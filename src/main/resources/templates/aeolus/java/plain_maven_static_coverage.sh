@@ -10,20 +10,38 @@ maven () {
 movereportfile () {
   echo '⚙️ executing move_report_file'
   mv target/tia/reports/*/testwise-coverage-*.json target/tia/reports/tiaTests.json
+}
+
+maven () {
+  echo '⚙️ executing maven'
+  mvn spotbugs:spotbugs checkstyle:checkstyle pmd:pmd pmd:cpd
   mkdir -p /var/tmp/aeolus-results
   shopt -s extglob
+  local _sources="target/spotbugsXml.xml"
+  local _directory
+  _directory=$(dirname "${_sources}")
+  mkdir -p /var/tmp/aeolus-results/"${_directory}"
+  cp -a "${_sources}" /var/tmp/aeolus-results/target/spotbugsXml.xml
+  local _sources="target/checkstyle-result.xml"
+  local _directory
+  _directory=$(dirname "${_sources}")
+  mkdir -p /var/tmp/aeolus-results/"${_directory}"
+  cp -a "${_sources}" /var/tmp/aeolus-results/target/checkstyle-result.xml
+  local _sources="target/pmd.xml"
+  local _directory
+  _directory=$(dirname "${_sources}")
+  mkdir -p /var/tmp/aeolus-results/"${_directory}"
+  cp -a "${_sources}" /var/tmp/aeolus-results/target/pmd.xml
+  local _sources="target/cpd.xml"
+  local _directory
+  _directory=$(dirname "${_sources}")
+  mkdir -p /var/tmp/aeolus-results/"${_directory}"
+  cp -a "${_sources}" /var/tmp/aeolus-results/target/cpd.xml
   local _sources="target/tia/reports/tiaTests.json"
   local _directory
   _directory=$(dirname "${_sources}")
   mkdir -p /var/tmp/aeolus-results/"${_directory}"
   cp -a "${_sources}" /var/tmp/aeolus-results/target/tia/reports/tiaTests.json
-}
-
-junit () {
-  echo '⚙️ executing junit'
-  #empty script action, just for the results
-  mkdir -p /var/tmp/aeolus-results
-  shopt -s extglob
   local _sources="**/target/surefire-reports/*.xml"
   local _directory
   _directory=$(dirname "${_sources}")
@@ -35,7 +53,7 @@ final_aeolus_post_action () {
   set +e # from now on, we don't exit on errors
   echo '⚙️ executing final_aeolus_post_action'
   cd "${AEOLUS_INITIAL_DIRECTORY}"
-  junit "${_current_lifecycle}"
+  maven "${_current_lifecycle}"
   cd "${AEOLUS_INITIAL_DIRECTORY}"
 }
 

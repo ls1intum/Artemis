@@ -8,6 +8,11 @@ gradle () {
   ./gradlew clean test
 }
 
+staticcodeanalysis () {
+  echo '⚙️ executing static_code_analysis'
+  ./gradlew check -x test
+}
+
 setupworkingdirectoryforcleanup () {
   echo '⚙️ executing setup_working_directory_for_cleanup'
   mkdir -p /var/tmp/aeolus-results
@@ -18,12 +23,35 @@ setupworkingdirectoryforcleanup () {
   mkdir -p /var/tmp/aeolus-results/"${_directory}"
   cp -a "${_sources}" /var/tmp/aeolus-results/**/test-results/test/*.xml
   chmod -R 777 .
+  mkdir -p /var/tmp/aeolus-results
+  shopt -s extglob
+  local _sources="target/spotbugsXml.xml"
+  local _directory
+  _directory=$(dirname "${_sources}")
+  mkdir -p /var/tmp/aeolus-results/"${_directory}"
+  cp -a "${_sources}" /var/tmp/aeolus-results/target/spotbugsXml.xml
+  local _sources="target/checkstyle-result.xml"
+  local _directory
+  _directory=$(dirname "${_sources}")
+  mkdir -p /var/tmp/aeolus-results/"${_directory}"
+  cp -a "${_sources}" /var/tmp/aeolus-results/target/checkstyle-result.xml
+  local _sources="target/pmd.xml"
+  local _directory
+  _directory=$(dirname "${_sources}")
+  mkdir -p /var/tmp/aeolus-results/"${_directory}"
+  cp -a "${_sources}" /var/tmp/aeolus-results/target/pmd.xml
+  local _sources="target/cpd.xml"
+  local _directory
+  _directory=$(dirname "${_sources}")
+  mkdir -p /var/tmp/aeolus-results/"${_directory}"
+  cp -a "${_sources}" /var/tmp/aeolus-results/target/cpd.xml
 }
 
-# always steps
 final_aeolus_post_action () {
   set +e # from now on, we don't exit on errors
   echo '⚙️ executing final_aeolus_post_action'
+  cd "${AEOLUS_INITIAL_DIRECTORY}"
+  static_code_analysis "${_current_lifecycle}"
   cd "${AEOLUS_INITIAL_DIRECTORY}"
   setup_working_directory_for_cleanup "${_current_lifecycle}"
   cd "${AEOLUS_INITIAL_DIRECTORY}"

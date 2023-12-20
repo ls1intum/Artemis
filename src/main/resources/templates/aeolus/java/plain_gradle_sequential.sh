@@ -2,25 +2,34 @@
 set -e
 export AEOLUS_INITIAL_DIRECTORY=$(pwd)
 
-gradle () {
-  echo '⚙️ executing gradle'
+structuraltests () {
+  echo '⚙️ executing structural_tests'
   chmod +x ./gradlew
-  ./gradlew clean test
+  ./gradlew clean structuralTests
+}
+
+behaviortests () {
+  echo '⚙️ executing behavior_tests'
+  ./gradlew behaviorTests
 }
 
 setupworkingdirectoryforcleanup () {
   echo '⚙️ executing setup_working_directory_for_cleanup'
   mkdir -p /var/tmp/aeolus-results
   shopt -s extglob
-  local _sources="**/test-results/test/*.xml"
+  local _sources="**/test-results/structuralTests/*.xml"
   local _directory
   _directory=$(dirname "${_sources}")
   mkdir -p /var/tmp/aeolus-results/"${_directory}"
-  cp -a "${_sources}" /var/tmp/aeolus-results/**/test-results/test/*.xml
+  cp -a "${_sources}" /var/tmp/aeolus-results/**/test-results/structuralTests/*.xml
+  local _sources="**/test-results/behaviorTests/*.xml"
+  local _directory
+  _directory=$(dirname "${_sources}")
+  mkdir -p /var/tmp/aeolus-results/"${_directory}"
+  cp -a "${_sources}" /var/tmp/aeolus-results/**/test-results/behaviorTests/*.xml
   chmod -R 777 .
 }
 
-# always steps
 final_aeolus_post_action () {
   set +e # from now on, we don't exit on errors
   echo '⚙️ executing final_aeolus_post_action'
@@ -38,7 +47,9 @@ main () {
   local _script_name
   _script_name=$(realpath "${0}")
   trap final_aeolus_post_action EXIT
-  bash -c "source ${_script_name} aeolus_sourcing;gradle ${_current_lifecycle}"
+  bash -c "source ${_script_name} aeolus_sourcing;structuraltests ${_current_lifecycle}"
+  cd "${AEOLUS_INITIAL_DIRECTORY}"
+  bash -c "source ${_script_name} aeolus_sourcing;behaviortests ${_current_lifecycle}"
   cd "${AEOLUS_INITIAL_DIRECTORY}"
 }
 

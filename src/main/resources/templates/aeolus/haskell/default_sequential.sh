@@ -1,64 +1,56 @@
 #!/usr/bin/env bash
 set -e
 export AEOLUS_INITIAL_DIRECTORY=$(pwd)
-# step run_structural_tests
-# generated from step run_structural_tests
-# original type was script
-run_structural_tests () {
+
+runstructuraltests () {
   echo '⚙️ executing run_structural_tests'
   # the build process is specified in `run.sh` in the test repository
   # -s enables the safe testing mode
   chmod +x run.sh
   ./run.sh -s
 }
-# step run_behavior_tests
-# generated from step run_behavior_tests
-# original type was script
-run_behavior_tests () {
+
+runbehaviortests () {
   echo '⚙️ executing run_behavior_tests'
   # the build process is specified in `run.sh` in the test repository
   # -s enables the safe testing mode
   chmod +x run.sh
   ./run.sh -s
 }
-# step junit
-# generated from step junit
-# original type was script
+
 junit () {
   echo '⚙️ executing junit'
+  mkdir -p /var/tmp/aeolus-results
+  shopt -s extglob
+  local _sources="test-reports/results.xml"
+  local _directory
+  _directory=$(dirname "${_sources}")
+  mkdir -p /var/tmp/aeolus-results/"${_directory}"
+  cp -a "${_sources}" /var/tmp/aeolus-results/test-reports/results.xml
   #empty script action, just for the results
 }
 
-# move results
-aeolus_move_results () {
-  echo '⚙️ moving results'
-  mkdir -p /aeolus-results
-  shopt -s extglob
-  cd $AEOLUS_INITIAL_DIRECTORY
-  local _sources="test-reports/results.xml"
-  mv $_sources /aeolus-results/test-reports/results.xml
-}
-
-# always steps
 final_aeolus_post_action () {
   set +e # from now on, we don't exit on errors
   echo '⚙️ executing final_aeolus_post_action'
-  cd $AEOLUS_INITIAL_DIRECTORY
-  junit $_current_lifecycle
-  cd $AEOLUS_INITIAL_DIRECTORY
-  aeolus_move_results $_current_lifecycle
-  cd $AEOLUS_INITIAL_DIRECTORY
+  cd "${AEOLUS_INITIAL_DIRECTORY}"
+  junit "${_current_lifecycle}"
+  cd "${AEOLUS_INITIAL_DIRECTORY}"
 }
 
-
-# main function
 main () {
   local _current_lifecycle="${1}"
+    if [[ "${_current_lifecycle}" == "aeolus_sourcing" ]]; then
+    # just source to use the methods in the subshell, no execution
+    return 0
+  fi
+  local _script_name
+  _script_name=$(realpath "${0}")
   trap final_aeolus_post_action EXIT
-  run_structural_tests $_current_lifecycle
-  cd $AEOLUS_INITIAL_DIRECTORY
-  run_behavior_tests $_current_lifecycle
-  cd $AEOLUS_INITIAL_DIRECTORY
+  bash -c "source ${_script_name} aeolus_sourcing;runstructuraltests ${_current_lifecycle}"
+  cd "${AEOLUS_INITIAL_DIRECTORY}"
+  bash -c "source ${_script_name} aeolus_sourcing;runbehaviortests ${_current_lifecycle}"
+  cd "${AEOLUS_INITIAL_DIRECTORY}"
 }
 
-main $@
+main "${@}"

@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -396,7 +397,10 @@ public class ProgrammingExerciseService {
 
         Windfile windfile = programmingExercise.getWindfile();
         if (windfile != null && buildScriptGenerationService.isPresent()) {
-            buildScriptGenerationService.get().saveScript(programmingExercise);
+            String script = buildScriptGenerationService.get().getScript(programmingExercise);
+            programmingExercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
+            programmingExercise.setBuildScript(script);
+            programmingExercise = programmingExerciseRepository.save(programmingExercise);
         }
 
         // if the exercise is imported from a file, the changes fixing the project name will trigger a first build anyway, so

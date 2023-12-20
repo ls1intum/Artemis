@@ -1,11 +1,8 @@
-api: v0.0.1
 #!/usr/bin/env bash
 set -e
 export AEOLUS_INITIAL_DIRECTORY=$(pwd)
-# step setup_the_build_environment
-# generated from step setup_the_build_environment
-# original type was script
-setup_the_build_environment () {
+
+setupthebuildenvironment () {
   echo '⚙️ executing setup_the_build_environment'
   #!/usr/bin/env bash
   # ------------------------------
@@ -27,10 +24,8 @@ setup_the_build_environment () {
   fi
   cd ..
 }
-# step setup_makefile
-# generated from step setup_makefile
-# original type was script
-setup_makefile () {
+
+setupmakefile () {
   echo '⚙️ executing setup_makefile'
   #!/usr/bin/env bash
   # ------------------------------
@@ -46,10 +41,8 @@ setup_makefile () {
   cp -f tests/Makefile assignment/Makefile || exit 2
   sed -i "s~\bINCLUDEDIRS\s*=.*~${foundIncludeDirs}~; s~\bSOURCE\s*=.*~${foundSource}~" assignment/Makefile
 }
-# step build_and_run_all_tests
-# generated from step build_and_run_all_tests
-# original type was script
-build_and_run_all_tests () {
+
+buildandrunalltests () {
   echo '⚙️ executing build_and_run_all_tests'
   #!/usr/bin/env bash
   # ------------------------------
@@ -66,49 +59,50 @@ build_and_run_all_tests () {
       exit 1
   fi
 }
-# step cleanup
-# generated from step cleanup
-# original type was script
+
 cleanup () {
   echo '⚙️ executing cleanup'
+  mkdir -p /var/tmp/aeolus-results
+  shopt -s extglob
+  local _sources="test-reports/tests-results.xml"
+  local _directory
+  _directory=$(dirname "${_sources}")
+  mkdir -p /var/tmp/aeolus-results/"${_directory}"
+  cp -a "${_sources}" /var/tmp/aeolus-results/test-reports/tests-results.xml
   sudo rm -rf tests/ assignment/ test-reports/ || true
   chmod -R 777 .
-}
-
-# move results
-aeolus_move_results () {
-  echo '⚙️ moving results'
-  mkdir -p /aeolus-results
+  mkdir -p /var/tmp/aeolus-results
   shopt -s extglob
-  cd $AEOLUS_INITIAL_DIRECTORY
   local _sources="target/gcc.xml"
-  mv $_sources /aeolus-results/target/gcc.xml
-  local _sources="test-reports/tests-results.xml"
-  mv $_sources /aeolus-results/test-reports/tests-results.xml
+  local _directory
+  _directory=$(dirname "${_sources}")
+  mkdir -p /var/tmp/aeolus-results/"${_directory}"
+  cp -a "${_sources}" /var/tmp/aeolus-results/target/gcc.xml
 }
 
-# always steps
 final_aeolus_post_action () {
   set +e # from now on, we don't exit on errors
   echo '⚙️ executing final_aeolus_post_action'
-  cd $AEOLUS_INITIAL_DIRECTORY
-  cleanup $_current_lifecycle
-  cd $AEOLUS_INITIAL_DIRECTORY
-  aeolus_move_results $_current_lifecycle
-  cd $AEOLUS_INITIAL_DIRECTORY
+  cd "${AEOLUS_INITIAL_DIRECTORY}"
+  cleanup "${_current_lifecycle}"
+  cd "${AEOLUS_INITIAL_DIRECTORY}"
 }
 
-
-# main function
 main () {
   local _current_lifecycle="${1}"
+    if [[ "${_current_lifecycle}" == "aeolus_sourcing" ]]; then
+    # just source to use the methods in the subshell, no execution
+    return 0
+  fi
+  local _script_name
+  _script_name=$(realpath "${0}")
   trap final_aeolus_post_action EXIT
-  setup_the_build_environment $_current_lifecycle
-  cd $AEOLUS_INITIAL_DIRECTORY
-  setup_makefile $_current_lifecycle
-  cd $AEOLUS_INITIAL_DIRECTORY
-  build_and_run_all_tests $_current_lifecycle
-  cd $AEOLUS_INITIAL_DIRECTORY
+  bash -c "source ${_script_name} aeolus_sourcing;setupthebuildenvironment ${_current_lifecycle}"
+  cd "${AEOLUS_INITIAL_DIRECTORY}"
+  bash -c "source ${_script_name} aeolus_sourcing;setupmakefile ${_current_lifecycle}"
+  cd "${AEOLUS_INITIAL_DIRECTORY}"
+  bash -c "source ${_script_name} aeolus_sourcing;buildandrunalltests ${_current_lifecycle}"
+  cd "${AEOLUS_INITIAL_DIRECTORY}"
 }
 
-main $@
+main "${@}"

@@ -34,6 +34,25 @@ public class BuildScriptProvider {
     public BuildScriptProvider(ProgrammingExerciseRepository programmingExerciseRepository, ResourceLoaderService resourceLoaderService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.resourceLoaderService = resourceLoaderService;
+        // load all scripts into the cache
+        cacheOnBoot();
+    }
+
+    private void cacheOnBoot() {
+        var resources = this.resourceLoaderService.getResources(Path.of("templates", "aeolus"));
+        for (var resource : resources) {
+            try {
+                String filename = resource.getFilename();
+                String directory = resource.getURL().getPath().split("templates/aeolus/")[1].split("/")[0];
+                String uniqueKey = directory + "_" + filename;
+                byte[] fileContent = IOUtils.toByteArray(resource.getInputStream());
+                String script = new String(fileContent, StandardCharsets.UTF_8);
+                scriptCache.put(uniqueKey, script);
+            }
+            catch (IOException e) {
+                LOGGER.error("Failed to load script {}", resource.getFilename(), e);
+            }
+        }
     }
 
     /**
@@ -45,6 +64,10 @@ public class BuildScriptProvider {
     public void storeBuildScriptInDatabase(ProgrammingExercise programmingExercise, String script) {
         programmingExercise.setBuildScript(script);
         programmingExerciseRepository.save(programmingExercise);
+    }
+
+    public String getCachedScript(String key) {
+        return scriptCache.getOrDefault(key, null);
     }
 
     /**

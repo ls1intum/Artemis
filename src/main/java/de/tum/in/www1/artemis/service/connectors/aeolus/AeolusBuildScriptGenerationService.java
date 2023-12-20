@@ -28,7 +28,7 @@ public class AeolusBuildScriptGenerationService extends BuildScriptGenerationSer
     }
 
     @Override
-    public String saveScript(ProgrammingExercise programmingExercise) {
+    public String getScript(ProgrammingExercise programmingExercise) {
         if (!profileService.isLocalCi()) {
             return null;
         }
@@ -38,7 +38,7 @@ public class AeolusBuildScriptGenerationService extends BuildScriptGenerationSer
         }
         if (windfile != null) {
             String script = aeolusBuildPlanService.generateBuildScript(windfile, AeolusTarget.CLI);
-            buildScriptProvider.storeBuildScriptInDatabase(programmingExercise, script);
+            // buildScriptProvider.storeBuildScriptInDatabase(programmingExercise, script);
             return script;
         }
         return null;

@@ -12,7 +12,7 @@ public abstract class BuildScriptGenerationService {
         this.buildScriptProvider = buildScriptProvider;
     }
 
-    public abstract String saveScript(ProgrammingExercise programmingExercise);
+    public abstract String getScript(ProgrammingExercise programmingExercise);
 
     public abstract String previewScript(Windfile windfile, AeolusTarget target);
 }

@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 set -e
 export AEOLUS_INITIAL_DIRECTORY=$(pwd)
-# step build_and_test_the_code
-# generated from step build_and_test_the_code
-# original type was script
-build_and_test_the_code () {
+
+buildandtestthecode () {
   echo '⚙️ executing build_and_test_the_code'
   # Delete possible old Sources and replace with student's assignment Sources
   rm -rf Sources
@@ -33,11 +31,16 @@ build_and_test_the_code () {
   cd ..
   chmod -R 777 .
 }
-# step run_static_code_analysis
-# generated from step run_static_code_analysis
-# original type was script
-run_static_code_analysis () {
+
+runstaticcodeanalysis () {
   echo '⚙️ executing run_static_code_analysis'
+  mkdir -p /var/tmp/aeolus-results
+  shopt -s extglob
+  local _sources="assignment/tests.xml"
+  local _directory
+  _directory=$(dirname "${_sources}")
+  mkdir -p /var/tmp/aeolus-results/"${_directory}"
+  cp -a "${_sources}" /var/tmp/aeolus-results/assignment/tests.xml
   # Copy SwiftLint rules
   cp .swiftlint.yml assignment || true
   # create target directory for SCA Parser
@@ -45,38 +48,34 @@ run_static_code_analysis () {
   cd assignment
   # Execute static code analysis
   swiftlint > ../target/swiftlint-result.xml
-}
-
-# move results
-aeolus_move_results () {
-  echo '⚙️ moving results'
-  mkdir -p /aeolus-results
+  mkdir -p /var/tmp/aeolus-results
   shopt -s extglob
-  cd $AEOLUS_INITIAL_DIRECTORY
   local _sources="target/swiftlint-result.xml"
-  mv $_sources /aeolus-results/target/swiftlint-result.xml
-  local _sources="assignment/tests.xml"
-  mv $_sources /aeolus-results/assignment/tests.xml
+  local _directory
+  _directory=$(dirname "${_sources}")
+  mkdir -p /var/tmp/aeolus-results/"${_directory}"
+  cp -a "${_sources}" /var/tmp/aeolus-results/target/swiftlint-result.xml
 }
 
-# always steps
 final_aeolus_post_action () {
   set +e # from now on, we don't exit on errors
   echo '⚙️ executing final_aeolus_post_action'
-  cd $AEOLUS_INITIAL_DIRECTORY
-  run_static_code_analysis $_current_lifecycle
-  cd $AEOLUS_INITIAL_DIRECTORY
-  aeolus_move_results $_current_lifecycle
-  cd $AEOLUS_INITIAL_DIRECTORY
+  cd "${AEOLUS_INITIAL_DIRECTORY}"
+  run_static_code_analysis "${_current_lifecycle}"
+  cd "${AEOLUS_INITIAL_DIRECTORY}"
 }
 
-
-# main function
 main () {
   local _current_lifecycle="${1}"
+    if [[ "${_current_lifecycle}" == "aeolus_sourcing" ]]; then
+    # just source to use the methods in the subshell, no execution
+    return 0
+  fi
+  local _script_name
+  _script_name=$(realpath "${0}")
   trap final_aeolus_post_action EXIT
-  build_and_test_the_code $_current_lifecycle
-  cd $AEOLUS_INITIAL_DIRECTORY
+  bash -c "source ${_script_name} aeolus_sourcing;buildandtestthecode ${_current_lifecycle}"
+  cd "${AEOLUS_INITIAL_DIRECTORY}"
 }
 
-main $@
+main "${@}"

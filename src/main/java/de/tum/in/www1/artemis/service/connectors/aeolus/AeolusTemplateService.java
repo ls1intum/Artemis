@@ -1,16 +1,12 @@
 package de.tum.in.www1.artemis.service.connectors.aeolus;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -97,15 +93,11 @@ public class AeolusTemplateService {
         if (templateCache.containsKey(uniqueKey)) {
             return templateCache.get(uniqueKey);
         }
-        Resource fileResource = resourceLoaderService.getResource(Path.of("templates", "aeolus", programmingLanguage.name().toLowerCase(), templateFileName));
-        if (!fileResource.exists()) {
-            throw new IOException("File " + Path.of("templates", "aeolus", programmingLanguage.name().toLowerCase(), templateFileName)
-                    + " not found for settings: programming language: " + programmingLanguage.name() + ", project type: " + projectType.map(Enum::name).orElse("default")
-                    + ", static analysis: " + staticAnalysis + ", sequential runs: " + sequentialRuns + ", test coverage: " + testCoverage);
+        String scriptCache = buildScriptProvider.getCachedScript(uniqueKey);
+        if (scriptCache == null) {
+            LOGGER.error("No windfile found for key {}", uniqueKey);
         }
-        byte[] fileContent = IOUtils.toByteArray(fileResource.getInputStream());
-        String yaml = new String(fileContent, StandardCharsets.UTF_8);
-        Windfile windfile = readWindfile(yaml);
+        Windfile windfile = readWindfile(scriptCache);
         this.addInstanceVariablesToWindfile(windfile, programmingLanguage, projectType);
         templateCache.put(uniqueKey, windfile);
         return windfile;
