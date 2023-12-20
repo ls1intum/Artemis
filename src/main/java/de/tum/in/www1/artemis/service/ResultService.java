@@ -15,10 +15,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
@@ -60,10 +57,12 @@ public class ResultService {
 
     private final StudentExamRepository studentExamRepository;
 
+    private final LongFeedbackTextRepository longFeedbackTextRepository;
+
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiNewResultService> ltiNewResultService,
             ResultWebsocketService resultWebsocketService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
-            FeedbackRepository feedbackRepository, ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository,
-            AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService,
+            FeedbackRepository feedbackRepository, LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository,
+            ParticipantScoreRepository participantScoreRepository, AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository) {
@@ -74,6 +73,7 @@ public class ResultService {
         this.complaintResponseRepository = complaintResponseRepository;
         this.ratingRepository = ratingRepository;
         this.feedbackRepository = feedbackRepository;
+        this.longFeedbackTextRepository = longFeedbackTextRepository;
         this.complaintRepository = complaintRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.authCheckService = authCheckService;
@@ -396,10 +396,23 @@ public class ResultService {
         feedbackList.forEach(feedback -> {
             // cut association to parent object
             feedback.setResult(null);
+            LongFeedbackText longFeedback = null;
+            // search for long feedback parent feedback has and cut the association between them.
+            if (feedback.getId() != null) {
+                longFeedback = longFeedbackTextRepository.findByFeedbackId(feedback.getId()).orElse(null);
+                if (longFeedback != null) {
+                    feedback.clearLongFeedback();
+                }
+            }
             // persist the child object without an association to the parent object.
             feedback = feedbackRepository.saveAndFlush(feedback);
             // restore the association to the parent object
             feedback.setResult(result);
+
+            // restore the association of the long feedback to the parent feedback
+            if (longFeedback != null) {
+                feedback.setDetailText(longFeedback.getText());
+            }
             savedFeedbacks.add(feedback);
         });
         return savedFeedbacks;

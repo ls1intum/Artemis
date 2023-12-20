@@ -39,9 +39,9 @@ import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 @RequestMapping("/api")
 public class ProgrammingAssessmentResource extends AssessmentResource {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingAssessmentResource.class);
-
     private static final String ENTITY_NAME = "programmingAssessment";
+
+    private final Logger log = LoggerFactory.getLogger(ProgrammingAssessmentResource.class);
 
     private final ProgrammingAssessmentService programmingAssessmentService;
 
@@ -53,16 +53,13 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private final LongFeedbackTextRepository longFeedbackTextRepository;
-
     private final Optional<AthenaFeedbackSendingService> athenaFeedbackSendingService;
 
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingAssessmentService programmingAssessmentService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService,
             ResultWebsocketService resultWebsocketService, Optional<LtiNewResultService> ltiNewResultService, StudentParticipationRepository studentParticipationRepository,
             ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<AthenaFeedbackSendingService> athenaFeedbackSendingService,
-            LongFeedbackTextRepository longFeedbackTextRepository) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<AthenaFeedbackSendingService> athenaFeedbackSendingService) {
         super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, examService, resultWebsocketService,
                 exampleSubmissionRepository, submissionRepository, singleUserNotificationService);
         this.programmingAssessmentService = programmingAssessmentService;
@@ -71,7 +68,6 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.athenaFeedbackSendingService = athenaFeedbackSendingService;
-        this.longFeedbackTextRepository = longFeedbackTextRepository;
     }
 
     /**
@@ -153,11 +149,6 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         // make sure that the participation and submission cannot be manipulated on the client side
         newManualResult.setParticipation(participation);
         newManualResult.setSubmission(existingManualResult.getSubmission());
-
-        // make sure the long feedback texts are not detached from the parent feedback
-        for (Feedback feedback : newManualResult.getFeedbacks().stream().filter(feedback -> feedback.getId() != null).toList()) {
-            longFeedbackTextRepository.findByFeedbackId(feedback.getId()).ifPresent(longFeedbackText -> feedback.setDetailText(longFeedbackText.getText()));
-        }
 
         var programmingExercise = (ProgrammingExercise) participation.getExercise();
         checkAuthorization(programmingExercise, user);
