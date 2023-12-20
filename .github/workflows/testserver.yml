@@ -210,7 +210,7 @@ jobs:
           - environment: artemis-staging-localci.artemis.cit.tum.de
             label-identifier: artemis-staging
             url: https://artemis-staging-localci.artemis.cit.tum.de
-            user: deployment
+            user: bamboo
             hosts:
               - artemis-staging-localci-node-1.artemis.cit.tum.de
               - artemis-staging-localci-node-2.artemis.cit.tum.de
