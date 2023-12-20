@@ -167,6 +167,7 @@ describe('AnswerPostHeaderComponent', () => {
     it('should not display edit and delete options to users that are neither author or tutor', () => {
         metisServiceUserIsAtLeastTutorMock.mockReturnValue(false);
         metisServiceUserPostingAuthorMock.mockReturnValue(false);
+        metisServiceUserIsAtLeastInstructorMock.mockReturnValue(false);
         fixture.detectChanges();
         expect(getElement(debugElement, '.editIcon')).toBeNull();
         expect(getElement(debugElement, '.deleteIcon')).toBeNull();

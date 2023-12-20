@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -94,15 +95,28 @@ public class QuizPoolService extends QuizService<QuizPool> {
      * Find a quiz pool (if exists) that belongs to the given exam id
      *
      * @param examId the id of the exam to be searched
+     * @return optional quiz pool that belongs to the given exam id
+     */
+    public Optional<QuizPool> findWithQuizQuestionsByExamId(Long examId) {
+        Optional<QuizPool> quizPoolOptional = quizPoolRepository.findWithEagerQuizQuestionsByExamId(examId);
+        if (quizPoolOptional.isPresent()) {
+            QuizPool quizPool = quizPoolOptional.get();
+            List<Long> quizGroupIds = quizPool.getQuizQuestions().stream().map(QuizQuestion::getQuizGroupId).filter(Objects::nonNull).toList();
+            List<QuizGroup> quizGroups = quizGroupRepository.findAllById(quizGroupIds);
+            quizPool.setQuizGroups(quizGroups);
+            reassignQuizQuestion(quizPool, quizGroups);
+        }
+        return quizPoolOptional;
+    }
+
+    /**
+     * Find a quiz pool (if exists) that belongs to the given exam id
+     *
+     * @param examId the id of the exam to be searched
      * @return quiz pool that belongs to the given exam id
      */
-    public QuizPool findByExamId(Long examId) {
-        QuizPool quizPool = quizPoolRepository.findWithEagerQuizQuestionsByExamId(examId).orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, "examId=" + examId));
-        List<Long> quizGroupIds = quizPool.getQuizQuestions().stream().map(QuizQuestion::getQuizGroupId).filter(Objects::nonNull).toList();
-        List<QuizGroup> quizGroups = quizGroupRepository.findAllById(quizGroupIds);
-        quizPool.setQuizGroups(quizGroups);
-        reassignQuizQuestion(quizPool, quizGroups);
-        return quizPool;
+    public Optional<QuizPool> findByExamId(Long examId) {
+        return quizPoolRepository.findByExamId(examId);
     }
 
     /**

@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
-import { CourseWideContext, PageType, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
+import { PageType, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { Subject, Subscription, combineLatest, takeUntil } from 'rxjs';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -42,7 +42,6 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
     forceReload = true;
 
     readonly documentationType: DocumentationType = 'Communications';
-    readonly CourseWideContext = CourseWideContext;
     readonly PageType = PageType;
     readonly pageType = PageType.OVERVIEW;
 
@@ -160,9 +159,6 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
         // will scroll to the top of the posts
         this.forceReload = true;
 
-        const lectureIds: number[] = [];
-        const exerciseIds: number[] = [];
-        const courseWideContexts: CourseWideContext[] = [];
         const conversationIds: number[] = [];
 
         for (const context of this.formGroup.get('context')?.value || []) {
@@ -171,9 +167,6 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
             }
         }
 
-        this.currentPostContextFilter.lectureIds = lectureIds.length ? lectureIds : undefined;
-        this.currentPostContextFilter.exerciseIds = exerciseIds.length ? exerciseIds : undefined;
-        this.currentPostContextFilter.courseWideContexts = courseWideContexts.length ? courseWideContexts : undefined;
         this.currentPostContextFilter.courseWideChannelIds = conversationIds;
 
         super.onSelectContext();
@@ -194,16 +187,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
      * Angular needs to be able to identify the currently selected option
      */
     compareContextFilterOptionFn(option1: any, option2: any) {
-        if (option1.exerciseId && option2.exerciseId) {
-            return option1.exerciseId === option2.exerciseId;
-        } else if (option1.lectureId && option2.lectureId) {
-            return option1.lectureId === option2.lectureId;
-        } else if (option1.courseWideContext && option2.courseWideContext) {
-            return option1.courseWideContext === option2.courseWideContext;
-        } else if (option1.courseId && option2.courseId) {
-            return option1.courseId === option2.courseId;
-        }
-        return false;
+        return option1.conversationId === option2.conversationId;
     }
 
     /**
@@ -234,11 +218,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
      * this empty post has a default course-wide context as well as the course set as context
      **/
     createEmptyPost(): void {
-        this.createdPost = this.metisService.createEmptyPostForContext(
-            this.currentPostContextFilter.courseWideContexts?.[0],
-            this.exercises?.find((exercise) => exercise.id === this.currentPostContextFilter.exerciseIds?.[0]),
-            this.lectures?.find((lecture) => lecture.id === this.currentPostContextFilter.lectureIds?.[0]),
-        );
+        this.createdPost = this.metisService.createEmptyPostForContext();
     }
     /**
      * defines a function that returns the post id as unique identifier,
@@ -271,9 +251,6 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
     private resetCurrentFilter(): void {
         this.currentPostContextFilter = {
             courseId: this.course!.id,
-            courseWideContexts: undefined,
-            exerciseIds: undefined,
-            lectureIds: undefined,
             courseWideChannelIds: [],
             searchText: undefined,
             filterToUnresolved: false,
