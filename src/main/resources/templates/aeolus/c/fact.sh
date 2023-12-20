@@ -41,8 +41,6 @@ cleanup () {
   _directory=$(dirname "${_sources}")
   mkdir -p /var/tmp/aeolus-results/"${_directory}"
   cp -a "${_sources}" /var/tmp/aeolus-results/test-reports/tests-results.xml
-  sudo rm -rf tests/ assignment/ test-reports/ || true
-  chmod -R 777 .
 }
 
 # always steps

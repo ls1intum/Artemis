@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.ExecCreateCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
@@ -123,7 +124,7 @@ public class LocalCIContainerService {
         // container's
         // main process. The execution command can run concurrently with the main process. This setup with the ExecCreateCmdResponse gives us the ability to wait in code until the
         // command has finished before trying to extract the results.
-        return executeDockerCommand(containerId, true, true, "bash", WORKING_DIRECTORY + "/script.sh");
+        return executeDockerCommand(containerId, true, true, false, "bash", WORKING_DIRECTORY + "/script.sh");
     }
 
     /**
@@ -227,7 +228,7 @@ public class LocalCIContainerService {
 
         if (!Objects.equals(testCheckoutPath, "")) {
             addDirectory(buildJobContainerId, WORKING_DIRECTORY + "/testing-dir", true);
-            executeDockerCommand(buildJobContainerId, false, false, "chmod", "-R", "777", WORKING_DIRECTORY + "/testing-dir");
+            executeDockerCommand(buildJobContainerId, false, false, true, "chmod", "-R", "777", WORKING_DIRECTORY + "/testing-dir");
         }
         addAndPrepareDirectory(buildJobContainerId, testRepositoryPath, WORKING_DIRECTORY + "/testing-dir/" + testCheckoutPath);
         addAndPrepareDirectory(buildJobContainerId, assignmentRepositoryPath, WORKING_DIRECTORY + "/testing-dir/" + assignmentCheckoutPath);
@@ -250,16 +251,16 @@ public class LocalCIContainerService {
     }
 
     private void renameDirectoryOrFile(String containerId, String oldName, String newName) {
-        executeDockerCommand(containerId, false, false, "mv", oldName, newName);
+        executeDockerCommand(containerId, false, false, true, "mv", oldName, newName);
     }
 
     private void addDirectory(String containerId, String directoryName, boolean createParentsIfNecessary) {
         String[] command = createParentsIfNecessary ? new String[] { "mkdir", "-p", directoryName } : new String[] { "mkdir", directoryName };
-        executeDockerCommand(containerId, false, false, command);
+        executeDockerCommand(containerId, false, false, true, command);
     }
 
     private void convertDosFilesToUnix(String path, String containerId) {
-        executeDockerCommand(containerId, false, false, "sh", "-c", "find " + path + " -type f ! -path '*/.git/*' -exec sed -i 's/\\r$//' {} \\;");
+        executeDockerCommand(containerId, false, false, true, "sh", "-c", "find " + path + " -type f ! -path '*/.git/*' -exec sed -i 's/\\r$//' {} \\;");
     }
 
     private void copyToContainer(String sourcePath, String containerId) {
@@ -320,11 +321,14 @@ public class LocalCIContainerService {
         dockerClient.execStartCmd(createCmdResponse.getId()).withDetach(true).exec(new ResultCallback.Adapter<>());
     }
 
-    private List<BuildLogEntry> executeDockerCommand(String containerId, boolean attachStdout, boolean attachStderr, String... command) {
+    private List<BuildLogEntry> executeDockerCommand(String containerId, boolean attachStdout, boolean attachStderr, boolean forceRoot, String... command) {
         boolean detach = !attachStdout && !attachStderr;
 
-        ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(containerId).withAttachStdout(attachStdout).withAttachStderr(attachStderr).withUser("root")
-                .withCmd(command).exec();
+        ExecCreateCmd execCreateCmd = dockerClient.execCreateCmd(containerId).withAttachStdout(attachStdout).withAttachStderr(attachStderr).withCmd(command);
+        if (forceRoot) {
+            execCreateCmd = execCreateCmd.withUser("root");
+        }
+        ExecCreateCmdResponse execCreateCmdResponse = execCreateCmd.exec();
         List<BuildLogEntry> buildLogEntries = new ArrayList<>();
         final CountDownLatch latch = new CountDownLatch(1);
         dockerClient.execStartCmd(execCreateCmdResponse.getId()).withDetach(detach).exec(new ResultCallback.Adapter<>() {
