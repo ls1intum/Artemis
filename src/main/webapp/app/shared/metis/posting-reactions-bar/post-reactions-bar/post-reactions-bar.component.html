@@ -43,14 +43,14 @@
             ></jhi-emoji-picker>
         }
     </ng-template>
-    @if (displayPriority === DisplayPriority.PINNED || currentUserIsAtLeastTutor) {
+    @if (displayPriority === DisplayPriority.PINNED || canPin) {
         <div class="col-auto p-0">
             <button
                 class="reaction-button pin"
-                [class.reaction-button--not-hoverable]="!currentUserIsAtLeastTutor"
-                [class.reaction-button--reacted]="displayPriority === DisplayPriority.PINNED && currentUserIsAtLeastTutor"
-                [disabled]="!currentUserIsAtLeastTutor || readOnlyMode"
-                (click)="currentUserIsAtLeastTutor && togglePin()"
+                [class.reaction-button--not-hoverable]="!canPin"
+                [class.reaction-button--reacted]="displayPriority === DisplayPriority.PINNED && canPin"
+                [disabled]="!canPin || readOnlyMode"
+                (click)="canPin && togglePin()"
             >
                 <jhi-emoji [emoji]="pinEmojiId" [ngbTooltip]="pinTooltip | artemisTranslate" [placement]="'auto'"></jhi-emoji>
             </button>
