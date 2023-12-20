@@ -37,6 +37,9 @@ public class AeolusBuildScriptGenerationService extends BuildScriptGenerationSer
             windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
         }
         if (windfile != null) {
+            windfile.setId("not-used");
+            windfile.setDescription("not-used");
+            windfile.setName("not-used");
             return aeolusBuildPlanService.generateBuildScript(windfile, AeolusTarget.CLI);
         }
         return null;
