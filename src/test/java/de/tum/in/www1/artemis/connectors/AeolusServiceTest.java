@@ -156,4 +156,19 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         ReflectionTestUtils.setField(aeolusBuildPlanService, "ciUrl", null);
         assertThat(aeolusBuildPlanService.publishBuildPlan(new Windfile(), AeolusTarget.BAMBOO)).isNull();
     }
+
+    @Test
+    void testBuildScriptGeneration() {
+        aeolusRequestMockProvider.mockGeneratePreview(AeolusTarget.CLI);
+        Windfile windfile = new Windfile();
+        windfile.setApi("v0.0.1");
+        windfile.setMetadata(new WindfileMetadata());
+        windfile.getMetadata().setName("test");
+        windfile.getMetadata().setDescription("test");
+        windfile.getMetadata().setId("test");
+        windfile.setActions(List.of(new ScriptAction()));
+        String script = aeolusBuildPlanService.generateBuildScript(windfile, AeolusTarget.CLI);
+        assertThat(script).isNotNull();
+        assertThat(script).isEqualTo("imagine a result here");
+    }
 }
