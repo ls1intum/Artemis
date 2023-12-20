@@ -6,8 +6,11 @@ import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.crypto.SecretKey;
 
@@ -102,7 +105,12 @@ class LtiDeepLinkingIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     private LinkedMultiValueMap<String, String> getDeepLinkingRequestParams() {
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("exerciseId", "1");
+        Set<Long> exerciseIds = new HashSet<>();
+        exerciseIds.add(1L);
+
+        String exerciseIdsParam = exerciseIds.stream().map(String::valueOf).collect(Collectors.joining(","));
+
+        params.add("exerciseIds", exerciseIdsParam);
         params.add("ltiIdToken", createJwtForTest());
         params.add("clientRegistrationId", "registration-id");
         return params;
