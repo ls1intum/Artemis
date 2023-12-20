@@ -245,7 +245,7 @@ public class StudentExamResource {
         var savedStudentExam = studentExamRepository.save(studentExam);
 
         if (!savedStudentExam.isTestRun()) {
-            Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
+            Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
             if (now.isAfter(exam.getVisibleDate())) {
                 instanceMessageSendService.sendStudentExamIndividualWorkingTimeChangeDuringConduction(studentExamId);
                 examLiveEventsService.createAndSendWorkingTimeUpdateEvent(savedStudentExam, workingTime, originalWorkingTime, false, userRepository.getUser());

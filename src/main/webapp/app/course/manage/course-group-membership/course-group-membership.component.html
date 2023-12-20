@@ -11,11 +11,15 @@
     [userSearch]="userSearch"
     (importFinish)="loadAll()"
 >
-    <span *ngIf="course">
-        <span>{{ course?.title }} - </span>
-        <span *ngIf="filteredUsersSize < allCourseGroupUsers.length">{{ filteredUsersSize }} <span jhiTranslate="artemisApp.course.courseGroup.outOf"> out of </span> </span
-        >{{ allCourseGroupUsers.length }}
-        <span [jhiTranslate]="'artemisApp.course.' + courseGroupEntityName">{{ capitalize(courseGroupEntityName) }}</span>
-        <span class="text-body-secondary">({{ courseGroupName }})</span>
-    </span>
+    @if (course) {
+        <span>
+            <span>{{ course?.title }} - </span>
+            @if (filteredUsersSize < allCourseGroupUsers.length) {
+                <span>{{ filteredUsersSize }} <span jhiTranslate="artemisApp.course.courseGroup.outOf"> out of </span> </span>
+            }
+            {{ allCourseGroupUsers.length }}
+            <span [jhiTranslate]="'artemisApp.course.' + courseGroupEntityName">{{ capitalize(courseGroupEntityName) }}</span>
+            <span class="text-body-secondary">({{ courseGroupName }})</span>
+        </span>
+    }
 </jhi-course-group>

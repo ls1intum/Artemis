@@ -39,11 +39,27 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAeolusTemplateFile() throws Exception {
         Map<String, Integer> templatesWithExpectedScriptActions = new HashMap<>();
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE", 1);
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?sequentialRuns=true", 1);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE", 2);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?sequentialRuns=true", 3);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?staticAnalysis=true", 3);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?staticAnalysis=true&testCoverage=true", 3);
         templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN", 1);
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?sequentialRuns=true", 1);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?sequentialRuns=true", 2);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?staticAnalysis=true", 2);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?staticAnalysis=true&testCoverage=true", 3);
         templatesWithExpectedScriptActions.put("ASSEMBLER", 4);
+        templatesWithExpectedScriptActions.put("C/FACT", 3);
+        templatesWithExpectedScriptActions.put("C/GCC", 4);
+        templatesWithExpectedScriptActions.put("C/GCC?staticAnalysis=true", 4);
+        templatesWithExpectedScriptActions.put("KOTLIN", 2);
+        templatesWithExpectedScriptActions.put("KOTLIN?testCoverage=true", 3);
+        templatesWithExpectedScriptActions.put("KOTLIN?sequentialRuns=true", 3);
+        templatesWithExpectedScriptActions.put("VHDL", 4);
+        templatesWithExpectedScriptActions.put("HASKELL", 2);
+        templatesWithExpectedScriptActions.put("HASKELL?sequentialRuns=true", 3);
+        templatesWithExpectedScriptActions.put("OCAML", 2);
+        templatesWithExpectedScriptActions.put("SWIFT/PLAIN", 2);
+        templatesWithExpectedScriptActions.put("SWIFT/PLAIN?staticAnalysis=true", 2);
         for (Map.Entry<String, Integer> entry : templatesWithExpectedScriptActions.entrySet()) {
             String template = request.get("/api/aeolus/templates/" + entry.getKey(), HttpStatus.OK, String.class);
             assertThat(template).isNotEmpty();

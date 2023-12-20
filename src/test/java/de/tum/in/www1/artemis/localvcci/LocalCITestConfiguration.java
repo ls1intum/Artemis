@@ -63,6 +63,7 @@ public class LocalCITestConfiguration {
         doReturn(createContainerCmd).when(createContainerCmd).withName(anyString());
         doReturn(createContainerCmd).when(createContainerCmd).withHostConfig(any());
         doReturn(createContainerCmd).when(createContainerCmd).withEnv(anyString(), anyString(), anyString());
+        doReturn(createContainerCmd).when(createContainerCmd).withUser(anyString());
         doReturn(createContainerCmd).when(createContainerCmd).withCmd(anyString(), anyString(), anyString());
         doReturn(createContainerResponse).when(createContainerCmd).exec();
 
@@ -82,6 +83,7 @@ public class LocalCITestConfiguration {
         ExecCreateCmdResponse execCreateCmdResponse = mock(ExecCreateCmdResponse.class);
         doReturn(execCreateCmd).when(dockerClient).execCreateCmd(anyString());
         doReturn(execCreateCmd).when(execCreateCmd).withCmd(any(String[].class));
+        doReturn(execCreateCmd).when(execCreateCmd).withUser(anyString());
         doReturn(execCreateCmd).when(execCreateCmd).withAttachStdout(anyBoolean());
         doReturn(execCreateCmd).when(execCreateCmd).withAttachStderr(anyBoolean());
         doReturn(execCreateCmd).when(execCreateCmd).withCmd(anyString(), anyString());

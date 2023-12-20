@@ -7,20 +7,15 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
-import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { Router } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
-import { CourseWideContext, PageType, PostContentValidationPattern, PostTitleValidationPattern, PostingEditType } from 'app/shared/metis/metis.util';
+import { PageType, PostContentValidationPattern, PostTitleValidationPattern, PostingEditType } from 'app/shared/metis/metis.util';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 
 const TITLE_MAX_LENGTH = 200;
-const DEBOUNCE_TIME_BEFORE_SIMILARITY_CHECK = 800;
 
 export interface ContextSelectorOption {
-    lecture?: Lecture;
-    exercise?: Exercise;
-    courseWideContext?: CourseWideContext;
     conversation?: Conversation;
 }
 
@@ -42,7 +37,6 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     currentContextSelectorOption: ContextSelectorOption;
     similarPosts: Post[] = [];
 
-    readonly CourseWideContext = CourseWideContext;
     readonly PageType = PageType;
     readonly EditType = PostingEditType;
     protected readonly getAsChannel = getAsChannelDto;
@@ -110,15 +104,8 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         this.formGroup = this.formBuilder.group(this.postValidator());
         this.formGroup.controls['context'].valueChanges.subscribe((context: ContextSelectorOption) => {
             this.currentContextSelectorOption = context;
-            // announcements should not show similar posts
-            if (this.currentContextSelectorOption.courseWideContext === CourseWideContext.ANNOUNCEMENT) {
-                this.similarPosts = [];
-            }
+            this.similarPosts = [];
         });
-        // we only want to search for similar posts (and show the result of the duplication check) if a post is created, not on updates
-        if (this.editType === this.EditType.CREATE && !this.isCourseMessagesPage) {
-            this.triggerPostSimilarityCheck();
-        }
     }
 
     /**
@@ -137,29 +124,6 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
                 this.isLoading = false;
             },
         });
-    }
-
-    /**
-     * invokes the metis service to get similar posts on changes of the formGroup, i.e. title or content
-     */
-    triggerPostSimilarityCheck(): void {
-        this.formGroup
-            .get('title')
-            ?.valueChanges.pipe(debounceTime(DEBOUNCE_TIME_BEFORE_SIMILARITY_CHECK), distinctUntilChanged())
-            .subscribe((title: string) => {
-                let tempPost = new Post();
-                tempPost = this.setPostProperties(tempPost);
-                // determine if title is provided
-                if (title.length > 0 && this.currentContextSelectorOption.courseWideContext !== CourseWideContext.ANNOUNCEMENT) {
-                    // if title input field is not empty, or context other than announcement invoke metis service to get similar posts
-                    this.metisService.getSimilarPosts(tempPost).subscribe((similarPosts: Post[]) => {
-                        this.similarPosts = similarPosts;
-                    });
-                } else {
-                    // if title input field is empty, set similar posts to empty array to not show the list
-                    this.similarPosts = [];
-                }
-            });
     }
 
     /**
@@ -190,38 +154,17 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         }
     }
 
-    /**
-     * required for distinguishing different select options for the context selector,
-     * Angular needs to be able to identify the currently selected option
-     */
-    compareContextSelectorOptionFn(option1: ContextSelectorOption, option2: ContextSelectorOption): boolean {
-        if (option1.exercise && option2.exercise) {
-            return option1.exercise.id === option2.exercise.id;
-        } else if (option1.lecture && option2.lecture) {
-            return option1.lecture.id === option2.lecture.id;
-        } else if (option1.courseWideContext && option2.courseWideContext) {
-            return option1.courseWideContext === option2.courseWideContext;
-        }
-        return false;
-    }
-
     private setPostProperties(post: Post): Post {
         post.title = this.formGroup.get('title')?.value;
         post.tags = this.tags;
         post.content = this.formGroup.get('content')?.value;
         const currentContextSelectorOption: ContextSelectorOption = {
-            exercise: undefined,
-            lecture: undefined,
-            courseWideContext: undefined,
             ...this.formGroup.get('context')?.value,
         };
         post = {
             ...post,
             ...currentContextSelectorOption,
         };
-        if (currentContextSelectorOption.courseWideContext) {
-            post.course = { id: this.course.id, title: this.course.title };
-        }
         if (currentContextSelectorOption.conversation) {
             post.conversation = currentContextSelectorOption.conversation;
         }
@@ -229,11 +172,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     }
 
     private resetCurrentContextSelectorOption(): void {
-        this.currentContextSelectorOption = {
-            lecture: this.posting.lecture,
-            exercise: this.posting.exercise,
-            courseWideContext: this.posting.courseWideContext,
-        };
+        this.currentContextSelectorOption = { conversation: this.posting.conversation };
     }
 
     private postValidator() {
