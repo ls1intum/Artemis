@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
-import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.BuildScriptProvider;
 
 /**
@@ -34,16 +33,12 @@ public class AeolusTemplateService {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
-    private final ResourceLoaderService resourceLoaderService;
-
     private final Map<String, Windfile> templateCache = new ConcurrentHashMap<>();
 
     private final BuildScriptProvider buildScriptProvider;
 
-    public AeolusTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService,
-            BuildScriptProvider buildScriptProvider) {
+    public AeolusTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, BuildScriptProvider buildScriptProvider) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
-        this.resourceLoaderService = resourceLoaderService;
         this.buildScriptProvider = buildScriptProvider;
     }
 
