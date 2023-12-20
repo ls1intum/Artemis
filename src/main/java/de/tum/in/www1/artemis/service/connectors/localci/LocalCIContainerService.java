@@ -67,6 +67,18 @@ public class LocalCIContainerService {
     @Value("${artemis.continuous-integration.local-cis-build-scripts-path}")
     String localCIBuildScriptBasePath;
 
+    @Value("${artemis.continuous-integration.proxies.use-system-proxy:false}")
+    boolean useSystemProxy;
+
+    @Value("${artemis.continuous-integration.proxies.default.http-proxy}")
+    String httpProxy;
+
+    @Value("${artemis.continuous-integration.proxies.default.https-proxy}")
+    String httpsProxy;
+
+    @Value("${artemis.continuous-integration.proxies.default.no-proxy}")
+    String noProxy;
+
     AeolusTemplateService aeolusTemplateService;
 
     public LocalCIContainerService(DockerClient dockerClient, HostConfig hostConfig, AeolusTemplateService aeolusTemplateService) {
@@ -79,14 +91,17 @@ public class LocalCIContainerService {
      * Configure a container with the Docker image, the container name, the binds, and the branch to checkout, and set the command that runs when the container starts.
      *
      * @param containerName the name of the container to be created
-     * @param branch        the branch to checkout
-     * @param commitHash    the commit hash to checkout. If it is null, the latest commit of the branch will be checked out.
      * @param image         the Docker image to use for the container
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
-    public CreateContainerResponse configureContainer(String containerName, String branch, String commitHash, String image) {
-        return dockerClient.createContainerCmd(image).withName(containerName).withHostConfig(hostConfig)
-                .withEnv("ARTEMIS_BUILD_TOOL=gradle", "ARTEMIS_DEFAULT_BRANCH=" + branch, "ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH=" + (commitHash != null ? commitHash : ""))
+    public CreateContainerResponse configureContainer(String containerName, String image) {
+        List<String> envVars = new ArrayList<>();
+        if (useSystemProxy) {
+            envVars.add("HTTP_PROXY=" + httpProxy);
+            envVars.add("HTTPS_PROXY=" + httpsProxy);
+            envVars.add("NO_PROXY=" + noProxy);
+        }
+        return dockerClient.createContainerCmd(image).withName(containerName).withHostConfig(hostConfig).withEnv(envVars)
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
                 // container from exiting until it finishes.
                 // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is indicated

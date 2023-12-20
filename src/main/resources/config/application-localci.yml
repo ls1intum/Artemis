@@ -19,3 +19,12 @@ artemis:
         queue-size-limit: 100
         # The path to the local CI build scripts. This path is relative to the Artemis root directory.
         local-cis-build-scripts-path: local-ci-scripts
+        proxies:
+            use-system-proxy: false
+            default:
+                http-proxy: http://proxyserver:port
+                https-proxy: http://proxyserver:port
+                no-proxy: localhost,127.0.0.1
+
+
+
