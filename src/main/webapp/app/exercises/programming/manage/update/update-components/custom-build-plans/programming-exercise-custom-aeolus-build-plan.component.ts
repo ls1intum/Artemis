@@ -80,19 +80,17 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
         this.staticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
         this.sequentialTestRuns = this.programmingExercise.sequentialTestRuns;
         this.testwiseCoverageEnabled = this.programmingExercise.testwiseCoverageEnabled;
-        if (this.programmingExerciseCreationConfig.customBuildPlansSupported) {
-            this.aeolusService
-                .getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
-                .subscribe({
-                    next: (file) => {
-                        this.programmingExercise.windFile = this.aeolusService.parseWindFile(file);
-                    },
-                    error: () => {
-                        this.programmingExercise.windFile = undefined;
-                    },
-                });
-            this.programmingExerciseCreationConfig.buildPlanLoaded = true;
-        }
+        this.aeolusService
+            .getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
+            .subscribe({
+                next: (file) => {
+                    this.programmingExercise.windFile = this.aeolusService.parseWindFile(file);
+                },
+                error: () => {
+                    this.programmingExercise.windFile = undefined;
+                },
+            });
+        this.programmingExerciseCreationConfig.buildPlanLoaded = true;
     }
 
     get editor(): AceEditorComponent | undefined {

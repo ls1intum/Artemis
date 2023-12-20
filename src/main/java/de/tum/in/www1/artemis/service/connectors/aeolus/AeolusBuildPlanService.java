@@ -114,6 +114,13 @@ public class AeolusBuildPlanService {
         return null;
     }
 
+    /**
+     * Generates a build script for a programming exercise using Aeolus
+     *
+     * @param windfile the build plan to generate the build script for
+     * @param target   the target to generate the build script for, either bamboo or jenkins or cli
+     * @return the generated build script
+     */
     public String generateBuildScript(Windfile windfile, AeolusTarget target) {
         String buildPlan = new Gson().toJson(windfile);
         String requestUrl = aeolusUrl + "/generate/" + target.getName();

@@ -9,6 +9,9 @@ import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.BuildScriptGenerationService;
 import de.tum.in.www1.artemis.service.connectors.BuildScriptProvider;
 
+/**
+ * Service for generating build scripts for programming exercises using Aeolus
+ */
 @Profile("aeolus")
 @Service
 public class AeolusBuildScriptGenerationService extends BuildScriptGenerationService {

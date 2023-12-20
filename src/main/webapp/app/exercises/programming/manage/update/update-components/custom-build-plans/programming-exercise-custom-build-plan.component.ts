@@ -39,6 +39,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     ngOnChanges(changes: SimpleChanges) {
         if (changes.programmingExerciseCreationConfig || changes.programmingExercise) {
             if (this.shouldReloadTemplate()) {
+                console.log('should reload template');
                 this.loadAeolusTemplate();
             }
         }
@@ -79,36 +80,32 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         this.staticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
         this.sequentialTestRuns = this.programmingExercise.sequentialTestRuns;
         this.testwiseCoverageEnabled = this.programmingExercise.testwiseCoverageEnabled;
-        if (this.programmingExerciseCreationConfig.customBuildPlansSupported) {
-            if (!this.programmingExercise.windFile || !this.programmingExercise.buildScript) {
-                this.aeolusService
-                    .getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
-                    .subscribe({
-                        next: (file) => {
-                            this.programmingExercise.windFile = this.aeolusService.parseWindFile(file);
-                        },
-                        error: () => {
-                            this.programmingExercise.windFile = undefined;
-                        },
-                    });
-                this.programmingExerciseCreationConfig.buildPlanLoaded = true;
-                if (!this.programmingExercise.windFile) {
-                    this.resetCustomBuildPlan();
-                }
-                this.aeolusService
-                    .getAeolusTemplateScript(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
-                    .subscribe({
-                        next: (file: string) => {
-                            this.codeChanged(file);
-                        },
-                        error: () => {
-                            this.programmingExercise.buildScript = undefined;
-                        },
-                    });
-                if (!this.programmingExercise.buildScript) {
-                    this.resetCustomBuildPlan();
-                }
-            }
+        this.aeolusService
+            .getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
+            .subscribe({
+                next: (file) => {
+                    this.programmingExercise.windFile = this.aeolusService.parseWindFile(file);
+                },
+                error: () => {
+                    this.programmingExercise.windFile = undefined;
+                },
+            });
+        this.programmingExerciseCreationConfig.buildPlanLoaded = true;
+        if (!this.programmingExercise.windFile) {
+            this.resetCustomBuildPlan();
+        }
+        this.aeolusService
+            .getAeolusTemplateScript(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
+            .subscribe({
+                next: (file: string) => {
+                    this.codeChanged(file);
+                },
+                error: () => {
+                    this.programmingExercise.buildScript = undefined;
+                },
+            });
+        if (!this.programmingExercise.buildScript) {
+            this.resetCustomBuildPlan();
         }
     }
 

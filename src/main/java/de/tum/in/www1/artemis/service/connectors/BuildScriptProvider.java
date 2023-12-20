@@ -107,6 +107,7 @@ public class BuildScriptProvider {
      * @param staticAnalysis whether the static analysis template should be used
      * @param sequentialRuns whether the sequential runs template should be used
      * @param testCoverage   whether the test coverage template should be used
+     * @param fileExtension  the file extension of the template file
      * @return The filename of the requested configuration
      */
     public String buildTemplateName(Optional<ProjectType> projectType, Boolean staticAnalysis, Boolean sequentialRuns, Boolean testCoverage, String fileExtension) {
