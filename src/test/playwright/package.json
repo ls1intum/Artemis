@@ -6,6 +6,7 @@
     "devDependencies": {
         "@playwright/test": "1.40.0",
         "@types/request": "^2.48.12",
+        "axios": "^1.6.2",
         "dayjs": "^1.11.10",
         "dotenv": "^16.3.1",
         "playwright": "1.40.0",
