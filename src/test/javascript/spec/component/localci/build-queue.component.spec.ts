@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { BuildQueueComponent } from './build-queue.component';
+import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
 
 describe('BuildQueueComponent', () => {
     let component: BuildQueueComponent;
