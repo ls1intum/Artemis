@@ -1,59 +1,66 @@
 <h4 class="mb-4" jhiTranslate="artemisApp.examTimeline.title" [translateValues]="{ username: studentExam.user!.login! }">Exam timeline</h4>
-<div *ngIf="studentExam">
-    <ngx-slider class="mb-5" #slider [(value)]="selectedTimestamp" [options]="options" (userChange)="onSliderInputChange($event)"></ngx-slider>
-    <jhi-exam-navigation-bar
-        #examNavigationBar
-        id="exam-navigation-bar"
-        class="sticky-top d-block"
-        [exercises]="studentExam?.exercises!"
-        [exerciseIndex]="exerciseIndex"
-        [examTimeLineView]="true"
-        (onPageChanged)="onPageChange($event)"
-    ></jhi-exam-navigation-bar>
-    <!-- exercises -->
-    <ng-container *ngFor="let exercise of studentExam.exercises; let i = index">
-        <ng-container *ngIf="exercise && exercise.studentParticipations && exercise.studentParticipations[0]">
-            <ng-container *ngIf="pageComponentVisited[i]">
-                <ng-container [ngSwitch]="exercise.type">
+@if (studentExam) {
+    <div>
+        <ngx-slider class="mb-5" #slider [(value)]="selectedTimestamp" [options]="options" (userChange)="onSliderInputChange($event)"></ngx-slider>
+        <jhi-exam-navigation-bar
+            #examNavigationBar
+            id="exam-navigation-bar"
+            class="sticky-top d-block"
+            [exercises]="studentExam?.exercises!"
+            [exerciseIndex]="exerciseIndex"
+            [examTimeLineView]="true"
+            (onPageChanged)="onPageChange($event)"
+        ></jhi-exam-navigation-bar>
+        <!-- exercises -->
+        @for (exercise of studentExam.exercises; track exercise; let i = $index) {
+            @if (exercise && exercise.studentParticipations && exercise.studentParticipations[0]) {
+                @if (pageComponentVisited[i]) {
                     <div [hidden]="i !== activePageIndex">
-                        <jhi-quiz-submission-exam
-                            *ngSwitchCase="ExerciseType.QUIZ"
-                            [exercise]="exercise"
-                            [quizConfiguration]="exercise"
-                            [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
-                            [readonly]="true"
-                            [examTimeline]="true"
-                        ></jhi-quiz-submission-exam>
-                        <jhi-file-upload-submission-exam
-                            *ngSwitchCase="ExerciseType.FILE_UPLOAD"
-                            [exercise]="exercise"
-                            [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
-                            [readonly]="true"
-                            [examTimeline]="true"
-                        ></jhi-file-upload-submission-exam>
-                        <jhi-text-editor-exam
-                            *ngSwitchCase="ExerciseType.TEXT"
-                            [exercise]="exercise"
-                            [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
-                            [readonly]="true"
-                            [examTimeline]="true"
-                        ></jhi-text-editor-exam>
-                        <jhi-modeling-submission-exam
-                            *ngSwitchCase="ExerciseType.MODELING"
-                            [exercise]="exercise"
-                            [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
-                            [readonly]="true"
-                            [examTimeline]="true"
-                        ></jhi-modeling-submission-exam>
-                        <jhi-programming-exam-diff
-                            *ngSwitchCase="ExerciseType.PROGRAMMING"
-                            [exercise]="exercise"
-                            [studentParticipation]="exercise.studentParticipations[0]"
-                            [(cachedDiffReports)]="cachedDiffReports"
-                        ></jhi-programming-exam-diff>
+                        @switch (exercise.type) {
+                            @case (ExerciseType.QUIZ) {
+                                <jhi-quiz-submission-exam
+                                    [exercise]="exercise"
+                                    [quizConfiguration]="exercise"
+                                    [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
+                                    [readonly]="true"
+                                    [examTimeline]="true"
+                                ></jhi-quiz-submission-exam>
+                            }
+                            @case (ExerciseType.FILE_UPLOAD) {
+                                <jhi-file-upload-submission-exam
+                                    [exercise]="exercise"
+                                    [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
+                                    [readonly]="true"
+                                    [examTimeline]="true"
+                                ></jhi-file-upload-submission-exam>
+                            }
+                            @case (ExerciseType.TEXT) {
+                                <jhi-text-editor-exam
+                                    [exercise]="exercise"
+                                    [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
+                                    [readonly]="true"
+                                    [examTimeline]="true"
+                                ></jhi-text-editor-exam>
+                            }
+                            @case (ExerciseType.MODELING) {
+                                <jhi-modeling-submission-exam
+                                    [exercise]="exercise"
+                                    [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
+                                    [readonly]="true"
+                                    [examTimeline]="true"
+                                ></jhi-modeling-submission-exam>
+                            }
+                            @case (ExerciseType.PROGRAMMING) {
+                                <jhi-programming-exam-diff
+                                    [exercise]="exercise"
+                                    [studentParticipation]="exercise.studentParticipations[0]"
+                                    [(cachedDiffReports)]="cachedDiffReports"
+                                ></jhi-programming-exam-diff>
+                            }
+                        }
                     </div>
-                </ng-container>
-            </ng-container>
-        </ng-container>
-    </ng-container>
-</div>
+                }
+            }
+        }
+    </div>
+}
