@@ -3,7 +3,7 @@ import { BuildAction, ProgrammingExercise, ProgrammingLanguage, ProjectType, Scr
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
-import { AeolusPreview, AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
+import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-aeolus-build-plan',
@@ -26,15 +26,6 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     active?: BuildAction = undefined;
 
     private _editor?: AceEditorComponent;
-    private _generatedEditor?: AceEditorComponent;
-
-    @ViewChild('generatedEditor', { static: false }) set generatedEditor(value: AceEditorComponent) {
-        this._generatedEditor = value;
-        if (this._generatedEditor) {
-            this.setupGeneratorEditor();
-            this._generatedEditor.setText('#!/bin/bash\n\n# Add your custom build plan action here\n\nexit 0');
-        }
-    }
 
     @ViewChild('editor', { static: false }) set editor(value: AceEditorComponent) {
         this._editor = value;
@@ -108,10 +99,6 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
         return this._editor;
     }
 
-    get generatedEditor(): AceEditorComponent | undefined {
-        return this._generatedEditor;
-    }
-
     faQuestionCircle = faQuestionCircle;
 
     protected getActionScript(action: string): string {
@@ -149,7 +136,6 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
                 this.active = undefined;
                 this.code = '';
             }
-            this.generatePreview();
         }
     }
 
@@ -161,7 +147,6 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
             newAction.runAlways = false;
             this.programmingExercise.windFile.actions.push(newAction);
             this.changeActiveAction(action);
-            this.generatePreview();
         }
     }
 
@@ -180,21 +165,9 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
         }
     }
 
-    generatePreview(): void {
-        if (this.programmingExercise.windFile) {
-            const preview: AeolusPreview | undefined = this.aeolusService.generatePreview(Object.assign({}, this.programmingExercise.windFile));
-            if (preview) {
-                this.generatedEditor?.setText(preview.result);
-            } else {
-                this.generatedEditor?.setText('#!/bin/bash\n\n# Add your custom build plan action here\n\nexit 0');
-            }
-        }
-    }
-
     codeChanged(code: string): void {
         if (this.active instanceof ScriptAction) {
             (this.active as ScriptAction).script = code;
-            this.generatePreview();
         }
     }
 
@@ -234,33 +207,10 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
         });
     }
 
-    /**
-     * Sets up an ace editor for the template or solution file.
-     */
-    setupGeneratorEditor(): void {
-        if (!this._generatedEditor) {
-            return;
-        }
-        this._generatedEditor.getEditor().setOptions({
-            animatedScroll: true,
-            maxLines: 35,
-            showPrintMargin: false,
-            readOnly: false,
-            highlightActiveLine: false,
-            highlightGutterLine: false,
-            minLines: 35,
-            mode: 'ace/mode/sh',
-        });
-        this._generatedEditor.getEditor().renderer.setOptions({
-            showFoldWidgets: false,
-        });
-    }
-
     setDockerImage(dockerImage: string) {
         if (!this.programmingExercise.windFile || !this.programmingExercise.windFile.metadata.docker) {
             return;
         }
         this.programmingExercise.windFile.metadata.docker.image = dockerImage;
-        this.generatePreview();
     }
 }

@@ -37,15 +37,8 @@ public class AeolusBuildScriptGenerationService extends BuildScriptGenerationSer
             windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
         }
         if (windfile != null) {
-            String script = aeolusBuildPlanService.generateBuildScript(windfile, AeolusTarget.CLI);
-            // buildScriptProvider.storeBuildScriptInDatabase(programmingExercise, script);
-            return script;
+            return aeolusBuildPlanService.generateBuildScript(windfile, AeolusTarget.CLI);
         }
         return null;
-    }
-
-    @Override
-    public String previewScript(Windfile windfile, AeolusTarget target) {
-        return aeolusBuildPlanService.generateBuildScript(windfile, target);
     }
 }

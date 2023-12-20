@@ -96,6 +96,7 @@ public class AeolusTemplateService {
         String scriptCache = buildScriptProvider.getCachedScript(uniqueKey);
         if (scriptCache == null) {
             LOGGER.error("No windfile found for key {}", uniqueKey);
+            return null;
         }
         Windfile windfile = readWindfile(scriptCache);
         this.addInstanceVariablesToWindfile(windfile, programmingLanguage, projectType);

@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -12,11 +11,9 @@ import org.springframework.web.bind.annotation.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
-import de.tum.in.www1.artemis.service.connectors.BuildScriptGenerationService;
 import de.tum.in.www1.artemis.service.connectors.BuildScriptProvider;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
@@ -37,18 +34,14 @@ public class AeolusTemplateResource {
 
     private final BuildScriptProvider buildScriptProvider;
 
-    private final Optional<BuildScriptGenerationService> buildScriptGenerationService;
-
     /**
      * Constructor for the AeolusTemplateResource
      *
      * @param aeolusTemplateService the service for retrieving the aeolus template files
      */
-    public AeolusTemplateResource(AeolusTemplateService aeolusTemplateService, BuildScriptProvider buildScriptProvider,
-            Optional<BuildScriptGenerationService> buildScriptGenerationService) {
+    public AeolusTemplateResource(AeolusTemplateService aeolusTemplateService, BuildScriptProvider buildScriptProvider) {
         this.aeolusTemplateService = aeolusTemplateService;
         this.buildScriptProvider = buildScriptProvider;
-        this.buildScriptGenerationService = buildScriptGenerationService;
     }
 
     /**
@@ -76,22 +69,6 @@ public class AeolusTemplateResource {
         String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
 
         return getAeolusTemplateFileContentWithResponse(language, projectTypePrefix, staticAnalysis, sequentialRuns, testCoverage);
-    }
-
-    @PostMapping({ "/preview/{target}" })
-    @EnforceAtLeastEditor
-    @Profile("aeolus")
-    public ResponseEntity<Map<String, String>> getPreview(@PathVariable AeolusTarget target, @RequestBody String body) {
-        logger.debug("REST request to preview aeolus script for target {}", target);
-
-        try {
-            Windfile windfile = Windfile.deserialize(body);
-            return generatePreviewBuildScript(windfile, target);
-        }
-        catch (Exception e) {
-            logger.error("Error when deserializing windfile", e);
-            return ResponseEntity.of(Optional.empty());
-        }
     }
 
     /**
@@ -142,6 +119,9 @@ public class AeolusTemplateResource {
                 optionalProjectType = Optional.of(ProjectType.valueOf(projectTypePrefix.toUpperCase()));
             }
             Windfile windfile = aeolusTemplateService.getWindfileFor(language, optionalProjectType, staticAnalysis, sequentialRuns, testCoverage);
+            if (windfile == null) {
+                return new ResponseEntity<>(null, null, HttpStatus.NOT_FOUND);
+            }
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.setContentType(MediaType.APPLICATION_JSON);
             String json = new ObjectMapper().writeValueAsString(windfile);
@@ -181,23 +161,5 @@ public class AeolusTemplateResource {
             HttpHeaders responseHeaders = new HttpHeaders();
             return new ResponseEntity<>(null, responseHeaders, HttpStatus.NOT_FOUND);
         }
-    }
-
-    /**
-     * Generates a preview build script for the given windfile and target
-     *
-     * @param windfile the windfile to generate the script for
-     * @param target   the target to generate the script for
-     * @return the generated script
-     */
-    private ResponseEntity<Map<String, String>> generatePreviewBuildScript(Windfile windfile, AeolusTarget target) {
-        if (buildScriptGenerationService.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-        String script = buildScriptGenerationService.get().previewScript(windfile, target);
-        HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.setContentType(MediaType.APPLICATION_JSON);
-        Map<String, String> map = Map.of("result", script);
-        return new ResponseEntity<>(map, responseHeaders, HttpStatus.OK);
     }
 }

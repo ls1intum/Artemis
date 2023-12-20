@@ -11,7 +11,7 @@ import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { programmingExerciseCreationConfigMock } from './update-components/programming-exercise-creation-config-mock';
-import { AeolusPreview, AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
+import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 import { PROFILE_AEOLUS } from 'app/app.constants';
 import { Observable } from 'rxjs';
 
@@ -88,7 +88,6 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     });
 
     it('should delete action', () => {
-        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue({ result: 'this is some code' } as AeolusPreview);
         comp.deleteAction('gradle');
         const size = programmingExercise.windFile?.actions.length;
         expect(size).toBeDefined();
@@ -98,7 +97,6 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     });
 
     it('should add action', () => {
-        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue({ result: 'this is some code' } as AeolusPreview);
         const size = programmingExercise.windFile?.actions.length;
         expect(size).toBeDefined();
         comp.addAction('gradle clean');
@@ -111,14 +109,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         comp.editor = new AceEditorComponent(elementRef, zone, mockThemeService);
     });
 
-    it('should accept preview editor', () => {
-        const elementRef: ElementRef = new ElementRef(document.createElement('div'));
-        const zone: NgZone = new NgZone({});
-        comp.generatedEditor = new AceEditorComponent(elementRef, zone, mockThemeService);
-    });
-
     it('should change code of active action', () => {
-        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue({ result: 'this is some code' } as AeolusPreview);
         comp.changeActiveAction('gradle');
         expect(comp.code).toBe(gradleBuildAction.script);
         comp.codeChanged('test');
@@ -126,7 +117,6 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     });
 
     it('should change code if deleting active action and unset active action', () => {
-        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue({ result: 'this is some code' } as AeolusPreview);
         comp.changeActiveAction('gradle');
         expect(comp.code).toBe(gradleBuildAction.script);
         comp.deleteAction('gradle');
@@ -161,7 +151,6 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
 
     it('should change code', () => {
         comp.changeActiveAction('gradle');
-        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue({ result: 'this is some code' } as AeolusPreview);
         comp.codeChanged('this is some code');
         const action: BuildAction | undefined = comp.active;
         expect(action).toBeDefined();
@@ -275,16 +264,6 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         expect(resetSpy).toHaveBeenCalled();
     });
 
-    it('should print default message in preview', () => {
-        const elementRef: ElementRef = new ElementRef(document.createElement('div'));
-        const zone: NgZone = new NgZone({});
-        comp.generatedEditor = new AceEditorComponent(elementRef, zone, mockThemeService);
-        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue(undefined);
-        expect(comp.programmingExercise.windFile).toBeDefined();
-        comp.generatePreview();
-        expect(comp.generatedEditor?.text).toBe('#!/bin/bash\n\n# Add your custom build plan action here\n\nexit 0');
-    });
-
     it('should parse windfile correctly', () => {
         const parsedWindFile = mockAeolusService.parseWindFile(mockAeolusService.serializeWindFile(windFile));
         expect(parsedWindFile).toBeDefined();
@@ -299,16 +278,6 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     it('should return undefined on invalid windfile', () => {
         const parsedWindFile = mockAeolusService.parseWindFile('{invalid json}');
         expect(parsedWindFile).toBeUndefined();
-    });
-
-    it('should call generatePreview', () => {
-        const elementRef: ElementRef = new ElementRef(document.createElement('div'));
-        const zone: NgZone = new NgZone({});
-        comp.generatedEditor = new AceEditorComponent(elementRef, zone, mockThemeService);
-        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue({ result: 'this is some code' } as AeolusPreview);
-        comp.generatePreview();
-        expect(comp.generatedEditor?.text).toBe('this is some code');
-        expect(mockAeolusService.generatePreview).toHaveBeenCalled();
     });
 
     it('should add parameter to active action', () => {
@@ -341,10 +310,6 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     it('should return empty array', () => {
         comp.active = undefined;
         expect(comp.getParameterKeys()).toHaveLength(0);
-    });
-
-    it('should return and not throw error', () => {
-        comp.setupGeneratorEditor();
     });
 
     it('should not call loadAeolusTemplate on existing exercise', () => {

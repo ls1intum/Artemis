@@ -4,11 +4,6 @@ import { Observable } from 'rxjs';
 
 import { BuildAction, PlatformAction, ProgrammingLanguage, ProjectType, ScriptAction, WindFile } from 'app/entities/programming-exercise.model';
 
-export interface AeolusPreview {
-    result: string;
-    key?: string;
-}
-
 @Injectable({ providedIn: 'root' })
 export class AeolusService {
     private resourceUrl = 'api/aeolus';
@@ -101,33 +96,6 @@ export class AeolusService {
             uri: path,
             params: params,
         };
-    }
-
-    /**
-     * Generates a preview of the given windfile
-     * @param {WindFile} windfile
-     * @returns {Observable<string>} the generated preview
-     */
-    generatePreview(windfile: WindFile): AeolusPreview | undefined {
-        const headers = { 'Content-Type': 'application/json' };
-        windfile.metadata.id = 'not-important-for-preview';
-        windfile.metadata.name = 'not-important-for-preview';
-        windfile.metadata.description = 'not-important-for-preview';
-        let response = undefined;
-        this.http
-            .post<string>(`${this.resourceUrl}/preview/CLI`, this.serializeWindFile(windfile), {
-                responseType: 'text' as 'json',
-                headers,
-            })
-            .subscribe({
-                next: (preview) => {
-                    response = Object.assign({}, JSON.parse(preview));
-                },
-                error: () => {
-                    response = undefined;
-                },
-            });
-        return response;
     }
 
     serializeWindFile(windFile: WindFile): string {
