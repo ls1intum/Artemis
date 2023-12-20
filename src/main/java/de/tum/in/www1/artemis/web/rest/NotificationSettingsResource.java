@@ -93,4 +93,17 @@ public class NotificationSettingsResource {
         NotificationSetting[] resultAsArray = resultAsList.toArray(new NotificationSetting[0]);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "notificationSetting", "test")).body(resultAsArray);
     }
+
+    /**
+     * GET muted-conversations : Loads the list of all muted conversations of a user
+     *
+     * @return ResponseEntity with status 200 and the list of muted conversations
+     */
+    @GetMapping("muted-conversations")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Set<Long>> searchMembersOfConversation() {
+        User user = userRepository.getUser();
+        Set<Long> mutedConversations = notificationSettingRepository.findMutedConversations(user.getId());
+        return ResponseEntity.ok(mutedConversations);
+    }
 }
