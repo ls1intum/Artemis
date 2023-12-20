@@ -46,6 +46,8 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { NotificationService } from 'app/shared/notification/notification.service';
+import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 import { MockMetisConversationService } from '../../helpers/mocks/service/mock-metis-conversation.service';
 
 const endDate1 = dayjs().add(1, 'days');
@@ -168,6 +170,7 @@ describe('CourseOverviewComponent', () => {
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: NotificationService, useClass: MockNotificationService },
             ],
         })
             .compileComponents()
@@ -241,6 +244,7 @@ describe('CourseOverviewComponent', () => {
     it.each([true, false])('should determine once if there are unread messages', async (hasNewMessages: boolean) => {
         const spy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
         metisConversationService._hasUnreadMessages$.next(hasNewMessages);
+        jest.spyOn(metisConversationService, 'setUpConversationService').mockReturnValue(of());
 
         await component.ngOnInit();
 
