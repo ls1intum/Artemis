@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { AccountService } from 'app/core/auth/account.service';
@@ -11,7 +11,7 @@ import { faRefresh } from '@fortawesome/free-solid-svg-icons';
     templateUrl: './build-queue.component.html',
     styleUrl: './build-queue.component.scss',
 })
-export class BuildQueueComponent {
+export class BuildQueueComponent implements OnInit {
     @ViewChild(DataTableComponent) dataTable: DataTableComponent;
 
     rowClass: string | undefined = undefined;
