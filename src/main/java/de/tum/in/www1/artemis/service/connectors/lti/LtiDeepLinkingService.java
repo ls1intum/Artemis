@@ -14,6 +14,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.lti.Lti13DeepLinkingResponse;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
@@ -28,6 +29,8 @@ public class LtiDeepLinkingService {
 
     @Value("${server.url}")
     private String artemisServerUrl;
+
+    private static final double DEFAULT_SCORE_MAXIMUM = 100D;
 
     private final ExerciseRepository exerciseRepository;
 
@@ -105,18 +108,16 @@ public class LtiDeepLinkingService {
     private JsonObject setContentItem(String courseId, String exerciseId) {
         Optional<Exercise> exerciseOpt = exerciseRepository.findById(Long.valueOf(exerciseId));
         String launchUrl = String.format(artemisServerUrl + "/courses/%s/exercises/%s", courseId, exerciseId);
-        return exerciseOpt.map(exercise -> createContentItem(exercise.getType(), exercise.getTitle(), launchUrl)).orElse(null);
+        return exerciseOpt.map(exercise -> createContentItem(exerciseOpt.get(), launchUrl)).orElse(null);
     }
 
-    private JsonObject createContentItem(String type, String title, String url) {
+    private JsonObject createContentItem(Exercise exercise, String url) {
         JsonObject item = new JsonObject();
-        item.addProperty("type", type);
-        item.addProperty("title", title);
+        item.addProperty("type", exercise.getType());
+        item.addProperty("title", exercise.getTitle());
         item.addProperty("url", url);
-        // line item required property scoreMaximum needs to be added for automatically adding resource to grade book
-        JsonObject lineItem = new JsonObject();
-        lineItem.addProperty("scoreMaximum", 100D);
-        item.addProperty("lineItem", lineItem.toString());
+
+        addLineItemIfIncluded(exercise, item);
         return item;
     }
 
@@ -136,5 +137,13 @@ public class LtiDeepLinkingService {
 
     private boolean isEmptyString(String string) {
         return string == null || string.isEmpty();
+    }
+
+    private void addLineItemIfIncluded(Exercise exercise, JsonObject item) {
+        if (exercise.getIncludedInOverallScore() != IncludedInOverallScore.NOT_INCLUDED) {
+            JsonObject lineItem = new JsonObject();
+            lineItem.addProperty("scoreMaximum", DEFAULT_SCORE_MAXIMUM);
+            item.addProperty("lineItem", lineItem.toString());
+        }
     }
 }
