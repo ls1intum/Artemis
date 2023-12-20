@@ -36,7 +36,114 @@ class BPMNDiagramTest extends AbstractUMLDiagramTest {
     }
 
     @Test
-    void parseBpmnDiagramModelCorrectly() throws IOException {
+    void parseDiagramElementsCorrectly() throws IOException {
+        UMLDiagram diagram = UMLModelParser.buildModelFromJSON(parseString(BPMNDiagrams.BPMN_MODEL_3).getAsJsonObject(), 1L);
+        assertThat(diagram).isInstanceOf(BPMNDiagram.class);
+        BPMNDiagram bpmnDiagram = (BPMNDiagram) diagram;
+
+        assertThat(bpmnDiagram.getAllModelElements()).hasSize(15);
+        assertThat(bpmnDiagram.getAnnotations()).hasSize(1);
+        assertThat(bpmnDiagram.getCallActivities()).hasSize(1);
+        assertThat(bpmnDiagram.getDataObjects()).hasSize(1);
+        assertThat(bpmnDiagram.getDataStores()).hasSize(1);
+        assertThat(bpmnDiagram.getEndEvents()).hasSize(1);
+        assertThat(bpmnDiagram.getGateways()).hasSize(1);
+        assertThat(bpmnDiagram.getGroups()).hasSize(1);
+        assertThat(bpmnDiagram.getIntermediateEvents()).hasSize(1);
+        assertThat(bpmnDiagram.getPools()).hasSize(1);
+        assertThat(bpmnDiagram.getStartEvents()).hasSize(1);
+        assertThat(bpmnDiagram.getSubprocesses()).hasSize(1);
+        assertThat(bpmnDiagram.getSwimlanes()).hasSize(2);
+        assertThat(bpmnDiagram.getTasks()).hasSize(1);
+        assertThat(bpmnDiagram.getTransactions()).hasSize(1);
+
+        UMLElement taskElement = bpmnDiagram.getElementByJSONID("24e6430e-e7d7-4065-81ae-3575ed168940");
+        assertThat(taskElement).isInstanceOf(BPMNTask.class);
+        BPMNTask task = (BPMNTask) taskElement;
+        assertThat(task.getName()).isEqualTo("Task");
+        assertThat(task.getTaskType()).isEqualTo(BPMNTask.BPMNTaskType.DEFAULT);
+        assertThat(task.getMarker()).isEqualTo(BPMNTask.BPMNMarker.NONE);
+
+        UMLElement subprocessElement = bpmnDiagram.getElementByJSONID("9c9b76c8-8e06-4aa5-ab10-ff6e376c9566");
+        assertThat(subprocessElement).isInstanceOf(BPMNSubprocess.class);
+        BPMNSubprocess subprocess = (BPMNSubprocess) subprocessElement;
+        assertThat(subprocess.getName()).isEqualTo("Subprocess");
+
+        UMLElement transactionElement = bpmnDiagram.getElementByJSONID("3d81a5cd-8541-4532-a72c-5ae4dba48eea");
+        assertThat(transactionElement).isInstanceOf(BPMNTransaction.class);
+        BPMNTransaction transaction = (BPMNTransaction) transactionElement;
+        assertThat(transaction.getName()).isEqualTo("Transaction");
+
+        UMLElement callActivityElement = bpmnDiagram.getElementByJSONID("b5eddff7-b20c-4181-be3a-6272d5192783");
+        assertThat(callActivityElement).isInstanceOf(BPMNCallActivity.class);
+        BPMNCallActivity callActivity = (BPMNCallActivity) callActivityElement;
+        assertThat(callActivity.getName()).isEqualTo("Call Activity");
+
+        UMLElement annotationElement = bpmnDiagram.getElementByJSONID("977df2b3-d39e-434a-b364-d058b6d265e5");
+        assertThat(annotationElement).isInstanceOf(BPMNAnnotation.class);
+        BPMNAnnotation annotation = (BPMNAnnotation) annotationElement;
+        assertThat(annotation.getName()).isEqualTo("Annotation");
+
+        UMLElement startEventElement = bpmnDiagram.getElementByJSONID("68d1f3b2-3970-44f8-8f37-e34fea4485bb");
+        assertThat(startEventElement).isInstanceOf(BPMNStartEvent.class);
+        BPMNStartEvent startEvent = (BPMNStartEvent) startEventElement;
+        assertThat(startEvent.getName()).isEqualTo("");
+        assertThat(startEvent.getEventType()).isEqualTo(BPMNStartEvent.BPMNStartEventType.DEFAULT);
+
+        UMLElement intermediateEventElement = bpmnDiagram.getElementByJSONID("3b7f912b-cfc6-4dc5-a6de-0dbe0507c36b");
+        assertThat(intermediateEventElement).isInstanceOf(BPMNIntermediateEvent.class);
+        BPMNIntermediateEvent intermediateEvent = (BPMNIntermediateEvent) intermediateEventElement;
+        assertThat(intermediateEvent.getName()).isEqualTo("");
+        assertThat(intermediateEvent.getEventType()).isEqualTo(BPMNIntermediateEvent.BPMNIntermediateEventType.DEFAULT);
+
+        UMLElement endEventElement = bpmnDiagram.getElementByJSONID("b2402d3a-525e-4a66-8385-bc14ff548475");
+        assertThat(endEventElement).isInstanceOf(BPMNEndEvent.class);
+        BPMNEndEvent endEvent = (BPMNEndEvent) endEventElement;
+        assertThat(endEvent.getName()).isEqualTo("");
+        assertThat(endEvent.getEventType()).isEqualTo(BPMNEndEvent.BPMNEndEventType.DEFAULT);
+
+        UMLElement gatewayElement = bpmnDiagram.getElementByJSONID("730a9658-0a60-4fa9-8890-81788cb8a641");
+        assertThat(gatewayElement).isInstanceOf(BPMNGateway.class);
+        BPMNGateway gateway = (BPMNGateway) gatewayElement;
+        assertThat(gateway.getName()).isEqualTo("");
+        assertThat(gateway.getGatewayType()).isEqualTo(BPMNGateway.BPMNGatewayType.EXCLUSIVE);
+
+        UMLElement dataObjectElement = bpmnDiagram.getElementByJSONID("94b72e34-5eb5-4a32-b098-3bc38a389266");
+        assertThat(dataObjectElement).isInstanceOf(BPMNDataObject.class);
+        BPMNDataObject dataObject = (BPMNDataObject) dataObjectElement;
+        assertThat(dataObject.getName()).isEqualTo("");
+
+        UMLElement dataStoreElement = bpmnDiagram.getElementByJSONID("7a9aaa87-b828-4244-9692-319b35ec4fbf");
+        assertThat(dataStoreElement).isInstanceOf(BPMNDataStore.class);
+        BPMNDataStore dataStore = (BPMNDataStore) dataStoreElement;
+        assertThat(dataStore.getName()).isEqualTo("");
+
+        UMLElement groupElement = bpmnDiagram.getElementByJSONID("b12777af-5198-4785-adcb-b783d3897236");
+        assertThat(groupElement).isInstanceOf(BPMNGroup.class);
+        BPMNGroup group = (BPMNGroup) groupElement;
+        assertThat(group.getName()).isEqualTo("");
+
+        UMLElement poolElement = bpmnDiagram.getElementByJSONID("9cf8b22d-62f0-4f29-b354-007e89128729");
+        assertThat(poolElement).isInstanceOf(BPMNPool.class);
+        BPMNPool pool = (BPMNPool) poolElement;
+        assertThat(pool.getName()).isEqualTo("Pool");
+
+        UMLElement swimlaneElement1 = bpmnDiagram.getElementByJSONID("9451d510-b382-45ff-af78-14952d5dc2a0");
+        assertThat(swimlaneElement1).isInstanceOf(BPMNSwimlane.class);
+        BPMNSwimlane swimlane1 = (BPMNSwimlane) swimlaneElement1;
+        assertThat(swimlane1.getName()).isEqualTo("Lane 1");
+        assertThat(swimlane1.getParentElement()).isSameAs(pool);
+
+        UMLElement swimlaneElement2 = bpmnDiagram.getElementByJSONID("03da0f2b-c915-4881-a7e0-90e8e5a0dad8");
+        assertThat(swimlaneElement2).isInstanceOf(BPMNSwimlane.class);
+        BPMNSwimlane swimlane2 = (BPMNSwimlane) swimlaneElement2;
+        assertThat(swimlane2.getName()).isEqualTo("Lane 2");
+        assertThat(swimlane2.getParentElement()).isSameAs(pool);
+
+    }
+
+    @Test
+    void parseLargeBpmnDiagramModelCorrectly() throws IOException {
         UMLDiagram diagram = UMLModelParser.buildModelFromJSON(parseString(BPMNDiagrams.BPMN_MODEL_2).getAsJsonObject(), 1L);
         assertThat(diagram).isInstanceOf(BPMNDiagram.class);
         BPMNDiagram bpmnDiagram = (BPMNDiagram) diagram;
