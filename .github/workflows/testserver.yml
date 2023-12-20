@@ -211,12 +211,7 @@ jobs:
             label-identifier: artemis-staging
             url: https://artemis-staging-localci.artemis.cit.tum.de
             user: bamboo
-            hosts:
-              - artemis-staging-localci-node-1.artemis.cit.tum.de
-              - artemis-staging-localci-node-2.artemis.cit.tum.de
-              - artemis-staging-localci-node-3.artemis.cit.tum.de
-              - artemis-staging-localci-node-4.artemis.cit.tum.de
-              - artemis-staging-localci-node-5.artemis.cit.tum.de
+            hosts: artemis-staging-localci-node-1.artemis.cit.tum.de artemis-staging-localci-node-2.artemis.cit.tum.de artemis-staging-localci-node-3.artemis.cit.tum.de artemis-staging-localci-node-4.artemis.cit.tum.de artemis-staging-localci-node-5.artemis.cit.tum.de
             folder: /opt/artemis
             host_keys: |
                 artemis-staging-localci-node-1.artemis.cit.tum.de ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBCR1Lk8sH4/AeCryKWFa4Vx+SAx4oAMd0C669yIxJssWr02qDbA907LlsDzf5J+lCN20elI9gtJxiw5LgsdJO4Y=
