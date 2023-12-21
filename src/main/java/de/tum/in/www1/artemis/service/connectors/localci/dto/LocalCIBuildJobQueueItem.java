@@ -13,6 +13,8 @@ public class LocalCIBuildJobQueueItem implements Serializable {
 
     private String name;
 
+    private String buildAgentAddress;
+
     private long participationId;
 
     private String repositoryTypeOrUserName;
@@ -59,6 +61,14 @@ public class LocalCIBuildJobQueueItem implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getBuildAgentAddress() {
+        return buildAgentAddress;
+    }
+
+    public void setBuildAgentAddress(String buildAgentAddress) {
+        this.buildAgentAddress = buildAgentAddress;
     }
 
     public long getParticipationId() {
