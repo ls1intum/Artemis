@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.metis;
+package de.tum.in.www1.artemis.plagiarism;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
