@@ -7,11 +7,12 @@ import { PROFILE_LOCALCI } from 'app/app.constants';
 
 describe('BuildQueueGuard', () => {
     let guard: BuildQueueGuard;
-    let profileService: ProfileService;
     let router: Router;
+    let profileServiceMock: { getProfileInfo: jest.Mock };
 
     beforeEach(() => {
-        const profileServiceMock = {
+        // Define profileServiceMock here so it's accessible in the tests
+        profileServiceMock = {
             getProfileInfo: jest.fn(),
         };
 
@@ -24,18 +25,17 @@ describe('BuildQueueGuard', () => {
         });
 
         guard = TestBed.inject(BuildQueueGuard);
-        profileService = TestBed.inject(ProfileService);
         router = TestBed.inject(Router);
     });
 
     it('should allow access if PROFILE_LOCALCI is active', async () => {
-        profileService.getProfileInfo.mockReturnValue(of({ activeProfiles: [PROFILE_LOCALCI] }));
+        profileServiceMock.getProfileInfo.mockReturnValue(of({ activeProfiles: [PROFILE_LOCALCI] }));
         await guard.canActivate();
         expect(router.navigate).not.toHaveBeenCalled();
     });
 
     it('should not allow access if PROFILE_LOCALCI is not active', async () => {
-        profileService.getProfileInfo.mockReturnValue(of({ activeProfiles: [] }));
+        profileServiceMock.getProfileInfo.mockReturnValue(of({ activeProfiles: [] }));
         await guard.canActivate();
         expect(router.navigate).toHaveBeenCalledWith(['/course-management']);
     });
