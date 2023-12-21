@@ -7,8 +7,12 @@ import static org.mockito.Mockito.verify;
 
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.gitlab4j.api.GitLabApiException;
+import org.gitlab4j.api.models.Group;
+import org.gitlab4j.api.models.Project;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,6 +65,33 @@ class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         catch (VersionControlException e) {
             assertThat(e.getMessage()).isNotEmpty();
         }
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    void testCheckIfGroupNotFoundThenProjectNotExists() {
+        gitlabRequestMockProvider.mockGetOptionalGroup("project-key", Optional.empty());
+        assertThat(versionControlService.checkIfProjectExists("project-key", "project name")).as("a project cannot exist if there is no group for it").isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    void testCheckIfGroupContainsNoRepositoriesThenProjectNotExists() throws GitLabApiException {
+        final Group group = new Group();
+        gitlabRequestMockProvider.mockGetOptionalGroup("project-key", Optional.of(group));
+        gitlabRequestMockProvider.mockGetProjectsStream(group, Stream.empty());
+
+        assertThat(versionControlService.checkIfProjectExists("project-key", "project name")).as("an empty exercise group can safely be reused").isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    void testCheckIfGroupContainsRepositoriesThenProjectExists() throws GitLabApiException {
+        final Group group = new Group();
+        gitlabRequestMockProvider.mockGetOptionalGroup("project-key", Optional.of(group));
+        gitlabRequestMockProvider.mockGetProjectsStream(group, Stream.of(new Project()));
+
+        assertThat(versionControlService.checkIfProjectExists("project-key", "project name")).as("a non-empty exercise group cannot be used for another exercise").isTrue();
     }
 
     @Test
