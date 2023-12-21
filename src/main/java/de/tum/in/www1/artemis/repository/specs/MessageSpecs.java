@@ -48,7 +48,7 @@ public class MessageSpecs {
                 return null;
             }
             // search by text or #message
-            else if (searchText.startsWith("#") && !searchText.substring(1).isBlank() && StringUtils.isNumeric(searchText.substring(1))) {
+            else if (searchText.startsWith("#") && StringUtils.isNumeric(searchText.substring(1))) {
                 // if searchText starts with a # and is followed by a message id, filter for message with id
                 return criteriaBuilder.equal(root.get(Post_.ID), Integer.parseInt(searchText.substring(1)));
             }
