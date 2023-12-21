@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCISharedBuildJobQueueService;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 
 @Profile("localci")
@@ -51,5 +52,18 @@ public class AdminBuildJobQueueResource {
         log.debug("REST request to get the running build jobs");
         List<LocalCIBuildJobQueueItem> runningBuildJobs = localCIBuildJobQueueService.getProcessingJobs();
         return ResponseEntity.ok(runningBuildJobs);
+    }
+
+    /**
+     * Returns information on available build agents
+     *
+     * @return list of build agents information
+     */
+    @GetMapping("/build-job-queue/build-agents")
+    @EnforceAdmin
+    public ResponseEntity<List<LocalCIBuildAgentInformation>> getBuildAgentInformation() {
+        log.debug("REST request to get information on available build agents");
+        List<LocalCIBuildAgentInformation> buildAgentInfo = localCIBuildJobQueueService.getBuildAgentInformation();
+        return ResponseEntity.ok(buildAgentInfo);
     }
 }
