@@ -16,6 +16,7 @@ import {
     faFilePdf,
     faFlag,
     faGraduationCap,
+    faList,
     faListAlt,
     faNetworkWired,
     faPersonChalkboard,

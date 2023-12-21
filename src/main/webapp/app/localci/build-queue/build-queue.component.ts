@@ -52,10 +52,4 @@ export class BuildQueueComponent implements OnInit {
             }
         });
     }
-    /**
-     * Computes the row class that is being added to all rows of the datatable
-     */
-    dataTableRowClass() {
-        return this.rowClass;
-    }
 }
