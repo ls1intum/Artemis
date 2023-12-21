@@ -6,6 +6,7 @@ import java.util.List;
 
 import javax.persistence.criteria.*;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.jpa.domain.Specification;
 
 import de.tum.in.www1.artemis.domain.Course_;
@@ -47,7 +48,7 @@ public class MessageSpecs {
                 return null;
             }
             // search by text or #message
-            else if (searchText.startsWith("#") && !searchText.substring(1).isBlank()) {
+            else if (searchText.startsWith("#") && !searchText.substring(1).isBlank() && StringUtils.isNumeric(searchText.substring(1))) {
                 // if searchText starts with a # and is followed by a message id, filter for message with id
                 return criteriaBuilder.equal(root.get(Post_.ID), Integer.parseInt(searchText.substring(1)));
             }
