@@ -14,7 +14,7 @@ import { faRefresh } from '@fortawesome/free-solid-svg-icons';
 export class BuildQueueComponent implements OnInit {
     @ViewChild(DataTableComponent) dataTable: DataTableComponent;
 
-    rowClass: string | undefined = undefined;
+    rowClass?: string;
 
     queuedBuildJobs: BuildJob[];
     runningBuildJobs: BuildJob[];
@@ -29,10 +29,13 @@ export class BuildQueueComponent implements OnInit {
     ) {}
 
     ngOnInit() {
+        this.load();
+    }
+
+    load() {
         this.route.paramMap.subscribe((params) => {
             const courseId = Number(params.get('courseId'));
             if (courseId) {
-                console.log('courseId: ' + courseId);
                 this.buildQueueService.getQueuedBuildJobsByCourseId(courseId).subscribe((queuedBuildJobs) => {
                     this.queuedBuildJobs = queuedBuildJobs;
                 });
@@ -42,7 +45,6 @@ export class BuildQueueComponent implements OnInit {
             } else {
                 this.buildQueueService.getQueuedBuildJobs().subscribe((queuedBuildJobs) => {
                     this.queuedBuildJobs = queuedBuildJobs;
-                    console.log('queuedBuildJobs1: ', queuedBuildJobs);
                 });
                 this.buildQueueService.getRunningBuildJobs().subscribe((runningBuildJobs) => {
                     this.runningBuildJobs = runningBuildJobs;
@@ -53,11 +55,7 @@ export class BuildQueueComponent implements OnInit {
     /**
      * Computes the row class that is being added to all rows of the datatable
      */
-    dataTableRowClass = () => {
+    dataTableRowClass() {
         return this.rowClass;
-    };
-
-    refresh() {
-        this.ngOnInit();
     }
 }
