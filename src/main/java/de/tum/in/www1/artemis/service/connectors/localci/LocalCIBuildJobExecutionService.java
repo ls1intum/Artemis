@@ -249,8 +249,7 @@ public class LocalCIBuildJobExecutionService {
             assignmentRepositoryPath = cloneAndCheckoutRepository(participation, commitHash);
         }
 
-        // Create the container from the "ls1tum/artemis-maven-template" image with the local paths to the Git repositories and the shell script bound to it. Also give the
-        // container information about the branch and commit hash to be used.
+        // Create the container from the "ls1tum/artemis-maven-template" image with the local paths to the Git repositories and the shell script bound to it.
         // This does not start the container yet.
         CreateContainerResponse container = localCIContainerService.configureContainer(containerName, dockerImage);
 

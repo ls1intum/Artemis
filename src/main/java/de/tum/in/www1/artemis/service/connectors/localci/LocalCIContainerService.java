@@ -88,7 +88,7 @@ public class LocalCIContainerService {
     }
 
     /**
-     * Configure a container with the Docker image, the container name, the binds, and the branch to checkout, and set the command that runs when the container starts.
+     * Configure a container with the Docker image, the container name, optional proxy config variables, and set the command that runs when the container starts.
      *
      * @param containerName the name of the container to be created
      * @param image         the Docker image to use for the container

@@ -19,6 +19,7 @@ artemis:
         queue-size-limit: 100
         # The path to the local CI build scripts. This path is relative to the Artemis root directory.
         local-cis-build-scripts-path: local-ci-scripts
+        # In case you need to use a proxy to access the internet from the Docker container (e.g., due to firewall constraints), set use-system-proxy to true and configure the proxy settings below.
         proxies:
             use-system-proxy: false
             default:
