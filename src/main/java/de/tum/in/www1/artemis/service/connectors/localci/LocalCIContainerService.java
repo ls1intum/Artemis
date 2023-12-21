@@ -61,23 +61,20 @@ public class LocalCIContainerService {
 
     public static final String WORKING_DIRECTORY = "/var/tmp";
 
-    @Value("${artemis.continuous-integration.build.images.java.default}")
-    String dockerImage;
-
     @Value("${artemis.continuous-integration.local-cis-build-scripts-path}")
-    String localCIBuildScriptBasePath;
+    private String localCIBuildScriptBasePath;
 
     @Value("${artemis.continuous-integration.proxies.use-system-proxy:false}")
-    boolean useSystemProxy;
+    private boolean useSystemProxy;
 
     @Value("${artemis.continuous-integration.proxies.default.http-proxy:}")
-    String httpProxy;
+    private String httpProxy;
 
     @Value("${artemis.continuous-integration.proxies.default.https-proxy:}")
-    String httpsProxy;
+    private String httpsProxy;
 
     @Value("${artemis.continuous-integration.proxies.default.no-proxy:}")
-    String noProxy;
+    private String noProxy;
 
     AeolusTemplateService aeolusTemplateService;
 
