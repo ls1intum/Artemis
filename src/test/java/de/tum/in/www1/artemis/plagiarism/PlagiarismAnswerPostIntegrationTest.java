@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.metis;
+package de.tum.in.www1.artemis.plagiarism;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -54,8 +54,6 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     private List<AnswerPost> existingAnswerPosts;
 
     private Long courseId;
-
-    static final int MAX_POSTS_PER_PAGE = 20;
 
     @BeforeEach
     void initTestCase() {
