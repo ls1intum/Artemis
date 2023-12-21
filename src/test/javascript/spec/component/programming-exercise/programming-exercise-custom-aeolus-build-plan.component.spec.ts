@@ -124,14 +124,6 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         expect(comp.active).toBeUndefined();
     });
 
-    it('should return true', () => {
-        expect(comp.isScriptAction(gradleBuildAction)).toBeTrue();
-    });
-
-    it('should return false', () => {
-        expect(comp.isScriptAction(new BuildAction())).toBeFalse();
-    });
-
     it('should do nothing without a Windfile', () => {
         comp.programmingExercise.windFile = undefined;
         comp.code = 'this should not change';

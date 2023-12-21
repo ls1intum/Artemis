@@ -16,16 +16,14 @@
                 <div class="d-flex flex-column h-100 justify-content-between">
                     <div class="list-group">
                         @for (action of this.programmingExercise.windFile?.actions; track action) {
-                            @if (isScriptAction(action)) {
-                                <div class="list-group-item mb-1" [ngClass]="{ active: active?.name === action.name }" (click)="changeActiveAction(action.name)">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <p class="mb-0">{{ action.name }}</p>
-                                        <div>
-                                            <button type="button" class="btn-close" (click)="deleteAction(action.name)" aria-label="Remove"></button>
-                                        </div>
+                            <div class="list-group-item mb-1" [ngClass]="{ active: active?.name === action.name }" (click)="changeActiveAction(action.name)">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <p class="mb-0">{{ action.name }}</p>
+                                    <div>
+                                        <button type="button" class="btn-close" (click)="deleteAction(action.name)" aria-label="Remove"></button>
                                     </div>
                                 </div>
-                            }
+                            </div>
                         }
                     </div>
                     <div>
@@ -60,7 +58,7 @@
                     </div>
                     <div class="card-text">
                         <label jhiTranslate="artemisApp.programmingExercise.script" class="mb-2">Script</label>
-                        @if (needsEditor()) {
+                        @if (isScriptAction) {
                             <jhi-ace-editor #editor (textChanged)="codeChanged($event)" />
                         }
                     </div>

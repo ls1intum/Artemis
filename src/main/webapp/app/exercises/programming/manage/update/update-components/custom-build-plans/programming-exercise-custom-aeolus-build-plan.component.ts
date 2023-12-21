@@ -24,6 +24,7 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
 
     code: string = '#!/bin/bash\n\n# Add your custom build plan action here';
     active?: BuildAction = undefined;
+    isScriptAction: boolean = false;
 
     private _editor?: AceEditorComponent;
 
@@ -107,10 +108,6 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
         return '';
     }
 
-    isScriptAction(action: BuildAction): boolean {
-        return action instanceof ScriptAction;
-    }
-
     changeActiveAction(action: string): void {
         if (!this.programmingExercise.windFile) {
             return;
@@ -118,13 +115,10 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
 
         this.code = this.getActionScript(action);
         this.active = this.programmingExercise.windFile.actions.find((a) => a.name === action);
-        if (this.needsEditor() && this.editor) {
+        this.isScriptAction = this.active instanceof ScriptAction;
+        if (this.isScriptAction && this.editor) {
             this.editor.setText(this.code);
         }
-    }
-
-    protected needsEditor(): boolean {
-        return this.active instanceof ScriptAction;
     }
 
     deleteAction(action: string): void {
