@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.connectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.junit.Assert.assertThrows;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -92,8 +91,13 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
     @Test()
     void testValidWindfileWithInvalidAction() {
         String invalidWindfile = "{\n\"api\": \"v0.0.1\",\n\"metadata\": {\n\"name\": \"example windfile\",\n\"description\": \"example windfile\",\n\"id\": \"example-windfile\"\n},\n\"actions\": [\n{\n\"name\": \"valid-action\",\n\"clsas\": \"script-action\",\n\"scri\": \"echo $PATH\",\n\"runAlways\": true\n}\n]\n}";
-        Exception exception = assertThrows(JsonParseException.class, () -> Windfile.deserialize(invalidWindfile));
-        assertThat(exception.getMessage()).isEqualTo("Cannot determine type");
+        try {
+            Windfile.deserialize(invalidWindfile);
+        }
+        catch (JsonParseException exception) {
+            assertThat(exception.getMessage()).isEqualTo("Cannot determine type");
+        }
+        fail("Should have thrown an exception as there is no script or platform in the actions object");
     }
 
     @Test
