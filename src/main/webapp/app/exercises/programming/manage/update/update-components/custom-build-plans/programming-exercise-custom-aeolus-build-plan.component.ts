@@ -171,10 +171,7 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     }
 
     getParameter(key: string): string | number | boolean {
-        if (this.active) {
-            return this.active.parameters.get(key) ?? '';
-        }
-        return '';
+        return this.active?.parameters?.get(key) ?? '';
     }
 
     /**

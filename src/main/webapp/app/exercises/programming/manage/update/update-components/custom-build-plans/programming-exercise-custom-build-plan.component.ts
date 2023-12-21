@@ -39,7 +39,6 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     ngOnChanges(changes: SimpleChanges) {
         if (changes.programmingExerciseCreationConfig || changes.programmingExercise) {
             if (this.shouldReloadTemplate()) {
-                console.log('should reload template');
                 this.loadAeolusTemplate();
             }
         }
@@ -99,6 +98,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
             .subscribe({
                 next: (file: string) => {
                     this.codeChanged(file);
+                    this.editor?.setText(file);
                 },
                 error: () => {
                     this.programmingExercise.buildScript = undefined;
