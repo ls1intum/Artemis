@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.SOLUTION_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -15,15 +16,21 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
+import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.AeolusRequestMockProvider;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.*;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 
@@ -44,6 +51,12 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
     @Autowired
     AeolusTemplateService aeolusTemplateService;
+
+    @Autowired
+    AeolusBuildScriptGenerationService aeolusBuildScriptGenerationService;
+
+    @SpyBean
+    ProfileService profileService;
 
     /**
      * Initializes aeolusRequestMockProvider
@@ -161,6 +174,12 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     @Test
     void testBuildScriptGeneration() {
         aeolusRequestMockProvider.mockGeneratePreview(AeolusTarget.CLI);
+        String script = aeolusBuildPlanService.generateBuildScript(getWindfile(), AeolusTarget.CLI);
+        assertThat(script).isNotNull();
+        assertThat(script).isEqualTo("imagine a result here");
+    }
+
+    private Windfile getWindfile() {
         Windfile windfile = new Windfile();
         windfile.setApi("v0.0.1");
         windfile.setMetadata(new WindfileMetadata());
@@ -168,7 +187,35 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         windfile.getMetadata().setDescription("test");
         windfile.getMetadata().setId("test");
         windfile.setActions(List.of(new ScriptAction()));
-        String script = aeolusBuildPlanService.generateBuildScript(windfile, AeolusTarget.CLI);
+        return windfile;
+    }
+
+    private String getSerializedWindfile() throws JsonProcessingException {
+        return new ObjectMapper().writeValueAsString(getWindfile());
+    }
+
+    @Test
+    void testBuildScriptGenerationUsingBuildPlanGenerationService() throws JsonProcessingException {
+        when(profileService.isLocalCi()).thenReturn(true);
+        aeolusRequestMockProvider.mockGeneratePreview(AeolusTarget.CLI);
+        aeolusRequestMockProvider.mockGeneratePreview(AeolusTarget.CLI);
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise.setBuildPlanConfiguration(getSerializedWindfile());
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExercise.setSequentialTestRuns(true);
+        programmingExercise.setTestwiseCoverageEnabled(true);
+        String script = aeolusBuildScriptGenerationService.getScript(programmingExercise);
+        assertThat(script).isNotNull();
+        assertThat(script).isEqualTo("imagine a result here");
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
+        programmingExercise.setProjectType(null);
+        programmingExercise.setStaticCodeAnalysisEnabled(false);
+        programmingExercise.setSequentialTestRuns(false);
+        programmingExercise.setTestwiseCoverageEnabled(false);
+        programmingExercise.setBuildPlanConfiguration(null);
+        script = aeolusBuildScriptGenerationService.getScript(programmingExercise);
         assertThat(script).isNotNull();
         assertThat(script).isEqualTo("imagine a result here");
     }

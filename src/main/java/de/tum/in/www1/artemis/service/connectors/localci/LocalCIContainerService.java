@@ -376,19 +376,6 @@ public class LocalCIContainerService {
         boolean hasSequentialTestRuns = programmingExercise.hasSequentialTestRuns();
         boolean hasStaticCodeAnalysis = programmingExercise.isStaticCodeAnalysisEnabled();
 
-        List<ScriptAction> actions = List.of();
-
-        Windfile windfile = programmingExercise.getWindfile();
-
-        if (windfile == null) {
-            windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
-        }
-        if (windfile != null) {
-            actions = windfile.getScriptActions();
-        }
-
-        String customScript = programmingExercise.getBuildScript();
-
         Path scriptsPath = Path.of(localCIBuildScriptBasePath);
 
         if (!Files.exists(scriptsPath)) {
@@ -406,10 +393,23 @@ public class LocalCIContainerService {
         StringBuilder buildScript = new StringBuilder();
         buildScript.append("#!/bin/bash\n");
         buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir\n");
+
+        String customScript = programmingExercise.getBuildScript();
         if (customScript != null) {
             buildScript.append(customScript);
         }
         else {
+            List<ScriptAction> actions = List.of();
+
+            Windfile windfile = programmingExercise.getWindfile();
+
+            if (windfile == null) {
+                windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
+            }
+            if (windfile != null) {
+                actions = windfile.getScriptActions();
+            }
+
             actions.forEach(action -> {
                 String workdir = action.getWorkdir();
                 if (workdir != null) {

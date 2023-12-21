@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.connectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.junit.Assert.assertThrows;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -82,10 +83,17 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     @Test()
     void testValidWindfileDeserializationWithClass() {
-        String invalidWindfile = "{\n\"api\": \"v0.0.1\",\n\"metadata\": {\n\"name\": \"example windfile\",\n\"description\": \"example windfile\",\n\"id\": \"example-windfile\"\n},\n\"actions\": [\n{\n\"name\": \"valid-action\",\n\"class\": \"script-action\",\n\"script\": \"echo $PATH\",\n\"runAlways\": true\n}\n]\n}";
-        Windfile windfile = Windfile.deserialize(invalidWindfile);
+        String validWindfile = "{\n\"api\": \"v0.0.1\",\n\"metadata\": {\n\"name\": \"example windfile\",\n\"description\": \"example windfile\",\n\"id\": \"example-windfile\"\n},\n\"actions\": [\n{\n\"name\": \"valid-action\",\n\"class\": \"script-action\",\n\"script\": \"echo $PATH\",\n\"runAlways\": true\n},{\n\"name\": \"valid-action1\",\n\"platform\": \"bamboo\",\n\"runAlways\": true\n},{\n\"name\": \"valid-action2\",\n\"script\": \"bash script\",\n\"runAlways\": true\n}\n]\n}";
+        Windfile windfile = Windfile.deserialize(validWindfile);
         assertThat(windfile).isNotNull();
         assertThat(windfile.getActions().get(0)).isInstanceOf(ScriptAction.class);
+    }
+
+    @Test()
+    void testValidWindfileWithInvalidAction() {
+        String invalidWindfile = "{\n\"api\": \"v0.0.1\",\n\"metadata\": {\n\"name\": \"example windfile\",\n\"description\": \"example windfile\",\n\"id\": \"example-windfile\"\n},\n\"actions\": [\n{\n\"name\": \"valid-action\",\n\"clsas\": \"script-action\",\n\"scri\": \"echo $PATH\",\n\"runAlways\": true\n}\n]\n}";
+        Exception exception = assertThrows(JsonParseException.class, () -> Windfile.deserialize(invalidWindfile));
+        assertThat(exception.getMessage()).isEqualTo("Cannot determine type");
     }
 
     @Test

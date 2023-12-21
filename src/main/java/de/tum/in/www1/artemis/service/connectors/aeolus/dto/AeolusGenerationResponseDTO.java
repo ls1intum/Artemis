@@ -20,11 +20,6 @@ public class AeolusGenerationResponseDTO {
     public AeolusGenerationResponseDTO() {
     }
 
-    public AeolusGenerationResponseDTO(String key, String result) {
-        this.key = key;
-        this.result = result;
-    }
-
     public String getKey() {
         return key;
     }
