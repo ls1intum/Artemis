@@ -243,7 +243,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.dialogErrorSource.unsubscribe();
     }
 
-    getExerciseDetails() {
+    getExerciseDetails(): DetailOverviewSection[] {
         const exercise = this.programmingExercise;
         return [
             this.getExerciseDetailsGeneralSection(exercise),
@@ -254,7 +254,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         ] as DetailOverviewSection[];
     }
 
-    getExerciseDetailsGeneralSection(exercise: ProgrammingExercise) {
+    getExerciseDetailsGeneralSection(exercise: ProgrammingExercise): DetailOverviewSection {
         return {
             headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle',
             details: [
@@ -284,10 +284,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     data: { text: exercise.categories?.map((category) => category.category?.toUpperCase()).join(', ') },
                 },
             ].filter(Boolean),
-        };
+        } as DetailOverviewSection;
     }
 
-    getExerciseDetailsModeSection(exercise: ProgrammingExercise) {
+    getExerciseDetailsModeSection(exercise: ProgrammingExercise): DetailOverviewSection {
         return {
             headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle',
             details: [
@@ -321,12 +321,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     title: 'artemisApp.programmingExercise.publishBuildPlanUrl',
                     data: { boolean: exercise.publishBuildPlanUrl },
                 },
-                {},
             ].filter(Boolean),
-        };
+        } as DetailOverviewSection;
     }
 
-    getExerciseDetailsLanguageSection(exercise: ProgrammingExercise) {
+    getExerciseDetailsLanguageSection(exercise: ProgrammingExercise): DetailOverviewSection {
         return {
             headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
             details: [
@@ -421,10 +420,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     data: { text: exercise.packageName },
                 },
             ].filter(Boolean),
-        };
+        } as DetailOverviewSection;
     }
 
-    getExerciseDetailsProblemSection(exercise: ProgrammingExercise) {
+    getExerciseDetailsProblemSection(exercise: ProgrammingExercise): DetailOverviewSection {
         return {
             headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle',
             details: [
@@ -436,7 +435,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         };
     }
 
-    getExerciseDetailsGradingSection(exercise: ProgrammingExercise) {
+    getExerciseDetailsGradingSection(exercise: ProgrammingExercise): DetailOverviewSection {
         const includedInScoreIsBoolean = exercise.includedInOverallScore != IncludedInOverallScore.INCLUDED_AS_BONUS;
         const includedInScore = {
             type: includedInScoreIsBoolean ? DetailType.Boolean : DetailType.Text,
@@ -508,7 +507,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     data: { buildLogStatistics: exercise.buildLogStatistics },
                 },
             ].filter(Boolean),
-        };
+        } as DetailOverviewSection;
     }
 
     private checkBuildPlanEditable() {

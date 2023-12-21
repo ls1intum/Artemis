@@ -79,7 +79,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
      * Deletes quiz exercise
      */
     deleteQuizExercise() {
-        return this.quizExerciseService.delete(this.quizExercise.id!).subscribe({
+        this.quizExerciseService.delete(this.quizExercise.id!).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'quizExerciseListModification',

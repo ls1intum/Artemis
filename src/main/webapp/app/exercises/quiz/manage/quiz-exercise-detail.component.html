@@ -10,7 +10,7 @@
                 <jhi-quiz-exercise-manage-buttons [quizExercise]="quizExercise" [isDetailPage]="true" (loadQuizExercises)="load()"></jhi-quiz-exercise-manage-buttons>
                 <hr />
                 <jhi-quiz-exercise-lifecycle-buttons [quizExercise]="quizExercise" (loadOne)="load()" (handleNewQuizExercise)="load()"></jhi-quiz-exercise-lifecycle-buttons>
-                @if (!quizExercise.releaseDate || dayjs(quizExercise.releaseDate).isBefore(dayjs())) {
+                @if (showStatistics) {
                     <div class="mt-3">
                         <jhi-exercise-detail-statistics
                             [exercise]="quizExercise"

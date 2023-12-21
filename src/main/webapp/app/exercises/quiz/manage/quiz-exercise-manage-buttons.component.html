@@ -1,40 +1,34 @@
 <div class="btn-group {{ isDetailPage ? 'flex-wrap' : 'flex-btn-group-container' }}">
-    <div class="{{ isDetailPage ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
-        @if (quizExercise.isAtLeastTutor) {
+    @if (quizExercise.isAtLeastTutor) {
+        <div class="{{ isDetailPage ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
             <a id="preview-quiz" [routerLink]="[baseUrl, 'quiz-exercises', quizExercise.id, 'preview']" class="btn btn-success btn-sm me-1 mb-1">
                 <fa-icon [icon]="faEye"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.preview">Preview</span>
             </a>
-        }
-        @if (quizExercise.isAtLeastTutor) {
             <a [routerLink]="[baseUrl, 'quiz-exercises', quizExercise.id, 'solution']" class="btn btn-success btn-sm me-1 mb-1">
                 <fa-icon [icon]="faEye"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.solution">Solution</span>
             </a>
-        }
-    </div>
-    <div class="{{ isDetailPage ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
-        @if (quizExercise.isAtLeastTutor) {
+        </div>
+        <div class="{{ isDetailPage ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
             <a [routerLink]="[baseUrl, 'quiz-exercises', quizExercise.id, 'quiz-point-statistic']" class="btn btn-info btn-sm me-1 mb-1">
                 <span>
                     <fa-icon [icon]="faSignal"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="global.menu.entities.quizStatistic">Statistics</span>
                 </span>
             </a>
-        }
-        @if (quizExercise.isAtLeastTutor) {
             <a [routerLink]="[baseUrl, 'quiz-exercises', quizExercise.id, 'scores']" class="btn btn-info btn-sm me-1 mb-1">
                 <fa-icon [icon]="faTable"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
             </a>
-        }
-        @if (isDetailPage) {
-            <a [routerLink]="[baseUrl, 'quiz-exercises', quizExercise.id, 'participations']" class="btn btn-primary btn-sm me-1 mb-1">
-                <fa-icon [icon]="faListAlt"></fa-icon>
-                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
-            </a>
-        }
-    </div>
+            @if (isDetailPage) {
+                <a [routerLink]="[baseUrl, 'quiz-exercises', quizExercise.id, 'participations']" class="btn btn-primary btn-sm me-1 mb-1">
+                    <fa-icon [icon]="faListAlt"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+                </a>
+            }
+        </div>
+    }
     <div class="{{ isDetailPage ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
         @if (quizExercise.isAtLeastInstructor) {
             <button type="submit" (click)="exportQuizExercise(true)" class="btn btn-warning btn-sm me-1 mb-1">
@@ -62,8 +56,8 @@
             </a>
         }
     </div>
-    <div class="{{ isDetailPage ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
-        @if (quizExercise.isAtLeastInstructor) {
+    @if (quizExercise.isAtLeastInstructor) {
+        <div class="{{ isDetailPage ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
             <button
                 jhiDeleteButton
                 [entityTitle]="quizExercise.title || ''"
@@ -76,8 +70,6 @@
             >
                 <fa-icon [icon]="faUndo"></fa-icon>
             </button>
-        }
-        @if (quizExercise.isAtLeastInstructor) {
             <button
                 jhiDeleteButton
                 [entityTitle]="quizExercise.title || ''"
@@ -90,6 +82,6 @@
             >
                 <fa-icon [icon]="faTrash"></fa-icon>
             </button>
-        }
-    </div>
+        </div>
+    }
 </div>

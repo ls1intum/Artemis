@@ -40,7 +40,7 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
 
     fileUploadExercise: FileUploadExercise;
     isExamExercise: boolean;
-    course: Course | undefined;
+    course?: Course;
     doughnutStats: ExerciseManagementStatisticsDto;
     exerciseDetailSections: DetailOverviewSection[];
     formattedProblemStatement: SafeHtml | null;
@@ -93,7 +93,7 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    getExerciseDetailSections() {
+    getExerciseDetailSections(): DetailOverviewSection[] {
         const exercise = this.fileUploadExercise;
         const generalSection = getExerciseGeneralDetailsSection(exercise);
         const modeSection = getExerciseModeDetailSection(exercise);

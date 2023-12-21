@@ -32,22 +32,19 @@
                                 <input class="form-check-input" type="checkbox" (change)="toggleExercise(quizExercise)" [ngModel]="isExerciseSelected(quizExercise)" />
                             </td>
                         }
-                        <td>
-                            @if (quizExercise.isAtLeastTutor) {
+                        @if (quizExercise.isAtLeastTutor) {
+                            <td>
                                 <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id]">{{ quizExercise.id }} </a>
-                            } @else {
-                                {{ quizExercise.id }}
-                            }
-                        </td>
-                        <td>
-                            @if (quizExercise.isAtLeastTutor) {
+                            </td>
+                            <td>
                                 <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id]">
                                     {{ quizExercise.title }}
                                 </a>
-                            } @else {
-                                {{ quizExercise.title }}
-                            }
-                        </td>
+                            </td>
+                        } @else {
+                            <td>{{ quizExercise.id }}</td>
+                            <td>{{ quizExercise.title }}</td>
+                        }
                         <td>
                             @if (quizExercise.status === QuizStatus.CLOSED) {
                                 <span>{{ 'artemisApp.quizExercise.quizStatus.closed' | artemisTranslate }}</span>

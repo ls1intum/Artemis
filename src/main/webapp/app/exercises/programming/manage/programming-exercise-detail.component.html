@@ -14,43 +14,41 @@
                                 <fa-icon [icon]="faWrench"></fa-icon>&nbsp;
                                 <span jhiTranslate="entity.action.edit"> Edit</span>
                             </a>
-                        }
-                        <!-- Edit in editor button -->
-                        @if (programmingExercise.isAtLeastEditor && programmingExercise.templateParticipation) {
-                            <a
-                                [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
-                                jhiOrionFilter
-                                [showInOrionWindow]="false"
-                                [routerLink]="[baseResource, 'code-editor', programmingExercise.templateParticipation.id!]"
-                                class="btn btn-warning btn-sm"
-                            >
-                                <fa-icon [icon]="faPencilAlt"></fa-icon>
-                                <span jhiTranslate="entity.action.editInEditor">Edit in Editor</span>
-                            </a>
-                        }
-                        <!-- Edit build plan button -->
-                        @if (programmingExercise.isAtLeastEditor && isBuildPlanEditable) {
-                            <a
-                                [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
-                                jhiOrionFilter
-                                [showInOrionWindow]="false"
-                                [routerLink]="[baseResource, 'edit-build-plan']"
-                                class="btn btn-warning btn-sm"
-                            >
-                                <fa-icon [icon]="faPencilAlt"></fa-icon>
-                                <span jhiTranslate="entity.action.editBuildPlan">Edit build plan</span>
-                            </a>
-                        }
-                        @if (programmingExercise.isAtLeastEditor && programmingExercise.course && !isExamExercise) {
-                            <a
-                                [routerLink]="['/course-management', programmingExercise.course.id!, 'programming-exercises', programmingExercise.id, 'exercise-hints']"
-                                class="btn btn-warning btn-sm position-relative"
-                            >
-                                <fa-icon [icon]="faLightbulb"></fa-icon>
-                                <span jhiTranslate="entity.action.hints">Hints</span>
-                            </a>
-                        }
-                        @if (programmingExercise.isAtLeastEditor) {
+                            <!-- Edit in editor button -->
+                            @if (programmingExercise.templateParticipation) {
+                                <a
+                                    [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
+                                    jhiOrionFilter
+                                    [showInOrionWindow]="false"
+                                    [routerLink]="[baseResource, 'code-editor', programmingExercise.templateParticipation.id!]"
+                                    class="btn btn-warning btn-sm"
+                                >
+                                    <fa-icon [icon]="faPencilAlt"></fa-icon>
+                                    <span jhiTranslate="entity.action.editInEditor">Edit in Editor</span>
+                                </a>
+                            }
+                            <!-- Edit build plan button -->
+                            @if (isBuildPlanEditable) {
+                                <a
+                                    [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
+                                    jhiOrionFilter
+                                    [showInOrionWindow]="false"
+                                    [routerLink]="[baseResource, 'edit-build-plan']"
+                                    class="btn btn-warning btn-sm"
+                                >
+                                    <fa-icon [icon]="faPencilAlt"></fa-icon>
+                                    <span jhiTranslate="entity.action.editBuildPlan">Edit build plan</span>
+                                </a>
+                            }
+                            @if (programmingExercise.course && !isExamExercise) {
+                                <a
+                                    [routerLink]="['/course-management', programmingExercise.course.id!, 'programming-exercises', programmingExercise.id, 'exercise-hints']"
+                                    class="btn btn-warning btn-sm position-relative"
+                                >
+                                    <fa-icon [icon]="faLightbulb"></fa-icon>
+                                    <span jhiTranslate="entity.action.hints">Hints</span>
+                                </a>
+                            }
                             <a [routerLink]="[baseResource, 'grading', 'test-cases']" class="btn btn-warning btn-sm">
                                 <fa-icon [icon]="faFileSignature"></fa-icon>
                                 <span jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
@@ -96,14 +94,14 @@
                                 <fa-icon [icon]="faTable"></fa-icon>
                                 <span jhiTranslate="entity.action.scores">Scores</span>
                             </a>
-                        }
-                        @if (programmingExercise.isAtLeastTutor && programmingExercise.course && !isExamExercise) {
-                            <a
-                                [routerLink]="['/course-management', programmingExercise.course!.id!, 'programming-exercises', programmingExercise.id!, 'exercise-statistics']"
-                                class="btn btn-info btn-sm"
-                            >
-                                <fa-icon [icon]="faChartBar"></fa-icon>&nbsp;<span jhiTranslate="statistics.statistics-title">Statistics</span>
-                            </a>
+                            @if (programmingExercise.course && !isExamExercise) {
+                                <a
+                                    [routerLink]="['/course-management', programmingExercise.course!.id!, 'programming-exercises', programmingExercise.id!, 'exercise-statistics']"
+                                    class="btn btn-info btn-sm"
+                                >
+                                    <fa-icon [icon]="faChartBar"></fa-icon>&nbsp;<span jhiTranslate="statistics.statistics-title">Statistics</span>
+                                </a>
+                            }
                         }
                     </div>
                     <hr />
@@ -174,8 +172,6 @@
                                 <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
                                 <span jhiTranslate="artemisApp.programmingExercise.unlockAllRepositories">Unlock all repositories</span>
                             </button>
-                        }
-                        @if (programmingExercise.isAtLeastInstructor && !localVCEnabled) {
                             <button
                                 id="lockAllRepositoriesButton"
                                 class="btn btn-danger btn-sm me-1"
@@ -198,8 +194,6 @@
                             >
                                 <fa-icon [icon]="faCheckDouble"></fa-icon> <span jhiTranslate="artemisApp.consistencyCheck.button">Check consistency</span>
                             </button>
-                        }
-                        @if (programmingExercise.isAtLeastEditor) {
                             <button
                                 [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                                 jhiProgrammingExerciseResetButton

@@ -16,9 +16,9 @@ export interface DetailOverviewSection {
     details: Detail[];
 }
 
-interface Detail {
+export interface Detail {
     type: DetailType;
-    title: string;
+    title?: string;
     titleTranslationProps?: Record<string, string>;
     titleHelpText?: string;
     data: any;
