@@ -3,6 +3,10 @@ package de.tum.in.www1.artemis;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -22,6 +26,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.RSAKey;
 
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
@@ -103,10 +108,26 @@ class LtiDeepLinkingIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         request.postWithoutResponseBody("/api/lti13/deep-linking/" + course.getId(), HttpStatus.BAD_REQUEST, params);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deepLinkingSuccessAsInstructor() throws Exception {
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        keyPairGenerator.initialize(2048);
+        KeyPair keyPair = keyPairGenerator.generateKeyPair();
+
+        RSAKey mockRsaKey = new RSAKey.Builder((RSAPublicKey) keyPair.getPublic()).privateKey((RSAPrivateKey) keyPair.getPrivate()).build();
+
+        when(this.oAuth2JWKSService.getJWK(any())).thenReturn(mockRsaKey);
+        var params = getDeepLinkingRequestParams();
+
+        request.postWithoutResponseBody("/api/lti13/deep-linking/" + course.getId(), HttpStatus.OK, params);
+    }
+
     private LinkedMultiValueMap<String, String> getDeepLinkingRequestParams() {
         var params = new LinkedMultiValueMap<String, String>();
         Set<Long> exerciseIds = new HashSet<>();
-        exerciseIds.add(1L);
+        var exercise = course.getExercises().stream().findFirst().orElseThrow();
+        exerciseIds.add(exercise.getId());
 
         String exerciseIdsParam = exerciseIds.stream().map(String::valueOf).collect(Collectors.joining(","));
 
