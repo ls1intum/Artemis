@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.SOLUTION_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
 
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -16,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
@@ -30,7 +28,6 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
-import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.*;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 
@@ -54,9 +51,6 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
     @Autowired
     AeolusBuildScriptGenerationService aeolusBuildScriptGenerationService;
-
-    @SpyBean
-    ProfileService profileService;
 
     /**
      * Initializes aeolusRequestMockProvider
@@ -195,10 +189,7 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     @Test
-    void testBuildScriptGenerationUsingBuildPlanGenerationService() throws JsonProcessingException {
-        when(profileService.isLocalCi()).thenReturn(true);
-        aeolusRequestMockProvider.mockGeneratePreview(AeolusTarget.CLI);
-        aeolusRequestMockProvider.mockGeneratePreview(AeolusTarget.CLI);
+    void testShouldNotGenerateAnything() throws JsonProcessingException {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise.setBuildPlanConfiguration(getSerializedWindfile());
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
@@ -207,16 +198,6 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         programmingExercise.setSequentialTestRuns(true);
         programmingExercise.setTestwiseCoverageEnabled(true);
         String script = aeolusBuildScriptGenerationService.getScript(programmingExercise);
-        assertThat(script).isNotNull();
-        assertThat(script).isEqualTo("imagine a result here");
-        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
-        programmingExercise.setProjectType(null);
-        programmingExercise.setStaticCodeAnalysisEnabled(false);
-        programmingExercise.setSequentialTestRuns(false);
-        programmingExercise.setTestwiseCoverageEnabled(false);
-        programmingExercise.setBuildPlanConfiguration(null);
-        script = aeolusBuildScriptGenerationService.getScript(programmingExercise);
-        assertThat(script).isNotNull();
-        assertThat(script).isEqualTo("imagine a result here");
+        assertThat(script).isNull();
     }
 }
