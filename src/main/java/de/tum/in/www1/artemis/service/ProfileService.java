@@ -29,6 +29,11 @@ public class ProfileService {
         return isProfileActive("bamboo");
     }
 
+    /**
+     * Checks if the local CI profile is active
+     *
+     * @return true if the local CI profile is active, false otherwise
+     */
     public boolean isLocalCi() {
         return isProfileActive(Constants.PROFILE_LOCALCI);
     }

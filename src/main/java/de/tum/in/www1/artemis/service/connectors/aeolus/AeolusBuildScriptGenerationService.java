@@ -22,6 +22,14 @@ public class AeolusBuildScriptGenerationService extends BuildScriptGenerationSer
 
     private final ProfileService profileService;
 
+    /**
+     * Instantiates a new build script generation service.
+     *
+     * @param buildScriptProvider    the build script provider
+     * @param aeolusBuildPlanService the aeolus build plan service
+     * @param aeolusTemplateService  the aeolus template service
+     * @param profileService         the profile service
+     */
     public AeolusBuildScriptGenerationService(BuildScriptProvider buildScriptProvider, AeolusBuildPlanService aeolusBuildPlanService, AeolusTemplateService aeolusTemplateService,
             ProfileService profileService) {
         super(buildScriptProvider);

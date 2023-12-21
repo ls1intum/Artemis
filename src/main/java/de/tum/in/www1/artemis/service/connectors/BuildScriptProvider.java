@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis.service.connectors;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.io.IOUtils;
@@ -13,26 +16,31 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 
+/**
+ * Service for providing build scripts for programming exercises
+ * The scripts are loaded from the resources/templates/aeolus directory
+ */
 @Service
 @Profile("aeolus | localci")
 public class BuildScriptProvider {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(BuildScriptProvider.class);
-
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
+    private final Logger logger = LoggerFactory.getLogger(BuildScriptProvider.class);
 
     private final ResourceLoaderService resourceLoaderService;
 
     private final Map<String, String> scriptCache = new ConcurrentHashMap<>();
 
-    public BuildScriptProvider(ProgrammingExerciseRepository programmingExerciseRepository, ResourceLoaderService resourceLoaderService) {
-        this.programmingExerciseRepository = programmingExerciseRepository;
+    /**
+     * Constructor for BuildScriptProvider, which loads all scripts into the cache to speed up retrieval
+     * during the runtime of the application
+     *
+     * @param resourceLoaderService resourceLoaderService
+     */
+    public BuildScriptProvider(ResourceLoaderService resourceLoaderService) {
         this.resourceLoaderService = resourceLoaderService;
         // load all scripts into the cache
         cacheOnBoot();
@@ -50,22 +58,17 @@ public class BuildScriptProvider {
                 scriptCache.put(uniqueKey, script);
             }
             catch (IOException e) {
-                LOGGER.error("Failed to load script {}", resource.getFilename(), e);
+                logger.error("Failed to load script {}", resource.getFilename(), e);
             }
         }
     }
 
     /**
-     * Stores the given script in the database for the given programming exercise
+     * Returns the file content of the template file for the given language and project type with the different options
      *
-     * @param programmingExercise the programming exercise for which the script should be stored
-     * @param script              the script to store
+     * @param key the key of the script to be returned
+     * @return the requested template as a bash script or windfile
      */
-    public void storeBuildScriptInDatabase(ProgrammingExercise programmingExercise, String script) {
-        programmingExercise.setBuildScript(script);
-        programmingExerciseRepository.save(programmingExercise);
-    }
-
     public String getCachedScript(String key) {
         return scriptCache.getOrDefault(key, null);
     }
@@ -86,7 +89,7 @@ public class BuildScriptProvider {
         String templateFileName = buildTemplateName(projectType, staticAnalysis, sequentialRuns, testCoverage, "sh");
         String uniqueKey = programmingLanguage.name().toLowerCase() + "_" + templateFileName;
         if (scriptCache.containsKey(uniqueKey)) {
-            LOGGER.debug("Returning cached script for {}", uniqueKey);
+            logger.debug("Returning cached script for {}", uniqueKey);
             return scriptCache.get(uniqueKey);
         }
         Resource fileResource = resourceLoaderService.getResource(Path.of("templates", "aeolus", programmingLanguage.name().toLowerCase(), templateFileName));
@@ -96,7 +99,7 @@ public class BuildScriptProvider {
         byte[] fileContent = IOUtils.toByteArray(fileResource.getInputStream());
         String script = new String(fileContent, StandardCharsets.UTF_8);
         scriptCache.put(uniqueKey, script);
-        LOGGER.debug("Caching script for {}", uniqueKey);
+        logger.debug("Caching script for {}", uniqueKey);
         return script;
     }
 

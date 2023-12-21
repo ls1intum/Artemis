@@ -42,7 +42,9 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.connectors.BuildScriptProvider;
-import de.tum.in.www1.artemis.service.connectors.aeolus.*;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.ScriptAction;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
 
 /**
@@ -59,8 +61,14 @@ public class LocalCIContainerService {
 
     private final HostConfig hostConfig;
 
+    /**
+     * The directory in which the build jobs are executed
+     */
     public static final String WORKING_DIRECTORY = "/var/tmp";
 
+    /**
+     * The directory in which the results of the build jobs are expected
+     */
     public static final String AEOLUS_RESULT_DIRECTORY = "/var/tmp/aeolus-results";
 
     @Value("${artemis.continuous-integration.build.images.java.default}")
@@ -371,6 +379,13 @@ public class LocalCIContainerService {
         List<ScriptAction> actions = List.of();
 
         Windfile windfile = programmingExercise.getWindfile();
+
+        if (windfile == null) {
+            windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
+        }
+        if (windfile != null) {
+            actions = windfile.getScriptActions();
+        }
 
         String customScript = programmingExercise.getBuildScript();
 
