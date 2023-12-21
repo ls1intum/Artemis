@@ -37,7 +37,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
-class PostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "postintegration";
 

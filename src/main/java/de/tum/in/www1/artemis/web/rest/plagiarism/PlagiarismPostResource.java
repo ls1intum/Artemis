@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest.metis;
+package de.tum.in.www1.artemis.web.rest.plagiarism;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -20,7 +20,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
-import de.tum.in.www1.artemis.service.metis.PostService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismPostService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -32,17 +32,17 @@ import tech.jhipster.web.util.PaginationUtil;
  */
 @RestController
 @RequestMapping("/api")
-public class PostResource {
+public class PlagiarismPostResource {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-    private final PostService postService;
+    private final PlagiarismPostService plagiarismPostService;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    public PostResource(PostService postService) {
-        this.postService = postService;
+    public PlagiarismPostResource(PlagiarismPostService plagiarismPostService) {
+        this.plagiarismPostService = plagiarismPostService;
     }
 
     /**
@@ -58,7 +58,7 @@ public class PostResource {
     public ResponseEntity<Post> createPost(@PathVariable Long courseId, @Valid @RequestBody Post post) throws URISyntaxException {
         log.debug("POST createPost invoked for course {} with post {}", courseId, post.getContent());
         long start = System.nanoTime();
-        Post createdPost = postService.createPost(courseId, post);
+        Post createdPost = plagiarismPostService.createPost(courseId, post);
         log.info("createPost took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/posts/" + createdPost.getId())).body(createdPost);
     }
@@ -77,7 +77,7 @@ public class PostResource {
     public ResponseEntity<Post> updatePost(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody Post post) {
         log.debug("PUT updatePost invoked for course {} with post {}", courseId, post.getContent());
         long start = System.nanoTime();
-        Post updatedPost = postService.updatePost(courseId, postId, post);
+        Post updatedPost = plagiarismPostService.updatePost(courseId, postId, post);
         log.info("updatePost took {}", TimeLogUtil.formatDurationFrom(start));
         return new ResponseEntity<>(updatedPost, null, HttpStatus.OK);
     }
@@ -94,10 +94,10 @@ public class PostResource {
     public ResponseEntity<List<Post>> getPostsInCourse(PostContextFilter postContextFilter) {
         Page<Post> coursePosts;
         if (postContextFilter.getPlagiarismCaseId() != null) {
-            coursePosts = new PageImpl<>(postService.getAllPlagiarismCasePosts(postContextFilter));
+            coursePosts = new PageImpl<>(plagiarismPostService.getAllPlagiarismCasePosts(postContextFilter));
         }
         else {
-            throw new BadRequestAlertException("A post cannot be associated with more than one context if plagiarismCaseId is set", postService.getEntityName(),
+            throw new BadRequestAlertException("A post cannot be associated with more than one context if plagiarismCaseId is set", plagiarismPostService.getEntityName(),
                     "noPlagiarismCase");
         }
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), coursePosts);
@@ -118,8 +118,8 @@ public class PostResource {
     public ResponseEntity<Void> deletePost(@PathVariable Long courseId, @PathVariable Long postId) {
         log.debug("DELETE deletePost invoked for course {} on post {}", courseId, postId);
         long start = System.nanoTime();
-        postService.deletePostById(courseId, postId);
+        plagiarismPostService.deletePostById(courseId, postId);
         log.info("deletePost took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, postService.getEntityName(), postId.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, plagiarismPostService.getEntityName(), postId.toString())).build();
     }
 }

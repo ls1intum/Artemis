@@ -6,16 +6,15 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.metis.AnswerPost;
-import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.Posting;
-import de.tum.in.www1.artemis.domain.metis.Reaction;
+import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismAnswerPostService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismPostService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
@@ -35,9 +34,9 @@ public class ReactionService {
 
     private final ReactionRepository reactionRepository;
 
-    private final PostService postService;
+    private final PlagiarismPostService plagiarismPostService;
 
-    private final AnswerPostService answerPostService;
+    private final PlagiarismAnswerPostService plagiarismAnswerPostService;
 
     private final ConversationService conversationService;
 
@@ -45,13 +44,14 @@ public class ReactionService {
 
     private final AnswerPostRepository answerPostRepository;
 
-    public ReactionService(UserRepository userRepository, CourseRepository courseRepository, ReactionRepository reactionRepository, PostService postService,
-            AnswerPostService answerPostService, ConversationService conversationService, PostRepository postRepository, AnswerPostRepository answerPostRepository) {
+    public ReactionService(UserRepository userRepository, CourseRepository courseRepository, ReactionRepository reactionRepository, PlagiarismPostService plagiarismPostService,
+            PlagiarismAnswerPostService plagiarismAnswerPostService, ConversationService conversationService, PostRepository postRepository,
+            AnswerPostRepository answerPostRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.reactionRepository = reactionRepository;
-        this.postService = postService;
-        this.answerPostService = answerPostService;
+        this.plagiarismPostService = plagiarismPostService;
+        this.plagiarismAnswerPostService = plagiarismAnswerPostService;
         this.conversationService = conversationService;
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
@@ -131,14 +131,14 @@ public class ReactionService {
             updatedPost.removeAnswerPost(updatedAnswerPost);
             updatedPost.addAnswerPost(updatedAnswerPost);
         }
-        postService.broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null, null);
+        plagiarismPostService.broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null, null);
         reactionRepository.deleteById(reactionId);
     }
 
     private void mayInteractWithConversationElseThrow(User user, Post post, Course course) {
         if (post.getConversation() != null) {
             conversationService.isMemberOrCreateForCourseWideElseThrow(post.getConversation().getId(), user, Optional.empty());
-            postService.preCheckUserAndCourseForCommunicationOrMessaging(user, course);
+            plagiarismPostService.preCheckUserAndCourseForCommunicationOrMessaging(user, course);
         }
     }
 
@@ -153,7 +153,7 @@ public class ReactionService {
      */
     private Reaction createReactionForAnswer(Reaction reaction, AnswerPost posting, User user, Course course) {
         Reaction savedReaction;
-        AnswerPost answerPost = answerPostService.findAnswerPostOrAnswerMessageById(posting.getId());
+        AnswerPost answerPost = plagiarismAnswerPostService.findAnswerPostOrAnswerMessageById(posting.getId());
         mayInteractWithConversationElseThrow(user, answerPost.getPost(), course);
         reaction.setAnswerPost(answerPost);
         // save reaction
@@ -164,7 +164,7 @@ public class ReactionService {
         AnswerPost updatedAnswerPost = answerPostRepository.save(answerPost);
         updatedAnswerPost.getPost().setConversation(answerPost.getPost().getConversation());
 
-        answerPostService.preparePostAndBroadcast(answerPost, course, null);
+        plagiarismAnswerPostService.preparePostAndBroadcast(answerPost, course, null);
         return savedReaction;
     }
 
@@ -179,7 +179,7 @@ public class ReactionService {
      */
     private Reaction createReactionForPost(Reaction reaction, Post posting, User user, Course course) {
         Reaction savedReaction;
-        Post post = postService.findPostOrMessagePostById(posting.getId());
+        Post post = plagiarismPostService.findPostOrMessagePostById(posting.getId());
         mayInteractWithConversationElseThrow(user, post, course);
         reaction.setPost(post);
         // save reaction
@@ -194,7 +194,7 @@ public class ReactionService {
         Post updatedPost = postRepository.save(post);
         updatedPost.setConversation(post.getConversation());
 
-        postService.broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course.getId(), null, null);
+        plagiarismPostService.broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course.getId(), null, null);
         return savedReaction;
     }
 }

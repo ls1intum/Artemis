@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class AnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "answerpostintegration";
 

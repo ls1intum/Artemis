@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest.metis;
+package de.tum.in.www1.artemis.web.rest.plagiarism;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
-import de.tum.in.www1.artemis.service.metis.AnswerPostService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismAnswerPostService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 /**
@@ -19,14 +19,14 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
  */
 @RestController
 @RequestMapping("/api")
-public class AnswerPostResource {
+public class PlagiarismAnswerPostResource {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-    private final AnswerPostService answerPostService;
+    private final PlagiarismAnswerPostService plagiarismAnswerPostService;
 
-    public AnswerPostResource(AnswerPostService answerPostService) {
-        this.answerPostService = answerPostService;
+    public PlagiarismAnswerPostResource(PlagiarismAnswerPostService plagiarismAnswerPostService) {
+        this.plagiarismAnswerPostService = plagiarismAnswerPostService;
     }
 
     /**
@@ -42,7 +42,7 @@ public class AnswerPostResource {
     public ResponseEntity<AnswerPost> createAnswerPost(@PathVariable Long courseId, @RequestBody AnswerPost answerPost) throws URISyntaxException {
         log.debug("POST createAnswerPost invoked for course {} with post {}", courseId, answerPost.getContent());
         long start = System.nanoTime();
-        AnswerPost createdAnswerPost = answerPostService.createAnswerPost(courseId, answerPost);
+        AnswerPost createdAnswerPost = plagiarismAnswerPostService.createAnswerPost(courseId, answerPost);
         log.info("createAnswerPost took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.created(new URI("/api/courses" + courseId + "/answer-posts/" + createdAnswerPost.getId())).body(createdAnswerPost);
     }
@@ -61,7 +61,7 @@ public class AnswerPostResource {
     public ResponseEntity<AnswerPost> updateAnswerPost(@PathVariable Long courseId, @PathVariable Long answerPostId, @RequestBody AnswerPost answerPost) {
         log.debug("PUT updateAnswerPost invoked for course {} with post {}", courseId, answerPost.getContent());
         long start = System.nanoTime();
-        AnswerPost updatedAnswerPost = answerPostService.updateAnswerPost(courseId, answerPostId, answerPost);
+        AnswerPost updatedAnswerPost = plagiarismAnswerPostService.updateAnswerPost(courseId, answerPostId, answerPost);
         log.info("updatedAnswerPost took {}", TimeLogUtil.formatDurationFrom(start));
         return new ResponseEntity<>(updatedAnswerPost, null, HttpStatus.OK);
     }
@@ -79,7 +79,7 @@ public class AnswerPostResource {
     public ResponseEntity<Void> deleteAnswerPost(@PathVariable Long courseId, @PathVariable Long answerPostId) {
         log.debug("PUT deleteAnswerPost invoked for course {} on post {}", courseId, answerPostId);
         long start = System.nanoTime();
-        answerPostService.deleteAnswerPostById(courseId, answerPostId);
+        plagiarismAnswerPostService.deleteAnswerPostById(courseId, answerPostId);
         log.info("deleteAnswerPost took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok().build();
     }
