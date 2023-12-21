@@ -14,8 +14,6 @@ import { faRefresh } from '@fortawesome/free-solid-svg-icons';
 export class BuildQueueComponent implements OnInit {
     @ViewChild(DataTableComponent) dataTable: DataTableComponent;
 
-    rowClass?: string;
-
     queuedBuildJobs: BuildJob[];
     runningBuildJobs: BuildJob[];
 
