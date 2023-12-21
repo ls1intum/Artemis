@@ -70,13 +70,13 @@ public class LocalCIContainerService {
     @Value("${artemis.continuous-integration.proxies.use-system-proxy:false}")
     boolean useSystemProxy;
 
-    @Value("${artemis.continuous-integration.proxies.default.http-proxy}")
+    @Value("${artemis.continuous-integration.proxies.default.http-proxy:}")
     String httpProxy;
 
-    @Value("${artemis.continuous-integration.proxies.default.https-proxy}")
+    @Value("${artemis.continuous-integration.proxies.default.https-proxy:}")
     String httpsProxy;
 
-    @Value("${artemis.continuous-integration.proxies.default.no-proxy}")
+    @Value("${artemis.continuous-integration.proxies.default.no-proxy:}")
     String noProxy;
 
     AeolusTemplateService aeolusTemplateService;
