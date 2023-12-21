@@ -48,9 +48,9 @@ public class ProgrammingExerciseFeedbackCreationService {
     private static final String TIMEOUT_EXCEPTIONS_REGEX = String.join("|", "org.junit.runners.model.TestTimedOutException", "java.util.concurrent.TimeoutException",
             "org.awaitility.core.ConditionTimeoutException", "TimedOutException");
 
-    private static final String EXCEPTION_PREFIX_MESSAGE_REGEX = "[a-zA-Z0-9._ ]{1,5000}";
+    private static final String EXCEPTION_PREFIX_MESSAGE_REGEX = "[\\w. ]{1,5000}";
 
-    private static final String EXCEPTION_MESSAGE_REGEX = "[a-zA-Z0-9._:\t ]{1,5000}";
+    private static final String EXCEPTION_MESSAGE_REGEX = "[\\w.:\t ]{1,5000}";
 
     /**
      * Defines two pattern groups, (1) the exception name and (2) the exception text
