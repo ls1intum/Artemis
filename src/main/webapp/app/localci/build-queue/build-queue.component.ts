@@ -1,6 +1,5 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 import { BuildJob } from 'app/entities/build-job.model';
@@ -12,8 +11,6 @@ import { faRefresh } from '@fortawesome/free-solid-svg-icons';
     styleUrl: './build-queue.component.scss',
 })
 export class BuildQueueComponent implements OnInit {
-    @ViewChild(DataTableComponent) dataTable: DataTableComponent;
-
     queuedBuildJobs: BuildJob[];
     runningBuildJobs: BuildJob[];
 
