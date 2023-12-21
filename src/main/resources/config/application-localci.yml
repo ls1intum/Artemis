@@ -26,6 +26,3 @@ artemis:
                 http-proxy: http://proxyserver:port
                 https-proxy: http://proxyserver:port
                 no-proxy: localhost,127.0.0.1
-
-
-
