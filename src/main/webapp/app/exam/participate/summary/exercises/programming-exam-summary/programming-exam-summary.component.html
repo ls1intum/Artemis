@@ -19,7 +19,7 @@
                 </div>
                 @if (isAfterResultsArePublished) {
                     <h5>{{ 'artemisApp.exam.examSummary.assessment' | artemisTranslate }}</h5>
-                    @if (feedbackComponentParameters.result) {
+                    @if (feedbackComponentParameters?.result) {
                         <jhi-result-detail
                             [exercise]="feedbackComponentParameters.exercise"
                             [result]="feedbackComponentParameters.result"
