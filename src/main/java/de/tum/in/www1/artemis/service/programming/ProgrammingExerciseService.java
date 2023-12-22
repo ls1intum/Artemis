@@ -261,6 +261,7 @@ public class ProgrammingExerciseService {
 
         savedProgrammingExercise = programmingExerciseRepository.save(savedProgrammingExercise);
 
+<<<<<<< HEAD
         // Step 11: Update task from problem statement
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
