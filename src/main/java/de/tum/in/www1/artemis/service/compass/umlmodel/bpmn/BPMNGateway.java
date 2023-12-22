@@ -5,8 +5,6 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.google.common.base.CaseFormat;
-
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
@@ -73,7 +71,7 @@ public class BPMNGateway extends UMLElement implements Serializable {
      */
     @Override
     public String getType() {
-        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, BPMN_GATEWAY_TYPE);
+        return BPMN_GATEWAY_TYPE;
     }
 
     /**

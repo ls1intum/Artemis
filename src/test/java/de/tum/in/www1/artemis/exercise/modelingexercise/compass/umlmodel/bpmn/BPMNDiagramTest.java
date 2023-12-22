@@ -60,85 +60,131 @@ class BPMNDiagramTest extends AbstractUMLDiagramTest {
         UMLElement taskElement = bpmnDiagram.getElementByJSONID("24e6430e-e7d7-4065-81ae-3575ed168940");
         assertThat(taskElement).isInstanceOf(BPMNTask.class);
         BPMNTask task = (BPMNTask) taskElement;
+        assertThat(task.getType()).isEqualTo("BPMNTask");
         assertThat(task.getName()).isEqualTo("Task");
+        assertThat(task.toString()).isEqualTo("Task");
         assertThat(task.getTaskType()).isEqualTo(BPMNTask.BPMNTaskType.DEFAULT);
         assertThat(task.getMarker()).isEqualTo(BPMNTask.BPMNMarker.NONE);
+        assertThat(task.similarity(task)).isEqualTo(1.0);
 
         UMLElement subprocessElement = bpmnDiagram.getElementByJSONID("9c9b76c8-8e06-4aa5-ab10-ff6e376c9566");
         assertThat(subprocessElement).isInstanceOf(BPMNSubprocess.class);
         BPMNSubprocess subprocess = (BPMNSubprocess) subprocessElement;
+        assertThat(subprocess.getType()).isEqualTo("BPMNSubprocess");
         assertThat(subprocess.getName()).isEqualTo("Subprocess");
+        assertThat(subprocess.toString()).isEqualTo("Subprocess");
+        assertThat(subprocess.similarity(subprocess)).isEqualTo(1.0);
 
         UMLElement transactionElement = bpmnDiagram.getElementByJSONID("3d81a5cd-8541-4532-a72c-5ae4dba48eea");
         assertThat(transactionElement).isInstanceOf(BPMNTransaction.class);
         BPMNTransaction transaction = (BPMNTransaction) transactionElement;
+        assertThat(transaction.getType()).isEqualTo("BPMNTransaction");
         assertThat(transaction.getName()).isEqualTo("Transaction");
+        assertThat(transaction.toString()).isEqualTo("Transaction");
+        assertThat(transaction.similarity(transaction)).isEqualTo(1.0);
 
         UMLElement callActivityElement = bpmnDiagram.getElementByJSONID("b5eddff7-b20c-4181-be3a-6272d5192783");
         assertThat(callActivityElement).isInstanceOf(BPMNCallActivity.class);
         BPMNCallActivity callActivity = (BPMNCallActivity) callActivityElement;
+        assertThat(callActivity.getType()).isEqualTo("BPMNCallActivity");
         assertThat(callActivity.getName()).isEqualTo("Call Activity");
+        assertThat(callActivity.toString()).isEqualTo("Call Activity");
+        assertThat(callActivity.similarity(callActivity)).isEqualTo(1.0);
 
         UMLElement annotationElement = bpmnDiagram.getElementByJSONID("977df2b3-d39e-434a-b364-d058b6d265e5");
         assertThat(annotationElement).isInstanceOf(BPMNAnnotation.class);
         BPMNAnnotation annotation = (BPMNAnnotation) annotationElement;
+        assertThat(annotation.getType()).isEqualTo("BPMNAnnotation");
         assertThat(annotation.getName()).isEqualTo("Annotation");
+        assertThat(annotation.toString()).isEqualTo("Annotation");
+        assertThat(annotation.similarity(annotation)).isEqualTo(1.0);
 
         UMLElement startEventElement = bpmnDiagram.getElementByJSONID("68d1f3b2-3970-44f8-8f37-e34fea4485bb");
         assertThat(startEventElement).isInstanceOf(BPMNStartEvent.class);
         BPMNStartEvent startEvent = (BPMNStartEvent) startEventElement;
+        assertThat(startEvent.getType()).isEqualTo("BPMNStartEvent");
         assertThat(startEvent.getName()).isEqualTo("");
+        assertThat(startEvent.toString()).isEqualTo("");
         assertThat(startEvent.getEventType()).isEqualTo(BPMNStartEvent.BPMNStartEventType.DEFAULT);
+        assertThat(startEvent.similarity(startEvent)).isEqualTo(1.0);
 
         UMLElement intermediateEventElement = bpmnDiagram.getElementByJSONID("3b7f912b-cfc6-4dc5-a6de-0dbe0507c36b");
         assertThat(intermediateEventElement).isInstanceOf(BPMNIntermediateEvent.class);
         BPMNIntermediateEvent intermediateEvent = (BPMNIntermediateEvent) intermediateEventElement;
+        assertThat(intermediateEvent.getType()).isEqualTo("BPMNIntermediateEvent");
         assertThat(intermediateEvent.getName()).isEqualTo("");
+        assertThat(intermediateEvent.toString()).isEqualTo("");
         assertThat(intermediateEvent.getEventType()).isEqualTo(BPMNIntermediateEvent.BPMNIntermediateEventType.DEFAULT);
+        assertThat(intermediateEvent.similarity(intermediateEvent)).isEqualTo(1.0);
 
         UMLElement endEventElement = bpmnDiagram.getElementByJSONID("b2402d3a-525e-4a66-8385-bc14ff548475");
         assertThat(endEventElement).isInstanceOf(BPMNEndEvent.class);
         BPMNEndEvent endEvent = (BPMNEndEvent) endEventElement;
+        assertThat(endEvent.getType()).isEqualTo("BPMNEndEvent");
         assertThat(endEvent.getName()).isEqualTo("");
+        assertThat(endEvent.toString()).isEqualTo("");
         assertThat(endEvent.getEventType()).isEqualTo(BPMNEndEvent.BPMNEndEventType.DEFAULT);
+        assertThat(endEvent.similarity(endEvent)).isEqualTo(1.0);
 
         UMLElement gatewayElement = bpmnDiagram.getElementByJSONID("730a9658-0a60-4fa9-8890-81788cb8a641");
         assertThat(gatewayElement).isInstanceOf(BPMNGateway.class);
         BPMNGateway gateway = (BPMNGateway) gatewayElement;
+        assertThat(gateway.getType()).isEqualTo("BPMNGateway");
         assertThat(gateway.getName()).isEqualTo("");
+        assertThat(gateway.toString()).isEqualTo("");
         assertThat(gateway.getGatewayType()).isEqualTo(BPMNGateway.BPMNGatewayType.EXCLUSIVE);
+        assertThat(gateway.similarity(gateway)).isEqualTo(1.0);
 
         UMLElement dataObjectElement = bpmnDiagram.getElementByJSONID("94b72e34-5eb5-4a32-b098-3bc38a389266");
         assertThat(dataObjectElement).isInstanceOf(BPMNDataObject.class);
         BPMNDataObject dataObject = (BPMNDataObject) dataObjectElement;
+        assertThat(dataObject.getType()).isEqualTo("BPMNDataObject");
         assertThat(dataObject.getName()).isEqualTo("");
+        assertThat(dataObject.toString()).isEqualTo("");
+        assertThat(dataObject.similarity(dataObject)).isEqualTo(1.0);
 
         UMLElement dataStoreElement = bpmnDiagram.getElementByJSONID("7a9aaa87-b828-4244-9692-319b35ec4fbf");
         assertThat(dataStoreElement).isInstanceOf(BPMNDataStore.class);
         BPMNDataStore dataStore = (BPMNDataStore) dataStoreElement;
+        assertThat(dataStore.getType()).isEqualTo("BPMNDataStore");
         assertThat(dataStore.getName()).isEqualTo("");
+        assertThat(dataStore.toString()).isEqualTo("");
+        assertThat(dataStore.similarity(dataStore)).isEqualTo(1.0);
 
         UMLElement groupElement = bpmnDiagram.getElementByJSONID("b12777af-5198-4785-adcb-b783d3897236");
         assertThat(groupElement).isInstanceOf(BPMNGroup.class);
         BPMNGroup group = (BPMNGroup) groupElement;
+        assertThat(group.getType()).isEqualTo("BPMNGroup");
         assertThat(group.getName()).isEqualTo("");
+        assertThat(group.toString()).isEqualTo("");
+        assertThat(group.similarity(group)).isEqualTo(1.0);
 
         UMLElement poolElement = bpmnDiagram.getElementByJSONID("9cf8b22d-62f0-4f29-b354-007e89128729");
         assertThat(poolElement).isInstanceOf(BPMNPool.class);
         BPMNPool pool = (BPMNPool) poolElement;
+        assertThat(pool.getType()).isEqualTo("BPMNPool");
         assertThat(pool.getName()).isEqualTo("Pool");
+        assertThat(pool.toString()).isEqualTo("Pool");
+        assertThat(pool.similarity(pool)).isEqualTo(1.0);
 
         UMLElement swimlaneElement1 = bpmnDiagram.getElementByJSONID("9451d510-b382-45ff-af78-14952d5dc2a0");
         assertThat(swimlaneElement1).isInstanceOf(BPMNSwimlane.class);
         BPMNSwimlane swimlane1 = (BPMNSwimlane) swimlaneElement1;
+        assertThat(swimlane1.getType()).isEqualTo("BPMNSwimlane");
         assertThat(swimlane1.getName()).isEqualTo("Lane 1");
+        assertThat(swimlane1.toString()).isEqualTo("Lane 1");
         assertThat(swimlane1.getParentElement()).isSameAs(pool);
+        assertThat(swimlane1.similarity(swimlane1)).isEqualTo(1.0);
 
         UMLElement swimlaneElement2 = bpmnDiagram.getElementByJSONID("03da0f2b-c915-4881-a7e0-90e8e5a0dad8");
         assertThat(swimlaneElement2).isInstanceOf(BPMNSwimlane.class);
         BPMNSwimlane swimlane2 = (BPMNSwimlane) swimlaneElement2;
+        assertThat(swimlane2.getType()).isEqualTo("BPMNSwimlane");
         assertThat(swimlane2.getName()).isEqualTo("Lane 2");
+        assertThat(swimlane2.toString()).isEqualTo("Lane 2");
         assertThat(swimlane2.getParentElement()).isSameAs(pool);
+        assertThat(swimlane2.similarity(swimlane2)).isEqualTo(1.0);
+        assertThat(swimlane1.similarity(swimlane2)).isEqualTo(0.83);
 
     }
 
