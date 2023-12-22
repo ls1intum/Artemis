@@ -1,0 +1,28 @@
+api: v0.0.1
+actions:
+  - name: tests
+    script: |
+      chmod +x ./gradlew
+      ./gradlew clean test tiaTests --run-all-tests
+    runAlways: false
+  - name: static_code_analysis
+    script: ./gradlew check -x test
+    runAlways: true
+    results:
+      - name: spotbugs
+        path: target/spotbugsXml.xml
+      - name: checkstyle
+        path: target/checkstyle-result.xml
+      - name: pmd
+        path: target/pmd.xml
+      - name: pmd_cpd
+        path: target/cpd.xml
+      - name: testwiseCoverageReport
+        path: build/reports/testwise-coverage/tiaTests/tiaTests.json
+      - name: junit_**/test-results/test/*.xml
+        path: '**/test-results/test/*.xml'
+        type: junit
+  - name: setup_working_directory_for_cleanup
+    script: chmod -R 777 .
+    runAlways: true
+    platform: bamboo

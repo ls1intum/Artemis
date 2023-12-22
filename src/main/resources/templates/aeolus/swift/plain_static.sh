@@ -42,6 +42,7 @@ run_static_code_analysis () {
   # Execute static code analysis
   swiftlint > ../target/swiftlint-result.xml
 }
+
 final_aeolus_post_action () {
   set +e # from now on, we don't exit on errors
   echo '⚙️ executing final_aeolus_post_action'

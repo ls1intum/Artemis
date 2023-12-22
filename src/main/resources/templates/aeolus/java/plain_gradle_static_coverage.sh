@@ -2,26 +2,25 @@
 set -e
 export AEOLUS_INITIAL_DIRECTORY=$(pwd)
 
-maven () {
-  echo '⚙️ executing maven'
-  mvn clean test -Pcoverage
+tests () {
+  echo '⚙️ executing tests'
+  chmod +x ./gradlew
+  ./gradlew clean test tiaTests --run-all-tests
 }
 
-move_report_file () {
-  echo '⚙️ executing move_report_file'
-  mv target/tia/reports/*/testwise-coverage-*.json target/tia/reports/tiaTests.json
-}
-
-junit () {
-  echo '⚙️ executing junit'
-  #empty script action, just for the results
+static_code_analysis () {
+  echo '⚙️ executing static_code_analysis'
+  ./gradlew check -x test
 }
 
 final_aeolus_post_action () {
   set +e # from now on, we don't exit on errors
   echo '⚙️ executing final_aeolus_post_action'
   cd "${AEOLUS_INITIAL_DIRECTORY}"
-  junit
+  static_code_analysis
+  cd "${AEOLUS_INITIAL_DIRECTORY}"
+  setup_working_directory_for_cleanup
+  cd "${AEOLUS_INITIAL_DIRECTORY}"
 }
 
 main () {
@@ -32,9 +31,7 @@ main () {
   local _script_name
   _script_name=$(realpath "${0}")
   trap final_aeolus_post_action EXIT
-  bash -c "source ${_script_name} aeolus_sourcing;maven"
-  cd "${AEOLUS_INITIAL_DIRECTORY}"
-  bash -c "source ${_script_name} aeolus_sourcing;move_report_file"
+  bash -c "source ${_script_name} aeolus_sourcing;tests"
   cd "${AEOLUS_INITIAL_DIRECTORY}"
 }
 

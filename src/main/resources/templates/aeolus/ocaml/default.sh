@@ -14,6 +14,7 @@ junit () {
   echo '⚙️ executing junit'
   #empty script action, just for the results
 }
+
 final_aeolus_post_action () {
   set +e # from now on, we don't exit on errors
   echo '⚙️ executing final_aeolus_post_action'

@@ -12,16 +12,16 @@ move_report_file () {
   mv target/tia/reports/*/testwise-coverage-*.json target/tia/reports/tiaTests.json
 }
 
-junit () {
-  echo '⚙️ executing junit'
-  #empty script action, just for the results
+maven () {
+  echo '⚙️ executing maven'
+  mvn spotbugs:spotbugs checkstyle:checkstyle pmd:pmd pmd:cpd
 }
 
 final_aeolus_post_action () {
   set +e # from now on, we don't exit on errors
   echo '⚙️ executing final_aeolus_post_action'
   cd "${AEOLUS_INITIAL_DIRECTORY}"
-  junit
+  maven
 }
 
 main () {
