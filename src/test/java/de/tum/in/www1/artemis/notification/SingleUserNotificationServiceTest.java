@@ -11,7 +11,6 @@ import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import javax.mail.MessagingException;
@@ -23,7 +22,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
@@ -87,9 +85,6 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private ParticipationUtilService participationUtilService;
-
-    @Captor
-    private ArgumentCaptor<CompletableFuture<Void>> futureCaptor;
 
     private User user;
 
@@ -166,20 +161,14 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         channel.setCreationDate(ZonedDateTime.now());
 
         post = new Post();
-        post.setExercise(exercise);
-        post.setLecture(lecture);
         post.setAuthor(userTwo);
         post.setConversation(channel);
-        post.setCourse(course);
         post.setTitle(POST_TITLE);
         post.setContent(POST_CONTENT);
 
         Post answerPostPost = new Post();
-        answerPostPost.setExercise(exercise);
-        answerPostPost.setLecture(lecture);
         answerPostPost.setConversation(channel);
         answerPostPost.setAuthor(userTwo);
-        answerPostPost.setCourse(course);
         answerPost = new AnswerPost();
         answerPost.setPost(answerPostPost);
         answerPost.setAuthor(userThree);
@@ -253,7 +242,9 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         notificationSettingRepository.save(new NotificationSetting(user, false, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST));
         assertThat(notificationRepository.findAll()).as("No notifications should be present prior to the method call").isEmpty();
 
-        singleUserNotificationService.notifyUserAboutNewMessageReply(answerPost, user, userTwo, NEW_REPLY_FOR_EXERCISE_POST);
+        SingleUserNotification notification = singleUserNotificationService.createNotificationAboutNewMessageReply(answerPost, answerPost.getAuthor(),
+                answerPost.getPost().getConversation());
+        singleUserNotificationService.notifyUserAboutNewMessageReply(answerPost, notification, user, userTwo, NEW_REPLY_FOR_EXERCISE_POST);
 
         assertThat(notificationRepository.findAll()).as("The notification should have been saved to the DB").hasSize(1);
         // no web app notification or email should be sent
@@ -422,15 +413,16 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         post.setAuthor(user);
         post.setCreationDate(ZonedDateTime.now());
         post.setConversation(groupChat);
-        post.setCourse(course);
 
         AnswerPost answerPost = new AnswerPost();
         answerPost.setAuthor(userTwo);
         answerPost.setCreationDate(ZonedDateTime.now().plusSeconds(5));
         answerPost.setPost(post);
 
-        singleUserNotificationService.notifyUserAboutNewMessageReply(answerPost, user, userTwo, CONVERSATION_NEW_REPLY_MESSAGE);
-        verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
+        SingleUserNotification notification = singleUserNotificationService.createNotificationAboutNewMessageReply(answerPost, answerPost.getAuthor(),
+                answerPost.getPost().getConversation());
+        singleUserNotificationService.notifyUserAboutNewMessageReply(answerPost, notification, user, userTwo, CONVERSATION_NEW_REPLY_MESSAGE);
+        verify(websocketMessagingService, never()).sendMessage(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
         Notification sentNotification = notificationRepository.findAll().stream().max(Comparator.comparing(DomainObject::getId)).orElseThrow();
 
         SingleUserNotificationService.NewReplyNotificationSubject notificationSubject = new SingleUserNotificationService.NewReplyNotificationSubject(answerPost, user, userTwo);
