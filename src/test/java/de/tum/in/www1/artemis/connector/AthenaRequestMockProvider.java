@@ -204,6 +204,11 @@ public class AthenaRequestMockProvider {
         responseActions.andRespond(withSuccess(node.toString(), MediaType.APPLICATION_JSON));
     }
 
+    /**
+     * Mocks the /modules API from Athena used to retrieve all available feedback suggestion modules
+     * Makes the endpoint return an empty module list.
+     *
+     */
     public void mockGetAvailableModulesSuccessEmptyModulesList() {
         // Response: []
         final ArrayNode array = mapper.createArrayNode();
@@ -212,6 +217,11 @@ public class AthenaRequestMockProvider {
         responseActions.andRespond(withSuccess().body(array.toString()).contentType(MediaType.APPLICATION_JSON));
     }
 
+    /**
+     * Mocks the /modules API from Athena used to retrieve all available feedback suggestion modules
+     * Makes the endpoint return four modules (2x text and 2x programming).
+     *
+     */
     public void mockGetAvailableModulesSuccess() {
         // Response:
         // [{"name":"module_example","url":"http://module-example-service:5001","type":"programming","supports_evaluation":true},{"name":"module_programming_llm","url":"http://module-programming-llm-service:5002","type":"programming","supports_evaluation":false},{"name":"module_text_llm","url":"http://module-text-llm-service:5003","type":"text","supports_evaluation":true},{"name":"module_text_cofee","url":"http://module-text-cofee-service:5004","type":"text","supports_evaluation":false},{"name":"module_programming_themisml","url":"http://module-programming-themisml-service:5005","type":"programming","supports_evaluation":false}]
@@ -226,11 +236,15 @@ public class AthenaRequestMockProvider {
         responseActions.andRespond(withSuccess().body(array.toString()).contentType(MediaType.APPLICATION_JSON));
     }
 
-    public void mockGetAvailableModulesFailure() {
-        final ResponseActions responseActions = mockServerShortTimeout.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules")).andExpect(method(HttpMethod.GET));
-        responseActions.andRespond(withException(new SocketTimeoutException()));
-    }
-
+    /**
+     * Helper method to create a JSON representation of a feedback module as sent by Athena
+     *
+     * @param name               The name of the module
+     * @param url                The URL of the module
+     * @param type               The type for which the module can generate feedback suggestions
+     * @param supportsEvaluation Indicating if the module can support evaluation (not used in Artemis)
+     * @return JSON representation of the feedback module
+     */
     private ObjectNode createModule(String name, String url, String type, boolean supportsEvaluation) {
         // creates {"name":"module_example","url":"http://module-example-service:5001","type":"programming","supports_evaluation":true}
         ObjectNode moduleNode = mapper.createObjectNode();
@@ -242,7 +256,7 @@ public class AthenaRequestMockProvider {
     }
 
     /**
-     * Mocks ths /health API endpoint from Athena used to check if the service is up and running
+     * Mocks the /health API endpoint from Athena used to check if the service is up and running
      *
      * @param exampleModuleHealthy Example module health status (in addition to the general status)
      */
