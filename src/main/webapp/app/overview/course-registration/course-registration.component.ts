@@ -49,7 +49,7 @@ export class CourseRegistrationComponent implements OnInit {
             } else {
                 this.coursesToSelect = this.sortService.sortByProperty(courses, this.predicate, this.ascending);
             }
-            this.filteredCoursesToSelect = [...this.coursesToSelect];
+            this.applySearch(); // Call this here to re-apply the search term after sorting
             this.loading = false;
         });
     }
@@ -71,6 +71,7 @@ export class CourseRegistrationComponent implements OnInit {
             relativeTo: this.activatedRoute.parent,
             queryParams: {
                 sort: `${this.predicate},${this.ascending ? ASC : DESC}`,
+                search: this.searchTermString, // Add the search term to the query parameters
             },
         });
     }
@@ -96,6 +97,7 @@ export class CourseRegistrationComponent implements OnInit {
                 this.predicate = 'title';
                 this.ascending = true;
             }
+            this.searchTermString = params.get('search') || '';
             this.loadRegistrableCourses();
         });
     }
