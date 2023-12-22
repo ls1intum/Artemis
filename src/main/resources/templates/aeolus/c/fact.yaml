@@ -30,14 +30,14 @@ actions:
           rm Tests.py
           rm -rf ./tests || true
       runAlways: false
+      results:
+          -   name: junit_test-reports/tests-results.xml
+              path: test-reports/tests-results.xml
+              type: junit
     - name: cleanup
+      platform: bamboo
       script: |-
           sudo rm -rf tests/ assignment/ test-reports/ || true
           chmod -R 777 .
       runAlways: true
-      results:
-          - name: junit_test-reports/tests-results.xml
-            path: test-reports/tests-results.xml
-            type: junit
-            before: true
 

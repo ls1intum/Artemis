@@ -65,15 +65,16 @@ actions:
               exit 1
           fi
       runAlways: false
+      results:
+          -   name: gcc
+              path: target/gcc.xml
+          -   name: junit_test-reports/tests-results.xml
+              path: test-reports/tests-results.xml
+              type: junit
+              before: true
     - name: cleanup
       script: |-
           sudo rm -rf tests/ assignment/ test-reports/ || true
           chmod -R 777 .
       runAlways: true
-      results:
-          - name: gcc
-            path: target/gcc.xml
-          - name: junit_test-reports/tests-results.xml
-            path: test-reports/tests-results.xml
-            type: junit
-            before: true
+      platform: bamboo
