@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,6 +17,13 @@ public interface LongFeedbackTextRepository extends JpaRepository<LongFeedbackTe
             WHERE longFeedback.feedback.id = :feedbackId
             """)
     Optional<LongFeedbackText> findByFeedbackId(long feedbackId);
+
+    @Query("""
+            SELECT longFeedback
+            FROM LongFeedbackText longFeedback
+            WHERE longFeedback.feedback.id IN :feedbackIds
+            """)
+    List<LongFeedbackText> findByFeedbackIds(List<Long> feedbackIds);
 
     @Query("""
             SELECT longFeedback

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -393,13 +394,22 @@ public class ResultService {
     private List<Feedback> saveFeedbackWithHibernateWorkaround(@NotNull Result result, List<Feedback> feedbackList) {
         // Avoid hibernate exception
         List<Feedback> savedFeedbacks = new ArrayList<>();
+        // Collect ids of feedbacks that have long feedback.
+        List<Long> feedbackIdsWithLongFeedback = feedbackList.stream().filter(feedback -> feedback.getId() != null && feedback.getHasLongFeedbackText()).map(Feedback::getId)
+                .toList();
+        // Get long feedback list from the database.
+        List<LongFeedbackText> longFeedbackTextList = longFeedbackTextRepository.findByFeedbackIds(feedbackIdsWithLongFeedback);
+
+        // Convert list to map for accessing later.
+        Map<Long, LongFeedbackText> longLongFeedbackTextMap = longFeedbackTextList.stream()
+                .collect(Collectors.toMap(longFeedbackText -> longFeedbackText.getFeedback().getId(), longFeedbackText -> longFeedbackText));
         feedbackList.forEach(feedback -> {
             // cut association to parent object
             feedback.setResult(null);
             LongFeedbackText longFeedback = null;
-            // search for long feedback parent feedback has and cut the association between them.
-            if (feedback.getId() != null) {
-                longFeedback = longFeedbackTextRepository.findByFeedbackId(feedback.getId()).orElse(null);
+            // look for long feedback that parent feedback has and cut the association between them.
+            if (feedback.getId() != null && feedback.getHasLongFeedbackText()) {
+                longFeedback = longLongFeedbackTextMap.get(feedback.getId());
                 if (longFeedback != null) {
                     feedback.clearLongFeedback();
                 }
