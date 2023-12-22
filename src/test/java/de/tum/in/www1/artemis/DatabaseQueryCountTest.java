@@ -47,6 +47,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
     void testGetAllCoursesForDashboardRealisticQueryCount() throws Exception {
         // Tests the amount of DB calls for a 'realistic' call to courses/for-dashboard. We should aim to maintain or lower the amount of DB calls, and be aware if they increase
         // TODO: add team exercises, do not make all quizzes active
+        // TODO: add 1. tutorial groups with a 2. tutorial group configuration, 3. competencies and 4. prerequisites and make sure those are not loaded in the database
         var courses = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, true, true, NUMBER_OF_TUTORS);
 
         assertThatDb(() -> {
@@ -54,7 +55,8 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
             var userCourses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
             log.info("Finish courses for dashboard call for multiple courses");
             return userCourses;
-        }).hasBeenCalledAtMostTimes(11);
+        }).hasBeenCalledAtMostTimes(9);
+        // TODO: update the following description, we only have 9 and not 11 calls
         // 1 DB call to get the user from the DB
         // 1 DB call to get the course with exercise, lectures
         // 1 DB call to load all exercises
@@ -71,7 +73,8 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
             var userCourse = request.get("/api/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, Course.class);
             log.info("Finish courses for dashboard call for one course");
             return userCourse;
-        }).hasBeenCalledAtMostTimes(15);
+        }).hasBeenCalledAtMostTimes(11);
+        // TODO: update the following description, we only have 11 and not 15 calls
         // 1 DB call to get the user from the DB
         // 2 DB calls to get the course with exercise, lectures, exams
         // 1 DB call to load all exercises
