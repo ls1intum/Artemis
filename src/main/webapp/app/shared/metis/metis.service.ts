@@ -1,10 +1,10 @@
 import { Post } from 'app/entities/metis/post.model';
 import { PostService } from 'app/shared/metis/post.service';
-import { BehaviorSubject, Observable, ReplaySubject, map } from 'rxjs';
+import { BehaviorSubject, Observable, ReplaySubject, Subscription, map, tap } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { Course, isCommunicationEnabled } from 'app/entities/course.model';
+import { Course } from 'app/entities/course.model';
 import { Posting } from 'app/entities/metis/posting.model';
 import { Injectable, OnDestroy } from '@angular/core';
 import { AnswerPostService } from 'app/shared/metis/answer-post.service';
@@ -13,16 +13,14 @@ import { Reaction } from 'app/entities/metis/reaction.model';
 import { ReactionService } from 'app/shared/metis/reaction.service';
 import {
     ContextInformation,
-    CourseWideContext,
     DisplayPriority,
     MetisPostAction,
     MetisWebsocketChannelPrefix,
     PageType,
     PostContextFilter,
     RouteComponents,
+    SortDirection,
 } from 'app/shared/metis/metis.util';
-import { Exercise } from 'app/entities/exercise.model';
-import { Lecture } from 'app/entities/lecture.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Params } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -32,6 +30,8 @@ import dayjs from 'dayjs/esm';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, ChannelSubType, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { NotificationService } from 'app/shared/notification/notification.service';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -50,6 +50,7 @@ export class MetisService implements OnDestroy {
     private subscriptionChannel?: string;
 
     private forceUpdate: boolean;
+    private courseWideTopicSubscription: Subscription;
 
     constructor(
         protected postService: PostService,
@@ -59,10 +60,14 @@ export class MetisService implements OnDestroy {
         protected exerciseService: ExerciseService,
         private translateService: TranslateService,
         private jhiWebsocketService: JhiWebsocketService,
+        private conversationService: ConversationService,
+        notificationService: NotificationService,
     ) {
         this.accountService.identity().then((user: User) => {
             this.user = user!;
         });
+
+        this.courseWideTopicSubscription = notificationService.newOrUpdatedMessage.subscribe(this.handleNewOrUpdatedMessage);
     }
 
     get posts(): Observable<Post[]> {
@@ -75,6 +80,10 @@ export class MetisService implements OnDestroy {
 
     get totalNumberOfPosts(): Observable<number> {
         return this.totalNumberOfPosts$.asObservable();
+    }
+
+    getCurrentConversation(): ConversationDto | undefined {
+        return this.currentConversation;
     }
 
     static getLinkForLecturePost(courseId: number, lectureId: number): RouteComponents {
@@ -109,6 +118,7 @@ export class MetisService implements OnDestroy {
         if (this.subscriptionChannel) {
             this.jhiWebsocketService.unsubscribe(this.subscriptionChannel);
         }
+        this.courseWideTopicSubscription.unsubscribe();
     }
 
     getPageType(): PageType {
@@ -135,9 +145,6 @@ export class MetisService implements OnDestroy {
         if (course && (this.courseId === undefined || this.courseId !== course.id)) {
             this.courseId = course.id!;
             this.course = course;
-            if (isCommunicationEnabled(course)) {
-                this.updateCoursePostTags();
-            }
         }
     }
 
@@ -184,7 +191,7 @@ export class MetisService implements OnDestroy {
             this.currentPostContextFilter = postContextFilter;
             this.currentConversation = conversation;
             this.postService.getPosts(this.courseId, postContextFilter).subscribe((res) => {
-                if (!forceUpdate && PageType.OVERVIEW === this.pageType) {
+                if (!forceUpdate && (PageType.OVERVIEW === this.pageType || PageType.PAGE_SECTION === this.pageType)) {
                     // if infinite scroll enabled, add fetched posts to the end of cachedPosts
                     this.cachedPosts.push(...res.body!);
                 } else {
@@ -210,7 +217,18 @@ export class MetisService implements OnDestroy {
      * @return {Observable<Post>} created post
      */
     createPost(post: Post): Observable<Post> {
-        return this.postService.create(this.courseId, post).pipe(map((res: HttpResponse<Post>) => res.body!));
+        return this.postService.create(this.courseId, post).pipe(
+            map((res: HttpResponse<Post>) => res.body!),
+            tap((createdPost: Post) => {
+                const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === createdPost.id);
+                // Update the cached posts after successfully creating a new post if it is not already cached (can happen if the WebSocket message arrives before the HTTP response)
+                if (indexToUpdate === -1) {
+                    this.cachedPosts = [createdPost, ...this.cachedPosts];
+                    this.posts$.next(this.cachedPosts);
+                    this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                }
+            }),
+        );
     }
 
     /**
@@ -219,7 +237,25 @@ export class MetisService implements OnDestroy {
      * @return {Observable<AnswerPost>} created answer post
      */
     createAnswerPost(answerPost: AnswerPost): Observable<AnswerPost> {
-        return this.answerPostService.create(this.courseId, answerPost).pipe(map((res: HttpResponse<Post>) => res.body!));
+        return this.answerPostService.create(this.courseId, answerPost).pipe(
+            map((res: HttpResponse<AnswerPost>) => res.body!),
+            tap((createdAnswerPost: AnswerPost) => {
+                const indexOfCachedPost = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === answerPost.post?.id);
+                if (indexOfCachedPost > -1) {
+                    // Update the answers of the cached post, if the answer is not already included in the list of answers
+                    const indexOfAnswer = this.cachedPosts[indexOfCachedPost].answers?.findIndex((answer) => answer.id === createdAnswerPost.id) ?? -1;
+                    if (indexOfAnswer === -1) {
+                        if (!this.cachedPosts[indexOfCachedPost].answers) {
+                            // Need to create a new message object since Angular doesn't detect changes otherwise
+                            this.cachedPosts[indexOfCachedPost] = { ...this.cachedPosts[indexOfCachedPost], answers: [], reactions: [] };
+                        }
+                        this.cachedPosts[indexOfCachedPost].answers!.push(createdAnswerPost);
+                        this.posts$.next(this.cachedPosts);
+                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                    }
+                }
+            }),
+        );
     }
 
     /**
@@ -228,7 +264,18 @@ export class MetisService implements OnDestroy {
      * @return {Observable<Post>} updated post
      */
     updatePost(post: Post): Observable<Post> {
-        return this.postService.update(this.courseId, post).pipe(map((res: HttpResponse<Post>) => res.body!));
+        return this.postService.update(this.courseId, post).pipe(
+            map((res: HttpResponse<Post>) => res.body!),
+            tap((updatedPost: Post) => {
+                const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === updatedPost.id);
+                if (indexToUpdate > -1) {
+                    updatedPost.answers = [...(this.cachedPosts[indexToUpdate].answers ?? [])];
+                    this.cachedPosts[indexToUpdate] = updatedPost;
+                    this.posts$.next(this.cachedPosts);
+                    this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                }
+            }),
+        );
     }
 
     /**
@@ -237,7 +284,21 @@ export class MetisService implements OnDestroy {
      * @return {Observable<AnswerPost>} updated answer post
      */
     updateAnswerPost(answerPost: AnswerPost): Observable<AnswerPost> {
-        return this.answerPostService.update(this.courseId, answerPost).pipe(map((res: HttpResponse<Post>) => res.body!));
+        return this.answerPostService.update(this.courseId, answerPost).pipe(
+            map((res: HttpResponse<AnswerPost>) => res.body!),
+            tap((updatedAnswerPost: AnswerPost) => {
+                const indexOfCachedPost = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === answerPost.post?.id);
+                if (indexOfCachedPost > -1) {
+                    const indexOfAnswer = this.cachedPosts[indexOfCachedPost].answers?.findIndex((answer) => answer.id === updatedAnswerPost.id) ?? -1;
+                    if (indexOfAnswer > -1) {
+                        updatedAnswerPost.post = { ...this.cachedPosts[indexOfCachedPost], answers: [], reactions: [] };
+                        this.cachedPosts[indexOfCachedPost].answers![indexOfAnswer] = updatedAnswerPost;
+                        this.posts$.next(this.cachedPosts);
+                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                    }
+                }
+            }),
+        );
     }
 
     /**
@@ -255,7 +316,20 @@ export class MetisService implements OnDestroy {
      * @param {Post} post to be deleted
      */
     deletePost(post: Post): void {
-        this.postService.delete(this.courseId, post).subscribe();
+        this.postService
+            .delete(this.courseId, post)
+            .pipe(
+                tap(() => {
+                    const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === post.id);
+                    // Delete the cached post if it still exists (might be already deleted due to WebSocket message)
+                    if (indexToUpdate > -1) {
+                        this.cachedPosts.splice(indexToUpdate, 1);
+                        this.posts$.next(this.cachedPosts);
+                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                    }
+                }),
+            )
+            .subscribe();
     }
 
     /**
@@ -263,7 +337,23 @@ export class MetisService implements OnDestroy {
      * @param {AnswerPost} answerPost to be deleted
      */
     deleteAnswerPost(answerPost: AnswerPost): void {
-        this.answerPostService.delete(this.courseId, answerPost).subscribe();
+        this.answerPostService
+            .delete(this.courseId, answerPost)
+            .pipe(
+                tap(() => {
+                    const indexOfCachedPost = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === answerPost.post?.id);
+                    if (indexOfCachedPost > -1) {
+                        // Delete the answer if it still exists (might already be deleted due to WebSocket message)
+                        const indexOfAnswer = this.cachedPosts[indexOfCachedPost].answers?.findIndex((answer) => answer.id === answerPost.id) ?? -1;
+                        if (indexOfAnswer > -1) {
+                            this.cachedPosts[indexOfCachedPost].answers!.splice(indexOfAnswer, 1);
+                            this.posts$.next(this.cachedPosts);
+                            this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                        }
+                    }
+                }),
+            )
+            .subscribe();
     }
 
     /**
@@ -272,7 +362,25 @@ export class MetisService implements OnDestroy {
      * @return {Observable<Reaction>} created reaction
      */
     createReaction(reaction: Reaction): Observable<Reaction> {
-        return this.reactionService.create(this.courseId, reaction).pipe(map((res: HttpResponse<Post>) => res.body!));
+        return this.reactionService.create(this.courseId, reaction).pipe(
+            map((res: HttpResponse<Reaction>) => res.body!),
+            tap((createdReaction: Reaction) => {
+                const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === createdReaction.post?.id);
+                if (indexToUpdate > -1) {
+                    const cachedPost = this.cachedPosts[indexToUpdate];
+                    const indexOfReaction = cachedPost.reactions?.findIndex((r) => r.id === createdReaction.id) ?? -1;
+                    // Only add reaction if not already there (can happen due to WebSocket update)
+                    if (indexOfReaction === -1) {
+                        cachedPost.reactions = cachedPost.reactions ?? [];
+                        cachedPost.reactions!.push(createdReaction);
+                        // Need to create a new message object since Angular doesn't detect changes otherwise
+                        this.cachedPosts[indexToUpdate] = { ...cachedPost };
+                        this.posts$.next(this.cachedPosts);
+                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                    }
+                }
+            }),
+        );
     }
 
     /**
@@ -280,7 +388,24 @@ export class MetisService implements OnDestroy {
      * @param {Reaction} reaction to be deleted
      */
     deleteReaction(reaction: Reaction): Observable<void> {
-        return this.reactionService.delete(this.courseId, reaction).pipe(map((res: HttpResponse<void>) => res.body!));
+        return this.reactionService.delete(this.courseId, reaction).pipe(
+            map((res: HttpResponse<void>) => res.body!),
+            tap(() => {
+                const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === reaction.post?.id);
+                if (indexToUpdate > -1) {
+                    // Delete the reaction from the post if it is not already deleted (can happen due to WebSocket message)
+                    const cachedPost = this.cachedPosts[indexToUpdate];
+                    const indexOfReaction = cachedPost.reactions?.findIndex((r) => r.id == reaction.id) ?? -1;
+                    if (indexOfReaction > -1) {
+                        cachedPost.reactions!.splice(indexOfReaction, 1);
+                        // Need to create a new message object since Angular doesn't detect changes otherwise
+                        this.cachedPosts[indexToUpdate] = { ...cachedPost };
+                        this.posts$.next(this.cachedPosts);
+                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                    }
+                }
+            }),
+        );
     }
 
     /**
@@ -313,46 +438,25 @@ export class MetisService implements OnDestroy {
     }
     /**
      * creates empty default post that is needed on initialization of a newly opened modal to edit or create a post
-     * @param {CourseWideContext | undefined} courseWideContext optional course-wide context as default context
-     * @param {Exercise | undefined} exercise optional exercise as default context
-     * @param {Lecture | undefined} lecture optional lecture as default context
-     * @param plagiarismCase
-     * @param conversation
+     * @param conversation optional conversation as default context
+     * @param plagiarismCase optional plagiarism case as default context
      * @return {Post} created default object
      */
-    createEmptyPostForContext(courseWideContext?: CourseWideContext, exercise?: Exercise, lecture?: Lecture, plagiarismCase?: PlagiarismCase, conversation?: Conversation): Post {
+    createEmptyPostForContext(conversation?: Conversation, plagiarismCase?: PlagiarismCase): Post {
         const emptyPost: Post = new Post();
-        if (courseWideContext) {
-            emptyPost.courseWideContext = courseWideContext;
-            emptyPost.course = this.course;
-        } else if (exercise) {
-            const exercisePost = ExerciseService.convertExerciseFromClient(exercise);
-            emptyPost.exercise = { id: exercisePost.id, title: exercisePost.title, type: exercisePost.type } as Exercise;
-        } else if (lecture) {
-            emptyPost.lecture = { id: lecture.id, title: lecture.title } as Lecture;
+        if (conversation) {
+            emptyPost.conversation = conversation;
         } else if (plagiarismCase) {
             emptyPost.plagiarismCase = { id: plagiarismCase.id } as PlagiarismCase;
-        } else if (conversation) {
-            emptyPost.conversation = conversation;
-        } else {
-            // set default
-            emptyPost.courseWideContext = CourseWideContext.TECH_SUPPORT as CourseWideContext;
         }
         return emptyPost;
     }
 
     /**
      * determines the router link components required for navigating to the detail view of the given post
-     * @param {Post} post to be navigated to
      * @return {RouteComponents} array of router link components
      */
-    getLinkForPost(post?: Post): RouteComponents {
-        if (post?.lecture) {
-            return MetisService.getLinkForLecturePost(this.courseId, post.lecture.id!);
-        }
-        if (post?.exercise) {
-            return MetisService.getLinkForExercisePost(this.courseId, post.exercise.id!);
-        }
+    getLinkForPost(): RouteComponents {
         return MetisService.getLinkForCoursePost(this.courseId);
     }
 
@@ -413,11 +517,10 @@ export class MetisService implements OnDestroy {
      * @return {Params} required parameter key-value pair
      */
     getQueryParamsForPost(post: Post): Params {
-        if (post.courseWideContext) {
+        if (post.conversation) {
             return MetisService.getQueryParamsForCoursePost(post.id!);
-        } else {
-            return MetisService.getQueryParamsForLectureOrExercisePost(post.id!);
         }
+        return {};
     }
 
     /**
@@ -427,18 +530,14 @@ export class MetisService implements OnDestroy {
      */
     getContextInformation(post: Post): ContextInformation {
         let routerLinkComponents = undefined;
-        let displayName;
-        if (post.exercise) {
-            displayName = post.exercise.title!;
-            routerLinkComponents = ['/courses', this.courseId, 'exercises', post.exercise.id!];
-        } else if (post.lecture) {
-            displayName = post.lecture.title!;
-            routerLinkComponents = ['/courses', this.courseId, 'lectures', post.lecture.id!];
-        } else {
-            // course-wide topics are not linked, only displayName is set
-            displayName = this.translateService.instant('artemisApp.metis.overview.' + post.courseWideContext);
+        let queryParams = undefined;
+        let displayName = '';
+        if (post.conversation) {
+            displayName = getAsChannelDto(post.conversation)?.name ?? '';
+            routerLinkComponents = ['/courses', this.courseId, 'messages'];
+            queryParams = { conversationId: post.conversation.id! };
         }
-        return { routerLinkComponents, displayName };
+        return { routerLinkComponents, displayName, queryParams };
     }
 
     /**
@@ -465,60 +564,90 @@ export class MetisService implements OnDestroy {
         // unsubscribe from existing channel subscription
         if (this.subscriptionChannel) {
             this.jhiWebsocketService.unsubscribe(this.subscriptionChannel);
+            this.subscriptionChannel = undefined;
         }
+
         // create new subscription
         this.subscriptionChannel = channel;
         this.jhiWebsocketService.subscribe(this.subscriptionChannel);
-        this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((postDTO: MetisPostDTO) => {
-            postDTO.post.creationDate = dayjs(postDTO.post.creationDate);
-            postDTO.post.answers?.forEach((answer: AnswerPost) => {
-                answer.creationDate = dayjs(answer.creationDate);
-            });
+        this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe(this.handleNewOrUpdatedMessage);
+    }
 
-            switch (postDTO.action) {
-                case MetisPostAction.CREATE:
-                    if (
-                        postDTO.post.conversation?.id !== undefined &&
-                        postDTO.post.conversation.id === this.currentPostContextFilter.conversationId &&
-                        (!this.currentPostContextFilter.searchText || postDTO.post.content?.toLowerCase().includes(this.currentPostContextFilter.searchText.toLowerCase()))
-                    ) {
-                        // we can add the received conversation message to the cached messages without violating the current context filter setting
+    private handleNewOrUpdatedMessage = (postDTO: MetisPostDTO): void => {
+        const postConvId = postDTO.post.conversation?.id;
+        const postIsNotFromCurrentConversation = this.currentPostContextFilter.conversationId && postConvId !== this.currentPostContextFilter.conversationId;
+        const postIsNotFromSelectedCourseWideChannels =
+            this.currentPostContextFilter.courseWideChannelIds?.length && postConvId && !this.currentPostContextFilter.courseWideChannelIds.includes(postConvId);
+        const postIsNotCourseWide = !getAsChannelDto(postDTO.post.conversation)?.isCourseWide;
+
+        if (postIsNotFromCurrentConversation || postIsNotFromSelectedCourseWideChannels || postIsNotCourseWide) {
+            return;
+        }
+
+        postDTO.post.creationDate = dayjs(postDTO.post.creationDate);
+        postDTO.post.answers?.forEach((answer: AnswerPost) => {
+            answer.creationDate = dayjs(answer.creationDate);
+        });
+
+        switch (postDTO.action) {
+            case MetisPostAction.CREATE:
+                const doesNotMatchOwnFilter = this.currentPostContextFilter.filterToOwn && postDTO.post.author?.id !== this.user.id;
+                const doesNotMatchReactedFilter = this.currentPostContextFilter.filterToAnsweredOrReacted;
+                const doesNotMatchSearchString =
+                    this.currentPostContextFilter.searchText?.length &&
+                    !postDTO.post.content?.toLowerCase().includes(this.currentPostContextFilter.searchText.toLowerCase().trim());
+
+                if (!postConvId || doesNotMatchOwnFilter || doesNotMatchReactedFilter || doesNotMatchSearchString) {
+                    break;
+                }
+                // we can add the received conversation message to the cached messages without violating the current context filter setting
+                // prevent adding the same post multiple times
+                const existingPostIndex = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
+                if (existingPostIndex === -1) {
+                    if (this.currentPostContextFilter.sortingOrder === SortDirection.ASCENDING) {
+                        this.cachedPosts.push(postDTO.post);
+                    } else {
                         this.cachedPosts = [postDTO.post, ...this.cachedPosts];
                     }
-                    this.addTags(postDTO.post.tags);
-                    break;
-                case MetisPostAction.UPDATE:
-                    const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
-                    if (indexToUpdate > -1) {
-                        this.cachedPosts[indexToUpdate] = postDTO.post;
-                    }
-                    this.addTags(postDTO.post.tags);
-                    break;
-                case MetisPostAction.DELETE:
-                    const indexToDelete = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
-                    if (indexToDelete > -1) {
-                        this.cachedPosts.splice(indexToDelete, 1);
-                    }
-                    break;
-                default:
-                    break;
-            }
-            // emit updated version of cachedPosts to subscribing components...
-            if (PageType.OVERVIEW === this.pageType || PageType.PAGE_SECTION === this.pageType) {
-                const oldPage = this.currentPostContextFilter.page;
-                const oldPageSize = this.currentPostContextFilter.pageSize;
-                this.currentPostContextFilter.pageSize = oldPageSize! * (oldPage! + 1);
-                this.currentPostContextFilter.page = 0;
-                // ...by invoking the getFilteredPosts method with forceUpdate set to true iff receiving a new Q&A post, i.e. fetching posts from server only in this case
-                this.getFilteredPosts(this.currentPostContextFilter, !postDTO.post.conversation && postDTO.action === MetisPostAction.CREATE, this.currentConversation);
-                this.currentPostContextFilter.pageSize = oldPageSize;
-                this.currentPostContextFilter.page = oldPage;
-            } else {
-                // ...by invoking the getFilteredPosts method with forceUpdate set to false, i.e. without fetching posts from server
-                this.getFilteredPosts(this.currentPostContextFilter, false);
-            }
-        });
-    }
+                }
+
+                if (this.currentPostContextFilter.conversationId && postDTO.post.author?.id !== this.user.id) {
+                    this.conversationService.markAsRead(this.courseId, this.currentPostContextFilter.conversationId).subscribe();
+                }
+
+                this.addTags(postDTO.post.tags);
+                break;
+            case MetisPostAction.UPDATE:
+                const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
+                if (indexToUpdate > -1) {
+                    this.cachedPosts[indexToUpdate] = postDTO.post;
+                }
+                this.addTags(postDTO.post.tags);
+                break;
+            case MetisPostAction.DELETE:
+                const indexToDelete = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
+                if (indexToDelete > -1) {
+                    this.cachedPosts.splice(indexToDelete, 1);
+                }
+                break;
+            default:
+                break;
+        }
+        // emit updated version of cachedPosts to subscribing components...
+        if (PageType.OVERVIEW === this.pageType) {
+            const oldPage = this.currentPostContextFilter.page;
+            const oldPageSize = this.currentPostContextFilter.pageSize;
+            this.currentPostContextFilter.pageSize = oldPageSize! * (oldPage! + 1);
+            this.currentPostContextFilter.page = 0;
+            // ...by invoking the getFilteredPosts method with forceUpdate set to true iff receiving a new Q&A post, i.e. fetching posts from server only in this case
+            this.getFilteredPosts(this.currentPostContextFilter, !postConvId, this.currentConversation);
+            this.currentPostContextFilter.pageSize = oldPageSize;
+            this.currentPostContextFilter.page = oldPage;
+        } else {
+            // ...by invoking the getFilteredPosts method with forceUpdate set to false, i.e. without fetching posts from server
+            this.getFilteredPosts(this.currentPostContextFilter, false);
+        }
+    };
 
     /**
      * Determines the channel to be used for websocket communication based on the current post context filter,
@@ -526,16 +655,17 @@ export class MetisService implements OnDestroy {
      * By calling the createWebsocketSubscription method with this channel as parameter, the metis service also subscribes to that messages in this channel
      */
     private createSubscriptionFromPostContextFilter(): void {
-        let channel = MetisWebsocketChannelPrefix;
-        if (getAsChannelDto(this.currentConversation)?.isCourseWide) {
-            channel = `${MetisWebsocketChannelPrefix}courses/${this.courseId}/conversations/` + this.currentPostContextFilter.conversationId;
-        } else if (this.currentPostContextFilter.conversationId) {
-            channel = `/user${MetisWebsocketChannelPrefix}courses/${this.courseId}/conversations/` + this.currentPostContextFilter.conversationId;
+        if (this.currentPostContextFilter.plagiarismCaseId) {
+            const channel = MetisWebsocketChannelPrefix + 'plagiarismCase/' + this.currentPostContextFilter.plagiarismCaseId;
+            this.createWebsocketSubscription(channel);
         } else {
-            // subscribe to course as this is topic that is emitted on in every case
-            channel += `courses/${this.courseId}`;
+            // No need for extra subscription since messaging topics are covered by other services
+            if (this.subscriptionChannel) {
+                this.jhiWebsocketService.unsubscribe(this.subscriptionChannel);
+                this.subscriptionChannel = undefined;
+            }
+            return;
         }
-        this.createWebsocketSubscription(channel);
     }
 
     /**
@@ -549,18 +679,9 @@ export class MetisService implements OnDestroy {
     }
 
     private hasDifferentContexts(other: PostContextFilter): boolean {
-        this.currentPostContextFilter.courseWideContexts?.sort();
-        this.currentPostContextFilter.exerciseIds?.sort((a, b) => a - b);
-        this.currentPostContextFilter.lectureIds?.sort((a, b) => a - b);
+        this.currentPostContextFilter.courseWideChannelIds?.sort((a, b) => a - b);
+        other.courseWideChannelIds?.sort((a, b) => a - b);
 
-        other.courseWideContexts?.sort();
-        other.exerciseIds?.sort((a, b) => a - b);
-        other.lectureIds?.sort((a, b) => a - b);
-
-        return (
-            this.currentPostContextFilter.courseWideContexts?.toString() !== other.courseWideContexts?.toString() ||
-            this.currentPostContextFilter.exerciseIds?.toString() !== other.exerciseIds?.toString() ||
-            this.currentPostContextFilter.lectureIds?.toString() !== other.lectureIds?.toString()
-        );
+        return this.currentPostContextFilter.courseWideChannelIds?.toString() !== other.courseWideChannelIds?.toString();
     }
 }

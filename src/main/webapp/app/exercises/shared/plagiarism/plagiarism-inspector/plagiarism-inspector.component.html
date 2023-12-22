@@ -6,16 +6,17 @@
                     <fa-icon class="plagiarism-options-toggle" [icon]="faChevronRight"></fa-icon>
                     <span>{{ 'artemisApp.plagiarism.plagiarismDetection' | artemisTranslate }}</span>
                 </h4>
-
                 <div class="plagiarism-warning">
                     <fa-icon [icon]="faExclamationTriangle" id="plagiarismCaution"></fa-icon>
                     <span>{{ 'artemisApp.plagiarism.caution' | artemisTranslate }}</span>
                 </div>
             </div>
             <div class="plagiarism-header-top-right">
-                <button *ngIf="chartFilterApplied" class="check-plagiarism btn btn-info" (click)="resetFilter()">
-                    <span>{{ 'artemisApp.plagiarism.resetFilter' | artemisTranslate }}</span>
-                </button>
+                @if (chartFilterApplied) {
+                    <button class="check-plagiarism btn btn-info" (click)="resetFilter()">
+                        <span>{{ 'artemisApp.plagiarism.resetFilter' | artemisTranslate }}</span>
+                    </button>
+                }
                 <button
                     [jhiFeatureToggle]="FeatureToggle.PlagiarismChecks"
                     class="check-plagiarism btn btn-primary"
@@ -45,7 +46,9 @@
                                 'artemisApp.plagiarism.cleanUp.confirmDialog.deleteAll' | artemisTranslate
                             }}</label>
                         </div>
-                        <p *ngIf="deleteAllPlagiarismComparisons" jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.warning" class="text-warning"></p>
+                        @if (deleteAllPlagiarismComparisons) {
+                            <p jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.warning" class="text-warning"></p>
+                        }
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-danger" (click)="modal.close('confirm')">
@@ -53,35 +56,35 @@
                         </button>
                     </div>
                 </ng-template>
-                <button
-                    *ngIf="exercise.isAtLeastInstructor && plagiarismResult"
-                    [jhiFeatureToggle]="FeatureToggle.PlagiarismChecks"
-                    class="check-plagiarism btn btn-danger"
-                    (click)="openCleanUpModal(toggleDeleteModal)"
-                    [overwriteDisabled]="detectionInProgress"
-                >
-                    <span jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.submit">Clean up</span>
-                </button>
-
-                <div ngbDropdown *ngIf="plagiarismResult">
-                    <button class="btn btn-secondary btn-block" id="download-plagiarism" ngbDropdownToggle>
-                        <span>Download</span>
+                @if (exercise.isAtLeastInstructor && plagiarismResult) {
+                    <button
+                        [jhiFeatureToggle]="FeatureToggle.PlagiarismChecks"
+                        class="check-plagiarism btn btn-danger"
+                        (click)="openCleanUpModal(toggleDeleteModal)"
+                        [overwriteDisabled]="detectionInProgress"
+                    >
+                        <span jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.submit">Clean up</span>
                     </button>
-                    <div ngbDropdownMenu aria-labelledby="download-plagiarism">
-                        <button type="button" (click)="downloadPlagiarismResultsJson()" ngbDropdownItem>JSON</button>
-                        <button type="button" (click)="downloadPlagiarismResultsCsv()" ngbDropdownItem>CSV</button>
+                }
+                @if (plagiarismResult) {
+                    <div ngbDropdown>
+                        <button class="btn btn-secondary btn-block" id="download-plagiarism" ngbDropdownToggle>
+                            <span>Download</span>
+                        </button>
+                        <div ngbDropdownMenu aria-labelledby="download-plagiarism">
+                            <button type="button" (click)="downloadPlagiarismResultsJson()" ngbDropdownItem>JSON</button>
+                            <button type="button" (click)="downloadPlagiarismResultsCsv()" ngbDropdownItem>CSV</button>
+                        </div>
                     </div>
-                </div>
+                }
             </div>
         </div>
-
         <div class="plagiarism-header-options" [hidden]="!showOptions">
             <div class="plagiarism-option">
                 <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.similarityThreshold">Similarity Threshold</div>
                 <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.similarityThresholdTooltip' | artemisTranslate"></fa-icon>
                 <input type="number" required class="form-control" min="0" max="100" step="5" id="plagiarism-similarity-threshold" [(ngModel)]="similarityThreshold" />
             </div>
-
             <div class="plagiarism-option" [class.disabled]="!enableMinimumScore">
                 <div class="plagiarism-checkbox form-check" for="enableMinimumScore">
                     <input type="checkbox" id="enableMinimumScore" class="plagiarism-option-checkbox form-check-input" [(ngModel)]="enableMinimumScore" checked />
@@ -90,7 +93,6 @@
                 <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.minimumScoreTooltip' | artemisTranslate"></fa-icon>
                 <input required type="number" [disabled]="!enableMinimumScore" class="form-control" min="0" max="100" id="plagiarism-minimum-score" [(ngModel)]="minimumScore" />
             </div>
-
             <div class="plagiarism-option" [class.disabled]="!enableMinimumSize">
                 <div class="plagiarism-checkbox form-check" for="enableMinimumSize">
                     <input type="checkbox" id="enableMinimumSize" class="plagiarism-option-checkbox form-check-input" [(ngModel)]="enableMinimumSize" checked />
@@ -99,43 +101,53 @@
                 <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="getMinimumSizeTooltip() | artemisTranslate"></fa-icon>
                 <input required type="number" [disabled]="!enableMinimumSize" class="form-control" min="0" max="100" id="plagiarism-minimum-size" [(ngModel)]="minimumSize" />
             </div>
-
-            <div *ngIf="isProgrammingExercise()" class="plagiarism-checkbox form-check" for="generateJPlagReport">
-                <input class="form-check-input" type="checkbox" id="generateJPlagReport" [(ngModel)]="generateJPlagReport" checked />
-                <label for="generateJPlagReport" class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.generateJplagReport">Generate JPlag Report</label>
-            </div>
+            @if (isProgrammingExercise()) {
+                <div class="plagiarism-checkbox form-check" for="generateJPlagReport">
+                    <input class="form-check-input" type="checkbox" id="generateJPlagReport" [(ngModel)]="generateJPlagReport" checked />
+                    <label for="generateJPlagReport" class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.generateJplagReport">Generate JPlag Report</label>
+                </div>
+            }
         </div>
     </div>
-
-    <div class="plagiarism-body" *ngIf="plagiarismResult && !detectionInProgress">
-        <jhi-plagiarism-sidebar
-            [showRunDetails]="showRunDetails"
-            (showRunDetailsChange)="showSimilarityDistribution($event)"
-            [comparisons]="visibleComparisons"
-            [offset]="sidebarOffset"
-            (selectIndex)="selectComparisonWithID($event)"
-            [activeID]="selectedComparisonId"
-            [casesFiltered]="chartFilterApplied"
-        ></jhi-plagiarism-sidebar>
-
-        <jhi-plagiarism-details
-            [hidden]="showRunDetails"
-            [comparison]="plagiarismResult.comparisons ? getSelectedComparison() : undefined"
-            [exercise]="exercise"
-        ></jhi-plagiarism-details>
-
-        <jhi-plagiarism-run-details [hidden]="!showRunDetails" [plagiarismResult]="plagiarismResult" (similaritySelected)="filterByChart($event)"></jhi-plagiarism-run-details>
-    </div>
-
-    <div class="plagiarism-empty" *ngIf="!plagiarismResult || detectionInProgress">
-        <div class="d-flex flex-column" *ngIf="detectionInProgress">
-            <div class="spinner-border text-primary align-self-center mb-1" role="status">
-                <span class="sr-only"></span>
-            </div>
-            <p>{{ detectionInProgressMessage }}</p>
+    @if (plagiarismResult && !detectionInProgress) {
+        <div class="plagiarism-body">
+            <jhi-plagiarism-sidebar
+                [showRunDetails]="showRunDetails"
+                (showRunDetailsChange)="showSimilarityDistribution($event)"
+                [comparisons]="visibleComparisons"
+                [offset]="sidebarOffset"
+                (selectIndex)="selectComparisonWithID($event)"
+                [activeID]="selectedComparisonId"
+                [casesFiltered]="chartFilterApplied"
+            ></jhi-plagiarism-sidebar>
+            <jhi-plagiarism-details
+                [hidden]="showRunDetails"
+                [comparison]="plagiarismResult.comparisons ? getSelectedComparison() : undefined"
+                [exercise]="exercise"
+            ></jhi-plagiarism-details>
+            <jhi-plagiarism-run-details
+                [hidden]="!showRunDetails"
+                [plagiarismResult]="plagiarismResult"
+                [plagiarismResultStats]="plagiarismResultStats"
+                (similaritySelected)="filterByChart($event)"
+            ></jhi-plagiarism-run-details>
         </div>
-        <span class="plagiarism-empty-label" *ngIf="!detectionInProgress">
-            {{ 'artemisApp.plagiarism.empty' | artemisTranslate }}
-        </span>
-    </div>
+    }
+    @if (!plagiarismResult || detectionInProgress) {
+        <div class="plagiarism-empty">
+            @if (detectionInProgress) {
+                <div class="d-flex flex-column">
+                    <div class="spinner-border text-primary align-self-center mb-1" role="status">
+                        <span class="sr-only"></span>
+                    </div>
+                    <p>{{ detectionInProgressMessage }}</p>
+                </div>
+            }
+            @if (!detectionInProgress) {
+                <span class="plagiarism-empty-label">
+                    {{ 'artemisApp.plagiarism.empty' | artemisTranslate }}
+                </span>
+            }
+        </div>
+    }
 </div>

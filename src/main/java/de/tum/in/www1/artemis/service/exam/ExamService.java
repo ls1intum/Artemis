@@ -7,7 +7,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalDouble;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -27,8 +37,24 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.BonusStrategy;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.FileUploadSubmission;
+import de.tum.in.www1.artemis.domain.GradeStep;
+import de.tum.in.www1.artemis.domain.GradingScale;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -39,20 +65,48 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmittedAnswerCount;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.GradingScaleRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.SubmittedAnswerRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.BonusService;
+import de.tum.in.www1.artemis.service.CourseScoreCalculationService;
+import de.tum.in.www1.artemis.service.ExerciseDeletionService;
+import de.tum.in.www1.artemis.service.QuizPoolService;
+import de.tum.in.www1.artemis.service.TutorLeaderboardService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.export.CourseExamExportService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService.PlagiarismMapping;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
-import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.dto.BonusExampleDTO;
+import de.tum.in.www1.artemis.web.rest.dto.BonusResultDTO;
+import de.tum.in.www1.artemis.web.rest.dto.BonusSourceResultDTO;
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
+import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
+import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -121,7 +175,13 @@ public class ExamService {
 
     private final CourseRepository courseRepository;
 
+    private final QuizPoolService quizPoolService;
+
     private final ObjectMapper defaultObjectMapper;
+
+    private static final boolean IS_TEST_RUN = false;
+
+    private static final String NOT_ALLOWED_TO_ACCESS_THE_GRADE_SUMMARY = "You are not allowed to access the grade summary of a student exam ";
 
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService,
             InstanceMessageSendService instanceMessageSendService, TutorLeaderboardService tutorLeaderboardService, StudentParticipationRepository studentParticipationRepository,
@@ -130,7 +190,8 @@ public class ExamService {
             SubmissionRepository submissionRepository, CourseExamExportService courseExamExportService, GitService gitService, GroupNotificationService groupNotificationService,
             GradingScaleRepository gradingScaleRepository, PlagiarismCaseRepository plagiarismCaseRepository, AuthorizationCheckService authorizationCheckService,
             BonusService bonusService, ExerciseDeletionService exerciseDeletionService, SubmittedAnswerRepository submittedAnswerRepository,
-            AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService, CourseRepository courseRepository) {
+            AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService, CourseRepository courseRepository,
+            QuizPoolService quizPoolService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -156,6 +217,7 @@ public class ExamService {
         this.auditEventRepository = auditEventRepository;
         this.courseScoreCalculationService = courseScoreCalculationService;
         this.courseRepository = courseRepository;
+        this.quizPoolService = quizPoolService;
         this.defaultObjectMapper = new ObjectMapper();
     }
 
@@ -163,28 +225,20 @@ public class ExamService {
      * Get one exam by id with exercise groups and exercises.
      * Also fetches the template and solution participation for programming exercises and questions for quiz exercises.
      *
-     * @param examId the id of the entity
+     * @param examId      the id of the entity
+     * @param withDetails determines whether additional parameters such as template and solution participation for programming exercises
+     *                        and questions for the quiz should be loaded
      * @return the exam with exercise groups
      */
     @NotNull
-    public Exam findByIdWithExerciseGroupsAndExercisesElseThrow(Long examId) {
-        log.debug("Request to get exam with exercise groups : {}", examId);
-        Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            for (Exercise exercise : exerciseGroup.getExercises()) {
-                if (exercise instanceof ProgrammingExercise programmingExercise) {
-                    ProgrammingExercise exerciseWithTemplateAndSolutionParticipation = programmingExerciseRepository
-                            .findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(exercise.getId());
-                    programmingExercise.setTemplateParticipation(exerciseWithTemplateAndSolutionParticipation.getTemplateParticipation());
-                    programmingExercise.setSolutionParticipation(exerciseWithTemplateAndSolutionParticipation.getSolutionParticipation());
-                }
-                if (exercise instanceof QuizExercise quizExercise) {
-                    QuizExercise quizExerciseWithQuestions = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId());
-                    quizExercise.setQuizQuestions(quizExerciseWithQuestions.getQuizQuestions());
-                }
-            }
+    public Exam findByIdWithExerciseGroupsAndExercisesElseThrow(Long examId, boolean withDetails) {
+        log.debug("Request to get exam {} with exercise groups (with details: {})", examId, withDetails);
+        if (!withDetails) {
+            return examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
         }
-        return exam;
+        else {
+            return examRepository.findWithExerciseGroupsAndExercisesAndDetailsByIdOrElseThrow(examId);
+        }
     }
 
     /**
@@ -367,10 +421,10 @@ public class ExamService {
         if (studentIds.size() == 1) {  // Optimize single student case by filtering in the database.
             Long studentId = studentIds.iterator().next();
             User targetUser = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(studentId);
-            StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(targetUser.getId(), examId)
+            StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(targetUser.getId(), examId, IS_TEST_RUN)
                     .orElseThrow(() -> new EntityNotFoundException("No student exam found for examId " + examId + " and userId " + studentId));
 
-            StudentExamWithGradeDTO studentExamWithGradeDTO = getStudentExamGradesForSummaryAsStudent(targetUser, studentExam);
+            StudentExamWithGradeDTO studentExamWithGradeDTO = getStudentExamGradesForSummaryAsStudent(targetUser, studentExam, IS_TEST_RUN);
             var studentResult = studentExamWithGradeDTO.studentResult();
             return Map.of(studentId, new BonusSourceResultDTO(studentResult.overallPointsAchieved(), studentResult.mostSeverePlagiarismVerdict(), null, null,
                     Boolean.TRUE.equals(studentResult.submitted())));
@@ -391,15 +445,19 @@ public class ExamService {
      *
      * @param targetUser  the user who submitted the studentExam
      * @param studentExam the student exam to be evaluated
+     * @param isTestRun   set if an instructor executes a test run
      * @return the student exam result with points and grade
      */
-    public StudentExamWithGradeDTO getStudentExamGradesForSummaryAsStudent(User targetUser, StudentExam studentExam) {
+    public StudentExamWithGradeDTO getStudentExamGradesForSummaryAsStudent(User targetUser, StudentExam studentExam, boolean isTestRun) {
 
         loadQuizExercisesForStudentExam(studentExam);
 
         // check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
-        if (!Boolean.TRUE.equals(studentExam.isSubmitted()) || !studentExam.areResultsPublishedYet()) {
-            throw new AccessForbiddenException("You are not allowed to access the grade summary of a student exam which was NOT submitted!");
+        if (!Boolean.TRUE.equals(studentExam.isSubmitted()) && !isTestRun) {
+            throw new AccessForbiddenException(NOT_ALLOWED_TO_ACCESS_THE_GRADE_SUMMARY + "which was NOT submitted!");
+        }
+        if (!studentExam.areResultsPublishedYet() && !isTestRun) {
+            throw new AccessForbiddenException(NOT_ALLOWED_TO_ACCESS_THE_GRADE_SUMMARY + "before the release date of results");
         }
 
         // fetch participations, submissions and results and connect them to the studentExam
@@ -1150,6 +1208,19 @@ public class ExamService {
         });
         // set transient number of registered users
         examRepository.setNumberOfExamUsersForExams(Collections.singletonList(exam));
+    }
+
+    /**
+     * Set properties for quiz exercises in exam
+     *
+     * @param exam The exam for which to set the properties
+     */
+    public void setQuizExamProperties(Exam exam) {
+        Optional<QuizPool> optionalQuizPool = quizPoolService.findByExamId(exam.getId());
+        if (optionalQuizPool.isPresent()) {
+            QuizPool quizPool = optionalQuizPool.get();
+            exam.setQuizExamMaxPoints(quizPool.getMaxPoints());
+        }
     }
 
     /**

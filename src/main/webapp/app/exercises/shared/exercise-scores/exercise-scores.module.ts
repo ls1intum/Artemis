@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { ManageAssessmentButtonsComponent } from 'app/exercises/shared/exercise-scores/manage-assessment-buttons.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ExerciseScoresComponent } from './exercise-scores.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -40,6 +41,7 @@ import { ExternalSubmissionButtonComponent } from 'app/exercises/shared/external
         ExerciseScoresExportButtonComponent,
         ExternalSubmissionButtonComponent,
         ExternalSubmissionDialogComponent,
+        ManageAssessmentButtonsComponent,
     ],
     exports: [SubmissionExportButtonComponent, ExerciseScoresExportButtonComponent, ExternalSubmissionButtonComponent],
 })

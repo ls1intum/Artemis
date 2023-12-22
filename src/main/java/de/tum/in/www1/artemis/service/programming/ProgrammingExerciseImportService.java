@@ -197,13 +197,11 @@ public class ProgrammingExerciseImportService {
         final var targetExerciseProjectKey = newExercise.getProjectKey();
         final var templatePlanName = BuildPlanType.TEMPLATE.getName();
         final var solutionPlanName = BuildPlanType.SOLUTION.getName();
-        final var templateKey = templateExercise.getProjectKey();
-        final var targetKey = newExercise.getProjectKey();
         final var targetName = newExercise.getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase() + " " + newExercise.getTitle();
         ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
         continuousIntegration.createProjectForExercise(newExercise);
-        continuousIntegration.copyBuildPlan(templateKey, templatePlanName, targetKey, targetName, templatePlanName, false);
-        continuousIntegration.copyBuildPlan(templateKey, solutionPlanName, targetKey, targetName, solutionPlanName, true);
+        continuousIntegration.copyBuildPlan(templateExercise, templatePlanName, newExercise, targetName, templatePlanName, false);
+        continuousIntegration.copyBuildPlan(templateExercise, solutionPlanName, newExercise, targetName, solutionPlanName, true);
         continuousIntegration.givePlanPermissions(newExercise, templatePlanName);
         continuousIntegration.givePlanPermissions(newExercise, solutionPlanName);
         programmingExerciseService.giveCIProjectPermissions(newExercise);
@@ -279,6 +277,11 @@ public class ProgrammingExerciseImportService {
         newExercise.setShortName(newExercise.getShortName().replaceAll("[^a-zA-Z0-9]", ""));
         newExercise.generateAndSetProjectKey();
         programmingExerciseService.checkIfProjectExists(newExercise);
+
+        if (newExercise.isExamExercise()) {
+            // Disable feedback suggestions on exam exercises (currently not supported)
+            newExercise.setFeedbackSuggestionsEnabled(false);
+        }
 
         final var importedProgrammingExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(originalProgrammingExercise, newExercise);
         importRepositories(originalProgrammingExercise, importedProgrammingExercise);

@@ -8,7 +8,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
-import { faFile, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faFile, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { Subject } from 'rxjs';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
@@ -34,16 +34,15 @@ export class LectureComponent implements OnInit {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     activeFilters = new Set<LectureDateFilter>();
-    readonly filterType = LectureDateFilter;
-
     predicate: string;
     ascending: boolean;
 
-    documentationType = DocumentationType.Lecture;
+    readonly filterType = LectureDateFilter;
+    readonly documentationType: DocumentationType = 'Lecture';
 
     // Icons
     faPlus = faPlus;
-    faTimes = faTimes;
+    faTrash = faTrash;
     faPencilAlt = faPencilAlt;
     faFile = faFile;
     faPuzzlePiece = faPuzzlePiece;

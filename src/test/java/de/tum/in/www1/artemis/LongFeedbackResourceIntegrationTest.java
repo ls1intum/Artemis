@@ -19,6 +19,8 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationIndep
 
     private static final String TEST_PREFIX = "longfeedbackintegration";
 
+    private static final String LONG_FEEDBACK = "a".repeat(Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH + 10);
+
     @Autowired
     private UserUtilService userUtilService;
 
@@ -48,8 +50,8 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationIndep
     void getLongFeedbackAsStudent() throws Exception {
         final Feedback feedback = addLongFeedbackToResult(resultStudent1);
 
-        final LongFeedbackText longFeedbackText = request.get(getUrl(resultStudent1.getId(), feedback.getId()), HttpStatus.OK, LongFeedbackText.class);
-        assertThat(longFeedbackText.getFeedback().getId()).isEqualTo(feedback.getId());
+        final String longFeedbackText = request.get(getUrl(resultStudent1.getId(), feedback.getId()), HttpStatus.OK, String.class);
+        assertThat(longFeedbackText).isEqualTo(LONG_FEEDBACK);
     }
 
     @Test
@@ -57,8 +59,8 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationIndep
     void getLongFeedbackAsTutor() throws Exception {
         final Feedback feedback = addLongFeedbackToResult(resultStudent1);
 
-        final LongFeedbackText longFeedbackText = request.get(getUrl(resultStudent1.getId(), feedback.getId()), HttpStatus.OK, LongFeedbackText.class);
-        assertThat(longFeedbackText.getFeedback().getId()).isEqualTo(feedback.getId());
+        final String longFeedbackText = request.get(getUrl(resultStudent1.getId(), feedback.getId()), HttpStatus.OK, String.class);
+        assertThat(longFeedbackText).isEqualTo(LONG_FEEDBACK);
     }
 
     @Test
@@ -66,7 +68,7 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationIndep
     void badRequestOnWrongResultId() throws Exception {
         final Feedback feedback = addLongFeedbackToResult(resultStudent1);
 
-        final LongFeedbackText longFeedbackText = request.get(getUrl(resultStudent1.getId() + 1, feedback.getId()), HttpStatus.BAD_REQUEST, LongFeedbackText.class);
+        final String longFeedbackText = request.get(getUrl(resultStudent1.getId() + 1, feedback.getId()), HttpStatus.BAD_REQUEST, String.class);
         assertThat(longFeedbackText).isNull();
     }
 
@@ -75,7 +77,7 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationIndep
     void notFoundIfNotExists() throws Exception {
         final Feedback feedback = addLongFeedbackToResult(resultStudent1);
 
-        final LongFeedbackText longFeedbackText = request.get(getUrl(resultStudent1.getId(), feedback.getId() + 1), HttpStatus.NOT_FOUND, LongFeedbackText.class);
+        final String longFeedbackText = request.get(getUrl(resultStudent1.getId(), feedback.getId() + 1), HttpStatus.NOT_FOUND, String.class);
         assertThat(longFeedbackText).isNull();
     }
 
@@ -86,7 +88,7 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationIndep
         feedback.setDetailText("short text");
         participationUtilService.addFeedbackToResult(feedback, resultStudent1);
 
-        final LongFeedbackText longFeedbackText = request.get(getUrl(resultStudent1.getId(), feedback.getId()), HttpStatus.NOT_FOUND, LongFeedbackText.class);
+        final String longFeedbackText = request.get(getUrl(resultStudent1.getId(), feedback.getId()), HttpStatus.NOT_FOUND, String.class);
         assertThat(longFeedbackText).isNull();
     }
 
@@ -95,7 +97,7 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationIndep
     void accessForbiddenIfNotOwnParticipation() throws Exception {
         final Feedback feedback = addLongFeedbackToResult(resultStudent1);
 
-        final LongFeedbackText longFeedbackText = request.get(getUrl(resultStudent1.getId(), feedback.getId()), HttpStatus.FORBIDDEN, LongFeedbackText.class);
+        final String longFeedbackText = request.get(getUrl(resultStudent1.getId(), feedback.getId()), HttpStatus.FORBIDDEN, String.class);
         assertThat(longFeedbackText).isNull();
     }
 
@@ -105,7 +107,7 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationIndep
 
     private Feedback addLongFeedbackToResult(final Result result) {
         final Feedback feedback = new Feedback();
-        feedback.setDetailText("a".repeat(Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH + 10));
+        feedback.setDetailText(LONG_FEEDBACK);
 
         participationUtilService.addFeedbackToResult(feedback, result);
 

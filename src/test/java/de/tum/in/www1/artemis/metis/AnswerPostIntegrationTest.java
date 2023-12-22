@@ -18,13 +18,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
-import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
-import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
@@ -55,17 +51,9 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
     private List<Post> existingPostsWithAnswers;
 
-    private List<Post> existingPostsWithAnswersInExercise;
-
-    private List<Post> existingPostsWithAnswersInLecture;
-
-    private List<Post> existingPostsWithAnswersCourseWide;
-
     private List<AnswerPost> existingAnswerPosts;
 
     private Long courseId;
-
-    private User student1;
 
     static final int MAX_POSTS_PER_PAGE = 20;
 
@@ -73,59 +61,25 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest
     void initTestCase() {
 
         userUtilService.addUsers(TEST_PREFIX, 4, 4, 4, 1);
-        student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         // initialize test setup and get all existing posts with answers (four posts, one in each context, are initialized with one answer each): 4 answers in total (with author
         // student1)
         List<Post> existingPostsAndConversationPostsWithAnswers = conversationUtilService.createPostsWithAnswerPostsWithinCourse(TEST_PREFIX).stream()
-                .filter(coursePost -> coursePost.getAnswers() != null && coursePost.getPlagiarismCase() == null).toList();
+                .filter(coursePost -> coursePost.getAnswers() != null && !coursePost.getAnswers().isEmpty()).toList();
 
-        existingPostsWithAnswers = existingPostsAndConversationPostsWithAnswers.stream().filter(post -> post.getConversation() == null).toList();
+        existingPostsWithAnswers = existingPostsAndConversationPostsWithAnswers.stream().filter(post -> post.getPlagiarismCase() != null).toList();
 
         // get all answerPosts
-        existingAnswerPosts = existingPostsAndConversationPostsWithAnswers.stream().map(Post::getAnswers).flatMap(Collection::stream).toList();
+        existingAnswerPosts = existingPostsWithAnswers.stream().map(Post::getAnswers).flatMap(Collection::stream).toList();
 
-        // get all existing posts with answers in exercise context
-        existingPostsWithAnswersInExercise = existingPostsWithAnswers.stream().filter(coursePost -> coursePost.getAnswers() != null && coursePost.getExercise() != null).toList();
-
-        // get all existing posts with answers in lecture context
-        existingPostsWithAnswersInLecture = existingPostsWithAnswers.stream().filter(coursePost -> coursePost.getAnswers() != null && coursePost.getLecture() != null).toList();
-
-        // get all existing posts with answers in lecture context
-        existingPostsWithAnswersCourseWide = existingPostsWithAnswers.stream().filter(coursePost -> coursePost.getAnswers() != null && coursePost.getCourseWideContext() != null)
-                .toList();
-
-        courseId = existingPostsWithAnswersInExercise.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
-    }
-
-    // CREATE
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCreateAnswerPostInLecture() throws Exception {
-        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInLecture.get(0));
-        testAnswerPostCreation(answerPostToSave);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCreateAnswerPostInExercise() throws Exception {
-        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInExercise.get(0));
-        testAnswerPostCreation(answerPostToSave);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCreateAnswerPostCourseWide() throws Exception {
-        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
-        testAnswerPostCreation(answerPostToSave);
+        courseId = existingPostsWithAnswers.get(0).getPlagiarismCase().getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
     }
 
     @ParameterizedTest
     @MethodSource("userMentionProvider")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateAnswerPostWithUserMention(String userMention, boolean isUserMentionValid) throws Exception {
-        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
+        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswers.get(0));
         answerPostToSave.setContent(userMention);
 
         if (!isUserMentionValid) {
@@ -140,18 +94,6 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest
         // should increment answer count
         assertThat(postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
-    }
-
-    private void testAnswerPostCreation(AnswerPost answerPostToSave) throws Exception {
-        var countBefore = answerPostRepository.count();
-        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
-        // should not be automatically post resolving
-        assertThat(createdAnswerPost.doesResolvePost()).isFalse();
-        // should increment answer count
-        assertThat(postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
-        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
-        assertThat(countBefore + 1).isEqualTo(answerPostRepository.count());
     }
 
     @Test
@@ -172,57 +114,18 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest
         persistedCourse = courseRepository.saveAndFlush(persistedCourse);
         assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(courseInformationSharingConfiguration);
 
-        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
+        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswers.get(0));
 
         var answerPostCount = answerPostRepository.count();
 
-        request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
 
         var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
-        assertThat(newAnswerPostCount).isZero();
+        assertThat(newAnswerPostCount).isOne();
 
         // active messaging again
         persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
         courseRepository.saveAndFlush(persistedCourse);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateAnswerPostInLecture_asInstructor() throws Exception {
-        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInLecture.get(0));
-
-        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
-        // should increment answer count
-        assertThat(postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
-        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
-        assertThat(answerPostRepository.findById(createdAnswerPost.getId())).isPresent();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateAnswerPostInExercise_asInstructor() throws Exception {
-        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInExercise.get(0));
-
-        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
-        // should increment answer count
-        assertThat(postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
-        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
-        assertThat(answerPostRepository.findById(createdAnswerPost.getId())).isPresent();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateAnswerPostCourseWide_asInstructor() throws Exception {
-        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
-
-        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
-        // should increment answer count
-        assertThat(postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
-        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
-        assertThat(answerPostRepository.findById(createdAnswerPost.getId())).isPresent();
     }
 
     @Test
@@ -243,324 +146,46 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest
     // GET
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetPostsForCourse_WithUnresolvedPosts() throws Exception {
-        // filterToUnresolved set true; will fetch all unresolved posts of current course
+    void testGetPlagiarismPostsForCourse() throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("filterToUnresolved", "true");
+        params.add("plagiarismCaseId", existingPostsWithAnswers.get(0).getPlagiarismCase().getId().toString());
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
-        // get posts of current user and compare
-        List<Post> unresolvedPosts = existingPostsWithAnswers.stream()
-                .filter(post -> post.getCourseWideContext() == null || !post.getCourseWideContext().equals(CourseWideContext.ANNOUNCEMENT)
-                        && post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost())))
-                .toList();
-
-        assertThat(returnedPosts).isEqualTo(unresolvedPosts);
+        assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetPostsForCourse_WithOwnAndUnresolvedPosts() throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testGetPlagiarismPostsForCourse_Forbidden() throws Exception {
         // filterToOwn & filterToUnresolved set true; will fetch all unresolved posts of current user
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("filterToUnresolved", "true");
-        params.add("filterToOwn", "true");
+        params.add("plagiarismCaseId", existingPostsWithAnswers.get(0).getPlagiarismCase().getId().toString());
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
-        // get unresolved posts of current user and compare
-        List<Post> resolvedPosts = existingPostsWithAnswers.stream().filter(post -> student1.getId().equals(post.getAuthor().getId())
-                && (post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost())))).toList();
-
-        assertThat(returnedPosts).isEqualTo(resolvedPosts);
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.FORBIDDEN, Post.class, params);
+        assertThat(returnedPosts).isNull();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetPostsForCourseWithCourseWideContent() throws Exception {
-        // filterToUnresolved set true; will fetch all unresolved posts of current course
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("courseWideContexts", "TECH_SUPPORT");
-
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
-        List<Post> resolvedPosts = existingPostsWithAnswers.stream().filter(post -> CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext())).toList();
-
-        assertThat(returnedPosts).isEqualTo(resolvedPosts);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetPostsForCourseWithUnresolvedPostsWithCourseWideContent() throws Exception {
-        // filterToUnresolved set true; will fetch all unresolved posts of current course
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("filterToUnresolved", "true");
-        params.add("courseWideContexts", "TECH_SUPPORT");
-
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
-        List<Post> resolvedPosts = existingPostsWithAnswers.stream()
-                .filter(post -> post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
-                        && CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext()))
-                .toList();
-
-        assertThat(returnedPosts).isEqualTo(resolvedPosts);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetPostsForCourseWithOwnWithCourseWideContent() throws Exception {
-        // filterToOwn & filterToUnresolved set true; will fetch all unresolved posts of current user
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("filterToOwn", "true");
-        params.add("courseWideContexts", "TECH_SUPPORT");
-
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
-        List<Post> resolvedPosts = existingPostsWithAnswers.stream()
-                .filter(post -> student1.getId().equals(post.getAuthor().getId())
-                        && post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
-                        && CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext()))
-                .toList();
-
-        assertThat(returnedPosts).isEqualTo(resolvedPosts);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetPostsForCourseWithOwnAndUnresolvedPostsWithCourseWideContent() throws Exception {
-        // filterToOwn & filterToUnresolved set true; will fetch all unresolved posts of current user
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("filterToUnresolved", "true");
-        params.add("filterToOwn", "true");
-        params.add("courseWideContexts", "TECH_SUPPORT");
-
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
-        // get unresolved posts of current user and compare
-        List<Post> resolvedPosts = existingPostsWithAnswers.stream()
-                .filter(post -> student1.getId().equals(post.getAuthor().getId())
-                        && post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
-                        && CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext()))
-                .toList();
-
-        assertThat(returnedPosts).isEqualTo(resolvedPosts);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetPostsForCourse_OrderByAnswerCountDESC() throws Exception {
+    void testGetPlagiarismPostsForCourse_BadRequest() throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
 
-        // ordering only available in course discussions page, where paging is enabled
-        params.add("pagingEnabled", "true");
-        params.add("page", "0");
-        params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
-
-        params.add("postSortCriterion", PostSortCriterion.ANSWER_COUNT.toString());
-        params.add("sortingOrder", SortingOrder.DESCENDING.toString());
-
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
-
-        int numberOfMaxAnswersSeenOnAnyPost = Integer.MAX_VALUE;
-        for (Post post : returnedPosts) {
-            assertThat(post.getAnswers().size()).isLessThanOrEqualTo(numberOfMaxAnswersSeenOnAnyPost);
-            numberOfMaxAnswersSeenOnAnyPost = post.getAnswers().size();
-        }
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.BAD_REQUEST, Post.class, params);
+        assertThat(returnedPosts).isNull();
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetPostsForCourse_OrderByAnswerCountASC() throws Exception {
-        var params = new LinkedMultiValueMap<String, String>();
-
-        // ordering only available in course discussions page, where paging is enabled
-        params.add("pagingEnabled", "true");
-        params.add("page", "0");
-        params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
-
-        params.add("postSortCriterion", PostSortCriterion.ANSWER_COUNT.toString());
-        params.add("sortingOrder", SortingOrder.ASCENDING.toString());
-
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
-
-        int numberOfMaxAnswersSeenOnAnyPost = 0;
-        for (Post post : returnedPosts) {
-            assertThat(post.getAnswers().size()).isGreaterThanOrEqualTo(numberOfMaxAnswersSeenOnAnyPost);
-            numberOfMaxAnswersSeenOnAnyPost = post.getAnswers().size();
-        }
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetAnsweredOrReactedPostsByUserForCourse() throws Exception {
-
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("filterToAnsweredOrReacted", "true");
-
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
-        existingPostsWithAnswers = existingPostsWithAnswers.stream()
-                .filter(post -> post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(answerPost.getAuthor().getId()))
-                        || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(post.getAuthor().getId())))
-                .toList();
-
-        assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetOwnAndAnsweredOrReactedPostsByUserForCourse() throws Exception {
-
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("filterToAnsweredOrReacted", "true");
-        params.add("filterToOwn", "true");
-
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
-        existingPostsWithAnswers = existingPostsWithAnswers.stream().filter(
-                post -> student1.getId().equals(post.getAuthor().getId()) && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
-                        || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(post.getAuthor().getId()))))
-                .toList();
-
-        assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetUnresolvedAnsweredOrReactedPostsByUserForCourse() throws Exception {
-
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("filterToAnsweredOrReacted", "true");
-        params.add("filterToUnresolved", "true");
-
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
-        existingPostsWithAnswers = existingPostsWithAnswers.stream()
-                .filter(post -> post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
-                        && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(answerPost.getAuthor().getId()))
-                                || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(reaction.getUser().getId()))))
-                .toList();
-
-        assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetUnresolvedOwnAnsweredOrReactedPostsByUserForCourse() throws Exception {
-
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("filterToOwn", "true");
-        params.add("filterToUnresolved", "true");
-        params.add("filterToAnsweredOrReacted", "true");
-
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
-        existingPostsWithAnswers = existingPostsWithAnswers.stream().filter(
-                post -> student1.getId().equals(post.getAuthor().getId()) && (post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
-                        && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
-                                || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(reaction.getUser().getId())))))
-                .toList();
-
-        assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
-
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("filterToAnsweredOrReacted", "true");
-        params.add("courseWideContexts", "TECH_SUPPORT");
-
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
-        existingPostsWithAnswersCourseWide = existingPostsWithAnswersCourseWide.stream()
-                .filter(post -> CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext())
-                        && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
-                                || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(reaction.getUser().getId()))))
-                .toList();
-
-        assertThat(returnedPosts).isEqualTo(existingPostsWithAnswersCourseWide);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetOwnAndAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
-
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("filterToAnsweredOrReacted", "true");
-        params.add("filterToOwn", "true");
-        params.add("courseWideContexts", "TECH_SUPPORT");
-
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
-        existingPostsWithAnswersCourseWide = existingPostsWithAnswersCourseWide.stream()
-                .filter(post -> CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext()) && student1.getId().equals(post.getAuthor().getId())
-                        && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
-                                || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(reaction.getUser().getId()))))
-                .toList();
-
-        assertThat(returnedPosts).isEqualTo(existingPostsWithAnswersCourseWide);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetUnresolvedAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
-
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("filterToAnsweredOrReacted", "true");
-        params.add("filterToUnresolved", "true");
-        params.add("courseWideContexts", "TECH_SUPPORT");
-
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
-        existingPostsWithAnswersCourseWide = existingPostsWithAnswersCourseWide.stream()
-                .filter(post -> CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext())
-                        && post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
-                        && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
-                                || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(reaction.getUser().getId()))))
-                .toList();
-
-        assertThat(returnedPosts).isEqualTo(existingPostsWithAnswersCourseWide);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetUnresolvedOwnAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
-
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("filterToOwn", "true");
-        params.add("filterToUnresolved", "true");
-        params.add("filterToAnsweredOrReacted", "true");
-        params.add("courseWideContexts", "TECH_SUPPORT");
-
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
-        existingPostsWithAnswersCourseWide = existingPostsWithAnswersCourseWide.stream()
-                .filter(post -> CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext()) && student1.getId().equals(post.getAuthor().getId())
-                        && (post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
-                                && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
-                                        || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(reaction.getUser().getId())))))
-                .toList();
-
-        assertThat(returnedPosts).isEqualTo(existingPostsWithAnswersCourseWide);
-    }
     // UPDATE
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testEditAnswerPost_asTutor() throws Exception {
-        // update post of student1 (index 0)--> OK
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER ")
+    void testEditAnswerPost_asStudent_Forbidden() throws Exception {
+        // update post of student1 (index 0)--> FORBIDDEN
         AnswerPost answerPostToUpdate = editExistingAnswerPost(existingAnswerPosts.get(0));
 
         AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate, AnswerPost.class,
-                HttpStatus.OK);
-        conversationUtilService.assertSensitiveInformationHidden(updatedAnswerPost);
-        assertThat(answerPostToUpdate).isEqualTo(updatedAnswerPost);
+                HttpStatus.FORBIDDEN);
+        assertThat(updatedAnswerPost).isNull();
     }
 
     @Test
@@ -598,7 +223,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testEditAnswerPost_asStudent2_forbidden() throws Exception {
         // update post from another student (index 1)--> forbidden
-        AnswerPost answerPostNotToUpdate = editExistingAnswerPost(existingAnswerPosts.get(1));
+        AnswerPost answerPostNotToUpdate = editExistingAnswerPost(existingAnswerPosts.get(0));
 
         AnswerPost notUpdatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPostNotToUpdate.getId(), answerPostNotToUpdate,
                 AnswerPost.class, HttpStatus.FORBIDDEN);
@@ -608,7 +233,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEditAnswerPostWithIdIsNull_badRequest() throws Exception {
-        AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
+        AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswers.get(0));
 
         AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate,
                 AnswerPost.class, HttpStatus.BAD_REQUEST);
@@ -618,7 +243,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEditAnswerPostWithWrongCourseId_badRequest() throws Exception {
-        AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
+        AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswers.get(0));
         Course dummyCourse = courseUtilService.createCourse();
 
         AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + dummyCourse.getId() + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate,
@@ -627,10 +252,10 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testToggleResolvesPost() throws Exception {
-        AnswerPost answerPost = existingAnswerPosts.get(1);
-        AnswerPost answerPost2 = existingAnswerPosts.get(2);
+        AnswerPost answerPost = existingAnswerPosts.get(0);
+        AnswerPost answerPost2 = existingAnswerPosts.get(1);
 
         // confirm that answer post resolves the original post
         answerPost.setResolvesPost(true);
@@ -661,9 +286,9 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testToggleResolvesPost_asPostAuthor() throws Exception {
-        // author of the associated original post is student1
+        // author of the associated original post is instructor1
         AnswerPost answerPost = existingAnswerPosts.get(0);
 
         // confirm that answer post resolves the original post
@@ -729,8 +354,8 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testDeleteAnswerPost_asTutor() throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDeleteAnswerPost() throws Exception {
         var answerPostCount = answerPostRepository.count();
         // delete post from another student (index 0) --> ok
         AnswerPost answerPostToDelete = existingAnswerPosts.get(0);
@@ -743,17 +368,17 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testDeleteAnswerPost_asTutor_notFound() throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDeleteAnswerPost_asStudent_notFound() throws Exception {
         var countBefore = answerPostRepository.count();
         request.delete("/api/courses/" + courseId + "/answer-posts/" + 9999L, HttpStatus.NOT_FOUND);
         assertThat(answerPostRepository.count()).isEqualTo(countBefore);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testDeleteResolvingAnswerPost_asTutor() throws Exception {
-        AnswerPost answerPostToDeleteWhichResolves = existingAnswerPosts.get(3);
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDeleteResolvingAnswerPost_asAuthor() throws Exception {
+        AnswerPost answerPostToDeleteWhichResolves = existingAnswerPosts.get(0);
 
         var countBefore = answerPostRepository.count();
         request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToDeleteWhichResolves.getId(), HttpStatus.OK);

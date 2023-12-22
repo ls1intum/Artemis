@@ -1,10 +1,6 @@
 package de.tum.in.www1.artemis.service.metis.conversation;
 
-import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -14,10 +10,7 @@ import javax.validation.constraints.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
@@ -140,12 +133,7 @@ public class ChannelService {
         var savedChannel = channelRepository.save(channel);
 
         if (creator.isPresent()) {
-            var conversationParticipantOfRequestingUser = new ConversationParticipant();
-            // set the last reading time of a participant in the past when creating conversation for the first time!
-            conversationParticipantOfRequestingUser.setLastRead(ZonedDateTime.now().minusYears(2));
-            conversationParticipantOfRequestingUser.setUnreadMessagesCount(0L);
-            conversationParticipantOfRequestingUser.setUser(creator.get());
-            conversationParticipantOfRequestingUser.setConversation(savedChannel);
+            var conversationParticipantOfRequestingUser = ConversationParticipant.createWithDefaultValues(creator.get(), savedChannel);
             // Creator is a moderator. Special case, because creator is the only moderator that can not be revoked the role
             conversationParticipantOfRequestingUser.setIsModerator(true);
             conversationParticipantOfRequestingUser = conversationParticipantRepository.save(conversationParticipantOfRequestingUser);
@@ -284,7 +272,6 @@ public class ChannelService {
      */
     public Channel createExamChannel(Exam exam, Optional<String> channelName) {
         Channel channelToCreate = createDefaultChannel(channelName, "exam-", exam.getTitle());
-        channelToCreate.setIsPublic(false);
         channelToCreate.setExam(exam);
         Channel createdChannel = createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         exam.setChannelName(createdChannel.getName());
@@ -303,6 +290,9 @@ public class ChannelService {
             return null;
         }
         Channel channel = channelRepository.findChannelByLectureId(originalLecture.getId());
+        if (channel == null) {
+            return null;
+        }
         return updateChannelName(channel, channelName);
     }
 
@@ -336,11 +326,13 @@ public class ChannelService {
             return null;
         }
         Channel channel = channelRepository.findChannelByExamId(originalExam.getId());
+        if (channel == null) {
+            return null;
+        }
         return updateChannelName(channel, updatedExam.getChannelName());
     }
 
     private Channel updateChannelName(Channel channel, String newChannelName) {
-
         // Update channel name if necessary
         if (!newChannelName.equals(channel.getName())) {
             channel.setName(newChannelName);

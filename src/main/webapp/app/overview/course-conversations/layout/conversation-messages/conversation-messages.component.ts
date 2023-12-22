@@ -27,6 +27,7 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { OneToOneChat, isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { canCreateNewMessageInConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+
 @Component({
     selector: 'jhi-conversation-messages',
     templateUrl: './conversation-messages.component.html',
@@ -193,7 +194,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
         let conversation: Conversation;
         if (isChannelDto(this._activeConversation)) {
-            conversation = new Channel();
+            const channel = new Channel();
+            channel.isAnnouncementChannel = this._activeConversation.isAnnouncementChannel;
+            conversation = channel;
         } else if (isGroupChatDto(this._activeConversation)) {
             conversation = new GroupChat();
         } else if (isOneToOneChatDto(this._activeConversation)) {
@@ -203,7 +206,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
         conversation.id = this._activeConversation.id;
         this.refreshMetisConversationPostContextFilter();
-        return this.metisService.createEmptyPostForContext(undefined, undefined, undefined, undefined, conversation);
+        return this.metisService.createEmptyPostForContext(conversation);
     }
 
     postsTrackByFn = (index: number, post: Post): number => post.id!;

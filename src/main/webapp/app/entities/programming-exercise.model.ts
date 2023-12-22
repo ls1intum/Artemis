@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, resetDates } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
@@ -9,6 +9,52 @@ import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-log-statistics-dto';
+
+export class BuildAction {
+    name: string;
+    runAlways: boolean;
+    workdir: string;
+    results?: AeolusResult[];
+    parameters: Map<string, string | boolean | number>;
+}
+
+export class AeolusResult {
+    name: string;
+    path: string;
+    ignore: string;
+    type?: string;
+    before?: boolean;
+}
+
+export class ScriptAction extends BuildAction {
+    script: string;
+}
+
+export class PlatformAction extends BuildAction {
+    type: string;
+    kind: string;
+}
+
+export class WindMetadata {
+    author: string | any;
+    description: string;
+    id: string;
+    name: string;
+    docker: DockerConfiguration;
+}
+
+export class DockerConfiguration {
+    image: string;
+    tag?: string;
+    volumes: Map<string, string>;
+    parameters: Map<string, string>;
+}
+
+export class WindFile {
+    api: string;
+    metadata: WindMetadata;
+    actions: BuildAction[];
+}
 
 export enum ProgrammingLanguage {
     JAVA = 'JAVA',
@@ -41,6 +87,7 @@ export class ProgrammingExercise extends Exercise {
     public solutionParticipation?: SolutionProgrammingExerciseParticipation;
     public testRepositoryUrl?: string;
     public publishBuildPlanUrl?: boolean;
+    public customizeBuildPlanWithAeolus?: boolean;
     public allowOnlineEditor?: boolean;
     public staticCodeAnalysisEnabled?: boolean;
     /**
@@ -64,6 +111,8 @@ export class ProgrammingExercise extends Exercise {
     public testCasesChanged?: boolean;
 
     public projectType?: ProjectType;
+    public windFile?: WindFile;
+    public buildPlanConfiguration?: string;
 
     public testwiseCoverageEnabled?: boolean;
 
@@ -95,4 +144,12 @@ export class ProgrammingExercise extends Exercise {
         this.showTestNamesToStudents = false; // default value
         this.testwiseCoverageEnabled = false; // default value
     }
+}
+
+export function resetProgrammingDates(exercise: ProgrammingExercise) {
+    resetDates(exercise);
+
+    // without dates set, they have to be reset as well
+    exercise.releaseTestsWithExampleSolution = false;
+    exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
 }

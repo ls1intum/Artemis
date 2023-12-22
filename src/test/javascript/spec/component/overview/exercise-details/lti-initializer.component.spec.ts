@@ -8,6 +8,8 @@ import { of } from 'rxjs';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockProvider } from 'ng-mocks';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 
 describe('LtiInitializerComponent', () => {
     let comp: LtiInitializerComponent;
@@ -29,6 +31,7 @@ describe('LtiInitializerComponent', () => {
                 { provide: UserService, useClass: MockUserService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: Router, useClass: MockRouter },
+                { provide: AccountService, useClass: MockAccountService },
             ],
         })
             .compileComponents()

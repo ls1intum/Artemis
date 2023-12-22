@@ -5,7 +5,6 @@ import { LongFeedbackTextService } from 'app/exercises/shared/feedback/long-feed
 import { MockProvider } from 'ng-mocks';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { Feedback } from 'app/entities/feedback.model';
-import { LongFeedbackText } from 'app/entities/long-feedback-text.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { Result } from 'app/entities/result.model';
@@ -64,10 +63,8 @@ describe('FeedbackTextComponent', () => {
     }));
 
     it('should fetch long feedback', fakeAsync(() => {
-        const longFeedbackText = {
-            text: 'long feedback text',
-        };
-        getLongFeedbackStub.mockReturnValue(of(new HttpResponse<LongFeedbackText>({ body: longFeedbackText })));
+        const longFeedbackText: string = 'long feedback text';
+        getLongFeedbackStub.mockReturnValue(of(new HttpResponse<string>({ body: longFeedbackText })));
 
         comp.feedback = getFeedbackItem('', getFeedbackReference(1, 2, true));
 
@@ -75,16 +72,14 @@ describe('FeedbackTextComponent', () => {
         tick();
 
         expect(getLongFeedbackStub).toHaveBeenCalledExactlyOnceWith(1, 2);
-        expect(comp.text).toBe(longFeedbackText.text);
+        expect(comp.text).toBe(longFeedbackText);
         expect(comp.downloadText).toBeUndefined();
         expect(comp.downloadFilename).toBeUndefined();
     }));
 
     it('should create a download link for very long feedback', fakeAsync(() => {
-        const longFeedbackText = {
-            text: '0'.repeat(100_000),
-        };
-        getLongFeedbackStub.mockReturnValue(of(new HttpResponse<LongFeedbackText>({ body: longFeedbackText })));
+        const longFeedbackText = '0'.repeat(100_000);
+        getLongFeedbackStub.mockReturnValue(of(new HttpResponse<string>({ body: longFeedbackText })));
 
         comp.feedback = getFeedbackItem('short version', getFeedbackReference(1, 2, true));
 
@@ -94,7 +89,7 @@ describe('FeedbackTextComponent', () => {
         expect(comp.text).toBe('short version');
         expect(comp.downloadFilename).toBe('feedback_2.txt');
         expect(comp.downloadText).toContain('data:text/plain;charset=utf-8,');
-        expect(comp.downloadText).toContain(longFeedbackText.text);
+        expect(comp.downloadText).toContain(longFeedbackText);
     }));
 
     const getFeedbackReference = (resultId: number, feedbackId: number, hasLongFeedbackText: boolean): Feedback => {

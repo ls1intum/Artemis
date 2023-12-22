@@ -1,53 +1,61 @@
-<div class="exercise-row-container mb-3" *ngIf="nextRelevantExercise && isVisibleToStudents(nextRelevantExercise.exercise)">
-    <h3 class="text-primary">
-        <span *ngIf="nextRelevantExercise!.dueDate; else noDueDate">
-            {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeader' | artemisTranslate: { date: nextRelevantExercise.dueDate | artemisDate } }}
-        </span>
-        <ng-template #noDueDate>
-            {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeaderWithoutDueDate' | artemisTranslate }}
-        </ng-template>
-    </h3>
-    <jhi-course-exercise-row
-        class="pb-1"
-        id="next-course-exercise-row"
-        [exercise]="nextRelevantExercise!.exercise"
-        [course]="course"
-        [hasGuidedTour]="nextRelevantExercise!.exercise === exerciseForGuidedTour"
-    />
-    <div class="collapsed"></div>
-</div>
-
-<div class="guided-tour exercise-row-container mb-3" *ngFor="let weekKey of weeklyIndexKeys">
-    <div
-        class="control-label"
-        [ngClass]="{ 'text-primary': immutableWeeklyExercisesGrouped[weekKey] ? immutableWeeklyExercisesGrouped[weekKey].isCurrentWeek : false }"
-        (click)="weeklyExercisesGrouped[weekKey].isCollapsed = !weeklyExercisesGrouped[weekKey].isCollapsed"
-    >
-        <fa-icon class="pe-3" [icon]="immutableWeeklyExercisesGrouped[weekKey].isCollapsed ? faAngleDown : faAngleUp"></fa-icon>
-        <span *ngIf="immutableWeeklyExercisesGrouped[weekKey].start && immutableWeeklyExercisesGrouped[weekKey].end">
-            {{ immutableWeeklyExercisesGrouped[weekKey].start | artemisDate: 'short-date' }} -
-            {{ immutableWeeklyExercisesGrouped[weekKey].end | artemisDate: 'short-date' }}
-        </span>
-        <span *ngIf="!immutableWeeklyExercisesGrouped[weekKey].start || !immutableWeeklyExercisesGrouped[weekKey].end">
-            {{ 'artemisApp.courseOverview.exerciseList.noDateAssociated' | artemisTranslate }}
-        </span>
-        <span
-            class="ms-2"
-            style="font-weight: 300"
-            jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseGroupHeader"
-            [translateValues]="{ total: immutableWeeklyExercisesGrouped[weekKey].exercises.length }"
-        >
-            (Exercises: {{ immutableWeeklyExercisesGrouped[weekKey].exercises.length }})
-        </span>
-    </div>
-    <div *ngIf="!immutableWeeklyExercisesGrouped[weekKey].isCollapsed">
+@if (nextRelevantExercise && isVisibleToStudents(nextRelevantExercise.exercise)) {
+    <div class="exercise-row-container mb-3">
+        <h3 class="text-primary">
+            @if (nextRelevantExercise!.dueDate) {
+                <span>
+                    {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeader' | artemisTranslate: { date: nextRelevantExercise.dueDate | artemisDate } }}
+                </span>
+            } @else {
+                {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeaderWithoutDueDate' | artemisTranslate }}
+            }
+        </h3>
         <jhi-course-exercise-row
             class="pb-1"
-            [exercise]="exercise"
+            id="next-course-exercise-row"
+            [exercise]="nextRelevantExercise!.exercise"
             [course]="course"
-            [hasGuidedTour]="exercise === exerciseForGuidedTour"
-            *ngFor="let exercise of immutableWeeklyExercisesGrouped[weekKey].exercises"
+            [hasGuidedTour]="nextRelevantExercise!.exercise === exerciseForGuidedTour"
         />
+        <div class="collapsed"></div>
     </div>
-    <div class="collapsed"></div>
+}
+<div class="guided-tour exercise-row-container">
+    @for (weekKey of Object.keys(exerciseGroups); track weekKey) {
+        <div class="mb-3">
+            <div
+                class="control-label"
+                [ngClass]="{ 'text-primary': exerciseGroups[weekKey] ? exerciseGroups[weekKey].isCurrentWeek : false }"
+                (click)="exerciseGroups[weekKey].isCollapsed = !exerciseGroups[weekKey].isCollapsed"
+            >
+                <fa-icon class="pe-3" [icon]="exerciseGroups[weekKey].isCollapsed ? faAngleDown : faAngleUp"></fa-icon>
+                @if (exerciseGroups[weekKey].start && exerciseGroups[weekKey].end) {
+                    <span>
+                        {{ exerciseGroups[weekKey].start | artemisDate: 'short-date' }} -
+                        {{ exerciseGroups[weekKey].end | artemisDate: 'short-date' }}
+                    </span>
+                }
+                @if (!exerciseGroups[weekKey].start || !exerciseGroups[weekKey].end) {
+                    <span>
+                        {{ 'artemisApp.courseOverview.exerciseList.noDateAssociated' | artemisTranslate }}
+                    </span>
+                }
+                <span
+                    class="ms-2"
+                    style="font-weight: 300"
+                    jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseGroupHeader"
+                    [translateValues]="{ total: exerciseGroups[weekKey].exercises.length }"
+                >
+                    (Exercises: {{ exerciseGroups[weekKey].exercises.length }})
+                </span>
+            </div>
+            @if (!exerciseGroups[weekKey].isCollapsed) {
+                <div>
+                    @for (exercise of exerciseGroups[weekKey].exercises; track exercise) {
+                        <jhi-course-exercise-row class="pb-1" [exercise]="exercise" [course]="course" [hasGuidedTour]="exercise === exerciseForGuidedTour" />
+                    }
+                </div>
+            }
+            <div class="collapsed"></div>
+        </div>
+    }
 </div>

@@ -8,6 +8,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ConversationMemberSearchFilter, ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../helpers/conversationExampleModels';
+import { NotificationService } from 'app/shared/notification/notification.service';
+import { MockNotificationService } from '../../../../helpers/mocks/service/mock-notification.service';
 
 describe('ConversationService', () => {
     let service: ConversationService;
@@ -19,6 +21,7 @@ describe('ConversationService', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: NotificationService, useClass: MockNotificationService },
             ],
         });
         service = TestBed.inject(ConversationService);
@@ -84,6 +87,15 @@ describe('ConversationService', () => {
         req.flush({});
         tick();
     }));
+
+    it('markAsRead', () => {
+        service
+            .markAsRead(1, 1)
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual({}));
+        const req = httpMock.expectOne({ method: 'PATCH' });
+        req.flush({});
+    });
 
     it('acceptCodeOfConduct', () => {
         service

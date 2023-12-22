@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
@@ -10,21 +13,18 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.LearningPathRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
@@ -44,13 +44,16 @@ public class LearningPathResource {
 
     private final UserRepository userRepository;
 
+    private final CompetencyProgressService competencyProgressService;
+
     public LearningPathResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, LearningPathService learningPathService,
-            LearningPathRepository learningPathRepository, UserRepository userRepository) {
+            LearningPathRepository learningPathRepository, UserRepository userRepository, CompetencyProgressService competencyProgressService) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.learningPathService = learningPathService;
         this.learningPathRepository = learningPathRepository;
         this.userRepository = userRepository;
+        this.competencyProgressService = competencyProgressService;
     }
 
     /**
@@ -220,7 +223,7 @@ public class LearningPathResource {
     public ResponseEntity<Long> getLearningPathId(@PathVariable Long courseId) {
         log.debug("REST request to get learning path id for course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authorizationCheckService.isStudentInCourse(course, null)) {
+        if (!authorizationCheckService.isAtLeastStudentInCourse(course, null)) {
             throw new AccessForbiddenException("You are not a student in this course.");
         }
         if (!course.getLearningPathsEnabled()) {
@@ -239,6 +242,31 @@ public class LearningPathResource {
             learningPath = learningPathOptional.get();
         }
         return ResponseEntity.ok(learningPath.getId());
+    }
+
+    /**
+     * GET /courses/:courseId/competencies/:competencyId/learning-path/:learningPathId : Gets the competency progress in a learning path
+     *
+     * @param learningPathId the id of the learning path for which to get the progress
+     * @return the ResponseEntity with status 200 (OK) and with the progress in the body
+     */
+    @GetMapping("/learning-path/{learningPathId}/competency-progress")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Set<CompetencyProgressForLearningPathDTO>> getCompetencyProgressForLearningPath(@PathVariable long learningPathId) {
+        log.debug("REST request to get competency progress for learning path: {}", learningPathId);
+        final var learningPath = learningPathRepository.findWithEagerCourseAndCompetenciesByIdElseThrow(learningPathId);
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+
+        if (!user.getId().equals(learningPath.getUser().getId()) && !authorizationCheckService.isAtLeastInstructorInCourse(learningPath.getCourse(), user)) {
+            throw new AccessForbiddenException("You are not authorized to access other students competency progress.");
+        }
+
+        // update progress and construct DTOs
+        final var progressDTOs = learningPath.getCompetencies().stream().map(competency -> {
+            var progress = competencyProgressService.updateCompetencyProgress(competency.getId(), learningPath.getUser());
+            return new CompetencyProgressForLearningPathDTO(competency.getId(), competency.getMasteryThreshold(), progress.getProgress(), progress.getConfidence());
+        }).collect(Collectors.toSet());
+        return ResponseEntity.ok(progressDTOs);
     }
 
     /**

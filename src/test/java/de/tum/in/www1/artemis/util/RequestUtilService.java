@@ -567,7 +567,12 @@ public class RequestUtilService {
     }
 
     public File getFile(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params, @Nullable Map<String, String> expectedResponseHeaders) throws Exception {
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(new HttpHeaders())).andExpect(status().is(expectedStatus.value())).andReturn();
+        return getFile(path, expectedStatus, params, new HttpHeaders(), expectedResponseHeaders);
+    }
+
+    public File getFile(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params, HttpHeaders headers, @Nullable Map<String, String> expectedResponseHeaders)
+            throws Exception {
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(headers)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
         if (!expectedStatus.is2xxSuccessful()) {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();

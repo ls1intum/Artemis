@@ -26,6 +26,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
@@ -38,12 +40,14 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntry
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
-import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
+import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
@@ -130,7 +134,9 @@ public class ProgrammingExerciseService {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    private final IrisSettingsService irisSettingsService;
+    private final Optional<IrisSettingsService> irisSettingsService;
+
+    private final Optional<AeolusTemplateService> aeolusTemplateService;
 
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
@@ -143,7 +149,7 @@ public class ProgrammingExerciseService {
             ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository, ExerciseSpecificationService exerciseSpecificationService,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, ChannelService channelService,
-            ProgrammingSubmissionService programmingSubmissionService, IrisSettingsService irisSettingsService) {
+            ProgrammingSubmissionService programmingSubmissionService, Optional<IrisSettingsService> irisSettingsService, Optional<AeolusTemplateService> aeolusTemplateService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -171,6 +177,7 @@ public class ProgrammingExerciseService {
         this.channelService = channelService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.irisSettingsService = irisSettingsService;
+        this.aeolusTemplateService = aeolusTemplateService;
     }
 
     /**
@@ -209,7 +216,7 @@ public class ProgrammingExerciseService {
         // Step 2: Creating repositories for new exercise
         programmingExerciseRepositoryService.createRepositoriesForNewExercise(programmingExercise);
 
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
 
         // Step 3: Initializing solution and template participation
         initParticipations(savedProgrammingExercise);
@@ -229,28 +236,43 @@ public class ProgrammingExerciseService {
         // Step 6: Create initial submission
         programmingSubmissionService.createInitialSubmissions(savedProgrammingExercise);
 
-        savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
+        // Step 7: Make sure that plagiarism detection config does not use existing id
+        Optional.ofNullable(savedProgrammingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
 
-        // Step 7: Create exercise channel
+        // Step 8: For LocalCI and Aeolus, we store the build plan definition in the database as a windfile
+        if (aeolusTemplateService.isPresent()) {
+            Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(savedProgrammingExercise);
+            if (windfile != null) {
+                savedProgrammingExercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
+            }
+            else {
+                log.warn("No windfile for the settings of exercise {}", savedProgrammingExercise.getId());
+            }
+        }
+
+        // Save programming exercise to prevent transient exception
+        savedProgrammingExercise = programmingExerciseRepository.save(savedProgrammingExercise);
+
+        // Step 9: Create exercise channel
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
-        // Step 8: Setup build plans for template and solution participation
+        // Step 10: Setup build plans for template and solution participation
         setupBuildPlansForNewExercise(savedProgrammingExercise);
 
         savedProgrammingExercise = programmingExerciseRepository.save(savedProgrammingExercise);
 
-        // Step 9: Update task from problem statement
+        // Step 11: Update task from problem statement
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
-        // Step 10: Webhooks and scheduling
-        // Step 10a: Create web hooks for version control
+        // Step 12: Webhooks and scheduling
+        // Step 12a: Create web hooks for version control
         versionControl.addWebHooksForExercise(savedProgrammingExercise);
-        // Step 10b: Schedule operations
+        // Step 12b: Schedule operations
         scheduleOperations(savedProgrammingExercise.getId());
-        // Step 10c: Check notifications for new exercise
+        // Step 12c: Check notifications for new exercise
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(savedProgrammingExercise);
 
-        // Step 11: Trigger build if the exercise is not imported.
+        // Step 13: Trigger build if the exercise is not imported.
         if (!isImportedFromFile) {
             triggerBuildForTemplateAndSolutionParticipation(savedProgrammingExercise);
         }
@@ -472,7 +494,6 @@ public class ProgrammingExerciseService {
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
 
         channelService.updateExerciseChannel(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
-        irisSettingsService.updateIrisSettings(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
         String problemStatementWithTestNames = updatedProgrammingExercise.getProblemStatement();
         programmingExerciseTaskService.replaceTestNamesWithIds(updatedProgrammingExercise);
@@ -650,7 +671,7 @@ public class ProgrammingExerciseService {
     public void delete(Long programmingExerciseId, boolean deleteBaseReposBuildPlans) {
         // Note: This method does not accept a programming exercise to solve issues with nested Transactions.
         // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
-        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
+        final var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
 
         // The delete operation cancels scheduled tasks (like locking/unlocking repositories)
@@ -666,6 +687,8 @@ public class ProgrammingExerciseService {
 
         programmingExerciseGitDiffReportRepository.deleteByProgrammingExerciseId(programmingExerciseId);
 
+        irisSettingsService.ifPresent(iss -> iss.deleteSettingsFor(programmingExercise));
+
         SolutionProgrammingExerciseParticipation solutionProgrammingExerciseParticipation = programmingExercise.getSolutionParticipation();
         TemplateProgrammingExerciseParticipation templateProgrammingExerciseParticipation = programmingExercise.getTemplateParticipation();
         if (solutionProgrammingExerciseParticipation != null) {
@@ -676,8 +699,8 @@ public class ProgrammingExerciseService {
         }
 
         // Note: we fetch the programming exercise again here with student participations to avoid Hibernate issues during the delete operation below
-        programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(programmingExerciseId);
-        log.debug("Delete programming exercises with student participations: {}", programmingExercise.getStudentParticipations());
+        var programmingExerciseWithStudentParticipations = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(programmingExerciseId);
+        log.debug("Delete programming exercises with student participations: {}", programmingExerciseWithStudentParticipations.getStudentParticipations());
         // This will also delete the template & solution participation: we explicitly use deleteById to avoid potential Hibernate issues during deletion
         programmingExerciseRepository.deleteById(programmingExerciseId);
     }

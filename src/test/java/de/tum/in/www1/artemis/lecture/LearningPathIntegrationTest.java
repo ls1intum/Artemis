@@ -8,7 +8,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -33,8 +32,6 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.LectureUnitService;
-import de.tum.in.www1.artemis.service.feature.Feature;
-import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.LearningPathResource;
@@ -92,9 +89,6 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Autowired
     private LearningPathUtilService learningPathUtilService;
 
-    @Autowired
-    private FeatureToggleService featureToggleService;
-
     private Course course;
 
     private Competency[] competencies;
@@ -111,33 +105,27 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     private static final String INSTRUCTOR_OF_COURSE = TEST_PREFIX + "instructor1";
 
-    private User studentNotInCourse;
-
-    @BeforeEach
-    void enableLearningPathsFeatureToggle() {
-        featureToggleService.enableFeature(Feature.LearningPaths);
-    }
-
-    @AfterEach
-    void disableLearningPathsFeatureToggle() {
-        featureToggleService.disableFeature(Feature.LearningPaths);
-    }
-
     @BeforeEach
     void setupTestScenario() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 1, 1);
 
         // Add users that are not in the course
-        studentNotInCourse = userUtilService.createAndSaveUser(TEST_PREFIX + "student1337");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "student1337");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor1337");
 
         course = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1).get(0);
         competencies = competencyUtilService.createCompetencies(course, 5);
 
+        // set threshold to 60, 70, and 80 respectively
+        for (int i = 0; i < competencies.length; i++) {
+            competencies[i] = competencyUtilService.updateMasteryThreshold(competencies[i], 60 + i * 10);
+        }
+
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, past(1), future(1), future(2));
         List<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(textExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
         participationUtilService.addAssessmentWithFeedbackWithGradingInstructionsForExercise(textExercise, STUDENT_OF_COURSE);
+        competencyUtilService.linkExerciseToCompetency(competencies[1], textExercise);
 
         Lecture lecture = new Lecture();
         lecture.setDescription("Test Lecture");
@@ -146,6 +134,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         textUnit = lectureUtilService.createTextUnit();
         lectureUtilService.addLectureUnitsToLecture(lecture, List.of(textUnit));
+        competencyUtilService.linkLectureUnitToCompetency(competencies[2], textUnit);
 
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         lectureUnitService.setLectureUnitCompletion(textUnit, student, true);
@@ -204,14 +193,12 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TUTOR_OF_COURSE, roles = "TA")
     void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
-        request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.FORBIDDEN, Long.class);
     }
 
     @Test
     @WithMockUser(username = EDITOR_OF_COURSE, roles = "EDITOR")
     void testAll_asEditor() throws Exception {
         this.testAllPreAuthorize();
-        request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.FORBIDDEN, Long.class);
     }
 
     @Test
@@ -469,7 +456,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Test
     @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-    void getLearningPathId() throws Exception {
+    void testGetLearningPathId() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
@@ -479,7 +466,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Test
     @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-    void getLearningPathIdNotExisting() throws Exception {
+    void testGetLearningPathIdNotExisting() throws Exception {
         course.setLearningPathsEnabled(true);
         course = courseRepository.save(course);
         var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
@@ -487,6 +474,35 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         learningPathRepository.deleteAll(student.getLearningPaths());
         final var result = request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.OK, Long.class);
         assertThat(result).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testGetCompetencyProgressForLearningPathByOtherStudent() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        request.get("/api/learning-path/" + learningPath.getId() + "/competency-progress", HttpStatus.FORBIDDEN, Set.class);
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetCompetencyProgressForLearningPathByOwner() throws Exception {
+        testGetCompetencyProgressForLearningPath();
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    void testGetCompetencyProgressForLearningPathByInstructor() throws Exception {
+        testGetCompetencyProgressForLearningPath();
+    }
+
+    void testGetCompetencyProgressForLearningPath() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        final var result = request.get("/api/learning-path/" + learningPath.getId() + "/competency-progress", HttpStatus.OK, Set.class);
+        assertThat(result).hasSize(5);
     }
 
 }

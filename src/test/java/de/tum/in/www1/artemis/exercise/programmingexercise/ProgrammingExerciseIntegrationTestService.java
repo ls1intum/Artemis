@@ -75,6 +75,7 @@ import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseTestCaseResource;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
 
 /**
@@ -1760,10 +1761,10 @@ class ProgrammingExerciseIntegrationTestService {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         var programmingExercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationById(exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
-        prepareTwoRepositoriesForPlagiarismChecks(programmingExercise);
+        prepareTwoStudentAndOneInstructorRepositoriesForPlagiarismChecks(programmingExercise);
 
         final var path = ROOT + CHECK_PLAGIARISM.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
-        var result = request.get(path, HttpStatus.OK, TextPlagiarismResult.class, plagiarismUtilService.getDefaultPlagiarismOptions());
+        var result = request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, plagiarismUtilService.getDefaultPlagiarismOptions());
         assertPlagiarismResult(programmingExercise, result, 100.0);
     }
 
@@ -1771,7 +1772,7 @@ class ProgrammingExerciseIntegrationTestService {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         var programmingExercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationById(exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
-        prepareTwoRepositoriesForPlagiarismChecks(programmingExercise);
+        prepareTwoStudentAndOneInstructorRepositoriesForPlagiarismChecks(programmingExercise);
 
         final var path = ROOT + CHECK_PLAGIARISM_JPLAG_REPORT.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         var jplagZipArchive = request.getFile(path, HttpStatus.OK, plagiarismUtilService.getDefaultPlagiarismOptions());
@@ -1780,33 +1781,43 @@ class ProgrammingExerciseIntegrationTestService {
 
         try (ZipFile zipFile = new ZipFile(jplagZipArchive)) {
             assertThat(zipFile.getEntry("overview.json")).isNotNull();
-            assertThat(zipFile.getEntry(Path.of("files/Submission-1.java/Submission-1.java").toString())).isNotNull();
-            assertThat(zipFile.getEntry(Path.of("files/Submission-2.java/Submission-2.java").toString())).isNotNull();
+            assertThat(zipFile.getEntry(Path.of("files/1-Submission1.java/1-Submission1.java").toString())).isNotNull();
+            assertThat(zipFile.getEntry(Path.of("files/2-Submission2.java/2-Submission2.java").toString())).isNotNull();
 
             // it is random which of the following two exists, but one of them must be part of the zip file
-            var json1 = zipFile.getEntry("Submission-2.java-Submission-1.java.json");
-            var json2 = zipFile.getEntry("Submission-1.java-Submission-2.java.json");
+            var json1 = zipFile.getEntry("1-Submission1.java-2-Submission2.java.json");
+            var json2 = zipFile.getEntry("2-Submission2.java-1-Submission1.java.json");
             assertThat(json1 != null || json2 != null).isTrue();
         }
     }
 
-    private void assertPlagiarismResult(ProgrammingExercise programmingExercise, TextPlagiarismResult result, double expectedSimilarity) {
-        assertThat(result.getComparisons()).hasSize(1);
-        assertThat(result.getExercise().getId()).isEqualTo(programmingExercise.getId());
+    private void assertPlagiarismResult(ProgrammingExercise programmingExercise, PlagiarismResultDTO<TextPlagiarismResult> result, double expectedSimilarity) {
+        // verify plagiarism result
+        assertThat(result.plagiarismResult().getComparisons()).hasSize(1);
+        assertThat(result.plagiarismResult().getExercise().getId()).isEqualTo(programmingExercise.getId());
 
-        PlagiarismComparison<TextSubmissionElement> comparison = result.getComparisons().iterator().next();
+        PlagiarismComparison<TextSubmissionElement> comparison = result.plagiarismResult().getComparisons().iterator().next();
         assertThat(comparison.getSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.0001));
         assertThat(comparison.getStatus()).isEqualTo(PlagiarismStatus.NONE);
         assertThat(comparison.getMatches()).hasSize(1);
+
+        // verify plagiarism result stats
+        var stats = result.plagiarismResultStats();
+        assertThat(stats.numberOfDetectedSubmissions()).isEqualTo(2);
+        assertThat(stats.averageSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.0001));
+        assertThat(stats.maximalSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.0001));
     }
 
-    private void prepareTwoRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, GitAPIException {
+    private void prepareTwoStudentAndOneInstructorRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, GitAPIException {
         var participationStudent1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
         var participationStudent2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student2");
+        var participationInstructor1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "instructor1");
         var submissionStudent1 = programmingExerciseUtilService.createProgrammingSubmission(participationStudent1, false);
         var submissionStudent2 = programmingExerciseUtilService.createProgrammingSubmission(participationStudent2, false);
+        var submissionInstructor1 = programmingExerciseUtilService.createProgrammingSubmission(participationInstructor1, false);
         participationUtilService.addResultToSubmission(submissionStudent1, AssessmentType.AUTOMATIC, null);
         participationUtilService.addResultToSubmission(submissionStudent2, AssessmentType.AUTOMATIC, null);
+        participationUtilService.addResultToSubmission(submissionInstructor1, AssessmentType.AUTOMATIC, null);
 
         var jPlagReposDir = Path.of(repoDownloadClonePath, "jplag-repos");
         var projectKey = programmingExercise.getProjectKey();
@@ -1845,9 +1856,9 @@ class ProgrammingExerciseIntegrationTestService {
                 """;
 
         Files.createDirectories(jPlagReposDir.resolve(projectKey));
-        Path file1 = Files.createFile(jPlagReposDir.resolve(projectKey).resolve("Submission-1.java"));
+        Path file1 = Files.createFile(jPlagReposDir.resolve(projectKey).resolve("1-Submission1.java"));
         FileUtils.writeStringToFile(file1.toFile(), exampleProgram, StandardCharsets.UTF_8);
-        Path file2 = Files.createFile(jPlagReposDir.resolve(projectKey).resolve("Submission-2.java"));
+        Path file2 = Files.createFile(jPlagReposDir.resolve(projectKey).resolve("2-Submission2.java"));
         FileUtils.writeStringToFile(file2.toFile(), exampleProgram, StandardCharsets.UTF_8);
 
         doReturn(jPlagReposDir).when(fileService).getTemporaryUniqueSubfolderPath(any(Path.class), eq(60L));
@@ -1866,8 +1877,8 @@ class ProgrammingExerciseIntegrationTestService {
 
         TextPlagiarismResult expectedResult = textExerciseUtilService.createTextPlagiarismResultForExercise(programmingExercise);
 
-        TextPlagiarismResult result = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/plagiarism-result", HttpStatus.OK, TextPlagiarismResult.class);
-        assertThat(result.getId()).isEqualTo(expectedResult.getId());
+        var result = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/plagiarism-result", HttpStatus.OK, PlagiarismResultDTO.class);
+        assertThat(result.plagiarismResult().getId()).isEqualTo(expectedResult.getId());
     }
 
     void testGetPlagiarismResultWithoutResult() throws Exception {

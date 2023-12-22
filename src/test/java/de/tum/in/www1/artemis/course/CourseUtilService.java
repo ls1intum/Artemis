@@ -142,32 +142,61 @@ public class CourseUtilService {
     @Autowired
     private GradingScaleUtilService gradingScaleUtilService;
 
+    /**
+     * Creates and saves a course with null id.
+     *
+     * @return The created course.
+     */
     public Course createCourse() {
         return createCourse(null);
     }
 
+    /**
+     * Creates and saves a course with the given id.
+     *
+     * @param id The id of the course.
+     * @return The newly created course.
+     */
     public Course createCourse(Long id) {
         Course course = CourseFactory.generateCourse(id, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         return courseRepo.save(course);
     }
 
+    /**
+     * Creates and saves a course with messaging enabled.
+     *
+     * @return The newly created course.
+     */
     public Course createCourseWithMessagingEnabled() {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor", true);
         course.setCourseInformationSharingMessagingCodeOfConduct("Code of Conduct");
         return courseRepo.save(course);
     }
 
-    public Course createCourseWithCustomStudentGroupName(String studentGroupName) {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), studentGroupName, "tutor", "editor", "instructor");
-        return courseRepo.save(course);
-    }
-
+    /**
+     * Creates and saves a course with the given short name and student group name.
+     *
+     * @param studentGroupName The student group name of the course.
+     * @param shortName        The short name of the course.
+     * @return The new course.
+     */
     public Course createCourseWithCustomStudentGroupName(String studentGroupName, String shortName) {
         Course course = CourseFactory.generateCourse(null, shortName, pastTimestamp, futureTimestamp, new HashSet<>(), studentGroupName, "tutor", "editor", "instructor", 3, 3, 7,
                 500, 500, true, true, 7);
         return courseRepo.save(course);
     }
 
+    /**
+     * Creates and saves a course with organizations.
+     *
+     * @param name         The name of the organization.
+     * @param shortName    The short name of the organization.
+     * @param url          The url of the organization.
+     * @param description  The description of the organization.
+     * @param logoUrl      The url of the logo.
+     * @param emailPattern The email pattern of the organization.
+     * @return The new course.
+     */
     public Course createCourseWithOrganizations(String name, String shortName, String url, String description, String logoUrl, String emailPattern) {
         Course course = createCourse();
         Set<Organization> organizations = new HashSet<>();
@@ -178,12 +207,27 @@ public class CourseUtilService {
         return courseRepo.save(course);
     }
 
+    /**
+     * Creates and saves with organizations using default values.
+     *
+     * @return The new course.
+     */
     public Course createCourseWithOrganizations() {
         return createCourseWithOrganizations("organization1", "org1", "org.org", "This is organization1", null, "^.*@matching.*$");
     }
 
+    /**
+     * Creates and saves two courses with exercises, lectures, lecture units and competencies.
+     *
+     * @param userPrefix                  The prefix of the course user groups.
+     * @param withParticipations          True, if 5 participations by student1 should be added to the course exercises. If false, no participations are added.
+     * @param withFiles                   True, if lecture unit attachments with files should be generated. If false, attachments without files are generated.
+     * @param numberOfTutorParticipations The number of tutor participations to add to the modeling exercise. "withParticipations" should be set to true for this to have an effect.
+     * @return The list of created and saved courses.
+     * @throws IOException If a file cannot be loaded from resources.
+     */
     public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(String userPrefix, boolean withParticipations, boolean withFiles,
-            int numberOfTutorParticipations) throws Exception {
+            int numberOfTutorParticipations) throws IOException {
         List<Course> courses = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
         return courses.stream().peek(course -> {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
@@ -192,19 +236,39 @@ public class CourseUtilService {
         }).toList();
     }
 
-    public List<Course> createCoursesWithExercisesAndLectures(String prefix, boolean withParticipations, int numberOfTutorParticipations) throws Exception {
-        return createCoursesWithExercisesAndLectures(prefix, withParticipations, false, numberOfTutorParticipations);
+    /**
+     * Creates and saves two courses with exercises and lectures. Lecture unit attachments without files are generated.
+     *
+     * @param userPrefix                  The prefix of the course user groups.
+     * @param withParticipations          True, if 5 participations by student1 should be added to the course exercises. If false, no participations are added.
+     * @param numberOfTutorParticipations The number of tutor participations to add to the modeling exercise. "withParticipations" should be set to true for this to have an effect.
+     * @return The list of created and saved courses.
+     * @throws IOException If a file cannot be loaded from resources.
+     */
+    public List<Course> createCoursesWithExercisesAndLectures(String userPrefix, boolean withParticipations, int numberOfTutorParticipations) throws IOException {
+        return createCoursesWithExercisesAndLectures(userPrefix, withParticipations, false, numberOfTutorParticipations);
     }
 
-    public List<Course> createCoursesWithExercisesAndLectures(String prefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations) throws Exception {
+    /**
+     * Creates and saves two courses with exercises and lectures.
+     *
+     * @param userPrefix                  The prefix of the course user groups.
+     * @param withParticipations          True, if 5 participations by student1 should be added to the course exercises. If false, no participations are added.
+     * @param withFiles                   True, if lecture unit attachments with files should be generated. If false, attachments without files are generated.
+     * @param numberOfTutorParticipations The number of tutor participations to add to the modeling exercise. "withParticipations" should be set to true for this to have an effect.
+     * @return The list of created and saved courses.
+     * @throws IOException If a file cannot be loaded from resources.
+     */
+    public List<Course> createCoursesWithExercisesAndLectures(String userPrefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations)
+            throws IOException {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
 
-        Course course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), prefix + "tumuser", prefix + "tutor", prefix + "editor",
-                prefix + "instructor");
-        Course course2 = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), pastTimestamp, new HashSet<>(), prefix + "tumuser", prefix + "tutor",
-                prefix + "editor", prefix + "instructor");
+        Course course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), userPrefix + "tumuser", userPrefix + "tutor", userPrefix + "editor",
+                userPrefix + "instructor");
+        Course course2 = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), pastTimestamp, new HashSet<>(), userPrefix + "tumuser", userPrefix + "tutor",
+                userPrefix + "editor", userPrefix + "instructor");
 
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
                 course1);
@@ -268,10 +332,10 @@ public class CourseUtilService {
 
         if (withParticipations) {
 
-            // create 5 tutor participations and 5 example submissions and connect all of them (to test the many-to-many relationship)
+            // create "numberOfTutorParticipations" tutor participations and example submissions. Connect all of them (to test the many-to-many relationship).
             Set<TutorParticipation> tutorParticipations = new HashSet<>();
             for (int i = 1; i < numberOfTutorParticipations + 1; i++) {
-                var tutorParticipation = new TutorParticipation().tutor(userUtilService.getUserByLogin(prefix + "tutor" + i)).status(TutorParticipationStatus.NOT_PARTICIPATED)
+                var tutorParticipation = new TutorParticipation().tutor(userUtilService.getUserByLogin(userPrefix + "tutor" + i)).status(TutorParticipationStatus.NOT_PARTICIPATED)
                         .assessedExercise(modelingExercise);
                 tutorParticipationRepo.save(tutorParticipation);
                 tutorParticipations.add(tutorParticipation);
@@ -285,7 +349,7 @@ public class CourseUtilService {
                 exampleSubmissionRepo.save(exampleSubmission);
             }
 
-            User user = userUtilService.getUserByLogin(prefix + "student1");
+            User user = userUtilService.getUserByLogin(userPrefix + "student1");
             StudentParticipation participation1 = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, modelingExercise, user);
             StudentParticipation participation2 = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, user);
             StudentParticipation participation3 = ParticipationFactory.generateStudentParticipation(InitializationState.UNINITIALIZED, modelingExercise, user);
@@ -357,16 +421,13 @@ public class CourseUtilService {
         return Arrays.asList(course1, course2);
     }
 
-    public List<Course> createMultipleCoursesWithAllExercisesAndLectures(String userPrefix, int numberOfCoursesWithExercisesAndLectures, int numberOfTutorParticipations)
-            throws Exception {
-        List<Course> courses = new ArrayList<>();
-        for (int i = 0; i < numberOfCoursesWithExercisesAndLectures; i++) {
-            var coursesWithLectures = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, true, true, numberOfTutorParticipations);
-            courses.addAll(coursesWithLectures);
-        }
-        return courses;
-    }
-
+    /**
+     * Creates and saves course with all exercise types. Also creates participations together with submissions and results.
+     *
+     * @param userPrefix                 The prefix of the course user groups.
+     * @param hasAssessmentDueDatePassed True, if the assessment due date of the exercises has passed.
+     * @return The created course.
+     */
     public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(String userPrefix, boolean hasAssessmentDueDatePassed) {
         var assessmentTimestamp = hasAssessmentDueDatePassed ? ZonedDateTime.now().minusMinutes(10L) : ZonedDateTime.now().plusMinutes(10L);
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -524,7 +585,12 @@ public class CourseUtilService {
         return courseSaved;
     }
 
-    public OnlineCourseConfiguration addOnlineCourseConfigurationToCourse(Course course) {
+    /**
+     * Adds online configuration to a course.
+     *
+     * @param course The course to which online configuration should be added.
+     */
+    public void addOnlineCourseConfigurationToCourse(Course course) {
         OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.setLtiKey("artemis_lti_key");
         onlineCourseConfiguration.setLtiSecret("fake-secret");
@@ -533,26 +599,33 @@ public class CourseUtilService {
         onlineCourseConfiguration.setCourse(course);
         course.setOnlineCourseConfiguration(onlineCourseConfiguration);
         courseRepo.save(course);
-        return onlineCourseConfiguration;
-    }
-
-    public Course addEmptyCourse(String studentGroupName, String taGroupName, String editorGroupName, String instructorGroupName) {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), studentGroupName, taGroupName, editorGroupName,
-                instructorGroupName);
-        courseRepo.save(course);
-        assertThat(courseRepo.findById(course.getId())).as("empty course is initialized").isPresent();
-        return course;
     }
 
     /**
-     * @return An empty course
+     * Creates and saves an active empty course with default user group names.
+     *
+     * @return An empty course.
+     */
+    public Course addEmptyCourse(String studentGroupName, String taGroupName, String editorGroupName, String instructorGroupName) {
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), studentGroupName, taGroupName, editorGroupName,
+                instructorGroupName);
+        return courseRepo.save(course);
+    }
+
+    /**
+     * Creates and saves an active empty course with default user group names.
+     *
+     * @return An empty course.
      */
     public Course addEmptyCourse() {
         return addEmptyCourse("tumuser", "tutor", "editor", "instructor");
     }
 
     /**
-     * @param title The title reflect the genre of exercise that will be added to the course
+     * Creates and saves a course with the corresponding exercise.
+     *
+     * @param title The title reflect the type of exercise to be added to the course
+     * @return The newly created course.
      */
     public Course addCourseInOtherInstructionGroupAndExercise(String title) {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "other-instructors");
@@ -560,7 +633,7 @@ public class CourseUtilService {
             course = courseRepo.save(course);
 
             var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
-            ProgrammingExerciseFactory.populateProgrammingExercise(programmingExercise, "TSTEXC", "Programming", false);
+            ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, "TSTEXC", "Programming", false);
             programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
             programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -589,6 +662,11 @@ public class CourseUtilService {
         return course;
     }
 
+    /**
+     * Creates and saves a course with both modeling and text exercise.
+     *
+     * @return The created course.
+     */
     public Course addCourseWithModelingAndTextExercise() {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
@@ -604,6 +682,11 @@ public class CourseUtilService {
         return course;
     }
 
+    /**
+     * Creates and saves a course with one modeling, one text, and one file upload exercise.
+     *
+     * @return The created course.
+     */
     public Course addCourseWithModelingAndTextAndFileUploadExercise() {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
 
@@ -627,6 +710,23 @@ public class CourseUtilService {
         return course;
     }
 
+    /**
+     * Creates and saves a course with exercises and submissions. We can specify the number of exercises. To not only test one type, this method generates modeling, file-upload and
+     * text exercises in a cyclic manner.
+     *
+     * @param numberOfExercises             Number of generated exercises. E.g. if you set it to 4, 2 modeling exercises, one text and one file-upload exercise will be generated.
+     *                                          (that's why there is the %3 check)
+     * @param numberOfSubmissionPerExercise For each exercise this number of submissions will be generated. E.g. if you have 2 exercises, and set this to 4, in total 8
+     *                                          submissions will be created.
+     * @param numberOfAssessments           Generates the assessments for a submission of an exercise. Example from above, 2 exercises, 4 submissions each. If you set
+     *                                          numberOfAssessments to 2, for each exercise 2 assessments will be created. In total there will be 4 assessments then. (by two
+     *                                          different tutors, as each exercise is assessed by an individual tutor. There are 4 tutors that create assessments)
+     * @param numberOfComplaints            Generates the complaints for assessments, in the same way as results are created.
+     * @param typeComplaint                 True: complaintType==COMPLAINT | false: complaintType==MORE_FEEDBACK
+     * @param numberComplaintResponses      Generates responses for the complaint/feedback request (as above)
+     * @param validModel                    Model for the modeling submission
+     * @return The generated course
+     */
     public Course addCourseWithExercisesAndSubmissions(String userPrefix, String suffix, int numberOfExercises, int numberOfSubmissionPerExercise, int numberOfAssessments,
             int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel) {
         return addCourseWithExercisesAndSubmissions("short", userPrefix, suffix, numberOfExercises, numberOfSubmissionPerExercise, numberOfAssessments, numberOfComplaints,
@@ -634,22 +734,51 @@ public class CourseUtilService {
     }
 
     /**
-     * With this method we can generate a course. We can specify the number of exercises. To not only test one type, this method generates modeling, file-upload and text
-     * exercises in a cyclic manner.
+     * Creates and saves a course with exercises and submissions. We can specify the number of exercises. To not only test one type, this method generates modeling, file-upload and
+     * text exercises in a cyclic manner.
      *
-     * @param numberOfExercises             number of generated exercises. E.g. if you set it to 4, 2 modeling exercises, one text and one file-upload exercise will be generated.
-     *                                          (thats why there is the %3 check)
-     * @param numberOfSubmissionPerExercise for each exercise this number of submissions will be generated. E.g. if you have 2 exercises, and set this to 4, in total 8
+     * @param shortName                     The short name of the course.
+     * @param userPrefix                    The prefix of the course user groups.
+     * @param suffix                        The suffix of the course user groups.
+     * @param numberOfExercises             Number of generated exercises. E.g. if you set it to 4, 2 modeling exercises, one text and one file-upload exercise will be generated.
+     *                                          (that's why there is the %3 check)
+     * @param numberOfSubmissionPerExercise For each exercise this number of submissions will be generated. E.g. if you have 2 exercises, and set this to 4, in total 8
      *                                          submissions will be created.
-     * @param numberOfAssessments           generates the assessments for a submission of an exercise. Example from abobe, 2 exrecises, 4 submissions each. If you set
-     *                                          numberOfAssessments to 2, for each exercise 2 assessmetns will be created. In total there will be 4 assessments then. (by two
+     * @param numberOfAssessments           Generates the assessments for a submission of an exercise. Example from above, 2 exercises, 4 submissions each. If you set
+     *                                          numberOfAssessments to 2, for each exercise 2 assessments will be created. In total there will be 4 assessments then. (by two
      *                                          different tutors, as each exercise is assessed by an individual tutor. There are 4 tutors that create assessments)
-     * @param numberOfComplaints            generates the complaints for assessments, in the same way as results are created.
-     * @param typeComplaint                 true: complaintType==COMPLAINT | false: complaintType==MORE_FEEDBACK
-     * @param numberComplaintResponses      generates responses for the complaint/feedback request (as above)
-     * @param validModel                    model for the modeling submission
-     * @param assessmentDueDateInThePast    if the assessment due date of all exercises is in the past or not
-     * @return - the generated course
+     * @param numberOfComplaints            Generates the complaints for assessments, in the same way as results are created.
+     * @param typeComplaint                 True: complaintType==COMPLAINT | false: complaintType==MORE_FEEDBACK
+     * @param numberComplaintResponses      Generates responses for the complaint/feedback request (as above).
+     * @param validModel                    Model for the modeling submission.
+     * @return The generated course.
+     */
+    public Course addCourseWithExercisesAndSubmissionsWithAssessmentDueDatesInTheFuture(String shortName, String userPrefix, String suffix, int numberOfExercises,
+            int numberOfSubmissionPerExercise, int numberOfAssessments, int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel) {
+        return addCourseWithExercisesAndSubmissions(shortName, userPrefix, suffix, numberOfExercises, numberOfSubmissionPerExercise, numberOfAssessments, numberOfComplaints,
+                typeComplaint, numberComplaintResponses, validModel, false);
+    }
+
+    /**
+     * Creates and saves a course with exercises and submissions. We can specify the number of exercises. To not only test one type, this method generates modeling, file-upload and
+     * text exercises in a cyclic manner.
+     *
+     * @param courseShortName               The short name of the course.
+     * @param userPrefix                    The prefix of the course user groups.
+     * @param suffix                        The suffix of the course user groups.
+     * @param numberOfExercises             Number of generated exercises. E.g. if you set it to 4, 2 modeling exercises, one text and one file-upload exercise will be generated.
+     *                                          (that's why there is the %3 check)
+     * @param numberOfSubmissionPerExercise For each exercise this number of submissions will be generated. E.g. if you have 2 exercises, and set this to 4, in total 8
+     *                                          submissions will be created.
+     * @param numberOfAssessments           Generates the assessments for a submission of an exercise. Example from above, 2 exercises, 4 submissions each. If you set
+     *                                          numberOfAssessments to 2, for each exercise 2 assessments will be created. In total there will be 4 assessments then. (by two
+     *                                          different tutors, as each exercise is assessed by an individual tutor. There are 4 tutors that create assessments)
+     * @param numberOfComplaints            Generates the complaints for assessments, in the same way as results are created.
+     * @param typeComplaint                 True: complaintType==COMPLAINT | false: complaintType==MORE_FEEDBACK
+     * @param numberComplaintResponses      Generates responses for the complaint/feedback request (as above).
+     * @param validModel                    Model for the modeling submission.
+     * @param assessmentDueDateInThePast    If the assessment due date of all exercises is in the past (true) or not (false).
+     * @return The generated course.
      */
     public Course addCourseWithExercisesAndSubmissions(String courseShortName, String userPrefix, String suffix, int numberOfExercises, int numberOfSubmissionPerExercise,
             int numberOfAssessments, int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel, boolean assessmentDueDateInThePast) {
@@ -733,13 +862,13 @@ public class CourseUtilService {
     }
 
     /**
-     * Creates a new course that gets saved in the Course repository.
+     * Creates and saves a new course.
      *
-     * @param id        the id of the course
-     * @param startDate start date of the course
-     * @param endDate   end date of the course
-     * @param exercises exercises of the course
-     * @return course that was created
+     * @param id        The id of the course.
+     * @param startDate The start date of the course.
+     * @param endDate   The end date of the course.
+     * @param exercises Exercises to be added to the course.
+     * @return Created and saved course.
      */
     public Course createAndSaveCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
         Course course = CourseFactory.generateCourse(id, startDate, endDate, exercises, "tumuser", "tutor", "editor", "instructor");
@@ -748,35 +877,49 @@ public class CourseUtilService {
         return course;
     }
 
-    public Course createCourseWithTestModelingAndFileUploadExercisesAndSubmissions(String loginPrefix) throws Exception {
+    /**
+     * Creates and saves a course with one text, one modeling, and one file upload exercise. It also generates a submission for each exercise.
+     *
+     * @param userPrefix The prefix of the course user groups.
+     * @return The created course.
+     * @throws IOException If a file cannot be loaded from resources.
+     */
+    public Course createCourseWithTextModelingAndFileUploadExercisesAndSubmissions(String userPrefix) throws IOException {
         Course course = addCourseWithModelingAndTextAndFileUploadExercise();
         course.setEndDate(ZonedDateTime.now().minusMinutes(5));
         course = courseRepo.save(course);
 
         var fileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "FileUpload");
-        fileUploadExerciseUtilService.createFileUploadSubmissionWithFile(loginPrefix, fileUploadExercise, "uploaded-file.png");
+        fileUploadExerciseUtilService.createFileUploadSubmissionWithFile(userPrefix, fileUploadExercise, "uploaded-file.png");
 
         var textExercise = exerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");
         var textSubmission = ParticipationFactory.generateTextSubmission("example text", Language.ENGLISH, true);
-        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, loginPrefix + "student1");
+        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, userPrefix + "student1");
 
         var modelingExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "Modeling");
-        participationUtilService.createAndSaveParticipationForExercise(modelingExercise, loginPrefix + "student1");
+        participationUtilService.createAndSaveParticipationForExercise(modelingExercise, userPrefix + "student1");
         String emptyActivityModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(emptyActivityModel, true);
-        participationUtilService.addSubmission(modelingExercise, submission, loginPrefix + "student1");
+        participationUtilService.addSubmission(modelingExercise, submission, userPrefix + "student1");
 
         return course;
     }
 
-    public Course createCourseWithExamAndExercises(String loginPrefix) throws IOException {
+    /**
+     * Creates and saves a course with exam and submissions. The exam includes one file upload, one text and one modeling exercise.
+     *
+     * @param userPrefix The prefix of the course user groups.
+     * @return The created course.
+     * @throws IOException If a file cannot be loaded from resources.
+     */
+    public Course createCourseWithExamExercisesAndSubmissions(String userPrefix) throws IOException {
         var course = addEmptyCourse();
 
         // Create a file upload exercise with a dummy submission file
         var exerciseGroup1 = exerciseGroupRepository.save(new ExerciseGroup());
         var fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExerciseForExam(".png", exerciseGroup1);
         fileUploadExercise = exerciseRepo.save(fileUploadExercise);
-        fileUploadExerciseUtilService.createFileUploadSubmissionWithFile(loginPrefix, fileUploadExercise, "uploaded-file.png");
+        fileUploadExerciseUtilService.createFileUploadSubmissionWithFile(userPrefix, fileUploadExercise, "uploaded-file.png");
         exerciseGroup1.addExercise(fileUploadExercise);
         exerciseGroup1 = exerciseGroupRepository.save(exerciseGroup1);
 
@@ -785,7 +928,7 @@ public class CourseUtilService {
         var textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup2);
         textExercise = exerciseRepo.save(textExercise);
         var textSubmission = ParticipationFactory.generateTextSubmission("example text", Language.ENGLISH, true);
-        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, loginPrefix + "student1");
+        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, userPrefix + "student1");
         exerciseGroup2.addExercise(textExercise);
         exerciseGroup2 = exerciseGroupRepository.save(exerciseGroup2);
 
@@ -795,7 +938,7 @@ public class CourseUtilService {
         modelingExercise = exerciseRepo.save(modelingExercise);
         String emptyActivityModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
         var modelingSubmission = ParticipationFactory.generateModelingSubmission(emptyActivityModel, true);
-        participationUtilService.addSubmission(modelingExercise, modelingSubmission, loginPrefix + "student1");
+        participationUtilService.addSubmission(modelingExercise, modelingSubmission, userPrefix + "student1");
         exerciseGroup3.addExercise(modelingExercise);
         exerciseGroupRepository.save(exerciseGroup3);
 
@@ -808,8 +951,13 @@ public class CourseUtilService {
         return course;
     }
 
-    public Course saveCourse(Course course) {
-        return courseRepo.save(course);
+    /**
+     * Saves the passed course to the repository.
+     *
+     * @param course The course to be saved.
+     */
+    public void saveCourse(Course course) {
+        courseRepo.save(course);
     }
 
     public void enableMessagingForCourse(Course course) {
@@ -824,7 +972,13 @@ public class CourseUtilService {
         }
     }
 
-    public Course createCourseWithTextExerciseAndTutor(String login) {
+    /**
+     * Creates and saves a course with text exercise and a tutor.
+     *
+     * @param tutorLogin The login of the tutor to be created.
+     * @return The created course.
+     */
+    public Course createCourseWithTextExerciseAndTutor(String tutorLogin) {
         Course course = this.createCourse();
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         StudentParticipation participation = ParticipationFactory.generateStudentParticipationWithoutUser(InitializationState.INITIALIZED, textExercise);
@@ -833,28 +987,18 @@ public class CourseUtilService {
         textSubmission.setParticipation(participation);
         textSubmissionRepo.saveAndFlush(textSubmission);
         course.addExercises(textExercise);
-        User user = userUtilService.createAndSaveUser(login);
+        User user = userUtilService.createAndSaveUser(tutorLogin);
         user.setGroups(Set.of(course.getTeachingAssistantGroupName()));
         userRepo.save(user);
         return course;
     }
 
-    public Course createCourseWithInstructorAndTextExercise(String userPrefix) {
-        Course course = this.createCourse();
-        TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
-        StudentParticipation participation = ParticipationFactory.generateStudentParticipationWithoutUser(InitializationState.INITIALIZED, textExercise);
-        studentParticipationRepo.save(participation);
-        course.addExercises(textExercise);
-        userUtilService.addUsers(userPrefix, 0, 0, 0, 1);
-        return course;
-    }
-
     /**
-     * Update the max complaint text limit of the course.
+     * Updates the max complaint text limit of the course.
      *
-     * @param course             course which is updated
-     * @param complaintTextLimit new complaint text limit
-     * @return updated course
+     * @param course             Course which is updated
+     * @param complaintTextLimit New complaint text limit
+     * @return The updated course.
      */
     public Course updateCourseComplaintTextLimit(Course course, int complaintTextLimit) {
         course.setMaxComplaintTextLimit(complaintTextLimit);
@@ -863,11 +1007,11 @@ public class CourseUtilService {
     }
 
     /**
-     * Update the max complaint response text limit of the course.
+     * Updates the max complaint response text limit of the course.
      *
-     * @param course                     course which is updated
-     * @param complaintResponseTextLimit new complaint response text limit
-     * @return updated course
+     * @param course                     Course which is updated.
+     * @param complaintResponseTextLimit The new complaint response text limit.
+     * @return The updated course.
      */
     public Course updateCourseComplaintResponseTextLimit(Course course, int complaintResponseTextLimit) {
         course.setMaxComplaintResponseTextLimit(complaintResponseTextLimit);
@@ -875,6 +1019,13 @@ public class CourseUtilService {
         return courseRepo.save(course);
     }
 
+    /**
+     * Updates course groups with the passed prefix and suffix.
+     *
+     * @param userPrefix The new prefix of the course user groups.
+     * @param course     The course to be updated.
+     * @param suffix     The new suffix of the course user groups.
+     */
     public void updateCourseGroups(String userPrefix, Course course, String suffix) {
         course.setStudentGroupName(userPrefix + "student" + suffix);
         course.setTeachingAssistantGroupName(userPrefix + "tutor" + suffix);
@@ -883,6 +1034,16 @@ public class CourseUtilService {
         courseRepo.save(course);
     }
 
+    /**
+     * Creates and saves a course with custom student group name and exam with exercises including grading scale.
+     *
+     * @param user                     The student to be added to the exam.
+     * @param studentGroupName         The new student group name.
+     * @param shortName                The short name of the course.
+     * @param withProgrammingExercise  True, if the exam should include programming exercises. False, if the exam does not include programming exercises.
+     * @param withAllQuizQuestionTypes True, if the exam should include all quiz question types. False, if they are not needed.
+     * @return The created course.
+     */
     public Course createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercisesAndGradingScale(User user, String studentGroupName, String shortName,
             boolean withProgrammingExercise, boolean withAllQuizQuestionTypes) {
         Course course = createCourseWithCustomStudentGroupName(studentGroupName, shortName);
@@ -892,11 +1053,5 @@ public class CourseUtilService {
         course.addExam(exam);
         examUtilService.addExerciseGroupsAndExercisesToExam(exam, withProgrammingExercise, withAllQuizQuestionTypes);
         return courseRepo.save(course);
-    }
-
-    public Course addCourseWithExercisesAndSubmissionsWithAssessmentDueDatesInTheFuture(String shortName, String userPrefix, String suffix, int numberOfExercises,
-            int numberOfSubmissionPerExercise, int numberOfAssessments, int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel) {
-        return addCourseWithExercisesAndSubmissions(shortName, userPrefix, suffix, numberOfExercises, numberOfSubmissionPerExercise, numberOfAssessments, numberOfComplaints,
-                typeComplaint, numberComplaintResponses, validModel, false);
     }
 }

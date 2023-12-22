@@ -1,51 +1,44 @@
-<div
-    class="node-icon-container"
-    *ngIf="node.type === NodeType.EXERCISE || node.type === NodeType.LECTURE_UNIT; else noTask"
-    [jhiStickyPopover]="popContentTask"
-    placement="right"
-    triggers="manual"
->
-    <fa-icon id="learning-object" [icon]="getIcon(node)" [class.completed]="node.completed"></fa-icon>
-</div>
-<ng-template #noTask>
-    <div
-        class="node-s node-icon-container"
-        *ngIf="node.type === NodeType.COMPETENCY_START || node.type === NodeType.COMPETENCY_END; else noCompetency"
-        [jhiStickyPopover]="popContentCompetency"
-        placement="right"
-        triggers="manual"
-    >
-        <fa-icon id="competency" [icon]="getIcon(node)"></fa-icon>
+@if (node.type === NodeType.EXERCISE || node.type === NodeType.LECTURE_UNIT) {
+    <div class="node-icon-container" [jhiStickyPopover]="popContentTask" placement="right" triggers="manual">
+        <fa-icon id="learning-object" [icon]="getIcon(node)" [class.completed]="node.completed"></fa-icon>
     </div>
-</ng-template>
-
-<ng-template #noCompetency>
-    <div class="node-xs node-icon-container">
-        <fa-icon id="match" [icon]="getIcon(node)"></fa-icon>
-    </div>
-</ng-template>
-
+} @else {
+    @if (node.type === NodeType.COMPETENCY_START || node.type === NodeType.COMPETENCY_END) {
+        <div class="node-icon-container" [class.node-s]="node.type === NodeType.COMPETENCY_END" [jhiStickyPopover]="popContentCompetency" placement="right" triggers="manual">
+            @if (node.type === NodeType.COMPETENCY_START) {
+                <jhi-competency-rings
+                    class="m-1"
+                    id="competency-start"
+                    [progress]="progress"
+                    [confidence]="confidence"
+                    [mastery]="mastery"
+                    [hideTooltip]="true"
+                ></jhi-competency-rings>
+            }
+            @if (node.type === NodeType.COMPETENCY_END) {
+                <fa-icon id="competency-end" [icon]="getIcon(node)"></fa-icon>
+            }
+        </div>
+    } @else {
+        <div class="node-xs node-icon-container">
+            <fa-icon id="match" [icon]="getIcon(node)"></fa-icon>
+        </div>
+    }
+}
 <ng-template #popContentTask>
-    <jhi-exercise-node-details
-        class="node-details"
-        *ngIf="node.type === NodeType.EXERCISE"
-        [exerciseId]="node.linkedResource!"
-        [(exercise)]="nodeDetailsData.exercise"
-    ></jhi-exercise-node-details>
-    <jhi-lecture-unit-node-details
-        class="node-details"
-        *ngIf="node.type === NodeType.LECTURE_UNIT"
-        [lectureUnitId]="node.linkedResource!"
-        [(lectureUnit)]="nodeDetailsData.lectureUnit"
-    ></jhi-lecture-unit-node-details>
+    @if (node.type === NodeType.EXERCISE) {
+        <jhi-exercise-node-details class="node-details" [exerciseId]="node.linkedResource!" [(exercise)]="nodeDetailsData.exercise"></jhi-exercise-node-details>
+    }
+    @if (node.type === NodeType.LECTURE_UNIT) {
+        <jhi-lecture-unit-node-details class="node-details" [lectureUnitId]="node.linkedResource!" [(lectureUnit)]="nodeDetailsData.lectureUnit"></jhi-lecture-unit-node-details>
+    }
 </ng-template>
-
 <ng-template #popContentCompetency>
     <jhi-competency-node-details
         class="node-details"
         [courseId]="courseId"
         [competencyId]="node.linkedResource!"
         [(competency)]="nodeDetailsData.competency"
-        [(competencyProgress)]="nodeDetailsData.competencyProgress"
+        [competencyProgress]="nodeDetailsData.competencyProgress!"
     ></jhi-competency-node-details>
 </ng-template>

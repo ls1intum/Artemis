@@ -143,7 +143,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits" })
     Optional<Course> findWithEagerLecturesAndLectureUnitsById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration", "irisSettings" })
+    @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
     Optional<Course> findForUpdateById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "competencies", "prerequisites" })
@@ -311,7 +311,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * @param exercises all exercises (e.g. of a course or exercise group) that should be filtered
      * @return the filtered and relevant exercises for manual assessment
      */
-    default Set<Exercise> getInterestingExercisesForAssessmentDashboards(Set<Exercise> exercises) {
+    default Set<Exercise> filterInterestingExercisesForAssessmentDashboards(Set<Exercise> exercises) {
         return exercises.stream()
                 .filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise
                         || (exercise instanceof ProgrammingExercise && (exercise.getAssessmentType() != AUTOMATIC || exercise.getAllowComplaintsForAutomaticAssessments())))
@@ -425,6 +425,17 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     default boolean isCommunicationEnabled(long courseId) {
         return informationSharingConfigurationIsOneOf(courseId,
                 Set.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING));
+    }
+
+    /**
+     * Checks if the communication feature is enabled for a course.
+     *
+     * @param courseId the id of the course
+     * @return true if the communication feature is enabled for the course, false otherwise
+     */
+    default boolean isMessagingOrCommunicationEnabled(long courseId) {
+        return informationSharingConfigurationIsOneOf(courseId, Set.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY,
+                CourseInformationSharingConfiguration.MESSAGING_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING));
     }
 
     /**

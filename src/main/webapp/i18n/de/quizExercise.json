@@ -81,6 +81,7 @@
             "addMultipleChoiceQuestion": "Multiple-Choice Frage hinzufügen",
             "addDragAndDropQuestion": "Drag-And-Drop Frage hinzufügen",
             "addShortAnswerQuestion": "Short-Answer Frage hinzufügen",
+            "addApollonDragAndDropQuestion": "Apollon Drag-And-Drop Frage erstellen",
             "addExistingQuestions": "Vorhandene Fragen hinzufügen",
             "fromAFile": "Aus einer Datei",
             "fromACourse": "Von einem Kurs",

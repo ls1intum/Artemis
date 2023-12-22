@@ -1,39 +1,46 @@
-<div *ngIf="exercise">
-    <jhi-header-exercise-page-with-details *ngIf="displayHeader" [exercise]="exercise!" [course]="exercise?.exerciseGroup?.exam?.course">
-        <span pagetitle>{{ exercise?.exerciseGroup ? exercise.exerciseGroup!.title : exercise!.title }}</span>
-    </jhi-header-exercise-page-with-details>
-    <div class="row">
-        <div class="col pe-0 flex-grow-1">
-            <!-- PROBLEM STATEMENT START -->
-            <div class="row mt-2 mb-2 align-items-baseline" id="problem-statement">
-                <div class="col-12 col-md-12 markdown-preview problem-statement">
-                    <h3>{{ 'artemisApp.exercise.problemStatement' | artemisTranslate }}</h3>
-                    <p
-                        [innerHTML]="exercise?.problemStatement ? (exercise.problemStatement | htmlForMarkdown) : ('artemisApp.exercise.emptyProblemStatement' | artemisTranslate)"
-                    ></p>
+@if (exercise) {
+    <div>
+        @if (displayHeader) {
+            <jhi-header-exercise-page-with-details [exercise]="exercise!" [course]="exercise?.exerciseGroup?.exam?.course">
+                <span pagetitle>{{ exercise?.exerciseGroup ? exercise.exerciseGroup!.title : exercise!.title }}</span>
+            </jhi-header-exercise-page-with-details>
+        }
+        <div class="row">
+            <div class="col pe-0 flex-grow-1">
+                <!-- PROBLEM STATEMENT START -->
+                <div class="row mt-2 mb-2 align-items-baseline" id="problem-statement">
+                    <div class="col-12 col-md-12 markdown-preview problem-statement">
+                        <h3>{{ 'artemisApp.exercise.problemStatement' | artemisTranslate }}</h3>
+                        <p
+                            [innerHTML]="
+                                exercise?.problemStatement ? (exercise.problemStatement | htmlForMarkdown) : ('artemisApp.exercise.emptyProblemStatement' | artemisTranslate)
+                            "
+                        ></p>
+                    </div>
                 </div>
+                <!-- PROBLEM STATEMENT END -->
+                <div class="row mb-2 mt-2 align-items-baseline">
+                    <h3 class="pe-2">{{ 'artemisApp.exercise.exampleSolution' | artemisTranslate }}</h3>
+                </div>
+                <dl class="row-md jh-entity-details markdown-preview">
+                    @if (exampleSolutionInfo?.exampleSolutionUML || exampleSolutionInfo?.exampleSolution) {
+                        @if (exampleSolutionInfo?.exampleSolutionUML && exampleSolutionInfo?.modelingExercise) {
+                            <dd class="editor-outline-background">
+                                <jhi-modeling-editor
+                                    [readOnly]="true"
+                                    [diagramType]="exampleSolutionInfo?.modelingExercise?.diagramType"
+                                    [umlModel]="exampleSolutionInfo?.exampleSolutionUML"
+                                    [withExplanation]="!!exampleSolutionInfo?.modelingExercise?.exampleSolutionExplanation"
+                                    [explanation]="exampleSolutionInfo?.modelingExercise?.exampleSolutionExplanation || ''"
+                                />
+                            </dd>
+                        }
+                        <dd [innerHTML]="exampleSolutionInfo?.exampleSolution"></dd>
+                    } @else {
+                        <dd [innerHTML]="'artemisApp.exercise.emptyExampleSolution' | artemisTranslate"></dd>
+                    }
+                </dl>
             </div>
-            <!-- PROBLEM STATEMENT END -->
-            <div class="row mb-2 mt-2 align-items-baseline">
-                <h3 class="pe-2">{{ 'artemisApp.exercise.exampleSolution' | artemisTranslate }}</h3>
-            </div>
-            <dl class="row-md jh-entity-details markdown-preview">
-                <ng-container *ngIf="exampleSolutionInfo?.exampleSolutionUML || exampleSolutionInfo?.exampleSolution; else emptyExampleSolution">
-                    <dd *ngIf="exampleSolutionInfo?.exampleSolutionUML && exampleSolutionInfo?.modelingExercise" class="editor-outline-background">
-                        <jhi-modeling-editor
-                            [readOnly]="true"
-                            [diagramType]="exampleSolutionInfo?.modelingExercise?.diagramType"
-                            [umlModel]="exampleSolutionInfo?.exampleSolutionUML"
-                            [withExplanation]="!!exampleSolutionInfo?.modelingExercise?.exampleSolutionExplanation"
-                            [explanation]="exampleSolutionInfo?.modelingExercise?.exampleSolutionExplanation || ''"
-                        ></jhi-modeling-editor>
-                    </dd>
-                    <dd [innerHTML]="exampleSolutionInfo?.exampleSolution"></dd>
-                </ng-container>
-                <ng-template #emptyExampleSolution>
-                    <dd [innerHTML]="'artemisApp.exercise.emptyExampleSolution' | artemisTranslate"></dd>
-                </ng-template>
-            </dl>
         </div>
     </div>
-</div>
+}

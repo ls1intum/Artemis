@@ -228,7 +228,7 @@ public class MailService implements InstantNotificationService {
         // Translation that can not be done via i18n Resource Bundle (for Thymeleaf) but has to be set in this service via Java
         String newAnnouncementString = locale.toString().equals("en") ? "New announcement \"%s\" in course \"%s\"" : "Neue Ankündigung \"%s\" im Kurs \"%s\"";
         String postTitle = ((Post) notificationSubject).getTitle();
-        String courseTitle = ((Post) notificationSubject).getCourse().getTitle();
+        String courseTitle = ((Post) notificationSubject).getConversation().getCourse().getTitle();
 
         return String.format(newAnnouncementString, postTitle, courseTitle);
     }
@@ -377,8 +377,9 @@ public class MailService implements InstantNotificationService {
             case DUPLICATE_TEST_CASE -> templateEngine.process("mail/notification/duplicateTestCasesEmail", context);
             case NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT -> templateEngine.process("mail/notification/plagiarismCaseEmail", context);
             case PLAGIARISM_CASE_VERDICT_STUDENT -> templateEngine.process("mail/notification/plagiarismVerdictEmail", context);
-            case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED -> templateEngine
-                    .process("mail/notification/tutorialGroupBasicEmail", context);
+            case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR,
+                    TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED ->
+                templateEngine.process("mail/notification/tutorialGroupBasicEmail", context);
             case TUTORIAL_GROUP_DELETED -> templateEngine.process("mail/notification/tutorialGroupDeletedEmail", context);
             case TUTORIAL_GROUP_UPDATED -> templateEngine.process("mail/notification/tutorialGroupUpdatedEmail", context);
             case DATA_EXPORT_CREATED -> templateEngine.process("mail/notification/dataExportCreatedEmail", context);

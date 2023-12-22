@@ -83,8 +83,10 @@ public class ModelingExerciseUtilService {
     private ModelingSubmissionService modelSubmissionService;
 
     /**
-     * @param title The title of the to be added modeling exercise
-     * @return A course with one specified modeling exercise
+     * Creates and saves a Course with a ModelingExercise. The ModelingExercise's DiagramType is set to ClassDiagram.
+     *
+     * @param title The title of the ModelingExercise
+     * @return The created Course
      */
     public Course addCourseWithOneModelingExercise(String title) {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -100,21 +102,21 @@ public class ModelingExerciseUtilService {
         return course;
     }
 
+    /**
+     * Creates and saves a Course with a ModelingExercise. The ModelingExercise's DiagramType is set to ClassDiagram.
+     *
+     * @return The created Course
+     */
     public Course addCourseWithOneModelingExercise() {
         return addCourseWithOneModelingExercise("ClassDiagram");
     }
 
-    public Course addCourseWithOneReleasedModelExerciseWithKnowledge(String title) {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
-                course);
-        modelingExercise.setTitle(title);
-        course.addExercises(modelingExercise);
-        courseRepo.save(course);
-        exerciseRepo.save(modelingExercise);
-        return course;
-    }
-
+    /**
+     * Creates and saves a ModelingExercise. Also creates an active Course and an Exam with a mandatory ExerciseGroup the Modeling Exercise belongs to.
+     *
+     * @param title The title of the ModelingExercise
+     * @return The created ModelingExercise
+     */
     public ModelingExercise addCourseExamExerciseGroupWithOneModelingExercise(String title) {
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
         ModelingExercise classExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
@@ -123,10 +125,20 @@ public class ModelingExerciseUtilService {
         return classExercise;
     }
 
+    /**
+     * Creates and saves a ModelingExercise. Also creates an active Course and an Exam with a mandatory ExerciseGroup the Modeling Exercise belongs to.
+     *
+     * @return The created ModelingExercise
+     */
     public ModelingExercise addCourseExamExerciseGroupWithOneModelingExercise() {
         return addCourseExamExerciseGroupWithOneModelingExercise("ClassDiagram");
     }
 
+    /**
+     * Creates and saves a Course with 11 ModelingExercises, one of each DiagramType and one finished exercise.
+     *
+     * @return The created Course
+     */
     public Course addCourseWithDifferentModelingExercises() {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         ModelingExercise classExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
@@ -200,12 +212,12 @@ public class ModelingExerciseUtilService {
     }
 
     /**
-     * Stores for the given model a submission of the user and initiates the corresponding Result
+     * Creates and saves a ModelingSubmission, a Result and a StudentParticipation for the given ModelingExercise.
      *
-     * @param exercise exercise the submission belongs to
-     * @param model    ModelingSubmission json as string contained in the submission
-     * @param login    of the user the submission belongs to
-     * @return submission stored in the modelingSubmissionRepository
+     * @param exercise The ModelingExercise the submission belongs to
+     * @param model    The model of the submission
+     * @param login    The login of the user the submission belongs to
+     * @return The created ModelingSubmission
      */
     public ModelingSubmission addModelingSubmissionWithEmptyResult(ModelingExercise exercise, String model, String login) {
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
@@ -223,6 +235,14 @@ public class ModelingExerciseUtilService {
         return submission;
     }
 
+    /**
+     * Creates and saves a StudentParticipation for the given ModelingExercise and ModelingSubmission.
+     *
+     * @param exercise   The ModelingExercise the submission belongs to
+     * @param submission The ModelingSubmission that belongs to the StudentParticipation
+     * @param login      The login of the user the submission belongs to
+     * @return The updated ModelingSubmission
+     */
     public ModelingSubmission addModelingSubmission(ModelingExercise exercise, ModelingSubmission submission, String login) {
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
         participation.addSubmission(submission);
@@ -232,6 +252,14 @@ public class ModelingExerciseUtilService {
         return submission;
     }
 
+    /**
+     * Creates and saves a team StudentParticipation for the given ModelingExercise and a team ModelingSubmission.
+     *
+     * @param exercise   The ModelingExercise the submission belongs to
+     * @param submission The ModelingSubmission that belongs to the StudentParticipation
+     * @param team       The team the submission belongs to
+     * @return The updated ModelingSubmission
+     */
     public ModelingSubmission addModelingTeamSubmission(ModelingExercise exercise, ModelingSubmission submission, Team team) {
         StudentParticipation participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
         participation.addSubmission(submission);
@@ -241,6 +269,16 @@ public class ModelingExerciseUtilService {
         return submission;
     }
 
+    /**
+     * Creates and saves a StudentParticipation for the given ModelingExercise, the ModelingSubmission, and login. Also creates and saves a Result for the StudentParticipation
+     * given the assessorLogin.
+     *
+     * @param exercise      The ModelingExercise the submission belongs to
+     * @param submission    The ModelingSubmission that belongs to the StudentParticipation
+     * @param login         The login of the user the submission belongs to
+     * @param assessorLogin The login of the assessor the Result belongs to
+     * @return The updated ModelingSubmission
+     */
     public ModelingSubmission addModelingSubmissionWithResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
 
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
@@ -265,11 +303,30 @@ public class ModelingExerciseUtilService {
         return submission;
     }
 
+    /**
+     * Creates and saves a StudentParticipation for the given ModelingExercise, the ModelingSubmission, and login. Also creates and saves a Result for the StudentParticipation
+     * given the assessorLogin.
+     *
+     * @param exercise      The ModelingExercise the submission belongs to
+     * @param submission    The ModelingSubmission that belongs to the StudentParticipation
+     * @param login         The login of the user the submission belongs to
+     * @param assessorLogin The login of the assessor the Result belongs to
+     * @return The updated Submission
+     */
     public Submission addModelingSubmissionWithFinishedResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
         return participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation, submission, assessorLogin);
     }
 
+    /**
+     * Creates and saves a ModelingSubmission from a file.
+     *
+     * @param exercise The ModelingExercise the submission belongs to
+     * @param path     The path to the file that contains the submission's model
+     * @param login    The login of the user the submission belongs to
+     * @return The created ModelingSubmission
+     * @throws Exception If the file can't be read
+     */
     public ModelingSubmission addModelingSubmissionFromResources(ModelingExercise exercise, String path, String login) throws IOException {
         String model = FileUtils.loadFileFromResources(path);
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(model, true);
@@ -278,18 +335,41 @@ public class ModelingExerciseUtilService {
         return submission;
     }
 
+    /**
+     * Verifies that a ModelingSubmission with the given id has been stored with the given model. Fails if the submission can't be found or the models don't match.
+     *
+     * @param submissionId The id of the ModelingSubmission
+     * @param sentModel    The model that should have been stored
+     */
     public void checkModelingSubmissionCorrectlyStored(Long submissionId, String sentModel) {
         Optional<ModelingSubmission> modelingSubmission = modelingSubmissionRepo.findById(submissionId);
         assertThat(modelingSubmission).as("submission correctly stored").isPresent();
         checkModelsAreEqual(modelingSubmission.orElseThrow().getModel(), sentModel);
     }
 
+    /**
+     * Verifies that the given models are equal. Fails if they are not equal.
+     *
+     * @param storedModel The model that has been stored
+     * @param sentModel   The model that should have been stored
+     */
     public void checkModelsAreEqual(String storedModel, String sentModel) {
         JsonObject sentModelObject = parseString(sentModel).getAsJsonObject();
         JsonObject storedModelObject = parseString(storedModel).getAsJsonObject();
         assertThat(storedModelObject).as("model correctly stored").isEqualTo(sentModelObject);
     }
 
+    /**
+     * Creates and saves a Result given a ModelingSubmission and a path to a file containing the Feedback for the Result.
+     *
+     * @param exercise   The ModelingExercise the submission belongs to
+     * @param submission The ModelingSubmission the Result belongs to
+     * @param path       The path to the file containing the Feedback for the Result
+     * @param login      The login of the assessor the Result belongs to
+     * @param submit     True, if the Result should be submitted (if the Result needs to be edited before submission, set this to false)
+     * @return The created Result
+     * @throws Exception If the file can't be read
+     */
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String path, String login, boolean submit) throws Exception {
         List<Feedback> feedbackList = participationUtilService.loadAssessmentFomResources(path);
         Result result = assessmentService.saveManualAssessment(submission, feedbackList, null);
@@ -302,6 +382,15 @@ public class ModelingExerciseUtilService {
         return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(result.getId());
     }
 
+    /**
+     * Creates and saves a Result for the given ModelingSubmission. The Result contains two Feedback elements.
+     *
+     * @param exercise   The ModelingExercise the submission belongs to
+     * @param submission The ModelingSubmission the Result belongs to
+     * @param login      The login of the assessor the Result belongs to
+     * @param submit     True, if the Result should be submitted (if the Result needs to be edited before submission, set this to false)
+     * @return The created Result
+     */
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String login, boolean submit) {
         Feedback feedback1 = feedbackRepo.save(new Feedback().detailText("detail1"));
         Feedback feedback2 = feedbackRepo.save(new Feedback().detailText("detail2"));
@@ -319,26 +408,17 @@ public class ModelingExerciseUtilService {
         return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(result.getId());
     }
 
+    /**
+     * Creates and saves a ModelingPlagiarismResult for the given Exercise.
+     *
+     * @param exercise The Exercise the ModelingPlagiarismResult belongs to
+     * @return The created ModelingPlagiarismResult
+     */
     public ModelingPlagiarismResult createModelingPlagiarismResultForExercise(Exercise exercise) {
         ModelingPlagiarismResult result = new ModelingPlagiarismResult();
         result.setExercise(exercise);
         result.setSimilarityDistribution(new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
         result.setDuration(4);
         return plagiarismResultRepo.save(result);
-    }
-
-    public Course addModelingExerciseToCourse(Course course) {
-        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
-        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
-        ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
-
-        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
-                course);
-        modelingExercise.setGradingInstructions("Grading instructions");
-        modelingExercise.getCategories().add("Modeling");
-        modelingExercise = modelingExerciseRepository.save(modelingExercise);
-        course.addExercises(modelingExercise);
-        return courseRepo.save(course);
-
     }
 }

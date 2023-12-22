@@ -1,4 +1,4 @@
-<ng-container *ngIf="course">
+@if (course) {
     <div class="row">
         <div class="col d-flex align-items-center">
             <h3>
@@ -10,20 +10,24 @@
             <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
         </div>
         <div class="col text-end align-self-center">
-            <button type="button" id="back-to-wizard" *ngIf="showBackToWizardModeButton" class="btn btn-secondary" (click)="goBackToWizardMode()">
-                <fa-icon [icon]="faHandshakeAngle"></fa-icon>&nbsp;{{ 'artemisApp.lecture.wizardMode.backToWizard' | artemisTranslate }}
-            </button>
+            @if (showBackToWizardModeButton) {
+                <button type="button" id="back-to-wizard" class="btn btn-secondary" (click)="goBackToWizardMode()">
+                    <fa-icon [icon]="faHandshakeAngle"></fa-icon>&nbsp;{{ 'artemisApp.lecture.wizardMode.backToWizard' | artemisTranslate }}
+                </button>
+            }
             <button id="toggleSearchButton" class="btn btn-primary" type="button" (click)="toggleSearch()">
                 {{ 'artemisApp.course.exercise.search.toggleButton.' + showSearch | artemisTranslate }}
             </button>
         </div>
     </div>
-
-    <jhi-course-management-exercises-search *ngIf="showSearch" (exerciseFilter)="exerciseFilter = $event"></jhi-course-management-exercises-search>
-    <div *ngIf="showSearch && getFilteredExerciseCount() == 0 && !exerciseFilter.isEmpty()" class="alert alert-secondary" role="alert">
-        {{ 'artemisApp.course.exercise.search.noResults' | artemisTranslate }}
-    </div>
-
+    @if (showSearch) {
+        <jhi-course-management-exercises-search (exerciseFilter)="exerciseFilter = $event"></jhi-course-management-exercises-search>
+    }
+    @if (showSearch && getFilteredExerciseCount() === 0 && !exerciseFilter.isEmpty()) {
+        <div class="alert alert-secondary" role="alert">
+            {{ 'artemisApp.course.exercise.search.noResults' | artemisTranslate }}
+        </div>
+    }
     <jhi-course-exercise-card
         [headingJhiTranslate]="'artemisApp.course.programmingExercises'"
         [exerciseCount]="programmingExercisesCount"
@@ -54,7 +58,6 @@
             (filteredExerciseCount)="filteredProgrammingExercisesCount = $event"
         ></jhi-programming-exercise>
     </jhi-course-exercise-card>
-
     <jhi-course-exercise-card
         *jhiExtensionPoint="overrideNonProgrammingExerciseCard"
         [headingJhiTranslate]="'artemisApp.course.quizExercises'"
@@ -72,7 +75,6 @@
             (filteredExerciseCount)="filteredQuizExercisesCount = $event"
         ></jhi-quiz-exercise>
     </jhi-course-exercise-card>
-
     <jhi-course-exercise-card
         *jhiExtensionPoint="overrideNonProgrammingExerciseCard"
         [headingJhiTranslate]="'artemisApp.course.modelingExercises'"
@@ -90,7 +92,6 @@
             (filteredExerciseCount)="filteredModelingExercisesCount = $event"
         ></jhi-modeling-exercise>
     </jhi-course-exercise-card>
-
     <jhi-course-exercise-card
         *jhiExtensionPoint="overrideNonProgrammingExerciseCard"
         [headingJhiTranslate]="'artemisApp.course.textExercises'"
@@ -108,7 +109,6 @@
             (filteredExerciseCount)="filteredTextExercisesCount = $event"
         ></jhi-text-exercise>
     </jhi-course-exercise-card>
-
     <jhi-course-exercise-card
         *jhiExtensionPoint="overrideNonProgrammingExerciseCard"
         [headingJhiTranslate]="'artemisApp.course.fileUploadExercises'"
@@ -126,4 +126,4 @@
             (filteredExerciseCount)="filteredFileUploadExercisesCount = $event"
         ></jhi-file-upload-exercise>
     </jhi-course-exercise-card>
-</ng-container>
+}

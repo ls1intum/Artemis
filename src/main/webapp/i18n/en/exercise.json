@@ -57,6 +57,8 @@
             "emptyExampleSolution": "(No example solution)",
             "exampleSolutionPublicationDateError": "For graded exercises, Example Solution Publication Date must be after Release, Start and Due Date if set. Please check your selection again",
             "exampleSolutionPublicationDateWarning": "Example Solution Publication Date is before Due Date!",
+            "feedbackSuggestionsEnabled": "Enable feedback suggestions from Athena",
+            "feedbackSuggestionsEnabledTooltip": "If enabled, Athena will suggest feedback to tutors on some submissions.",
             "assessmentCriterion": "Assessment Criterion",
             "assessmentInstructions": "Assessment Instructions",
             "assessmentInstruction": "Assessment Instruction: ",

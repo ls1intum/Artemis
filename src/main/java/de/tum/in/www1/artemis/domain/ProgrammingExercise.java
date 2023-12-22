@@ -17,17 +17,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.*;
+import com.google.gson.JsonSyntaxException;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
-import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -143,18 +144,15 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details")
     private boolean releaseTestsWithExampleSolution;
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "iris_settings_id", table = "programming_exercise_details")
-    private IrisSettings irisSettings;
+    @Column(name = "build_plan_configuration", table = "programming_exercise_details", columnDefinition = "longtext")
+    private String buildPlanConfiguration;
 
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
-     * This property is only used when creating the exercise (the client sets this value when POSTing the new exercise to the server).
-     * It is not persisted as this setting can not be changed afterwards.
      * This is currently only supported for HASKELL and OCAML on BAMBOO, thus the default value is false.
      */
-    @Transient
-    private boolean checkoutSolutionRepositoryTransient = false;
+    @Column(name = "checkout_solution_repository", table = "programming_exercise_details", columnDefinition = "boolean default false")
+    private boolean checkoutSolutionRepository;
 
     /**
      * Convenience getter. The actual URL is stored in the {@link TemplateProgrammingExerciseParticipation}
@@ -741,11 +739,11 @@ public class ProgrammingExercise extends Exercise {
     }
 
     public boolean getCheckoutSolutionRepository() {
-        return this.checkoutSolutionRepositoryTransient;
+        return this.checkoutSolutionRepository;
     }
 
     public void setCheckoutSolutionRepository(boolean checkoutSolutionRepository) {
-        this.checkoutSolutionRepositoryTransient = checkoutSolutionRepository;
+        this.checkoutSolutionRepository = checkoutSolutionRepository;
     }
 
     /**
@@ -855,10 +853,6 @@ public class ProgrammingExercise extends Exercise {
         buildPlanAccessSecret = UUID.randomUUID().toString();
     }
 
-    public IrisSettings getIrisSettings() {
-        return irisSettings;
-    }
-
     /**
      * {@inheritDoc}
      */
@@ -869,7 +863,40 @@ public class ProgrammingExercise extends Exercise {
         super.disconnectRelatedEntities();
     }
 
-    public void setIrisSettings(IrisSettings irisSettings) {
-        this.irisSettings = irisSettings;
+    /**
+     * Returns the JSON encoded custom build plan configuration
+     *
+     * @return the JSON encoded custom build plan configuration or null if the default one should be used
+     */
+    public String getBuildPlanConfiguration() {
+        return buildPlanConfiguration;
+    }
+
+    /**
+     * Sets the JSON encoded custom build plan configuration
+     *
+     * @param buildPlanConfiguration the JSON encoded custom build plan configuration
+     */
+    public void setBuildPlanConfiguration(String buildPlanConfiguration) {
+        this.buildPlanConfiguration = buildPlanConfiguration;
+    }
+
+    /**
+     * We store the build plan configuration as a JSON string in the database, as it is easier to handle than a complex object structure.
+     * This method parses the JSON string and returns a {@link Windfile} object.
+     *
+     * @return the {@link Windfile} object or null if the JSON string could not be parsed
+     */
+    public Windfile getWindfile() {
+        if (buildPlanConfiguration == null) {
+            return null;
+        }
+        try {
+            return Windfile.deserialize(buildPlanConfiguration);
+        }
+        catch (JsonSyntaxException e) {
+            log.error("Could not parse build plan configuration for programming exercise {}", this.getId(), e);
+        }
+        return null;
     }
 }

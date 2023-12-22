@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository.metis;
 import static de.tum.in.www1.artemis.repository.specs.MessageSpecs.*;
 import static de.tum.in.www1.artemis.repository.specs.PostSpecs.*;
 
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.data.domain.Page;
@@ -35,11 +36,30 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
      * @return returns a Page of Messages
      */
     default Page<Post> findMessages(PostContextFilter postContextFilter, Pageable pageable, long userId) {
-        Specification<Post> specification = Specification.where(getConversationSpecification(postContextFilter.getConversationId())
-                .and(MessageSpecs.getSearchTextSpecification(postContextFilter.getSearchText()).and(getSortSpecification())
-                        .and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId)))
+        Specification<Post> specification = Specification.where(getConversationSpecification(postContextFilter.getConversationId()))
+                .and(MessageSpecs.getSearchTextSpecification(postContextFilter.getSearchText())).and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId))
                 .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId))
-                .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved())));
+                .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved()))
+                .and(getSortSpecification(true, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder()));
+
+        return findAll(specification, pageable);
+    }
+
+    /**
+     * Generates SQL Query via specifications to find and sort messages from course-wide
+     *
+     * @param postContextFilter filtering and sorting properties for post objects
+     * @param pageable          paging object which contains the page number and number of records to fetch
+     * @param userId            the id of the user for which the messages should be returned
+     * @return returns a Page of Messages
+     */
+    default Page<Post> findCourseWideMessages(PostContextFilter postContextFilter, Pageable pageable, long userId) {
+        Specification<Post> specification = Specification.where(getCourseWideChannelsSpecification(postContextFilter.getCourseId()))
+                .and(getConversationsSpecification(postContextFilter.getCourseWideChannelIds())).and(MessageSpecs.getSearchTextSpecification(postContextFilter.getSearchText()))
+                .and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId))
+                .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId))
+                .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved()))
+                .and(getSortSpecification(true, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder()));
 
         return findAll(specification, pageable);
     }
@@ -59,4 +79,17 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
             WHERE p.id = :postId AND answer.author = cp.user
             """)
     Set<User> findUsersWhoRepliedInMessage(@Param("postId") Long postId);
+
+    /**
+     * Finds tags of course-wide messages
+     *
+     * @param courseId the course
+     * @return list of tags
+     */
+    @Query("""
+            SELECT DISTINCT tag FROM Post post
+            LEFT JOIN post.tags tag LEFT JOIN Channel channel ON channel.id = post.conversation.id
+            WHERE channel.course.id = :courseId and channel.isCourseWide = true
+            """)
+    List<String> findPostTagsForCourse(@Param("courseId") Long courseId);
 }

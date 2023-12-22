@@ -9,6 +9,7 @@ export class CompetencyRingsComponent {
     @Input() progress = 0;
     @Input() confidence = 0;
     @Input() mastery = 0;
+    @Input() hideTooltip = false;
 
     get progressPercentage(): number {
         return this.percentageRange(this.progress);

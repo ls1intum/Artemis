@@ -1,8 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
-import { CourseWideContext, PageType, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
-import { Subscription, combineLatest } from 'rxjs';
-import { Course } from 'app/entities/course.model';
+import { PageType, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
+import { Subject, Subscription, combineLatest, takeUntil } from 'rxjs';
+import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -13,6 +13,9 @@ import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { ChannelDTO, ChannelSubType, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 
 @Component({
     selector: 'jhi-course-discussion',
@@ -26,20 +29,24 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
 
     exercises?: Exercise[];
     lectures?: Lecture[];
+    courseWideChannels: ChannelDTO[] = [];
+    categorizedChannels: { [key: string]: ChannelDTO[] } = {};
+    availableChannelSubtypes: string[];
     currentSortDirection = SortDirection.DESCENDING;
     totalItems = 0;
     pagingEnabled = true;
     itemsPerPage = ITEMS_PER_PAGE;
     page = 1;
-
-    documentationType = DocumentationType.Communications;
+    isCommunicationEnabled: boolean;
 
     forceReload = true;
-    readonly CourseWideContext = CourseWideContext;
+
+    readonly documentationType: DocumentationType = 'Communications';
     readonly PageType = PageType;
     readonly pageType = PageType.OVERVIEW;
 
     private totalItemsSubscription: Subscription;
+    private ngUnsubscribe = new Subject<void>();
 
     constructor(
         protected metisService: MetisService,
@@ -47,6 +54,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
         private courseManagementService: CourseManagementService,
         private formBuilder: FormBuilder,
         private courseStorageService: CourseStorageService,
+        private metisConversationService: MetisConversationService,
     ) {
         super(metisService);
     }
@@ -56,6 +64,12 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
      * creates the subscription to posts to stay updated on any changes of posts in this course
      */
     ngOnInit(): void {
+        this.metisConversationService.isServiceSetup$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isServiceSetUp: boolean) => {
+            if (isServiceSetUp) {
+                this.subscribeToConversationsOfUser();
+            }
+        });
+
         this.paramSubscription = combineLatest({
             params: this.activatedRoute.parent!.parent!.params,
             queryParams: this.activatedRoute.parent!.parent!.queryParams,
@@ -84,6 +98,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
 
     onCourseLoad(course: Course) {
         this.course = course;
+        this.isCommunicationEnabled = isCommunicationEnabled(course);
         if (this.course?.lectures) {
             this.lectures = this.course.lectures.sort(this.overviewContextSortFn);
         }
@@ -95,6 +110,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
         this.metisService.getFilteredPosts({
             courseId: this.course!.id,
             searchText: this.searchText ? this.searchText : undefined,
+            courseWideChannelIds: [],
             postSortCriterion: this.currentSortCriterion,
             sortingOrder: this.currentSortDirection,
             pagingEnabled: this.pagingEnabled,
@@ -122,6 +138,8 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
     ngOnDestroy(): void {
         super.onDestroy();
         this.totalItemsSubscription?.unsubscribe();
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
     }
 
     /**
@@ -141,23 +159,15 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
         // will scroll to the top of the posts
         this.forceReload = true;
 
-        const lectureIds: number[] = [];
-        const exerciseIds: number[] = [];
-        const courseWideContexts: CourseWideContext[] = [];
+        const conversationIds: number[] = [];
 
         for (const context of this.formGroup.get('context')?.value || []) {
-            if (context.lectureId) {
-                lectureIds.push(context.lectureId);
-            } else if (context.exerciseId) {
-                exerciseIds.push(context.exerciseId);
-            } else if (context.courseWideContext) {
-                courseWideContexts.push(context.courseWideContext);
+            if (context.conversationId) {
+                conversationIds.push(context.conversationId);
             }
         }
 
-        this.currentPostContextFilter.lectureIds = lectureIds.length ? lectureIds : undefined;
-        this.currentPostContextFilter.exerciseIds = exerciseIds.length ? exerciseIds : undefined;
-        this.currentPostContextFilter.courseWideContexts = courseWideContexts.length ? courseWideContexts : undefined;
+        this.currentPostContextFilter.courseWideChannelIds = conversationIds;
 
         super.onSelectContext();
     }
@@ -177,16 +187,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
      * Angular needs to be able to identify the currently selected option
      */
     compareContextFilterOptionFn(option1: any, option2: any) {
-        if (option1.exerciseId && option2.exerciseId) {
-            return option1.exerciseId === option2.exerciseId;
-        } else if (option1.lectureId && option2.lectureId) {
-            return option1.lectureId === option2.lectureId;
-        } else if (option1.courseWideContext && option2.courseWideContext) {
-            return option1.courseWideContext === option2.courseWideContext;
-        } else if (option1.courseId && option2.courseId) {
-            return option1.courseId === option2.courseId;
-        }
-        return false;
+        return option1.conversationId === option2.conversationId;
     }
 
     /**
@@ -217,11 +218,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
      * this empty post has a default course-wide context as well as the course set as context
      **/
     createEmptyPost(): void {
-        this.createdPost = this.metisService.createEmptyPostForContext(
-            this.currentPostContextFilter.courseWideContexts?.[0],
-            this.exercises?.find((exercise) => exercise.id === this.currentPostContextFilter.exerciseIds?.[0]),
-            this.lectures?.find((lecture) => lecture.id === this.currentPostContextFilter.lectureIds?.[0]),
-        );
+        this.createdPost = this.metisService.createEmptyPostForContext();
     }
     /**
      * defines a function that returns the post id as unique identifier,
@@ -254,9 +251,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
     private resetCurrentFilter(): void {
         this.currentPostContextFilter = {
             courseId: this.course!.id,
-            courseWideContexts: undefined,
-            exerciseIds: undefined,
-            lectureIds: undefined,
+            courseWideChannelIds: [],
             searchText: undefined,
             filterToUnresolved: false,
             filterToOwn: false,
@@ -275,5 +270,21 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
             this.page += 1;
             this.onSelectPage();
         }
+    }
+
+    private subscribeToConversationsOfUser() {
+        this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDto[]) => {
+            this.courseWideChannels = conversations?.filter((conv) => isChannelDto(conv) && conv.isCourseWide) ?? [];
+            this.categorizedChannels = {};
+            this.availableChannelSubtypes = [];
+            const subTypeDisplayOrder = [ChannelSubType.GENERAL, ChannelSubType.EXERCISE, ChannelSubType.LECTURE, ChannelSubType.EXAM];
+            subTypeDisplayOrder.forEach((subType) => {
+                const channelsOfSubType = this.courseWideChannels.filter((channel) => channel.subType === subType);
+                if (channelsOfSubType.length) {
+                    this.categorizedChannels[subType] = channelsOfSubType;
+                    this.availableChannelSubtypes.push(subType);
+                }
+            });
+        });
     }
 }

@@ -81,6 +81,18 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             """)
     List<StatisticsEntry> getActiveUsers(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
+    @Query("""
+            SELECT DISTINCT u.login
+            FROM User u, Submission s, StudentParticipation p
+            WHERE
+                s.participation.id = p.id AND
+                p.student.id = u.id AND
+                s.submissionDate >= :startDate AND
+                s.submissionDate <= :endDate AND
+                u.login NOT LIKE '%test%'
+            """)
+    List<String> getActiveUserNames(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
+
     /**
      * Count users that were active within the given date range.
      * Users are considered as active if they created a submission within the given date range
@@ -374,8 +386,8 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
                 post.creationDate, count(post.id)
                 )
-            from Post post left join post.lecture lectures left join post.exercise exercises
-            where post.creationDate >= :#{#startDate} and post.creationDate <= :#{#endDate} and (lectures.course.id = :#{#courseId} or exercises.course.id = :#{#courseId} or post.course.id = :#{#courseId})
+            from Post post left join Channel channel ON channel.id = post.conversation.id
+            where post.creationDate >= :#{#startDate} and post.creationDate <= :#{#endDate} and channel.course.id = :#{#courseId} and channel.isCourseWide = true
             group by post.creationDate
             order by post.creationDate asc
             """)
@@ -386,8 +398,8 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
                 post.creationDate, count(post.id)
                 )
-            from Post post left join post.exercise exercise
-            where post.creationDate >= :#{#startDate} and post.creationDate <= :#{#endDate} and exercise.id = :#{#exerciseId}
+            from Post post left join Channel channel ON channel.id = post.conversation.id
+            where post.creationDate >= :#{#startDate} and post.creationDate <= :#{#endDate} and channel.exercise.id = :#{#exerciseId}
             group by post.creationDate
             order by post.creationDate asc
             """)
@@ -396,15 +408,15 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
 
     @Query("""
             select count(post)
-            from Post post left join post.exercise exercise
-            where exercise.id = :#{#exerciseId}
+            from Post post left join Channel channel ON channel.id = post.conversation.id
+            where channel.exercise.id = :#{#exerciseId}
             """)
     long getNumberOfExercisePosts(@Param("exerciseId") Long exerciseId);
 
     @Query("""
             select count(distinct post.id)
-            from AnswerPost answer left join answer.post post left join post.exercise exercise
-            where exercise.id = :#{#exerciseId} and answer.resolvesPost = true
+            from AnswerPost answer left join answer.post post left join Channel channel ON channel.id = post.conversation.id
+            where channel.exercise.id = :#{#exerciseId} and answer.resolvesPost = true
             """)
     long getNumberOfResolvedExercisePosts(@Param("exerciseId") Long exerciseId);
 
@@ -413,8 +425,8 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
                 answer.creationDate, count(answer.id)
                 )
-            from AnswerPost answer left join answer.post post left join post.lecture lectures left join post.exercise exercises
-            where answer.creationDate >= :#{#startDate} and answer.creationDate <= :#{#endDate} and answer.resolvesPost = true and (lectures.course.id = :#{#courseId} or exercises.course.id = :#{#courseId} or post.course.id = :#{#courseId})
+            from AnswerPost answer left join answer.post post left join Channel channel ON channel.id = post.conversation.id
+            where answer.creationDate >= :#{#startDate} and answer.creationDate <= :#{#endDate} and answer.resolvesPost = true and channel.course.id = :#{#courseId} and channel.isCourseWide = true
             group by answer.creationDate
             order by answer.creationDate asc
             """)
@@ -425,8 +437,8 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
                 answer.creationDate, count(answer.id)
                 )
-            from AnswerPost answer left join answer.post post left join post.exercise exercise
-            where answer.creationDate >= :#{#startDate} and answer.creationDate <= :#{#endDate} and answer.resolvesPost = true and exercise.course.id = :#{#exerciseId}
+            from AnswerPost answer left join answer.post post left join Channel channel ON channel.id = post.conversation.id
+            where answer.creationDate >= :#{#startDate} and answer.creationDate <= :#{#endDate} and answer.resolvesPost = true and channel.exercise.id = :#{#exerciseId}
             group by answer.creationDate
             order by answer.creationDate asc
             """)

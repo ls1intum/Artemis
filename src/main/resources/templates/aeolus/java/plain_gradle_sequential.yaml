@@ -1,0 +1,22 @@
+api: v0.0.1
+actions:
+    - name: structural_tests
+      script: |
+        chmod +x ./gradlew
+        ./gradlew clean structuralTests
+      runAlways: false
+    - name: behavior_tests
+      script: ./gradlew behaviorTests
+      runAlways: false
+    - name: setup_working_directory_for_cleanup
+      script: chmod -R 777 .
+      runAlways: true
+      results:
+          - name: junit_**/test-results/structuralTests/*.xml
+            path: '**/test-results/structuralTests/*.xml'
+            type: junit
+            before: true
+          - name: junit_**/test-results/behaviorTests/*.xml
+            path: '**/test-results/behaviorTests/*.xml'
+            type: junit
+            before: true

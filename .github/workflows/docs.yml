@@ -1,10 +1,6 @@
 name: Documentation
 
 on:
-  pull_request:
-    paths:
-    - 'docs/**'
-    - '.github/workflows/docs.yml'
   push:
     branches:
     - develop
@@ -16,12 +12,6 @@ on:
   release:
     types:
     - created
-
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
-permissions:
-  contents: read
-  pages: write
-  id-token: write
 
 jobs:
 
@@ -48,7 +38,7 @@ jobs:
     needs: docs
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: documentation
           path: public
@@ -56,24 +46,24 @@ jobs:
         uses: appleboy/scp-action@master
         with:
           host: docs.artemis.cit.tum.de
-          username: ${{ secrets.DOCS_SSH_USER }}
-          key: ${{ secrets.DOCS_SSH_KEY }}
-          proxy_host: ${{ secrets.DEPLOYMENT_GATEWAY_HOST }}
-          proxy_username: ${{ secrets.DEPLOYMENT_GATEWAY_USER }}
+          username: ${{ vars.DOCS_SSH_USER }}
+          key: ${{ secrets.DEPLOYMENT_SSH_KEY }}
+          proxy_host: ${{ vars.DEPLOYMENT_GATEWAY_HOST }}
+          proxy_username: ${{ vars.DEPLOYMENT_GATEWAY_USER }}
           proxy_key: ${{ secrets.DEPLOYMENT_GATEWAY_SSH_KEY }}
-          proxy_port: ${{ secrets.DEPLOYMENT_GATEWAY_PORT }}
+          proxy_port: ${{ vars.DEPLOYMENT_GATEWAY_PORT }}
           source: "public"
-          target: ${{ secrets.DOCS_HOME }}
+          target: ${{ vars.DOCS_HOME }}
       - name: Move site to www
         uses: appleboy/ssh-action@master
         with:
           host: docs.artemis.cit.tum.de
-          username: ${{ secrets.DOCS_SSH_USER }}
-          key: ${{ secrets.DOCS_SSH_KEY }}
-          proxy_host: ${{ secrets.DEPLOYMENT_GATEWAY_HOST }}
-          proxy_username: ${{ secrets.DEPLOYMENT_GATEWAY_USER }}
+          username: ${{ vars.DOCS_SSH_USER }}
+          key: ${{ secrets.DEPLOYMENT_SSH_KEY }}
+          proxy_host: ${{ vars.DEPLOYMENT_GATEWAY_HOST }}
+          proxy_username: ${{ vars.DEPLOYMENT_GATEWAY_USER }}
           proxy_key: ${{ secrets.DEPLOYMENT_GATEWAY_SSH_KEY }}
-          proxy_port: ${{ secrets.DEPLOYMENT_GATEWAY_PORT }}
+          proxy_port: ${{ vars.DEPLOYMENT_GATEWAY_PORT }}
           script: |
-              rm -rf ${{ secrets.DOCS_WWW }}/*
-              mv -f public/* ${{ secrets.DOCS_WWW }}/
+              rm -rf ${{ vars.DOCS_WWW }}/*
+              mv -f public/* ${{ vars.DOCS_WWW }}/

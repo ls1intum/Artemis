@@ -1,96 +1,103 @@
-<div *ngIf="isLoading" class="d-flex justify-content-center">
-    <div class="spinner-border" role="status">
-        <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
-    </div>
-</div>
-
-<div *ngIf="!isLoading && health">
-    <h2 jhiTranslate="artemisApp.learningPath.manageLearningPaths.title">Learning Path Management</h2>
-    <div *ngIf="health.status?.includes(HealthStatus.DISABLED)">
-        <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.isDisabled">Disabled</span>
-        <div>
-            <button
-                id="enable-learning-paths-button"
-                *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
-                type="button"
-                class="btn btn-primary"
-                (click)="enableLearningPaths()"
-                jhiTranslate="artemisApp.learningPath.manageLearningPaths.enable"
-                [ngbTooltip]="'artemisApp.learningPath.manageLearningPaths.enableHint' | artemisTranslate"
-            >
-                Enable
-            </button>
+@if (isLoading) {
+    <div class="d-flex justify-content-center">
+        <div class="spinner-border" role="status">
+            <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
         </div>
     </div>
-
-    <jhi-learning-path-health-status-warning
-        *ngIf="health.status?.includes(HealthStatus.MISSING)"
-        [status]="HealthStatus.MISSING"
-        (onButtonClicked)="generateMissing()"
-    ></jhi-learning-path-health-status-warning>
-    <jhi-learning-path-health-status-warning
-        *ngIf="health.status?.includes(HealthStatus.NO_COMPETENCIES)"
-        [status]="HealthStatus.NO_COMPETENCIES"
-        (onButtonClicked)="routeToCompetencyManagement()"
-    ></jhi-learning-path-health-status-warning>
-    <jhi-learning-path-health-status-warning
-        *ngIf="health.status?.includes(HealthStatus.NO_RELATIONS)"
-        [status]="HealthStatus.NO_RELATIONS"
-        (onButtonClicked)="routeToCompetencyManagement()"
-    ></jhi-learning-path-health-status-warning>
-
-    <div *ngIf="!health.status?.includes(HealthStatus.DISABLED)">
-        <div class="form-group form-inline">
-            <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.search">Search for Learning Path:</span>
-            <input [(ngModel)]="searchTerm" class="form-control ms-2" name="searchLearningPath" type="text" />
-            <span *ngIf="searchLoading" class="ms-3" jhiTranslate="loading">Loading...</span>
-        </div>
-        <table class="table table-striped align-middle flex">
-            <thead class="thead-dark">
-                <tr (sortChange)="sortRows()" [(ascending)]="listSorting" [(predicate)]="sortedColumn" class="flex-row" jhiSort>
-                    <th class="col-1" jhiSortBy="{{ column.ID }}">
-                        <span>#</span>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
-                    <th class="col-4" jhiSortBy="{{ column.USER_NAME }}">
-                        <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.table.name">Name</span>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
-                    <th class="col-2" jhiSortBy="{{ column.USER_LOGIN }}">
-                        <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.table.login">Login</span>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
-                    <th class="col-4" jhiSortBy="{{ column.PROGRESS }}">
-                        <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.table.progress">Progress</span>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
-                    <th class="col-1"></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let learningPath of content.resultsOnPage; trackBy: trackId" class="flex-row">
-                    <td class="col-1">
-                        <span>{{ learningPath.id }}</span>
-                    </td>
-                    <td class="text-break col-4">
-                        <ngb-highlight [result]="learningPath.user?.name" [term]="searchTerm"></ngb-highlight>
-                    </td>
-                    <td class="text-break col-2">
-                        <ngb-highlight [result]="learningPath.user?.login" [term]="searchTerm"></ngb-highlight>
-                    </td>
-                    <td class="col-4">
-                        <ngb-progressbar type="primary" [showValue]="true" [value]="learningPath.progress ?? 0" [max]="100"></ngb-progressbar>
-                    </td>
-                    <td class="col-1">
-                        <jhi-button (onClick)="viewLearningPath(learningPath)" [title]="'entity.action.view'"></jhi-button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-
-        <div class="d-flex justify-content-between p-2">
-            <ngb-pagination (pageChange)="onPageChange($event)" [(page)]="state.page" [collectionSize]="total" [maxSize]="50" [pageSize]="state.pageSize" [rotate]="true">
-            </ngb-pagination>
-        </div>
+}
+@if (!isLoading && health) {
+    <div>
+        <h2 jhiTranslate="artemisApp.learningPath.manageLearningPaths.title">Learning Path Management</h2>
+        @if (health.status?.includes(HealthStatus.DISABLED)) {
+            <div>
+                <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.isDisabled">Disabled</span>
+                <div>
+                    <button
+                        id="enable-learning-paths-button"
+                        type="button"
+                        class="btn btn-primary"
+                        (click)="enableLearningPaths()"
+                        jhiTranslate="artemisApp.learningPath.manageLearningPaths.enable"
+                        [ngbTooltip]="'artemisApp.learningPath.manageLearningPaths.enableHint' | artemisTranslate"
+                    >
+                        Enable
+                    </button>
+                </div>
+            </div>
+        }
+        @if (health.status?.includes(HealthStatus.MISSING)) {
+            <jhi-learning-path-health-status-warning [status]="HealthStatus.MISSING" (onButtonClicked)="generateMissing()"></jhi-learning-path-health-status-warning>
+        }
+        @if (health.status?.includes(HealthStatus.NO_COMPETENCIES)) {
+            <jhi-learning-path-health-status-warning
+                [status]="HealthStatus.NO_COMPETENCIES"
+                (onButtonClicked)="routeToCompetencyManagement()"
+            ></jhi-learning-path-health-status-warning>
+        }
+        @if (health.status?.includes(HealthStatus.NO_RELATIONS)) {
+            <jhi-learning-path-health-status-warning
+                [status]="HealthStatus.NO_RELATIONS"
+                (onButtonClicked)="routeToCompetencyManagement()"
+            ></jhi-learning-path-health-status-warning>
+        }
+        @if (!health.status?.includes(HealthStatus.DISABLED)) {
+            <div>
+                <div class="form-group form-inline">
+                    <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.search">Search for Learning Path:</span>
+                    <input [(ngModel)]="searchTerm" class="form-control ms-2" name="searchLearningPath" type="text" />
+                    @if (searchLoading) {
+                        <span class="ms-3" jhiTranslate="loading">Loading...</span>
+                    }
+                </div>
+                <table class="table table-striped align-middle flex">
+                    <thead class="thead-dark">
+                        <tr (sortChange)="sortRows()" [(ascending)]="listSorting" [(predicate)]="sortedColumn" class="flex-row" jhiSort>
+                            <th class="col-1" jhiSortBy="{{ column.ID }}">
+                                <span>#</span>
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
+                            <th class="col-4" jhiSortBy="{{ column.USER_NAME }}">
+                                <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.table.name">Name</span>
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
+                            <th class="col-2" jhiSortBy="{{ column.USER_LOGIN }}">
+                                <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.table.login">Login</span>
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
+                            <th class="col-4" jhiSortBy="{{ column.PROGRESS }}">
+                                <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.table.progress">Progress</span>
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
+                            <th class="col-1"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (learningPath of content.resultsOnPage; track trackId($index, learningPath)) {
+                            <tr class="flex-row">
+                                <td class="col-1">
+                                    <span>{{ learningPath.id }}</span>
+                                </td>
+                                <td class="text-break col-4">
+                                    <ngb-highlight [result]="learningPath.user?.name" [term]="searchTerm"></ngb-highlight>
+                                </td>
+                                <td class="text-break col-2">
+                                    <ngb-highlight [result]="learningPath.user?.login" [term]="searchTerm"></ngb-highlight>
+                                </td>
+                                <td class="col-4">
+                                    <ngb-progressbar type="primary" [showValue]="true" [value]="learningPath.progress ?? 0" [max]="100"></ngb-progressbar>
+                                </td>
+                                <td class="col-1">
+                                    <jhi-button (onClick)="viewLearningPath(learningPath)" [title]="'entity.action.view'"></jhi-button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <div class="d-flex justify-content-between p-2">
+                    <ngb-pagination (pageChange)="onPageChange($event)" [(page)]="state.page" [collectionSize]="total" [maxSize]="50" [pageSize]="state.pageSize" [rotate]="true">
+                    </ngb-pagination>
+                </div>
+            </div>
+        }
     </div>
-</div>
+}

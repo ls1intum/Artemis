@@ -135,7 +135,7 @@ export class ProgrammingExerciseTaskService {
     /**
      * Reset all test cases.
      */
-    public resetTestCases(): Observable<ProgrammingExerciseTestCase[]> {
+    public resetTestCases(): Observable<ProgrammingExerciseTestCase | ProgrammingExerciseTask[]> {
         return this.gradingService.resetTestCases(this.exercise.id!).pipe(
             tap((testCases: ProgrammingExerciseTestCase[]) => {
                 this.alertService.success(`artemisApp.programmingExercise.configureGrading.testCases.resetSuccessful`);
@@ -151,19 +151,45 @@ export class ProgrammingExerciseTaskService {
         );
     }
 
+    /**
+     * Remove duplicate test cases from the tasks array if instructor has added the same test case to multiple tasks
+     * Test cases contained in multiple tasks get attributed to the first task they are found in
+     */
+    private removeDuplicateTestCasesFromTasks() {
+        const testCaseSet = new Set<number>(); // Assuming 'id' is a unique identifier for ProgrammingExerciseTestCase
+
+        for (const task of this.tasks) {
+            const uniqueTestCases: ProgrammingExerciseTestCase[] = [];
+            for (const testCase of task.testCases) {
+                if (!testCaseSet.has(testCase.id!)) {
+                    testCaseSet.add(testCase.id!);
+                    uniqueTestCases.push(testCase);
+                }
+            }
+            task.testCases = uniqueTestCases;
+        }
+
+        // Remove empty test cases
+        this.tasks = this.tasks.filter((tasks) => tasks.testCases.length > 0);
+    }
+
     private initializeTasks = (serverSideTasks: ProgrammingExerciseServerSideTask[]): ProgrammingExerciseTask[] => {
         this.tasks = serverSideTasks.map((task) => task as ProgrammingExerciseTask);
 
         this.tasks = this.tasks // configureTestCases needs tasks to be set be to be able to use the testCases getter
-            .map(this.configureTestCases)
+            .map((task) => ({ ...task, testCases: task.testCases ?? [] }))
             .map(this.addGradingStats);
 
+        this.removeDuplicateTestCasesFromTasks();
         this.setCurrentTasks();
         this.updateAllTaskPoints();
 
         return this.currentTasks;
     };
 
+    /*
+     * Set the tasks currently displayed. Used for showing of active/inactive test cases
+     */
     private setCurrentTasks = () => {
         const tasksCopy: ProgrammingExerciseTask[] = JSON.parse(JSON.stringify(this.tasks));
         if (this.ignoreInactive) {
@@ -175,7 +201,7 @@ export class ProgrammingExerciseTaskService {
             this.currentTasks = tasksCopy;
         }
 
-        // Initialize tasks after filtering of inactive test cases
+        // Initialize tasks after filtering/showing of inactive test cases
         this.currentTasks.forEach(this.initializeTask);
     };
 
@@ -204,25 +230,16 @@ export class ProgrammingExerciseTaskService {
         return task;
     };
 
-    private configureTestCases = (task: ProgrammingExerciseTask): ProgrammingExerciseTask => {
-        const allTestCases = this.tasks.flatMap(({ testCases }) => testCases);
-
-        task.testCases = task.testCases ?? [];
-        task.testCases = task.testCases // Set same testcases in tasks to same reference
-            .map((testCase) => allTestCases.find(({ id }) => id === testCase.id)) as ProgrammingExerciseTestCase[];
-        return task;
-    };
-
     /**
      * Initialized task values according to the values of its test cases
-     * @param task
+     * @param task to be initialized
      */
     public initializeTask = (task: ProgrammingExerciseTask): ProgrammingExerciseTask => {
         task.weight = sum(task.testCases.map((testCase) => testCase.weight ?? 0));
         task.bonusMultiplier = getSingleValue(task.testCases.map((testCase) => testCase.bonusMultiplier));
         task.bonusPoints = sum(task.testCases.map((testCase) => testCase.bonusPoints ?? 0));
         task.visibility = getSingleValue(task.testCases.map((testCase) => testCase.visibility));
-        task.type = getSingleValue(task.testCases.map((testCase) => testCase.type));
+        task.type = getSingleValue(task.testCases.map((testCase) => testCase.type)) ?? 'MIXED';
 
         return task;
     };

@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { Competency, CompetencyRelation, CompetencyRelationError, CourseCompetencyProgress, getIcon, getIconTooltip } from 'app/entities/competency.model';
@@ -7,13 +7,12 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, finalize, map, switchMap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, forkJoin } from 'rxjs';
-import { faPencilAlt, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faPencilAlt, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PrerequisiteImportComponent } from 'app/course/competencies/competency-management/prerequisite-import.component';
 import { ClusterNode, Edge, Node } from '@swimlane/ngx-graph';
-import { AccountService } from 'app/core/auth/account.service';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { CompetencyImportComponent } from 'app/course/competencies/competency-management/competency-import.component';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-competency-management',
@@ -38,22 +37,19 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    documentationType = DocumentationType.Competencies;
-
     update$: Subject<boolean> = new Subject<boolean>();
 
-    getIcon = getIcon;
-    getIconTooltip = getIconTooltip;
+    readonly getIcon = getIcon;
+    readonly getIconTooltip = getIconTooltip;
+    readonly documentationType: DocumentationType = 'Competencies';
 
     // Icons
     faPlus = faPlus;
-    faTimes = faTimes;
+    faTrash = faTrash;
     faPencilAlt = faPencilAlt;
 
     constructor(
         private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private accountService: AccountService,
         private competencyService: CompetencyService,
         private alertService: AlertService,
         private modalService: NgbModal,

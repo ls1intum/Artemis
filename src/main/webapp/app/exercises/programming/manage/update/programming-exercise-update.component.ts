@@ -4,7 +4,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { Observable, Subject } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingDates } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from '../services/programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,7 +12,7 @@ import { switchMap, tap } from 'rxjs/operators';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { Exercise, IncludedInOverallScore, ValidationReason, resetDates } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -23,13 +23,14 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { onError } from 'app/shared/util/global.utils';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { faBan, faExclamationCircle, faHandshakeAngle, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
+import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exercises/course-utils';
+import { PROFILE_AEOLUS, PROFILE_LOCALCI } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -41,6 +42,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     readonly FeatureToggle = FeatureToggle;
     readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly ProjectType = ProjectType;
+    readonly documentationType: DocumentationType = 'Programming';
 
     private translationBasePath = 'artemisApp.programmingExercise.';
 
@@ -68,6 +70,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     isSaving: boolean;
     goBackAfterSaving = false;
     problemStatementLoaded = false;
+    buildPlanLoaded = false;
     templateParticipationResultLoaded = true;
     notificationText?: string;
     courseId: number;
@@ -114,11 +117,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public packageNameRequired = true;
     public staticCodeAnalysisAllowed = false;
     public checkoutSolutionRepositoryAllowed = false;
+    public customizeBuildPlanWithAeolus = false;
     public sequentialTestRunsAllowed = false;
     public publishBuildPlanUrlAllowed = false;
     public testwiseCoverageAnalysisSupported = false;
     public auxiliaryRepositoriesSupported = false;
     public auxiliaryRepositoriesValid = true;
+    public customBuildPlansSupported = false;
 
     // Additional options for import
     public recreateBuildPlans = false;
@@ -130,8 +135,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public withDependenciesValue = false;
 
     public modePickerOptions: ModePickerOption<ProjectType>[] = [];
-
-    documentationType = DocumentationType.Programming;
 
     // Icons
     faSave = faSave;
@@ -262,6 +265,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             this.programmingExercise.projectType = this.projectTypes[0];
             this.selectedProjectTypeValue = this.projectTypes[0]!;
             this.withDependenciesValue = false;
+            this.buildPlanLoaded = false;
+            this.programmingExercise.windFile = undefined;
+            this.programmingExercise.buildPlanConfiguration = undefined;
         }
 
         // If we switch to another language which does not support static code analysis we need to reset options related to static code analysis
@@ -405,10 +411,14 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                             this.isExamMode = true;
                             this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
                                 this.programmingExercise.exerciseGroup = res.body!;
+                                if (this.programmingExercise.exerciseGroup.exam?.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
+                                    this.selectedProgrammingLanguage = this.programmingExercise.exerciseGroup.exam.course.defaultProgrammingLanguage;
+                                }
                             });
                             // we need the course id  to make the request to the server if it's an import from file
                             if (this.isImportFromFile) {
                                 this.courseId = params['courseId'];
+                                this.loadCourseExerciseCategories(params['courseId']);
                             }
                         } else if (params['courseId']) {
                             this.courseId = params['courseId'];
@@ -419,12 +429,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                                     this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
                                 }
                                 this.exerciseCategories = this.programmingExercise.categories || [];
-                                this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course!.id!).subscribe({
-                                    next: (categoryRes: HttpResponse<string[]>) => {
-                                        this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
-                                    },
-                                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                                });
+
+                                this.loadCourseExerciseCategories(this.programmingExercise.course!.id!);
                             });
                         }
                     }
@@ -463,37 +469,29 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             }
         });
 
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.customBuildPlansSupported = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI) || profileInfo?.activeProfiles.includes(PROFILE_AEOLUS);
+        });
+        this.defineSupportedProgrammingLanguages();
+    }
+
+    private defineSupportedProgrammingLanguages() {
         this.supportedLanguages = [];
 
-        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.JAVA)) {
-            this.supportedLanguages.push(ProgrammingLanguage.JAVA);
+        for (const programmingLanguage of Object.values(ProgrammingLanguage)) {
+            if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(programmingLanguage)) {
+                this.supportedLanguages.push(programmingLanguage);
+            }
         }
-        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.PYTHON)) {
-            this.supportedLanguages.push(ProgrammingLanguage.PYTHON);
-        }
-        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.C)) {
-            this.supportedLanguages.push(ProgrammingLanguage.C);
-        }
-        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.HASKELL)) {
-            this.supportedLanguages.push(ProgrammingLanguage.HASKELL);
-        }
-        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.KOTLIN)) {
-            this.supportedLanguages.push(ProgrammingLanguage.KOTLIN);
-        }
-        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.VHDL)) {
-            this.supportedLanguages.push(ProgrammingLanguage.VHDL);
-        }
-        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.ASSEMBLER)) {
-            this.supportedLanguages.push(ProgrammingLanguage.ASSEMBLER);
-        }
-        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.SWIFT)) {
-            this.supportedLanguages.push(ProgrammingLanguage.SWIFT);
-        }
-        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.OCAML)) {
-            this.supportedLanguages.push(ProgrammingLanguage.OCAML);
-        }
-        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.EMPTY)) {
-            this.supportedLanguages.push(ProgrammingLanguage.EMPTY);
+    }
+
+    private loadCourseExerciseCategories(courseId?: number) {
+        loadCourseExerciseCategories(courseId, this.courseService, this.exerciseService, this.alertService).subscribe((existingCategories) => {
+            this.existingCategories = existingCategories;
+        });
+
+        if (this.exerciseCategories === undefined) {
+            this.exerciseCategories = [];
         }
     }
 
@@ -507,27 +505,26 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.isImportFromExistingExercise = true;
         this.originalStaticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
         // The source exercise is injected via the Resolver. The route parameters determine the target exerciseGroup or course
-        if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
+        const courseId = params['courseId'];
+        if (courseId && params['examId'] && params['exerciseGroupId']) {
             this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
                 this.programmingExercise.exerciseGroup = res.body!;
                 // Set course to undefined if a normal exercise is imported
                 this.programmingExercise.course = undefined;
             });
             this.isExamMode = true;
-        } else if (params['courseId']) {
-            this.courseService.find(params['courseId']).subscribe((res) => {
+        } else if (courseId) {
+            this.courseService.find(courseId).subscribe((res) => {
                 this.programmingExercise.course = res.body!;
                 // Set exerciseGroup to undefined if an exam exercise is imported
                 this.programmingExercise.exerciseGroup = undefined;
             });
             this.isExamMode = false;
         }
-        resetDates(this.programmingExercise);
+        this.loadCourseExerciseCategories(courseId);
+        resetProgrammingDates(this.programmingExercise);
 
         this.programmingExercise.projectKey = undefined;
-        this.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
-        this.programmingExercise.shortName = undefined;
-        this.programmingExercise.title = undefined;
         if (this.programmingExercise.submissionPolicy) {
             this.programmingExercise.submissionPolicy.id = undefined;
         }
@@ -575,6 +572,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      * Saves the programming exercise with the provided input
      */
     saveExercise() {
+        if (this.programmingExercise.customizeBuildPlanWithAeolus) {
+            this.programmingExercise.buildPlanConfiguration = JSON.stringify(this.programmingExercise.windFile);
+        } else {
+            this.programmingExercise.buildPlanConfiguration = undefined;
+            this.programmingExercise.windFile = undefined;
+        }
         // If the programming exercise has a submission policy with a NONE type, the policy is removed altogether
         if (this.programmingExercise.submissionPolicy && this.programmingExercise.submissionPolicy.type === SubmissionPolicyType.NONE) {
             this.programmingExercise.submissionPolicy = undefined;
@@ -1015,14 +1018,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.programmingExercise.exerciseGroup = undefined;
         this.programmingExercise.course = undefined;
         this.programmingExercise.projectKey = undefined;
-        this.programmingExercise.dueDate = undefined;
-        this.programmingExercise.assessmentDueDate = undefined;
-        this.programmingExercise.releaseDate = undefined;
-        this.programmingExercise.startDate = undefined;
-        this.programmingExercise.exampleSolutionPublicationDate = undefined;
-        //without dates set, they can only be false
-        this.programmingExercise.allowComplaintsForAutomaticAssessments = false;
-        this.programmingExercise.allowManualFeedbackRequests = false;
+
+        resetProgrammingDates(this.programmingExercise);
+
         this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
         // we need to get it from the history object as setting the programming language
         // sets the project type of the programming exercise to the default value for the programming language.
@@ -1040,6 +1038,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             auxiliaryRepositoryDuplicateDirectories: this.auxiliaryRepositoryDuplicateDirectories,
             auxiliaryRepositoryDuplicateNames: this.auxiliaryRepositoryDuplicateNames,
             checkoutSolutionRepositoryAllowed: this.checkoutSolutionRepositoryAllowed,
+            customBuildPlansSupported: this.customBuildPlansSupported,
             invalidDirectoryNamePattern: this.invalidDirectoryNamePattern,
             invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
             titleNamePattern: this.titleNamePattern,
@@ -1078,6 +1077,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             updateTemplate: this.updateTemplate,
             publishBuildPlanUrlAllowed: this.publishBuildPlanUrlAllowed,
             recreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
+            buildPlanLoaded: this.buildPlanLoaded,
         };
     }
 }
