@@ -1,0 +1,21 @@
+{
+    "artemisApp": {
+        "buildQueue": {
+            "title": "Build Warteschlange",
+            "pageTitle": "Build Job Informationen",
+            "refreshLabel": "Aktualisieren",
+            "queuedBuildJobs": "Wartende Build Jobs",
+            "runningBuildJobs": "Laufende Build Jobs",
+            "buildJob": {
+                "name": "Name",
+                "participationId": "Teilnahme ID",
+                "repositoryType": "Repository Typ",
+                "commitHash": "Commit Hash",
+                "submissionDate": "Abgabe Datum",
+                "buildStartDate": "Build Start Datum",
+                "courseId": "Kurs ID",
+                "priority": "Priorität"
+            }
+        }
+    }
+}
