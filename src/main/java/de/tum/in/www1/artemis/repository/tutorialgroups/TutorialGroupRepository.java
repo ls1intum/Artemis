@@ -25,7 +25,7 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
     @Query("""
             SELECT tutorialGroup
             FROM TutorialGroup tutorialGroup
-            LEFT JOIN FETCH tutorialGroup.tutorialGroupChannel
+                LEFT JOIN FETCH tutorialGroup.tutorialGroupChannel
             WHERE tutorialGroup.id = :#{#tutorialGroupId}
             """)
     Optional<TutorialGroup> getTutorialGroupWithChannel(@Param("tutorialGroupId") Long tutorialGroupId);
@@ -83,19 +83,24 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
     @Query("""
             SELECT tutorialGroup
             FROM TutorialGroup tutorialGroup
-            LEFT JOIN FETCH tutorialGroup.teachingAssistant
-            LEFT JOIN FETCH tutorialGroup.registrations
+                LEFT JOIN FETCH tutorialGroup.teachingAssistant
+                LEFT JOIN FETCH tutorialGroup.registrations
+                LEFT JOIN FETCH tutorialGroup.tutorialGroupSessions
+                LEFT JOIN FETCH tutorialGroup.tutorialGroupSchedule
+                LEFT JOIN FETCH tutorialGroup.tutorialGroupChannel
             WHERE tutorialGroup.course.id = :#{#courseId}
-            ORDER BY tutorialGroup.title""")
-    Set<TutorialGroup> findAllByCourseIdWithTeachingAssistantAndRegistrations(@Param("courseId") Long courseId);
+            ORDER BY tutorialGroup.title
+            """)
+    Set<TutorialGroup> findAllByCourseIdWithTeachingAssistantRegistrationsAndSchedule(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT tutorialGroup
             FROM TutorialGroup tutorialGroup
-            LEFT JOIN FETCH tutorialGroup.teachingAssistant
-            LEFT JOIN FETCH tutorialGroup.registrations
-            LEFT JOIN FETCH tutorialGroup.tutorialGroupSessions
-            LEFT JOIN FETCH tutorialGroup.tutorialGroupSchedule
+                LEFT JOIN FETCH tutorialGroup.teachingAssistant
+                LEFT JOIN FETCH tutorialGroup.registrations
+                LEFT JOIN FETCH tutorialGroup.tutorialGroupSessions
+                LEFT JOIN FETCH tutorialGroup.tutorialGroupSchedule
+                LEFT JOIN FETCH tutorialGroup.tutorialGroupChannel
             WHERE tutorialGroup.id = :#{#tutorialGroupId}
             """)
     Optional<TutorialGroup> findByIdWithTeachingAssistantAndRegistrationsAndSessions(@Param("tutorialGroupId") long tutorialGroupId);
