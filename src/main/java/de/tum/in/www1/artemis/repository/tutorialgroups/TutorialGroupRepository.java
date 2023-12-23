@@ -161,4 +161,6 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
     default Optional<Channel> getTutorialGroupChannel(Long tutorialGroupId) {
         return getTutorialGroupWithChannel(tutorialGroupId).map(TutorialGroup::getTutorialGroupChannel);
     }
+
+    Long countByCourse(Course course);
 }
