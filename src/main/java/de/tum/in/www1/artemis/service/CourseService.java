@@ -268,10 +268,6 @@ public class CourseService {
         exerciseService.loadExerciseDetailsIfNecessary(course, user);
         course.setExams(examRepository.findByCourseIdsForUser(Set.of(course.getId()), user.getId(), user.getGroups(), ZonedDateTime.now()));
         course.setLectures(lectureService.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), user));
-        course.setCompetencies(competencyRepository.findAllForCourseWithProgressForUser(course.getId(), user.getId()));
-        course.setPrerequisites(competencyService.findAllPrerequisitesForCourse(course, user));
-        course.setTutorialGroups(tutorialGroupService.findAllForCourse(course, user));
-        course.setTutorialGroupsConfiguration(tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElse(null));
         if (authCheckService.isOnlyStudentInCourse(course, user)) {
             course.setExams(examRepository.filterVisibleExams(course.getExams()));
         }
