@@ -354,14 +354,14 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      * Check if the course has any competencies or prerequisites
      */
     hasCompetencies(): boolean {
-        return !!(this.course?.competencies?.length || this.course?.prerequisites?.length);
+        return !!(this.course?.numberOfCompetencies || this.course?.numberOfPrerequisites);
     }
 
     /**
      * Check if the course has a tutorial groups
      */
     hasTutorialGroups(): boolean {
-        return !!this.course?.tutorialGroups?.length;
+        return !!this.course?.numberOfTutorialGroups;
     }
 
     /**
