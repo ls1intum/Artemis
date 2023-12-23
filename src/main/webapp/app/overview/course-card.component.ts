@@ -89,9 +89,7 @@ export class CourseCardComponent implements OnChanges {
             this.ngxDoughnutData = [...this.ngxDoughnutData];
         }
 
-        if (this.course.lectures) {
-            this.lectureCount = this.course.lectures.length;
-        }
+        this.lectureCount = this.course.numberOfLectures ?? this.course.lectures?.length ?? 0;
 
         if (this.course.exams) {
             this.examCount = this.course.exams.length;
