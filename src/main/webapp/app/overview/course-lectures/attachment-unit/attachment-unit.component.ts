@@ -18,13 +18,16 @@ import { FileService } from 'app/shared/http/file.service';
 import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
 import { faSquare, faSquareCheck } from '@fortawesome/free-regular-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { AbstractScienceComponent } from 'app/shared/science/science.component';
+import { ScienceService } from 'app/shared/science/science.service';
+import { ScienceEventType } from 'app/shared/science/science.model';
 
 @Component({
     selector: 'jhi-attachment-unit',
     templateUrl: './attachment-unit.component.html',
     styleUrls: ['../lecture-unit.component.scss'],
 })
-export class AttachmentUnitComponent {
+export class AttachmentUnitComponent extends AbstractScienceComponent {
     @Input() attachmentUnit: AttachmentUnit;
     @Input() isPresentationMode = false;
     @Output() onCompletion: EventEmitter<LectureUnitCompletionEvent> = new EventEmitter();
@@ -36,7 +39,12 @@ export class AttachmentUnitComponent {
     faSquare = faSquare;
     faSquareCheck = faSquareCheck;
 
-    constructor(private fileService: FileService) {}
+    constructor(
+        private fileService: FileService,
+        scienceService: ScienceService,
+    ) {
+        super(scienceService, ScienceEventType.LECTURE__FILE_UNIT_DOWNLOAD);
+    }
 
     handleCollapse(event: Event) {
         event.stopPropagation();
@@ -45,6 +53,13 @@ export class AttachmentUnitComponent {
 
     downloadAttachment(event: Event) {
         event.stopPropagation();
+
+        // log event
+        if (this.attachmentUnit?.id) {
+            this.setResourceId(this.attachmentUnit.id);
+        }
+        this.logEvent();
+
         if (this.attachmentUnit?.attachment?.link) {
             this.fileService.downloadFile(this.attachmentUnit?.attachment?.link);
             this.onCompletion.emit({ lectureUnit: this.attachmentUnit, completed: true });
