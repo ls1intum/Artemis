@@ -4,13 +4,16 @@ import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import urlParser from 'js-video-url-parser';
 import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
 import { faSquare, faSquareCheck } from '@fortawesome/free-regular-svg-icons';
+import { AbstractScienceComponent } from 'app/shared/science/science.component';
+import { ScienceService } from 'app/shared/science/science.service';
+import { ScienceEventType } from 'app/shared/science/science.model';
 
 @Component({
     selector: 'jhi-video-unit',
     templateUrl: './video-unit.component.html',
     styleUrls: ['../lecture-unit.component.scss'],
 })
-export class VideoUnitComponent implements OnInit {
+export class VideoUnitComponent extends AbstractScienceComponent implements OnInit {
     @Input() videoUnit: VideoUnit;
     @Input() isPresentationMode = false;
     @Output() onCompletion: EventEmitter<LectureUnitCompletionEvent> = new EventEmitter();
@@ -30,9 +33,14 @@ export class VideoUnitComponent implements OnInit {
     faSquare = faSquare;
     faSquareCheck = faSquareCheck;
 
-    constructor() {}
+    constructor(scienceService: ScienceService) {
+        super(scienceService, ScienceEventType.LECTURE__VIDEO_UNIT_OPEN);
+    }
 
     ngOnInit() {
+        if (this.videoUnit?.id) {
+            this.setResourceId(this.videoUnit.id);
+        }
         if (this.videoUnit?.source) {
             // Validate the URL before displaying it
             if (this.videoUrlAllowList.some((r) => r.test(this.videoUnit.source!)) || !urlParser || urlParser.parse(this.videoUnit.source)) {
@@ -46,6 +54,9 @@ export class VideoUnitComponent implements OnInit {
         this.isCollapsed = !this.isCollapsed;
 
         if (!this.isCollapsed) {
+            // log event
+            this.logEvent();
+
             // Mark the unit as completed when the user has it open for at least 5 minutes
             this.completionTimeout = setTimeout(
                 () => {
