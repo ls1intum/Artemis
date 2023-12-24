@@ -11,7 +11,7 @@ Refer to the `Spotbugs documentation <https://spotbugs.readthedocs.io/en/stable/
 This table contains all rules that are activated by default when creating a new programming exercise.
 You can suppress a complete category by changing its visibility in the grading settings.
 For a more fine-granular configuration, you can add or remove rules by editing the `checkstyle-configuration.xml` file.
-For a description of the rules refer to the `Checkstyle documentation <https://checkstyle.sourceforge.io/checks.html>`__.
+For a description of the rules refer to the `Checkstyle documentation <https://checkstyle.org/checks.html>`__.
 
 +-------------------------------------------+------------------------------+--------------------------------------------------------------------------+
 | Category (Tool/Artemis)                   | Rule                         | Properties                                                               |
