@@ -7,6 +7,7 @@ import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,8 +38,9 @@ import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 /**
  * REST controller for managing QuizSubmission.
  */
+@Profile("core")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/core/")
 public class QuizSubmissionResource {
 
     private final Logger log = LoggerFactory.getLogger(QuizSubmissionResource.class);
@@ -84,7 +86,7 @@ public class QuizSubmissionResource {
      * @param quizSubmission the quizSubmission to submit
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
-    @PostMapping("/exercises/{exerciseId}/submissions/live")
+    @PostMapping("exercises/{exerciseId}/submissions/live")
     @EnforceAtLeastStudent
     public ResponseEntity<QuizSubmission> submitForLiveMode(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for live mode : {}", quizSubmission);
@@ -108,7 +110,7 @@ public class QuizSubmissionResource {
      * @param quizSubmission the quizSubmission to submit
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
-    @PostMapping("/exercises/{exerciseId}/submissions/practice")
+    @PostMapping("exercises/{exerciseId}/submissions/practice")
     @EnforceAtLeastStudent
     public ResponseEntity<Result> submitForPractice(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for practice : {}", quizSubmission);

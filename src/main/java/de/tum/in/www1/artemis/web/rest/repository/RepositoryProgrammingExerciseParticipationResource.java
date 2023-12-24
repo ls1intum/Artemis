@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -41,8 +42,9 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Executes repository actions on repositories related to the participation id transmitted. Available to the owner of the participation, TAs/Instructors of the exercise and Admins.
  */
+@Profile("core")
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/core/")
 public class RepositoryProgrammingExerciseParticipationResource extends RepositoryResource {
 
     private final ParticipationAuthorizationCheckService participationAuthCheckService;

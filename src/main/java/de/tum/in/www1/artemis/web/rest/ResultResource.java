@@ -10,6 +10,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,8 +38,9 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 /**
  * REST controller for managing Result.
  */
+@Profile("core")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/core/")
 public class ResultResource {
 
     private final Logger log = LoggerFactory.getLogger(ResultResource.class);

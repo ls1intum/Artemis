@@ -478,14 +478,14 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 .students(userRepo.findOneByLogin(TEST_PREFIX + "student1").map(Set::of).orElseThrow());
         team = teamRepo.save(team);
 
-        // Check for endpoint: @GetMapping("/courses/for-dashboard")
+        // Check for endpoint: @GetMapping("courses/for-dashboard")
         List<CourseForDashboardDTO> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
         Exercise serverExercise = courses.stream().filter(c -> c.course().getId().equals(course.getId())).findAny()
                 .flatMap(c -> c.course().getExercises().stream().filter(e -> e.getId().equals(exercise.getId())).findAny()).orElseThrow();
         assertThat(serverExercise.getStudentAssignedTeamId()).as("Assigned team id on exercise from dashboard is correct for student.").isEqualTo(team.getId());
         assertThat(serverExercise.isStudentAssignedTeamIdComputed()).as("Assigned team id on exercise was computed.").isTrue();
 
-        // Check for endpoint: @GetMapping("/exercises/{exerciseId}/details")
+        // Check for endpoint: @GetMapping("exercises/{exerciseId}/details")
         Exercise exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, Exercise.class);
         assertThat(exerciseWithDetails.getStudentAssignedTeamId()).as("Assigned team id on exercise from details is correct for student.").isEqualTo(team.getId());
         assertThat(serverExercise.isStudentAssignedTeamIdComputed()).as("Assigned team id on exercise was computed.").isTrue();

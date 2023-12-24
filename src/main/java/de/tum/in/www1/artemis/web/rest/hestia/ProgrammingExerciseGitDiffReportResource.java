@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,8 +22,9 @@ import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGitDiffReportDTO;
 /**
  * REST controller for managing ProgrammingExerciseGitDiffReports and its entries.
  */
+@Profile("core")
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/core/")
 public class ProgrammingExerciseGitDiffReportResource {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGitDiffReportResource.class);

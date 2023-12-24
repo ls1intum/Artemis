@@ -27,8 +27,8 @@ import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 /**
  * REST controller for managing {@link IrisChatSession}.
  */
-@RestController
 @Profile("iris")
+@RestController
 @RequestMapping("api/iris/")
 public class IrisChatSessionResource {
 
@@ -128,7 +128,7 @@ public class IrisChatSessionResource {
      * @param sessionId id of the session
      * @return a status {@code 200 (Ok)} and with body true if Iris is active, false otherwise
      */
-    @GetMapping("/sessions/{sessionId}/active")
+    @GetMapping("sessions/{sessionId}/active")
     @EnforceAtLeastStudent
     public ResponseEntity<IrisHealthDTO> isIrisActive(@PathVariable Long sessionId) {
         var session = irisChatSessionRepository.findByIdElseThrow(sessionId);

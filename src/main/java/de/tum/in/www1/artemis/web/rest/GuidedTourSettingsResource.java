@@ -4,6 +4,7 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,8 +17,9 @@ import de.tum.in.www1.artemis.service.user.UserService;
 /**
  * Rest controller for managing GuidedTourSetting
  */
+@Profile("core")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/core/")
 public class GuidedTourSettingsResource {
 
     private final Logger log = LoggerFactory.getLogger(GuidedTourSettingsResource.class);
@@ -34,7 +36,7 @@ public class GuidedTourSettingsResource {
      * @param guidedTourSettings updated guided tour object
      * @return the guided tour settings
      */
-    @PutMapping("/guided-tour-settings")
+    @PutMapping("guided-tour-settings")
     @EnforceAtLeastStudent
     public ResponseEntity<Set<GuidedTourSetting>> updateGuidedTourSettings(@RequestBody Set<GuidedTourSetting> guidedTourSettings) {
         log.debug("REST request to update GuidedTourSetting : {}", guidedTourSettings);
@@ -48,7 +50,7 @@ public class GuidedTourSettingsResource {
      * @param settingsKey the guided tour settings key that of the setting that should be deleted
      * @return the guided tour settings
      */
-    @DeleteMapping("/guided-tour-settings/{settingsKey}")
+    @DeleteMapping("guided-tour-settings/{settingsKey}")
     @EnforceAtLeastStudent
     public ResponseEntity<Set<GuidedTourSetting>> deleteGuidedTourSetting(@PathVariable String settingsKey) {
         log.debug("REST request to delete GuidedTourSetting : {}", settingsKey);

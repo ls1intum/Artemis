@@ -6,6 +6,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,8 +28,9 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
+@Profile("core")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/core/")
 public class LectureUnitResource {
 
     private final Logger log = LoggerFactory.getLogger(LectureUnitResource.class);
@@ -67,7 +69,7 @@ public class LectureUnitResource {
      * @param orderedLectureUnitIds ordered list of ids of lecture units
      * @return the ResponseEntity with status 200 (OK) and with body the ordered lecture units
      */
-    @PutMapping("/lectures/{lectureId}/lecture-units-order")
+    @PutMapping("lectures/{lectureId}/lecture-units-order")
     @EnforceAtLeastEditor
     public ResponseEntity<List<LectureUnit>> updateLectureUnitsOrder(@PathVariable Long lectureId, @RequestBody List<Long> orderedLectureUnitIds) {
         log.debug("REST request to update the order of lecture units of lecture: {}", lectureId);
@@ -105,7 +107,7 @@ public class LectureUnitResource {
      * @param completed     true if the lecture unit should be marked as completed, false for uncompleted
      * @return the ResponseEntity with status 200 (OK)
      */
-    @PostMapping("/lectures/{lectureId}/lecture-units/{lectureUnitId}/completion")
+    @PostMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}/completion")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> completeLectureUnit(@PathVariable Long lectureUnitId, @PathVariable Long lectureId, @RequestParam("completed") boolean completed) {
         log.info("REST request to mark lecture unit as completed: {}", lectureUnitId);
@@ -139,7 +141,7 @@ public class LectureUnitResource {
      * @param lectureUnitId the id of the lecture unit to remove
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/lectures/{lectureId}/lecture-units/{lectureUnitId}")
+    @DeleteMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteLectureUnit(@PathVariable Long lectureUnitId, @PathVariable Long lectureId) {
         log.info("REST request to delete lecture unit: {}", lectureUnitId);
@@ -168,7 +170,7 @@ public class LectureUnitResource {
      * @param lectureUnitId the id of the lecture unit that should be fetched
      * @return the ResponseEntity with status 200 (OK)
      */
-    @GetMapping("/lecture-units/{lectureUnitId}/for-learning-path-node-details")
+    @GetMapping("lecture-units/{lectureUnitId}/for-learning-path-node-details")
     @EnforceAtLeastStudent
     public ResponseEntity<LectureUnitForLearningPathNodeDetailsDTO> getLectureUnitForLearningPathNodeDetails(@PathVariable long lectureUnitId) {
         log.info("REST request to get lecture unit for learning path node details with id: {}", lectureUnitId);

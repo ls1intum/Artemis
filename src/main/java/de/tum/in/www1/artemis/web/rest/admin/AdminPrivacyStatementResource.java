@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest.admin;
 
 import javax.ws.rs.BadRequestException;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.PrivacyStatement;
@@ -12,6 +13,7 @@ import de.tum.in.www1.artemis.service.LegalDocumentService;
 /**
  * REST controller for editing the Privacy Statement as an admin.
  */
+@Profile("admin")
 @RestController
 @RequestMapping("api/admin/")
 public class AdminPrivacyStatementResource {

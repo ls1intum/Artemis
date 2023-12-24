@@ -9,6 +9,7 @@ import java.time.ZonedDateTime;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -28,8 +29,9 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * REST controller for data exports.
  * It contains the REST endpoints for requesting, downloading data exports and checking if a data export can be requested or downloaded.
  */
+@Profile("core")
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/core/")
 public class DataExportResource {
 
     private final int DAYS_BETWEEN_DATA_EXPORTS;

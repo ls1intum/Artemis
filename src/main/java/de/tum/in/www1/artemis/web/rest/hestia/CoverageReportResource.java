@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest.hestia;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,8 +19,9 @@ import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 /**
  * REST controller for managing ProgrammingExerciseTestwiseCoverageReports and its entries.
  */
+@Profile("core")
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/core/")
 public class CoverageReportResource {
 
     private final Logger log = LoggerFactory.getLogger(CoverageReportResource.class);

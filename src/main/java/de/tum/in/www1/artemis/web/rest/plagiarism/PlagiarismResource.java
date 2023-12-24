@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,8 +31,9 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 /**
  * REST controller for managing Plagiarism Cases.
  */
+@Profile("core")
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/core/")
 public class PlagiarismResource {
 
     private final CourseRepository courseRepository;

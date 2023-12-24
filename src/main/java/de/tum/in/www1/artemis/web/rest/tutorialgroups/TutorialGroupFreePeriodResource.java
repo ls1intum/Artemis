@@ -13,6 +13,7 @@ import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,8 +29,9 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupFreePeriodService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
+@Profile("core")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/core/")
 public class TutorialGroupFreePeriodResource {
 
     private static final String ENTITY_NAME = "tutorialGroupFreePeriod";
@@ -62,7 +64,7 @@ public class TutorialGroupFreePeriodResource {
      * @param tutorialGroupFreePeriodId     the id of the tutorial group free period to get
      * @return ResponseEntity with status 200 (OK) and with body the tutorial group free period
      */
-    @GetMapping("/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}")
+    @GetMapping("courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupFreePeriod> getOneOfConfiguration(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
@@ -85,7 +87,7 @@ public class TutorialGroupFreePeriodResource {
      * @param tutorialGroupFreePeriod       tutorial group free period that should be created
      * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group free period
      */
-    @PutMapping("/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}")
+    @PutMapping("courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupFreePeriod> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
@@ -131,7 +133,7 @@ public class TutorialGroupFreePeriodResource {
      * @param tutorialGroupFreePeriod       tutorial group free period that should be created
      * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group free period
      */
-    @PostMapping("/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods")
+    @PostMapping("courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupFreePeriod> create(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
@@ -171,7 +173,7 @@ public class TutorialGroupFreePeriodResource {
      * @param tutorialGroupFreePeriodId     the id of the tutorial group free period that should be deleted
      * @return ResponseEntity with the status 204 (No Content)
      */
-    @DeleteMapping("/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}")
+    @DeleteMapping("courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> delete(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId, @PathVariable Long tutorialGroupFreePeriodId)

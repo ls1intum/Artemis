@@ -64,8 +64,9 @@ import tech.jhipster.web.util.PaginationUtil;
 /**
  * REST controller for managing Course.
  */
+@Profile("core")
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/core/")
 public class CourseResource {
 
     private static final String ENTITY_NAME = "course";
@@ -276,6 +277,7 @@ public class CourseResource {
      * @param onlineCourseConfiguration the online course configuration to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated online course configuration
      */
+    // TODO: move into LTIResource
     @PutMapping("courses/{courseId}/onlineCourseConfiguration")
     @EnforceAtLeastInstructor
     @Profile("lti")
@@ -867,7 +869,7 @@ public class CourseResource {
      * @param roles       the roles which should be searched in
      * @return the ResponseEntity with status 200 (OK) and with body all users
      */
-    @GetMapping("/courses/{courseId}/users/search")
+    @GetMapping("courses/{courseId}/users/search")
     @EnforceAtLeastStudent
     public ResponseEntity<List<UserPublicInfoDTO>> searchUsersInCourse(@PathVariable Long courseId, @RequestParam("loginOrName") String loginOrName,
             @RequestParam("roles") List<String> roles) {

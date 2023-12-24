@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest.open;
 
 import javax.ws.rs.BadRequestException;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Imprint;
@@ -12,6 +13,7 @@ import de.tum.in.www1.artemis.service.LegalDocumentService;
 /**
  * REST controller for retrieving the imprint.
  */
+@Profile("core")
 @RestController
 @RequestMapping("api/public/")
 public class PublicImprintResource {

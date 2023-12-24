@@ -28,8 +28,8 @@ import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
  * REST controller for managing {@link IrisCodeEditorSession}.
  * TODO: Lots of duplication with IrisChatSessionResource. Problem is lots of overlap but a few very important differences.
  */
-@RestController
 @Profile("iris")
+@RestController
 @RequestMapping("api/iris/")
 public class IrisCodeEditorSessionResource {
 
@@ -131,7 +131,7 @@ public class IrisCodeEditorSessionResource {
      * @param sessionId id of the session
      * @return a status {@code 200 (Ok)} and with body true if Iris is active, false otherwise
      */
-    @GetMapping("/code-editor-sessions/{sessionId}/active")
+    @GetMapping("code-editor-sessions/{sessionId}/active")
     @EnforceAtLeastEditor
     public ResponseEntity<Boolean> isIrisActive(@PathVariable Long sessionId) {
         var session = irisCodeEditorSessionRepository.findByIdElseThrow(sessionId);

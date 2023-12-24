@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,8 +41,9 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 /**
  * REST controller for managing Lecture.
  */
+@Profile("core")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/core/")
 public class LectureResource {
 
     private final Logger log = LoggerFactory.getLogger(LectureResource.class);
@@ -90,7 +92,7 @@ public class LectureResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new lecture, or with status 400 (Bad Request) if the lecture has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/lectures")
+    @PostMapping("lectures")
     @EnforceAtLeastEditor
     public ResponseEntity<Lecture> createLecture(@RequestBody Lecture lecture) throws URISyntaxException {
         log.debug("REST request to save Lecture : {}", lecture);
@@ -112,7 +114,7 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated lecture, or with status 400 (Bad Request) if the lecture is not valid, or with status 500 (Internal
      *         Server Error) if the lecture couldn't be updated
      */
-    @PutMapping("/lectures")
+    @PutMapping("lectures")
     @EnforceAtLeastEditor
     public ResponseEntity<Lecture> updateLecture(@RequestBody Lecture lecture) {
         log.debug("REST request to update Lecture : {}", lecture);
@@ -198,7 +200,7 @@ public class LectureResource {
      * @param lectureId the lectureId of the lecture to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the lecture, or with status 404 (Not Found)
      */
-    @GetMapping("/lectures/{lectureId}")
+    @GetMapping("lectures/{lectureId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Lecture> getLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {}", lectureId);
@@ -224,7 +226,7 @@ public class LectureResource {
      *         or a forbidden error (403) if the user is not at least an editor in the source or target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
-    @PostMapping("/lectures/import/{sourceLectureId}")
+    @PostMapping("lectures/import/{sourceLectureId}")
     @EnforceAtLeastEditor
     public ResponseEntity<Lecture> importLecture(@PathVariable long sourceLectureId, @RequestParam long courseId) throws URISyntaxException {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -252,7 +254,7 @@ public class LectureResource {
      * @param lectureId the lectureId of the lecture to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the lecture including posts, lecture units and competencies, or with status 404 (Not Found)
      */
-    @GetMapping("/lectures/{lectureId}/details")
+    @GetMapping("lectures/{lectureId}/details")
     @EnforceAtLeastStudent
     public ResponseEntity<Lecture> getLectureWithDetails(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details", lectureId);
@@ -297,7 +299,7 @@ public class LectureResource {
      * @param lectureId the id of the lecture
      * @return the title of the lecture wrapped in an ResponseEntity or 404 Not Found if no lecture with that id exists
      */
-    @GetMapping("/lectures/{lectureId}/title")
+    @GetMapping("lectures/{lectureId}/title")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getLectureTitle(@PathVariable Long lectureId) {
         final var title = lectureRepository.getLectureTitle(lectureId);
@@ -352,7 +354,7 @@ public class LectureResource {
      * @param lectureId the id of the lecture to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/lectures/{lectureId}")
+    @DeleteMapping("lectures/{lectureId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteLecture(@PathVariable Long lectureId) {
         Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);

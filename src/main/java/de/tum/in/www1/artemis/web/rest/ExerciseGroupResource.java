@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,8 +33,9 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 /**
  * REST controller for managing ExerciseGroup.
  */
+@Profile("core")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/core/")
 public class ExerciseGroupResource {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseGroupResource.class);
@@ -78,7 +80,7 @@ public class ExerciseGroupResource {
      *         or with status 400 (Bad Request) if the exerciseGroup has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/courses/{courseId}/exams/{examId}/exerciseGroups")
+    @PostMapping("courses/{courseId}/exams/{examId}/exerciseGroups")
     @EnforceAtLeastEditor
     public ResponseEntity<ExerciseGroup> createExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody ExerciseGroup exerciseGroup)
             throws URISyntaxException {
@@ -115,7 +117,7 @@ public class ExerciseGroupResource {
      * @return the ResponseEntity with status 200 (OK) and with the body of the updated exercise group
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/courses/{courseId}/exams/{examId}/exerciseGroups")
+    @PutMapping("courses/{courseId}/exams/{examId}/exerciseGroups")
     @EnforceAtLeastEditor
     public ResponseEntity<ExerciseGroup> updateExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody ExerciseGroup updatedExerciseGroup)
             throws URISyntaxException {
@@ -142,7 +144,7 @@ public class ExerciseGroupResource {
      * @param updatedExerciseGroup the list of Exercise Groups to be imported
      * @return the ResponseEntity with status 201 (Created) and with body the newly imported exercise groups, or with status 400 (Bad Request)
      */
-    @PostMapping("/courses/{courseId}/exams/{examId}/import-exercise-group")
+    @PostMapping("courses/{courseId}/exams/{examId}/import-exercise-group")
     @EnforceAtLeastEditor
     public ResponseEntity<List<ExerciseGroup>> importExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<ExerciseGroup> updatedExerciseGroup)
             throws IOException {
@@ -163,7 +165,7 @@ public class ExerciseGroupResource {
      * @param exerciseGroupId the id of the exercise group to find
      * @return the ResponseEntity with status 200 (OK) and with the found exercise group as body
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId}")
+    @GetMapping("courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId}")
     @EnforceAtLeastEditor
     public ResponseEntity<ExerciseGroup> getExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId) {
         log.debug("REST request to get exercise group : {}", exerciseGroupId);
@@ -202,7 +204,7 @@ public class ExerciseGroupResource {
      * @param deleteBaseReposBuildPlans    boolean which states whether the corresponding base build plans should be deleted
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId}")
+    @DeleteMapping("courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId,
             @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans, @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {

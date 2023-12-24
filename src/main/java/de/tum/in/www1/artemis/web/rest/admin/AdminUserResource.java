@@ -58,6 +58,7 @@ import tech.jhipster.web.util.PaginationUtil;
  * <p>
  * Another option would be to have a specific JPA entity graph to handle this case.
  */
+@Profile("admin")
 @RestController
 @RequestMapping("api/admin/")
 public class AdminUserResource {
@@ -179,6 +180,7 @@ public class AdminUserResource {
      * @param userId of the user to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated user
      */
+    // TODO: move into LdapResource
     @PutMapping("users/{userId}/sync-ldap")
     @EnforceAdmin
     @Profile("ldap | ldap-only")

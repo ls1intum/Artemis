@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.admin;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
@@ -9,6 +10,7 @@ import de.tum.in.www1.artemis.web.rest.dto.RequestDataExportDTO;
 /**
  * REST controller for requesting data exports for another user as admin.
  */
+@Profile("admin")
 @RestController
 @RequestMapping("api/admin/")
 public class AdminDataExportResource {

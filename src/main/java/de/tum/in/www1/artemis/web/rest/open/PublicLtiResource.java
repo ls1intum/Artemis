@@ -37,9 +37,10 @@ import io.jsonwebtoken.*;
 /**
  * REST controller for receiving LTI requests.
  */
-@RestController
-@RequestMapping("api/public/")
 @Profile("lti")
+@RestController
+// TODO: should we adapt the mapping based on the profile?
+@RequestMapping("api/public/")
 public class PublicLtiResource {
 
     private final Logger log = LoggerFactory.getLogger(PublicLtiResource.class);

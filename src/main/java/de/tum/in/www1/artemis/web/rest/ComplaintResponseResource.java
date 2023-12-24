@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,8 +28,9 @@ import tech.jhipster.web.util.ResponseUtil;
 /**
  * REST controller for managing complaints.
  */
+@Profile("core")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/core/")
 public class ComplaintResponseResource {
 
     private final Logger log = LoggerFactory.getLogger(ComplaintResponseResource.class);
@@ -60,7 +62,7 @@ public class ComplaintResponseResource {
      * @param complaintId - id of the complaint to lock
      * @return the ResponseEntity with status 201 (Created) and with body the empty complaint response
      */
-    @PostMapping("/complaint-responses/complaint/{complaintId}/create-lock")
+    @PostMapping("complaint-responses/complaint/{complaintId}/create-lock")
     @EnforceAtLeastTutor
     public ResponseEntity<ComplaintResponse> lockComplaint(@PathVariable long complaintId) {
         log.debug("REST request to create empty complaint response for complaint with id: {}", complaintId);
@@ -77,7 +79,7 @@ public class ComplaintResponseResource {
      * @param complaintId - id of the complaint to lock again
      * @return the ResponseEntity with status 201 (Created) and with body the empty complaint response
      */
-    @PostMapping("/complaint-responses/complaint/{complaintId}/refresh-lock")
+    @PostMapping("complaint-responses/complaint/{complaintId}/refresh-lock")
     @EnforceAtLeastTutor
     public ResponseEntity<ComplaintResponse> refreshLockOnComplaint(@PathVariable long complaintId) {
         log.debug("REST request to refresh empty complaint response for complaint with id: {}", complaintId);
@@ -94,7 +96,7 @@ public class ComplaintResponseResource {
      * @param complaintId - id of the complaint to remove the lock for
      * @return the ResponseEntity with status 200 (Ok)
      */
-    @DeleteMapping("/complaint-responses/complaint/{complaintId}/remove-lock")
+    @DeleteMapping("complaint-responses/complaint/{complaintId}/remove-lock")
     @EnforceAtLeastTutor
     public ResponseEntity<Void> removeLockFromComplaint(@PathVariable long complaintId) {
         log.debug("REST request to remove the lock on the complaint with the id: {}", complaintId);
@@ -110,7 +112,7 @@ public class ComplaintResponseResource {
      * @param complaintResponse the complaint response used for resolving the complaint
      * @return the ResponseEntity with status 200 (Ok) and with body the complaint response used for resolving the complaint
      */
-    @PutMapping("/complaint-responses/complaint/{complaintId}/resolve")
+    @PutMapping("complaint-responses/complaint/{complaintId}/resolve")
     @EnforceAtLeastTutor
     public ResponseEntity<ComplaintResponse> resolveComplaint(@RequestBody ComplaintResponse complaintResponse, @PathVariable long complaintId) {
         log.debug("REST request to resolve the complaint with id: {}", complaintId);
@@ -129,7 +131,7 @@ public class ComplaintResponseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the complaint response, or with status 404 (Not Found)
      */
     // TODO: change URL to /complaint-responses?complaintId={complaintId}
-    @GetMapping("/complaint-responses/complaint/{complaintId}")
+    @GetMapping("complaint-responses/complaint/{complaintId}")
     @EnforceAtLeastStudent
     public ResponseEntity<ComplaintResponse> getComplaintResponseByComplaintId(@PathVariable long complaintId, Principal principal) {
         log.debug("REST request to get ComplaintResponse associated to complaint : {}", complaintId);

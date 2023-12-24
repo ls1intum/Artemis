@@ -6,6 +6,7 @@ import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +17,7 @@ import de.tum.in.www1.artemis.service.PlantUmlService;
  * Created by Josias Montag on 14.12.16.
  */
 
+@Profile("core")
 @RestController
 @RequestMapping(PlantUmlResource.Endpoints.ROOT)
 public class PlantUmlResource {

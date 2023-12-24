@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
@@ -34,8 +35,9 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile("core")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/core/")
 public class ProgrammingExerciseParticipationResource {
 
     private static final String ENTITY_NAME = "programmingExerciseParticipation";
@@ -79,7 +81,7 @@ public class ProgrammingExerciseParticipationResource {
      * @param participationId for which to retrieve the student participation with latest result and feedbacks.
      * @return the ResponseEntity with status 200 (OK) and the participation with its latest result in the body.
      */
-    @GetMapping("/programming-exercise-participations/{participationId}/student-participation-with-latest-result-and-feedbacks")
+    @GetMapping("programming-exercise-participations/{participationId}/student-participation-with-latest-result-and-feedbacks")
     @EnforceAtLeastStudent
     public ResponseEntity<ProgrammingExerciseStudentParticipation> getParticipationWithLatestResultForStudentParticipation(@PathVariable Long participationId) {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository
@@ -135,7 +137,7 @@ public class ProgrammingExerciseParticipationResource {
      * @return the ResponseEntity with the last pending submission if it exists or null with status Ok (200). Will return notFound (404) if there is no participation for the given
      *         id and forbidden (403) if the user is not allowed to access the participation.
      */
-    @GetMapping("/programming-exercise-participations/{participationId}/latest-pending-submission")
+    @GetMapping("programming-exercise-participations/{participationId}/latest-pending-submission")
     @EnforceAtLeastStudent
     public ResponseEntity<ProgrammingSubmission> getLatestPendingSubmission(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {
         Optional<ProgrammingSubmission> submissionOpt;
@@ -157,7 +159,7 @@ public class ProgrammingExerciseParticipationResource {
      * @return a Map of {[participationId]: ProgrammingSubmission | null}. Will contain an entry for every student participation of the exercise and a submission object if a
      *         pending submission exists or null if not.
      */
-    @GetMapping("/programming-exercises/{exerciseId}/latest-pending-submissions")
+    @GetMapping("programming-exercises/{exerciseId}/latest-pending-submissions")
     @EnforceAtLeastTutor
     public ResponseEntity<Map<Long, Optional<ProgrammingSubmission>>> getLatestPendingSubmissionsByExerciseId(@PathVariable Long exerciseId) {
         ProgrammingExercise programmingExercise;
@@ -184,7 +186,7 @@ public class ProgrammingExerciseParticipationResource {
      * @param gradedParticipationId optional parameter that specifies that the repository should be set to the graded participation instead of the exercise template
      * @return the ResponseEntity with status 200 (OK)
      */
-    @PutMapping("/programming-exercise-participations/{participationId}/reset-repository")
+    @PutMapping("programming-exercise-participations/{participationId}/reset-repository")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> resetRepository(@PathVariable Long participationId, @RequestParam(required = false) Long gradedParticipationId)
             throws GitAPIException, IOException {

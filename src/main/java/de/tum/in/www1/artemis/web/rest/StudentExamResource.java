@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -77,8 +78,9 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 /**
  * REST controller for managing ExerciseGroup.
  */
+@Profile("core")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/core/")
 public class StudentExamResource {
 
     private final Logger log = LoggerFactory.getLogger(StudentExamResource.class);
@@ -169,7 +171,7 @@ public class StudentExamResource {
      * @param studentExamId the id of the student exam to find
      * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}")
+    @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<StudentExamWithGradeDTO> getStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         log.debug("REST request to get student exam : {}", studentExamId);
@@ -206,7 +208,7 @@ public class StudentExamResource {
      * @param examId   the exam to which the student exams belong to
      * @return the ResponseEntity with status 200 (OK) and a set of student exams. The set can be empty
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/student-exams")
+    @GetMapping("courses/{courseId}/exams/{examId}/student-exams")
     @EnforceAtLeastInstructor
     public ResponseEntity<Set<StudentExam>> getStudentExamsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all student exams for exam : {}", examId);
@@ -227,7 +229,7 @@ public class StudentExamResource {
      * @param workingTime   the new working time in seconds
      * @return the ResponseEntity with status 200 (OK) and with the updated student exam as body
      */
-    @PatchMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/working-time")
+    @PatchMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/working-time")
     @EnforceAtLeastInstructor
     public ResponseEntity<StudentExam> updateWorkingTime(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
             @RequestBody Integer workingTime) {
@@ -268,7 +270,7 @@ public class StudentExamResource {
      * @param message      the optional instructor message to be sent to the student
      * @return the ResponseEntity with status 200 (OK) and with the updated student exam as body
      */
-    @PostMapping("/courses/{courseId}/exams/{examId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}/attendance-check")
+    @PostMapping("courses/{courseId}/exams/{examId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}/attendance-check")
     @EnforceAtLeastInstructor
     public ResponseEntity<ExamAttendanceCheckEventDTO> attendanceCheck(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable String studentLogin,
             @RequestBody(required = false) String message) {
@@ -303,7 +305,7 @@ public class StudentExamResource {
      *         200 if successful
      *         400 if student exam was in an illegal state
      */
-    @PostMapping("/courses/{courseId}/exams/{examId}/student-exams/submit")
+    @PostMapping("courses/{courseId}/exams/{examId}/student-exams/submit")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam studentExamFromClient) {
         long start = System.nanoTime();
@@ -355,7 +357,7 @@ public class StudentExamResource {
      * @param request       the http request, used to extract headers
      * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/conduction")
+    @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/conduction")
     @EnforceAtLeastStudent
     public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
             HttpServletRequest request) {
@@ -418,7 +420,7 @@ public class StudentExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the found test run as body
      */
     // TODO: use the same REST call as for real exams and test exams
-    @GetMapping("/courses/{courseId}/exams/{examId}/test-run/{testRunId}/conduction")
+    @GetMapping("courses/{courseId}/exams/{examId}/test-run/{testRunId}/conduction")
     @EnforceAtLeastInstructor
     public ResponseEntity<StudentExam> getTestRunForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId, HttpServletRequest request) {
         // NOTE: it is important that this method has the same logic (except really small differences) as getStudentExamForConduction
@@ -476,7 +478,7 @@ public class StudentExamResource {
      * @param studentExamId the studentExamId for which the summary should be loaded
      * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/summary")
+    @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/summary")
     @EnforceAtLeastStudent
     public ResponseEntity<StudentExam> getStudentExamForSummary(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         long start = System.currentTimeMillis();
@@ -523,7 +525,7 @@ public class StudentExamResource {
      * @param isTestRun whether the student exam belongs to a test run by an instructor or not
      * @return the ResponseEntity with status 200 (OK) and with the StudentExamWithGradeDTO instance without the student exam as body
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/grade-summary")
+    @GetMapping("courses/{courseId}/exams/{examId}/student-exams/grade-summary")
     @EnforceAtLeastStudent
     public ResponseEntity<StudentExamWithGradeDTO> getStudentExamGradesForSummary(@PathVariable Long courseId, @PathVariable Long examId,
             @RequestParam(required = false) Long userId, @RequestParam(required = false, defaultValue = "false") boolean isTestRun) {
@@ -557,7 +559,7 @@ public class StudentExamResource {
      * @param examId   the id of the exam
      * @return the list of exam live events
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/live-events")
+    @GetMapping("courses/{courseId}/exams/{examId}/student-exams/live-events")
     @EnforceAtLeastStudent
     public ResponseEntity<List<ExamLiveEventDTO>> getExamLiveEvents(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.currentTimeMillis();
@@ -632,7 +634,7 @@ public class StudentExamResource {
      * @param examId   the id of the exam
      * @return {@link HttpStatus#BAD_REQUEST} if the exam is not over yet | {@link HttpStatus#FORBIDDEN} if the user is not an instructor
      */
-    @PostMapping("/courses/{courseId}/exams/{examId}/student-exams/assess-unsubmitted-and-empty-student-exams")
+    @PostMapping("courses/{courseId}/exams/{examId}/student-exams/assess-unsubmitted-and-empty-student-exams")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> assessUnsubmittedStudentExamsAndEmptySubmissions(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to automatically assess the not submitted student exams of the exam with id {}", examId);
@@ -725,7 +727,7 @@ public class StudentExamResource {
      * @param examId   the exam to which the student exams belongs to
      * @return ResponseEntity containing the status
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/start-exercises/status")
+    @GetMapping("courses/{courseId}/exams/{examId}/student-exams/start-exercises/status")
     @EnforceAtLeastInstructor
     public ResponseEntity<ExamExerciseStartPreparationStatus> getExerciseStartStatus(@PathVariable Long courseId, @PathVariable Long examId) {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
@@ -823,7 +825,7 @@ public class StudentExamResource {
      * @return the student exam with the new state of submitted and submissionDate
      *         200 if successful
      */
-    @PutMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/toggle-to-submitted")
+    @PutMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/toggle-to-submitted")
     @EnforceAtLeastInstructor
     public ResponseEntity<StudentExam> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         User instructor = userRepository.getUser();
@@ -860,7 +862,7 @@ public class StudentExamResource {
      * @return the student exam with the new state of submitted and submissionDate
      *         200 if successful
      */
-    @PutMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/toggle-to-unsubmitted")
+    @PutMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/toggle-to-unsubmitted")
     @EnforceAtLeastInstructor
     public ResponseEntity<StudentExam> unsubmitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         User instructor = userRepository.getUser();

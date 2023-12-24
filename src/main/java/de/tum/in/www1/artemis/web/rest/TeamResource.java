@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,8 +41,9 @@ import de.tum.in.www1.artemis.web.websocket.team.TeamWebsocketService;
 /**
  * REST controller for managing Teams.
  */
+@Profile("core")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/core/")
 public class TeamResource {
 
     private final Logger log = LoggerFactory.getLogger(TeamResource.class);
@@ -101,7 +103,7 @@ public class TeamResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new team, or with status 400 (Bad Request) if the team already has an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/exercises/{exerciseId}/teams")
+    @PostMapping("exercises/{exerciseId}/teams")
     @EnforceAtLeastTutor
     public ResponseEntity<Team> createTeam(@RequestBody Team team, @PathVariable long exerciseId) throws URISyntaxException {
         log.debug("REST request to save Team : {}", team);
@@ -146,7 +148,7 @@ public class TeamResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated team, or with status 400 (Bad Request) if the team is not valid, or with status 500 (Internal
      *         Server Error) if the team couldn't be updated
      */
-    @PutMapping("/exercises/{exerciseId}/teams/{teamId}")
+    @PutMapping("exercises/{exerciseId}/teams/{teamId}")
     @EnforceAtLeastTutor
     public ResponseEntity<Team> updateTeam(@RequestBody Team team, @PathVariable long exerciseId, @PathVariable long teamId) {
         log.debug("REST request to update Team : {}", team);
@@ -216,7 +218,7 @@ public class TeamResource {
      * @param teamId     the id of the team to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the team, or with status 404 (Not Found)
      */
-    @GetMapping("/exercises/{exerciseId}/teams/{teamId}")
+    @GetMapping("exercises/{exerciseId}/teams/{teamId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Team> getTeam(@PathVariable long exerciseId, @PathVariable long teamId) {
         log.debug("REST request to get Team : {}", teamId);
@@ -244,7 +246,7 @@ public class TeamResource {
      * @param teamOwnerId the user id of the team owner for which to filter the teams by (optional)
      * @return the ResponseEntity with status 200 (OK) and the list of teams in body
      */
-    @GetMapping("/exercises/{exerciseId}/teams")
+    @GetMapping("exercises/{exerciseId}/teams")
     @EnforceAtLeastTutor
     public ResponseEntity<List<Team>> getTeamsForExercise(@PathVariable long exerciseId, @RequestParam(value = "teamOwnerId", required = false) Long teamOwnerId) {
         log.debug("REST request to get all Teams for the exercise with id : {}", exerciseId);
@@ -263,7 +265,7 @@ public class TeamResource {
      * @param teamId     the id of the team to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/exercises/{exerciseId}/teams/{teamId}")
+    @DeleteMapping("exercises/{exerciseId}/teams/{teamId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteTeam(@PathVariable long exerciseId, @PathVariable long teamId) {
         log.info("REST request to delete Team with id {} in exercise with id {}", teamId, exerciseId);
@@ -296,7 +298,7 @@ public class TeamResource {
      * @param shortName the shortName of the team to check for existence
      * @return Response with status 200 (OK) and boolean flag in the body
      */
-    @GetMapping("/courses/{courseId}/teams/exists")
+    @GetMapping("courses/{courseId}/teams/exists")
     @EnforceAtLeastTutor
     public ResponseEntity<Boolean> existsTeamByShortName(@PathVariable long courseId, @RequestParam("shortName") String shortName) {
         log.debug("REST request to check Team existence for course with id {} for shortName : {}", courseId, shortName);
@@ -313,7 +315,7 @@ public class TeamResource {
      * @param loginOrName the login or name by which to search users
      * @return the ResponseEntity with status 200 (OK) and with body all users
      */
-    @GetMapping("/courses/{courseId}/exercises/{exerciseId}/team-search-users")
+    @GetMapping("courses/{courseId}/exercises/{exerciseId}/team-search-users")
     @EnforceAtLeastTutor
     public ResponseEntity<List<TeamSearchUserDTO>> searchTeamInExercise(@PathVariable long courseId, @PathVariable long exerciseId,
             @RequestParam("loginOrName") String loginOrName) {
@@ -336,7 +338,7 @@ public class TeamResource {
      * @param importStrategyType the import strategy to use when importing the teams
      * @return the ResponseEntity with status 200 (OK) and the list of created teams in body
      */
-    @PutMapping("/exercises/{exerciseId}/teams/import-from-list")
+    @PutMapping("exercises/{exerciseId}/teams/import-from-list")
     @EnforceAtLeastEditor
     public ResponseEntity<List<Team>> importTeamsFromList(@PathVariable long exerciseId, @RequestBody List<Team> teams, @RequestParam TeamImportStrategyType importStrategyType) {
         log.debug("REST request import given teams into destination exercise with id {}", exerciseId);
@@ -375,7 +377,7 @@ public class TeamResource {
      * @param importStrategyType    the import strategy to use when importing the teams
      * @return the ResponseEntity with status 200 (OK) and the list of created teams in body
      */
-    @PutMapping("/exercises/{destinationExerciseId}/teams/import-from-exercise/{sourceExerciseId}")
+    @PutMapping("exercises/{destinationExerciseId}/teams/import-from-exercise/{sourceExerciseId}")
     @EnforceAtLeastEditor
     public ResponseEntity<List<Team>> importTeamsFromSourceExercise(@PathVariable long destinationExerciseId, @PathVariable long sourceExerciseId,
             @RequestParam TeamImportStrategyType importStrategyType) {

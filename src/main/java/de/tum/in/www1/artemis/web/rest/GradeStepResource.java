@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,8 +28,9 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 /**
  * REST controller for managing grade steps of a grading scale
  */
+@Profile("core")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/core/")
 public class GradeStepResource {
 
     private final Logger log = LoggerFactory.getLogger(GradeStepResource.class);
@@ -68,7 +70,7 @@ public class GradeStepResource {
      * @param courseId the course to which the grading scale belongs
      * @return ResponseEntity with status 200 (Ok) with body a list of grade steps if the grading scale exists and 404 (Not found) otherwise
      */
-    @GetMapping("/courses/{courseId}/grading-scale/grade-steps")
+    @GetMapping("courses/{courseId}/grading-scale/grade-steps")
     @EnforceAtLeastStudent
     public ResponseEntity<GradeStepsDTO> getAllGradeStepsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all grade steps for course: {}", courseId);
@@ -89,7 +91,7 @@ public class GradeStepResource {
      * @param examId   the exam to which the grading scale belongs
      * @return ResponseEntity with status 200 (Ok) with body a list of grade steps if the grading scale exists and 404 (Not found) otherwise
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/grading-scale/grade-steps")
+    @GetMapping("courses/{courseId}/exams/{examId}/grading-scale/grade-steps")
     @EnforceAtLeastStudent
     public ResponseEntity<GradeStepsDTO> getAllGradeStepsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all grade steps for exam: {}", examId);
@@ -122,7 +124,7 @@ public class GradeStepResource {
      * @param gradeStepId the grade step within the grading scale
      * @return ResponseEntity with status 200 (Ok) with body the grade steps if the grading scale and grade step exist and 404 (Not found) otherwise
      */
-    @GetMapping("/courses/{courseId}/grading-scale/grade-steps/{gradeStepId}")
+    @GetMapping("courses/{courseId}/grading-scale/grade-steps/{gradeStepId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<GradeStep> getGradeStepsByIdForCourse(@PathVariable Long courseId, @PathVariable Long gradeStepId) {
         log.debug("REST request to get grade step {} for course: {}", gradeStepId, courseId);
@@ -141,7 +143,7 @@ public class GradeStepResource {
      * @param gradeStepId the grade step within the grading scale
      * @return ResponseEntity with status 200 (Ok) with body the grade steps if the grading scale and grade step exist and 404 (Not found) otherwise
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/grading-scale/grade-steps/{gradeStepId}")
+    @GetMapping("courses/{courseId}/exams/{examId}/grading-scale/grade-steps/{gradeStepId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<GradeStep> getGradeStepsByIdForExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long gradeStepId) {
         log.debug("REST request to get grade step {} for exam: {}", gradeStepId, examId);
@@ -159,7 +161,7 @@ public class GradeStepResource {
      * @param gradePercentage the grade percentage the has to be mapped to a grade step
      * @return ResponseEntity with status 200 (Ok) with body the grade if the grading scale and grade step exist and 404 (Not found) otherwise
      */
-    @GetMapping("/courses/{courseId}/grading-scale/match-grade-step")
+    @GetMapping("courses/{courseId}/grading-scale/match-grade-step")
     @EnforceAtLeastStudent
     public ResponseEntity<GradeDTO> getGradeStepByPercentageForCourse(@PathVariable Long courseId, @RequestParam Double gradePercentage) {
         log.debug("REST request to get grade step for grade percentage {} for course: {}", gradePercentage, courseId);
@@ -196,7 +198,7 @@ public class GradeStepResource {
      * @param gradePercentage the grade percentage the has to be mapped to a grade step
      * @return ResponseEntity with status 200 (Ok) with body the grade if the grading scale and grade step exist and 404 (Not found) otherwise
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/grading-scale/match-grade-step")
+    @GetMapping("courses/{courseId}/exams/{examId}/grading-scale/match-grade-step")
     @EnforceAtLeastStudent
     public ResponseEntity<GradeDTO> getGradeStepByPercentageForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam Double gradePercentage) {
         log.debug("REST request to get grade step for grade percentage {} for exam: {}", gradePercentage, examId);

@@ -7,6 +7,7 @@ import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,8 +29,9 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
+@Profile("core")
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/core/")
 public class LearningPathResource {
 
     private final Logger log = LoggerFactory.getLogger(LearningPathResource.class);
@@ -166,7 +168,7 @@ public class LearningPathResource {
      * @param learningPathId the id of the learning path that should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the ngx representation of the learning path
      */
-    @GetMapping("/learning-path/{learningPathId}/graph")
+    @GetMapping("learning-path/{learningPathId}/graph")
     @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastStudent
     public ResponseEntity<NgxLearningPathDTO> getLearningPathNgxGraph(@PathVariable Long learningPathId) {
@@ -180,7 +182,7 @@ public class LearningPathResource {
      * @param learningPathId the id of the learning path that should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the ngx representation of the learning path
      */
-    @GetMapping("/learning-path/{learningPathId}/path")
+    @GetMapping("learning-path/{learningPathId}/path")
     @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastStudent
     public ResponseEntity<NgxLearningPathDTO> getLearningPathNgxPath(@PathVariable Long learningPathId) {
@@ -218,7 +220,7 @@ public class LearningPathResource {
      * @param courseId the id of the course from which the learning path id should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the id of the learning path
      */
-    @GetMapping("/courses/{courseId}/learning-path-id")
+    @GetMapping("courses/{courseId}/learning-path-id")
     @EnforceAtLeastStudent
     public ResponseEntity<Long> getLearningPathId(@PathVariable Long courseId) {
         log.debug("REST request to get learning path id for course with id: {}", courseId);
@@ -250,7 +252,7 @@ public class LearningPathResource {
      * @param learningPathId the id of the learning path for which to get the progress
      * @return the ResponseEntity with status 200 (OK) and with the progress in the body
      */
-    @GetMapping("/learning-path/{learningPathId}/competency-progress")
+    @GetMapping("learning-path/{learningPathId}/competency-progress")
     @EnforceAtLeastStudent
     public ResponseEntity<Set<CompetencyProgressForLearningPathDTO>> getCompetencyProgressForLearningPath(@PathVariable long learningPathId) {
         log.debug("REST request to get competency progress for learning path: {}", learningPathId);

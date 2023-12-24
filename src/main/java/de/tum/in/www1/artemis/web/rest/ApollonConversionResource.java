@@ -20,9 +20,9 @@ import de.tum.in.www1.artemis.service.connectors.apollon.dto.ApollonModelDTO;
 /**
  * REST controller for managing ApollonDiagram.
  */
-@RestController
-@RequestMapping("/api")
 @Profile("apollon")
+@RestController
+@RequestMapping("api/apollon/")
 public class ApollonConversionResource {
 
     private final Logger log = LoggerFactory.getLogger(ApollonConversionResource.class);
@@ -39,7 +39,7 @@ public class ApollonConversionResource {
      * @param request the model for conversion
      * @return input stream for conversion
      */
-    @PostMapping("/apollon/convert-to-pdf")
+    @PostMapping("apollon/convert-to-pdf")
     @EnforceAtLeastStudent
     public ResponseEntity<InputStreamResource> convertApollonModel(@RequestBody ApollonModelDTO request) {
         log.debug("REST call to convert apollon model to pdf");

@@ -15,8 +15,9 @@ import de.tum.in.www1.artemis.security.annotations.ManualConfig;
 /**
  * REST controller to serve the public JWKSet related to all OAuth2 clients.
  */
-@RestController
 @Profile("lti")
+// TODO: should we adapt the mapping based on the profile?
+@RestController
 public class PublicOAuth2JWKSResource {
 
     private final OAuth2JWKSService jwksService;
@@ -25,7 +26,7 @@ public class PublicOAuth2JWKSResource {
         this.jwksService = jwksService;
     }
 
-    @GetMapping(".well-known/jwks.json")
+    @GetMapping("/.well-known/jwks.json")
     @EnforceNothing
     @ManualConfig
     public ResponseEntity<String> getJwkSet() {

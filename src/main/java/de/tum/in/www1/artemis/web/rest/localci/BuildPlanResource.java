@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.web.rest.localci;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Profile("gitlabci | jenkins")
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/gitlabci/")
 public class BuildPlanResource {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
@@ -45,7 +45,7 @@ public class BuildPlanResource {
      * @param exerciseId the exercise for which the build plan should be retrieved
      * @return the build plan stored in the database
      */
-    @GetMapping("/programming-exercises/{exerciseId}/build-plan/for-editor")
+    @GetMapping("programming-exercises/{exerciseId}/build-plan/for-editor")
     @EnforceAtLeastEditor
     public ResponseEntity<BuildPlan> getBuildPlanForEditor(@PathVariable Long exerciseId) {
         log.debug("REST request to get build plan for programming exercise with id {}", exerciseId);
@@ -69,7 +69,7 @@ public class BuildPlanResource {
      * @param buildPlan  The new build plan for the exercise.
      * @return The updated build plan.
      */
-    @PutMapping("/programming-exercises/{exerciseId}/build-plan")
+    @PutMapping("programming-exercises/{exerciseId}/build-plan")
     @EnforceAtLeastEditor
     public ResponseEntity<BuildPlan> setBuildPlan(@PathVariable Long exerciseId, @RequestBody BuildPlan buildPlan) {
         log.debug("REST request to set build plan for programming exercise with id {}", exerciseId);

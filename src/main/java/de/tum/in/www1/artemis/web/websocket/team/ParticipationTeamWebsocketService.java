@@ -90,7 +90,7 @@ public class ParticipationTeamWebsocketService {
      * @param participationId     id of participation
      * @param stompHeaderAccessor header from STOMP frame
      */
-    @SubscribeMapping("/topic/participations/{participationId}/team")
+    @SubscribeMapping("topic/participations/{participationId}/team")
     public void subscribe(@DestinationVariable Long participationId, StompHeaderAccessor stompHeaderAccessor) {
         final String destination = getDestination(participationId);
         destinationTracker.put(stompHeaderAccessor.getSessionId(), destination);
@@ -102,7 +102,7 @@ public class ParticipationTeamWebsocketService {
      *
      * @param participationId id of participation
      */
-    @MessageMapping("/topic/participations/{participationId}/team/trigger")
+    @MessageMapping("topic/participations/{participationId}/team/trigger")
     public void triggerSendOnlineTeamStudents(@DestinationVariable Long participationId) {
         sendOnlineTeamStudents(participationId);
     }
@@ -114,7 +114,7 @@ public class ParticipationTeamWebsocketService {
      * @param participationId id of participation which is being worked on
      * @param principal       principal of user who is working on the submission
      */
-    @MessageMapping("/topic/participations/{participationId}/team/typing")
+    @MessageMapping("topic/participations/{participationId}/team/typing")
     public void startTyping(@DestinationVariable Long participationId, Principal principal) {
         updateValue(lastTypingTracker, participationId, principal.getName());
         sendOnlineTeamStudents(participationId);
@@ -127,7 +127,7 @@ public class ParticipationTeamWebsocketService {
      * @param modelingSubmission updated modeling submission
      * @param principal          principal of user who wants to update the text submission
      */
-    @MessageMapping("/topic/participations/{participationId}/team/modeling-submissions/update")
+    @MessageMapping("topic/participations/{participationId}/team/modeling-submissions/update")
     public void updateModelingSubmission(@DestinationVariable Long participationId, @Payload ModelingSubmission modelingSubmission, Principal principal) {
         long start = System.currentTimeMillis();
         updateSubmission(participationId, modelingSubmission, principal, "/modeling-submissions");
@@ -141,7 +141,7 @@ public class ParticipationTeamWebsocketService {
      * @param textSubmission  updated text submission
      * @param principal       principal of user who wants to update the text submission
      */
-    @MessageMapping("/topic/participations/{participationId}/team/text-submissions/update")
+    @MessageMapping("topic/participations/{participationId}/team/text-submissions/update")
     public void updateTextSubmission(@DestinationVariable Long participationId, @Payload TextSubmission textSubmission, Principal principal) {
         long start = System.currentTimeMillis();
         updateSubmission(participationId, textSubmission, principal, "/text-submissions");

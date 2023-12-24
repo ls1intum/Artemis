@@ -22,9 +22,9 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
  * the different options (static analysis, sequential runs, test coverage) as well as the default
  * image for the programming language and project type for the artemis instance.
  */
-@RestController
 @Profile("aeolus | localci")
-@RequestMapping("/api/aeolus")
+@RestController
+@RequestMapping("api/aeolus")
 public class AeolusTemplateResource {
 
     private final Logger logger = LoggerFactory.getLogger(AeolusTemplateResource.class);

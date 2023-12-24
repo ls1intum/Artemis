@@ -17,6 +17,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -54,8 +55,9 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 /**
  * REST controller for managing QuizExercise.
  */
+@Profile("core")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/core/")
 public class QuizExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(QuizExerciseResource.class);
@@ -305,7 +307,7 @@ public class QuizExerciseResource {
      * @param quizExerciseId the id of the quizExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
      */
-    @GetMapping("/quiz-exercises/{quizExerciseId}")
+    @GetMapping("quiz-exercises/{quizExerciseId}")
     @EnforceAtLeastTutor
     public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long quizExerciseId) {
         // TODO: Split this route in two: One for normal and one for exam exercises
@@ -335,7 +337,7 @@ public class QuizExerciseResource {
      * @param quizExerciseId the id of the quizExercise for which the statistics should be recalculated
      * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
      */
-    @GetMapping("/quiz-exercises/{quizExerciseId}/recalculate-statistics")
+    @GetMapping("quiz-exercises/{quizExerciseId}/recalculate-statistics")
     @EnforceAtLeastTutor
     public ResponseEntity<QuizExercise> recalculateStatistics(@PathVariable Long quizExerciseId) {
         log.info("REST request to recalculate quiz statistics : {}", quizExerciseId);
@@ -354,7 +356,7 @@ public class QuizExerciseResource {
      * @param quizExerciseId the id of the quizExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
      */
-    @GetMapping("/quiz-exercises/{quizExerciseId}/for-student")
+    @GetMapping("quiz-exercises/{quizExerciseId}/for-student")
     @EnforceAtLeastStudent
     public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long quizExerciseId) {
         log.info("REST request to get quiz exercise : {}", quizExerciseId);
@@ -380,7 +382,7 @@ public class QuizExerciseResource {
      * @param joinRequest    DTO with the password for the batch to join; unused for quizzes in INDIVIDUAL mode
      * @return the ResponseEntity with status 200 (OK) and with body the quizBatch that was joined
      */
-    @PostMapping("/quiz-exercises/{quizExerciseId}/join")
+    @PostMapping("quiz-exercises/{quizExerciseId}/join")
     @EnforceAtLeastStudent
     public ResponseEntity<QuizBatch> joinBatch(@PathVariable Long quizExerciseId, @RequestBody QuizBatchJoinDTO joinRequest) {
         log.info("REST request to join quiz batch : {}, {}", quizExerciseId, joinRequest);
@@ -413,7 +415,7 @@ public class QuizExerciseResource {
      * @param quizExerciseId the id of the quizExercise to add the batch to
      * @return the ResponseEntity with status 200 (OK) and with body the new batch
      */
-    @PutMapping("/quiz-exercises/{quizExerciseId}/add-batch")
+    @PutMapping("quiz-exercises/{quizExerciseId}/add-batch")
     @EnforceAtLeastTutor
     public ResponseEntity<QuizBatch> addBatch(@PathVariable Long quizExerciseId) {
         log.info("REST request to add quiz batch : {}", quizExerciseId);
@@ -435,7 +437,7 @@ public class QuizExerciseResource {
      * @param quizBatchId the id of the quizBatch to start
      * @return the ResponseEntity with status 200 (OK)
      */
-    @PutMapping("/quiz-exercises/{quizBatchId}/start-batch")
+    @PutMapping("quiz-exercises/{quizBatchId}/start-batch")
     @EnforceAtLeastTutor
     public ResponseEntity<QuizBatch> startBatch(@PathVariable Long quizBatchId) {
         log.info("REST request to start quiz batch : {}", quizBatchId);
@@ -467,7 +469,7 @@ public class QuizExerciseResource {
      * @param action         the action to perform on the quiz (allowed actions: "start-now", "set-visible", "open-for-practice")
      * @return the response entity with status 200 if quiz was started, appropriate error code otherwise
      */
-    @PutMapping("/quiz-exercises/{quizExerciseId}/{action}")
+    @PutMapping("quiz-exercises/{quizExerciseId}/{action}")
     @EnforceAtLeastEditor
     public ResponseEntity<QuizExercise> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable String action) {
         log.debug("REST request to perform action {} on quiz exercise {}", action, quizExerciseId);
@@ -563,7 +565,7 @@ public class QuizExerciseResource {
      * @param quizExerciseId the id of the quizExercise to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/quiz-exercises/{quizExerciseId}")
+    @DeleteMapping("quiz-exercises/{quizExerciseId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long quizExerciseId) {
         log.info("REST request to delete quiz exercise : {}", quizExerciseId);
@@ -652,7 +654,7 @@ public class QuizExerciseResource {
      * @param isExamFilter   Whether to search in the groups for exercises
      * @return The desired page, sorted and matching the given query
      */
-    @GetMapping("/quiz-exercises")
+    @GetMapping("quiz-exercises")
     @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<QuizExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search, @RequestParam(defaultValue = "true") boolean isCourseFilter,
             @RequestParam(defaultValue = "true") boolean isExamFilter) {

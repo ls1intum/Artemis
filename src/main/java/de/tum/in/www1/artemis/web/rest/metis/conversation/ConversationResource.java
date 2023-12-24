@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
@@ -36,8 +37,9 @@ import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationUserDTO;
 import tech.jhipster.web.util.PaginationUtil;
 
+@Profile("core")
 @RestController
-@RequestMapping("/api/courses")
+@RequestMapping("api/courses")
 public class ConversationResource extends ConversationManagementResource {
 
     private final Logger log = LoggerFactory.getLogger(ConversationResource.class);
@@ -69,7 +71,7 @@ public class ConversationResource extends ConversationManagementResource {
      * @param courseId the id of the course
      * @return ResponseEntity with status 200 (OK) and with body containing the list of conversations where the requesting user is a member
      */
-    @GetMapping("/{courseId}/conversations")
+    @GetMapping("{courseId}/conversations")
     @EnforceAtLeastStudent
     public ResponseEntity<List<ConversationDTO>> getConversationsOfUser(@PathVariable Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -89,7 +91,7 @@ public class ConversationResource extends ConversationManagementResource {
      * @param isFavorite     the new favorite status
      * @return ResponseEntity with status 200 (Ok)
      */
-    @PostMapping("/{courseId}/conversations/{conversationId}/favorite")
+    @PostMapping("{courseId}/conversations/{conversationId}/favorite")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> changeFavoriteStatus(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isFavorite) {
         checkMessagingOrCommunicationEnabledElseThrow(courseId);
@@ -107,7 +109,7 @@ public class ConversationResource extends ConversationManagementResource {
      * @param isHidden       the new hidden status
      * @return ResponseEntity with status 200 (Ok)
      */
-    @PostMapping("/{courseId}/conversations/{conversationId}/hidden")
+    @PostMapping("{courseId}/conversations/{conversationId}/hidden")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> switchHiddenStatus(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isHidden) {
         checkMessagingOrCommunicationEnabledElseThrow(courseId);
@@ -123,7 +125,7 @@ public class ConversationResource extends ConversationManagementResource {
      * @param courseId the id of the course
      * @return ResponseEntity with status 200 (Ok) and the information if the user has unread messages
      */
-    @GetMapping("/{courseId}/unread-messages")
+    @GetMapping("{courseId}/unread-messages")
     @EnforceAtLeastStudent
     public ResponseEntity<Boolean> hasUnreadMessages(@PathVariable Long courseId) {
         checkMessagingOrCommunicationEnabledElseThrow(courseId);
@@ -140,7 +142,7 @@ public class ConversationResource extends ConversationManagementResource {
      * @param conversationId the id of the conversation
      * @return ResponseEntity with status 200 (Ok)
      */
-    @PatchMapping("/{courseId}/conversations/{conversationId}/mark-as-read")
+    @PatchMapping("{courseId}/conversations/{conversationId}/mark-as-read")
     @EnforceAtLeastStudent
     public ResponseEntity<Boolean> markAsRead(@PathVariable Long courseId, @PathVariable Long conversationId) {
         checkMessagingOrCommunicationEnabledElseThrow(courseId);
@@ -159,7 +161,7 @@ public class ConversationResource extends ConversationManagementResource {
      * @param courseId the course's ID
      * @return ResponseEntity with status 200 (Ok) and body is true if the user agreed to the course's code of conduct
      */
-    @GetMapping("/{courseId}/code-of-conduct/agreement")
+    @GetMapping("{courseId}/code-of-conduct/agreement")
     @EnforceAtLeastStudent
     public ResponseEntity<Boolean> isCodeOfConductAccepted(@PathVariable Long courseId) {
         checkMessagingOrCommunicationEnabledElseThrow(courseId);
@@ -175,7 +177,7 @@ public class ConversationResource extends ConversationManagementResource {
      * @param courseId the course's ID
      * @return ResponseEntity with status 200 (Ok)
      */
-    @PatchMapping("/{courseId}/code-of-conduct/agreement")
+    @PatchMapping("{courseId}/code-of-conduct/agreement")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> acceptCodeOfConduct(@PathVariable Long courseId) {
         checkMessagingOrCommunicationEnabledElseThrow(courseId);
@@ -192,7 +194,7 @@ public class ConversationResource extends ConversationManagementResource {
      * @param courseId the course's ID
      * @return ResponseEntity with the status 200 (Ok) and a list of users responsible for the course
      */
-    @GetMapping("/{courseId}/code-of-conduct/responsible-users")
+    @GetMapping("{courseId}/code-of-conduct/responsible-users")
     @EnforceAtLeastStudent
     public ResponseEntity<List<ResponsibleUserDTO>> getResponsibleUsersForCodeOfConduct(@PathVariable Long courseId) {
         checkMessagingOrCommunicationEnabledElseThrow(courseId);
@@ -218,7 +220,7 @@ public class ConversationResource extends ConversationManagementResource {
      * @param pageable       containing the pageable information
      * @return ResponseEntity with status 200 (OK) and with body containing the list of found members matching the criteria
      */
-    @GetMapping("/{courseId}/conversations/{conversationId}/members/search")
+    @GetMapping("{courseId}/conversations/{conversationId}/members/search")
     @EnforceAtLeastStudent
     public ResponseEntity<List<ConversationUserDTO>> searchMembersOfConversation(@PathVariable Long courseId, @PathVariable Long conversationId,
             @RequestParam("loginOrName") String loginOrName, @RequestParam(value = "filter", required = false) ConversationMemberSearchFilters filter, Pageable pageable) {

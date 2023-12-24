@@ -15,6 +15,7 @@ import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -48,8 +49,9 @@ import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile("core")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/core/")
 public class TutorialGroupResource {
 
     private static final String TITLE_REGEX = "^[a-zA-Z0-9]{1}[a-zA-Z0-9- ]{0,19}$";
@@ -106,7 +108,7 @@ public class TutorialGroupResource {
      * @param tutorialGroupId the id of the tutorial group
      * @return ResponseEntity with status 200 (OK) and with body containing the title of the tutorial group
      */
-    @GetMapping("/tutorial-groups/{tutorialGroupId}/title")
+    @GetMapping("tutorial-groups/{tutorialGroupId}/title")
     @EnforceAtLeastStudent
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<String> getTitle(@PathVariable Long tutorialGroupId) {
@@ -122,7 +124,7 @@ public class TutorialGroupResource {
      * @param courseId the id of the course to which the tutorial groups belong to
      * @return ResponseEntity with status 200 (OK) and with body containing the unique campus values of all tutorials where user is instructor
      */
-    @GetMapping("/courses/{courseId}/tutorial-groups/campus-values")
+    @GetMapping("courses/{courseId}/tutorial-groups/campus-values")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Set<String>> getUniqueCampusValues(@PathVariable Long courseId) {
@@ -140,7 +142,7 @@ public class TutorialGroupResource {
      * @param courseId the id of the course to which the tutorial groups belong to
      * @return ResponseEntity with status 200 (OK) and with body containing the unique language values of all tutorials where user is instructor
      */
-    @GetMapping("/courses/{courseId}/tutorial-groups/language-values")
+    @GetMapping("courses/{courseId}/tutorial-groups/language-values")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Set<String>> getUniqueLanguageValues(@PathVariable Long courseId) {
@@ -157,7 +159,7 @@ public class TutorialGroupResource {
      * @param courseId the id of the course to which the tutorial groups belong to
      * @return the ResponseEntity with status 200 (OK) and with body containing the tutorial groups of the course
      */
-    @GetMapping("/courses/{courseId}/tutorial-groups")
+    @GetMapping("courses/{courseId}/tutorial-groups")
     @EnforceAtLeastStudent
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<List<TutorialGroup>> getAllForCourse(@PathVariable Long courseId) {
@@ -177,7 +179,7 @@ public class TutorialGroupResource {
      * @param tutorialGroupId the id of the tutorial group to retrieve
      * @return ResponseEntity with status 200 (OK) and with body the tutorial group
      */
-    @GetMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}")
+    @GetMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}")
     @EnforceAtLeastStudent
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroup> getOneOfCourse(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
@@ -196,7 +198,7 @@ public class TutorialGroupResource {
      * @param tutorialGroup the tutorial group that should be created
      * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group
      */
-    @PostMapping("/courses/{courseId}/tutorial-groups")
+    @PostMapping("courses/{courseId}/tutorial-groups")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroup> create(@PathVariable Long courseId, @RequestBody @Valid TutorialGroup tutorialGroup) throws URISyntaxException {
@@ -257,7 +259,7 @@ public class TutorialGroupResource {
      * @param tutorialGroupId the id of the tutorial group to delete
      * @return the ResponseEntity with status 204 (NO_CONTENT)
      */
-    @DeleteMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}")
+    @DeleteMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> delete(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
@@ -291,7 +293,7 @@ public class TutorialGroupResource {
      * @param tutorialGroupUpdateDTO dto containing the tutorial group to update and the optional notification text
      * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group
      */
-    @PutMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}")
+    @PutMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroup> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
@@ -379,7 +381,7 @@ public class TutorialGroupResource {
      * @param studentLogin    the login of the student to deregister
      * @return the ResponseEntity with status 204 (NO_CONTENT)
      */
-    @DeleteMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/deregister/{studentLogin:" + Constants.LOGIN_REGEX + "}")
+    @DeleteMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/deregister/{studentLogin:" + Constants.LOGIN_REGEX + "}")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> deregisterStudent(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable String studentLogin) {
@@ -401,7 +403,7 @@ public class TutorialGroupResource {
      * @param studentLogin    the login of the student to register
      * @return the ResponseEntity with status 204 (NO_CONTENT)
      */
-    @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/register/{studentLogin:" + Constants.LOGIN_REGEX + "}")
+    @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/register/{studentLogin:" + Constants.LOGIN_REGEX + "}")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> registerStudent(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable String studentLogin) {
@@ -428,7 +430,7 @@ public class TutorialGroupResource {
      * @return the list of students who could not be registered for the tutorial group, because they could NOT be found in the Artemis database as students of the tutorial group
      *         course
      */
-    @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/register-multiple")
+    @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/register-multiple")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Set<StudentDTO>> registerMultipleStudentsToTutorialGroup(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
@@ -450,7 +452,7 @@ public class TutorialGroupResource {
      * @param importDTOs the list registration import DTOsd
      * @return the list of registrations with information about the success of the import sorted by tutorial group title
      */
-    @PostMapping("/courses/{courseId}/tutorial-groups/import")
+    @PostMapping("courses/{courseId}/tutorial-groups/import")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<List<TutorialGroupRegistrationImportDTO>> importRegistrations(@PathVariable Long courseId,

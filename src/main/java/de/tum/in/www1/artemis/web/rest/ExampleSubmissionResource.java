@@ -8,6 +8,7 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,8 +31,9 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 /**
  * REST controller for managing ExampleSubmission.
  */
+@Profile("core")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/core/")
 public class ExampleSubmissionResource {
 
     private final Logger log = LoggerFactory.getLogger(ExampleSubmissionResource.class);
@@ -71,7 +73,7 @@ public class ExampleSubmissionResource {
      * @param exampleSubmission the exampleSubmission to create
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
-    @PostMapping("/exercises/{exerciseId}/example-submissions")
+    @PostMapping("exercises/{exerciseId}/example-submissions")
     @EnforceAtLeastEditor
     public ResponseEntity<ExampleSubmission> createExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
         log.debug("REST request to save ExampleSubmission : {}", exampleSubmission);
@@ -90,7 +92,7 @@ public class ExampleSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated exampleSubmission, or with status 400 (Bad Request) if the exampleSubmission is not valid, or with
      *         status 500 (Internal Server Error) if the exampleSubmission couldn't be updated
      */
-    @PutMapping("/exercises/{exerciseId}/example-submissions")
+    @PutMapping("exercises/{exerciseId}/example-submissions")
     @EnforceAtLeastEditor
     public ResponseEntity<ExampleSubmission> updateExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
         log.debug("REST request to update ExampleSubmission : {}", exampleSubmission);
@@ -109,7 +111,7 @@ public class ExampleSubmissionResource {
      * @param exampleSubmissionId the id of the exampleSubmission to prepare
      * @return ResponseEntity with status 200 (OK)
      */
-    @PostMapping("/exercises/{exerciseId}/example-submissions/{exampleSubmissionId}/prepare-assessment")
+    @PostMapping("exercises/{exerciseId}/example-submissions/{exampleSubmissionId}/prepare-assessment")
     @EnforceAtLeastEditor
     public ResponseEntity<Void> prepareExampleAssessment(@PathVariable Long exerciseId, @PathVariable Long exampleSubmissionId) {
         log.debug("REST request to prepare ExampleSubmission for assessment : {}", exampleSubmissionId);
@@ -149,7 +151,7 @@ public class ExampleSubmissionResource {
      * @param exampleSubmissionId the id of the exampleSubmission to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the exampleSubmission, or with status 404 (Not Found)
      */
-    @GetMapping("/example-submissions/{exampleSubmissionId}")
+    @GetMapping("example-submissions/{exampleSubmissionId}")
     @EnforceAtLeastTutor
     public ResponseEntity<ExampleSubmission> getExampleSubmission(@PathVariable Long exampleSubmissionId) {
         log.debug("REST request to get ExampleSubmission : {}", exampleSubmissionId);
@@ -172,7 +174,7 @@ public class ExampleSubmissionResource {
      * @param exampleSubmissionId the id of the exampleSubmission to delete
      * @return the ResponseEntity with status 200 (OK), or with status 404 (Not Found)
      */
-    @DeleteMapping("/example-submissions/{exampleSubmissionId}")
+    @DeleteMapping("example-submissions/{exampleSubmissionId}")
     @EnforceAtLeastEditor
     public ResponseEntity<Void> deleteExampleSubmission(@PathVariable Long exampleSubmissionId) {
         log.debug("REST request to delete ExampleSubmission : {}", exampleSubmissionId);

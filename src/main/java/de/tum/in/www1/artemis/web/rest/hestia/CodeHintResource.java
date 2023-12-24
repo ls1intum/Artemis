@@ -25,8 +25,9 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 /**
  * REST controller for managing {@link CodeHint}.
  */
+@Profile("core")
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/core/")
 public class CodeHintResource {
 
     private final Logger log = LoggerFactory.getLogger(CodeHintResource.class);
@@ -102,6 +103,7 @@ public class CodeHintResource {
      * @param codeHintId The id of the code hint
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated code hint
      */
+    // TODO: move into some IrisResource
     @Profile("iris")
     @PostMapping("programming-exercises/{exerciseId}/code-hints/{codeHintId}/generate-description")
     @EnforceAtLeastEditor

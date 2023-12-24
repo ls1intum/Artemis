@@ -15,9 +15,9 @@ import de.tum.in.www1.artemis.service.connectors.localci.LocalCISharedBuildJobQu
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 
-@Profile("localci")
+@Profile("admin & localci")
 @RestController
-@RequestMapping("/api/admin")
+@RequestMapping("api/admin")
 public class AdminBuildJobQueueResource {
 
     private final LocalCISharedBuildJobQueueService localCIBuildJobQueueService;
@@ -33,7 +33,7 @@ public class AdminBuildJobQueueResource {
      *
      * @return the queued build jobs
      */
-    @GetMapping("/build-job-queue/queued")
+    @GetMapping("build-job-queue/queued")
     @EnforceAdmin
     public ResponseEntity<List<LocalCIBuildJobQueueItem>> getQueuedBuildJobs() {
         log.debug("REST request to get the queued build jobs");
@@ -46,7 +46,7 @@ public class AdminBuildJobQueueResource {
      *
      * @return the running build jobs
      */
-    @GetMapping("/build-job-queue/running")
+    @GetMapping("build-job-queue/running")
     @EnforceAdmin
     public ResponseEntity<List<LocalCIBuildJobQueueItem>> getRunningBuildJobs() {
         log.debug("REST request to get the running build jobs");
@@ -59,7 +59,7 @@ public class AdminBuildJobQueueResource {
      *
      * @return list of build agents information
      */
-    @GetMapping("/build-job-queue/build-agents")
+    @GetMapping("build-job-queue/build-agents")
     @EnforceAdmin
     public ResponseEntity<List<LocalCIBuildAgentInformation>> getBuildAgentInformation() {
         log.debug("REST request to get information on available build agents");

@@ -11,6 +11,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,6 +41,7 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 /**
  * REST controller for managing FileUploadExercise.
  */
+@Profile("core")
 @RestController
 @RequestMapping(FileUploadExerciseResource.Endpoints.ROOT)
 public class FileUploadExerciseResource {
@@ -111,7 +113,7 @@ public class FileUploadExerciseResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new fileUploadExercise, or with status 400 (Bad Request) if the fileUploadExercise has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/file-upload-exercises")
+    @PostMapping("file-upload-exercises")
     @EnforceAtLeastEditor
     public ResponseEntity<FileUploadExercise> createFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise) throws URISyntaxException {
         log.debug("REST request to save FileUploadExercise : {}", fileUploadExercise);
@@ -227,7 +229,7 @@ public class FileUploadExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated fileUploadExercise, or with status 400 (Bad Request) if the fileUploadExercise is not valid, or
      *         with status 500 (Internal Server Error) if the fileUploadExercise couldn't be updated
      */
-    @PutMapping("/file-upload-exercises/{exerciseId}")
+    @PutMapping("file-upload-exercises/{exerciseId}")
     @EnforceAtLeastEditor
     public ResponseEntity<FileUploadExercise> updateFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText, @PathVariable Long exerciseId) {
@@ -287,7 +289,7 @@ public class FileUploadExerciseResource {
      * @param exerciseId the id of the fileUploadExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the fileUploadExercise, or with status 404 (Not Found)
      */
-    @GetMapping("/file-upload-exercises/{exerciseId}")
+    @GetMapping("file-upload-exercises/{exerciseId}")
     @EnforceAtLeastTutor
     public ResponseEntity<FileUploadExercise> getFileUploadExercise(@PathVariable Long exerciseId) {
         // TODO: Split this route in two: One for normal and one for exam exercises
@@ -321,7 +323,7 @@ public class FileUploadExerciseResource {
      * @param exerciseId the id of the fileUploadExercise to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/file-upload-exercises/{exerciseId}")
+    @DeleteMapping("file-upload-exercises/{exerciseId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteFileUploadExercise(@PathVariable Long exerciseId) {
         log.info("REST request to delete FileUploadExercise : {}", exerciseId);
@@ -341,7 +343,7 @@ public class FileUploadExerciseResource {
      * @param submissionExportOptions the options that should be used for the export
      * @return ResponseEntity with status
      */
-    @PostMapping("/file-upload-exercises/{exerciseId}/export-submissions")
+    @PostMapping("file-upload-exercises/{exerciseId}/export-submissions")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {

@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,8 +36,9 @@ import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 /**
  * REST controller for managing ProgrammingAssessment.
  */
+@Profile("core")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/core/")
 public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingAssessmentResource.class);
@@ -78,7 +80,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      * @return the updated result
      */
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping("/programming-submissions/{submissionId}/assessment-after-complaint")
+    @PutMapping("programming-submissions/{submissionId}/assessment-after-complaint")
     @EnforceAtLeastTutor
     public ResponseEntity<Result> updateProgrammingManualResultAfterComplaint(@RequestBody AssessmentUpdate assessmentUpdate, @PathVariable long submissionId) {
         log.debug("REST request to update the assessment of manual result for submission {} after complaint.", submissionId);
@@ -113,7 +115,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      * @param submissionId the id of the submission for which the current assessment should be canceled
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
      */
-    @PutMapping("/programming-submissions/{submissionId}/cancel-assessment")
+    @PutMapping("programming-submissions/{submissionId}/cancel-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<Void> cancelAssessment(@PathVariable Long submissionId) {
         return super.cancelAssessment(submissionId);
@@ -128,7 +130,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      * @return the result saved to the database
      */
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping("/participations/{participationId}/manual-results")
+    @PutMapping("participations/{participationId}/manual-results")
     @EnforceAtLeastTutor
     public ResponseEntity<Result> saveProgrammingAssessment(@PathVariable Long participationId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
             @RequestBody Result newManualResult) {
@@ -240,7 +242,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      * @param resultId        - the id of the result which should get deleted
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not an instructor of the course or an admin
      */
-    @DeleteMapping("/participations/{participationId}/programming-submissions/{submissionId}/results/{resultId}")
+    @DeleteMapping("participations/{participationId}/programming-submissions/{submissionId}/results/{resultId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteAssessment(@PathVariable Long participationId, @PathVariable Long submissionId, @PathVariable Long resultId) {
         return super.deleteAssessment(participationId, submissionId, resultId);

@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -38,8 +39,9 @@ import io.swagger.annotations.ApiResponses;
 /**
  * REST controller for managing TextAssessment.
  */
+@Profile("core")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/core/")
 public class TextAssessmentResource extends AssessmentResource {
 
     @Value("${jhipster.clientApp.name}")
@@ -400,7 +402,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @param submissionId the id of the submission which must be connected to an example submission
      * @return the example result linked to the submission
      */
-    @GetMapping("/exercises/{exerciseId}/submissions/{submissionId}/example-result")
+    @GetMapping("exercises/{exerciseId}/submissions/{submissionId}/example-result")
     @EnforceAtLeastTutor
     public ResponseEntity<Result> getExampleResultForTutor(@PathVariable long exerciseId, @PathVariable long submissionId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();

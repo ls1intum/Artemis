@@ -12,6 +12,7 @@ import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,8 +28,9 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
+@Profile("core")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/core/")
 public class TutorialGroupsConfigurationResource {
 
     private static final String ENTITY_NAME = "tutorialGroupsConfiguration";
@@ -57,7 +59,7 @@ public class TutorialGroupsConfigurationResource {
      * @param courseId the id of the course to which the tutorial groups configuration belongs
      * @return ResponseEntity with status 200 (OK) and with body the tutorial groups configuration
      */
-    @GetMapping("/courses/{courseId}/tutorial-groups-configuration")
+    @GetMapping("courses/{courseId}/tutorial-groups-configuration")
     @EnforceAtLeastStudent
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupsConfiguration> getOneOfCourse(@PathVariable Long courseId) {
@@ -74,7 +76,7 @@ public class TutorialGroupsConfigurationResource {
      * @param tutorialGroupsConfiguration the tutorial group configuration to create
      * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group configuration
      */
-    @PostMapping("/courses/{courseId}/tutorial-groups-configuration")
+    @PostMapping("courses/{courseId}/tutorial-groups-configuration")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupsConfiguration> create(@PathVariable Long courseId, @RequestBody @Valid TutorialGroupsConfiguration tutorialGroupsConfiguration)
@@ -109,7 +111,7 @@ public class TutorialGroupsConfigurationResource {
      * @param updatedTutorialGroupConfiguration the configuration to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group configuration
      */
-    @PutMapping("/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}")
+    @PutMapping("courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupsConfiguration> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,

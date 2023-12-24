@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,8 +27,9 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
  * created, therefore a POST mapping is missing. A DELETE mapping is also not necessary as those categories can only be
  * deactivated but not deleted.
  */
+@Profile("core")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/core/")
 public class StaticCodeAnalysisResource {
 
     private static final String ENTITY_NAME = "StaticCodeAnalysisCategory";

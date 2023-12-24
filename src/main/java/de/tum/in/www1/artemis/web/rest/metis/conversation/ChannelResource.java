@@ -12,6 +12,7 @@ import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -38,8 +39,9 @@ import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelIdAndNameDTO;
 
+@Profile("core")
 @RestController
-@RequestMapping("/api/courses")
+@RequestMapping("api/courses")
 public class ChannelResource extends ConversationManagementResource {
 
     private final Logger log = LoggerFactory.getLogger(ChannelResource.class);
@@ -87,7 +89,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param courseId the id of the course
      * @return ResponseEntity with status 200 (OK) and with body containing the list of channels the user is authorized to see
      */
-    @GetMapping("/{courseId}/channels/overview")
+    @GetMapping("{courseId}/channels/overview")
     @EnforceAtLeastStudent
     public ResponseEntity<List<ChannelDTO>> getCourseChannelsOverview(@PathVariable Long courseId) {
         log.debug("REST request to all channels of course: {}", courseId);
@@ -116,7 +118,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param courseId the id of the course
      * @return ResponseEntity with status 200 (OK) and with body containing the list of channels visible to all course members
      */
-    @GetMapping("/{courseId}/channels/public-overview")
+    @GetMapping("{courseId}/channels/public-overview")
     @EnforceAtLeastStudent
     public ResponseEntity<List<ChannelIdAndNameDTO>> getCoursePublicChannelsOverview(@PathVariable Long courseId) {
         log.debug("REST request to get all public channels of course: {}", courseId);
@@ -142,7 +144,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param exerciseId the id of the channel
      * @return ResponseEntity with status 200 (OK) and with body containing the channel
      */
-    @GetMapping("/{courseId}/exercises/{exerciseId}/channel")
+    @GetMapping("{courseId}/exercises/{exerciseId}/channel")
     @EnforceAtLeastStudent
     public ResponseEntity<ChannelDTO> getExerciseChannel(@PathVariable Long courseId, @PathVariable Long exerciseId) {
         log.debug("REST request to get channel of exercise: {}", exerciseId);
@@ -167,7 +169,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param lectureId the id of the channel
      * @return ResponseEntity with status 200 (OK) and with body containing the channel
      */
-    @GetMapping("/{courseId}/lectures/{lectureId}/channel")
+    @GetMapping("{courseId}/lectures/{lectureId}/channel")
     @EnforceAtLeastStudent
     public ResponseEntity<ChannelDTO> getLectureChannel(@PathVariable Long courseId, @PathVariable Long lectureId) {
         log.debug("REST request to get channel of lecture: {}", lectureId);
@@ -193,7 +195,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param channelDTO the dto containing the properties of the channel to be created
      * @return ResponseEntity with status 201 (Created) and with body containing the created channel
      */
-    @PostMapping("/{courseId}/channels")
+    @PostMapping("{courseId}/channels")
     @EnforceAtLeastStudent
     public ResponseEntity<ChannelDTO> createChannel(@PathVariable Long courseId, @RequestBody ChannelDTO channelDTO) throws URISyntaxException {
         log.debug("REST request to create channel in course {} with properties : {}", courseId, channelDTO);
@@ -225,7 +227,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param channelDTO the dto containing the properties of the channel to be updated
      * @return ResponseEntity with status 200 (Ok) and with body containing the updated channel
      */
-    @PutMapping("/{courseId}/channels/{channelId}")
+    @PutMapping("{courseId}/channels/{channelId}")
     @EnforceAtLeastStudent
     public ResponseEntity<ChannelDTO> updateChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody ChannelDTO channelDTO) {
         log.debug("REST request to update channel {} with properties : {}", channelId, channelDTO);
@@ -253,7 +255,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param channelId the id of the channel to be deleted
      * @return ResponseEntity with status 200 (Ok)
      */
-    @DeleteMapping("/{courseId}/channels/{channelId}")
+    @DeleteMapping("{courseId}/channels/{channelId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
         log.debug("REST request to delete channel {}", channelId);
@@ -284,7 +286,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param channelId the id of the channel to be archived
      * @return ResponseEntity with status 200 (Ok)
      */
-    @PostMapping("/{courseId}/channels/{channelId}/archive")
+    @PostMapping("{courseId}/channels/{channelId}/archive")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> archiveChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
         log.debug("REST request to archive channel : {}", channelId);
@@ -303,7 +305,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param channelId the id of the archived channel to be unarchived
      * @return ResponseEntity with status 200 (Ok)
      */
-    @PostMapping("/{courseId}/channels/{channelId}/unarchive")
+    @PostMapping("{courseId}/channels/{channelId}/unarchive")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> unArchiveChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
         log.debug("REST request to unarchive channel : {}", channelId);
@@ -323,7 +325,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param userLogins the logins of the channel members to be granted the channel moderator role
      * @return ResponseEntity with status 200 (Ok)
      */
-    @PostMapping("/{courseId}/channels/{channelId}/grant-channel-moderator")
+    @PostMapping("{courseId}/channels/{channelId}/grant-channel-moderator")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> grantChannelModeratorRole(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
         log.debug("REST request to grant channel moderator role to users {} in channel {}", userLogins.toString(), channelId);
@@ -346,7 +348,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param userLogins the logins of the channel members to be revoked the channel moderator role
      * @return ResponseEntity with status 200 (Ok)
      */
-    @PostMapping("/{courseId}/channels/{channelId}/revoke-channel-moderator")
+    @PostMapping("{courseId}/channels/{channelId}/revoke-channel-moderator")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> revokeChannelModeratorRole(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
         log.debug("REST request to revoke channel moderator role from users {} in channel {}", userLogins.toString(), channelId);
@@ -376,7 +378,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param addAllInstructors true if all course instructors should be added
      * @return ResponseEntity with status 200 (Ok)
      */
-    @PostMapping("/{courseId}/channels/{channelId}/register")
+    @PostMapping("{courseId}/channels/{channelId}/register")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> registerUsersToChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody(required = false) List<String> userLogins,
             @RequestParam(defaultValue = "false") Boolean addAllStudents, @RequestParam(defaultValue = "false") Boolean addAllTutors,
@@ -414,7 +416,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param userLogins the logins of the course users to be deregistered from a channel
      * @return ResponseEntity with status 200 (Ok)
      */
-    @PostMapping("/{courseId}/channels/{channelId}/deregister")
+    @PostMapping("{courseId}/channels/{channelId}/deregister")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deregisterUsers(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
         checkMessagingEnabledElseThrow(courseId);

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,8 +14,9 @@ import de.tum.in.www1.artemis.security.annotations.ManualConfig;
 /**
  * REST controller for the apple-app-site-association json
  */
+@Profile("core")
 @RestController
-@RequestMapping("/.well-known")
+@RequestMapping(".well-known")
 public class AppleAppSiteAssociationResource {
 
     @Value("${artemis.iosAppId: #{null}}")
@@ -28,7 +30,7 @@ public class AppleAppSiteAssociationResource {
      *
      * @return apple-app-site-association as json
      */
-    @GetMapping("/apple-app-site-association")
+    @GetMapping("apple-app-site-association")
     @ManualConfig
     public ResponseEntity<AppleAppSiteAssociation> getAppleAppSiteAssociation() {
         if (appId == null || appId.length() < 10) {

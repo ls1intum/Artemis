@@ -9,6 +9,7 @@ import javax.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
@@ -35,8 +36,9 @@ import tech.jhipster.web.util.PaginationUtil;
 /**
  * REST controller for managing Message Posts.
  */
+@Profile("core")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/core/")
 public class ConversationMessageResource {
 
     private final Logger log = LoggerFactory.getLogger(getClass());

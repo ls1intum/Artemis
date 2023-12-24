@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest.admin;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -14,6 +15,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 
+@Profile("admin")
 @RestController
 @RequestMapping("api/admin/")
 public class FeatureToggleResource {

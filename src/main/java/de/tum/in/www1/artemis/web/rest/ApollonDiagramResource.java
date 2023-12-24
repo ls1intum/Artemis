@@ -7,6 +7,7 @@ import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,8 +26,9 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 /**
  * REST controller for managing ApollonDiagram.
  */
+@Profile("core")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/core/")
 public class ApollonDiagramResource {
 
     private final Logger log = LoggerFactory.getLogger(ApollonDiagramResource.class);
@@ -53,7 +55,7 @@ public class ApollonDiagramResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new apollonDiagram, or with status 400 (Bad Request) if the apollonDiagram has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/course/{courseId}/apollon-diagrams")
+    @PostMapping("course/{courseId}/apollon-diagrams")
     @EnforceAtLeastTutor
     public ResponseEntity<ApollonDiagram> createApollonDiagram(@RequestBody ApollonDiagram apollonDiagram, @PathVariable Long courseId) throws URISyntaxException {
         log.debug("REST request to save ApollonDiagram : {}", apollonDiagram);
@@ -82,7 +84,7 @@ public class ApollonDiagramResource {
      *         with status 500 (Internal Server Error) if the apollonDiagram couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/course/{courseId}/apollon-diagrams")
+    @PutMapping("course/{courseId}/apollon-diagrams")
     @EnforceAtLeastTutor
     public ResponseEntity<ApollonDiagram> updateApollonDiagram(@RequestBody ApollonDiagram apollonDiagram, @PathVariable Long courseId) throws URISyntaxException {
         log.debug("REST request to update ApollonDiagram : {}", apollonDiagram);
@@ -120,7 +122,7 @@ public class ApollonDiagramResource {
      * @param courseId id of current course
      * @return the ResponseEntity with status 200 (OK) and the list of apollonDiagrams in body
      */
-    @GetMapping("/course/{courseId}/apollon-diagrams")
+    @GetMapping("course/{courseId}/apollon-diagrams")
     @EnforceAtLeastTutor
     public List<ApollonDiagram> getDiagramsByCourse(@PathVariable Long courseId) {
         log.debug("REST request to get ApollonDiagrams matching current course");
@@ -138,7 +140,7 @@ public class ApollonDiagramResource {
      * @param courseId         the id of the current course
      * @return the ResponseEntity with status 200 (OK) and with body the apollonDiagram, or with status 404 (Not Found)
      */
-    @GetMapping("/course/{courseId}/apollon-diagrams/{apollonDiagramId}")
+    @GetMapping("course/{courseId}/apollon-diagrams/{apollonDiagramId}")
     @EnforceAtLeastTutor
     public ResponseEntity<ApollonDiagram> getApollonDiagram(@PathVariable Long apollonDiagramId, @PathVariable Long courseId) {
         log.debug("REST request to get ApollonDiagram : {}", apollonDiagramId);
@@ -157,7 +159,7 @@ public class ApollonDiagramResource {
      * @param courseId         the id of the current course
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/course/{courseId}/apollon-diagrams/{apollonDiagramId}")
+    @DeleteMapping("course/{courseId}/apollon-diagrams/{apollonDiagramId}")
     @EnforceAtLeastEditor
     public ResponseEntity<Void> deleteApollonDiagram(@PathVariable Long apollonDiagramId, @PathVariable Long courseId) {
         log.debug("REST request to delete ApollonDiagram : {}", apollonDiagramId);
