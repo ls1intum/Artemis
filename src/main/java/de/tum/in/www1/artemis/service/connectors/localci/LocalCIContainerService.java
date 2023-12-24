@@ -66,11 +66,6 @@ public class LocalCIContainerService {
      */
     public static final String WORKING_DIRECTORY = "/var/tmp";
 
-    /**
-     * The directory in which the results of the build jobs are expected
-     */
-    public static final String AEOLUS_RESULT_DIRECTORY = "/var/tmp/aeolus-results";
-
     @Value("${artemis.continuous-integration.local-cis-build-scripts-path}")
     private String localCIBuildScriptBasePath;
 
