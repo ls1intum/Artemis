@@ -6,7 +6,7 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { PROFILE_LTI, VERSION } from 'app/app.constants';
+import { PROFILE_LOCALCI, PROFILE_LTI, VERSION } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -34,6 +34,7 @@ import {
     faCog,
     faEye,
     faFlag,
+    faGears,
     faHeart,
     faList,
     faLock,
@@ -87,6 +88,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     isExamActive = false;
     examActiveCheckFuture?: ReturnType<typeof setTimeout>;
     irisEnabled: boolean;
+    localCIActive: boolean = false;
     ltiEnabled: boolean;
 
     // Icons
@@ -112,6 +114,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     faBookOpen = faBookOpen;
     faUserPlus = faUserPlus;
     faSignOutAlt = faSignOutAlt;
+    faGears = faGears;
     faPuzzlePiece = faPuzzlePiece;
 
     private authStateSubscription: Subscription;
@@ -195,6 +198,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
                 this.gitUsername = profileInfo.git.commit.user.name;
                 this.irisEnabled = profileInfo.activeProfiles.includes('iris');
+                this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
                 this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LTI);
             }
         });
@@ -340,6 +344,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         suspicious_sessions: 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title',
         exam_timeline: 'artemisApp.examTimeline.breadcrumb',
         iris_settings: 'artemisApp.iris.settings.title.breadcrumb',
+        build_queue: 'artemisApp.buildQueue.title',
     };
 
     studentPathBreadcrumbTranslations = {

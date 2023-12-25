@@ -797,7 +797,11 @@ public class CourseTestService {
         // Test that the received course has two lectures
         assertThat(receivedCourse.getLectures()).as("Two lectures are returned").hasSize(2);
         // Test that the received course has two competencies
-        assertThat(receivedCourse.getCompetencies()).as("Two competencies are returned").hasSize(2);
+
+        assertThat(receivedCourse.getCompetencies()).isEmpty();
+        assertThat(receivedCourse.getPrerequisites()).isEmpty();
+        assertThat(receivedCourse.getTutorialGroups()).isEmpty();
+        assertThat(receivedCourse.getTutorialGroupsConfiguration()).isNull();
 
         // Iterate over all exercises of the remaining course
         for (Exercise exercise : courses.get(0).getExercises()) {

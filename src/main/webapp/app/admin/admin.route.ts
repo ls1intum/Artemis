@@ -13,6 +13,8 @@ import { StatisticsComponent } from 'app/admin/statistics/statistics.component';
 import { DocsComponent } from 'app/admin/docs/docs.component';
 import { organizationMgmtRoute } from 'app/admin/organization-management/organization-management.route';
 import { MetricsComponent } from 'app/admin/metrics/metrics.component';
+import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
+import { BuildQueueGuard } from 'app/localci/build-queue/build-queue.guard';
 import { ltiConfigurationRoute } from 'app/admin/lti-configuration/lti-configuration.route';
 
 export const adminState: Routes = [
@@ -79,6 +81,14 @@ export const adminState: Routes = [
                 data: {
                     pageTitle: 'statistics.title',
                 },
+            },
+            {
+                path: 'build-queue',
+                component: BuildQueueComponent,
+                data: {
+                    pageTitle: 'artemisApp.buildQueue.title',
+                },
+                canActivate: [BuildQueueGuard],
             },
             {
                 path: 'privacy-statement',
