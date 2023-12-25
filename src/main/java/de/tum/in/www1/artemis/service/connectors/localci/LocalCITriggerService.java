@@ -1,13 +1,12 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import java.util.List;
+import java.time.ZonedDateTime;
+import java.util.Objects;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
@@ -21,12 +20,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService;
 
-    private final LocalCIProgrammingLanguageFeatureService localCIProgrammingLanguageFeatureService;
-
-    public LocalCITriggerService(LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService,
-            LocalCIProgrammingLanguageFeatureService localCIProgrammingLanguageFeatureService) {
+    public LocalCITriggerService(LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService) {
         this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
-        this.localCIProgrammingLanguageFeatureService = localCIProgrammingLanguageFeatureService;
     }
 
     /**
@@ -49,22 +44,22 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash, boolean isPushToTestRepository) throws LocalCIException {
-
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-        ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
-        ProjectType projectType = programmingExercise.getProjectType();
         long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
-        List<ProjectType> supportedProjectTypes = localCIProgrammingLanguageFeatureService.getProgrammingLanguageFeatures(programmingLanguage).projectTypes();
+        String repositoryTypeOrUserName = participation.getVcsRepositoryUrl().repositoryNameWithoutProjectKey();
 
-        if (projectType != null && !supportedProjectTypes.contains(programmingExercise.getProjectType())) {
-            throw new LocalCIException("The project type " + programmingExercise.getProjectType() + " is not supported by the local CI.");
+        if (Objects.equals(repositoryTypeOrUserName, "exercise")) {
+            repositoryTypeOrUserName = "BASE";
+        }
+        else if (Objects.equals(repositoryTypeOrUserName, "solution")) {
+            repositoryTypeOrUserName = repositoryTypeOrUserName.toUpperCase();
         }
 
         // Exam exercises have a higher priority than normal exercises
         int priority = programmingExercise.isExamExercise() ? 1 : 2;
 
-        localCISharedBuildJobQueueService.addBuildJob(participation.getBuildPlanId(), participation.getId(), commitHash, System.currentTimeMillis(), priority, courseId,
-                isPushToTestRepository);
+        localCISharedBuildJobQueueService.addBuildJob(participation.getBuildPlanId(), participation.getId(), repositoryTypeOrUserName, commitHash, ZonedDateTime.now(), priority,
+                courseId, isPushToTestRepository);
     }
 }

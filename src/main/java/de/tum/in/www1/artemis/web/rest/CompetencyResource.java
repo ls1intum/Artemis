@@ -25,9 +25,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CompetencyProgressService;
-import de.tum.in.www1.artemis.service.CompetencyService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -70,10 +68,12 @@ public class CompetencyResource {
 
     private final LearningPathService learningPathService;
 
+    private final ExerciseService exerciseService;
+
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository, LectureUnitRepository lectureUnitRepository,
             CompetencyService competencyService, CompetencyProgressRepository competencyProgressRepository, ExerciseRepository exerciseRepository,
-            CompetencyProgressService competencyProgressService, LearningPathService learningPathService) {
+            CompetencyProgressService competencyProgressService, LearningPathService learningPathService, ExerciseService exerciseService) {
         this.courseRepository = courseRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.lectureUnitRepository = lectureUnitRepository;
@@ -85,6 +85,7 @@ public class CompetencyResource {
         this.exerciseRepository = exerciseRepository;
         this.competencyProgressService = competencyProgressService;
         this.learningPathService = learningPathService;
+        this.exerciseService = exerciseService;
     }
 
     /**
@@ -121,13 +122,21 @@ public class CompetencyResource {
      */
     @GetMapping("/courses/{courseId}/competencies")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<Competency>> getCompetencies(@PathVariable Long courseId) {
+    public ResponseEntity<List<Competency>> getCompetenciesWithProgress(@PathVariable Long courseId) {
         log.debug("REST request to get competencies for course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
+        // First load competencies
         Set<Competency> competencies = competencyRepository.findAllForCourse(course.getId());
+        // Then load the progress of the user
+        Set<CompetencyProgress> progressForUser = competencyProgressRepository.findByCompetenciesAndUser(competencies, user.getId());
+        // Map the progress into the competency now
+        competencies.forEach(competency -> {
+            var userProgress = progressForUser.stream().filter(progress -> progress.getCompetency().getId().equals(competency.getId())).findFirst().map(Set::of).orElseGet(Set::of);
+            competency.setUserProgress(userProgress);
+        });
         return ResponseEntity.ok(new ArrayList<>(competencies));
     }
 
@@ -151,8 +160,12 @@ public class CompetencyResource {
 
         competency.setLectureUnits(competency.getLectureUnits().stream().filter(lectureUnit -> authorizationCheckService.isAllowedToSeeLectureUnit(lectureUnit, currentUser))
                 .peek(lectureUnit -> lectureUnit.setCompleted(lectureUnit.isCompletedFor(currentUser))).collect(Collectors.toSet()));
-        competency.setExercises(
-                competency.getExercises().stream().filter(exercise -> authorizationCheckService.isAllowedToSeeExercise(exercise, currentUser)).collect(Collectors.toSet()));
+
+        Set<Exercise> exercisesUserIsAllowedToSee = exerciseService.filterOutExercisesThatUserShouldNotSee(competency.getExercises(), currentUser);
+        Set<Exercise> exercisesWithAllInformationNeeded = exerciseService
+                .loadExercisesWithInformationForDashboard(exercisesUserIsAllowedToSee.stream().map(Exercise::getId).collect(Collectors.toSet()), currentUser);
+        competency.setExercises(exercisesWithAllInformationNeeded);
+
         log.info("getCompetency took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok().body(competency);
     }
@@ -401,7 +414,7 @@ public class CompetencyResource {
             relation.setType(relationType);
 
             var competencies = competencyRepository.findAllForCourse(course.getId());
-            var competencyRelations = competencyRelationRepository.findAllByCourseId(course.getId());
+            var competencyRelations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
             competencyRelations.add(relation);
             if (competencyService.doesCreateCircularRelation(competencies, competencyRelations)) {
                 throw new BadRequestException("You can't define circular dependencies between competencies");

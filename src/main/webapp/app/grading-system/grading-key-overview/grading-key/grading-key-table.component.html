@@ -1,39 +1,58 @@
 <div>
-    <h6 *ngIf="!isExam">{{ 'artemisApp.gradingSystem.overview.info' | artemisTranslate }}</h6>
+    @if (!isExam) {
+        <h6>{{ 'artemisApp.gradingSystem.overview.info' | artemisTranslate }}</h6>
+    }
     <div>
         <table class="table table-striped w-auto">
             <thead>
                 <tr>
                     <th>{{ isBonus ? ('artemisApp.exam.examSummary.bonus' | artemisTranslate) : ('artemisApp.exam.examSummary.grade' | artemisTranslate) }}</th>
                     <th>{{ 'artemisApp.exam.examSummary.interval' | artemisTranslate }}</th>
-                    <th *ngIf="hasPointsSet">{{ 'artemisApp.exam.examSummary.intervalPoints' | artemisTranslate }}</th>
+                    @if (hasPointsSet) {
+                        <th>{{ 'artemisApp.exam.examSummary.intervalPoints' | artemisTranslate }}</th>
+                    }
                 </tr>
             </thead>
             <tbody>
-                <tr *ngIf="plagiarismGrade === studentGradeOrBonusPointsOrGradeBonus" [class.highlighted]="plagiarismGrade === studentGradeOrBonusPointsOrGradeBonus">
-                    <td>{{ plagiarismGrade }}<jhi-help-icon placement="auto" text="artemisApp.gradingSystem.plagiarismGradeHelp"></jhi-help-icon></td>
-                    <!-- &mdash; is used to indicate that this special grade does not correspond to a numeric interval. -->
-                    <td>&mdash;</td>
-                    <td *ngIf="hasPointsSet">&mdash;</td>
-                </tr>
-                <tr *ngIf="noParticipationGrade === studentGradeOrBonusPointsOrGradeBonus" [class.highlighted]="noParticipationGrade === studentGradeOrBonusPointsOrGradeBonus">
-                    <td>{{ noParticipationGrade }}<jhi-help-icon placement="auto" text="artemisApp.gradingSystem.noParticipationGradeHelp"></jhi-help-icon></td>
-                    <!-- &mdash; is used to indicate that this special grade does not correspond to a numeric interval. -->
-                    <td>&mdash;</td>
-                    <td *ngIf="hasPointsSet">&mdash;</td>
-                </tr>
-                <tr
-                    *ngFor="let gradeStep of gradeSteps; let last = last"
-                    [class.highlighted]="gradeStep.gradeName == studentGradeOrBonusPointsOrGradeBonus || +gradeStep.gradeName === +studentGradeOrBonusPointsOrGradeBonus!"
-                >
-                    <td>{{ gradeStep.gradeName }}</td>
-                    <td>
-                        <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.PERCENTAGE : last | safeHtml"></span>
-                    </td>
-                    <td *ngIf="hasPointsSet">
-                        <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.POINTS : last | safeHtml"></span>
-                    </td>
-                </tr>
+                @if (plagiarismGrade === studentGradeOrBonusPointsOrGradeBonus) {
+                    <tr [class.highlighted]="plagiarismGrade === studentGradeOrBonusPointsOrGradeBonus">
+                        <td>
+                            {{ plagiarismGrade }}
+                            <jhi-help-icon placement="auto" text="artemisApp.gradingSystem.plagiarismGradeHelp"></jhi-help-icon>
+                        </td>
+                        <!-- &mdash; is used to indicate that this special grade does not correspond to a numeric interval. -->
+                        <td>&mdash;</td>
+                        @if (hasPointsSet) {
+                            <td>&mdash;</td>
+                        }
+                    </tr>
+                }
+                @if (noParticipationGrade === studentGradeOrBonusPointsOrGradeBonus) {
+                    <tr [class.highlighted]="noParticipationGrade === studentGradeOrBonusPointsOrGradeBonus">
+                        <td>
+                            {{ noParticipationGrade }}
+                            <jhi-help-icon placement="auto" text="artemisApp.gradingSystem.noParticipationGradeHelp"></jhi-help-icon>
+                        </td>
+                        <!-- &mdash; is used to indicate that this special grade does not correspond to a numeric interval. -->
+                        <td>&mdash;</td>
+                        @if (hasPointsSet) {
+                            <td>&mdash;</td>
+                        }
+                    </tr>
+                }
+                @for (gradeStep of gradeSteps; track gradeStep; let last = $last) {
+                    <tr [class.highlighted]="gradeStep.gradeName === studentGradeOrBonusPointsOrGradeBonus || +gradeStep.gradeName === +studentGradeOrBonusPointsOrGradeBonus!">
+                        <td>{{ gradeStep.gradeName }}</td>
+                        <td>
+                            <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.PERCENTAGE : last | safeHtml"></span>
+                        </td>
+                        @if (hasPointsSet) {
+                            <td>
+                                <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.POINTS : last | safeHtml"></span>
+                            </td>
+                        }
+                    </tr>
+                }
             </tbody>
         </table>
     </div>

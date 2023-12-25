@@ -1,11 +1,12 @@
-<jhi-result-detail
-    *ngIf="exercise && result && exerciseType"
-    [exercise]="exercise"
-    [result]="result"
-    [showScoreChart]="true"
-    [exerciseType]="exerciseType"
-    [latestDueDate]="latestDueDate"
-    [messageKey]="messageKey"
-    [showMissingAutomaticFeedbackInformation]="showMissingAutomaticFeedbackInformation"
-    class="modal-padding"
-/>
+@if (exercise && result && exerciseType) {
+    <jhi-result-detail
+        [exercise]="exercise"
+        [result]="result"
+        [showScoreChart]="true"
+        [exerciseType]="exerciseType"
+        [latestDueDate]="latestDueDate"
+        [messageKey]="messageKey"
+        [showMissingAutomaticFeedbackInformation]="showMissingAutomaticFeedbackInformation"
+        class="modal-padding"
+    />
+}
