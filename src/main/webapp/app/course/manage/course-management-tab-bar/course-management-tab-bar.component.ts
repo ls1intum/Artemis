@@ -16,6 +16,7 @@ import {
     faFilePdf,
     faFlag,
     faGraduationCap,
+    faList,
     faListAlt,
     faNetworkWired,
     faPersonChalkboard,
@@ -30,7 +31,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { PROFILE_LTI } from 'app/app.constants';
+import { PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-course-management-tab-bar',
@@ -46,6 +47,8 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
     private paramSub?: Subscription;
     private courseSub?: Subscription;
     private eventSubscriber: Subscription;
+
+    localCIActive: boolean = false;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -69,6 +72,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
     faPersonChalkboard = faPersonChalkboard;
     faRobot = faRobot;
     faPuzzlePiece = faPuzzlePiece;
+    faList = faList;
 
     isCommunicationEnabled = false;
     isMessagingOrCommunicationEnabled = false;
@@ -105,6 +109,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
             if (profileInfo) {
                 this.irisEnabled = profileInfo.activeProfiles.includes('iris');
                 this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LTI);
+                this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
             }
         });
     }
