@@ -1,7 +1,9 @@
 <div>
-    <h3 *ngIf="!displayOnExamCover" id="general-information-title">
-        {{ 'artemisApp.exam.examSummary.generalInformation' | artemisTranslate }}
-    </h3>
+    @if (!displayOnExamCover) {
+        <h3 id="general-information-title">
+            {{ 'artemisApp.exam.examSummary.generalInformation' | artemisTranslate }}
+        </h3>
+    }
     <div class="ml-4 mt-3 mb-4">
         <table class="table table-borderless mx-auto d-block">
             <tbody>
