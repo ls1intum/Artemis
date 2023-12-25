@@ -346,7 +346,7 @@ public class CourseResource {
      */
     @GetMapping("courses")
     @EnforceAtLeastTutor
-    public List<Course> getAllCourses(@RequestParam(defaultValue = "false") boolean onlyActive) {
+    public List<Course> getCourses(@RequestParam(defaultValue = "false") boolean onlyActive) {
         log.debug("REST request to get all Courses the user has access to");
         User user = userRepository.getUserWithGroupsAndAuthorities();
         // TODO: we should avoid findAll() and instead try to filter this directly in the database, in case of admins, we should load batches of courses, e.g. per semester
@@ -367,7 +367,7 @@ public class CourseResource {
      */
     @GetMapping("courses/courses-with-quiz")
     @EnforceAtLeastEditor
-    public List<Course> getAllCoursesWithQuizExercises() {
+    public List<Course> getCoursesWithQuizExercises() {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (authCheckService.isAdmin(user)) {
             return courseRepository.findAllWithQuizExercisesWithEagerExercises();
@@ -386,9 +386,9 @@ public class CourseResource {
      */
     @GetMapping("courses/with-user-stats")
     @EnforceAtLeastTutor
-    public List<Course> getAllCoursesWithUserStats(@RequestParam(defaultValue = "false") boolean onlyActive) {
+    public List<Course> getCoursesWithUserStats(@RequestParam(defaultValue = "false") boolean onlyActive) {
         log.debug("get courses with user stats, only active: {}", onlyActive);
-        List<Course> courses = getAllCourses(onlyActive);
+        List<Course> courses = getCourses(onlyActive);
         for (Course course : courses) {
             course.setNumberOfInstructors(userRepository.countUserInGroup(course.getInstructorGroupName()));
             course.setNumberOfTeachingAssistants(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
@@ -406,7 +406,7 @@ public class CourseResource {
      */
     @GetMapping("courses/course-management-overview")
     @EnforceAtLeastTutor
-    public List<Course> getAllCoursesForManagementOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
+    public List<Course> getCoursesForManagementOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
         return courseService.getAllCoursesForManagementOverview(onlyActive);
     }
 
@@ -436,7 +436,7 @@ public class CourseResource {
      */
     @GetMapping("courses/for-enrollment")
     @EnforceAtLeastStudent
-    public List<Course> getAllCoursesForEnrollment() {
+    public List<Course> getCoursesForEnrollment() {
         log.debug("REST request to get all currently active courses that are not online courses");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
         return courseService.findAllEnrollableForUser(user).stream().filter(course -> authCheckService.isUserAllowedToSelfEnrollInCourse(user, course)).toList();
@@ -458,6 +458,7 @@ public class CourseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsForUser(courseId, user);
+        log.debug("courseService.findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsForUser done");
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             // user might be allowed to enroll in the course
             // We need the course with organizations so that we can check if the user is allowed to enroll
@@ -475,9 +476,11 @@ public class CourseResource {
         }
 
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user, true);
+        log.debug("courseService.fetchParticipationsWithSubmissionsAndResultsForCourses done");
         courseService.fetchPlagiarismCasesForCourseExercises(course.getExercises(), user.getId());
+        log.debug("courseService.fetchPlagiarismCasesForCourseExercises done");
         GradingScale gradingScale = gradingScaleRepository.findByCourseId(course.getId()).orElse(null);
-
+        log.debug("gradingScaleRepository.findByCourseId done");
         CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId());
         logDuration(List.of(course), user, timeNanoStart, "courses/" + courseId + "/for-dashboard (single course)");
         return ResponseEntity.ok(courseForDashboardDTO);
@@ -492,17 +495,21 @@ public class CourseResource {
      */
     @GetMapping("courses/for-dashboard")
     @EnforceAtLeastStudent
-    public List<CourseForDashboardDTO> getAllCoursesForDashboard() {
+    public List<CourseForDashboardDTO> getCoursesForDashboard() {
         long timeNanoStart = System.nanoTime();
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug(
-                "REST request to get all courses the user {} has access to with exams, lectures, exercises, participations, submissions and results + the calculated scores the user achieved in each of those courses",
-                user.getLogin());
+        log.debug("Request to get all courses user {} has access to with exams, lectures, exercises, participations, submissions and results + calculated scores", user.getLogin());
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(user);
+        log.debug("courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser done");
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, false);
+        log.debug("courseService.fetchParticipationsWithSubmissionsAndResultsForCourses done");
+        // TODO: we should avoid fetching plagiarism in the future, it's unnecessary for 99.9% of the cases
         courseService.fetchPlagiarismCasesForCourseExercises(courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet()), user.getId());
+        log.debug("courseService.fetchPlagiarismCasesForCourseExercises done");
+        // TODO: loading the grading scale here is only done to handle edge cases, we should avoid it, it's unnecessary for 90% of the cases and can be done when navigating into
+        // the course
         Set<GradingScale> gradingScales = gradingScaleRepository.findAllByCourseIds(courses.stream().map(Course::getId).collect(Collectors.toSet()));
-
+        log.debug("gradingScaleRepository.findAllByCourseIds done");
         List<CourseForDashboardDTO> coursesForDashboard = new ArrayList<>();
         for (Course course : courses) {
             GradingScale gradingScale = gradingScales.stream().filter(scale -> scale.getCourse().getId().equals(course.getId())).findFirst().orElse(null);
@@ -532,7 +539,7 @@ public class CourseResource {
      */
     @GetMapping("courses/for-notifications")
     @EnforceAtLeastStudent
-    public Set<Course> getAllCoursesForNotifications() {
+    public Set<Course> getCoursesForNotifications() {
         log.debug("REST request to get all Courses the user has access to");
         User user = userRepository.getUserWithGroupsAndAuthorities();
         return courseService.findAllActiveForUser(user);
@@ -818,7 +825,7 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/students")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Set<User>> getAllStudentsInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<User>> getStudentsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all students in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         return courseService.getAllUsersInGroup(course, course.getStudentGroupName());
@@ -902,7 +909,7 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/tutors")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Set<User>> getAllTutorsInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<User>> getTutorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all tutors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         return courseService.getAllUsersInGroup(course, course.getTeachingAssistantGroupName());
@@ -916,7 +923,7 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/editors")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Set<User>> getAllEditorsInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<User>> getEditorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all editors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         return courseService.getAllUsersInGroup(course, course.getEditorGroupName());
@@ -930,7 +937,7 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/instructors")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Set<User>> getAllInstructorsInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<User>> getInstructorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all instructors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         return courseService.getAllUsersInGroup(course, course.getInstructorGroupName());
