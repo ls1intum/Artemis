@@ -44,7 +44,7 @@ public class DropLocation extends TempIdObject implements QuizQuestionComponent<
     @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     private DragAndDropQuestion question;
 

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -20,13 +21,20 @@ public interface QuizQuestionRepository extends JpaRepository<QuizQuestion, Long
     @Query("""
             SELECT question
             FROM QuizExercise exercise
-                LEFT JOIN  exercise.quizQuestions question
+                LEFT JOIN exercise.quizQuestions question
             WHERE exercise.id = :exerciseId
             """)
     Set<QuizQuestion> getQuizQuestionsByExerciseId(@Param("exerciseId") long exerciseId);
 
+    @Query("""
+            SELECT question
+                FROM DragAndDropQuestion question
+                WHERE question.id = :questionId
+                """)
+    Optional<DragAndDropQuestion> findDnDQuestionById(@Param("questionId") long questionId);
+
     default DragAndDropQuestion findDnDQuestionByIdOrElseThrow(Long questionId) {
-        return (DragAndDropQuestion) findById(questionId).orElseThrow(() -> new EntityNotFoundException("DragAndDropQuestion", questionId));
+        return findDnDQuestionById(questionId).orElseThrow(() -> new EntityNotFoundException("DragAndDropQuestion", questionId));
     }
 
 }
