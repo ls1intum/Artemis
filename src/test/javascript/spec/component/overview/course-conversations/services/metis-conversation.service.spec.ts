@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync } from '@angular/core/testing';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { MockProvider } from 'ng-mocks';
@@ -20,6 +20,10 @@ import { ConversationWebsocketDTO } from 'app/entities/metis/conversation/conver
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 import { MetisPostAction } from 'app/shared/metis/metis.util';
 import dayjs from 'dayjs/esm';
+import { NotificationService } from 'app/shared/notification/notification.service';
+import { MockNotificationService } from '../../../../helpers/mocks/service/mock-notification.service';
+import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
+import { Post } from 'app/entities/metis/post.model';
 
 describe('MetisConversationService', () => {
     let metisConversationService: MetisConversationService;
@@ -30,6 +34,8 @@ describe('MetisConversationService', () => {
     let websocketService: JhiWebsocketService;
     let courseManagementService: CourseManagementService;
     let alertService: AlertService;
+    let notificationService: NotificationService;
+    let newOrUpdatedMessageSubject: Subject<MetisPostDTO>;
 
     const course = { id: 1 } as Course;
     let groupChat: GroupChatDto;
@@ -47,13 +53,18 @@ describe('MetisConversationService', () => {
                 MockProvider(OneToOneChatService),
                 MockProvider(ConversationService),
                 MockProvider(JhiWebsocketService),
-                { provide: AccountService, useClass: MockAccountService },
                 MockProvider(AlertService),
+                { provide: NotificationService, useClass: MockNotificationService },
+                { provide: AccountService, useClass: MockAccountService },
             ],
         });
         groupChat = generateExampleGroupChatDTO({ id: 1 });
         oneToOneChat = generateOneToOneChatDTO({ id: 2 });
         channel = generateExampleChannelDTO({ id: 3 });
+
+        notificationService = TestBed.inject(NotificationService);
+        newOrUpdatedMessageSubject = new Subject<MetisPostDTO>();
+        jest.spyOn(notificationService, 'newOrUpdatedMessage', 'get').mockReturnValue(newOrUpdatedMessageSubject);
 
         metisConversationService = TestBed.inject(MetisConversationService);
         groupChatService = TestBed.inject(GroupChatService);
@@ -263,7 +274,7 @@ describe('MetisConversationService', () => {
             metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const websocketDTO = new ConversationWebsocketDTO();
-                    websocketDTO.metisCrudAction = MetisPostAction.CREATE;
+                    websocketDTO.action = MetisPostAction.CREATE;
                     websocketDTO.conversation = generateExampleChannelDTO({ id: 99 });
 
                     receiveMockSubject.next(websocketDTO);
@@ -281,7 +292,7 @@ describe('MetisConversationService', () => {
             metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const websocketDTO = new ConversationWebsocketDTO();
-                    websocketDTO.metisCrudAction = MetisPostAction.UPDATE;
+                    websocketDTO.action = MetisPostAction.UPDATE;
                     websocketDTO.conversation = { ...channel, name: 'newtitle' } as ChannelDTO;
 
                     receiveMockSubject.next(websocketDTO);
@@ -303,7 +314,7 @@ describe('MetisConversationService', () => {
             metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const websocketDTO = new ConversationWebsocketDTO();
-                    websocketDTO.metisCrudAction = MetisPostAction.NEW_MESSAGE;
+                    websocketDTO.action = MetisPostAction.NEW_MESSAGE;
                     // 1 of january 2022
                     const lastMessageDate = dayjs('2022-01-01T00:00:00.000Z');
                     websocketDTO.conversation = { ...channel, lastMessageDate } as ChannelDTO;
@@ -325,7 +336,7 @@ describe('MetisConversationService', () => {
             metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const websocketDTO = new ConversationWebsocketDTO();
-                    websocketDTO.metisCrudAction = MetisPostAction.DELETE;
+                    websocketDTO.action = MetisPostAction.DELETE;
                     websocketDTO.conversation = { ...channel } as ChannelDTO;
 
                     receiveMockSubject.next(websocketDTO);
@@ -376,5 +387,23 @@ describe('MetisConversationService', () => {
             expect(isCodeOfConductAccepted).toBeTrue();
         });
         expect(acceptStub).toHaveBeenCalledOnce();
+    });
+
+    it('should handle new message', fakeAsync(() => {
+        const postDTO: MetisPostDTO = {
+            post: { author: { id: 456 }, content: 'Content', conversation: { id: 1 } } as Post,
+            action: MetisPostAction.CREATE,
+            notification: { title: 'title' },
+        };
+        metisConversationService['conversationsOfUser'] = [{ id: 1, unreadMessageCount: 0 } as ChannelDTO];
+
+        newOrUpdatedMessageSubject.next(postDTO);
+        expect(metisConversationService['conversationsOfUser'][0].unreadMessagesCount).toBe(1);
+    }));
+
+    it('should mark messages as read', () => {
+        metisConversationService['conversationsOfUser'] = [{ id: 1, unreadMessageCount: 1 } as ChannelDTO, { id: 2, unreadMessageCount: 1 } as ChannelDTO];
+        metisConversationService.markAsRead(2);
+        expect(metisConversationService['conversationsOfUser'][1].unreadMessagesCount).toBe(0);
     });
 });

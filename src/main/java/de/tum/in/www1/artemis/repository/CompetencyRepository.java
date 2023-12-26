@@ -31,8 +31,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long>, J
     @Query("""
             SELECT c
             FROM Competency c
-            LEFT JOIN FETCH c.userProgress progress
-                WHERE c.course.id = :courseId
+            WHERE c.course.id = :courseId
             """)
     Set<Competency> findAllForCourse(@Param("courseId") Long courseId);
 
@@ -127,11 +126,19 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long>, J
     @Query("""
             SELECT pr
             FROM Competency pr
-                LEFT JOIN FETCH pr.consecutiveCourses c
+                LEFT JOIN pr.consecutiveCourses c
             WHERE c.id = :courseId
             ORDER BY pr.title
             """)
     Set<Competency> findPrerequisitesByCourseId(@Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT COUNT(*)
+            FROM Competency pr
+                LEFT JOIN pr.consecutiveCourses c
+            WHERE c.id = :courseId
+            """)
+    Long countPrerequisitesByCourseId(@Param("courseId") Long courseId);
 
     /**
      * Query which fetches all competencies for which the user is editor or instructor in the course and

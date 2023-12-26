@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis.post;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -19,20 +16,16 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.*;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
-import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
-import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
-import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
+import de.tum.in.www1.artemis.domain.metis.conversation.*;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.lecture.LectureFactory;
+import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
-import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
-import de.tum.in.www1.artemis.repository.metis.PostRepository;
-import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
+import de.tum.in.www1.artemis.repository.metis.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
@@ -86,6 +79,12 @@ public class ConversationUtilService {
     @Autowired
     private UserUtilService userUtilService;
 
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
     /**
      * Creates and saves a Course with disabled posts.
      *
@@ -107,44 +106,42 @@ public class ConversationUtilService {
      */
     public List<Post> createPostsWithinCourse(String userPrefix) {
 
-        List<Exercise> testExercises = new ArrayList<>();
-        List<Lecture> testLectures = new ArrayList<>();
+        List<Channel> testExerciseChannels = new ArrayList<>();
+        List<Channel> testLectureChannels = new ArrayList<>();
 
         Course course1 = courseUtilService.createCourse();
         for (int i = 0; i < 2; i++) {
             TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
             course1.addExercises(textExercise);
             textExercise = exerciseRepo.save(textExercise);
-            testExercises.add(textExercise);
+            Channel exerciseChannel = exerciseUtilService.addChannelToExercise(textExercise);
+            testExerciseChannels.add(exerciseChannel);
 
             Lecture lecture = LectureFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
             course1.addLectures(lecture);
             lecture = lectureRepo.save(lecture);
-            testLectures.add(lecture);
+            Channel lectureChannel = lectureUtilService.addLectureChannel(lecture);
+            testLectureChannels.add(lectureChannel);
         }
 
         courseRepo.save(course1);
 
         PlagiarismCase plagiarismCase = new PlagiarismCase();
-        plagiarismCase.setExercise(testExercises.get(0));
+        plagiarismCase.setExercise(testExerciseChannels.get(0).getExercise());
         plagiarismCase.setStudent(userUtilService.getUserByLogin(userPrefix + "student1"));
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
 
         List<Post> posts = new ArrayList<>();
 
         // add posts to exercise
-        posts.addAll(createBasicPosts(testExercises.toArray(Exercise[]::new), userPrefix));
+        posts.addAll(createBasicPosts(testExerciseChannels.toArray(Channel[]::new), userPrefix));
 
         // add posts to lecture
-        posts.addAll(createBasicPosts(testLectures.toArray(Lecture[]::new), userPrefix));
+        posts.addAll(createBasicPosts(testLectureChannels.toArray(Channel[]::new), userPrefix));
 
         // add post to plagiarismCase
         posts.add(createBasicPost(plagiarismCase, userPrefix));
 
-        // add posts to course with different course-wide contexts provided in input array
-        CourseWideContext[] courseWideContexts = new CourseWideContext[] { CourseWideContext.ORGANIZATION, CourseWideContext.RANDOM, CourseWideContext.TECH_SUPPORT,
-                CourseWideContext.ANNOUNCEMENT };
-        posts.addAll(createBasicPosts(course1, courseWideContexts, userPrefix));
         posts.addAll(createBasicPosts(createOneToOneChat(course1, userPrefix), userPrefix, "tutor"));
         posts.addAll(createBasicPosts(createCourseWideChannel(course1, userPrefix), userPrefix, "student"));
         posts.addAll(createBasicPosts(createCourseWideChannel(course1, userPrefix), userPrefix, "student"));
@@ -225,21 +222,23 @@ public class ConversationUtilService {
         List<Post> posts = createPostsWithinCourse(userPrefix);
 
         // add answer for one post in each context (lecture, exercise, course-wide, conversation)
-        Post lecturePost = posts.stream().filter(coursePost -> coursePost.getLecture() != null).findFirst().orElseThrow();
+        Post lecturePost = posts.stream().filter(coursePost -> coursePost.getConversation() instanceof Channel channel && channel.getLecture() != null).findFirst().orElseThrow();
         lecturePost.setAnswers(createBasicAnswers(lecturePost, userPrefix));
         lecturePost.getAnswers().addAll(createBasicAnswers(lecturePost, userPrefix));
         postRepository.save(lecturePost);
 
-        Post exercisePost = posts.stream().filter(coursePost -> coursePost.getExercise() != null).findFirst().orElseThrow();
+        Post exercisePost = posts.stream().filter(coursePost -> coursePost.getConversation() instanceof Channel channel && channel.getExercise() != null).findFirst().orElseThrow();
         exercisePost.setAnswers(createBasicAnswers(exercisePost, userPrefix));
         postRepository.save(exercisePost);
 
         // resolved post
-        Post courseWidePost = posts.stream().filter(coursePost -> coursePost.getCourseWideContext() != null).findFirst().orElseThrow();
+        Post courseWidePost = posts.stream().filter(
+                coursePost -> coursePost.getConversation() instanceof Channel channel && channel.getIsCourseWide() && channel.getExercise() == null && channel.getLecture() == null)
+                .findFirst().orElseThrow();
         courseWidePost.setAnswers(createBasicAnswersThatResolves(courseWidePost, userPrefix));
         postRepository.save(courseWidePost);
 
-        Post conversationPost = posts.stream().filter(coursePost -> coursePost.getConversation() != null).findFirst().orElseThrow();
+        Post conversationPost = posts.stream().filter(coursePost -> coursePost.getConversation() instanceof OneToOneChat).findFirst().orElseThrow();
         conversationPost.setAnswers(createBasicAnswers(conversationPost, userPrefix));
         postRepository.save(conversationPost);
 
@@ -248,67 +247,32 @@ public class ConversationUtilService {
         studentConversationPost.setAnswers(createBasicAnswers(studentConversationPost, userPrefix));
         postRepository.save(studentConversationPost);
 
+        Post plagiarismPost = posts.stream().filter(coursePost -> coursePost.getPlagiarismCase() != null).findFirst().orElseThrow();
+        plagiarismPost.setAnswers(createBasicAnswers(plagiarismPost, userPrefix));
+        plagiarismPost.getAnswers().addAll(createBasicAnswers(plagiarismPost, userPrefix));
+        postRepository.save(plagiarismPost);
+
         return posts;
     }
 
     /**
-     * Creates and saves a Post for each of the given ExerciseContexts.
+     * Creates and saves a post for each of the given channelContexts.
      *
-     * @param exerciseContexts The ExerciseContexts the Posts belong to
-     * @param userPrefix       The prefix of the authors' logins (the logins are appended with ["student" + (index of ExerciseContext + 1)])
+     * @param channelContexts The channels the posts belong to
+     * @param userPrefix      The prefix of the authors' logins (the logins are appended with ["student" + (index of channelContext + 1)])
      * @return A List of the created Posts
      */
-    private List<Post> createBasicPosts(Exercise[] exerciseContexts, String userPrefix) {
+    private List<Post> createBasicPosts(Channel[] channelContexts, String userPrefix) {
         List<Post> posts = new ArrayList<>();
-        for (Exercise exerciseContext : exerciseContexts) {
+        for (Channel channelContext : channelContexts) {
             for (int i = 0; i < 4; i++) {
                 Post postToAdd = ConversationFactory.createBasicPost(i, userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", userPrefix + "student", (i + 1))));
-                postToAdd.setExercise(exerciseContext);
+                postToAdd.setConversation(channelContext);
                 postRepository.save(postToAdd);
                 posts.add(postToAdd);
             }
         }
 
-        return posts;
-    }
-
-    /**
-     * Creates and saves a Post for each of the given LectureContexts.
-     *
-     * @param lectureContexts The LectureContexts the Posts belong to
-     * @param userPrefix      The prefix of the authors' logins (the logins are appended with "tutor" + (index of LectureContext + 1))
-     * @return A List of the created Posts
-     */
-    private List<Post> createBasicPosts(Lecture[] lectureContexts, String userPrefix) {
-        List<Post> posts = new ArrayList<>();
-        for (Lecture lectureContext : lectureContexts) {
-            for (int i = 0; i < 4; i++) {
-                Post postToAdd = ConversationFactory.createBasicPost(i, userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", userPrefix + "tutor", (i + 1))));
-                postToAdd.setLecture(lectureContext);
-                postRepository.save(postToAdd);
-                posts.add(postToAdd);
-            }
-        }
-        return posts;
-    }
-
-    /**
-     * Creates and saves a Post for each of the given CourseWideContexts.
-     *
-     * @param courseContext      The Course the Posts belong to
-     * @param courseWideContexts The CourseWideContexts the Posts belong to
-     * @param userPrefix         The prefix of the authors' logins (the logins are appended with "editor" + (index of CourseWideContext + 1))
-     * @return A List of the created Posts
-     */
-    private List<Post> createBasicPosts(Course courseContext, CourseWideContext[] courseWideContexts, String userPrefix) {
-        List<Post> posts = new ArrayList<>();
-        for (int i = 0; i < courseWideContexts.length; i++) {
-            Post postToAdd = ConversationFactory.createBasicPost(i, userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", userPrefix + "editor", (i + 1))));
-            postToAdd.setCourse(courseContext);
-            postToAdd.setCourseWideContext(courseWideContexts[i]);
-            postRepository.save(postToAdd);
-            posts.add(postToAdd);
-        }
         return posts;
     }
 
@@ -322,7 +286,6 @@ public class ConversationUtilService {
     public Post createBasicPost(PlagiarismCase plagiarismCase, String userPrefix) {
         Post postToAdd = ConversationFactory.createBasicPost(0, userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", userPrefix + "instructor", 1)));
         postToAdd.setPlagiarismCase(plagiarismCase);
-        postToAdd.getPlagiarismCase().setExercise(null);
         return postRepository.save(postToAdd);
     }
 

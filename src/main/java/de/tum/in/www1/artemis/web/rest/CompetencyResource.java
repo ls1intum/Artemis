@@ -122,13 +122,21 @@ public class CompetencyResource {
      */
     @GetMapping("/courses/{courseId}/competencies")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<Competency>> getCompetencies(@PathVariable Long courseId) {
+    public ResponseEntity<List<Competency>> getCompetenciesWithProgress(@PathVariable Long courseId) {
         log.debug("REST request to get competencies for course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
+        // First load competencies
         Set<Competency> competencies = competencyRepository.findAllForCourse(course.getId());
+        // Then load the progress of the user
+        Set<CompetencyProgress> progressForUser = competencyProgressRepository.findByCompetenciesAndUser(competencies, user.getId());
+        // Map the progress into the competency now
+        competencies.forEach(competency -> {
+            var userProgress = progressForUser.stream().filter(progress -> progress.getCompetency().getId().equals(competency.getId())).findFirst().map(Set::of).orElseGet(Set::of);
+            competency.setUserProgress(userProgress);
+        });
         return ResponseEntity.ok(new ArrayList<>(competencies));
     }
 
@@ -406,7 +414,7 @@ public class CompetencyResource {
             relation.setType(relationType);
 
             var competencies = competencyRepository.findAllForCourse(course.getId());
-            var competencyRelations = competencyRelationRepository.findAllByCourseId(course.getId());
+            var competencyRelations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
             competencyRelations.add(relation);
             if (competencyService.doesCreateCircularRelation(competencies, competencyRelations)) {
                 throw new BadRequestException("You can't define circular dependencies between competencies");

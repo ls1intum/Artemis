@@ -93,4 +93,25 @@ public class VcsRepositoryUrl {
             return path;
         }
     }
+
+    /**
+     * Retrieves the repository name without the project key and the optional practice prefix from the URI.
+     *
+     * Examples:
+     * http://localhost:8080/git/GREAT/great-artemis_admin.git --> artemis_admin
+     * http://localhost:8080/git/GREAT/great-practice-artemis_admin.git --> artemis_admin
+     *
+     * @return the repository name without the project key and the optional practice prefix.
+     */
+    public String repositoryNameWithoutProjectKey() {
+        return repositorySlug().toLowerCase().replace(projectKey().toLowerCase() + "-", "").replace("practice-", "");
+    }
+
+    private String repositorySlug() {
+        return this.uri.getPath().substring(this.uri.getPath().lastIndexOf('/') + 1).replace(".git", "");
+    }
+
+    private String projectKey() {
+        return this.uri.getPath().substring(this.uri.getPath().lastIndexOf('/', this.uri.getPath().lastIndexOf('/') - 1) + 1, this.uri.getPath().lastIndexOf('/')).toLowerCase();
+    }
 }

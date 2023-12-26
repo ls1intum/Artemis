@@ -126,7 +126,7 @@ public class LearningPathNgxService {
      * @param edges        set of edges to store the new edges
      */
     private void generateNgxGraphRepresentationForRelations(LearningPath learningPath, Set<NgxLearningPathDTO.Node> nodes, Set<NgxLearningPathDTO.Edge> edges) {
-        final var relations = competencyRelationRepository.findAllByCourseId(learningPath.getCourse().getId());
+        final var relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(learningPath.getCourse().getId());
 
         // compute match clusters
         Map<Long, Integer> competencyToMatchCluster = new HashMap<>();

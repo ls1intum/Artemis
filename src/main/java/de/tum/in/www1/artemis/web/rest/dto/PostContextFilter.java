@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
-import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -13,12 +12,6 @@ public class PostContextFilter {
 
     @NotBlank
     private Long courseId;
-
-    private CourseWideContext[] courseWideContexts;
-
-    private Long[] exerciseIds;
-
-    private Long[] lectureIds;
 
     private long[] courseWideChannelIds;
 
@@ -53,30 +46,6 @@ public class PostContextFilter {
 
     public void setCourseId(Long courseId) {
         this.courseId = courseId;
-    }
-
-    public CourseWideContext[] getCourseWideContexts() {
-        return courseWideContexts;
-    }
-
-    public void setCourseWideContexts(CourseWideContext[] courseWideContexts) {
-        this.courseWideContexts = courseWideContexts;
-    }
-
-    public Long[] getExerciseIds() {
-        return exerciseIds;
-    }
-
-    public void setExerciseIds(Long[] exerciseIds) {
-        this.exerciseIds = exerciseIds;
-    }
-
-    public Long[] getLectureIds() {
-        return lectureIds;
-    }
-
-    public void setLectureIds(Long[] lectureIds) {
-        this.lectureIds = lectureIds;
     }
 
     public long[] getCourseWideChannelIds() {

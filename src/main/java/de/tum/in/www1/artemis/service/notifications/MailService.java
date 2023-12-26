@@ -228,7 +228,7 @@ public class MailService implements InstantNotificationService {
         // Translation that can not be done via i18n Resource Bundle (for Thymeleaf) but has to be set in this service via Java
         String newAnnouncementString = locale.toString().equals("en") ? "New announcement \"%s\" in course \"%s\"" : "Neue Ankündigung \"%s\" im Kurs \"%s\"";
         String postTitle = ((Post) notificationSubject).getTitle();
-        String courseTitle = ((Post) notificationSubject).getCourse().getTitle();
+        String courseTitle = ((Post) notificationSubject).getConversation().getCourse().getTitle();
 
         return String.format(newAnnouncementString, postTitle, courseTitle);
     }

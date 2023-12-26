@@ -85,6 +85,13 @@ public class Post extends Posting {
     @Column(name = "vote_count")
     private int voteCount;
 
+    public Post() {
+    }
+
+    public Post(long id) {
+        this.setId(id);
+    }
+
     public String getTitle() {
         return title;
     }
@@ -149,38 +156,6 @@ public class Post extends Posting {
         this.tags.add(tag);
     }
 
-    public Exercise getExercise() {
-        return exercise;
-    }
-
-    public void setExercise(Exercise exercise) {
-        this.exercise = exercise;
-    }
-
-    public Lecture getLecture() {
-        return lecture;
-    }
-
-    public void setLecture(Lecture lecture) {
-        this.lecture = lecture;
-    }
-
-    public Course getCourse() {
-        return course;
-    }
-
-    public void setCourse(Course course) {
-        this.course = course;
-    }
-
-    public CourseWideContext getCourseWideContext() {
-        return courseWideContext;
-    }
-
-    public void setCourseWideContext(CourseWideContext courseWideContext) {
-        this.courseWideContext = courseWideContext;
-    }
-
     public Conversation getConversation() {
         return conversation;
     }
@@ -233,25 +208,6 @@ public class Post extends Posting {
     }
 
     /**
-     * Helper method to determine if a given post has the same context, i.e. either same exercise, lecture or course-wide context
-     *
-     * @param otherPost post that is compared to
-     * @return boolean flag indicating if same context or not
-     */
-    public boolean hasSameContext(Post otherPost) {
-        if (getExercise() != null && otherPost.getExercise() != null && getExercise().getId().equals(otherPost.getExercise().getId())) {
-            return true;
-        }
-        else if (getLecture() != null && otherPost.getLecture() != null && getLecture().getId().equals(otherPost.getLecture().getId())) {
-            return true;
-        }
-        else if (getPlagiarismCase() != null && otherPost.getPlagiarismCase() != null && getPlagiarismCase().getId().equals(otherPost.getPlagiarismCase().getId())) {
-            return true;
-        }
-        return getCourseWideContext() != null && otherPost.getCourseWideContext() != null && getCourseWideContext() == otherPost.getCourseWideContext();
-    }
-
-    /**
      * Helper method to extract the course a Post belongs to, which is found in different locations based on the Post's context
      *
      * @return the course Post belongs to
@@ -259,16 +215,7 @@ public class Post extends Posting {
     @JsonIgnore
     @Override
     public Course getCoursePostingBelongsTo() {
-        if (this.course != null) {
-            return this.course;
-        }
-        else if (this.lecture != null) {
-            return this.lecture.getCourse();
-        }
-        else if (this.exercise != null) {
-            return this.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        }
-        else if (this.plagiarismCase != null) {
+        if (this.plagiarismCase != null) {
             return this.plagiarismCase.getExercise().getCourseViaExerciseGroupOrCourseMember();
         }
         else if (this.conversation != null) {
