@@ -201,7 +201,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("""
             SELECT DISTINCT c
             FROM Course c
-            LEFT JOIN FETCH c.exercises e
+                LEFT JOIN FETCH c.exercises e
             WHERE TYPE(e) = QuizExercise
             """)
     List<Course> findAllWithQuizExercisesWithEagerExercises();

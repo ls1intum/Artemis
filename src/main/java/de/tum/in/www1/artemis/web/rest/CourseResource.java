@@ -53,10 +53,7 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
-import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
-import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
-import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
-import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.dto.user.UserNameAndLoginDTO;
 import de.tum.in.www1.artemis.web.rest.errors.*;
 import tech.jhipster.web.util.PaginationUtil;
@@ -490,7 +487,7 @@ public class CourseResource {
         log.debug("courseService.fetchPlagiarismCasesForCourseExercises done");
         GradingScale gradingScale = gradingScaleRepository.findByCourseId(course.getId()).orElse(null);
         log.debug("gradingScaleRepository.findByCourseId done");
-        CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId(), Set.of());
+        CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId());
         logDuration(List.of(course), user, timeNanoStart, "courses/" + courseId + "/for-dashboard (single course)");
         return ResponseEntity.ok(courseForDashboardDTO);
     }
@@ -504,7 +501,7 @@ public class CourseResource {
      */
     @GetMapping("courses/for-dashboard")
     @EnforceAtLeastStudent
-    public Set<CourseForDashboardDTO> getCoursesForDashboard() {
+    public CoursesForDashboardDTO getCoursesForDashboard() {
         long timeNanoStart = System.nanoTime();
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("Request to get all courses user {} has access to with exams, lectures, exercises, participations, submissions and results + calculated scores", user.getLogin());
@@ -528,11 +525,11 @@ public class CourseResource {
         Set<CourseForDashboardDTO> coursesForDashboard = new HashSet<>();
         for (Course course : courses) {
             GradingScale gradingScale = gradingScales.stream().filter(scale -> scale.getCourse().getId().equals(course.getId())).findFirst().orElse(null);
-            CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId(), activeExams);
+            CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId());
             coursesForDashboard.add(courseForDashboardDTO);
         }
         logDuration(courses, user, timeNanoStart, "courses/for-dashboard (multiple courses)");
-        return coursesForDashboard;
+        return new CoursesForDashboardDTO(coursesForDashboard, activeExams);
     }
 
     private void logDuration(Collection<Course> courses, User user, long timeNanoStart, String path) {

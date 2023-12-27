@@ -334,17 +334,6 @@ describe('Course Management Service', () => {
         tick();
     }));
 
-    it('should get all courses', fakeAsync(() => {
-        returnedFromService = [{ ...course }];
-        const params = { testParam: 'testParamValue' };
-        courseManagementService
-            .getAll(params)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
-        requestAndExpectDateConversion('GET', `${resourceUrl}?testParam=testParamValue`, returnedFromService, course, true);
-        tick();
-    }));
-
     it('should get all courses with quiz exercises', fakeAsync(() => {
         returnedFromService = [{ ...course }];
         courseManagementService

@@ -15,7 +15,6 @@ import org.springframework.util.MultiValueMap;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
-import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
@@ -186,10 +185,9 @@ public class CourseScoreCalculationService {
      * @param course       the course to calculate the items for.
      * @param gradingScale the grading scale with the presentation configuration to use for calculating the presentation points.
      * @param userId       the id of the students whose scores in the course will be calculated.
-     * @param activeExams  the active exams for the current user
      * @return the CourseForDashboardDTO containing all the mentioned items.
      */
-    public CourseForDashboardDTO getScoresAndParticipationResults(Course course, GradingScale gradingScale, long userId, Set<Exam> activeExams) {
+    public CourseForDashboardDTO getScoresAndParticipationResults(Course course, GradingScale gradingScale, long userId) {
         Set<StudentParticipation> gradedStudentParticipations = new HashSet<>();
         for (Exercise exercise : course.getExercises()) {
             exercise.setCourse(course);
@@ -245,7 +243,7 @@ public class CourseScoreCalculationService {
 
         return new CourseForDashboardDTO(course, totalScores, scoresPerExerciseType.get(ExerciseType.TEXT), scoresPerExerciseType.get(ExerciseType.PROGRAMMING),
                 scoresPerExerciseType.get(ExerciseType.MODELING), scoresPerExerciseType.get(ExerciseType.FILE_UPLOAD), scoresPerExerciseType.get(ExerciseType.QUIZ),
-                participationResults, activeExams);
+                participationResults);
     }
 
     /**
