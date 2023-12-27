@@ -46,6 +46,8 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { NotificationService } from 'app/shared/notification/notification.service';
+import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 import { MockMetisConversationService } from '../../helpers/mocks/service/mock-metis-conversation.service';
 
 const endDate1 = dayjs().add(1, 'days');
@@ -90,6 +92,9 @@ const course2: Course = {
     competencies: [new Competency()],
     tutorialGroups: [new TutorialGroup()],
     prerequisites: [new Competency()],
+    numberOfCompetencies: 1,
+    numberOfPrerequisites: 1,
+    numberOfTutorialGroups: 1,
 };
 
 @Component({
@@ -112,7 +117,6 @@ describe('CourseOverviewComponent', () => {
     let courseService: CourseManagementService;
     let courseStorageService: CourseStorageService;
     let teamService: TeamService;
-    let competencyService: CompetencyService;
     let tutorialGroupsService: TutorialGroupsService;
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
     let jhiWebsocketService: JhiWebsocketService;
@@ -168,6 +172,7 @@ describe('CourseOverviewComponent', () => {
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: NotificationService, useClass: MockNotificationService },
             ],
         })
             .compileComponents()
@@ -178,7 +183,6 @@ describe('CourseOverviewComponent', () => {
                 courseService = TestBed.inject(CourseManagementService);
                 courseStorageService = TestBed.inject(CourseStorageService);
                 teamService = TestBed.inject(TeamService);
-                competencyService = TestBed.inject(CompetencyService);
                 tutorialGroupsService = TestBed.inject(TutorialGroupsService);
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
                 jhiWebsocketService = TestBed.inject(JhiWebsocketService);
@@ -241,6 +245,7 @@ describe('CourseOverviewComponent', () => {
     it.each([true, false])('should determine once if there are unread messages', async (hasNewMessages: boolean) => {
         const spy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
         metisConversationService._hasUnreadMessages$.next(hasNewMessages);
+        jest.spyOn(metisConversationService, 'setUpConversationService').mockReturnValue(of());
 
         await component.ngOnInit();
 
@@ -404,10 +409,6 @@ describe('CourseOverviewComponent', () => {
     it('should have competencies and tutorial groups', () => {
         const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
 
-        const competenciesResponse: HttpResponse<Competency[]> = new HttpResponse({
-            body: [new Competency()],
-            status: 200,
-        });
         const tutorialGroupsResponse: HttpResponse<TutorialGroup[]> = new HttpResponse({
             body: [new TutorialGroup()],
             status: 200,
@@ -417,8 +418,6 @@ describe('CourseOverviewComponent', () => {
             status: 200,
         });
 
-        jest.spyOn(competencyService, 'getAllPrerequisitesForCourse').mockReturnValue(of(competenciesResponse));
-        jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(competenciesResponse));
         jest.spyOn(tutorialGroupsService, 'getAllForCourse').mockReturnValue(of(tutorialGroupsResponse));
         jest.spyOn(tutorialGroupsConfigurationService, 'getOneOfCourse').mockReturnValue(of(configurationResponse));
 
