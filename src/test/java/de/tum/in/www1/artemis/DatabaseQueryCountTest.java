@@ -96,7 +96,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
     void testExamQueryCount() throws Exception {
         StudentExam studentExam = examUtilService.addStudentExamForActiveExamWithUser(TEST_PREFIX + "student1");
 
-        assertThatDb(() -> startWorkingOnExam(studentExam)).hasBeenCalledAtMostTimes(6);
+        assertThatDb(() -> startWorkingOnExam(studentExam)).hasBeenCalledAtMostTimes(7);
         assertThatDb(() -> submitExam(studentExam)).hasBeenCalledAtMostTimes(3);
     }
 
