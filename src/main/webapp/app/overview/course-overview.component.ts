@@ -37,6 +37,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -116,6 +117,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
         private metisConversationService: MetisConversationService,
         private router: Router,
+        private courseAccessStorageService: CourseAccessStorageService,
     ) {}
 
     async ngOnInit() {
@@ -124,6 +126,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         });
 
         this.course = this.courseStorageService.getCourse(this.courseId);
+
+        // Notify the course access storage service that the course has been accessed
+        this.courseAccessStorageService.onCourseAccessed(this.courseId);
 
         await this.loadCourse().toPromise();
         await this.initAfterCourseLoad();

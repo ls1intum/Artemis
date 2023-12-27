@@ -17,6 +17,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Router } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { faPenAlt } from '@fortawesome/free-solid-svg-icons';
+import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 
 @Component({
     selector: 'jhi-overview',
@@ -24,11 +25,14 @@ import { faPenAlt } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['./courses.component.scss'],
 })
 export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
-    public courses: Course[];
+    courses: Course[];
     public nextRelevantCourse?: Course;
     nextRelevantCourseForExam?: Course;
     nextRelevantExams?: Exam[];
     exams: Exam[] = [];
+
+    public recentlyAccessedCourses: Course[] = [];
+    public regularCourses: Course[] = [];
 
     courseForGuidedTour?: Course;
     quizExercisesChannels: string[] = [];
@@ -49,6 +53,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
         private examService: ExamManagementService,
         private router: Router,
         private serverDateService: ArtemisServerDateService,
+        private courseAccessStorageService: CourseAccessStorageService,
     ) {}
 
     async ngOnInit() {
@@ -93,6 +98,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
                         (exam) => !exam.testExam! && timeNow.isBefore(exam.endDate!) && timeNow.isAfter(exam.visibleDate!),
                     );
                     this.nextRelevantExercise = this.findNextRelevantExercise();
+                    this.sortCoursesInRecentlyAccessedAndRegularCourses();
                 }
             },
         });
@@ -128,6 +134,20 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
             }
             this.nextRelevantCourse = relevantExercise.course!;
             return relevantExercise;
+        }
+    }
+
+    /**
+     * Sorts the courses into recently accessed and regular courses.
+     * If there are less than 5 courses, all courses are displayed in the regular courses section.
+     */
+    sortCoursesInRecentlyAccessedAndRegularCourses() {
+        if (this.courses.length <= 5) {
+            this.regularCourses = this.courses;
+        } else {
+            const lastAccessedCourseIds = this.courseAccessStorageService.getLastAccessedCourses();
+            this.recentlyAccessedCourses = this.courses.filter((course) => lastAccessedCourseIds.includes(course.id!));
+            this.regularCourses = this.courses.filter((course) => !lastAccessedCourseIds.includes(course.id!));
         }
     }
 
