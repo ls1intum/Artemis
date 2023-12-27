@@ -13,9 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -45,13 +43,16 @@ public class ComplaintResponseResource {
 
     private final UserRepository userRepository;
 
+    private final TeamRepository teamRepository;
+
     public ComplaintResponseResource(ComplaintResponseRepository complaintResponseRepository, ComplaintResponseService complaintResponseService,
-            AuthorizationCheckService authorizationCheckService, UserRepository userRepository, ComplaintRepository complaintRepository) {
+            AuthorizationCheckService authorizationCheckService, UserRepository userRepository, ComplaintRepository complaintRepository, TeamRepository teamRepository) {
         this.complaintResponseRepository = complaintResponseRepository;
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
+        this.teamRepository = teamRepository;
     }
 
     /**
@@ -173,11 +174,12 @@ public class ComplaintResponseResource {
     }
 
     private boolean isOriginalAuthor(Principal principal, Participant originalAuthor) {
-        if (originalAuthor instanceof User) {
-            return Objects.equals(((User) originalAuthor).getLogin(), principal.getName());
+        if (originalAuthor instanceof User user) {
+            return Objects.equals(user.getLogin(), principal.getName());
         }
-        else if (originalAuthor instanceof Team) {
-            return ((Team) originalAuthor).hasStudentWithLogin(principal.getName());
+        else if (originalAuthor instanceof Team team) {
+            team = teamRepository.findWithStudentsByIdElseThrow(team.getId());
+            return team.hasStudentWithLogin(principal.getName());
         }
         else {
             throw new Error("Unknown Participant type");

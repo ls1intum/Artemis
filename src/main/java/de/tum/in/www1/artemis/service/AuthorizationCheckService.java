@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -53,7 +54,9 @@ public class AuthorizationCheckService {
     @Value("${artemis.user-management.course-enrollment.allowed-username-pattern:#{null}}")
     private Pattern allowedCourseEnrollmentUsernamePattern;
 
-    public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository, ExamDateService examDateService) {
+    private final TeamRepository teamRepository;
+
+    public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository, ExamDateService examDateService, TeamRepository teamRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examDateService = examDateService;
@@ -61,6 +64,7 @@ public class AuthorizationCheckService {
         if (allowedCourseEnrollmentUsernamePattern == null) {
             allowedCourseEnrollmentUsernamePattern = allowedCourseRegistrationUsernamePattern;
         }
+        this.teamRepository = teamRepository;
     }
 
     /**
@@ -556,6 +560,9 @@ public class AuthorizationCheckService {
             return false;
         }
         else {
+            if (participation.getParticipant() instanceof Team team) {
+                participation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
+            }
             return participation.isOwnedBy(user);
         }
     }
