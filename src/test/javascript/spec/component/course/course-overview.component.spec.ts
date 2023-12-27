@@ -92,6 +92,9 @@ const course2: Course = {
     competencies: [new Competency()],
     tutorialGroups: [new TutorialGroup()],
     prerequisites: [new Competency()],
+    numberOfCompetencies: 1,
+    numberOfPrerequisites: 1,
+    numberOfTutorialGroups: 1,
 };
 
 @Component({
@@ -114,7 +117,6 @@ describe('CourseOverviewComponent', () => {
     let courseService: CourseManagementService;
     let courseStorageService: CourseStorageService;
     let teamService: TeamService;
-    let competencyService: CompetencyService;
     let tutorialGroupsService: TutorialGroupsService;
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
     let jhiWebsocketService: JhiWebsocketService;
@@ -181,7 +183,6 @@ describe('CourseOverviewComponent', () => {
                 courseService = TestBed.inject(CourseManagementService);
                 courseStorageService = TestBed.inject(CourseStorageService);
                 teamService = TestBed.inject(TeamService);
-                competencyService = TestBed.inject(CompetencyService);
                 tutorialGroupsService = TestBed.inject(TutorialGroupsService);
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
                 jhiWebsocketService = TestBed.inject(JhiWebsocketService);
@@ -408,10 +409,6 @@ describe('CourseOverviewComponent', () => {
     it('should have competencies and tutorial groups', () => {
         const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
 
-        const competenciesResponse: HttpResponse<Competency[]> = new HttpResponse({
-            body: [new Competency()],
-            status: 200,
-        });
         const tutorialGroupsResponse: HttpResponse<TutorialGroup[]> = new HttpResponse({
             body: [new TutorialGroup()],
             status: 200,
@@ -421,8 +418,6 @@ describe('CourseOverviewComponent', () => {
             status: 200,
         });
 
-        jest.spyOn(competencyService, 'getAllPrerequisitesForCourse').mockReturnValue(of(competenciesResponse));
-        jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(competenciesResponse));
         jest.spyOn(tutorialGroupsService, 'getAllForCourse').mockReturnValue(of(tutorialGroupsResponse));
         jest.spyOn(tutorialGroupsConfigurationService, 'getOneOfCourse').mockReturnValue(of(configurationResponse));
 

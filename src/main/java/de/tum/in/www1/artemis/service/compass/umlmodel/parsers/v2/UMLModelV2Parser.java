@@ -43,6 +43,7 @@ public class UMLModelV2Parser {
             case PetriNet -> PetriNetParser.buildPetriNetFromJSON(modelElements, relationships, modelSubmissionId);
             case SyntaxTree -> SyntaxTreeParser.buildSyntaxTreeFromJSON(modelElements, relationships, modelSubmissionId);
             case Flowchart -> FlowchartParser.buildFlowchartFromJSON(modelElements, relationships, modelSubmissionId);
+            case BPMN -> throw new IllegalArgumentException("The V2 schema is not supported for BPMN diagrams");
         };
     }
 }
