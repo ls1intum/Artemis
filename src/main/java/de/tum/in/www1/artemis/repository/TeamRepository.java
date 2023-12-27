@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -23,6 +26,7 @@ import de.tum.in.www1.artemis.web.rest.errors.StudentsAlreadyAssignedException;
 @Repository
 public interface TeamRepository extends JpaRepository<Team, Long> {
 
+    @EntityGraph(type = LOAD, attributePaths = "students")
     List<Team> findAllByExerciseId(@Param("exerciseId") Long exerciseId);
 
     List<Team> findAllByExerciseCourseIdAndShortName(@Param("courseId") Long courseId, @Param("shortName") String shortName);
@@ -36,7 +40,7 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     @Query("""
             SELECT COUNT(DISTINCT team)
             FROM Team team
-            WHERE team.exercise.id = :#{#exerciseId}
+            WHERE team.exercise.id = :exerciseId
             """)
     Integer getNumberOfTeamsForExercise(@Param("exerciseId") Long exerciseId);
 
@@ -60,8 +64,13 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     @Query(value = "select distinct team from Team team left join fetch team.students where team.exercise.id = :#{#exerciseId} and team.owner.id = :#{#teamOwnerId}")
     List<Team> findAllByExerciseIdAndTeamOwnerIdWithEagerStudents(@Param("exerciseId") long exerciseId, @Param("teamOwnerId") long teamOwnerId);
 
-    @Query("select team from Team team left join fetch team.students where team.id = :#{#teamId}")
-    Optional<Team> findOneWithEagerStudents(@Param("teamId") Long teamId);
+    @Query("""
+            SELECT team
+            FROM Team team
+                LEFT JOIN FETCH team.students
+            WHERE team.id = :teamId
+            """)
+    Optional<Team> findWithStudentsById(@Param("teamId") Long teamId);
 
     /**
      * Returns all teams for an exercise (optionally filtered for a specific tutor who owns the teams)
@@ -98,7 +107,8 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
             team.setLastModifiedDate(Instant.now());
         }
         team.setExercise(exercise);
-        return save(team);
+        team = save(team);
+        return findWithStudentsByIdElseThrow(team.getId());
     }
 
     /**
@@ -121,5 +131,9 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
 
     default Team findByIdElseThrow(long teamId) throws EntityNotFoundException {
         return findById(teamId).orElseThrow(() -> new EntityNotFoundException("Team", teamId));
+    }
+
+    default Team findWithStudentsByIdElseThrow(long teamId) throws EntityNotFoundException {
+        return findWithStudentsById(teamId).orElseThrow(() -> new EntityNotFoundException("Team", teamId));
     }
 }

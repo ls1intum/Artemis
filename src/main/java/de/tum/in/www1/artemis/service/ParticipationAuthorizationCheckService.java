@@ -6,11 +6,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
@@ -25,12 +24,15 @@ public class ParticipationAuthorizationCheckService {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final TeamRepository teamRepository;
+
     public ParticipationAuthorizationCheckService(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, TeamRepository teamRepository) {
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
 
         this.authCheckService = authCheckService;
+        this.teamRepository = teamRepository;
     }
 
     /**
@@ -68,6 +70,10 @@ public class ParticipationAuthorizationCheckService {
      * @return True, if the user is allowed to access the participation; false otherwise.
      */
     public boolean canAccessParticipation(@NotNull final ParticipationInterface participation, final User user) {
+        if (participation instanceof StudentParticipation studentParticipation && studentParticipation.getParticipant() instanceof Team team) {
+            // eager load the team with students so their information can be used for the access check below
+            studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
+        }
         if (participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation) {
             return canAccessProgrammingParticipation(programmingExerciseParticipation, user);
         }

@@ -156,7 +156,7 @@ public class TeamResource {
         if (!team.getId().equals(teamId)) {
             throw new BadRequestAlertException("The team has an incorrect id.", ENTITY_NAME, "wrongId");
         }
-        Optional<Team> existingTeam = teamRepository.findById(teamId);
+        Optional<Team> existingTeam = teamRepository.findWithStudentsById(teamId);
         if (existingTeam.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -220,11 +220,7 @@ public class TeamResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Team> getTeam(@PathVariable long exerciseId, @PathVariable long teamId) {
         log.debug("REST request to get Team : {}", teamId);
-        Optional<Team> optionalTeam = teamRepository.findOneWithEagerStudents(teamId);
-        if (optionalTeam.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        Team team = optionalTeam.get();
+        Team team = teamRepository.findWithStudentsByIdElseThrow(teamId);
         if (team.getExercise() != null && !team.getExercise().getId().equals(exerciseId)) {
             throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
         }
@@ -268,7 +264,7 @@ public class TeamResource {
     public ResponseEntity<Void> deleteTeam(@PathVariable long exerciseId, @PathVariable long teamId) {
         log.info("REST request to delete Team with id {} in exercise with id {}", teamId, exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Team team = teamRepository.findByIdElseThrow(teamId);
+        Team team = teamRepository.findWithStudentsByIdElseThrow(teamId);
         if (team.getExercise() != null && !team.getExercise().getId().equals(exerciseId)) {
             throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
         }
@@ -283,9 +279,9 @@ public class TeamResource {
         // delete all team scores associated with the team
         teamScoreRepository.deleteAllByTeamId(team.getId());
 
-        teamRepository.delete(team);
-
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, team, null);
+
+        teamRepository.delete(team);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, Long.toString(teamId))).build();
     }
 

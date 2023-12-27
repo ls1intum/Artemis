@@ -272,7 +272,11 @@ public class ParticipationResource {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
-
+        if (participation.getParticipant() instanceof Team team) {
+            // eager load the team with students so their information can be access check below
+            participation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
+        }
+        // TODO: this check is done below as well with "checkAccessPermissionOwner"
         if (!participation.isOwnedBy(principal.getName())) {
             throw new AccessForbiddenException("You are not the user of this participation");
         }
@@ -286,7 +290,7 @@ public class ParticipationResource {
             throw new AccessForbiddenException("You are not allowed to resume that participation.");
         }
 
-        // There is a second participation of that student in the exericse that is inactive/finished now
+        // There is a second participation of that student in the exercise that is inactive/finished now
         Optional<StudentParticipation> optionalOtherStudentParticipation = participationService.findOneByExerciseAndParticipantAnyStateAndTestRun(programmingExercise, user,
                 !participation.isPracticeMode());
         if (optionalOtherStudentParticipation.isPresent()) {

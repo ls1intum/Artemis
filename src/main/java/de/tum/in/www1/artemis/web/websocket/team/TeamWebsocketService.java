@@ -4,6 +4,7 @@ import java.util.*;
 
 import javax.annotation.Nullable;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -12,6 +13,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.web.websocket.dto.TeamAssignmentPayload;
 
@@ -24,8 +26,11 @@ public class TeamWebsocketService {
 
     private final String assignmentTopic = "/topic/team-assignments";
 
-    public TeamWebsocketService(WebsocketMessagingService websocketMessagingService) {
+    private final TeamRepository teamRepository;
+
+    public TeamWebsocketService(WebsocketMessagingService websocketMessagingService, TeamRepository teamRepository) {
         this.websocketMessagingService = websocketMessagingService;
+        this.teamRepository = teamRepository;
     }
 
     /**
@@ -44,6 +49,9 @@ public class TeamWebsocketService {
     public void sendTeamAssignmentUpdate(Exercise exercise, @Nullable Team existingTeam, @Nullable Team updatedTeam, List<StudentParticipation> participationsOfUpdatedTeam) {
         // Users in the existing team that are no longer in the updated team were unassigned => inform them
         if (existingTeam != null) {
+            if (!Hibernate.isInitialized(existingTeam.getStudents())) {
+                existingTeam = teamRepository.findWithStudentsByIdElseThrow(existingTeam.getId());
+            }
             TeamAssignmentPayload payload = new TeamAssignmentPayload(exercise, null, List.of());
             Set<User> unassignedUsers = new HashSet<>(existingTeam.getStudents());
             unassignedUsers.removeAll(Optional.ofNullable(updatedTeam).map(Team::getStudents).orElse(Set.of()));
@@ -52,6 +60,9 @@ public class TeamWebsocketService {
 
         // Users in the updated team that were not yet part of the existing team were newly assigned => inform them
         if (updatedTeam != null) {
+            if (!Hibernate.isInitialized(updatedTeam.getStudents())) {
+                updatedTeam = teamRepository.findWithStudentsByIdElseThrow(updatedTeam.getId());
+            }
             TeamAssignmentPayload payload = new TeamAssignmentPayload(exercise, updatedTeam, participationsOfUpdatedTeam);
             Set<User> assignedUsers = new HashSet<>(updatedTeam.getStudents());
             assignedUsers.removeAll(Optional.ofNullable(existingTeam).map(Team::getStudents).orElse(Set.of()));
