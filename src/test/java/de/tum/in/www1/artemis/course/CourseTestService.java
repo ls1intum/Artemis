@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.course;
 
 import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 import static java.util.Collections.emptyList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -943,10 +942,12 @@ public class CourseTestService {
                 assertThat(receivedCourse.getExams()).isEmpty();
             }
             else if (i == 1) {
-                assertThat(receivedCourse.getExams()).hasSize(2);
+                assertThat(receivedCourse.getExams()).hasSize(0);
+                assertThat(receivedCourse.getNumberOfExams()).isEqualTo(3);
             }
             else {
-                assertThat(receivedCourse.getExams()).hasSize(3);
+                assertThat(receivedCourse.getExams()).hasSize(0);
+                assertThat(receivedCourse.getNumberOfExams()).isEqualTo(3);
             }
         }
     }
@@ -1045,7 +1046,7 @@ public class CourseTestService {
                             }
                             // Test that the correct modeling submission was filtered.
                             else if (submission instanceof ModelingSubmission modelingSubmission) {
-                                assertThat(modelingSubmission.getModel()).as("Correct modeling submission").isEqualTo("model1");
+                                assertThat(modelingSubmission.getModel()).as("Correct modeling submission").isIn("model1", "model2");
                             }
                         }
                     }

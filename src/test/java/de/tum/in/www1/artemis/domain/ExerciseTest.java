@@ -30,7 +30,7 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
 
     private Exercise exercise;
 
-    private List<StudentParticipation> studentParticipations;
+    private Set<StudentParticipation> studentParticipations;
 
     private StudentParticipation studentParticipationInitialized;
 
@@ -63,7 +63,7 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
         studentParticipationFinished = ParticipationFactory.generateStudentParticipationWithoutUser(InitializationState.FINISHED, exercise);
         studentParticipationUninitialized = ParticipationFactory.generateStudentParticipationWithoutUser(InitializationState.UNINITIALIZED, exercise);
 
-        studentParticipations = Arrays.asList(studentParticipationInactive, studentParticipationFinished, studentParticipationUninitialized, studentParticipationInitialized);
+        studentParticipations = Set.of(studentParticipationInactive, studentParticipationFinished, studentParticipationUninitialized, studentParticipationInitialized);
 
         ratedResult = new Result();
         ratedResult.setRated(true);
@@ -91,13 +91,13 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void findRelevantParticipation() {
-        List<StudentParticipation> relevantParticipations = exercise.findRelevantParticipation(studentParticipations);
+        var relevantParticipations = exercise.findRelevantParticipation(studentParticipations);
         assertThat(relevantParticipations).containsExactly(studentParticipationFinished);
     }
 
     @Test
     void findRelevantParticipation_empty() {
-        List<StudentParticipation> relevantParticipations = exercise.findRelevantParticipation(new ArrayList<>());
+        var relevantParticipations = exercise.findRelevantParticipation(Set.of());
         assertThat(relevantParticipations).isEmpty();
     }
 
@@ -110,7 +110,7 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
         studentParticipationFinished.setExercise(modelingExercise);
         studentParticipationUninitialized.setExercise(modelingExercise);
 
-        List<StudentParticipation> relevantParticipations = modelingExercise.findRelevantParticipation(studentParticipations);
+        var relevantParticipations = modelingExercise.findRelevantParticipation(studentParticipations);
         assertThat(relevantParticipations).containsExactly(studentParticipationFinished);
     }
 
@@ -123,7 +123,7 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
         studentParticipationFinished.setExercise(textExercise);
         studentParticipationUninitialized.setExercise(textExercise);
 
-        List<StudentParticipation> relevantParticipations = textExercise.findRelevantParticipation(studentParticipations);
+        var relevantParticipations = textExercise.findRelevantParticipation(studentParticipations);
         assertThat(relevantParticipations).containsExactly(studentParticipationFinished);
     }
 
@@ -163,7 +163,7 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void filterForCourseDashboard_emptyParticipations() {
-        exerciseService.filterForCourseDashboard(exercise, new ArrayList<>(), "student", true);
+        exerciseService.filterForCourseDashboard(exercise, Set.of(), "student", true);
         assertThat(exercise.getStudentParticipations()).isEmpty();
     }
 
@@ -246,13 +246,13 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(result).isNull();
     }
 
-    private List<StudentParticipation> filterForCourseDashboard_prepareParticipations() {
+    private Set<StudentParticipation> filterForCourseDashboard_prepareParticipations() {
         StudentParticipation participation = new StudentParticipation();
         participation.setInitializationState(InitializationState.INITIALIZED);
         participation.setExercise(exercise);
         participation.setSubmissions(Set.of(submission1, submission2, submission3));
 
-        List<StudentParticipation> participations = new ArrayList<>();
+        Set<StudentParticipation> participations = new HashSet<>();
         participations.add(participation);
 
         return participations;

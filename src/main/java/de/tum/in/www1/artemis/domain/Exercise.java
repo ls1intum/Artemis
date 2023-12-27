@@ -465,14 +465,14 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * @param participations the list of available participations
      * @return the found participation in an unmodifiable list or the empty list, if none exists
      */
-    public List<StudentParticipation> findRelevantParticipation(List<StudentParticipation> participations) {
+    public Set<StudentParticipation> findRelevantParticipation(Set<StudentParticipation> participations) {
         StudentParticipation relevantParticipation = null;
         for (StudentParticipation participation : participations) {
             if (participation.getExercise() != null && participation.getExercise().equals(this)) {
                 if (participation.getInitializationState() == InitializationState.INITIALIZED) {
                     // InitializationState INITIALIZED is preferred
                     // => if we find one, we can return immediately
-                    return List.of(participation);
+                    return Set.of(participation);
                 }
                 else if (participation.getInitializationState() == InitializationState.INACTIVE) {
                     // InitializationState INACTIVE is also ok
@@ -483,11 +483,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
                 else if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise
                         || participation.getExercise() instanceof FileUploadExercise
                         || (participation.getExercise() instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
-                    return List.of(participation);
+                    return Set.of(participation);
                 }
             }
         }
-        return relevantParticipation != null ? List.of(relevantParticipation) : Collections.emptyList();
+        return relevantParticipation != null ? Set.of(relevantParticipation) : Collections.emptySet();
     }
 
     /**

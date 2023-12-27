@@ -501,22 +501,28 @@ public class CourseResource {
      */
     @GetMapping("courses/for-dashboard")
     @EnforceAtLeastStudent
-    public List<CourseForDashboardDTO> getCoursesForDashboard() {
+    public Set<CourseForDashboardDTO> getCoursesForDashboard() {
         long timeNanoStart = System.nanoTime();
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("Request to get all courses user {} has access to with exams, lectures, exercises, participations, submissions and results + calculated scores", user.getLogin());
-        List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(user);
-        log.debug("courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser done");
+        Set<Course> courses = courseService.findAllActiveWithExercisesForUser(user);
+        log.debug("courseService.findAllActiveWithExercisesForUser done");
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, false);
+
+        // TODO: add a DB call to find active real exam(s) for the current user (in which the user is registered) to display them immediately in the course overview for faster
+        // navigation
+
         log.debug("courseService.fetchParticipationsWithSubmissionsAndResultsForCourses done");
         // TODO: we should avoid fetching plagiarism in the future, it's unnecessary for 99.9% of the cases
         courseService.fetchPlagiarismCasesForCourseExercises(courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet()), user.getId());
+
         log.debug("courseService.fetchPlagiarismCasesForCourseExercises done");
         // TODO: loading the grading scale here is only done to handle edge cases, we should avoid it, it's unnecessary for 90% of the cases and can be done when navigating into
         // the course
         Set<GradingScale> gradingScales = gradingScaleRepository.findAllByCourseIds(courses.stream().map(Course::getId).collect(Collectors.toSet()));
+
         log.debug("gradingScaleRepository.findAllByCourseIds done");
-        List<CourseForDashboardDTO> coursesForDashboard = new ArrayList<>();
+        Set<CourseForDashboardDTO> coursesForDashboard = new HashSet<>();
         for (Course course : courses) {
             GradingScale gradingScale = gradingScales.stream().filter(scale -> scale.getCourse().getId().equals(course.getId())).findFirst().orElse(null);
             CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId());
@@ -526,15 +532,14 @@ public class CourseResource {
         return coursesForDashboard;
     }
 
-    private void logDuration(List<Course> courses, User user, long timeNanoStart, String path) {
+    private void logDuration(Collection<Course> courses, User user, long timeNanoStart, String path) {
         if (log.isInfoEnabled()) {
             Set<Exercise> exercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
             Map<ExerciseMode, List<Exercise>> exercisesGroupedByExerciseMode = exercises.stream().collect(Collectors.groupingBy(Exercise::getMode));
             int noOfIndividualExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL), List.of()).size();
             int noOfTeamExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM), List.of()).size();
-            int noOfExams = courses.stream().mapToInt(course -> course.getExams().size()).sum();
-            log.info("{} finished in {} for {} courses with {} individual exercise(s), {} team exercise(s), and {} exam(s) for user {}", path,
-                    TimeLogUtil.formatDurationFrom(timeNanoStart), courses.size(), noOfIndividualExercises, noOfTeamExercises, noOfExams, user.getLogin());
+            log.info("{} finished in {} for {} courses with {} individual exercise(s) and {} team exercise(s) for user {}", path, TimeLogUtil.formatDurationFrom(timeNanoStart),
+                    courses.size(), noOfIndividualExercises, noOfTeamExercises, user.getLogin());
         }
     }
 
