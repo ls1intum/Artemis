@@ -460,6 +460,8 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     /**
+     * TODO: this method should be refactored/improved. It is almost static except the almost hidden part "exercise.equals(this)"
+     * In addition, it is implemented in an ambiguous way, because it's completely unclear, what relevant means here, in addition the method name does not fit to the return type
      * Find a relevant participation for this exercise (relevancy depends on InitializationState)
      *
      * @param participations the list of available participations
@@ -468,7 +470,8 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     public Set<StudentParticipation> findRelevantParticipation(Set<StudentParticipation> participations) {
         StudentParticipation relevantParticipation = null;
         for (StudentParticipation participation : participations) {
-            if (participation.getExercise() != null && participation.getExercise().equals(this)) {
+            var exercise = participation.getExercise();
+            if (exercise != null && exercise.equals(this)) {
                 if (participation.getInitializationState() == InitializationState.INITIALIZED) {
                     // InitializationState INITIALIZED is preferred
                     // => if we find one, we can return immediately
@@ -480,10 +483,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
                     relevantParticipation = participation;
                 }
                 // this case handles FINISHED participations which typically happen when manual results are involved
-                else if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise
-                        || participation.getExercise() instanceof FileUploadExercise
-                        || (participation.getExercise() instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
-                    return Set.of(participation);
+                else if (exercise instanceof ModelingExercise || exercise instanceof TextExercise || exercise instanceof FileUploadExercise
+                        || (exercise instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
+                    relevantParticipation = participation;
                 }
             }
         }

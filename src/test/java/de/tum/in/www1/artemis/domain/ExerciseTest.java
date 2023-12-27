@@ -92,7 +92,7 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     void findRelevantParticipation() {
         var relevantParticipations = exercise.findRelevantParticipation(studentParticipations);
-        assertThat(relevantParticipations).containsExactly(studentParticipationFinished);
+        assertThat(relevantParticipations).containsExactly(studentParticipationInitialized);
     }
 
     @Test
@@ -111,7 +111,7 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
         studentParticipationUninitialized.setExercise(modelingExercise);
 
         var relevantParticipations = modelingExercise.findRelevantParticipation(studentParticipations);
-        assertThat(relevantParticipations).containsExactly(studentParticipationFinished);
+        assertThat(relevantParticipations).containsExactly(studentParticipationInitialized);
     }
 
     @Test
@@ -124,7 +124,7 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
         studentParticipationUninitialized.setExercise(textExercise);
 
         var relevantParticipations = textExercise.findRelevantParticipation(studentParticipations);
-        assertThat(relevantParticipations).containsExactly(studentParticipationFinished);
+        assertThat(relevantParticipations).containsExactly(studentParticipationInitialized);
     }
 
     /* Primarily the functionality of findAppropriateSubmissionByResults() is tested with the following tests */
@@ -136,11 +136,13 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
         ratedResult.setAssessmentType(AssessmentType.MANUAL);
         ratedResult.setCompletionDate(ZonedDateTime.now().minusHours(2));
 
-        exerciseService.filterForCourseDashboard(exercise, studentParticipations, "student", true);
+        // only use the relevant participation
+        exerciseService.filterForCourseDashboard(exercise, Set.of(studentParticipationFinished), "student", true);
         var submissions = exercise.getStudentParticipations().iterator().next().getSubmissions();
         // We should only get the one relevant submission to send to the client
         assertThat(submissions).hasSize(1);
         Result result = submissions.iterator().next().getLatestResult();
+        assertThat(result).isNotNull();
         assertThat(result.getAssessor()).isNull();
     }
 

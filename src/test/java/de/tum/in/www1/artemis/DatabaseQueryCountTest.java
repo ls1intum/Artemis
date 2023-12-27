@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.CoursesForDashboardDTO;
 
 class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -52,7 +53,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThatDb(() -> {
             log.info("Start courses for dashboard call for multiple courses");
-            var userCourses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
+            var userCourses = request.get("/api/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
             log.info("Finish courses for dashboard call for multiple courses");
             return userCourses;
         }).hasBeenCalledAtMostTimes(10);

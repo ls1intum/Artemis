@@ -179,7 +179,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(course, null, student.getId(), Set.of());
+        CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(course, null, student.getId());
         assertThat(courseForDashboard.course()).isEqualTo(course);
         CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
         assertThat(totalCourseScores.maxPoints()).isZero();
@@ -199,7 +199,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         Course pastCourse = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, null, student.getId(), Set.of());
+        CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, null, student.getId());
         assertThat(courseForDashboard.course()).isEqualTo(pastCourse);
         CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
         assertThat(totalCourseScores.maxPoints()).isEqualTo(5.0);
@@ -242,7 +242,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
             });
         });
 
-        CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, gradingScale, student.getId(), Set.of());
+        CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, gradingScale, student.getId());
         assertThat(courseForDashboard.course()).isEqualTo(pastCourse);
         CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
         assertThat(totalCourseScores.maxPoints()).isEqualTo(8.0);
