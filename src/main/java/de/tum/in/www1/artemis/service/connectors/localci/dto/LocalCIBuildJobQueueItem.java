@@ -2,13 +2,14 @@ package de.tum.in.www1.artemis.service.connectors.localci.dto;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.ZonedDateTime;
 
 public class LocalCIBuildJobQueueItem implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private String id;
+    private long id;
 
     private String name;
 
@@ -16,15 +17,15 @@ public class LocalCIBuildJobQueueItem implements Serializable {
 
     private long participationId;
 
+    private String repositoryTypeOrUserName;
+
     private String commitHash;
 
-    private long expirationTime;
-
-    private long submissionDate;
+    private ZonedDateTime submissionDate;
 
     private int retryCount;
 
-    private long buildStartDate;
+    private ZonedDateTime buildStartDate;
 
     // 1-5, 1 is highest priority
     private int priority;
@@ -33,10 +34,12 @@ public class LocalCIBuildJobQueueItem implements Serializable {
 
     private boolean isPushToTestRepository;
 
-    public LocalCIBuildJobQueueItem(String name, long participationId, String commitHash, long submissionDate, int priority, long courseId, boolean isPushToTestRepository) {
-        this.id = String.valueOf(participationId) + submissionDate;
+    public LocalCIBuildJobQueueItem(String name, long participationId, String repositoryTypeOrUserName, String commitHash, ZonedDateTime submissionDate, int priority,
+            long courseId, boolean isPushToTestRepository) {
+        this.id = Long.parseLong(String.valueOf(participationId) + submissionDate.toInstant().toEpochMilli());
         this.name = name;
         this.participationId = participationId;
+        this.repositoryTypeOrUserName = repositoryTypeOrUserName;
         this.commitHash = commitHash;
         this.submissionDate = submissionDate;
         this.priority = priority;
@@ -44,11 +47,11 @@ public class LocalCIBuildJobQueueItem implements Serializable {
         this.isPushToTestRepository = isPushToTestRepository;
     }
 
-    public String getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(long id) {
         this.id = id;
     }
 
@@ -76,6 +79,14 @@ public class LocalCIBuildJobQueueItem implements Serializable {
         this.participationId = participationId;
     }
 
+    public String getRepositoryTypeOrUserName() {
+        return repositoryTypeOrUserName;
+    }
+
+    public void setRepositoryTypeOrUserName(String repositoryTypeOrUserName) {
+        this.repositoryTypeOrUserName = repositoryTypeOrUserName;
+    }
+
     public String getCommitHash() {
         return commitHash;
     }
@@ -84,27 +95,19 @@ public class LocalCIBuildJobQueueItem implements Serializable {
         this.commitHash = commitHash;
     }
 
-    public long getExpirationTime() {
-        return expirationTime;
-    }
-
-    public void setExpirationTime(long expirationTime) {
-        this.expirationTime = expirationTime;
-    }
-
-    public long getSubmissionDate() {
+    public ZonedDateTime getSubmissionDate() {
         return submissionDate;
     }
 
-    public void setSubmissionDate(long submissionDate) {
+    public void setSubmissionDate(ZonedDateTime submissionDate) {
         this.submissionDate = submissionDate;
     }
 
-    public long getBuildStartDate() {
+    public ZonedDateTime getBuildStartDate() {
         return buildStartDate;
     }
 
-    public void setBuildStartDate(long buildStartDate) {
+    public void setBuildStartDate(ZonedDateTime buildStartDate) {
         this.buildStartDate = buildStartDate;
     }
 
@@ -149,7 +152,8 @@ public class LocalCIBuildJobQueueItem implements Serializable {
 
     @Override
     public String toString() {
-        return "LocalCIBuildJobQueueItem{" + "name='" + name + '\'' + ", participationId=" + participationId + ", commitHash='" + commitHash + '\'' + ", submissionDate="
-                + submissionDate + ", retryCount=" + retryCount + ", priority=" + priority + ", buildStartDate=" + buildStartDate + '}';
+        return "LocalCIBuildJobQueueItem{" + "id='" + id + '\'' + ", name='" + name + '\'' + ", participationId=" + participationId + ", repositoryTypeOrUserName='"
+                + repositoryTypeOrUserName + '\'' + ", commitHash='" + commitHash + '\'' + ", submissionDate=" + submissionDate + ", retryCount=" + retryCount + ", buildStartDate="
+                + buildStartDate + ", priority=" + priority + ", courseId=" + courseId + ", isPushToTestRepository=" + isPushToTestRepository + '}';
     }
 }
