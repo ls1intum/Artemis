@@ -473,4 +473,16 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
                 examIdAndRegisteredUsersCountPair -> Math.toIntExact(examIdAndRegisteredUsersCountPair[1]) // registeredUsersCount
         ));
     }
+
+    @Query("""
+            SELECT e
+            FROM Exam e
+                LEFT JOIN e.examUsers registeredUsers
+            WHERE e.course.id IN :courseIds
+                AND e.visibleDate <= :visible
+                AND e.endDate >= :end
+                AND e.testExam = false
+                AND registeredUsers.user.id = :userId
+            """)
+    Set<Exam> findActiveExams(@Param("courseIds") Set<Long> courseIds, @Param("userId") Long userId, @Param("visible") ZonedDateTime visible, @Param("end") ZonedDateTime end);
 }

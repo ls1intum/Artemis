@@ -1,5 +1,6 @@
 import { Course } from 'app/entities/course.model';
 import { CourseScores } from 'app/course/course-scores/course-scores';
+import { Exam } from 'app/entities/exam.model';
 
 export class CourseForDashboardDTO {
     course: Course;
@@ -13,6 +14,8 @@ export class CourseForDashboardDTO {
     quizScores: CourseScores;
 
     participationResults: ParticipationResultDTO[];
+
+    activeExams: Exam[];
 
     constructor() {}
 }
