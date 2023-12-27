@@ -18,12 +18,12 @@ plugins {
     id "io.spring.dependency-management" version "1.1.4"
     id "com.google.cloud.tools.jib" version "3.4.0"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
-    id "com.diffplug.spotless" version "6.22.0"
+    id "com.diffplug.spotless" version "6.23.3"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.50.0"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
     id "com.gorylenko.gradle-git-properties" version "2.4.1"
-    id "org.owasp.dependencycheck" version "9.0.3"
+    id "org.owasp.dependencycheck" version "9.0.7"
     id "com.adarshr.test-logger" version "4.0.0"
 }
 
@@ -236,7 +236,7 @@ dependencies {
         }
     }
 
-    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.22.0"
+    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.22.1"
 
     implementation "uk.ac.ox.ctl:spring-security-lti13:0.0.4"
 
@@ -274,7 +274,7 @@ dependencies {
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.12.0"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.12.1"
     implementation "net.logstash.logback:logstash-logback-encoder:7.4"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
@@ -316,8 +316,9 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-starter-config:3.1.8"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
 
+    // TODO: updating to a later version breaks the build
     implementation "io.netty:netty-all:4.1.101.Final"
-    implementation "io.projectreactor.netty:reactor-netty:1.1.13"
+    implementation "io.projectreactor.netty:reactor-netty:1.1.14"
     implementation "org.springframework:spring-messaging:5.3.31"
     implementation "org.springframework.retry:spring-retry:2.0.4"
 
@@ -342,7 +343,7 @@ dependencies {
 
     // zalando problem spring web can only be updated when we support Spring 6
     implementation "org.zalando:problem-spring-web:0.27.0"
-    implementation "com.ibm.icu:icu4j:74.1"
+    implementation "com.ibm.icu:icu4j:74.2"
     implementation "com.github.seancfoley:ipaddress:5.4.0"
     implementation "org.apache.maven:maven-model:3.9.6"
     implementation "org.apache.pdfbox:pdfbox:3.0.1"
@@ -381,7 +382,7 @@ dependencies {
     testImplementation "org.awaitility:awaitility:4.2.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.2.0"
     testImplementation "org.gradle:gradle-tooling-api:8.5"
-    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.2.2"
+    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.2.3"
     testImplementation "com.opencsv:opencsv:5.9"
     testImplementation("io.zonky.test:embedded-database-spring-test:2.4.0") {
         exclude group: 'org.testcontainers', module: 'mariadb'
@@ -391,7 +392,7 @@ dependencies {
     testImplementation "org.skyscreamer:jsonassert:1.5.1"
     testImplementation ("net.bytebuddy:byte-buddy") {
         version {
-            strictly "1.14.10"
+            strictly "1.14.11"
         }
     }
 
