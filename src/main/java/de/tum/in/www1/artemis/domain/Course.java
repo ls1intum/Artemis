@@ -267,6 +267,50 @@ public class Course extends DomainObject {
     @Transient
     private Long numberOfStudentsTransient;
 
+    @Transient
+    private Long numberOfLecturesTransient;
+
+    @Transient
+    private Long numberOfTutorialGroupsTransient;
+
+    @Transient
+    private Long numberOfCompetenciesTransient;
+
+    @Transient
+    private Long numberOfPrerequisitesTransient;
+
+    public Long getNumberOfLectures() {
+        return numberOfLecturesTransient;
+    }
+
+    public Long getNumberOfTutorialGroups() {
+        return numberOfTutorialGroupsTransient;
+    }
+
+    public Long getNumberOfCompetencies() {
+        return numberOfCompetenciesTransient;
+    }
+
+    public Long getNumberOfPrerequisites() {
+        return numberOfPrerequisitesTransient;
+    }
+
+    public void setNumberOfLectures(Long numberOfLectures) {
+        this.numberOfLecturesTransient = numberOfLectures;
+    }
+
+    public void setNumberOfTutorialGroups(Long numberOfTutorialGroups) {
+        this.numberOfTutorialGroupsTransient = numberOfTutorialGroups;
+    }
+
+    public void setNumberOfCompetencies(Long numberOfCompetencies) {
+        this.numberOfCompetenciesTransient = numberOfCompetencies;
+    }
+
+    public void setNumberOfPrerequisites(Long numberOfPrerequisites) {
+        this.numberOfPrerequisitesTransient = numberOfPrerequisites;
+    }
+
     public String getTitle() {
         return title;
     }
