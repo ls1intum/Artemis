@@ -96,6 +96,11 @@ public class AthenaResource {
         final var exercise = exerciseFetcher.apply(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
+        // Check if feedback suggestions are actually enabled
+        if (!exercise.isFeedbackSuggestionsEnabled()) {
+            throw new InternalServerErrorException("Feedback suggestions are not enabled for this exercise");
+        }
+
         final var submission = submissionFetcher.apply(submissionId);
 
         try {
@@ -130,6 +135,7 @@ public class AthenaResource {
     @GetMapping("athena/programming-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ProgrammingFeedbackDTO>> getProgrammingFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
+        Exercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         return getFeedbackSuggestions(exerciseId, submissionId, programmingExerciseRepository::findByIdElseThrow, programmingSubmissionRepository::findByIdElseThrow,
                 athenaFeedbackSuggestionsService::getProgrammingFeedbackSuggestions);
     }
