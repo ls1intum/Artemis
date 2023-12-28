@@ -22,49 +22,58 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface TutorialGroupSessionRepository extends JpaRepository<TutorialGroupSession, Long> {
 
     @Query("""
-            SELECT tutorialGroupSession
-            FROM TutorialGroupSession tutorialGroupSession
-            WHERE tutorialGroupSession.tutorialGroup.id = :#{#tutorialGroupId}
-            AND tutorialGroupSession.status = :#{#status}
-            AND tutorialGroupSession.start >= :#{#now}
-            ORDER BY tutorialGroupSession.start""")
+            SELECT session
+            FROM TutorialGroupSession session
+            WHERE session.tutorialGroup.id = :#{#tutorialGroupId}
+                AND session.status = :#{#status}
+                AND session.start >= :#{#now}
+            ORDER BY session.start
+            """)
     List<TutorialGroupSession> findNextSessionsOfStatus(@Param("tutorialGroupId") Long tutorialGroupId, @Param("now") ZonedDateTime now,
             @Param("status") TutorialGroupSessionStatus status);
 
     @Query("""
-            SELECT tutorialGroupSession
-            FROM TutorialGroupSession tutorialGroupSession
-            WHERE tutorialGroupSession.tutorialGroup.id = :#{#tutorialGroupId}""")
+            SELECT session
+            FROM TutorialGroupSession session
+            WHERE session.tutorialGroup.id = :#{#tutorialGroupId}
+            """)
     Set<TutorialGroupSession> findAllByTutorialGroupId(@Param("tutorialGroupId") Long tutorialGroupId);
 
     @Query("""
-            SELECT tutorialGroupSession
-            FROM TutorialGroupSession tutorialGroupSession
-            WHERE tutorialGroupSession.tutorialGroupSchedule.id = :#{#scheduleId}""")
+            SELECT session
+            FROM TutorialGroupSession session
+            WHERE session.tutorialGroupSchedule.id = :#{#scheduleId}
+            """)
     Set<TutorialGroupSession> findAllByScheduleId(@Param("scheduleId") Long scheduleId);
 
     @Query("""
-            SELECT tutorialGroupSession
-            FROM TutorialGroupSession tutorialGroupSession
-            WHERE tutorialGroupSession.start <= :#{#end} AND tutorialGroupSession.end >= :#{#start}
-            AND tutorialGroupSession.tutorialGroup = :#{#tutorialGroup}""")
+            SELECT session
+            FROM TutorialGroupSession session
+            WHERE session.start <= :#{#end}
+                AND session.end >= :#{#start}
+                AND session.tutorialGroup = :#{#tutorialGroup}
+            """)
     Set<TutorialGroupSession> findOverlappingInSameTutorialGroup(@Param("tutorialGroup") TutorialGroup tutorialGroup, @Param("start") ZonedDateTime start,
             @Param("end") ZonedDateTime end);
 
     @Query("""
-            SELECT tutorialGroupSession
-            FROM TutorialGroupSession tutorialGroupSession
-            WHERE tutorialGroupSession.start <= :#{#end} AND tutorialGroupSession.end >= :#{#start}
-            AND tutorialGroupSession.tutorialGroupSchedule IS NULL
-            AND tutorialGroupSession.tutorialGroup = :#{#tutorialGroup}""")
+            SELECT session
+            FROM TutorialGroupSession session
+            WHERE session.start <= :#{#end}
+                AND session.end >= :#{#start}
+                AND session.tutorialGroupSchedule IS NULL
+                AND session.tutorialGroup = :#{#tutorialGroup}
+            """)
     Set<TutorialGroupSession> findOverlappingIndividualSessionsInSameTutorialGroup(@Param("tutorialGroup") TutorialGroup tutorialGroup, @Param("start") ZonedDateTime start,
             @Param("end") ZonedDateTime end);
 
     @Query("""
-            SELECT tutorialGroupSession
-            FROM TutorialGroupSession tutorialGroupSession
-            WHERE tutorialGroupSession.start <= :#{#end} AND tutorialGroupSession.end >= :#{#start}
-            AND tutorialGroupSession.tutorialGroup.course = :#{#course}""")
+            SELECT session
+            FROM TutorialGroupSession session
+            WHERE session.start <= :#{#end}
+                AND session.end >= :#{#start}
+            AND session.tutorialGroup.course = :#{#course}
+            """)
     Set<TutorialGroupSession> findAllBetween(@Param("course") Course course, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
 
     Set<TutorialGroupSession> findAllByTutorialGroupFreePeriodId(Long freePeriodId);

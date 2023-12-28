@@ -134,19 +134,20 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "competencies", "learningPaths", "learningPaths.competencies" })
     Optional<Course> findWithEagerLearningPathsAndCompetenciesById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "lectures" })
+    // Note: we load attachments directly because otherwise, they will be loaded in subsequent DB calls due to the EAGER relationship
+    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments" })
     Optional<Course> findWithEagerLecturesById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures" })
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.attachments" })
     Optional<Course> findWithEagerExercisesAndLecturesById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits" })
+    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits", "lectures.attachments" })
     Optional<Course> findWithEagerLecturesAndLectureUnitsById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
     Optional<Course> findForUpdateById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "competencies", "prerequisites" })
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "lectures.attachments", "competencies", "prerequisites" })
     Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(long courseId);
 
     @Query("""
