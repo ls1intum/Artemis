@@ -1,8 +1,12 @@
 package de.tum.in.www1.artemis.util;
 
 import org.assertj.core.api.AbstractAssert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class QueryCountAssert<T, E extends Exception> extends AbstractAssert<QueryCountAssert<T, E>, ThrowingProducer<T, E>> {
+
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     private final HibernateQueryInterceptor interceptor;
 
@@ -27,6 +31,7 @@ public class QueryCountAssert<T, E extends Exception> extends AbstractAssert<Que
         if (result.callCount != times) {
             throw failureWithActualExpected(interceptor.getQueryCount(), times, "Expected <%d> queries, but <%d> were performed.", times, result.callCount);
         }
+        log.info("result.callCount: {}", result.callCount);
         return result.result;
     }
 
@@ -42,6 +47,7 @@ public class QueryCountAssert<T, E extends Exception> extends AbstractAssert<Que
         if (result.callCount > times) {
             throw failureWithActualExpected(interceptor.getQueryCount(), times, "Expected at most <%d> queries, but <%d> were performed.", times, result.callCount);
         }
+        log.info("result.callCount: {}", result.callCount);
         return result.result;
     }
 

@@ -65,6 +65,7 @@
             "startDate": "Start",
             "endDate": "Ende",
             "semester": "Semester",
+            "recentlyAccessed": "Zuletzt verwendet",
             "maxPoints": {
                 "title": "Maximale Punktzahl",
                 "info": "Dieser Wert wird für die Berechnung von Beispielen (z.B. im Notenschlüssel) verwendet und hat keinen Einfluss auf die Noten der Studierenden. Die Noten werden mit Hilfe der im Kurs erreichbaren Punkte berechnet."
