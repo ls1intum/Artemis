@@ -9,7 +9,6 @@ import { CodeAnalysisPagingService } from 'app/exercises/programming/manage/serv
 import { ProgrammingExercisePagingService } from 'app/exercises/programming/manage/services/programming-exercise-paging.service';
 import { QuizExercisePagingService } from 'app/exercises/quiz/manage/quiz-exercise-paging.service';
 import { ExercisePagingService } from 'app/exercises/shared/manage/exercise-paging.service';
-import { PagingService } from 'app/exercises/shared/manage/paging.service';
 import { TextExercisePagingService } from 'app/exercises/text/manage/text-exercise/text-exercise-paging.service';
 import { ImportComponent } from 'app/shared/import/import.component';
 import { SortService } from 'app/shared/service/sort.service';
@@ -46,7 +45,7 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
         // The exercise import component does not know yet which paging service to use
         // This gets determined based on the exercise type, which is not set when invoking the constructor
         // Therefore we temporaily use this empty paging service which directly gets overwritten in ngOnInit().
-        super(router, {} as unknown as PagingService<Exercise>, sortService, activeModal);
+        super(router, sortService, activeModal, undefined);
     }
 
     ngOnInit(): void {

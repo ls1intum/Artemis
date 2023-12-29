@@ -13,7 +13,7 @@ import { SortService } from 'app/shared/service/sort.service';
 export class CompetencyImportComponent extends ImportComponent<Competency> {
     @Input() public disabledIds: number[];
 
-    constructor(router: Router, pagingService: CompetencyPagingService, sortService: SortService, activeModal: NgbActiveModal) {
-        super(router, pagingService, sortService, activeModal);
+    constructor(router: Router, sortService: SortService, activeModal: NgbActiveModal, pagingService: CompetencyPagingService) {
+        super(router, sortService, activeModal, pagingService);
     }
 }

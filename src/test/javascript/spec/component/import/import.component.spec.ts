@@ -18,8 +18,8 @@ import { DummyPagingService } from '../manage/dummy-paging-service';
 
 @Component({ template: '' })
 class DummyImportComponent extends ImportComponent<BaseEntity> {
-    constructor(router: Router, pagingService: DummyPagingService, sortService: SortService, activeModal: NgbActiveModal) {
-        super(router, pagingService, sortService, activeModal);
+    constructor(router: Router, sortService: SortService, activeModal: NgbActiveModal, pagingService: DummyPagingService) {
+        super(router, sortService, activeModal, pagingService);
     }
 }
 describe('ImportComponent', () => {

@@ -11,8 +11,8 @@ import { SortService } from 'app/shared/service/sort.service';
     templateUrl: './lecture-import.component.html',
 })
 export class LectureImportComponent extends ImportComponent<Lecture> {
-    constructor(router: Router, pagingService: LecturePagingService, sortService: SortService, activeModal: NgbActiveModal) {
-        super(router, pagingService, sortService, activeModal);
+    constructor(router: Router, sortService: SortService, activeModal: NgbActiveModal, pagingService: LecturePagingService) {
+        super(router, sortService, activeModal, pagingService);
     }
     openLectureInNewTab(lecture: Lecture) {
         const url = this.router.serializeUrl(this.router.createUrlTree(['course-management', lecture.course!.id, 'lectures', lecture.id]));

@@ -32,13 +32,13 @@ export class ExamImportComponent extends ImportComponent<Exam> {
 
     constructor(
         router: Router,
-        pagingService: ExamImportPagingService,
         sortService: SortService,
         activeModal: NgbActiveModal,
+        pagingService: ExamImportPagingService,
         private examManagementService: ExamManagementService,
         private alertService: AlertService,
     ) {
-        super(router, pagingService, sortService, activeModal);
+        super(router, sortService, activeModal, pagingService);
     }
 
     /**

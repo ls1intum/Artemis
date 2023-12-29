@@ -21,12 +21,12 @@ export class ExampleSubmissionImportComponent extends ImportComponent<Submission
 
     constructor(
         router: Router,
-        pagingService: ExampleSubmissionImportPagingService,
         sortService: SortService,
         activeModal: NgbActiveModal,
+        pagingService: ExampleSubmissionImportPagingService,
         private exampleSubmissionService: ExampleSubmissionService,
     ) {
-        super(router, pagingService, sortService, activeModal);
+        super(router, sortService, activeModal, pagingService);
     }
 
     get searchTermEntered() {

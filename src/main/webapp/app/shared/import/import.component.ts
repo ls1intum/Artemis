@@ -34,9 +34,9 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
 
     protected constructor(
         protected router: Router,
-        protected pagingService: PagingService<T>,
         private sortService: SortService,
         protected activeModal: NgbActiveModal,
+        protected pagingService?: PagingService<T>,
     ) {}
 
     get page(): number {
@@ -140,7 +140,7 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
             .pipe(
                 debounceTime(debounce),
                 tap(() => (this.loading = true)),
-                switchMap(() => this.pagingService.search(this.state, this.createOptions())),
+                switchMap(() => this.pagingService!.search(this.state, this.createOptions())),
             )
             .subscribe((resp: SearchResult<T>) => {
                 this.content = resp;
