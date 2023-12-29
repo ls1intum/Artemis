@@ -74,7 +74,7 @@ const courseEmpty: Course = {};
 
 const exam1: Exam = { id: 3, endDate: endDate1, visibleDate: visibleDate1, course: courseEmpty };
 const exam2: Exam = { id: 4, course: courseEmpty };
-const exams = [exam1, exam2];
+const exams: Exam[] = [exam1, exam2];
 const course1: Course = {
     id: 1,
     exams,
