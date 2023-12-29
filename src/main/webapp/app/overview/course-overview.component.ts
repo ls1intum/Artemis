@@ -34,6 +34,7 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -110,6 +111,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private changeDetectorRef: ChangeDetectorRef,
         private metisConversationService: MetisConversationService,
         private router: Router,
+        private courseAccessStorageService: CourseAccessStorageService,
     ) {}
 
     async ngOnInit() {
@@ -118,6 +120,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         });
 
         this.course = this.courseStorageService.getCourse(this.courseId);
+
+        // Notify the course access storage service that the course has been accessed
+        this.courseAccessStorageService.onCourseAccessed(this.courseId);
 
         await firstValueFrom(this.loadCourse());
         await this.initAfterCourseLoad();
