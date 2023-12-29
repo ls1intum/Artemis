@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.service.connectors.aeolus;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -19,6 +22,7 @@ import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.BuildScriptProvider;
 
 /**
@@ -29,17 +33,50 @@ import de.tum.in.www1.artemis.service.connectors.BuildScriptProvider;
 @Profile("aeolus | localci")
 public class AeolusTemplateService {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(AeolusTemplateService.class);
+    private final Logger logger = LoggerFactory.getLogger(AeolusTemplateService.class);
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
+
+    private final ResourceLoaderService resourceLoaderService;
 
     private final Map<String, Windfile> templateCache = new ConcurrentHashMap<>();
 
     private final BuildScriptProvider buildScriptProvider;
 
-    public AeolusTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, BuildScriptProvider buildScriptProvider) {
+    public AeolusTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService,
+            BuildScriptProvider buildScriptProvider) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
+        this.resourceLoaderService = resourceLoaderService;
         this.buildScriptProvider = buildScriptProvider;
+        // load all scripts into the cache
+        cacheOnBoot();
+    }
+
+    private void cacheOnBoot() {
+        var resources = this.resourceLoaderService.getResources(Path.of("templates", "aeolus"));
+        for (var resource : resources) {
+            try {
+                String filename = resource.getFilename();
+                if (filename == null) {
+                    continue;
+                }
+                String directory = resource.getURL().getPath().split("templates/aeolus/")[1].split("/")[0];
+                String projectType = filename.split("_")[0].replace(".yaml", "");
+                Optional<ProjectType> optionalProjectType = Optional.empty();
+                if (!projectType.equals("default")) {
+                    optionalProjectType = Optional.of(ProjectType.valueOf(projectType.toUpperCase()));
+                }
+                String uniqueKey = directory + "_" + filename;
+                byte[] fileContent = IOUtils.toByteArray(resource.getInputStream());
+                String script = new String(fileContent, StandardCharsets.UTF_8);
+                Windfile windfile = readWindfile(script);
+                this.addInstanceVariablesToWindfile(windfile, ProgrammingLanguage.valueOf(directory.toUpperCase()), optionalProjectType);
+                templateCache.put(uniqueKey, windfile);
+            }
+            catch (IOException | IllegalArgumentException e) {
+                logger.error("Failed to load windfile {}", resource.getFilename(), e);
+            }
+        }
     }
 
     /**
@@ -90,7 +127,7 @@ public class AeolusTemplateService {
         }
         String scriptCache = buildScriptProvider.getCachedScript(uniqueKey);
         if (scriptCache == null) {
-            LOGGER.error("No windfile found for key {}", uniqueKey);
+            logger.error("No windfile found for key {}", uniqueKey);
             return null;
         }
         Windfile windfile = readWindfile(scriptCache);
@@ -111,7 +148,7 @@ public class AeolusTemplateService {
                     exercise.hasSequentialTestRuns(), exercise.isTestwiseCoverageEnabled());
         }
         catch (IOException e) {
-            LOGGER.info("No windfile for the settings of exercise {}", exercise.getId(), e);
+            logger.info("No windfile for the settings of exercise {}", exercise.getId(), e);
         }
         return null;
     }

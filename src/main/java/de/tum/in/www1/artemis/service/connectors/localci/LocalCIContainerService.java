@@ -38,7 +38,6 @@ import com.github.dockerjava.api.model.HostConfig;
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.connectors.BuildScriptProvider;
@@ -380,8 +379,6 @@ public class LocalCIContainerService {
      */
     public Path createBuildScript(ProgrammingExerciseParticipation participation, String containerName) {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-        boolean hasSequentialTestRuns = programmingExercise.hasSequentialTestRuns();
-        boolean hasStaticCodeAnalysis = programmingExercise.isStaticCodeAnalysisEnabled();
 
         Path scriptsPath = Path.of(localCIBuildScriptBasePath);
 
@@ -427,19 +424,8 @@ public class LocalCIContainerService {
                     buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir\n");
                 }
             });
-            // Fall back to hardcoded scripts for old exercises without windfile
-            // *****************
-            // TODO: Delete once windfile templates can be used as fallbacks
-            if (actions.isEmpty()) {
-                // Windfile actions are not defined, use default build script
-                switch (programmingExercise.getProgrammingLanguage()) {
-                    case JAVA, KOTLIN -> scriptForJavaKotlin(programmingExercise, buildScript, hasSequentialTestRuns, hasStaticCodeAnalysis);
-                    case PYTHON -> scriptForPython(buildScript);
-                    default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingExercise.getProgrammingLanguage());
-                }
-            }
+
         }
-        // *****************
         try {
             FileUtils.writeStringToFile(buildScriptPath.toFile(), buildScript.toString(), StandardCharsets.UTF_8);
         }
@@ -448,71 +434,6 @@ public class LocalCIContainerService {
         }
 
         return buildScriptPath;
-    }
-
-    private void scriptForJavaKotlin(ProgrammingExercise programmingExercise, StringBuilder buildScript, boolean hasSequentialTestRuns, boolean hasStaticCodeAnalysis) {
-        boolean isMaven = ProjectType.isMavenProject(programmingExercise.getProjectType());
-
-        if (isMaven) {
-            if (hasSequentialTestRuns) {
-                buildScript.append("""
-                        cd structural
-                        mvn clean test
-                        if [ $? -eq 0 ]; then
-                            cd ..
-                            cd behavior
-                            mvn clean test
-                        fi
-                        cd ..
-                        """);
-            }
-            else {
-                buildScript.append("""
-                        mvn clean test
-                        """);
-                if (hasStaticCodeAnalysis) {
-                    buildScript.append("""
-                            mvn checkstyle:checkstyle
-                            mvn pmd:pmd
-                            mvn spotbugs:spotbugs
-                            """);
-                }
-            }
-        }
-        else {
-            if (hasSequentialTestRuns) {
-                buildScript.append("""
-                        chmod +x gradlew
-                        ./gradlew clean structuralTests
-                        if [ $? -eq 0 ]; then
-                            ./gradlew behaviorTests
-                        fi
-                        """);
-            }
-            else {
-                buildScript.append("""
-                        chmod +x gradlew
-                        ./gradlew clean test
-                        """);
-                if (hasStaticCodeAnalysis) {
-                    buildScript.append("""
-                            ./gradlew check -x test
-                            """);
-                }
-            }
-        }
-    }
-
-    private void scriptForPython(StringBuilder buildScript) {
-        buildScript.append("""
-                python3 -m compileall . -q || error=true
-                if [ ! $error ]
-                then
-                    pytest --junitxml=test-reports/results.xml
-                else
-                    exit 1
-                fi
-                """);
     }
 
     /**
