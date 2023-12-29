@@ -22,6 +22,8 @@ import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-co
 import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
 import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
 import { LearningPathManagementComponent } from 'app/course/learning-paths/learning-path-management/learning-path-management.component';
+import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
+import { BuildQueueGuard } from 'app/localci/build-queue/build-queue.guard';
 
 export const courseManagementState: Routes = [
     {
@@ -232,6 +234,15 @@ export const courseManagementState: Routes = [
                             pageTitle: 'artemisApp.learningPath.manageLearningPaths.title',
                         },
                         canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: 'build-queue',
+                        component: BuildQueueComponent,
+                        data: {
+                            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                            pageTitle: 'artemisApp.buildQueue.title',
+                        },
+                        canActivate: [UserRouteAccessService, BuildQueueGuard],
                     },
                 ],
             },

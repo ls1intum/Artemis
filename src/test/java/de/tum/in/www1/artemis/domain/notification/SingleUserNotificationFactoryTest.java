@@ -24,16 +24,12 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.domain.plagiarism.*;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 
 class SingleUserNotificationFactoryTest {
-
-    private static Lecture lecture;
 
     private static final Long LECTURE_ID = 0L;
 
@@ -53,13 +49,9 @@ class SingleUserNotificationFactoryTest {
 
     private static final String PROBLEM_STATEMENT = "problem statement";
 
-    private static Post post;
-
     private static final String POST_TITLE = "post title";
 
     private static final String POST_CONTENT = "post content";
-
-    private static AnswerPost answerPost;
 
     private static final String ANSWER_POST_CONTENT = "answer post content";
 
@@ -97,10 +89,6 @@ class SingleUserNotificationFactoryTest {
 
     private static final String USER_LOGIN = "de27sms";
 
-    private static PlagiarismComparison plagiarismComparison;
-
-    private static PlagiarismResult plagiarismResult;
-
     private static PlagiarismSubmission plagiarismSubmission;
 
     private static Set<PlagiarismSubmission<?>> plagiarismSubmissionSet;
@@ -120,7 +108,7 @@ class SingleUserNotificationFactoryTest {
         course.setId(COURSE_ID);
         course.setTitle(COURSE_TITLE);
 
-        lecture = new Lecture();
+        Lecture lecture = new Lecture();
         lecture.setId(LECTURE_ID);
         lecture.setCourse(course);
         lecture.setTitle(LECTURE_TITLE);
@@ -134,7 +122,7 @@ class SingleUserNotificationFactoryTest {
         cheatingUser = new User();
         cheatingUser.setLogin(USER_LOGIN);
 
-        plagiarismResult = new TextPlagiarismResult();
+        PlagiarismResult plagiarismResult = new TextPlagiarismResult();
         plagiarismResult.setExercise(exercise);
 
         plagiarismSubmission = new PlagiarismSubmission();
@@ -143,7 +131,7 @@ class SingleUserNotificationFactoryTest {
         plagiarismSubmissionSet = new HashSet<>();
         plagiarismSubmissionSet.add(plagiarismSubmission);
 
-        plagiarismComparison = new PlagiarismComparison();
+        PlagiarismComparison plagiarismComparison = new PlagiarismComparison();
         plagiarismComparison.setPlagiarismResult(plagiarismResult);
         plagiarismComparison.setSubmissionA(plagiarismSubmission);
 
@@ -170,31 +158,20 @@ class SingleUserNotificationFactoryTest {
         instructor.setFirstName("John");
         instructor.setLastName("Smith");
 
-        post = new Post();
-        post.setExercise(exercise);
-        post.setLecture(lecture);
+        Post post = new Post();
+        post.setConversation(new Channel());
         post.setAuthor(instructor);
         post.setTitle(POST_TITLE);
         post.setContent(POST_CONTENT);
         post.setCreationDate(CURRENT_TIME);
 
-        answerPost = new AnswerPost();
+        AnswerPost answerPost = new AnswerPost();
         answerPost.setPost(post);
         answerPost.setAuthor(instructor);
         answerPost.setContent(ANSWER_POST_CONTENT);
         answerPost.setCreationDate(CURRENT_TIME);
         dataExport = new DataExport();
         dataExport.setUser(tutorialGroupStudent);
-    }
-
-    /// Test for Notifications based on Posts
-
-    /**
-     * Calls the real createNotification method of the singleUserNotificationFactory and tests if the result is correct for Post notifications.
-     */
-    private void createAndCheckPostNotification() {
-        createdNotification = createNotification(post, answerPost, notificationType, course);
-        checkNotification();
     }
 
     /**
@@ -234,54 +211,6 @@ class SingleUserNotificationFactoryTest {
         assertThat(createdNotification.getTarget()).as("Created notification target should be equal to the expected one").isEqualTo(expectedTransientTarget.toJsonString());
         assertThat(createdNotification.getPriority()).as("Created notification priority should be equal to the expected one").isEqualTo(expectedPriority);
         assertThat(createdNotification.getAuthor()).as("Created notification author should be equal to the expected one").isNull();
-    }
-
-    /**
-     * Tests the functionality that deals with notifications that have the notification type of NEW_REPLY_FOR_EXERCISE_POST.
-     * I.e. notifications that originate from a new reply for an exercise post.
-     */
-    @Test
-    void createNotification_withNotificationType_NewReplyForExercisePost() {
-        notificationType = NEW_REPLY_FOR_EXERCISE_POST;
-        expectedTitle = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
-        expectedText = NEW_REPLY_FOR_EXERCISE_POST_SINGLE_TEXT;
-        expectedPlaceholderValues = "[\"" + COURSE_TITLE + "\",\"" + POST_TITLE + "\",\"" + POST_CONTENT + "\",\"" + CURRENT_TIME + "\",\"John Smith\",\"" + ANSWER_POST_CONTENT
-                + "\",\"" + CURRENT_TIME + "\",\"John Smith\",\"" + EXERCISE_TITLE + "\"]";
-        expectedPriority = MEDIUM;
-        expectedTransientTarget = createExercisePostTarget(post, course);
-        createAndCheckPostNotification();
-    }
-
-    /**
-     * Tests the functionality that deals with notifications that have the notification type of NEW_REPLY_FOR_LECTURE_POST.
-     * I.e. notifications that originate from a new reply for a lecture post.
-     */
-    @Test
-    void createNotification_withNotificationType_NewReplyForLecturePost() {
-        notificationType = NEW_REPLY_FOR_LECTURE_POST;
-        expectedTitle = NEW_REPLY_FOR_LECTURE_POST_TITLE;
-        expectedText = NEW_REPLY_FOR_LECTURE_POST_SINGLE_TEXT;
-        expectedPlaceholderValues = "[\"" + COURSE_TITLE + "\",\"" + POST_TITLE + "\",\"" + POST_CONTENT + "\",\"" + CURRENT_TIME + "\",\"John Smith\",\"" + ANSWER_POST_CONTENT
-                + "\",\"" + CURRENT_TIME + "\",\"John Smith\",\"" + LECTURE_TITLE + "\"]";
-        expectedPriority = MEDIUM;
-        expectedTransientTarget = createLecturePostTarget(post, course);
-        createAndCheckPostNotification();
-    }
-
-    /**
-     * Tests the functionality that deals with notifications that have the notification type of NEW_REPLY_FOR_COURSE_POST.
-     * I.e. notifications that originate from a new reply for a course post.
-     */
-    @Test
-    void createNotification_withNotificationType_NewReplyForCoursePost() {
-        notificationType = NEW_REPLY_FOR_COURSE_POST;
-        expectedTitle = NEW_REPLY_FOR_COURSE_POST_TITLE;
-        expectedText = NEW_REPLY_FOR_COURSE_POST_SINGLE_TEXT;
-        expectedPlaceholderValues = "[\"" + COURSE_TITLE + "\",\"" + POST_TITLE + "\",\"" + POST_CONTENT + "\",\"" + CURRENT_TIME + "\",\"John Smith\",\"" + ANSWER_POST_CONTENT
-                + "\",\"" + CURRENT_TIME + "\",\"John Smith\"]";
-        expectedPriority = MEDIUM;
-        expectedTransientTarget = createCoursePostTarget(post, course);
-        createAndCheckPostNotification();
     }
 
     /// Test for Notifications based on Exercises

@@ -9,14 +9,17 @@
             {{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentModal.confirmationQuestion' | artemisTranslate }}
             <b>{{ course?.title }}</b> ?
         </div>
-
-        <div *ngIf="!canEnrollAgain">
-            {{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentModal.reenrollmentNotPossible' | artemisTranslate }}
-        </div>
-        <div *ngIf="canEnrollAgain">
-            {{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentModal.reenrollmentPossible' | artemisTranslate }}
-            <b>{{ course?.enrollmentEndDate | artemisDate }}</b>
-        </div>
+        @if (!canEnrollAgain) {
+            <div>
+                {{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentModal.reenrollmentNotPossible' | artemisTranslate }}
+            </div>
+        }
+        @if (canEnrollAgain) {
+            <div>
+                {{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentModal.reenrollmentPossible' | artemisTranslate }}
+                <b>{{ course?.enrollmentEndDate | artemisDate }}</b>
+            </div>
+        }
     </div>
     <form class="unenrollment-confirmation" [formGroup]="confirmationForm" style="margin-top: 1rem">
         <label class="form-control-label" for="field_confirmation_input">
