@@ -190,6 +190,6 @@
         <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolutionTooltip'"></jhi-help-icon>
     </div>
     @if (!isExamMode) {
-        <jhi-exercise-feedback-suggestion-options [exercise]="exercise" [readOnly]="readOnly"></jhi-exercise-feedback-suggestion-options>
+        <jhi-exercise-feedback-suggestion-options [exercise]="exercise" [dueDate]="exercise.dueDate" [readOnly]="readOnly"></jhi-exercise-feedback-suggestion-options>
     }
 </div>

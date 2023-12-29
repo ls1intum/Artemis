@@ -6,11 +6,14 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { AthenaService } from 'app/assessment/athena.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercises/shared/feedback-suggestion/exercise-feedback-suggestion-options.component';
+import dayjs from 'dayjs/esm';
 
 describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     let component: ExerciseFeedbackSuggestionOptionsComponent;
     let fixture: ComponentFixture<ExerciseFeedbackSuggestionOptionsComponent>;
     let athenaService: AthenaService;
+    const pastDueDate = dayjs().subtract(1, 'hour');
+    const futureDueDate = dayjs().add(1, 'hour');
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -26,6 +29,8 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         fixture = TestBed.createComponent(ExerciseFeedbackSuggestionOptionsComponent);
         component = fixture.componentInstance;
         athenaService = TestBed.inject(AthenaService);
+
+        component.exercise = { feedbackSuggestionModule: undefined, dueDate: undefined };
     });
 
     it('should create', () => {
@@ -55,7 +60,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     });
 
     it('should disable input controls for programming exercises with automatic assessment type or read-only', () => {
-        component.exercise = { type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.AUTOMATIC } as Exercise;
+        component.exercise = { type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.AUTOMATIC, dueDate: futureDueDate } as Exercise;
 
         let result = component.inputControlsDisabled();
         expect(result).toBeTruthy();
@@ -69,8 +74,15 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         expect(result).toBeTruthy();
     });
 
+    it('should disable input controls if due date has passed', () => {
+        component.exercise = { type: ExerciseType.TEXT, dueDate: pastDueDate } as Exercise;
+
+        const result = component.inputControlsDisabled();
+        expect(result).toBeTruthy();
+    });
+
     it('should return grey color for checkbox label style for automatic programming exercises', () => {
-        component.exercise = { type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.AUTOMATIC } as Exercise;
+        component.exercise = { type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.AUTOMATIC, dueDate: futureDueDate } as Exercise;
 
         const style = component.getCheckboxLabelStyle();
 
@@ -78,7 +90,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     });
 
     it('should return an empty object for checkbox label style for non-automatic programming exercises', () => {
-        component.exercise = { type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.MANUAL } as Exercise;
+        component.exercise = { type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.MANUAL, dueDate: futureDueDate } as Exercise;
 
         const style = component.getCheckboxLabelStyle();
 

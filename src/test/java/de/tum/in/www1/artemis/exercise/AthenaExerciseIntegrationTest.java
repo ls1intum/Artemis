@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -117,6 +118,17 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testUpdateTextExercise_useRestrictedAthenaModule_badRequest() throws Exception {
         textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
+
+        request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testUpdateTextExercise_afterDueDate_badRequest() throws Exception {
+        textExercise.setDueDate(ZonedDateTime.now());
+        textExerciseRepository.save(textExercise);
+
+        textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
 
         request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }

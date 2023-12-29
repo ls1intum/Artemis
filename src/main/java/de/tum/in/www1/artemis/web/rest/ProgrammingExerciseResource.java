@@ -284,6 +284,8 @@ public class ProgrammingExerciseResource {
         // Check that only allowed Athena modules are used
         athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ENTITY_NAME),
                 () -> updatedProgrammingExercise.setFeedbackSuggestionModule(null));
+        // Changing Athena module after the due date has passed is not allowed
+        athenaModuleService.ifPresent(ams -> ams.checkValidAthenaModuleChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise, ENTITY_NAME));
 
         // Ignore changes to the default branch
         updatedProgrammingExercise.setBranch(programmingExerciseBeforeUpdate.getBranch());

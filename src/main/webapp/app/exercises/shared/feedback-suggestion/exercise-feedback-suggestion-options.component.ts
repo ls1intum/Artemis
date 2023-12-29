@@ -1,16 +1,18 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Observable } from 'rxjs';
 import { AthenaService } from 'app/assessment/athena.service';
 import { ActivatedRoute } from '@angular/router';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-exercise-feedback-suggestion-options',
     templateUrl: './exercise-feedback-suggestion-options.component.html',
 })
-export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit {
+export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnChanges {
     @Input() exercise: Exercise;
+    @Input() dueDate?: dayjs.Dayjs;
     @Input() readOnly: boolean = false;
 
     protected readonly AssessmentType = AssessmentType;
@@ -20,6 +22,7 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit {
     isAthenaEnabled$: Observable<boolean>;
     modulesAvailable: boolean;
     availableAthenaModules: string[];
+    initialAthenaModule?: string;
 
     constructor(
         private athenaService: AthenaService,
@@ -33,17 +36,33 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit {
             this.modulesAvailable = modules.length > 0;
         });
         this.isAthenaEnabled$ = this.athenaService.isEnabled();
+        this.initialAthenaModule = this.exercise.feedbackSuggestionModule;
     }
 
+    ngOnChanges(changes: any) {
+        if (!changes['dueDate'].isFirstChange()) {
+            if (this.inputControlsDisabled()) {
+                this.exercise.feedbackSuggestionModule = this.initialAthenaModule;
+            }
+        }
+    }
+
+    /**
+     * Returns true in case the input controls should be disabled. This is the case for all exercises when the due date has passed. For programming exercises,
+     * it returns true in case the assessment type is automatic, the exercise is readonly, the due date is undefined or the due date has passed.
+     */
     inputControlsDisabled() {
         if (this.exercise.type == ExerciseType.PROGRAMMING) {
-            return this.exercise.assessmentType == AssessmentType.AUTOMATIC || this.readOnly;
+            return this.exercise.assessmentType == AssessmentType.AUTOMATIC || this.readOnly || this.exercise.dueDate == undefined || this.hasDueDatePassed();
         }
-        return false;
+        return this.hasDueDatePassed();
     }
 
+    /**
+     * Returns the label style for the checkbox to enable feedback suggestions. In case the input controls are disabled, the label text color is set to grey.
+     */
     getCheckboxLabelStyle() {
-        if (this.exercise.type == ExerciseType.PROGRAMMING && this.exercise.assessmentType == AssessmentType.AUTOMATIC) {
+        if (this.inputControlsDisabled()) {
             return { color: 'grey' };
         }
         return {};
@@ -55,5 +74,9 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit {
         } else {
             this.exercise.feedbackSuggestionModule = undefined;
         }
+    }
+
+    private hasDueDatePassed() {
+        return dayjs(this.exercise.dueDate).isBefore(dayjs());
     }
 }

@@ -226,9 +226,11 @@ public class TextExerciseResource {
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(textExercise, textExerciseBeforeUpdate, ENTITY_NAME);
 
-        // TODO Athena: Check that only allowed athena modules are used
+        // Check that only allowed athena modules are used
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExerciseBeforeUpdate);
         athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
+        // Changing Athena module after the due date has passed is not allowed
+        athenaModuleService.ifPresent(ams -> ams.checkValidAthenaModuleChange(textExerciseBeforeUpdate, textExercise, ENTITY_NAME));
 
         channelService.updateExerciseChannel(textExerciseBeforeUpdate, textExercise);
 

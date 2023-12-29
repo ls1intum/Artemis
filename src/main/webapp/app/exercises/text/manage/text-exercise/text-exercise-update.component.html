@@ -153,7 +153,7 @@
             </div>
         </div>
         @if (!isExamMode) {
-            <jhi-exercise-feedback-suggestion-options [exercise]="textExercise"></jhi-exercise-feedback-suggestion-options>
+            <jhi-exercise-feedback-suggestion-options [exercise]="textExercise" [dueDate]="textExercise.dueDate"></jhi-exercise-feedback-suggestion-options>
             <jhi-exercise-update-plagiarism [exercise]="textExercise"> </jhi-exercise-update-plagiarism>
         }
         <jhi-presentation-score-checkbox [exercise]="textExercise"></jhi-presentation-score-checkbox>

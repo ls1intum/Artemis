@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -130,7 +132,7 @@ public class AthenaModuleService {
      *
      * @param exercise   The exercise for which the access should be checked
      * @param course     The course to which the exercise belongs to.
-     * @param entityName
+     * @param entityName Name of the entity
      * @throws BadRequestAlertException when the exercise has no access to the exercise's provided module.
      */
     public void checkHasAccessToAthenaModule(Exercise exercise, Course course, String entityName) throws BadRequestAlertException {
@@ -140,6 +142,22 @@ public class AthenaModuleService {
         if (!course.getRestrictedAthenaModulesAccess() && restrictedModules.contains(exercise.getFeedbackSuggestionModule())) {
             // Course does not have access to the restricted Athena modules
             throw new BadRequestAlertException("The exercise has no access to the selected Athena module", entityName, "noAccessToAthenaModule");
+        }
+    }
+
+    /**
+     * Checks if a module change is valid or not. In case it is not allowed it throws an exception.
+     * Modules cannot be changed after the exercise due date has passed.
+     *
+     * @param originalExercise The exercise before the update
+     * @param updatedExercise  The exercise after the update
+     * @param entityName       Name of the entity
+     * @throws BadRequestAlertException Is thrown in case the module change is not allowed
+     */
+    public void checkValidAthenaModuleChange(Exercise originalExercise, Exercise updatedExercise, String entityName) throws BadRequestAlertException {
+        if (!Objects.equals(originalExercise.getFeedbackSuggestionModule(), updatedExercise.getFeedbackSuggestionModule())
+                && originalExercise.getDueDate().isBefore(ZonedDateTime.now())) {
+            throw new BadRequestAlertException("Athena module can't be changed after due date has passed", entityName, "athenaModuleChangeAfterDueDate");
         }
     }
 
