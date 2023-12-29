@@ -1,33 +1,30 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { Subject, of, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../../test.module';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { SortService } from 'app/shared/service/sort.service';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { SortDirective } from 'app/shared/sort/sort.directive';
-import { SearchResult } from 'app/shared/table/pageable-table';
-import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
-import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
-import { Exam } from 'app/entities/exam.model';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
+import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
+import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
+import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
+import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SortService } from 'app/shared/service/sort.service';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
 import { NgbPaginationMocksModule } from '../../../helpers/mocks/directive/ngbPaginationMocks.module';
+import { ArtemisTestModule } from '../../../test.module';
 
 describe('Exam Import Component', () => {
     let component: ExamImportComponent;
     let fixture: ComponentFixture<ExamImportComponent>;
-    let sortService: SortService;
-    let pagingService: ExamImportPagingService;
     let activeModal: NgbActiveModal;
     let examManagementService: ExamManagementService;
     let alertService: AlertService;
@@ -67,8 +64,6 @@ describe('Exam Import Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExamImportComponent);
                 component = fixture.componentInstance;
-                sortService = fixture.debugElement.injector.get(SortService);
-                pagingService = fixture.debugElement.injector.get(ExamImportPagingService);
                 activeModal = TestBed.inject(NgbActiveModal);
                 examManagementService = fixture.debugElement.injector.get(ExamManagementService);
                 alertService = fixture.debugElement.injector.get(AlertService);
@@ -133,14 +128,7 @@ describe('Exam Import Component', () => {
         const alertSpy = jest.spyOn(alertService, 'error');
         const modalSpy = jest.spyOn(activeModal, 'close');
 
-        component.subsequentExerciseGroupSelection = true;
-        component.exam = exam1WithExercises;
-        component.targetCourseId = 1;
-        component.targetExamId = 2;
-        fixture.detectChanges();
-        component.performImportOfExerciseGroups();
-        expect(importSpy).toHaveBeenCalledOnce();
-        expect(importSpy).toHaveBeenCalledWith(1, 2, [exerciseGroup1]);
+        performImport(importSpy);
         expect(alertSpy).not.toHaveBeenCalled();
         expect(modalSpy).toHaveBeenCalledOnce();
         expect(modalSpy).toHaveBeenCalledWith([exerciseGroup1]);
@@ -184,14 +172,7 @@ describe('Exam Import Component', () => {
             const alertSpy = jest.spyOn(alertService, 'error');
             const modalSpy = jest.spyOn(activeModal, 'close');
 
-            component.subsequentExerciseGroupSelection = true;
-            component.exam = exam1WithExercises;
-            component.targetCourseId = 1;
-            component.targetExamId = 2;
-            fixture.detectChanges();
-            component.performImportOfExerciseGroups();
-
-            expect(importSpy).toHaveBeenCalledWith(1, 2, [exerciseGroup1]);
+            performImport(importSpy);
             if (errorKey == 'invalidKey') {
                 expect(alertSpy).toHaveBeenCalledWith('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: 0 });
             } else {
@@ -208,7 +189,13 @@ describe('Exam Import Component', () => {
         const importSpy = jest.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(throwError(() => error));
         const alertSpy = jest.spyOn(alertService, 'error');
         const modalSpy = jest.spyOn(activeModal, 'close');
+        performImport(importSpy);
 
+        expect(alertSpy).toHaveBeenCalledOnce();
+        expect(modalSpy).not.toHaveBeenCalled();
+    });
+
+    function performImport(importSpy: jest.SpyInstance): void {
         component.subsequentExerciseGroupSelection = true;
         component.exam = exam1WithExercises;
         component.targetCourseId = 1;
@@ -217,115 +204,5 @@ describe('Exam Import Component', () => {
         component.performImportOfExerciseGroups();
         expect(importSpy).toHaveBeenCalledOnce();
         expect(importSpy).toHaveBeenCalledWith(1, 2, [exerciseGroup1]);
-        expect(alertSpy).toHaveBeenCalledOnce();
-        expect(modalSpy).not.toHaveBeenCalled();
-    });
-
-    it('should initialize the subjects', () => {
-        // GIVEN
-        const searchSpy = jest.spyOn(component, 'performSearch' as any);
-
-        // WHEN
-        fixture.detectChanges();
-
-        // THEN
-        expect(searchSpy).toHaveBeenCalledTimes(2);
-        expect(searchSpy).toHaveBeenCalledWith(expect.any(Subject), 0);
-        expect(searchSpy).toHaveBeenCalledWith(expect.any(Subject), 300);
-    });
-
-    it('should initialize the content', () => {
-        // WHEN
-        fixture.detectChanges();
-
-        // THEN
-        expect(component.content).toEqual({ resultsOnPage: [], numberOfPages: 0 });
-    });
-
-    it('should close the active modal', () => {
-        // GIVEN
-        const activeModalSpy = jest.spyOn(activeModal, 'dismiss');
-
-        // WHEN
-        component.clear();
-
-        // THEN
-        expect(activeModalSpy).toHaveBeenCalledOnce();
-        expect(activeModalSpy).toHaveBeenCalledWith('cancel');
-    });
-
-    it('should close the active modal with result', () => {
-        // GIVEN
-        const activeModalSpy = jest.spyOn(activeModal, 'close');
-        const exam = { id: 1 } as Exam;
-        // WHEN
-        component.selectImport(exam);
-
-        // THEN
-        expect(activeModalSpy).toHaveBeenCalledOnce();
-        expect(activeModalSpy).toHaveBeenCalledWith(exam);
-    });
-
-    it('should change the page on active modal', fakeAsync(() => {
-        const defaultPageSize = 10;
-        const numberOfPages = 5;
-        const pagingServiceSpy = jest.spyOn(pagingService, 'search');
-        pagingServiceSpy.mockReturnValue(of({ numberOfPages } as SearchResult<Exam>));
-
-        fixture.detectChanges();
-
-        let expectedPageNumber = 1;
-        component.onPageChange(expectedPageNumber);
-        tick();
-        expect(component.page).toBe(expectedPageNumber);
-        expect(component.total).toBe(numberOfPages * defaultPageSize);
-
-        expectedPageNumber = 2;
-        component.onPageChange(expectedPageNumber);
-        tick();
-        expect(component.page).toBe(expectedPageNumber);
-        expect(component.total).toBe(numberOfPages * defaultPageSize);
-
-        // Page number should be changed unless it is falsy.
-        component.onPageChange(0);
-        tick();
-        expect(component.page).toBe(expectedPageNumber);
-
-        // Number of times onPageChange is called with a truthy value.
-        expect(pagingServiceSpy).toHaveBeenCalledTimes(2);
-    }));
-
-    it('should sort rows with default values', () => {
-        const sortServiceSpy = jest.spyOn(sortService, 'sortByProperty');
-
-        fixture.detectChanges();
-        component.sortRows();
-
-        expect(sortServiceSpy).toHaveBeenCalledOnce();
-        expect(sortServiceSpy).toHaveBeenCalledWith([], 'ID', false);
-    });
-
-    it('should set search term and search', fakeAsync(() => {
-        const pagingServiceSpy = jest.spyOn(pagingService, 'search');
-        pagingServiceSpy.mockReturnValue(of({ numberOfPages: 3 } as SearchResult<Exam>));
-
-        fixture.detectChanges();
-
-        const expectedSearchTerm = 'search term';
-        component.searchTerm = expectedSearchTerm;
-        tick();
-        expect(component.searchTerm).toBe(expectedSearchTerm);
-
-        // It should wait first before executing search.
-        expect(pagingServiceSpy).not.toHaveBeenCalled();
-
-        tick(300);
-
-        expect(pagingServiceSpy).toHaveBeenCalledOnce();
-    }));
-
-    it('should track the id correctly', () => {
-        const exam = { id: 1 } as Exam;
-        expect(component.trackId(5, exam)).toBe(exam.id);
-    });
+    }
 });

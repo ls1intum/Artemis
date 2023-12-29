@@ -45,8 +45,8 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
     ) {
         // The exercise import component does not know yet which paging service to use
         // This gets determined based on the exercise type, which is not set when invoking the constructor
-        // Therfore we temporaily use this empty paging service which directly gets overwritten in ngOnInit().
-        super(router, {} as any as PagingService<Exercise>, sortService, activeModal);
+        // Therefore we temporaily use this empty paging service which directly gets overwritten in ngOnInit().
+        super(router, {} as unknown as PagingService<Exercise>, sortService, activeModal);
     }
 
     ngOnInit(): void {

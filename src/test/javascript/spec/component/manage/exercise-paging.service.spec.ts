@@ -9,12 +9,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { take } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-
-class DummyPagingService extends ExercisePagingService<any> {
-    constructor(http: HttpClient) {
-        super(http, 'test');
-    }
-}
+import { DummyPagingService } from './dummy-paging-service';
 
 describe('Exercise Paging Service', () => {
     let service: ExercisePagingService<any>;

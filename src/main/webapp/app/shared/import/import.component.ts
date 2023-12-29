@@ -146,12 +146,22 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
                 this.content = resp;
                 this.loading = false;
                 this.total = resp.numberOfPages * this.state.pageSize;
+                this.onSearchResult();
             });
     }
 
+    /**
+     * This method is used to create additional options passed to the paging service.
+     */
     protected createOptions(): object | undefined {
         return undefined;
     }
+
+    /**
+     * This method is called after retrieving a result from the paging service.
+     * Used to perform some special logic with the search result (e.g. calculating the submission size for the example submission import)
+     */
+    protected onSearchResult(): void {}
 
     protected setSearchParam(patch: Partial<PageableSearch>) {
         Object.assign(this.state, patch);

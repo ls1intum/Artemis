@@ -1,41 +1,34 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { Lecture } from 'app/entities/lecture.model';
+import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { SortService } from 'app/shared/service/sort.service';
-import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
-import { MockComponent, MockDirective } from 'ng-mocks';
-import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import { Lecture } from 'app/entities/lecture.model';
-import { LecturePagingService } from 'app/lecture/lecture-paging.service';
-import { LectureImportComponent } from 'app/lecture/lecture-import.component';
-import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent, MockDirective } from 'ng-mocks';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('LectureImportComponent', () => {
     let fixture: ComponentFixture<LectureImportComponent>;
     let comp: LectureImportComponent;
-    let pagingService: LecturePagingService;
-    let sortService: SortService;
-    let searchStub: jest.SpyInstance;
-    let sortByPropertyStub: jest.SpyInstance;
-    let searchResult: SearchResult<Lecture>;
-    let state: PageableSearch;
-    let lecture: Lecture;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule, MockComponent(NgbPagination)],
             declarations: [LectureImportComponent, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
+            providers: [
+                // Overwrite MockRouter declaration in ArtemisTestModule which just returns 'testValue'
+                {
+                    provide: Router,
+                    useClass: Router,
+                },
+            ],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(LectureImportComponent);
                 comp = fixture.componentInstance;
-                pagingService = TestBed.inject(LecturePagingService);
-                sortService = TestBed.inject(SortService);
-                searchStub = jest.spyOn(pagingService, 'search');
-                sortByPropertyStub = jest.spyOn(sortService, 'sortByProperty');
             });
     });
 
@@ -43,75 +36,15 @@ describe('LectureImportComponent', () => {
         jest.restoreAllMocks();
     });
 
-    beforeEach(() => {
-        fixture.detectChanges();
-        lecture = new Lecture();
+    it('should open a lecture in a new tab', () => {
+        const lecture = new Lecture();
         lecture.id = 1;
-        searchResult = { numberOfPages: 3, resultsOnPage: [lecture] };
-        state = {
-            page: 1,
-            pageSize: 10,
-            searchTerm: 'initialSearchTerm',
-            sortingOrder: SortingOrder.DESCENDING,
-            sortedColumn: 'ID',
-            ...searchResult,
-        };
-        searchStub.mockReturnValue(of(searchResult));
-    });
+        lecture.course = { id: 4 };
 
-    const setStateAndCallOnInit = (middleExpectation: () => void) => {
-        comp.state = { ...state };
-        comp.ngOnInit();
-        middleExpectation();
-        expect(comp.content).toEqual(searchResult);
-        comp.sortRows();
-        expect(sortByPropertyStub).toHaveBeenCalledWith(searchResult.resultsOnPage, comp.sortedColumn, comp.listSorting);
-    };
+        const openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
 
-    it('should set content to paging result on sort', fakeAsync(() => {
-        expect(comp.listSorting).toBeFalse();
-        setStateAndCallOnInit(() => {
-            comp.listSorting = true;
-            tick(10);
-            expect(searchStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING }, undefined);
-            expect(comp.listSorting).toBeTrue();
-        });
-    }));
+        comp.openLectureInNewTab(lecture);
 
-    it('should set content to paging result on pageChange', fakeAsync(() => {
-        expect(comp.page).toBe(1);
-        setStateAndCallOnInit(() => {
-            comp.onPageChange(5);
-            tick(10);
-            expect(searchStub).toHaveBeenCalledWith({ ...state, page: 5 }, undefined);
-            expect(comp.page).toBe(5);
-        });
-    }));
-
-    it('should set content to paging result on search', fakeAsync(() => {
-        expect(comp.searchTerm).toBe('');
-        setStateAndCallOnInit(() => {
-            const givenSearchTerm = 'givenSearchTerm';
-            comp.searchTerm = givenSearchTerm;
-            tick(10);
-            expect(searchStub).not.toHaveBeenCalled();
-            tick(290);
-            expect(searchStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, undefined);
-            expect(comp.searchTerm).toEqual(givenSearchTerm);
-        });
-    }));
-
-    it('should set content to paging result on sortedColumn change', fakeAsync(() => {
-        expect(comp.sortedColumn).toBe('ID');
-        setStateAndCallOnInit(() => {
-            comp.sortedColumn = 'TITLE';
-            tick(10);
-            expect(searchStub).toHaveBeenCalledWith({ ...state, sortedColumn: 'TITLE' }, undefined);
-            expect(comp.sortedColumn).toBe('TITLE');
-        });
-    }));
-
-    it('should return lecture id', () => {
-        expect(comp.trackId(0, lecture)).toEqual(lecture.id);
+        expect(openSpy).toHaveBeenCalledWith('/course-management/4/lectures/1', '_blank');
     });
 });
