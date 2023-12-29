@@ -101,7 +101,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Column(name = "second_correction_enabled")
     private Boolean secondCorrectionEnabled = false;
 
-    // TODO Athena: adapt to new exercise model: instead of using a boolean, we just use the module name (enabled) or null
     @Column(name = "feedback_suggestion_module") // Athena module name (Athena enabled) or null
     private String feedbackSuggestionModule;
 

@@ -177,7 +177,7 @@ public class TextExerciseResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        // TODO Athena: Check that only allowed athena modules are used
+        // Check that only allowed athena modules are used
         athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
 
         TextExercise result = textExerciseRepository.save(textExercise);

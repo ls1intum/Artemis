@@ -314,5 +314,4 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#releaseTestsWithExampleSolution');
         expectElementToBeDisabled(checkbox);
     });
-    //     TODO Athena: Add test
 });

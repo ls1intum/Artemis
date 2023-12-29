@@ -206,7 +206,7 @@ public class ProgrammingExerciseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
         programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExercise, course);
 
-        // TODO Athena: Check that only allowed athena modules are used
+        // Check that only allowed athena modules are used
         athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(programmingExercise, course, ENTITY_NAME),
                 () -> programmingExercise.setFeedbackSuggestionModule(null));
 

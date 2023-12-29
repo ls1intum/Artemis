@@ -23,7 +23,12 @@ export class AthenaService {
         return this.profileService.getProfileInfo().pipe(switchMap((profileInfo) => of(profileInfo.activeProfiles.includes(PROFILE_ATHENA))));
     }
 
-    // TODO Athena: Add methods to get available modules
+    /**
+     * Fetches all available modules for a course and exercise.
+     *
+     * @param courseId The id of the course for which the feedback suggestion modules should be fetched
+     * @param exercise The exercise for which the feedback suggestion modules should be fetched
+     */
     public getAvailableModules(courseId: number, exercise: Exercise): Observable<string[]> {
         return this.isEnabled().pipe(
             switchMap((isAthenaEnabled) => {
