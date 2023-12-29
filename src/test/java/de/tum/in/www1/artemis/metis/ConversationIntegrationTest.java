@@ -457,7 +457,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void markMessagesAsRead() throws Exception {
         Channel channel = conversationUtilService.createCourseWideChannel(exampleCourse, "mark-as-read");
-        channel.setLastMessageDate(ZonedDateTime.now());
+        channel.setLastMessageDate(ZonedDateTime.now().minusDays(1));
         ConversationParticipant participant = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
 
         request.patch("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/mark-as-read", null, HttpStatus.OK);
