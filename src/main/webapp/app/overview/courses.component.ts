@@ -14,6 +14,8 @@ import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam.model';
 import { Router } from '@angular/router';
 import { faPenAlt } from '@fortawesome/free-solid-svg-icons';
+import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
+import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
 
 @Component({
     selector: 'jhi-overview',
@@ -21,10 +23,13 @@ import { faPenAlt } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['./courses.component.scss'],
 })
 export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
-    public courses: Course[];
+    courses: Course[];
     public nextRelevantCourse?: Course;
     nextRelevantCourseForExam?: Course;
     nextRelevantExams?: Exam[];
+
+    public recentlyAccessedCourses: Course[] = [];
+    public regularCourses: Course[] = [];
 
     courseForGuidedTour?: Course;
     quizExercisesChannels: string[] = [];
@@ -41,6 +46,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
         private teamService: TeamService,
         private jhiWebsocketService: JhiWebsocketService,
         private router: Router,
+        private courseAccessStorageService: CourseAccessStorageService,
     ) {}
 
     async ngOnInit() {
@@ -66,7 +72,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
             next: (res: HttpResponse<CoursesForDashboardDTO>) => {
                 if (res.body) {
                     const courses: Course[] = [];
-                    res.body.courses.forEach((courseDto) => {
+                    res.body.courses.forEach((courseDto: CourseForDashboardDTO) => {
                         courses.push(courseDto.course);
                     });
                     this.courses = courses.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
@@ -74,6 +80,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
 
                     this.nextRelevantExams = res.body.activeExams ?? [];
                     this.nextRelevantExercise = this.findNextRelevantExercise();
+                    this.sortCoursesInRecentlyAccessedAndRegularCourses();
                 }
             },
         });
@@ -110,6 +117,20 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
             }
             this.nextRelevantCourse = relevantExercise.course!;
             return relevantExercise;
+        }
+    }
+
+    /**
+     * Sorts the courses into recently accessed and regular courses.
+     * If there are less than 5 courses, all courses are displayed in the regular courses section.
+     */
+    sortCoursesInRecentlyAccessedAndRegularCourses() {
+        if (this.courses.length <= 5) {
+            this.regularCourses = this.courses;
+        } else {
+            const lastAccessedCourseIds = this.courseAccessStorageService.getLastAccessedCourses();
+            this.recentlyAccessedCourses = this.courses.filter((course) => lastAccessedCourseIds.includes(course.id!));
+            this.regularCourses = this.courses.filter((course) => !lastAccessedCourseIds.includes(course.id!));
         }
     }
 
