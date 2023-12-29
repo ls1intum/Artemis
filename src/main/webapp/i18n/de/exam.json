@@ -42,6 +42,8 @@
                 "reviewExplanation": "Die Einsicht findet statt bis ",
                 "realExamsHeading": "Klausuren",
                 "testExamsHeading": "Testklausuren",
+                "noExams": "Keine Klausuren vorhanden",
+                "goToExercises": "Gehe zu Aufgaben",
                 "testExam": {
                     "upcoming": "Demnächst stattfindende Testklausur",
                     "imminent": "Die Testklausur beginnt in ",

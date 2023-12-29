@@ -42,6 +42,8 @@
                 "reviewExplanation": "You can review the assessment until ",
                 "realExamsHeading": "Exams",
                 "testExamsHeading": "Test Exams",
+                "noExams": "No exams present",
+                "goToExercises": "Go to exercises",
                 "testExam": {
                     "upcoming": "Upcoming Test Exam",
                     "imminent": "The Test Exam will start ",
