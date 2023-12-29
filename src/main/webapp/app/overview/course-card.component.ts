@@ -101,6 +101,16 @@ export class CourseCardComponent implements OnChanges {
         this.router.navigate(['courses', this.course.id]);
     }
 
+    /**
+     * Navigates to the exam page of the course.
+     * We stop the propagation of the click event to avoid navigating to the exercise page.
+     * @param event the click event
+     */
+    navigateToExams(event: Event) {
+        event.stopPropagation();
+        this.router.navigate(['courses', this.course.id, 'exams']);
+    }
+
     private updateNextDueDate() {
         let nextExerciseDueDate = undefined;
         if (this.nextRelevantExercise) {
