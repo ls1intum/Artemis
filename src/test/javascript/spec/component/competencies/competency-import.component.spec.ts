@@ -8,18 +8,17 @@ import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import { CompetencyImportComponent } from 'app/course/competencies/competency-management/competency-import.component';
+import { CompetencyImportComponent, TableColumn } from 'app/course/competencies/competency-management/competency-import.component';
 import { CompetencyPagingService } from 'app/course/competencies/competency-paging.service';
 import { Competency } from 'app/entities/competency.model';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { TableColumn } from 'app/shared/import/import-component';
 
 describe('CompetencyImportComponent', () => {
     let fixture: ComponentFixture<CompetencyImportComponent>;
     let comp: CompetencyImportComponent;
     let pagingService: CompetencyPagingService;
     let sortService: SortService;
-    let searchForCompetenciesStub: jest.SpyInstance;
+    let searchStub: jest.SpyInstance;
     let sortByPropertyStub: jest.SpyInstance;
     let searchResult: SearchResult<Competency>;
     let state: PageableSearch;
@@ -35,7 +34,7 @@ describe('CompetencyImportComponent', () => {
                 comp = fixture.componentInstance;
                 pagingService = TestBed.inject(CompetencyPagingService);
                 sortService = TestBed.inject(SortService);
-                searchForCompetenciesStub = jest.spyOn(pagingService, 'searchForCompetencies');
+                searchStub = jest.spyOn(pagingService, 'search');
                 sortByPropertyStub = jest.spyOn(sortService, 'sortByProperty');
             });
     });
@@ -57,7 +56,7 @@ describe('CompetencyImportComponent', () => {
             sortedColumn: TableColumn.ID,
             ...searchResult,
         };
-        searchForCompetenciesStub.mockReturnValue(of(searchResult));
+        searchStub.mockReturnValue(of(searchResult));
     });
 
     const setStateAndCallOnInit = (middleExpectation: () => void) => {
@@ -74,7 +73,7 @@ describe('CompetencyImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.listSorting = true;
             tick(10);
-            expect(searchForCompetenciesStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING });
+            expect(searchStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING }, undefined);
             expect(comp.listSorting).toBeTrue();
         });
     }));
@@ -84,7 +83,7 @@ describe('CompetencyImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.onPageChange(5);
             tick(10);
-            expect(searchForCompetenciesStub).toHaveBeenCalledWith({ ...state, page: 5 });
+            expect(searchStub).toHaveBeenCalledWith({ ...state, page: 5 }, undefined);
             expect(comp.page).toBe(5);
         });
     }));
@@ -95,9 +94,9 @@ describe('CompetencyImportComponent', () => {
             const givenSearchTerm = 'givenSearchTerm';
             comp.searchTerm = givenSearchTerm;
             tick(10);
-            expect(searchForCompetenciesStub).not.toHaveBeenCalled();
+            expect(searchStub).not.toHaveBeenCalled();
             tick(290);
-            expect(searchForCompetenciesStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm });
+            expect(searchStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, undefined);
             expect(comp.searchTerm).toEqual(givenSearchTerm);
         });
     }));
@@ -107,7 +106,7 @@ describe('CompetencyImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.sortedColumn = TableColumn.TITLE;
             tick(10);
-            expect(searchForCompetenciesStub).toHaveBeenCalledWith({ ...state, sortedColumn: TableColumn.TITLE });
+            expect(searchStub).toHaveBeenCalledWith({ ...state, sortedColumn: TableColumn.TITLE }, undefined);
             expect(comp.sortedColumn).toEqual(TableColumn.TITLE);
         });
     }));

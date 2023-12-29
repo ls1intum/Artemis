@@ -38,14 +38,14 @@
                             </th>
                             <th style="display: table-caption">
                                 <span jhiTranslate="artemisApp.exampleSubmission.submissionSize"></span>
-                                @if (exercise && exercise.type === exerciseType.TEXT) {
+                                @if (exercise && exercise.type === ExerciseType.TEXT) {
                                     <fa-icon
                                         [icon]="faQuestionCircle"
                                         class="text-secondary ps-1"
                                         [ngbTooltip]="'artemisApp.exampleSubmission.textSubmissionSizeHint' | artemisTranslate"
                                     ></fa-icon>
                                 }
-                                @if (exercise && exercise.type === exerciseType.MODELING) {
+                                @if (exercise && exercise.type === ExerciseType.MODELING) {
                                     <fa-icon
                                         [icon]="faQuestionCircle"
                                         class="text-secondary ps-1"
@@ -69,7 +69,7 @@
                                     {{ submission.submissionSize }}
                                 </td>
                                 <td>
-                                    <jhi-button (onClick)="openImport(submission)" [title]="'artemisApp.exercise.import.table.doImport'"></jhi-button>
+                                    <jhi-button (onClick)="selectImport(submission)" [title]="'artemisApp.exercise.import.table.doImport'"></jhi-button>
                                 </td>
                             </tr>
                         }

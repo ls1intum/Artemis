@@ -33,7 +33,7 @@ describe('ExerciseImportComponent', () => {
     let sortService: SortService;
     let injector: Injector;
     let activeModal: NgbActiveModal;
-    let searchForExercisesStub: jest.SpyInstance;
+    let searchStub: jest.SpyInstance;
     let sortByPropertyStub: jest.SpyInstance;
     let searchResult: SearchResult<Exercise>;
     let state: PageableSearch;
@@ -59,7 +59,7 @@ describe('ExerciseImportComponent', () => {
                 sortService = TestBed.inject(SortService);
                 injector = TestBed.inject(Injector);
                 activeModal = TestBed.inject(NgbActiveModal);
-                searchForExercisesStub = jest.spyOn(quizExercisePagingService, 'searchForExercises');
+                searchStub = jest.spyOn(quizExercisePagingService, 'search');
                 sortByPropertyStub = jest.spyOn(sortService, 'sortByProperty');
             });
     });
@@ -81,7 +81,7 @@ describe('ExerciseImportComponent', () => {
             sortedColumn: 'ID',
             ...searchResult,
         };
-        searchForExercisesStub.mockReturnValue(of(searchResult));
+        searchStub.mockReturnValue(of(searchResult));
     });
 
     it('should initialize the content', () => {
@@ -117,7 +117,7 @@ describe('ExerciseImportComponent', () => {
     it('should change the page on active modal', fakeAsync(() => {
         const defaultPageSize = 10;
         const numberOfPages = 5;
-        const pagingServiceSpy = jest.spyOn(quizExercisePagingService, 'searchForExercises');
+        const pagingServiceSpy = jest.spyOn(quizExercisePagingService, 'search');
         pagingServiceSpy.mockReturnValue(of({ numberOfPages } as SearchResult<TextExercise>));
 
         fixture.detectChanges();
@@ -154,8 +154,7 @@ describe('ExerciseImportComponent', () => {
     });
 
     it('should set search term and search', fakeAsync(() => {
-        const pagingServiceSpy = jest.spyOn(quizExercisePagingService, 'searchForExercises');
-        pagingServiceSpy.mockReturnValue(of({ numberOfPages: 3 } as SearchResult<TextExercise>));
+        searchStub.mockReturnValue(of({ numberOfPages: 3 } as SearchResult<TextExercise>));
 
         fixture.detectChanges();
 
@@ -165,11 +164,11 @@ describe('ExerciseImportComponent', () => {
         expect(comp.searchTerm).toBe(expectedSearchTerm);
 
         // It should wait first before executing search.
-        expect(pagingServiceSpy).not.toHaveBeenCalled();
+        expect(searchStub).not.toHaveBeenCalled();
 
         tick(300);
 
-        expect(pagingServiceSpy).toHaveBeenCalledOnce();
+        expect(searchStub).toHaveBeenCalledOnce();
     }));
 
     const setStateAndCallOnInit = (middleExpectation: () => void) => {
@@ -186,7 +185,7 @@ describe('ExerciseImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.listSorting = true;
             tick(10);
-            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING }, true, true, undefined);
+            expect(searchStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING }, { isCourseFilter: true, isExamFilter: true });
             expect(comp.listSorting).toBeTrue();
         });
     }));
@@ -196,7 +195,7 @@ describe('ExerciseImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.onPageChange(5);
             tick(10);
-            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, page: 5 }, true, true, undefined);
+            expect(searchStub).toHaveBeenCalledWith({ ...state, page: 5 }, { isCourseFilter: true, isExamFilter: true });
             expect(comp.page).toBe(5);
         });
     }));
@@ -207,9 +206,9 @@ describe('ExerciseImportComponent', () => {
             const givenSearchTerm = 'givenSearchTerm';
             comp.searchTerm = givenSearchTerm;
             tick(10);
-            expect(searchForExercisesStub).not.toHaveBeenCalled();
+            expect(searchStub).not.toHaveBeenCalled();
             tick(290);
-            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, true, true, undefined);
+            expect(searchStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, { isCourseFilter: true, isExamFilter: true });
             expect(comp.searchTerm).toEqual(givenSearchTerm);
         });
     }));
@@ -219,7 +218,7 @@ describe('ExerciseImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.sortedColumn = 'TITLE';
             tick(10);
-            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, sortedColumn: 'TITLE' }, true, true, undefined);
+            expect(searchStub).toHaveBeenCalledWith({ ...state, sortedColumn: 'TITLE' }, { isCourseFilter: true, isExamFilter: true });
             expect(comp.sortedColumn).toBe('TITLE');
         });
     }));
@@ -229,8 +228,7 @@ describe('ExerciseImportComponent', () => {
     });
 
     it('should switch courseFilter/examFilter and search', fakeAsync(() => {
-        const pagingServiceSpy = jest.spyOn(quizExercisePagingService, 'searchForExercises');
-        pagingServiceSpy.mockReturnValue(of({ numberOfPages: 3 } as SearchResult<QuizExercise>));
+        searchStub.mockReturnValue(of({ numberOfPages: 3 } as SearchResult<QuizExercise>));
 
         fixture.detectChanges();
         expect(comp.isCourseFilter).toBeTrue();
@@ -242,7 +240,7 @@ describe('ExerciseImportComponent', () => {
         expect(comp.isCourseFilter).toBeFalse();
         expect(comp.isExamFilter).toBeFalse();
 
-        expect(pagingServiceSpy).not.toHaveBeenCalled();
+        expect(searchStub).not.toHaveBeenCalled();
         tick(300);
 
         const expectedSearchObject = {
@@ -252,7 +250,7 @@ describe('ExerciseImportComponent', () => {
             sortedColumn: 'ID',
             sortingOrder: 'DESCENDING',
         };
-        expect(pagingServiceSpy).toHaveBeenCalledWith(expectedSearchObject, false, false, undefined);
+        expect(searchStub).toHaveBeenCalledWith(expectedSearchObject, { isCourseFilter: false, isExamFilter: false });
     }));
 
     it.each([

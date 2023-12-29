@@ -9,15 +9,15 @@ import { map } from 'rxjs/operators';
 type EntityResponseType = SearchResult<Competency>;
 
 @Injectable({ providedIn: 'root' })
-export class CompetencyPagingService extends PagingService {
+export class CompetencyPagingService extends PagingService<Competency> {
     public resourceUrl = 'api/competencies';
 
     constructor(private http: HttpClient) {
         super();
     }
 
-    searchForCompetencies(pageable: PageableSearch): Observable<EntityResponseType> {
+    override search(pageable: PageableSearch): Observable<EntityResponseType> {
         const params = this.createHttpParams(pageable);
-        return this.http.get(`${this.resourceUrl}`, { params, observe: 'response' }).pipe(map((resp: HttpResponse<EntityResponseType>) => resp && resp.body!));
+        return this.http.get(`${this.resourceUrl}`, { params, observe: 'response' }).pipe(map((resp: HttpResponse<SearchResult<Competency>>) => resp && resp.body!));
     }
 }

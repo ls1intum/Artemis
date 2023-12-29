@@ -62,7 +62,7 @@
                             </td>
                             <td class="col-1">
                                 @if (!subsequentExerciseGroupSelection) {
-                                    <jhi-button (onClick)="forwardSelectedExam(exam)" [title]="'artemisApp.exercise.import.table.doImport'"></jhi-button>
+                                    <jhi-button (onClick)="selectImport(exam)" [title]="'artemisApp.exercise.import.table.doImport'"></jhi-button>
                                 }
                                 @if (subsequentExerciseGroupSelection) {
                                     <jhi-button (onClick)="openExerciseSelection(exam)" [title]="'artemisApp.examManagement.exerciseGroup.selectExerciseGroup'"></jhi-button>

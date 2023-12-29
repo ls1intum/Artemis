@@ -36,7 +36,7 @@ describe('LearningPathPagingService', () => {
             sortingOrder: SortingOrder.DESCENDING,
             sortedColumn: TableColumn.ID,
         } as PageableSearch;
-        learningPathPagingService.searchForLearningPaths(pageable, 1).subscribe();
+        learningPathPagingService.search(pageable, { courseId: 1 }).subscribe();
         const params = new HttpParams()
             .set('pageSize', String(pageable.pageSize))
             .set('page', String(pageable.page))

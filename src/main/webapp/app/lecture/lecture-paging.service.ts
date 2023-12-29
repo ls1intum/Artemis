@@ -9,14 +9,14 @@ import { map } from 'rxjs/operators';
 type EntityResponseType = SearchResult<Lecture>;
 
 @Injectable({ providedIn: 'root' })
-export class LecturePagingService extends PagingService {
+export class LecturePagingService extends PagingService<Lecture> {
     private static readonly resourceUrl = 'api/lectures';
 
     constructor(private http: HttpClient) {
         super();
     }
 
-    searchForLectures(pageable: PageableSearch): Observable<EntityResponseType> {
+    override search(pageable: PageableSearch): Observable<EntityResponseType> {
         const params = this.createHttpParams(pageable);
         return this.http.get(`${LecturePagingService.resourceUrl}`, { params, observe: 'response' }).pipe(map((resp: HttpResponse<EntityResponseType>) => resp && resp.body!));
     }

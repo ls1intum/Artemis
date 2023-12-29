@@ -18,7 +18,7 @@ describe('LectureImportComponent', () => {
     let comp: LectureImportComponent;
     let pagingService: LecturePagingService;
     let sortService: SortService;
-    let searchForLecturesStub: jest.SpyInstance;
+    let searchStub: jest.SpyInstance;
     let sortByPropertyStub: jest.SpyInstance;
     let searchResult: SearchResult<Lecture>;
     let state: PageableSearch;
@@ -34,7 +34,7 @@ describe('LectureImportComponent', () => {
                 comp = fixture.componentInstance;
                 pagingService = TestBed.inject(LecturePagingService);
                 sortService = TestBed.inject(SortService);
-                searchForLecturesStub = jest.spyOn(pagingService, 'searchForLectures');
+                searchStub = jest.spyOn(pagingService, 'search');
                 sortByPropertyStub = jest.spyOn(sortService, 'sortByProperty');
             });
     });
@@ -56,7 +56,7 @@ describe('LectureImportComponent', () => {
             sortedColumn: TableColumn.ID,
             ...searchResult,
         };
-        searchForLecturesStub.mockReturnValue(of(searchResult));
+        searchStub.mockReturnValue(of(searchResult));
     });
 
     const setStateAndCallOnInit = (middleExpectation: () => void) => {
@@ -73,7 +73,7 @@ describe('LectureImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.listSorting = true;
             tick(10);
-            expect(searchForLecturesStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING });
+            expect(searchStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING }, undefined);
             expect(comp.listSorting).toBeTrue();
         });
     }));
@@ -83,7 +83,7 @@ describe('LectureImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.onPageChange(5);
             tick(10);
-            expect(searchForLecturesStub).toHaveBeenCalledWith({ ...state, page: 5 });
+            expect(searchStub).toHaveBeenCalledWith({ ...state, page: 5 }, undefined);
             expect(comp.page).toBe(5);
         });
     }));
@@ -94,9 +94,9 @@ describe('LectureImportComponent', () => {
             const givenSearchTerm = 'givenSearchTerm';
             comp.searchTerm = givenSearchTerm;
             tick(10);
-            expect(searchForLecturesStub).not.toHaveBeenCalled();
+            expect(searchStub).not.toHaveBeenCalled();
             tick(290);
-            expect(searchForLecturesStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm });
+            expect(searchStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, undefined);
             expect(comp.searchTerm).toEqual(givenSearchTerm);
         });
     }));
@@ -106,7 +106,7 @@ describe('LectureImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.sortedColumn = TableColumn.TITLE;
             tick(10);
-            expect(searchForLecturesStub).toHaveBeenCalledWith({ ...state, sortedColumn: TableColumn.TITLE });
+            expect(searchStub).toHaveBeenCalledWith({ ...state, sortedColumn: TableColumn.TITLE }, undefined);
             expect(comp.sortedColumn).toEqual(TableColumn.TITLE);
         });
     }));

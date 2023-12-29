@@ -12,7 +12,7 @@ import { PrerequisiteImportComponent } from 'app/course/competencies/competency-
 import { CompetencyPagingService } from 'app/course/competencies/competency-paging.service';
 import { Competency } from 'app/entities/competency.model';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { TableColumn } from 'app/shared/import/import-component';
+import { TableColumn } from 'app/shared/import/import.component';
 
 describe('PrerequisiteImportComponent', () => {
     let fixture: ComponentFixture<PrerequisiteImportComponent>;

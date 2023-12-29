@@ -27,7 +27,7 @@ describe('ExampleSubmissionImportComponent', () => {
     let fixture: ComponentFixture<ExampleSubmissionImportComponent>;
     let pagingService: ExampleSubmissionImportPagingService;
     let sortService: SortService;
-    let searchForSubmissionsSpy: jest.SpyInstance;
+    let searchSpy: jest.SpyInstance;
     let sortByPropertySpy: jest.SpyInstance;
     let searchResult: SearchResult<Submission>;
     let state: PageableSearch;
@@ -58,7 +58,7 @@ describe('ExampleSubmissionImportComponent', () => {
                 pagingService = TestBed.inject(ExampleSubmissionImportPagingService);
                 sortService = TestBed.inject(SortService);
                 exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
-                searchForSubmissionsSpy = jest.spyOn(pagingService, 'searchForSubmissions');
+                searchSpy = jest.spyOn(pagingService, 'search');
                 sortByPropertySpy = jest.spyOn(sortService, 'sortByProperty');
                 getSubmissionSizeSpy = jest.spyOn(exampleSubmissionService, 'getSubmissionSize');
             });
@@ -92,7 +92,7 @@ describe('ExampleSubmissionImportComponent', () => {
             sortedColumn: TableColumn.ID,
             ...searchResult,
         };
-        searchForSubmissionsSpy.mockReturnValue(of(searchResult));
+        searchSpy.mockReturnValue(of(searchResult));
     });
 
     const setStateAndCallOnInit = (middleExpectation: () => void) => {
@@ -113,7 +113,7 @@ describe('ExampleSubmissionImportComponent', () => {
         setStateAndCallOnInit(() => {
             component.listSorting = true;
             tick(10);
-            expect(searchForSubmissionsSpy).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING }, exercise.id);
+            expect(searchSpy).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING }, { exerciseId: exercise.id });
             expect(component.listSorting).toBeTrue();
         });
     }));
@@ -123,7 +123,7 @@ describe('ExampleSubmissionImportComponent', () => {
         setStateAndCallOnInit(() => {
             component.onPageChange(2);
             tick(10);
-            expect(searchForSubmissionsSpy).toHaveBeenCalledWith({ ...state, page: 2 }, exercise.id);
+            expect(searchSpy).toHaveBeenCalledWith({ ...state, page: 2 }, { exerciseId: exercise.id });
             expect(component.page).toBe(2);
         });
     }));
@@ -134,9 +134,9 @@ describe('ExampleSubmissionImportComponent', () => {
             const givenSearchTerm = 'givenTestSearchTerm';
             component.searchTerm = givenSearchTerm;
             tick(10);
-            expect(searchForSubmissionsSpy).not.toHaveBeenCalled();
+            expect(searchSpy).not.toHaveBeenCalled();
             tick(290);
-            expect(searchForSubmissionsSpy).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, exercise.id);
+            expect(searchSpy).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, { exerciseId: exercise.id });
             expect(component.searchTerm).toBe(givenSearchTerm);
         });
     }));
@@ -146,7 +146,7 @@ describe('ExampleSubmissionImportComponent', () => {
         setStateAndCallOnInit(() => {
             component.sortedColumn = TableColumn.STUDENT_NAME;
             tick(10);
-            expect(searchForSubmissionsSpy).toHaveBeenCalledWith({ ...state, sortedColumn: TableColumn.STUDENT_NAME }, exercise.id);
+            expect(searchSpy).toHaveBeenCalledWith({ ...state, sortedColumn: TableColumn.STUDENT_NAME }, { exerciseId: exercise.id });
             expect(component.sortedColumn).toBe(TableColumn.STUDENT_NAME);
         });
     }));
