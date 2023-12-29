@@ -36,6 +36,7 @@ import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam.model';
 import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
+import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -108,6 +109,7 @@ describe('CoursesComponent', () => {
     let courseService: CourseManagementService;
     let serverDateService: ArtemisServerDateService;
     let exerciseService: ExerciseService;
+    let courseAccessStorageService: CourseAccessStorageService;
     let router: Router;
     let location: Location;
     let httpMock: HttpTestingController;
@@ -136,6 +138,7 @@ describe('CoursesComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: CourseExerciseRowComponent },
                 MockProvider(AlertService),
+                MockProvider(CourseAccessStorageService),
             ],
         })
             .compileComponents()
@@ -143,6 +146,7 @@ describe('CoursesComponent', () => {
                 fixture = TestBed.createComponent(CoursesComponent);
                 component = fixture.componentInstance;
                 courseService = TestBed.inject(CourseManagementService);
+                courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
                 location = TestBed.inject(Location);
                 TestBed.inject(GuidedTourService);
                 serverDateService = TestBed.inject(ArtemisServerDateService);
@@ -216,6 +220,44 @@ describe('CoursesComponent', () => {
             expect(getNextExerciseForHoursSpy).toHaveBeenCalledWith(course1.exercises);
             expect(component.nextRelevantExercise).toEqual(exercise1);
             expect(component.nextRelevantCourse).toEqual(exercise1.course);
+        });
+
+        it('should sort courses into regular and recently accessed after loading', () => {
+            const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
+            const sortCoursesInRecentlyAccessedAndRegularCoursesSpy = jest.spyOn(component, 'sortCoursesInRecentlyAccessedAndRegularCourses');
+            findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: coursesDashboard, headers: new HttpHeaders() })));
+
+            component.ngOnInit();
+
+            expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
+            expect(sortCoursesInRecentlyAccessedAndRegularCoursesSpy).toHaveBeenCalledOnce();
+
+            const lastAccessedCourses = [1, 2];
+            const recentCoursesSpy = jest.spyOn(courseAccessStorageService, 'getLastAccessedCourses').mockReturnValue(lastAccessedCourses);
+
+            // Test for less than 5 courses
+            const courses = [];
+            for (let i = 1; i <= 3; i++) {
+                const course = { id: i };
+                courses.push(course);
+            }
+
+            component.courses = courses;
+            component.sortCoursesInRecentlyAccessedAndRegularCourses();
+            expect(component.regularCourses).toEqual(courses);
+            expect(component.recentlyAccessedCourses).toEqual([]);
+            expect(recentCoursesSpy).not.toHaveBeenCalled();
+
+            // Test for more than 5 courses
+            for (let i = 4; i <= 7; i++) {
+                const course = { id: i };
+                courses.push(course);
+            }
+            component.courses = courses;
+            component.sortCoursesInRecentlyAccessedAndRegularCourses();
+            expect(component.regularCourses).toEqual(courses.slice(2));
+            expect(component.recentlyAccessedCourses).toEqual(courses.slice(0, 2));
+            expect(recentCoursesSpy).toHaveBeenCalledOnce();
         });
     });
 
