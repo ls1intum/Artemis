@@ -155,8 +155,9 @@ public class AthenaModuleService {
      * @throws BadRequestAlertException Is thrown in case the module change is not allowed
      */
     public void checkValidAthenaModuleChange(Exercise originalExercise, Exercise updatedExercise, String entityName) throws BadRequestAlertException {
-        if (!Objects.equals(originalExercise.getFeedbackSuggestionModule(), updatedExercise.getFeedbackSuggestionModule())
-                && originalExercise.getDueDate().isBefore(ZonedDateTime.now())) {
+        var dueDate = originalExercise.getDueDate();
+        if (!Objects.equals(originalExercise.getFeedbackSuggestionModule(), updatedExercise.getFeedbackSuggestionModule()) && dueDate != null
+                && dueDate.isBefore(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Athena module can't be changed after due date has passed", entityName, "athenaModuleChangeAfterDueDate");
         }
     }
