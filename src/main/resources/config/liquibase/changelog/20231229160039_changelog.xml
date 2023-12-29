@@ -2,7 +2,7 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
-    <changeSet id="20231126172632" author="zbil">
+    <changeSet id="20231229160039" author="zbil">
         <addColumn tableName="conversation_participant">
             <column name="is_muted" type="boolean" defaultValueBoolean="false">
                 <constraints nullable="false"/>
