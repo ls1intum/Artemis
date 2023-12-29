@@ -15,6 +15,7 @@ import { Exam } from 'app/entities/exam.model';
 import { Router } from '@angular/router';
 import { faPenAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
+import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
 
 @Component({
     selector: 'jhi-overview',
@@ -71,7 +72,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
             next: (res: HttpResponse<CoursesForDashboardDTO>) => {
                 if (res.body) {
                     const courses: Course[] = [];
-                    res.body.courses.forEach((courseDto) => {
+                    res.body.courses.forEach((courseDto: CourseForDashboardDTO) => {
                         courses.push(courseDto.course);
                     });
                     this.courses = courses.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
