@@ -34,7 +34,4 @@ main () {
   cd "${AEOLUS_INITIAL_DIRECTORY}"
 }
 
-
-
-
 main "${@}"

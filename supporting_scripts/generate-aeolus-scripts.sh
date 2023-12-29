@@ -20,9 +20,8 @@ process_windfile() {
   diff "${_dirname}/${_bashname}.sh" "${_newtempfile}"
   local _diff=$?
   if [[ $_diff -ne 0 ]]; then
-    echo "File $file has changed, please rerun the script ($0) to regenerate it."
-    echo "If you want to regenerate all scripts, run $_regenerate"
     if [[ "${_regenerate}" -eq 0 ]]; then
+        echo "File $file has changed, please rerun the script ($0) locally to regenerate them."
         rm "$_newtempfile"
         rm "$_tempfile"
         exit 1
