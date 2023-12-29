@@ -259,7 +259,7 @@ describe('Exam Import Component', () => {
         const activeModalSpy = jest.spyOn(activeModal, 'close');
         const exam = { id: 1 } as Exam;
         // WHEN
-        component.forwardSelectedExam(exam);
+        component.selectImport(exam);
 
         // THEN
         expect(activeModalSpy).toHaveBeenCalledOnce();
@@ -269,7 +269,7 @@ describe('Exam Import Component', () => {
     it('should change the page on active modal', fakeAsync(() => {
         const defaultPageSize = 10;
         const numberOfPages = 5;
-        const pagingServiceSpy = jest.spyOn(pagingService, 'searchForExams');
+        const pagingServiceSpy = jest.spyOn(pagingService, 'search');
         pagingServiceSpy.mockReturnValue(of({ numberOfPages } as SearchResult<Exam>));
 
         fixture.detectChanges();
@@ -302,11 +302,11 @@ describe('Exam Import Component', () => {
         component.sortRows();
 
         expect(sortServiceSpy).toHaveBeenCalledOnce();
-        expect(sortServiceSpy).toHaveBeenCalledWith([], component.column.ID, false);
+        expect(sortServiceSpy).toHaveBeenCalledWith([], 'ID', false);
     });
 
     it('should set search term and search', fakeAsync(() => {
-        const pagingServiceSpy = jest.spyOn(pagingService, 'searchForExams');
+        const pagingServiceSpy = jest.spyOn(pagingService, 'search');
         pagingServiceSpy.mockReturnValue(of({ numberOfPages: 3 } as SearchResult<Exam>));
 
         fixture.detectChanges();

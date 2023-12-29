@@ -13,7 +13,6 @@ import { SortService } from 'app/shared/service/sort.service';
 import { ExampleSubmissionImportPagingService } from 'app/exercises/shared/example-submission/example-submission-import/example-submission-import-paging.service';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { Submission } from 'app/entities/submission.model';
-import { TableColumn } from 'app/exercises/shared/example-submission/example-submission-import/example-submission-import.component';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -89,7 +88,7 @@ describe('ExampleSubmissionImportComponent', () => {
             pageSize: 10,
             searchTerm: 'initialSearchTerm',
             sortingOrder: SortingOrder.DESCENDING,
-            sortedColumn: TableColumn.ID,
+            sortedColumn: 'ID',
             ...searchResult,
         };
         searchSpy.mockReturnValue(of(searchResult));
@@ -142,12 +141,12 @@ describe('ExampleSubmissionImportComponent', () => {
     }));
 
     it('should set content to paging result on sortedColumn change', fakeAsync(() => {
-        expect(component.sortedColumn).toBe(TableColumn.ID);
+        expect(component.sortedColumn).toBe('ID');
         setStateAndCallOnInit(() => {
-            component.sortedColumn = TableColumn.STUDENT_NAME;
+            component.sortedColumn = 'STUDENT_NAME';
             tick(10);
-            expect(searchSpy).toHaveBeenCalledWith({ ...state, sortedColumn: TableColumn.STUDENT_NAME }, { exerciseId: exercise.id });
-            expect(component.sortedColumn).toBe(TableColumn.STUDENT_NAME);
+            expect(searchSpy).toHaveBeenCalledWith({ ...state, sortedColumn: 'STUDENT_NAME' }, { exerciseId: exercise.id });
+            expect(component.sortedColumn).toBe('STUDENT_NAME');
         });
     }));
 });

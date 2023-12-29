@@ -14,7 +14,7 @@ import { TextExercisePagingService } from 'app/exercises/text/manage/text-exerci
 import { ImportComponent } from 'app/shared/import/import.component';
 import { SortService } from 'app/shared/service/sort.service';
 
-export type TableColumn = 'ID' | 'TITLE' | 'COURSE_TITLE' | 'EXAM_TITLE' | 'PROGRAMMING_LANGUAGE';
+const DEFAULT_SORT_COLUMN = 'ID';
 
 @Component({
     selector: 'jhi-exercise-import',
@@ -22,7 +22,6 @@ export type TableColumn = 'ID' | 'TITLE' | 'COURSE_TITLE' | 'EXAM_TITLE' | 'PROG
 })
 export class ExerciseImportComponent extends ImportComponent<Exercise> implements OnInit {
     readonly ExerciseType = ExerciseType;
-    private readonly DEFAULT_SORT_COLUMN: TableColumn = 'ID';
 
     @Input() exerciseType?: ExerciseType;
 
@@ -61,6 +60,7 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
             this.titleKey =
                 this.exerciseType === ExerciseType.FILE_UPLOAD ? `artemisApp.fileUploadExercise.home.importLabel` : `artemisApp.${this.exerciseType}Exercise.home.importLabel`;
         }
+
         super.ngOnInit();
     }
 
@@ -88,7 +88,7 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
         return { isCourseFilter: this.isCourseFilter, isExamFilter: this.isExamFilter, programmingLanguage: this.programmingLanguage };
     }
 
-    override set sortedColumn(sortedColumn: TableColumn) {
+    override set sortedColumn(sortedColumn: string) {
         if (sortedColumn === 'COURSE_TITLE') {
             if (this.isExamFilter && !this.isCourseFilter) {
                 sortedColumn = 'EXAM_TITLE';
@@ -96,6 +96,12 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
             // sort by course / exam title is not possible if course and exam exercises are mixed
         }
         this.setSearchParam({ sortedColumn });
+    }
+
+    // When overriding the setter, we also need to override the getter.
+    // Otherwise typescript will always return undefined when using the getter.
+    override get sortedColumn(): string {
+        return this.state.sortedColumn;
     }
 
     onCourseFilterChange() {
@@ -114,7 +120,7 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
     // This avoids exercises still being filtered out by the sortedColum even if the filter is not set.
     private resetSortOnFilterChange() {
         if (this.sortedColumn === 'COURSE_TITLE' || this.sortedColumn === 'EXAM_TITLE') {
-            this.sortedColumn = this.DEFAULT_SORT_COLUMN;
+            this.sortedColumn = DEFAULT_SORT_COLUMN;
         }
     }
 

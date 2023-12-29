@@ -11,11 +11,6 @@ import { ExampleSubmissionImportPagingService } from 'app/exercises/shared/examp
 import { Router } from '@angular/router';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
-enum TableColumn {
-    ID = 'ID',
-    STUDENT_NAME = 'STUDENT_NAME',
-}
-
 @Component({
     selector: 'jhi-example-submission-import',
     templateUrl: './example-submission-import.component.html',
@@ -25,7 +20,6 @@ export class ExampleSubmissionImportComponent extends ImportComponent<Submission
 
     readonly faQuestionCircle = faQuestionCircle;
     readonly ExerciseType = ExerciseType;
-    readonly column = TableColumn;
 
     constructor(
         router: Router,

@@ -8,14 +8,6 @@ import { SortService } from 'app/shared/service/sort.service';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { Subject, debounceTime, switchMap, tap } from 'rxjs';
 
-// TODO remove this enum and use a string literal type instead (like done for the exercises)
-export enum TableColumn {
-    ID = 'ID',
-    TITLE = 'TITLE',
-    COURSE_TITLE = 'COURSE_TITLE',
-    SEMESTER = 'SEMESTER',
-}
-
 /**
  * An abstract component intended for cases where a resource needs to be imported from one course into another.
  *
@@ -31,7 +23,7 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
         pageSize: 10,
         searchTerm: '',
         sortingOrder: SortingOrder.DESCENDING,
-        sortedColumn: TableColumn.ID,
+        sortedColumn: 'ID',
     };
 
     // Icons

@@ -8,7 +8,7 @@ import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import { CompetencyImportComponent, TableColumn } from 'app/course/competencies/competency-management/competency-import.component';
+import { CompetencyImportComponent } from 'app/course/competencies/competency-management/competency-import.component';
 import { CompetencyPagingService } from 'app/course/competencies/competency-paging.service';
 import { Competency } from 'app/entities/competency.model';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
@@ -53,7 +53,7 @@ describe('CompetencyImportComponent', () => {
             pageSize: 10,
             searchTerm: 'initialSearchTerm',
             sortingOrder: SortingOrder.DESCENDING,
-            sortedColumn: TableColumn.ID,
+            sortedColumn: 'ID',
             ...searchResult,
         };
         searchStub.mockReturnValue(of(searchResult));
@@ -102,12 +102,12 @@ describe('CompetencyImportComponent', () => {
     }));
 
     it('should set content to paging result on sortedColumn change', fakeAsync(() => {
-        expect(comp.sortedColumn).toEqual(TableColumn.ID);
+        expect(comp.sortedColumn).toBe('ID');
         setStateAndCallOnInit(() => {
-            comp.sortedColumn = TableColumn.TITLE;
+            comp.sortedColumn = 'TITLE';
             tick(10);
-            expect(searchStub).toHaveBeenCalledWith({ ...state, sortedColumn: TableColumn.TITLE }, undefined);
-            expect(comp.sortedColumn).toEqual(TableColumn.TITLE);
+            expect(searchStub).toHaveBeenCalledWith({ ...state, sortedColumn: 'TITLE' }, undefined);
+            expect(comp.sortedColumn).toBe('TITLE');
         });
     }));
 

@@ -10,7 +10,7 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { Lecture } from 'app/entities/lecture.model';
 import { LecturePagingService } from 'app/lecture/lecture-paging.service';
-import { LectureImportComponent, TableColumn } from 'app/lecture/lecture-import.component';
+import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 
 describe('LectureImportComponent', () => {
@@ -53,7 +53,7 @@ describe('LectureImportComponent', () => {
             pageSize: 10,
             searchTerm: 'initialSearchTerm',
             sortingOrder: SortingOrder.DESCENDING,
-            sortedColumn: TableColumn.ID,
+            sortedColumn: 'ID',
             ...searchResult,
         };
         searchStub.mockReturnValue(of(searchResult));
@@ -102,12 +102,12 @@ describe('LectureImportComponent', () => {
     }));
 
     it('should set content to paging result on sortedColumn change', fakeAsync(() => {
-        expect(comp.sortedColumn).toEqual(TableColumn.ID);
+        expect(comp.sortedColumn).toBe('ID');
         setStateAndCallOnInit(() => {
-            comp.sortedColumn = TableColumn.TITLE;
+            comp.sortedColumn = 'TITLE';
             tick(10);
-            expect(searchStub).toHaveBeenCalledWith({ ...state, sortedColumn: TableColumn.TITLE }, undefined);
-            expect(comp.sortedColumn).toEqual(TableColumn.TITLE);
+            expect(searchStub).toHaveBeenCalledWith({ ...state, sortedColumn: 'TITLE' }, undefined);
+            expect(comp.sortedColumn).toBe('TITLE');
         });
     }));
 

@@ -107,7 +107,7 @@ describe('ExerciseImportComponent', () => {
         const activeModalSpy = jest.spyOn(activeModal, 'close');
         const exercise = { id: 1 } as TextExercise;
         // WHEN
-        comp.openImport(exercise);
+        comp.selectImport(exercise);
 
         // THEN
         expect(activeModalSpy).toHaveBeenCalledOnce();

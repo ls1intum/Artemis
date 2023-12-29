@@ -12,14 +12,13 @@ import { PrerequisiteImportComponent } from 'app/course/competencies/competency-
 import { CompetencyPagingService } from 'app/course/competencies/competency-paging.service';
 import { Competency } from 'app/entities/competency.model';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { TableColumn } from 'app/shared/import/import.component';
 
 describe('PrerequisiteImportComponent', () => {
     let fixture: ComponentFixture<PrerequisiteImportComponent>;
     let comp: PrerequisiteImportComponent;
     let pagingService: CompetencyPagingService;
     let sortService: SortService;
-    let searchForCompetenciesStub: jest.SpyInstance;
+    let searchStub: jest.SpyInstance;
     let sortByPropertyStub: jest.SpyInstance;
     let searchResult: SearchResult<Competency>;
     let state: PageableSearch;
@@ -35,7 +34,7 @@ describe('PrerequisiteImportComponent', () => {
                 comp = fixture.componentInstance;
                 pagingService = TestBed.inject(CompetencyPagingService);
                 sortService = TestBed.inject(SortService);
-                searchForCompetenciesStub = jest.spyOn(pagingService, 'searchForCompetencies');
+                searchStub = jest.spyOn(pagingService, 'search');
                 sortByPropertyStub = jest.spyOn(sortService, 'sortByProperty');
             });
     });
@@ -54,10 +53,10 @@ describe('PrerequisiteImportComponent', () => {
             pageSize: 10,
             searchTerm: 'initialSearchTerm',
             sortingOrder: SortingOrder.DESCENDING,
-            sortedColumn: TableColumn.ID,
+            sortedColumn: 'ID',
             ...searchResult,
         };
-        searchForCompetenciesStub.mockReturnValue(of(searchResult));
+        searchStub.mockReturnValue(of(searchResult));
     });
 
     const setStateAndCallOnInit = (middleExpectation: () => void) => {
@@ -74,7 +73,7 @@ describe('PrerequisiteImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.listSorting = true;
             tick(10);
-            expect(searchForCompetenciesStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING });
+            expect(searchStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING }, undefined);
             expect(comp.listSorting).toBeTrue();
         });
     }));
@@ -84,7 +83,7 @@ describe('PrerequisiteImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.onPageChange(5);
             tick(10);
-            expect(searchForCompetenciesStub).toHaveBeenCalledWith({ ...state, page: 5 });
+            expect(searchStub).toHaveBeenCalledWith({ ...state, page: 5 }, undefined);
             expect(comp.page).toBe(5);
         });
     }));
@@ -95,20 +94,20 @@ describe('PrerequisiteImportComponent', () => {
             const givenSearchTerm = 'givenSearchTerm';
             comp.searchTerm = givenSearchTerm;
             tick(10);
-            expect(searchForCompetenciesStub).not.toHaveBeenCalled();
+            expect(searchStub).not.toHaveBeenCalled();
             tick(290);
-            expect(searchForCompetenciesStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm });
+            expect(searchStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, undefined);
             expect(comp.searchTerm).toEqual(givenSearchTerm);
         });
     }));
 
     it('should set content to paging result on sortedColumn change', fakeAsync(() => {
-        expect(comp.sortedColumn).toEqual(TableColumn.ID);
+        expect(comp.sortedColumn).toBe('ID');
         setStateAndCallOnInit(() => {
-            comp.sortedColumn = TableColumn.TITLE;
+            comp.sortedColumn = 'TITLE';
             tick(10);
-            expect(searchForCompetenciesStub).toHaveBeenCalledWith({ ...state, sortedColumn: TableColumn.TITLE });
-            expect(comp.sortedColumn).toEqual(TableColumn.TITLE);
+            expect(searchStub).toHaveBeenCalledWith({ ...state, sortedColumn: 'TITLE' }, undefined);
+            expect(comp.sortedColumn).toBe('TITLE');
         });
     }));
 

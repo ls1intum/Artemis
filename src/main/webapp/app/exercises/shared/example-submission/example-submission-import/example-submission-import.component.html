@@ -23,10 +23,10 @@
                 <table class="table table-striped">
                     <thead class="thead-dark">
                         <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" (sortChange)="sortRows()">
-                            <th jhiSortBy="{{ column.ID }}">
+                            <th jhiSortBy="ID">
                                 <span>#</span>
                             </th>
-                            <th jhiSortBy="{{ column.STUDENT_NAME }}">
+                            <th jhiSortBy="STUDENT_NAME">
                                 <span jhiTranslate="artemisApp.exercise.name">Name</span>
                                 <fa-icon [icon]="faSort"></fa-icon>
                             </th>

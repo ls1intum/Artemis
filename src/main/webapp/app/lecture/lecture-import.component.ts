@@ -6,19 +6,11 @@ import { LecturePagingService } from 'app/lecture/lecture-paging.service';
 import { ImportComponent } from 'app/shared/import/import.component';
 import { SortService } from 'app/shared/service/sort.service';
 
-export enum TableColumn {
-    ID = 'ID',
-    TITLE = 'TITLE',
-    COURSE_TITLE = 'COURSE_TITLE',
-    SEMESTER = 'SEMESTER',
-}
-
 @Component({
     selector: 'jhi-lecture-import',
     templateUrl: './lecture-import.component.html',
 })
 export class LectureImportComponent extends ImportComponent<Lecture> {
-    readonly column = TableColumn;
     constructor(router: Router, pagingService: LecturePagingService, sortService: SortService, activeModal: NgbActiveModal) {
         super(router, pagingService, sortService, activeModal);
     }

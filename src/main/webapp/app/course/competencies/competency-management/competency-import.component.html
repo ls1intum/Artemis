@@ -14,19 +14,19 @@
         <table class="table table-striped align-middle flex">
             <thead class="thead-dark">
                 <tr (sortChange)="sortRows()" [(ascending)]="listSorting" [(predicate)]="sortedColumn" class="flex-row" jhiSort>
-                    <th class="col-1" jhiSortBy="{{ column.ID }}">
+                    <th class="col-1" jhiSortBy="ID">
                         <span>#</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th class="col-4" jhiSortBy="{{ column.TITLE }}">
+                    <th class="col-4" jhiSortBy="TITLE">
                         <span jhiTranslate="artemisApp.competency.importCompetency.table.title">Title</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th class="col-4" jhiSortBy="{{ column.COURSE_TITLE }}">
+                    <th class="col-4" jhiSortBy="COURSE_TITLE">
                         <span jhiTranslate="artemisApp.competency.importCompetency.table.course">Course</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th class="col-2" jhiSortBy="{{ column.SEMESTER }}">
+                    <th class="col-2" jhiSortBy="SEMESTER">
                         <span jhiTranslate="artemisApp.competency.importCompetency.table.semester">Semester</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>

@@ -12,20 +12,11 @@ import { ImportComponent } from 'app/shared/import/import.component';
 import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
 
-enum TableColumn {
-    ID = 'ID',
-    TITLE = 'TITLE',
-    COURSE_TITLE = 'COURSE_TITLE',
-    EXAM_MODE = 'EXAM_MODE',
-}
-
 @Component({
     selector: 'jhi-exam-import',
     templateUrl: './exam-import.component.html',
 })
 export class ExamImportComponent extends ImportComponent<Exam> {
-    readonly column = TableColumn;
-
     // boolean to indicate, if the import modal should include the exerciseGroup selection subsequently.
     @Input() subsequentExerciseGroupSelection: boolean;
     // Values to specify the target of the exercise group import
