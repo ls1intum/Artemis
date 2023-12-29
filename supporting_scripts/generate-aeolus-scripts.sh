@@ -15,7 +15,7 @@ process_windfile() {
   echo "  name: $_filename" >> "$_tempfile"
   echo "  description: $_filename" >> "$_tempfile"
   local _bashname="${_filename%.*}"
-  docker run --rm -v "./:/tmp" -it ghcr.io/ls1intum/aeolus/cli:nightly generate -t cli -i "/tmp/${_tempfile}" > "${_dirname}/${_bashname}.sh"
+  docker run --rm -v "./:/tmp" ghcr.io/ls1intum/aeolus/cli:nightly generate -t cli -i "/tmp/${_tempfile}" > "${_dirname}/${_bashname}.sh"
   rm "$_tempfile"
 }
 
