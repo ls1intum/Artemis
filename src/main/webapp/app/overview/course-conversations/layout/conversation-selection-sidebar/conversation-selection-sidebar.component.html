@@ -40,9 +40,9 @@
                             [activeConversation]="activeConversation"
                             (conversationSelected)="onConversationSelected($event)"
                             [course]="course"
-                            (settingsChanged)="onSettingsChanged()"
-                            (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
-                            (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
+                            (settingsDidChange)="onSettingsDidChange()"
+                            (conversationIsHiddenDidChange)="updateConversations()"
+                            (conversationIsFavoriteDidChange)="updateConversations()"
                         >
                         </jhi-conversation-sidebar-section>
                         <!-- Channels -->
@@ -54,9 +54,9 @@
                             [hideIfEmpty]="false"
                             [activeConversation]="activeConversation"
                             (conversationSelected)="onConversationSelected($event)"
-                            (settingsChanged)="onSettingsChanged()"
-                            (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
-                            (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
+                            (settingsDidChange)="onSettingsDidChange()"
+                            (conversationIsHiddenDidChange)="updateConversations()"
+                            (conversationIsFavoriteDidChange)="updateConversations()"
                             [course]="course"
                         >
                             <ng-template>
@@ -87,9 +87,9 @@
                             [conversations]="displayedExerciseChannels"
                             [activeConversation]="activeConversation"
                             (conversationSelected)="onConversationSelected($event)"
-                            (settingsChanged)="onSettingsChanged()"
-                            (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
-                            (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
+                            (settingsDidChange)="onSettingsDidChange()"
+                            (conversationIsHiddenDidChange)="updateConversations()"
+                            (conversationIsFavoriteDidChange)="updateConversations()"
                             [course]="course"
                         >
                             <ng-template>
@@ -115,9 +115,9 @@
                             [conversations]="displayedLectureChannels"
                             [activeConversation]="activeConversation"
                             (conversationSelected)="onConversationSelected($event)"
-                            (settingsChanged)="onSettingsChanged()"
-                            (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
-                            (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
+                            (settingsDidChange)="onSettingsDidChange()"
+                            (conversationIsHiddenDidChange)="updateConversations()"
+                            (conversationIsFavoriteDidChange)="updateConversations()"
                             [course]="course"
                         >
                             <ng-template>
@@ -143,9 +143,9 @@
                             [conversations]="displayedExamChannels"
                             [activeConversation]="activeConversation"
                             (conversationSelected)="onConversationSelected($event)"
-                            (settingsChanged)="onSettingsChanged()"
-                            (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
-                            (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
+                            (settingsDidChange)="onSettingsDidChange()"
+                            (conversationIsHiddenDidChange)="updateConversations()"
+                            (conversationIsFavoriteDidChange)="updateConversations()"
                             [course]="course"
                         >
                             <ng-template>
@@ -173,9 +173,9 @@
                                 [hideIfEmpty]="false"
                                 [activeConversation]="activeConversation"
                                 (conversationSelected)="onConversationSelected($event)"
-                                (settingsChanged)="onSettingsChanged()"
-                                (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
-                                (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
+                                (settingsDidChange)="onSettingsDidChange()"
+                                (conversationIsHiddenDidChange)="updateConversations()"
+                                (conversationIsFavoriteDidChange)="updateConversations()"
                                 [course]="course"
                             >
                                 <ng-template>
@@ -202,9 +202,9 @@
                                 [hideIfEmpty]="false"
                                 [activeConversation]="activeConversation"
                                 (conversationSelected)="onConversationSelected($event)"
-                                (settingsChanged)="onSettingsChanged()"
-                                (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
-                                (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
+                                (settingsDidChange)="onSettingsDidChange()"
+                                (conversationIsHiddenDidChange)="updateConversations()"
+                                (conversationIsFavoriteDidChange)="updateConversations()"
                                 [course]="course"
                             >
                                 <ng-template>
