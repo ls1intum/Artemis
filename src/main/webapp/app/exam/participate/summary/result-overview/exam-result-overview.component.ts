@@ -80,7 +80,15 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
             this.setExamGrade();
         }
 
+        console.log('studentExamWithGrade: ', this.studentExamWithGrade);
+        console.log('exerciseInfos', this.exerciseInfos);
+
+        console.log('updating local variables');
+
         this.updateLocalVariables();
+
+        console.log('studentExamWithGrade: ', this.studentExamWithGrade);
+        console.log('exerciseInfos', this.exerciseInfos);
     }
 
     ngOnChanges() {
