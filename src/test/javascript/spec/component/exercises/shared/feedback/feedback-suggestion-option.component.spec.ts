@@ -29,8 +29,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         fixture = TestBed.createComponent(ExerciseFeedbackSuggestionOptionsComponent);
         component = fixture.componentInstance;
         athenaService = TestBed.inject(AthenaService);
-
-        component.exercise = { feedbackSuggestionModule: undefined, dueDate: undefined };
+        component.exercise = { feedbackSuggestionModule: undefined, dueDate: undefined } as Exercise;
     });
 
     it('should create', () => {
