@@ -16,8 +16,7 @@ behavior () {
 
 main () {
   if [[ "${1}" == "aeolus_sourcing" ]]; then
-  # just source to use the methods in the subshell, no execution
-  return 0
+    return 0 # just source to use the methods in the subshell, no execution
   fi
   local _script_name
   _script_name=$(realpath "${0}")

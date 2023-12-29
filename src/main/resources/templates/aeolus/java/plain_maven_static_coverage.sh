@@ -12,7 +12,7 @@ move_report_file () {
   mv target/tia/reports/*/testwise-coverage-*.json target/tia/reports/tiaTests.json
 }
 
-maven () {
+maven_1 () {
   echo '⚙️ executing maven'
   mvn spotbugs:spotbugs checkstyle:checkstyle pmd:pmd pmd:cpd
 }
@@ -21,13 +21,12 @@ final_aeolus_post_action () {
   set +e # from now on, we don't exit on errors
   echo '⚙️ executing final_aeolus_post_action'
   cd "${AEOLUS_INITIAL_DIRECTORY}"
-  maven
+  maven_1
 }
 
 main () {
   if [[ "${1}" == "aeolus_sourcing" ]]; then
-  # just source to use the methods in the subshell, no execution
-  return 0
+    return 0 # just source to use the methods in the subshell, no execution
   fi
   local _script_name
   _script_name=$(realpath "${0}")
