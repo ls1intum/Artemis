@@ -482,6 +482,23 @@ describe('Course Management Update Component', () => {
         });
     });
 
+    describe('changeRestrictedAthenaModulesEnabled', () => {
+        it('should toggle restricted athena modules access', () => {
+            comp.course = new Course();
+            comp.course.restrictedAthenaModulesAccess = true;
+            comp.courseForm = new FormGroup({ restrictedAthenaModulesAccess: new FormControl(true) });
+
+            expect(comp.course.restrictedAthenaModulesAccess).toBeTrue();
+            expect(comp.courseForm.controls['restrictedAthenaModulesAccess'].value).toBeTruthy();
+            comp.changeRestrictedAthenaModulesEnabled();
+            expect(comp.course.restrictedAthenaModulesAccess).toBeFalse();
+            expect(comp.courseForm.controls['restrictedAthenaModulesAccess'].value).toBeFalsy();
+            comp.changeRestrictedAthenaModulesEnabled();
+            expect(comp.course.restrictedAthenaModulesAccess).toBeTrue();
+            expect(comp.courseForm.controls['restrictedAthenaModulesAccess'].value).toBeTruthy();
+        });
+    });
+
     describe('getSemesters', () => {
         it('should get semesters around current year', () => {
             const years = dayjs().year() - 2018 + 1;
