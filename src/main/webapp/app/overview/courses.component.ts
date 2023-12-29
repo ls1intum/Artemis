@@ -1,9 +1,8 @@
 import { Component, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
-import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
 import { Exercise } from 'app/entities/exercise.model';
@@ -13,9 +12,7 @@ import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam.model';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Router } from '@angular/router';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { faPenAlt } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
@@ -28,7 +25,6 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
     public nextRelevantCourse?: Course;
     nextRelevantCourseForExam?: Course;
     nextRelevantExams?: Exam[];
-    exams: Exam[] = [];
 
     courseForGuidedTour?: Course;
     quizExercisesChannels: string[] = [];
@@ -41,14 +37,10 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
     constructor(
         private courseService: CourseManagementService,
         private exerciseService: ExerciseService,
-        private alertService: AlertService,
-        private accountService: AccountService,
         private guidedTourService: GuidedTourService,
         private teamService: TeamService,
         private jhiWebsocketService: JhiWebsocketService,
-        private examService: ExamManagementService,
         private router: Router,
-        private serverDateService: ArtemisServerDateService,
     ) {}
 
     async ngOnInit() {
@@ -71,33 +63,23 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
 
     loadAndFilterCourses() {
         this.courseService.findAllForDashboard().subscribe({
-            next: (res: HttpResponse<Course[]>) => {
+            next: (res: HttpResponse<CoursesForDashboardDTO>) => {
                 if (res.body) {
-                    this.courses = res.body!.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
+                    const courses: Course[] = [];
+                    res.body.courses.forEach((courseDto) => {
+                        courses.push(courseDto.course);
+                    });
+                    this.courses = courses.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
                     this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, courseOverviewTour, true);
 
-                    // get all exams of courses
-                    this.courses.forEach((course) => {
-                        if (course.exams) {
-                            // set course for exam as it is not loaded within the server call
-                            course.exams.forEach((exam) => {
-                                exam.course = course;
-                                this.exams.push(exam);
-                            });
-                        }
-                    });
-                    // Used as constant to limit the number of calls
-                    const timeNow = this.serverDateService.now();
-                    this.nextRelevantExams = this.exams.filter(
-                        // TestExams should not be displayed as upcoming exams
-                        (exam) => !exam.testExam! && timeNow.isBefore(exam.endDate!) && timeNow.isAfter(exam.visibleDate!),
-                    );
+                    this.nextRelevantExams = res.body.activeExams ?? [];
                     this.nextRelevantExercise = this.findNextRelevantExercise();
                 }
             },
         });
     }
 
+    // TODO: we should remove this functionality or move it to the server
     findNextRelevantExercise() {
         const relevantExercises = new Array<Exercise>();
         let relevantExercise: Exercise | undefined;
@@ -135,6 +117,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
      * Sets the course for the next upcoming exam and returns the next upcoming exam or undefined
      */
     get nextRelevantExam(): Exam | undefined {
+        // TODO: support multiple relevant exams in the future
         let relevantExam: Exam | undefined;
         if (this.nextRelevantExams) {
             if (this.nextRelevantExams.length === 0) {
