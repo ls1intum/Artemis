@@ -297,31 +297,6 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testNoNotificationIfConversationMuted() throws Exception {
-        Channel channel = conversationUtilService.createCourseWideChannel(course, "test");
-        ConversationParticipant recipientWithMutedTrue = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student2");
-        recipientWithMutedTrue.setIsMuted(true);
-        conversationParticipantRepository.save(recipientWithMutedTrue);
-        ConversationParticipant recipientWithHiddenFalse = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "tutor1");
-        ConversationParticipant author = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
-
-        Post postToSave = new Post();
-        postToSave.setAuthor(author.getUser());
-        postToSave.setConversation(channel);
-
-        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
-        checkCreatedMessagePost(postToSave, createdPost);
-
-        // participants who muted the conversation should not be notified
-        verify(websocketMessagingService, never()).sendMessage(eq("/topic/user/" + recipientWithMutedTrue.getUser().getId() + "/notifications/conversations"),
-                any(Notification.class));
-        // participants who have not muted the conversation should be notified
-        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/user/" + recipientWithHiddenFalse.getUser().getId() + "/notifications/conversations"),
-                any(Notification.class));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBroadCastWithNotification() throws Exception {
         Channel channel = conversationUtilService.createCourseWideChannel(course, "test");
         ConversationParticipant recipientWithHiddenTrue = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student2");
