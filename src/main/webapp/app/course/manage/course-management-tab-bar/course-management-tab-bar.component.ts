@@ -16,6 +16,7 @@ import {
     faFilePdf,
     faFlag,
     faGraduationCap,
+    faList,
     faListAlt,
     faNetworkWired,
     faPersonChalkboard,
@@ -29,6 +30,8 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { PROFILE_LOCALCI } from 'app/app.constants';
+import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 
 @Component({
     selector: 'jhi-course-management-tab-bar',
@@ -44,6 +47,8 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
     private paramSub?: Subscription;
     private courseSub?: Subscription;
     private eventSubscriber: Subscription;
+
+    localCIActive: boolean = false;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -66,6 +71,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
     faGraduationCap = faGraduationCap;
     faPersonChalkboard = faPersonChalkboard;
     faRobot = faRobot;
+    faList = faList;
 
     isCommunicationEnabled = false;
     isMessagingOrCommunicationEnabled = false;
@@ -80,6 +86,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
         private router: Router,
         private modalService: NgbModal,
         private profileService: ProfileService,
+        private courseAccessStorageService: CourseAccessStorageService,
     ) {}
 
     /**
@@ -100,8 +107,12 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.irisEnabled = profileInfo.activeProfiles.includes('iris');
+                this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
             }
         });
+
+        // Notify the course access storage service that the course has been accessed
+        this.courseAccessStorageService.onCourseAccessed(courseId);
     }
 
     /**
