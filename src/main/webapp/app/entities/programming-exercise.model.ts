@@ -15,7 +15,7 @@ export class BuildAction {
     runAlways: boolean;
     workdir: string;
     results?: AeolusResult[];
-    parameters: Map<string, string | boolean | number>;
+    parameters: Map<string, string | boolean | number> = new Map<string, string | boolean | number>();
 }
 
 export class AeolusResult {

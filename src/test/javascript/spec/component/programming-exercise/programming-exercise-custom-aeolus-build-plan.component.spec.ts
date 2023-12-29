@@ -91,9 +91,10 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         comp.deleteAction('gradle');
         const size = programmingExercise.windFile?.actions.length;
         expect(size).toBeDefined();
-        expect(programmingExercise.windFile?.actions.length).toBe(size!);
+        const realSize = size!;
+        expect(programmingExercise.windFile?.actions.length).toBe(realSize);
         comp.deleteAction('clean');
-        expect(programmingExercise.windFile?.actions.length).toBe(size! - 1);
+        expect(programmingExercise.windFile?.actions.length).toBe(realSize - 1);
     });
 
     it('should add action', () => {
@@ -106,7 +107,9 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     it('should accept editor', () => {
         const elementRef: ElementRef = new ElementRef(document.createElement('div'));
         const zone: NgZone = new NgZone({});
+        expect(comp.editor).toBeUndefined();
         comp.editor = new AceEditorComponent(elementRef, zone, mockThemeService);
+        expect(comp.editor).toBeDefined();
     });
 
     it('should change code of active action', () => {
@@ -139,6 +142,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
 
     it('should not fail if setting up undefined editor', () => {
         comp.setupEditor();
+        expect(comp.editor).toBeUndefined();
     });
 
     it('should change code', () => {
@@ -243,6 +247,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.next(mockAeolusService.serializeWindFile(windFile))));
         comp.loadAeolusTemplate();
         expect(comp.programmingExercise.windFile).toBeDefined();
+        expect(comp.programmingExercise.windFile).toEqual(windFile);
     });
 
     it('should call this.resetCustomBuildPlan', () => {
@@ -274,7 +279,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
 
     it('should add parameter to active action', () => {
         comp.active = gradleBuildAction;
-        expect(comp.active?.parameters?.size).toBeUndefined();
+        expect(comp.active?.parameters?.size).toBe(0);
         comp.addParameter();
         expect(comp.active?.parameters?.size).toBe(1);
     });
