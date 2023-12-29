@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -57,7 +58,7 @@ public class LocalCISharedBuildJobQueueService {
     /**
      * Map of build jobs currently being processed across all nodes
      */
-    private final IMap<String, LocalCIBuildJobQueueItem> processingJobs;
+    private final IMap<Long, LocalCIBuildJobQueueItem> processingJobs;
 
     private final IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
 
@@ -95,16 +96,19 @@ public class LocalCISharedBuildJobQueueService {
     /**
      * Create build job item object and add it to the queue.
      *
-     * @param name                   name of the build job
-     * @param participationId        participation id of the build job
-     * @param commitHash             commit hash of the build job
-     * @param submissionDate         submission date of the build job
-     * @param priority               priority of the build job
-     * @param courseId               course id of the build job
-     * @param isPushToTestRepository defines if the build job is triggered by a push to a test repository
+     * @param name                     name of the build job
+     * @param participationId          participation id of the build job
+     * @param repositoryTypeOrUsername repository type (if template or solution) or username (if student repository)
+     * @param commitHash               commit hash of the build job
+     * @param submissionDate           submission date of the build job
+     * @param priority                 priority of the build job
+     * @param courseId                 course id of the build job
+     * @param isPushToTestRepository   defines if the build job is triggered by a push to a test repository
      */
-    public void addBuildJob(String name, long participationId, String commitHash, long submissionDate, int priority, long courseId, boolean isPushToTestRepository) {
-        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(name, participationId, commitHash, submissionDate, priority, courseId, isPushToTestRepository);
+    public void addBuildJob(String name, long participationId, String repositoryTypeOrUsername, String commitHash, ZonedDateTime submissionDate, int priority, long courseId,
+            boolean isPushToTestRepository) {
+        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(name, participationId, repositoryTypeOrUsername, commitHash, submissionDate, priority, courseId,
+                isPushToTestRepository);
         queue.add(buildJobQueueItem);
     }
 
@@ -219,8 +223,7 @@ public class LocalCISharedBuildJobQueueService {
         if (buildJob != null) {
             String hazelcastMemberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
             buildJob.setBuildAgentAddress(hazelcastMemberAddress);
-            buildJob.setBuildStartDate(System.currentTimeMillis());
-            buildJob.setExpirationTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(180));
+            buildJob.setBuildStartDate(ZonedDateTime.now());
             processingJobs.put(buildJob.getId(), buildJob);
             localProcessingJobs.incrementAndGet();
 
