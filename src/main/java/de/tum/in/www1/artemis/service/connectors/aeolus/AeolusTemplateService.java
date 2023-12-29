@@ -57,7 +57,7 @@ public class AeolusTemplateService {
         for (var resource : resources) {
             try {
                 String filename = resource.getFilename();
-                if (filename == null) {
+                if (filename == null || !filename.endsWith(".yaml")) {
                     continue;
                 }
                 String directory = resource.getURL().getPath().split("templates/aeolus/")[1].split("/")[0];

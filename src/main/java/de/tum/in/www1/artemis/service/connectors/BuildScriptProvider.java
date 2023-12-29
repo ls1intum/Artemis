@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 
 /**
  * Service for providing build scripts for programming exercises
@@ -46,11 +47,18 @@ public class BuildScriptProvider {
         cacheOnBoot();
     }
 
+    /**
+     * Loads all scripts from the resources/templates/aeolus directory into the cache
+     * The windfiles are ignored, since they are only used for the windfile and are cached in {@link AeolusTemplateService}
+     */
     private void cacheOnBoot() {
         var resources = this.resourceLoaderService.getResources(Path.of("templates", "aeolus"));
         for (var resource : resources) {
             try {
                 String filename = resource.getFilename();
+                if (filename == null || filename.endsWith(".yaml")) {
+                    continue;
+                }
                 String directory = resource.getURL().getPath().split("templates/aeolus/")[1].split("/")[0];
                 String uniqueKey = directory + "_" + filename;
                 byte[] fileContent = IOUtils.toByteArray(resource.getInputStream());
