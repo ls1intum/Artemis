@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
@@ -12,6 +12,7 @@ import { ConversationUserDTO } from 'app/entities/metis/conversation/conversatio
 import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { NotificationService } from 'app/shared/notification/notification.service';
 
 type EntityArrayResponseType = HttpResponse<ConversationDto[]>;
 
@@ -38,6 +39,7 @@ export class ConversationService {
         protected http: HttpClient,
         protected translationService: TranslateService,
         protected accountService: AccountService,
+        private notificationService: NotificationService,
     ) {}
 
     getConversationName(conversation: ConversationDto | undefined, showLogin = false): string {
@@ -114,7 +116,15 @@ export class ConversationService {
     updateIsHidden(courseId: number, conversationId: number, isHidden: boolean): Observable<HttpResponse<void>> {
         let params = new HttpParams();
         params = params.append('isHidden', isHidden.toString());
-        return this.http.post<void>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/hidden`, null, { observe: 'response', params });
+        return this.http
+            .post<void>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/hidden`, null, { observe: 'response', params })
+            .pipe(
+                tap(() =>
+                    isHidden
+                        ? this.notificationService.muteNotificationsForConversation(conversationId)
+                        : this.notificationService.unmuteNotificationsForConversation(conversationId),
+                ),
+            );
     }
 
     updateIsMuted(courseId: number, conversationId: number, isMuted: boolean): Observable<HttpResponse<void>> {

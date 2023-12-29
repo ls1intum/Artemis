@@ -99,8 +99,8 @@ public class ChannelResource extends ConversationManagementResource {
         var isOnlyStudent = authorizationCheckService.isOnlyStudentInCourse(course, requestingUser);
         var channels = channelRepository.findChannelsByCourseId(courseId).stream();
 
-        var filteredChannelSummaries = isOnlyStudent ? conversationService.filterVisibleChannelsForStudents(channels) : channels;
-        var channelDTOs = filteredChannelSummaries.map(summary -> conversationDTOService.convertChannelToDto(requestingUser, summary));
+        var filteredChannels = isOnlyStudent ? conversationService.filterVisibleChannelsForStudents(channels) : channels;
+        var channelDTOs = filteredChannels.map(channel -> conversationDTOService.convertChannelToDto(requestingUser, channel));
 
         // only instructors / system admins can see all channels
         if (!isAtLeastInstructor) {
@@ -144,20 +144,20 @@ public class ChannelResource extends ConversationManagementResource {
      */
     @GetMapping("/{courseId}/exercises/{exerciseId}/channel")
     @EnforceAtLeastStudent
-    public ResponseEntity<Channel> getExerciseChannel(@PathVariable Long courseId, @PathVariable Long exerciseId) {
+    public ResponseEntity<ChannelDTO> getExerciseChannel(@PathVariable Long courseId, @PathVariable Long exerciseId) {
         log.debug("REST request to get channel of exercise: {}", exerciseId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
         checkMessagingOrCommunicationEnabledElseThrow(course);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
         var channel = channelRepository.findChannelByExerciseId(exerciseId);
-        if (channel != null) {
-            channel.hideDetails();
-        }
 
+        if (channel == null) {
+            return ResponseEntity.ok(null);
+        }
         checkChannelMembership(channel, requestingUser);
 
-        return ResponseEntity.ok(channel);
+        return ResponseEntity.ok(conversationDTOService.convertChannelToDto(requestingUser, channel));
     }
 
     /**
@@ -169,20 +169,21 @@ public class ChannelResource extends ConversationManagementResource {
      */
     @GetMapping("/{courseId}/lectures/{lectureId}/channel")
     @EnforceAtLeastStudent
-    public ResponseEntity<Channel> getLectureChannel(@PathVariable Long courseId, @PathVariable Long lectureId) {
+    public ResponseEntity<ChannelDTO> getLectureChannel(@PathVariable Long courseId, @PathVariable Long lectureId) {
         log.debug("REST request to get channel of lecture: {}", lectureId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
         checkMessagingOrCommunicationEnabledElseThrow(course);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
         var channel = channelRepository.findChannelByLectureId(lectureId);
-        if (channel != null) {
-            channel.hideDetails();
-        }
 
+        if (channel == null) {
+            return ResponseEntity.ok(null);
+
+        }
         checkChannelMembership(channel, requestingUser);
 
-        return ResponseEntity.ok(channel);
+        return ResponseEntity.ok(conversationDTOService.convertChannelToDto(requestingUser, channel));
     }
 
     /**
