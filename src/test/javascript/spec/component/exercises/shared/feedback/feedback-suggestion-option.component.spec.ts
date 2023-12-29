@@ -29,7 +29,6 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         fixture = TestBed.createComponent(ExerciseFeedbackSuggestionOptionsComponent);
         component = fixture.componentInstance;
         athenaService = TestBed.inject(AthenaService);
-        component.exercise = { feedbackSuggestionModule: undefined, dueDate: undefined } as Exercise;
     });
 
     it('should create', () => {
@@ -39,6 +38,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     it('should initialize with available modules', async () => {
         const modules = ['Module1', 'Module2'];
         jest.spyOn(athenaService, 'getAvailableModules').mockReturnValue(of(modules));
+        component.exercise = { type: ExerciseType.TEXT, dueDate: futureDueDate, feedbackSuggestionModule: undefined } as Exercise;
 
         await component.ngOnInit();
 
@@ -49,6 +49,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     it('should set isAthenaEnabled$ with the result from athenaService', async () => {
         jest.spyOn(athenaService, 'getAvailableModules').mockReturnValue(of());
         jest.spyOn(athenaService, 'isEnabled').mockReturnValue(of(true));
+        component.exercise = { type: ExerciseType.TEXT, dueDate: futureDueDate, feedbackSuggestionModule: undefined } as Exercise;
 
         await component.ngOnInit();
 
