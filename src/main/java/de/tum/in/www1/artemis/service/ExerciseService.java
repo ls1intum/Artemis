@@ -265,7 +265,7 @@ public class ExerciseService {
             throw new IllegalArgumentException("All exercises must be from the same course!");
         }
         Course course = courses.stream().findFirst().get();
-        List<StudentParticipation> participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises, false);
+        var participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises, false);
         boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         for (Exercise exercise : exercises) {
             // add participation with submission and result to each exercise
@@ -410,7 +410,7 @@ public class ExerciseService {
      * @param username       used to get quiz submission for the user
      * @param isStudent      defines if the current user is a student
      */
-    public void filterForCourseDashboard(Exercise exercise, List<StudentParticipation> participations, String username, boolean isStudent) {
+    public void filterForCourseDashboard(Exercise exercise, Set<StudentParticipation> participations, String username, boolean isStudent) {
         // remove the unnecessary inner course attribute
         exercise.setCourse(null);
 
@@ -422,7 +422,7 @@ public class ExerciseService {
         }
 
         // get user's participation for the exercise
-        List<StudentParticipation> relevantParticipations = participations != null ? exercise.findRelevantParticipation(participations) : new ArrayList<>();
+        Set<StudentParticipation> relevantParticipations = participations != null ? exercise.findRelevantParticipation(participations) : Set.of();
 
         // for quiz exercises also check SubmissionHashMap for submission by this user (active participation)
         // if participation was not found in database
@@ -431,7 +431,7 @@ public class ExerciseService {
             if (submission.getSubmissionDate() != null) {
                 StudentParticipation quizParticipation = new StudentParticipation().exercise(exercise);
                 quizParticipation.setInitializationState(InitializationState.INITIALIZED);
-                relevantParticipations = List.of(quizParticipation);
+                relevantParticipations = Set.of(quizParticipation);
             }
         }
 
@@ -475,7 +475,7 @@ public class ExerciseService {
             participation.setExercise(null);
         });
 
-        exercise.setStudentParticipations(new HashSet<>(relevantParticipations));
+        exercise.setStudentParticipations(relevantParticipations);
     }
 
     /**

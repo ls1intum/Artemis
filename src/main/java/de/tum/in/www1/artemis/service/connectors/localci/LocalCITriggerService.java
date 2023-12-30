@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import java.time.ZonedDateTime;
+import java.util.Objects;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -44,11 +47,19 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
+        String repositoryTypeOrUserName = participation.getVcsRepositoryUrl().repositoryNameWithoutProjectKey();
+
+        if (Objects.equals(repositoryTypeOrUserName, "exercise")) {
+            repositoryTypeOrUserName = "BASE";
+        }
+        else if (Objects.equals(repositoryTypeOrUserName, "solution")) {
+            repositoryTypeOrUserName = repositoryTypeOrUserName.toUpperCase();
+        }
+
         // Exam exercises have a higher priority than normal exercises
         int priority = programmingExercise.isExamExercise() ? 1 : 2;
 
-        localCISharedBuildJobQueueService.addBuildJob(participation.getBuildPlanId(), participation.getId(), commitHash, System.currentTimeMillis(), priority, courseId,
-                isPushToTestRepository);
+        localCISharedBuildJobQueueService.addBuildJob(participation.getBuildPlanId(), participation.getId(), repositoryTypeOrUserName, commitHash, ZonedDateTime.now(), priority,
+                courseId, isPushToTestRepository);
     }
-
 }
