@@ -81,7 +81,9 @@ describe('ProgrammingExercise Custom Build Plan', () => {
     it('should accept editor', () => {
         const elementRef: ElementRef = new ElementRef(document.createElement('div'));
         const zone: NgZone = new NgZone({});
+        expect(comp.editor).toBeUndefined();
         comp.editor = new AceEditorComponent(elementRef, zone, mockThemeService);
+        expect(comp.editor).toBeDefined();
     });
 
     it('should not fail if setting up undefined editor', () => {
