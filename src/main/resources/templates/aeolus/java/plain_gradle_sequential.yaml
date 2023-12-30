@@ -19,3 +19,4 @@ actions:
   - name: setup_working_directory_for_cleanup
     script: chmod -R 777 .
     runAlways: true
+    platform: bamboo

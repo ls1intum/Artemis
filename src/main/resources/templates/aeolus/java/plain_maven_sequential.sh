@@ -19,7 +19,7 @@ main () {
     return 0 # just source to use the methods in the subshell, no execution
   fi
   local _script_name
-  _script_name=$(realpath "${0}")
+  _script_name=${BASH_SOURCE[0]:-$0}
   bash -c "source ${_script_name} aeolus_sourcing;structural"
   cd "${AEOLUS_INITIAL_DIRECTORY}"
   bash -c "source ${_script_name} aeolus_sourcing;behavior"
