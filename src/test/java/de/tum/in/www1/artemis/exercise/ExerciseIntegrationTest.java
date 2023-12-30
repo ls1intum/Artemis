@@ -473,7 +473,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 exercise.getStudentParticipations().iterator().next().setResults(Set.of(participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC,
                         ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next())));
             }
-            exerciseService.filterForCourseDashboard(exercise, List.copyOf(exercise.getStudentParticipations()), "student1", true);
+            exerciseService.filterForCourseDashboard(exercise, Set.copyOf(exercise.getStudentParticipations()), "student1", true);
 
             StudentParticipation participation = exercise.getStudentParticipations().iterator().next();
             Submission submission = participation.getSubmissions().iterator().next();
@@ -504,7 +504,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().setResults(new ArrayList<>());
                 exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().addResult(result);
             }
-            exerciseService.filterForCourseDashboard(exercise, List.copyOf(exercise.getStudentParticipations()), "student1", true);
+            exerciseService.filterForCourseDashboard(exercise, Set.copyOf(exercise.getStudentParticipations()), "student1", true);
             // All exercises have one result
             assertThat(exercise.getStudentParticipations().iterator().next().getResults()).hasSize(1);
             // Programming exercises should now have one manual result
