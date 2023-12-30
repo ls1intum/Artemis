@@ -19,34 +19,67 @@ public class LocalCIBuildQueueWebsocketService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
+    /**
+     * Constructor for dependency injection
+     *
+     * @param websocketMessagingService the websocket messaging service
+     */
     public LocalCIBuildQueueWebsocketService(WebsocketMessagingService websocketMessagingService) {
         this.websocketMessagingService = websocketMessagingService;
     }
 
+    /**
+     * Sends the queued build jobs for the given course over websocket.
+     *
+     * @param courseId      the id of the course for which to send the queued build jobs
+     * @param buildJobQueue the queued build jobs
+     */
+
     public void sendQueuedBuildJobsForCourse(long courseId, List<LocalCIBuildJobQueueItem> buildJobQueue) {
-        String channel = "/topic/build-job-queue/queued/" + courseId;
+        String channel = "/topic/courses/" + courseId + "/queued-jobs";
         log.debug("Sending message on topic {}: {}", channel, buildJobQueue);
         websocketMessagingService.sendMessage(channel, buildJobQueue);
     }
 
+    /**
+     * Sends the running build jobs for the given course over websocket.
+     *
+     * @param courseId         the id of the course for which to send the running build jobs
+     * @param buildJobsRunning the running build jobs
+     */
     public void sendRunningBuildJobsForCourse(long courseId, List<LocalCIBuildJobQueueItem> buildJobsRunning) {
-        String channel = "/topic/build-job-queue/running/" + courseId;
+        String channel = "/topic/courses/" + courseId + "/running-jobs";
         log.debug("Sending message on topic {}: {}", channel, buildJobsRunning);
         websocketMessagingService.sendMessage(channel, buildJobsRunning);
     }
 
+    /**
+     * Sends the queued build jobs over websocket. This is only allowed for admins.
+     *
+     * @param buildJobQueue the queued build jobs
+     */
     public void sendQueuedBuildJobs(List<LocalCIBuildJobQueueItem> buildJobQueue) {
-        String channel = "/topic/admin/build-job-queue/queued";
+        String channel = "/topic/admin/queued-jobs";
         log.debug("Sending message on topic {}: {}", channel, buildJobQueue);
         websocketMessagingService.sendMessage(channel, buildJobQueue);
     }
 
+    /**
+     * Sends the running build jobs over websocket. This is only allowed for admins.
+     *
+     * @param buildJobQueue the running build jobs
+     */
     public void sendRunningBuildJobs(List<LocalCIBuildJobQueueItem> buildJobQueue) {
-        String channel = "/topic/admin/build-job-queue/running";
+        String channel = "/topic/admin/running-jobs";
         log.debug("Sending message on topic {}: {}", channel, buildJobQueue);
         websocketMessagingService.sendMessage(channel, buildJobQueue);
     }
 
+    /**
+     * Sends the build agent information over websocket. This is only allowed for admins.
+     *
+     * @param buildAgentInfo the build agent information
+     */
     public void sendBuildAgentInformation(List<LocalCIBuildAgentInformation> buildAgentInfo) {
         String channel = "/topic/admin/build-agents";
         log.debug("Sending message on topic {}: {}", channel, buildAgentInfo);

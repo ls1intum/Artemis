@@ -29,8 +29,8 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * This method is used to unsubscribe from the websocket channels when the component is destroyed.
      */
     ngOnDestroy() {
-        this.websocketService.unsubscribe(`/topic/build-job-queue/queued`);
-        this.websocketService.unsubscribe(`/topic/build-job-queue/running`);
+        this.websocketService.unsubscribe(`/topic/admin/queued-jobs`);
+        this.websocketService.unsubscribe(`/topic/admin/running-jobs`);
         this.courseChannels.forEach((channel) => {
             this.websocketService.unsubscribe(channel);
         });
@@ -43,23 +43,23 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
         this.route.paramMap.subscribe((params) => {
             const courseId = Number(params.get('courseId'));
             if (courseId) {
-                this.websocketService.subscribe(`/topic/build-job-queue/queued/${courseId}`);
-                this.websocketService.subscribe(`/topic/build-job-queue/running/${courseId}`);
-                this.websocketService.receive(`/topic/build-job-queue/queued/${courseId}`).subscribe((queuedBuildJobs) => {
+                this.websocketService.subscribe(`/topic/courses/${courseId}/queued-jobs`);
+                this.websocketService.subscribe(`/topic/courses/${courseId}/running-jobs`);
+                this.websocketService.receive(`/topic/courses/${courseId}/queued-jobs`).subscribe((queuedBuildJobs) => {
                     this.queuedBuildJobs = queuedBuildJobs;
                 });
-                this.websocketService.receive(`/topic/build-job-queue/running/${courseId}`).subscribe((runningBuildJobs) => {
+                this.websocketService.receive(`/topic/courses/${courseId}/running-jobs`).subscribe((runningBuildJobs) => {
                     this.runningBuildJobs = runningBuildJobs;
                 });
-                this.courseChannels.push(`/topic/build-job-queue/queued/${courseId}`);
-                this.courseChannels.push(`/topic/build-job-queue/running/${courseId}`);
+                this.courseChannels.push(`/topic/courses/${courseId}/queued-jobs`);
+                this.courseChannels.push(`/topic/courses/${courseId}/running-jobs`);
             } else {
-                this.websocketService.subscribe(`/topic/admin/build-job-queue/queued`);
-                this.websocketService.subscribe(`/topic/admin/build-job-queue/running`);
-                this.websocketService.receive(`/topic/admin/build-job-queue/queued`).subscribe((queuedBuildJobs) => {
+                this.websocketService.subscribe(`/topic/admin/queued-jobs`);
+                this.websocketService.subscribe(`/topic/admin/running-jobs`);
+                this.websocketService.receive(`/topic/admin/queued-jobs`).subscribe((queuedBuildJobs) => {
                     this.queuedBuildJobs = queuedBuildJobs;
                 });
-                this.websocketService.receive(`/topic/admin/build-job-queue/running`).subscribe((runningBuildJobs) => {
+                this.websocketService.receive(`/topic/admin/running-jobs`).subscribe((runningBuildJobs) => {
                     this.runningBuildJobs = runningBuildJobs;
                 });
             }
