@@ -285,7 +285,7 @@ examples.forEach((activeConversation) => {
                 tick(301);
 
                 const forceRefreshMock = jest.spyOn(metisConversationService, 'forceRefresh').mockReturnValue(EMPTY);
-                component.onSettingsChanged();
+                component.onSettingsDidChange();
                 expect(forceRefreshMock).toHaveBeenCalledOnce();
             }));
 
