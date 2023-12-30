@@ -5,11 +5,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
@@ -39,31 +36,20 @@ public class LocalCIBuildQueueWebsocketService {
     }
 
     public void sendQueuedBuildJobs(List<LocalCIBuildJobQueueItem> buildJobQueue) {
-        if (isAdmin()) {
-            String channel = "/topic/admin/build-job-queue/queued";
-            log.debug("Sending message on topic {}: {}", channel, buildJobQueue);
-            websocketMessagingService.sendMessage(channel, buildJobQueue);
-        }
+        String channel = "/topic/admin/build-job-queue/queued";
+        log.debug("Sending message on topic {}: {}", channel, buildJobQueue);
+        websocketMessagingService.sendMessage(channel, buildJobQueue);
     }
 
     public void sendRunningBuildJobs(List<LocalCIBuildJobQueueItem> buildJobQueue) {
-        if (isAdmin()) {
-            String channel = "/topic/admin/build-job-queue/running";
-            log.debug("Sending message on topic {}: {}", channel, buildJobQueue);
-            websocketMessagingService.sendMessage(channel, buildJobQueue);
-        }
+        String channel = "/topic/admin/build-job-queue/running";
+        log.debug("Sending message on topic {}: {}", channel, buildJobQueue);
+        websocketMessagingService.sendMessage(channel, buildJobQueue);
     }
 
     public void sendBuildAgentInformation(List<LocalCIBuildAgentInformation> buildAgentInfo) {
-        if (isAdmin()) {
-            String channel = "/topic/admin/build-agents";
-            log.debug("Sending message on topic {}: {}", channel, buildAgentInfo);
-            websocketMessagingService.sendMessage(channel, buildAgentInfo);
-        }
-    }
-
-    private boolean isAdmin() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication.getAuthorities().stream().anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals(Role.ADMIN.getAuthority()));
+        String channel = "/topic/admin/build-agents";
+        log.debug("Sending message on topic {}: {}", channel, buildAgentInfo);
+        websocketMessagingService.sendMessage(channel, buildAgentInfo);
     }
 }
