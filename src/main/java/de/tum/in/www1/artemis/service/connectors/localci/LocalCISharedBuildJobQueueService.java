@@ -150,7 +150,7 @@ public class LocalCISharedBuildJobQueueService {
     }
 
     /**
-     * Wait 3 minutes after startup and then every 1 minute update the build agent information of the local hazelcast member.
+     * Wait 1 minute after startup and then every 1 minute update the build agent information of the local hazelcast member.
      * This is necessary because the build agent information is not updated automatically when a node joins the cluster.
      */
     @Scheduled(initialDelay = 60000, fixedRate = 60000) // 1 minute initial delay, 1 minute fixed rate
@@ -162,6 +162,15 @@ public class LocalCISharedBuildJobQueueService {
         if (!buildAgentInformation.containsKey(hazelcastInstance.getCluster().getLocalMember().getAddress().toString())) {
             updateLocalBuildAgentInformation();
         }
+    }
+
+    /**
+     * Check every 10 seconds whether the node has at least one thread available for a new build job.
+     * If so, process the next build job.
+     */
+    @Scheduled(fixedRate = 10000)
+    public void checkForBuildJobs() {
+        checkAvailabilityAndProcessNextBuild();
     }
 
     /**
@@ -251,6 +260,9 @@ public class LocalCISharedBuildJobQueueService {
      * On completion, check for next job.
      */
     private void processBuild(LocalCIBuildJobQueueItem buildJob) {
+        // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
+        // Therefore, a mock auth object has to be created.
+        SecurityUtils.setAuthorizationObject();
 
         if (buildJob == null) {
             return;
@@ -285,6 +297,7 @@ public class LocalCISharedBuildJobQueueService {
 
         // For some reason, it is possible that the participation object does not have the programming exercise
         if (participation.getProgrammingExercise() == null) {
+            SecurityUtils.setAuthorizationObject();
             participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
         }
 
@@ -295,8 +308,6 @@ public class LocalCISharedBuildJobQueueService {
             // Do not process the result if the participation has been deleted in the meantime
             Optional<Participation> participationOptional = participationRepository.findById(participation.getId());
             if (participationOptional.isPresent()) {
-                // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
-                // Therefore, a mock auth object has to be created.
                 SecurityUtils.setAuthorizationObject();
                 Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
                 if (result != null) {
@@ -331,6 +342,7 @@ public class LocalCISharedBuildJobQueueService {
             }
 
             // Do not requeue the build job if the participation has been deleted in the meantime
+            SecurityUtils.setAuthorizationObject();
             Optional<Participation> participationOptional = participationRepository.findById(participation.getId());
             if (participationOptional.isPresent()) {
                 log.warn("Requeueing failed build job: {}", buildJob);
@@ -348,7 +360,8 @@ public class LocalCISharedBuildJobQueueService {
      * Checks whether the node has at least one thread available for a new build job.
      */
     private boolean nodeIsAvailable() {
-        log.info("Current active threads: {}", localCIBuildExecutorService.getActiveCount());
+        log.debug("Currently processing jobs on this node: {}, maximum pool size of thread executor : {}", localProcessingJobs.get(),
+                localCIBuildExecutorService.getMaximumPoolSize());
         return localProcessingJobs.get() < localCIBuildExecutorService.getMaximumPoolSize();
     }
 
@@ -364,6 +377,7 @@ public class LocalCISharedBuildJobQueueService {
         ProgrammingExerciseParticipation participation;
         Optional<Participation> tempParticipation;
         while (retries < maxRetries) {
+            SecurityUtils.setAuthorizationObject();
             tempParticipation = participationRepository.findById(participationId);
             if (tempParticipation.isPresent()) {
                 participation = (ProgrammingExerciseParticipation) tempParticipation.get();
@@ -388,13 +402,13 @@ public class LocalCISharedBuildJobQueueService {
 
         @Override
         public void itemAdded(ItemEvent<LocalCIBuildJobQueueItem> item) {
-            log.info("CIBuildJobQueueItem added to queue: {}", item.getItem());
+            log.debug("CIBuildJobQueueItem added to queue: {}", item.getItem());
             checkAvailabilityAndProcessNextBuild();
         }
 
         @Override
         public void itemRemoved(ItemEvent<LocalCIBuildJobQueueItem> item) {
-            log.info("CIBuildJobQueueItem removed from queue: {}", item.getItem());
+            log.debug("CIBuildJobQueueItem removed from queue: {}", item.getItem());
         }
     }
 }
