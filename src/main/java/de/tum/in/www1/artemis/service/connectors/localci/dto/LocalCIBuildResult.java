@@ -33,7 +33,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
 
     private List<BuildLogEntry> buildLogEntries = new ArrayList<>();
 
-    private List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports;
+    private final List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports;
 
     private boolean hasLogs = false;
 
