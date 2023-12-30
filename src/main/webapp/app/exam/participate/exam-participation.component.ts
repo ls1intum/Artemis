@@ -117,6 +117,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     loadingExam: boolean;
     isAtLeastTutor?: boolean;
+    isAtLeastInstructor?: boolean;
 
     generateParticipationStatus: BehaviorSubject<GenerateParticipationStatus> = new BehaviorSubject('success');
 
@@ -539,9 +540,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (!course) {
             this.courseService.find(this.courseId).subscribe((courseResponse) => {
                 this.isAtLeastTutor = courseResponse.body?.isAtLeastTutor;
+                this.isAtLeastInstructor = courseResponse.body?.isAtLeastInstructor;
             });
         } else {
             this.isAtLeastTutor = course.isAtLeastTutor;
+            this.isAtLeastInstructor = course.isAtLeastInstructor;
         }
         this.loadingExam = false;
     }
