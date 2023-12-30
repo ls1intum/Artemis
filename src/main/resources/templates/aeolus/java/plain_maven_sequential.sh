@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -e
-export AEOLUS_INITIAL_DIRECTORY=$(pwd)
-
+export AEOLUS_INITIAL_DIRECTORY=${PWD}
 structural () {
   echo '⚙️ executing structural'
   cd "structural"
@@ -20,10 +19,10 @@ main () {
   fi
   local _script_name
   _script_name=${BASH_SOURCE[0]:-$0}
-  bash -c "source ${_script_name} aeolus_sourcing;structural"
   cd "${AEOLUS_INITIAL_DIRECTORY}"
-  bash -c "source ${_script_name} aeolus_sourcing;behavior"
+  bash -c "source ${_script_name} aeolus_sourcing; structural"
   cd "${AEOLUS_INITIAL_DIRECTORY}"
+  bash -c "source ${_script_name} aeolus_sourcing; behavior"
 }
 
 main "${@}"

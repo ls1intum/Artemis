@@ -1,51 +1,53 @@
 #!/usr/bin/env bash
 set -e
-export AEOLUS_INITIAL_DIRECTORY=$(pwd)
-
+export AEOLUS_INITIAL_DIRECTORY=${PWD}
 provide_environment_information () {
   echo '⚙️ executing provide_environment_information'
   #!/bin/bash
-  echo "--------------------Python versions--------------------"
-  python3 --version
-  pip3 --version
-  echo "--------------------Contents of tests repository--------------------"
-  ls -la tests
-  echo "---------------------------------------------"
-  echo "--------------------Contents of assignment repository--------------------"
-  ls -la assignment
-  echo "---------------------------------------------"
-  #Fallback in case Docker does not work as intended
-  REQ_FILE=tests/requirements.txt
-  if [ -f "$REQ_FILE" ]; then
-      pip3 install --user -r tests/requirements.txt
-  else
-      echo "$REQ_FILE does not exist"
-  fi
+echo "--------------------Python versions--------------------"
+python3 --version
+pip3 --version
+echo "--------------------Contents of tests repository--------------------"
+ls -la tests
+echo "---------------------------------------------"
+echo "--------------------Contents of assignment repository--------------------"
+ls -la assignment
+echo "---------------------------------------------"
+#Fallback in case Docker does not work as intended
+REQ_FILE=tests/requirements.txt
+if [ -f "$REQ_FILE" ]; then
+    pip3 install --user -r tests/requirements.txt
+else
+    echo "$REQ_FILE does not exist"
+fi
+
 }
 
 prepare_makefile () {
   echo '⚙️ executing prepare_makefile'
   #!/usr/bin/env bash
-  rm -f assignment/{GNUmakefile, Makefile, makefile}
-  rm -f assignment/io.inc
-  cp -f tests/Makefile assignment/Makefile || exit 2
-  cp -f tests/io.inc assignment/io.inc || exit 2
+rm -f assignment/{GNUmakefile, Makefile, makefile}
+rm -f assignment/io.inc
+cp -f tests/Makefile assignment/Makefile || exit 2
+cp -f tests/io.inc assignment/io.inc || exit 2
+
 }
 
 run_and_compile () {
   echo '⚙️ executing run_and_compile'
   cd tests
-  python3 compileTest.py ../assignment/
-  rm compileTest.py
-  cp result.xml ../assignment/result.xml
+python3 compileTest.py ../assignment/
+rm compileTest.py
+cp result.xml ../assignment/result.xml
+
 }
 
 junit () {
   echo '⚙️ executing junit'
   chmod -R 777 .
-}
 
-final_aeolus_post_action () {
+}
+function final_aeolus_post_action () {
   set +e # from now on, we don't exit on errors
   echo '⚙️ executing final_aeolus_post_action'
   cd "${AEOLUS_INITIAL_DIRECTORY}"
@@ -59,12 +61,13 @@ main () {
   local _script_name
   _script_name=${BASH_SOURCE[0]:-$0}
   trap final_aeolus_post_action EXIT
-  bash -c "source ${_script_name} aeolus_sourcing;provide_environment_information"
+
   cd "${AEOLUS_INITIAL_DIRECTORY}"
-  bash -c "source ${_script_name} aeolus_sourcing;prepare_makefile"
+  bash -c "source ${_script_name} aeolus_sourcing; provide_environment_information"
   cd "${AEOLUS_INITIAL_DIRECTORY}"
-  bash -c "source ${_script_name} aeolus_sourcing;run_and_compile"
+  bash -c "source ${_script_name} aeolus_sourcing; prepare_makefile"
   cd "${AEOLUS_INITIAL_DIRECTORY}"
+  bash -c "source ${_script_name} aeolus_sourcing; run_and_compile"
 }
 
 main "${@}"

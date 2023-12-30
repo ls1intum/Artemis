@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -e
-export AEOLUS_INITIAL_DIRECTORY=$(pwd)
-
+export AEOLUS_INITIAL_DIRECTORY=${PWD}
 tests () {
   echo '⚙️ executing tests'
   chmod +x ./gradlew
-  ./gradlew clean test tiaTests --run-all-tests
+./gradlew clean test tiaTests --run-all-tests
+
 }
 
 static_code_analysis () {
@@ -13,14 +13,16 @@ static_code_analysis () {
   ./gradlew check -x test
 }
 
-final_aeolus_post_action () {
+setup_working_directory_for_cleanup () {
+  echo '⚙️ executing setup_working_directory_for_cleanup'
+  chmod -R 777 .
+}
+function final_aeolus_post_action () {
   set +e # from now on, we don't exit on errors
   echo '⚙️ executing final_aeolus_post_action'
   cd "${AEOLUS_INITIAL_DIRECTORY}"
   static_code_analysis
-  cd "${AEOLUS_INITIAL_DIRECTORY}"
   setup_working_directory_for_cleanup
-  cd "${AEOLUS_INITIAL_DIRECTORY}"
 }
 
 main () {
@@ -30,8 +32,9 @@ main () {
   local _script_name
   _script_name=${BASH_SOURCE[0]:-$0}
   trap final_aeolus_post_action EXIT
-  bash -c "source ${_script_name} aeolus_sourcing;tests"
+
   cd "${AEOLUS_INITIAL_DIRECTORY}"
+  bash -c "source ${_script_name} aeolus_sourcing; tests"
 }
 
 main "${@}"
