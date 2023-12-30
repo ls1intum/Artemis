@@ -11,6 +11,11 @@ import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 
+/**
+ * This service sends out websocket messages for the local continuous integration system.
+ * It is used to send queued and running build jobs to the client.
+ * It is also used to send build agent information to the client.
+ */
 @Service
 @Profile("localci")
 public class LocalCIBuildQueueWebsocketService {
