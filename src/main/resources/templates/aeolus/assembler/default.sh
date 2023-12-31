@@ -47,7 +47,8 @@ junit () {
   chmod -R 777 .
 
 }
-function final_aeolus_post_action () {
+
+final_aeolus_post_action () {
   set +e # from now on, we don't exit on errors
   echo '⚙️ executing final_aeolus_post_action'
   cd "${AEOLUS_INITIAL_DIRECTORY}"

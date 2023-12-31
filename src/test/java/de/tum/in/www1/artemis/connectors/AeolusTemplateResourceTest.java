@@ -93,11 +93,11 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
         String invalidWindfile = "{\n\"api\": \"v0.0.1\",\n\"metadata\": {\n\"name\": \"example windfile\",\n\"description\": \"example windfile\",\n\"id\": \"example-windfile\"\n},\n\"actions\": [\n{\n\"name\": \"valid-action\",\n\"clsas\": \"script-action\",\n\"scri\": \"echo $PATH\",\n\"runAlways\": true\n}\n]\n}";
         try {
             Windfile.deserialize(invalidWindfile);
+            fail("Should have thrown an exception as there is no script or platform in the actions object");
         }
         catch (JsonParseException exception) {
             assertThat(exception.getMessage()).isEqualTo("Cannot determine type");
         }
-        fail("Should have thrown an exception as there is no script or platform in the actions object");
     }
 
     @Test
