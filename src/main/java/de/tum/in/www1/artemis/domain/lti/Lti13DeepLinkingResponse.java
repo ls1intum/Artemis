@@ -6,8 +6,8 @@ import java.util.Map;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 /**
  * Represents the LTI 1.3 Deep Linking Response.
@@ -61,14 +61,15 @@ public class Lti13DeepLinkingResponse {
     public Lti13DeepLinkingResponse(OidcIdToken ltiIdToken, String clientRegistrationId) {
         validateClaims(ltiIdToken);
 
-        var claim = ltiIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS).toString();
-
-        this.deepLinkingSettings = JsonParser.parseString(claim).getAsJsonObject();
+        Map<String, Object> deepLinkingSettings = ltiIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS);
+        // convert the map to json
+        this.deepLinkingSettings = new GsonBuilder().setPrettyPrinting().create().toJsonTree(deepLinkingSettings).getAsJsonObject();
+        ;
         this.setReturnUrl(this.deepLinkingSettings.get("deep_link_return_url").getAsString());
         this.clientRegistrationId = clientRegistrationId;
 
-        this.setAud(ltiIdToken.getClaim("iss").toString());
-        this.setIss(ltiIdToken.getClaim("aud").toString().replace("[", "").replace("]", ""));
+        this.setAud(ltiIdToken.getClaim("aud").toString().replace("[", "").replace("]", ""));
+        this.setIss(ltiIdToken.getClaim("iss").toString());
         this.setExp(ltiIdToken.getClaim("exp").toString());
         this.setIat(ltiIdToken.getClaim("iat").toString());
         this.setNonce(ltiIdToken.getClaim("nonce").toString());
