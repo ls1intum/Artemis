@@ -26,8 +26,7 @@ public class Lti13AgsClaim {
             return Optional.empty();
         }
 
-        JsonObject agsClaimJson = JsonParser.parseString(idToken.getClaim(Claims.AGS_CLAIM).toString()).getAsJsonObject();
-
+        JsonObject agsClaimJson = new GsonBuilder().setPrettyPrinting().create().toJsonTree(idToken.getClaim(Claims.AGS_CLAIM)).getAsJsonObject();
         Lti13AgsClaim agsClaim = new Lti13AgsClaim();
         JsonArray scopes = agsClaimJson.get("scope").getAsJsonArray();
 
