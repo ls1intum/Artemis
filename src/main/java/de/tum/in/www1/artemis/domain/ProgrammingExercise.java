@@ -667,17 +667,17 @@ public class ProgrammingExercise extends Exercise {
 
     /**
      * Find relevant participations for this exercise. Normally there are only one practice and graded participation.
-     * In case there are multiple, they are filtered as implemented in {@link Exercise#findRelevantParticipation(List)}
+     * In case there are multiple, they are filtered as implemented in {@link Exercise#findRelevantParticipation(Set)}
      *
      * @param participations the list of available participations
      * @return the found participation in an unmodifiable list or the empty list, if none exists
      */
     @Override
-    public List<StudentParticipation> findRelevantParticipation(List<StudentParticipation> participations) {
-        List<StudentParticipation> participationOfExercise = participations.stream()
-                .filter(participation -> participation.getExercise() != null && participation.getExercise().equals(this)).toList();
-        List<StudentParticipation> gradedParticipations = participationOfExercise.stream().filter(participation -> !participation.isPracticeMode()).toList();
-        List<StudentParticipation> practiceParticipations = participationOfExercise.stream().filter(Participation::isPracticeMode).toList();
+    public Set<StudentParticipation> findRelevantParticipation(Set<StudentParticipation> participations) {
+        Set<StudentParticipation> participationOfExercise = participations.stream()
+                .filter(participation -> participation.getExercise() != null && participation.getExercise().equals(this)).collect(Collectors.toSet());
+        Set<StudentParticipation> gradedParticipations = participationOfExercise.stream().filter(participation -> !participation.isPracticeMode()).collect(Collectors.toSet());
+        Set<StudentParticipation> practiceParticipations = participationOfExercise.stream().filter(Participation::isPracticeMode).collect(Collectors.toSet());
 
         if (gradedParticipations.size() > 1) {
             gradedParticipations = super.findRelevantParticipation(gradedParticipations);
@@ -686,7 +686,7 @@ public class ProgrammingExercise extends Exercise {
             practiceParticipations = super.findRelevantParticipation(practiceParticipations);
         }
 
-        return Stream.concat(gradedParticipations.stream(), practiceParticipations.stream()).toList();
+        return Stream.concat(gradedParticipations.stream(), practiceParticipations.stream()).collect(Collectors.toSet());
     }
 
     /**

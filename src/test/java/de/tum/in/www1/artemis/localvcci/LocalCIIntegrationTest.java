@@ -254,8 +254,8 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     private void verifyUserNotification(Participation participation) {
-        BuildTriggerWebsocketError expectedError = new BuildTriggerWebsocketError(
-                "java.util.concurrent.ExecutionException: de.tum.in.www1.artemis.exception.LocalCIException: Error while parsing test results", participation.getId());
+        BuildTriggerWebsocketError expectedError = new BuildTriggerWebsocketError("de.tum.in.www1.artemis.exception.LocalCIException: Error while parsing test results",
+                participation.getId());
         await().untilAsserted(
                 () -> verify(programmingMessagingService).notifyUserAboutSubmissionError(Mockito.eq(participation), argThat((BuildTriggerWebsocketError actualError) -> {
                     assertThat(actualError.getError()).isEqualTo(expectedError.getError());

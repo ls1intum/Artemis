@@ -53,10 +53,7 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
-import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
-import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
-import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
-import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.dto.user.UserNameAndLoginDTO;
 import de.tum.in.www1.artemis.web.rest.errors.*;
 import tech.jhipster.web.util.PaginationUtil;
@@ -115,13 +112,15 @@ public class CourseResource {
 
     private final LearningPathService learningPathService;
 
+    private final ExamRepository examRepository;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             Optional<OAuth2JWKSService> oAuth2JWKSService, Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
             CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathService learningPathService,
-            ConductAgreementService conductAgreementService) {
+            ConductAgreementService conductAgreementService, ExamRepository examRepository) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -142,6 +141,7 @@ public class CourseResource {
         this.gradingScaleRepository = gradingScaleRepository;
         this.learningPathService = learningPathService;
         this.conductAgreementService = conductAgreementService;
+        this.examRepository = examRepository;
     }
 
     /**
@@ -501,40 +501,45 @@ public class CourseResource {
      */
     @GetMapping("courses/for-dashboard")
     @EnforceAtLeastStudent
-    public List<CourseForDashboardDTO> getCoursesForDashboard() {
+    public CoursesForDashboardDTO getCoursesForDashboard() {
         long timeNanoStart = System.nanoTime();
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("Request to get all courses user {} has access to with exams, lectures, exercises, participations, submissions and results + calculated scores", user.getLogin());
-        List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(user);
-        log.debug("courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser done");
+        Set<Course> courses = courseService.findAllActiveWithExercisesForUser(user);
+        log.debug("courseService.findAllActiveWithExercisesForUser done");
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, false);
+
         log.debug("courseService.fetchParticipationsWithSubmissionsAndResultsForCourses done");
         // TODO: we should avoid fetching plagiarism in the future, it's unnecessary for 99.9% of the cases
         courseService.fetchPlagiarismCasesForCourseExercises(courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet()), user.getId());
+
         log.debug("courseService.fetchPlagiarismCasesForCourseExercises done");
         // TODO: loading the grading scale here is only done to handle edge cases, we should avoid it, it's unnecessary for 90% of the cases and can be done when navigating into
         // the course
-        Set<GradingScale> gradingScales = gradingScaleRepository.findAllByCourseIds(courses.stream().map(Course::getId).collect(Collectors.toSet()));
+        var gradingScales = gradingScaleRepository.findAllByCourseIds(courses.stream().map(Course::getId).collect(Collectors.toSet()));
+        // we explicitly add 1 hour here to compensate for potential write extensions. Calculating it exactly is not feasible here
+        var activeExams = examRepository.findActiveExams(courses.stream().map(Course::getId).collect(Collectors.toSet()), user.getId(), ZonedDateTime.now(),
+                ZonedDateTime.now().plusHours(1));
+
         log.debug("gradingScaleRepository.findAllByCourseIds done");
-        List<CourseForDashboardDTO> coursesForDashboard = new ArrayList<>();
+        Set<CourseForDashboardDTO> coursesForDashboard = new HashSet<>();
         for (Course course : courses) {
             GradingScale gradingScale = gradingScales.stream().filter(scale -> scale.getCourse().getId().equals(course.getId())).findFirst().orElse(null);
             CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId());
             coursesForDashboard.add(courseForDashboardDTO);
         }
         logDuration(courses, user, timeNanoStart, "courses/for-dashboard (multiple courses)");
-        return coursesForDashboard;
+        return new CoursesForDashboardDTO(coursesForDashboard, activeExams);
     }
 
-    private void logDuration(List<Course> courses, User user, long timeNanoStart, String path) {
+    private void logDuration(Collection<Course> courses, User user, long timeNanoStart, String path) {
         if (log.isInfoEnabled()) {
             Set<Exercise> exercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
             Map<ExerciseMode, List<Exercise>> exercisesGroupedByExerciseMode = exercises.stream().collect(Collectors.groupingBy(Exercise::getMode));
             int noOfIndividualExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL), List.of()).size();
             int noOfTeamExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM), List.of()).size();
-            int noOfExams = courses.stream().mapToInt(course -> course.getExams().size()).sum();
-            log.info("{} finished in {} for {} courses with {} individual exercise(s), {} team exercise(s), and {} exam(s) for user {}", path,
-                    TimeLogUtil.formatDurationFrom(timeNanoStart), courses.size(), noOfIndividualExercises, noOfTeamExercises, noOfExams, user.getLogin());
+            log.info("{} finished in {} for {} courses with {} individual exercise(s) and {} team exercise(s) for user {}", path, TimeLogUtil.formatDurationFrom(timeNanoStart),
+                    courses.size(), noOfIndividualExercises, noOfTeamExercises, user.getLogin());
         }
     }
 

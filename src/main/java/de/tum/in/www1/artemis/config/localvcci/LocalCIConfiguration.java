@@ -130,24 +130,6 @@ public class LocalCIConfiguration {
     }
 
     /**
-     * Creates a scheduled executor service that logs the current state of the local CI ExecutorService queue.
-     *
-     * @param localCIBuildExecutorService The local CI ExecutorService bean.
-     * @return The scheduled executor service bean.
-     */
-    @Bean
-    public ScheduledExecutorService buildQueueLogger(ExecutorService localCIBuildExecutorService) {
-        ScheduledExecutorService buildQueueLogger = Executors.newSingleThreadScheduledExecutor();
-        buildQueueLogger.scheduleAtFixedRate(() -> {
-            ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) localCIBuildExecutorService;
-            // Report on the current state of the local CI ExecutorService queue every 30 seconds.
-            log.info("Current queue size of local CI ExecutorService: {}", threadPoolExecutor.getQueue().size());
-            log.info("Number of jobs currently building on this node: {}", threadPoolExecutor.getActiveCount());
-        }, 0, 30, TimeUnit.SECONDS);
-        return buildQueueLogger;
-    }
-
-    /**
      * Creates an XMLInputFactory that is used to parse the test results during execution of the local CI build jobs.
      *
      * @return The XMLInputFactory bean.

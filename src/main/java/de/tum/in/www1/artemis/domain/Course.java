@@ -271,6 +271,9 @@ public class Course extends DomainObject {
     private Long numberOfLecturesTransient;
 
     @Transient
+    private Long numberOfExamsTransient;
+
+    @Transient
     private Long numberOfTutorialGroupsTransient;
 
     @Transient
@@ -281,6 +284,10 @@ public class Course extends DomainObject {
 
     public Long getNumberOfLectures() {
         return numberOfLecturesTransient;
+    }
+
+    public Long getNumberOfExams() {
+        return numberOfExamsTransient;
     }
 
     public Long getNumberOfTutorialGroups() {
@@ -297,6 +304,10 @@ public class Course extends DomainObject {
 
     public void setNumberOfLectures(Long numberOfLectures) {
         this.numberOfLecturesTransient = numberOfLectures;
+    }
+
+    public void setNumberOfExams(Long numberOfExams) {
+        this.numberOfExamsTransient = numberOfExams;
     }
 
     public void setNumberOfTutorialGroups(Long numberOfTutorialGroups) {
