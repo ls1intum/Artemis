@@ -5,7 +5,7 @@
             "deleted": "Kompetenz gelöscht",
             "updated": "Kompetenz bearbeitet",
             "competencyButton": "Kompetenzen",
-            "title": "Kompetenzen",
+            "title": "Titel",
             "description": "Beschreibung",
             "taxonomy": "Taxonomie",
             "softDueDate": "Empfohlen bis",
@@ -60,18 +60,29 @@
             },
             "parseDescription": {
                 "title": "Kompetenzvorschläge",
-                "courseDescription": "Kursbeschreibung",
-                "courseDescriptionPlaceholder": "Bitte gib eine Kursbeschreibung mit mindestens 100 Zeichen ein",
-                "generate": "Generieren"
+                "seenTooltip": "aktiviert, wenn der Vorschlag angesehen wurde",
+                "unseenModalTitle": "Speichern bestätigen",
+                "unseenModalText": "Du hast nicht alle Empfehlungen angesehen, möchtest du trotzdem fortfahren?",
+                "errorWarning": "Speichern nicht möglich, weil fehlerhafte Kompetenzen vorliegen",
+                "courseDescription": {
+                    "title": "Kursbeschreibung eingeben",
+                    "placeholder": "Bitte gib eine Kursbeschreibung ein",
+                    "requiredValidationError": "Kursbeschreibung darf nicht leer sein",
+                    "minlengthValidationError": "Kursbeschreibung muss mindestens {{min}} Zeichen lang sein",
+                    "maxlengthValidationError": "Kursbeschreibung darf maximal {{max}} Zeichen lang sein",
+                    "generate": "Generieren",
+                    "regenerate": "Erneut generieren",
+                    "regenerateTooltip": "Zusätzliche Kompetenzvorschläge generieren"
+                }
             },
             "createCompetency": {
                 "title": "Erstelle eine neue Kompetenz",
                 "titlePlaceholder": "Gib der Kompetenz einen Titel",
                 "titleRequiredValidationError": "Eine Kompetenz braucht einen Titel",
-                "titleMaxLengthValidationError": "Der Titel einer Kompetenz ist auf maximal 255 Symbole beschränkt",
+                "titleMaxLengthValidationError": "Der Titel einer Kompetenz ist auf maximal {{max}} Symbole beschränkt",
                 "titleUniqueValidationError": "Es gibt bereits eine Kompetenz mit diesem Titel in dem Kurs",
                 "descriptionPlaceholder": "Was sollen die Studierenden lernen? Beispiel: \"Du kannst den Unterschied zwischen Rekursion und Schleifen erklären.\"",
-                "descriptionMaxLengthValidationError": "Die Beschreibung der Kompetenz ist auf maximal 10 000 Symbole beschränkt",
+                "descriptionMaxLengthValidationError": "Die Beschreibung der Kompetenz ist auf maximal {{max}} Symbole beschränkt",
                 "softDueDate": "Empfohlenes Fertigstellungsdatum",
                 "softDueDateHint": "Empfehle einen Zeitpunkt zu dem die Studierenden diese Kompetenz gemeistert haben sollten. Dies ist keine harte Frist.",
                 "suggestedTaxonomy": "Vorschlag",

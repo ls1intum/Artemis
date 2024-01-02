@@ -1,15 +1,39 @@
 <form [formGroup]="form" (ngSubmit)="submitForm()">
-    <div class="d-flex align-items-center pb-1">
-        <h3 class="mb-0 pe-3">{{ 'artemisApp.competency.parseDescription.courseDescription' | artemisTranslate }}</h3>
-        <button id="submitButton" class="btn btn-primary" type="submit">
-            <span>{{ 'artemisApp.competency.parseDescription.generate' | artemisTranslate }}</span>
-        </button>
+    <h3>{{ 'artemisApp.competency.parseDescription.courseDescription.title' | artemisTranslate }}</h3>
+    <div class="form-group">
+        <textarea
+            class="form-control"
+            id="course-description"
+            rows="10"
+            formControlName="courseDescription"
+            [placeholder]="'artemisApp.competency.parseDescription.courseDescription.placeholder' | artemisTranslate"
+        ></textarea>
+        @if (courseDescriptionControl?.invalid && (courseDescriptionControl?.dirty || courseDescriptionControl?.touched)) {
+            <div class="alert alert-danger">
+                @if (courseDescriptionControl?.errors?.required) {
+                    <div>
+                        {{ 'artemisApp.competency.parseDescription.courseDescription.requiredValidationError' | artemisTranslate }}
+                    </div>
+                }
+                @if (courseDescriptionControl?.errors?.minlength) {
+                    <div>
+                        {{ 'artemisApp.competency.parseDescription.courseDescription.minlengthValidationError' | artemisTranslate: { min: DESCRIPTION_MIN } }}
+                    </div>
+                }
+                @if (courseDescriptionControl?.errors?.maxlength) {
+                    <div>
+                        {{ 'artemisApp.competency.parseDescription.courseDescription.maxlengthValidationError' | artemisTranslate: { max: DESCRIPTION_MAX } }}
+                    </div>
+                }
+            </div>
+        }
     </div>
-    <textarea
-        class="form-control"
-        id="course-description"
-        rows="10"
-        formControlName="courseDescription"
-        [placeholder]="'artemisApp.competency.parseDescription.courseDescriptionPlaceholder' | artemisTranslate"
-    ></textarea>
+    <jhi-button
+        [btnType]="ButtonType.SUCCESS"
+        [title]="!hasBeenSubmitted ? 'artemisApp.competency.parseDescription.courseDescription.generate' : 'artemisApp.competency.parseDescription.courseDescription.regenerate'"
+        [icon]="!hasBeenSubmitted ? faCode : faRotateRight"
+        [tooltip]="!hasBeenSubmitted ? '' : 'artemisApp.competency.parseDescription.courseDescription.regenerateTooltip'"
+        [disabled]="!isSubmitPossible"
+        [isLoading]="isLoading"
+    />
 </form>

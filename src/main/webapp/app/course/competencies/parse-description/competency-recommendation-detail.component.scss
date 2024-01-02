@@ -11,11 +11,9 @@
     transform: rotate(90deg);
 }
 
-.recommendation {
-    border: 1px solid var(--overview-blue-border-color);
+.card {
     background-color: var(--overview-light-background-color);
-    border-radius: 3px;
-    margin-bottom: 9px;
+    margin-bottom: 0.5rem;
 }
 
 .card-header {

@@ -8,7 +8,7 @@ import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { TranslateService } from '@ngx-translate/core';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { intersection } from 'lodash-es';
-import { CompetencyTaxonomy } from 'app/entities/competency.model';
+import { CompetencyTaxonomy, CompetencyValidators } from 'app/entities/competency.model';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 
@@ -91,7 +91,8 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
     onCancel: EventEmitter<any> = new EventEmitter<any>();
 
     titleUniqueValidator = titleUniqueValidator;
-    competencyTaxonomy = CompetencyTaxonomy;
+    protected readonly competencyTaxonomy = CompetencyTaxonomy;
+    protected readonly competencyValidators = CompetencyValidators;
 
     @Output()
     formSubmitted: EventEmitter<CompetencyFormData> = new EventEmitter<CompetencyFormData>();
@@ -197,7 +198,7 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Needed to keep the order in keyvalue pipe
+     * Keeps order of elements as-is in the keyvalue pipe
      */
     keepOrder = () => {
         return 0;

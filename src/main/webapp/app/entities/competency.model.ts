@@ -25,6 +25,11 @@ export enum CompetencyRelationError {
     NONE = 'NONE',
 }
 
+export enum CompetencyValidators {
+    TITLE_MAX = 255,
+    DESCRIPTION_MAX = 10000,
+}
+
 export class Competency implements BaseEntity {
     public id?: number;
     public title?: string;

@@ -23,6 +23,7 @@ import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-co
 import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
 import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
 import { LearningPathManagementComponent } from 'app/course/learning-paths/learning-path-management/learning-path-management.component';
+import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 
 export const courseManagementState: Routes = [
     {
@@ -231,6 +232,7 @@ export const courseManagementState: Routes = [
                                     pageTitle: 'artemisApp.competency.parseDescription.title',
                                 },
                                 canActivate: [UserRouteAccessService],
+                                canDeactivate: [PendingChangesGuard],
                             },
                         ],
                     },
