@@ -1,15 +1,16 @@
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { uniq } from 'lodash-es';
 import { RegExpLineNumberMatchArray, matchRegexWithLineNumbers } from 'app/shared/util/global.utils';
 import {
     AnalysisItem,
     ProblemStatementAnalysis,
     ProblemStatementIssue,
 } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
+import { uniq } from 'lodash-es';
 
 const TEST_CASE_REGEX = /\[[^[\]]+]\(((?:[^(),]+(?:\([^()]*\)[^(),]*)?(?:,[^(),]+(?:\([^()]*\)[^(),]*)?)*)?)\)/;
 const INVALID_TEST_CASE_TRANSLATION = 'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase';
+const DUPLICATED_TEST_CASE_TRANSLATION = 'artemisApp.programmingExercise.testCaseAnalysis.duplicatedTestCase';
 
 /**
  * Analyzes the problem statement of a programming-exercise and provides information support concerning potential issues.
@@ -55,7 +56,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
                 ([lineNumber, testCases]) =>
                     [
                         lineNumber,
-                        testCases.filter((testCase) => !exerciseTestCases.map((exTestcase) => exTestcase.toLowerCase()).includes(testCase.toLowerCase())),
+                        uniq(testCases.filter((testCase) => !exerciseTestCases.map((exTestcase) => exTestcase.toLowerCase()).includes(testCase.toLowerCase()))),
                         ProblemStatementIssue.INVALID_TEST_CASES,
                     ] as AnalysisItem,
             )
@@ -66,6 +67,19 @@ export class ProgrammingExerciseInstructionAnalysisService {
         );
 
         const invalidTestCases = invalidTestCaseAnalysis.flatMap(([, testCases]) => testCases);
+
+        const testCaseOccurrences = testCasesInMarkdown.reduce((acc, [lineNumber, testCases]) => {
+            testCases.forEach((testCase) => {
+                acc.set(testCase, (acc.get(testCase) || []).concat(lineNumber));
+            });
+            return acc;
+        }, new Map<string, number[]>());
+
+        const duplicatedTestCases = [...testCaseOccurrences.entries()]
+            .filter(([, lineNumbers]) => lineNumbers.length > 1)
+            .flatMap(([testCase, lineNumbers]) => uniq(lineNumbers).map((lineNumber) => [lineNumber, [testCase], ProblemStatementIssue.DUPLICATED_TEST_CASES] as AnalysisItem));
+
+        invalidTestCaseAnalysis.push(...duplicatedTestCases);
 
         return { missingTestCases, invalidTestCases, invalidTestCaseAnalysis };
     };
@@ -102,6 +116,9 @@ export class ProgrammingExerciseInstructionAnalysisService {
         switch (issueType) {
             case ProblemStatementIssue.INVALID_TEST_CASES:
                 return INVALID_TEST_CASE_TRANSLATION;
+
+            case ProblemStatementIssue.DUPLICATED_TEST_CASES:
+                return DUPLICATED_TEST_CASE_TRANSLATION;
         }
         // no default value, please add a new translation when adding new issue types
     };
@@ -114,7 +131,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
      * @param regex to search for in the tasks.
      */
     private extractRegexFromTasks(tasks: [number, string][], regex: RegExp): [number, string[]][] {
-        const cleanMatches = (matches: string[]) => uniq(matches.flat().filter(Boolean));
+        const cleanMatches = (matches: string[]) => matches.flat().filter(Boolean);
 
         return tasks
             .filter(([, task]) => !!task)

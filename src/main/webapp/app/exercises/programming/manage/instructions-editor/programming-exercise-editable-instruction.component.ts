@@ -226,15 +226,21 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     };
 
     private mapAnalysisToWarnings = (analysis: ProblemStatementAnalysis) => {
-        return Array.from(analysis.values()).flatMap(({ lineNumber, invalidTestCases }) => this.mapIssuesToAnnotations(lineNumber, invalidTestCases));
+        return Array.from(analysis.values()).flatMap(({ lineNumber, invalidTestCases, duplicatedTestCases }) =>
+            this.mapIssuesToAnnotations(lineNumber, invalidTestCases, duplicatedTestCases),
+        );
     };
 
-    private mapIssuesToAnnotations = (lineNumber: number, invalidTestCases?: string[]) => {
+    private mapIssuesToAnnotations = (lineNumber: number, invalidTestCases?: string[], duplicatedTestCases?: string[]) => {
         const mapIssues = (issues: string[]) => ({ row: lineNumber, column: 0, text: ' - ' + issues.join('\n - '), type: 'warning' });
 
         const annotations = [];
         if (invalidTestCases) {
             annotations.push(mapIssues(invalidTestCases));
+        }
+
+        if (duplicatedTestCases) {
+            annotations.push(mapIssues(duplicatedTestCases));
         }
 
         return annotations;
