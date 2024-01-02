@@ -5,26 +5,26 @@ setup_the_build_environment () {
   echo '⚙️ executing setup_the_build_environment'
   #!/usr/bin/env bash
 
-# ------------------------------
-# Task Description:
-# Build and run all tests
-# ------------------------------
+  # ------------------------------
+  # Task Description:
+  # Build and run all tests
+  # ------------------------------
 
-# Updating assignment and test-reports ownership...
-sudo chown artemis_user:artemis_user assignment/ -R
-sudo rm -rf test-reports
-mkdir test-reports
-chown artemis_user:artemis_user test-reports/ -R
+  # Updating assignment and test-reports ownership...
+  sudo chown artemis_user:artemis_user assignment/ -R
+  sudo rm -rf test-reports
+  mkdir test-reports
+  chown artemis_user:artemis_user test-reports/ -R
 
-# assignment
-cd tests
-REQ_FILE=requirements.txt
-if [ -f "$REQ_FILE" ]; then
-    pip3 install --user -r requirements.txt || true
-else
-    echo "$REQ_FILE does not exist"
-fi
-cd ..
+  # assignment
+  cd tests
+  REQ_FILE=requirements.txt
+  if [ -f "$REQ_FILE" ]; then
+      pip3 install --user -r requirements.txt || true
+  else
+      echo "$REQ_FILE does not exist"
+  fi
+  cd ..
 
 }
 
@@ -32,47 +32,47 @@ setup_makefile () {
   echo '⚙️ executing setup_makefile'
   #!/usr/bin/env bash
 
-# ------------------------------
-# Task Description:
-# Setup makefile
-# ------------------------------
+  # ------------------------------
+  # Task Description:
+  # Setup makefile
+  # ------------------------------
 
-shadowFilePath="../tests/testUtils/c/shadow_exec.c"
+  shadowFilePath="../tests/testUtils/c/shadow_exec.c"
 
-foundIncludeDirs=`grep -m 1 'INCLUDEDIRS\s*=' assignment/Makefile`
+  foundIncludeDirs=`grep -m 1 'INCLUDEDIRS\s*=' assignment/Makefile`
 
-foundSource=`grep -m 1 'SOURCE\s*=' assignment/Makefile`
-foundSource="$foundSource $shadowFilePath"
+  foundSource=`grep -m 1 'SOURCE\s*=' assignment/Makefile`
+  foundSource="$foundSource $shadowFilePath"
 
-rm -f assignment/GNUmakefile
-rm -f assignment/makefile
+  rm -f assignment/GNUmakefile
+  rm -f assignment/makefile
 
-cp -f tests/Makefile assignment/Makefile || exit 2
-sed -i "s~\bINCLUDEDIRS\s*=.*~${foundIncludeDirs}~; s~\bSOURCE\s*=.*~${foundSource}~" assignment/Makefile
+  cp -f tests/Makefile assignment/Makefile || exit 2
+  sed -i "s~\bINCLUDEDIRS\s*=.*~${foundIncludeDirs}~; s~\bSOURCE\s*=.*~${foundSource}~" assignment/Makefile
 }
 
 build_and_run_all_tests () {
   echo '⚙️ executing build_and_run_all_tests'
   #!/usr/bin/env bash
 
-# ------------------------------
-# Task Description:
-# Build and run all tests if the compilation succeeds
-# ------------------------------
-sudo chown artemis_user:artemis_user .
-gcc -c -Wall assignment/*.c || error=true
-if [ ! $error ]
-then
-    cd tests || exit 0
-    python3 Tests.py || true
-fi
+  # ------------------------------
+  # Task Description:
+  # Build and run all tests if the compilation succeeds
+  # ------------------------------
+  sudo chown artemis_user:artemis_user .
+  gcc -c -Wall assignment/*.c || error=true
+  if [ ! $error ]
+  then
+      cd tests || exit 0
+      python3 Tests.py || true
+  fi
 
 }
 
 cleanup () {
   echo '⚙️ executing cleanup'
   sudo rm -rf tests/ assignment/ test-reports/ || true
-chmod -R 777 .
+  chmod -R 777 .
 }
 
 main () {

@@ -4,7 +4,7 @@ export AEOLUS_INITIAL_DIRECTORY=${PWD}
 gradle () {
   echo '⚙️ executing gradle'
   chmod +x ./gradlew
-./gradlew clean test
+  ./gradlew clean test
 
 }
 

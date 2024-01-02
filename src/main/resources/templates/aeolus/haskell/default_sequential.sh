@@ -4,18 +4,18 @@ export AEOLUS_INITIAL_DIRECTORY=${PWD}
 run_structural_tests () {
   echo '⚙️ executing run_structural_tests'
   # the build process is specified in `run.sh` in the test repository
-# -s enables the safe testing mode
-chmod +x run.sh
-./run.sh -s
+  # -s enables the safe testing mode
+  chmod +x run.sh
+  ./run.sh -s
 
 }
 
 run_behavior_tests () {
   echo '⚙️ executing run_behavior_tests'
   # the build process is specified in `run.sh` in the test repository
-# -s enables the safe testing mode
-chmod +x run.sh
-./run.sh -s
+  # -s enables the safe testing mode
+  chmod +x run.sh
+  ./run.sh -s
 
 }
 

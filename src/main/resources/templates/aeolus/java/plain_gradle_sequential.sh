@@ -4,7 +4,7 @@ export AEOLUS_INITIAL_DIRECTORY=${PWD}
 structural_tests () {
   echo '⚙️ executing structural_tests'
   chmod +x ./gradlew
-./gradlew clean structuralTests
+  ./gradlew clean structuralTests
 
 }
 
