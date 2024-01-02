@@ -52,7 +52,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
 /**
@@ -547,11 +547,11 @@ public class LocalVCLocalCITestService {
      * @param localVCBasePath     the base path for the local repositories taken from the artemis.version-control.local-vcs-repo-path environment variable.
      */
     public void verifyRepositoryFoldersExist(ProgrammingExercise programmingExercise, String localVCBasePath) {
-        LocalVCRepositoryUrl templateRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getTemplateRepositoryUrl(), localVCBaseUrl);
+        LocalVCRepositoryUri templateRepositoryUrl = new LocalVCRepositoryUri(programmingExercise.getTemplateRepositoryUrl(), localVCBaseUrl);
         assertThat(templateRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).exists();
-        LocalVCRepositoryUrl solutionRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getSolutionRepositoryUrl(), localVCBaseUrl);
+        LocalVCRepositoryUri solutionRepositoryUrl = new LocalVCRepositoryUri(programmingExercise.getSolutionRepositoryUrl(), localVCBaseUrl);
         assertThat(solutionRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).exists();
-        LocalVCRepositoryUrl testsRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getTestRepositoryUrl(), localVCBaseUrl);
+        LocalVCRepositoryUri testsRepositoryUrl = new LocalVCRepositoryUri(programmingExercise.getTestRepositoryUrl(), localVCBaseUrl);
         assertThat(testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).exists();
     }
 }

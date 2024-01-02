@@ -176,7 +176,7 @@ public class LocalVCServletService {
             return;
         }
 
-        LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(servletRequest.getRequestURL().toString().replace("/info/refs", ""), localVCBaseUrl);
+        LocalVCRepositoryUri localVCRepositoryUrl = new LocalVCRepositoryUri(servletRequest.getRequestURL().toString().replace("/info/refs", ""), localVCBaseUrl);
 
         String projectKey = localVCRepositoryUrl.getProjectKey();
         String repositoryTypeOrUserName = localVCRepositoryUrl.getRepositoryTypeOrUserName();
@@ -308,7 +308,7 @@ public class LocalVCServletService {
 
         Path repositoryFolderPath = repository.getDirectory().toPath();
 
-        LocalVCRepositoryUrl localVCRepositoryUrl = getLocalVCRepositoryUrl(repositoryFolderPath);
+        LocalVCRepositoryUri localVCRepositoryUrl = getLocalVCRepositoryUrl(repositoryFolderPath);
 
         String repositoryTypeOrUserName = localVCRepositoryUrl.getRepositoryTypeOrUserName();
         String projectKey = localVCRepositoryUrl.getProjectKey();
@@ -343,7 +343,7 @@ public class LocalVCServletService {
                 TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
 
-    private ProgrammingExerciseParticipation getProgrammingExerciseParticipation(LocalVCRepositoryUrl localVCRepositoryUrl, String repositoryTypeOrUserName,
+    private ProgrammingExerciseParticipation getProgrammingExerciseParticipation(LocalVCRepositoryUri localVCRepositoryUrl, String repositoryTypeOrUserName,
             ProgrammingExercise exercise) {
         ProgrammingExerciseParticipation participation;
         try {
@@ -367,9 +367,9 @@ public class LocalVCServletService {
         return exercise;
     }
 
-    private LocalVCRepositoryUrl getLocalVCRepositoryUrl(Path repositoryFolderPath) {
+    private LocalVCRepositoryUri getLocalVCRepositoryUrl(Path repositoryFolderPath) {
         try {
-            return new LocalVCRepositoryUrl(repositoryFolderPath, localVCBaseUrl);
+            return new LocalVCRepositoryUri(repositoryFolderPath, localVCBaseUrl);
         }
         catch (LocalVCInternalException e) {
             // This means something is misconfigured.

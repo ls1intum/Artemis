@@ -104,7 +104,7 @@ public class JenkinsBuildPlanService {
      * @param planKey       the name of the plan
      * @param repositoryURL the url of the vcs repository
      */
-    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL) {
+    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryURL) {
         final JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs internalRepositoryUrls = getInternalRepositoryUrls(exercise, repositoryURL);
 
         final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
@@ -125,10 +125,10 @@ public class JenkinsBuildPlanService {
         triggerBuild(jobFolder, job);
     }
 
-    private JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs getInternalRepositoryUrls(final ProgrammingExercise exercise, final VcsRepositoryUrl assignmentRepositoryUrl) {
-        final VcsRepositoryUrl assignmentUrl = jenkinsInternalUrlService.toInternalVcsUrl(assignmentRepositoryUrl);
-        final VcsRepositoryUrl testUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURL(RepositoryType.TESTS));
-        final VcsRepositoryUrl solutionUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURL(RepositoryType.SOLUTION));
+    private JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs getInternalRepositoryUrls(final ProgrammingExercise exercise, final VcsRepositoryUri assignmentRepositoryUrl) {
+        final VcsRepositoryUri assignmentUrl = jenkinsInternalUrlService.toInternalVcsUrl(assignmentRepositoryUrl);
+        final VcsRepositoryUri testUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURL(RepositoryType.TESTS));
+        final VcsRepositoryUri solutionUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURL(RepositoryType.SOLUTION));
 
         return new JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs(assignmentUrl, testUrl, solutionUrl);
     }

@@ -8,12 +8,13 @@ import java.util.Map;
 import org.eclipse.jgit.lib.BaseRepositoryBuilder;
 
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 
 /**
  * This class represents repositories cloned from the VC system to Artemis to then be used in the online editor.
  * These repositories are cloned from the remote VCS and are saved in the folder defined in the application properties at artemis.repo-clone-path.
  * Note: This class does not represent local VCS repositories. The local VCS is treated as a remote VCS in code (like Bitbucket and GitLab) and is represented by the
- * {@link de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl} class.
+ * {@link LocalVCRepositoryUri} class.
  * Its repositories are saved as bare repositories in the folder defined in the application properties at artemis.version-control.local-vcs-repo-path.
  */
 public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepository {
@@ -22,23 +23,23 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
 
     private Path localPath;
 
-    private final VcsRepositoryUrl remoteRepositoryUrl;
+    private final VcsRepositoryUri remoteRepositoryUrl;
 
     private Map<File, FileType> filesAndFolders;
 
     private Collection<File> files;
 
-    public Repository(File gitDir, VcsRepositoryUrl remoteRepositoryUrl) throws IOException {
+    public Repository(File gitDir, VcsRepositoryUri remoteRepositoryUrl) throws IOException {
         super(gitDir);
         this.remoteRepositoryUrl = remoteRepositoryUrl;
     }
 
-    public Repository(String gitDir, VcsRepositoryUrl remoteRepositoryUrl) throws IOException {
+    public Repository(String gitDir, VcsRepositoryUri remoteRepositoryUrl) throws IOException {
         super(gitDir);
         this.remoteRepositoryUrl = remoteRepositoryUrl;
     }
 
-    public Repository(BaseRepositoryBuilder options, Path localPath, VcsRepositoryUrl remoteRepositoryUrl) throws IOException {
+    public Repository(BaseRepositoryBuilder options, Path localPath, VcsRepositoryUri remoteRepositoryUrl) throws IOException {
         super(options);
         this.localPath = localPath.normalize();
         this.remoteRepositoryUrl = remoteRepositoryUrl;
@@ -97,7 +98,7 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
         super.doClose();
     }
 
-    public VcsRepositoryUrl getRemoteRepositoryUrl() {
+    public VcsRepositoryUri getRemoteRepositoryUrl() {
         return remoteRepositoryUrl;
     }
 }

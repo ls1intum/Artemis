@@ -444,7 +444,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @param contentFilter  a filter for the content of the zip file
      * @return an optional containing the path to the zip file if the export was successful
      */
-    private Optional<File> exportRepository(VcsRepositoryUrl repositoryUrl, String repositoryName, String zippedRepoName, ProgrammingExercise exercise, Path workingDir,
+    private Optional<File> exportRepository(VcsRepositoryUri repositoryUrl, String repositoryName, String zippedRepoName, ProgrammingExercise exercise, Path workingDir,
             Path outputDir, @Nullable Predicate<Path> contentFilter, List<String> exportErrors) {
         try {
             // It's not guaranteed that the repository url is defined (old courses).
@@ -591,7 +591,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @throws IOException     if the zip file couldn't be created
      * @throws GitAPIException if the repo couldn't get checked out
      */
-    private Path createZipForRepository(VcsRepositoryUrl repositoryUrl, String zipFilename, Path workingDir, Path outputDir, @Nullable Predicate<Path> contentFilter)
+    private Path createZipForRepository(VcsRepositoryUri repositoryUrl, String zipFilename, Path workingDir, Path outputDir, @Nullable Predicate<Path> contentFilter)
             throws IOException, GitAPIException, GitException, UncheckedIOException {
         var repositoryDir = fileService.getTemporaryUniquePathWithoutPathCreation(workingDir, 5);
         Path localRepoPath;

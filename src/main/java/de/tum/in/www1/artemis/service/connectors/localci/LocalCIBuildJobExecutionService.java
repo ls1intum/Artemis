@@ -50,7 +50,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localci.scaparser.exception.UnsupportedToolException;
 import de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy.ParserPolicy;
 import de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy.ParserStrategy;
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
@@ -179,23 +179,23 @@ public class LocalCIBuildJobExecutionService {
         // Retrieve the paths to the repositories that the build job needs.
         // This includes the assignment repository (the one to be tested, e.g. the student's repository, or the template repository), and the tests repository which includes
         // the tests to be executed.
-        LocalVCRepositoryUrl assignmentRepositoryUrl;
-        LocalVCRepositoryUrl testsRepositoryUrl;
-        LocalVCRepositoryUrl[] auxiliaryRepositoriesUrls;
+        LocalVCRepositoryUri assignmentRepositoryUrl;
+        LocalVCRepositoryUri testsRepositoryUrl;
+        LocalVCRepositoryUri[] auxiliaryRepositoriesUrls;
         Path[] auxiliaryRepositoriesPaths;
         String[] auxiliaryRepositoryCheckoutDirectories;
 
         try {
-            assignmentRepositoryUrl = new LocalVCRepositoryUrl(participation.getRepositoryUrl(), localVCBaseUrl);
-            testsRepositoryUrl = new LocalVCRepositoryUrl(participation.getProgrammingExercise().getTestRepositoryUrl(), localVCBaseUrl);
+            assignmentRepositoryUrl = new LocalVCRepositoryUri(participation.getRepositoryUrl(), localVCBaseUrl);
+            testsRepositoryUrl = new LocalVCRepositoryUri(participation.getProgrammingExercise().getTestRepositoryUrl(), localVCBaseUrl);
 
             if (!auxiliaryRepositories.isEmpty()) {
-                auxiliaryRepositoriesUrls = new LocalVCRepositoryUrl[auxiliaryRepositories.size()];
+                auxiliaryRepositoriesUrls = new LocalVCRepositoryUri[auxiliaryRepositories.size()];
                 auxiliaryRepositoriesPaths = new Path[auxiliaryRepositories.size()];
                 auxiliaryRepositoryCheckoutDirectories = new String[auxiliaryRepositories.size()];
 
                 for (int i = 0; i < auxiliaryRepositories.size(); i++) {
-                    auxiliaryRepositoriesUrls[i] = new LocalVCRepositoryUrl(auxiliaryRepositories.get(i).getRepositoryUrl(), localVCBaseUrl);
+                    auxiliaryRepositoriesUrls[i] = new LocalVCRepositoryUri(auxiliaryRepositories.get(i).getRepositoryUrl(), localVCBaseUrl);
                     auxiliaryRepositoriesPaths[i] = auxiliaryRepositoriesUrls[i].getRepoClonePath(repoClonePath).toAbsolutePath();
                     auxiliaryRepositoryCheckoutDirectories[i] = auxiliaryRepositories.get(i).getCheckoutDirectory();
                 }
@@ -220,7 +220,7 @@ public class LocalCIBuildJobExecutionService {
                     if (programmingLanguageFeature.checkoutSolutionRepositoryAllowed()) {
                         var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(participation.getProgrammingExercise().getId());
                         if (solutionParticipation.isPresent()) {
-                            solutionRepositoryPath = new LocalVCRepositoryUrl(solutionParticipation.get().getRepositoryUrl(), localVCBaseUrl).getRepoClonePath(repoClonePath)
+                            solutionRepositoryPath = new LocalVCRepositoryUri(solutionParticipation.get().getRepositoryUrl(), localVCBaseUrl).getRepoClonePath(repoClonePath)
                                     .toAbsolutePath();
                         }
                     }

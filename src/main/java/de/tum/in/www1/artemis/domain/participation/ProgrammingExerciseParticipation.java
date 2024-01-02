@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 
 public interface ProgrammingExerciseParticipation extends ParticipationInterface {
 
@@ -60,14 +60,14 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
      * @return the repository url of the programming exercise participation wrapped in an object
      */
     @JsonIgnore
-    default VcsRepositoryUrl getVcsRepositoryUrl() {
+    default VcsRepositoryUri getVcsRepositoryUrl() {
         var repoUrl = getRepositoryUrl();
         if (repoUrl == null) {
             return null;
         }
 
         try {
-            return new VcsRepositoryUrl(repoUrl);
+            return new VcsRepositoryUri(repoUrl);
         }
         catch (URISyntaxException e) {
             log.warn("Cannot create URI for repositoryUrl: {} due to the following error: {}", repoUrl, e.getMessage());

@@ -57,7 +57,7 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    VcsRepositoryUrl getRepositoryUrl(Long exerciseId) {
+    VcsRepositoryUri getRepositoryUrl(Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         return exercise.getVcsTestRepositoryUrl();
     }

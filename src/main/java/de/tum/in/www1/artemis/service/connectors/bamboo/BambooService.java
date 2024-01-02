@@ -86,8 +86,8 @@ public class BambooService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl sourceCodeRepositoryURL, VcsRepositoryUrl testRepositoryURL,
-            VcsRepositoryUrl solutionRepositoryURL) {
+    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUri sourceCodeRepositoryURL, VcsRepositoryUri testRepositoryURL,
+            VcsRepositoryUri solutionRepositoryURL) {
         var additionalRepositories = programmingExercise.getAuxiliaryRepositoriesForBuildPlan().stream()
                 .map(repo -> new AuxiliaryRepository.AuxRepoNameWithUrl(repo.getName(), repo.getVcsRepositoryUrl())).toList();
         bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, sourceCodeRepositoryURL, testRepositoryURL, solutionRepositoryURL, additionalRepositories);
@@ -106,7 +106,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation, String branch) {
         String buildPlanId = participation.getBuildPlanId();
-        VcsRepositoryUrl repositoryUrl = participation.getVcsRepositoryUrl();
+        VcsRepositoryUri repositoryUrl = participation.getVcsRepositoryUrl();
         String projectKey = getProjectKeyFromBuildPlanId(buildPlanId);
         String repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
         String plainRepositoryUrl = urlService.getPlainUrlFromRepositoryUrl(repositoryUrl);

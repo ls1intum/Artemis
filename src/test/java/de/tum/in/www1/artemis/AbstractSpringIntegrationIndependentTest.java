@@ -265,7 +265,7 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     }
 
     @Override
-    public void mockRepositoryUrlIsValid(VcsRepositoryUrl vcsTemplateRepositoryUrl, String projectKey, boolean b) {
+    public void mockRepositoryUrlIsValid(VcsRepositoryUri vcsTemplateRepositoryUrl, String projectKey, boolean b) {
         log.debug("Called mockRepositoryUrlIsValid with args {}, {}, {}", vcsTemplateRepositoryUrl, projectKey, b);
     }
 
@@ -280,7 +280,7 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     }
 
     @Override
-    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) {
+    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUrl, String projectKey, Set<User> users) {
         log.debug("Called mockSetRepositoryPermissionsToReadOnly with args {}, {}, {}", repositoryUrl, projectKey, users);
     }
 

@@ -80,7 +80,7 @@ public class ContinuousIntegrationTestService {
         filePath = Path.of(localRepo.localRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(filePath);
 
-        GitUtilService.MockFileRepositoryUrl localRepoUrl = new GitUtilService.MockFileRepositoryUrl(localRepo.localRepoFile);
+        GitUtilService.MockFileRepositoryUri localRepoUrl = new GitUtilService.MockFileRepositoryUri(localRepo.localRepoFile);
         // create a participation
         participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, testPrefix + "student1", localRepoUrl.getURI());
         assertThat(programmingExercise).as("Exercise was correctly set").isEqualTo(participation.getProgrammingExercise());

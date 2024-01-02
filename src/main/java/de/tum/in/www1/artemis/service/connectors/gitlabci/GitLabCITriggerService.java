@@ -6,7 +6,7 @@ import org.gitlab4j.api.models.Trigger;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
@@ -31,8 +31,8 @@ public class GitLabCITriggerService implements ContinuousIntegrationTriggerServi
         triggerBuild(participation.getVcsRepositoryUrl(), participation.getProgrammingExercise().getBranch());
     }
 
-    private void triggerBuild(VcsRepositoryUrl vcsRepositoryUrl, String branch) {
-        final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(vcsRepositoryUrl);
+    private void triggerBuild(VcsRepositoryUri vcsRepositoryUri, String branch) {
+        final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(vcsRepositoryUri);
         try {
             Trigger trigger = gitlab.getPipelineApi().createPipelineTrigger(repositoryPath, "Trigger build");
             gitlab.getPipelineApi().triggerPipeline(repositoryPath, trigger, branch, null);

@@ -355,7 +355,7 @@ public class RepositoryService {
      * @return a dto to determine the status of the repository.
      * @throws GitAPIException if the repository status can't be retrieved.
      */
-    public boolean isClean(VcsRepositoryUrl repositoryUrl) throws GitAPIException {
+    public boolean isClean(VcsRepositoryUri repositoryUrl) throws GitAPIException {
         Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true);
         return gitService.isClean(repository);
     }
@@ -368,7 +368,7 @@ public class RepositoryService {
      * @return a dto to determine the status of the repository.
      * @throws GitAPIException if the repository status can't be retrieved.
      */
-    public boolean isClean(VcsRepositoryUrl repositoryUrl, String defaultBranch) throws GitAPIException {
+    public boolean isClean(VcsRepositoryUri repositoryUrl, String defaultBranch) throws GitAPIException {
         Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true, defaultBranch);
         return gitService.isClean(repository);
     }

@@ -30,8 +30,8 @@ public class ParticipationFactory {
      * @param repository The repository to generate the MockFileRepositoryUrl for
      * @return The generated MockFileRepositoryUrl
      */
-    public static GitUtilService.MockFileRepositoryUrl getMockFileRepositoryUrl(LocalRepository repository) {
-        return new GitUtilService.MockFileRepositoryUrl(repository.originRepoFile);
+    public static GitUtilService.MockFileRepositoryUri getMockFileRepositoryUrl(LocalRepository repository) {
+        return new GitUtilService.MockFileRepositoryUri(repository.originRepoFile);
     }
 
     /**

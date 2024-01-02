@@ -108,7 +108,7 @@ public class HestiaUtilTestService {
             FileUtils.write(solutionFile, content, Charset.defaultCharset());
         }
 
-        var templateRepoUrl = new GitUtilService.MockFileRepositoryUrl(templateRepo.localRepoFile);
+        var templateRepoUrl = new GitUtilService.MockFileRepositoryUri(templateRepo.localRepoFile);
         exercise.setTemplateRepositoryUrl(templateRepoUrl.toString());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(templateRepoUrl, true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(templateRepoUrl, false);
@@ -170,7 +170,7 @@ public class HestiaUtilTestService {
             FileUtils.write(solutionFile, content, Charset.defaultCharset());
         }
 
-        var solutionRepoUrl = new GitUtilService.MockFileRepositoryUrl(solutionRepo.localRepoFile);
+        var solutionRepoUrl = new GitUtilService.MockFileRepositoryUri(solutionRepo.localRepoFile);
         exercise.setSolutionRepositoryUrl(solutionRepoUrl.toString());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(solutionRepoUrl, true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(solutionRepoUrl, false);
@@ -214,7 +214,7 @@ public class HestiaUtilTestService {
         var commits = participationRepo.localGit.log().call();
         var commitsList = StreamSupport.stream(commits.spliterator(), false).toList();
 
-        var participationRepoUrl = new GitUtilService.MockFileRepositoryUrl(participationRepo.localRepoFile);
+        var participationRepoUrl = new GitUtilService.MockFileRepositoryUri(participationRepo.localRepoFile);
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(participationRepoUrl, true);
@@ -271,7 +271,7 @@ public class HestiaUtilTestService {
             FileUtils.write(solutionFile, content, Charset.defaultCharset());
         }
 
-        var testRepoUrl = new GitUtilService.MockFileRepositoryUrl(testRepo.localRepoFile);
+        var testRepoUrl = new GitUtilService.MockFileRepositoryUri(testRepo.localRepoFile);
         exercise.setTestRepositoryUrl(testRepoUrl.toString());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoUrl, true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoUrl, false);

@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
 class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -178,11 +178,11 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         request.delete(ROOT + PROGRAMMING_EXERCISES + "/" + programmingExercise.getId(), HttpStatus.OK, params);
 
         // Assert that the repository folders do not exist anymore.
-        LocalVCRepositoryUrl templateRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getTemplateRepositoryUrl(), localVCBaseUrl);
+        LocalVCRepositoryUri templateRepositoryUrl = new LocalVCRepositoryUri(programmingExercise.getTemplateRepositoryUrl(), localVCBaseUrl);
         assertThat(templateRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).doesNotExist();
-        LocalVCRepositoryUrl solutionRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getSolutionRepositoryUrl(), localVCBaseUrl);
+        LocalVCRepositoryUri solutionRepositoryUrl = new LocalVCRepositoryUri(programmingExercise.getSolutionRepositoryUrl(), localVCBaseUrl);
         assertThat(solutionRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).doesNotExist();
-        LocalVCRepositoryUrl testsRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getTestRepositoryUrl(), localVCBaseUrl);
+        LocalVCRepositoryUri testsRepositoryUrl = new LocalVCRepositoryUri(programmingExercise.getTestRepositoryUrl(), localVCBaseUrl);
         assertThat(testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).doesNotExist();
     }
 

@@ -6,7 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
@@ -25,7 +25,7 @@ public interface CIVCSMigrationService {
      * @param buildPlanKey  The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
      * @param repositoryUrl the URL of the assignment repository
      */
-    void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl);
+    void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUri repositoryUrl);
 
     /**
      * Deletes all build triggers for the given build plan.
@@ -34,7 +34,7 @@ public interface CIVCSMigrationService {
      * @param buildPlanKey  The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
      * @param repositoryUrl the URL of the repository that triggers the build
      */
-    void deleteBuildTriggers(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl);
+    void deleteBuildTriggers(String projectKey, String buildPlanKey, VcsRepositoryUri repositoryUrl);
 
     /**
      * Overrides the existing repository URL for the given build plan.
@@ -78,7 +78,7 @@ public interface CIVCSMigrationService {
      *
      * @param repositoryUrl
      */
-    void removeWebHook(VcsRepositoryUrl repositoryUrl);
+    void removeWebHook(VcsRepositoryUri repositoryUrl);
 
     /**
      * Checks if the build plan exists.

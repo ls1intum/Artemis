@@ -6,13 +6,13 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 
 /**
  * Represents a URL to a local VC repository.
  */
-public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
+public class LocalVCRepositoryUri extends VcsRepositoryUri {
 
     private final String projectKey;
 
@@ -30,7 +30,7 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
      * @param localVCBaseUrl the base URL of the local VC server defined in an environment variable.
      * @throws LocalVCInternalException if the project key or repository slug are invalid.
      */
-    public LocalVCRepositoryUrl(String projectKey, String repositorySlug, URL localVCBaseUrl) {
+    public LocalVCRepositoryUri(String projectKey, String repositorySlug, URL localVCBaseUrl) {
         final String urlString = localVCBaseUrl + buildRepositoryPath(projectKey, repositorySlug);
         try {
             this.uri = new URI(urlString);
@@ -52,7 +52,7 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
      * @param localVCBaseUrl the base URL of the local VC server defined in an environment variable.
      * @throws LocalVCInternalException if the URL string is invalid.
      */
-    public LocalVCRepositoryUrl(String urlString, URL localVCBaseUrl) {
+    public LocalVCRepositoryUri(String urlString, URL localVCBaseUrl) {
         if (!urlString.startsWith(localVCBaseUrl.toString())) {
             throw new LocalVCInternalException("Invalid local VC Repository URL: " + urlString);
         }
@@ -85,7 +85,7 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
      * @param localVCServerUrl the base URL of the local VC server defined in an environment variable.
      * @throws LocalVCInternalException if the repository path is invalid.
      */
-    public LocalVCRepositoryUrl(Path repositoryPath, URL localVCServerUrl) {
+    public LocalVCRepositoryUri(Path repositoryPath, URL localVCServerUrl) {
         if (".git".equals(repositoryPath.getFileName().toString())) {
             // This is the case when a local repository path is passed instead of a path to a remote repository in the "local-vcs-repos" folder.
             // In this case we remove the ".git" suffix.

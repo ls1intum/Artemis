@@ -9,7 +9,7 @@ import java.net.URISyntaxException;
 import org.junit.jupiter.api.Test;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
@@ -17,22 +17,22 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 
 class UrlServiceTest extends AbstractSpringIntegrationIndependentTest {
 
-    private final VcsRepositoryUrl repositoryUrl1 = new VcsRepositoryUrl("https://ab12cde@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab12cde");
+    private final VcsRepositoryUri repositoryUrl1 = new VcsRepositoryUri("https://ab12cde@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab12cde");
 
-    private final VcsRepositoryUrl repositoryUrl2 = new VcsRepositoryUrl("https://ab12cde@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab12cde.git");
+    private final VcsRepositoryUri repositoryUrl2 = new VcsRepositoryUri("https://ab12cde@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab12cde.git");
 
-    private final VcsRepositoryUrl repositoryUrl3 = new VcsRepositoryUrl("https://artemistest2gitlab.ase.in.tum.de/TESTADAPTER/testadapter-exercise.git");
+    private final VcsRepositoryUri repositoryUrl3 = new VcsRepositoryUri("https://artemistest2gitlab.ase.in.tum.de/TESTADAPTER/testadapter-exercise.git");
 
-    private final VcsRepositoryUrl repositoryUrl4 = new VcsRepositoryUrl("https://username@artemistest2gitlab.ase.in.tum.de/FTCSCAGRADING1/ftcscagrading1-username");
+    private final VcsRepositoryUri repositoryUrl4 = new VcsRepositoryUri("https://username@artemistest2gitlab.ase.in.tum.de/FTCSCAGRADING1/ftcscagrading1-username");
 
-    private final VcsRepositoryUrl repositoryUrl5 = new VcsRepositoryUrl("ssh://git@bitbucket.ase.in.tum.de:7999/eist20l06e03/eist20l06e03-ab12cde.git");
+    private final VcsRepositoryUri repositoryUrl5 = new VcsRepositoryUri("ssh://git@bitbucket.ase.in.tum.de:7999/eist20l06e03/eist20l06e03-ab12cde.git");
 
     // special case which recently did not work
-    private final VcsRepositoryUrl repositoryUrl6 = new VcsRepositoryUrl("https://ab12cde@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab12git");
+    private final VcsRepositoryUri repositoryUrl6 = new VcsRepositoryUri("https://ab12cde@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab12git");
 
-    private final VcsRepositoryUrl fileRepositoryUrl1 = new VcsRepositoryUrl(new File("C:/Users/Admin/AppData/Local/Temp/studentOriginRepo1644180397872264950"));
+    private final VcsRepositoryUri fileRepositoryUrl1 = new VcsRepositoryUri(new File("C:/Users/Admin/AppData/Local/Temp/studentOriginRepo1644180397872264950"));
 
-    private final VcsRepositoryUrl fileRepositoryUrl2 = new VcsRepositoryUrl(new File("/var/folders/vc/sk85td_s54v7w9tjq07b0_q80000gn/T/studentTeamOriginRepo420037178325056205"));
+    private final VcsRepositoryUri fileRepositoryUrl2 = new VcsRepositoryUri(new File("/var/folders/vc/sk85td_s54v7w9tjq07b0_q80000gn/T/studentTeamOriginRepo420037178325056205"));
 
     /**
      * empty constructor for exception handling
@@ -55,7 +55,7 @@ class UrlServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(repoSlug).isEqualTo("ftcscagrading1-username");
 
         assertThatExceptionOfType(VersionControlException.class)
-                .isThrownBy(() -> urlService.getRepositorySlugFromRepositoryUrl(new VcsRepositoryUrl("https://bitbucket.ase.in.tum.de")));
+                .isThrownBy(() -> urlService.getRepositorySlugFromRepositoryUrl(new VcsRepositoryUri("https://bitbucket.ase.in.tum.de")));
     }
 
     @Test
@@ -70,7 +70,7 @@ class UrlServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(repoSlug).isEqualTo("FTCSCAGRADING1/ftcscagrading1-username");
 
         assertThatExceptionOfType(VersionControlException.class)
-                .isThrownBy(() -> urlService.getRepositoryPathFromRepositoryUrl(new VcsRepositoryUrl("https://bitbucket.ase.in.tum.de")));
+                .isThrownBy(() -> urlService.getRepositoryPathFromRepositoryUrl(new VcsRepositoryUri("https://bitbucket.ase.in.tum.de")));
     }
 
     @Test
@@ -85,7 +85,7 @@ class UrlServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(repoSlug).isEqualTo("FTCSCAGRADING1");
 
         assertThatExceptionOfType(VersionControlException.class)
-                .isThrownBy(() -> urlService.getProjectKeyFromRepositoryUrl(new VcsRepositoryUrl("https://bitbucket.ase.in.tum.de")));
+                .isThrownBy(() -> urlService.getProjectKeyFromRepositoryUrl(new VcsRepositoryUri("https://bitbucket.ase.in.tum.de")));
     }
 
     @Test

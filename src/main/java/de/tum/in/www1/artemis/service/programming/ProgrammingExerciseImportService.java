@@ -114,9 +114,9 @@ public class ProgrammingExerciseImportService {
         }
 
         // Unprotect the default branch of the template exercise repo.
-        VcsRepositoryUrl templateVcsRepositoryUrl = newExercise.getVcsTemplateRepositoryUrl();
+        VcsRepositoryUri templateVcsRepositoryUri = newExercise.getVcsTemplateRepositoryUrl();
         String templateVcsRepositoryBranch = versionControl.getOrRetrieveBranchOfExercise(templateExercise);
-        versionControl.unprotectBranch(templateVcsRepositoryUrl, templateVcsRepositoryBranch);
+        versionControl.unprotectBranch(templateVcsRepositoryUri, templateVcsRepositoryBranch);
 
         // Add the necessary hooks notifying Artemis about changes after commits have been pushed
         versionControl.addWebHooksForExercise(newExercise);

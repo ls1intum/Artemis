@@ -4,7 +4,7 @@ import java.util.Optional;
 
 import org.w3c.dom.Document;
 
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 
@@ -13,13 +13,13 @@ public interface JenkinsXmlConfigBuilder {
     /**
      * Contains the URLs required to set up the build plan.
      * <p>
-     * The URLs should haven been converted to the internal URL format using {@link JenkinsInternalUrlService#toInternalVcsUrl(VcsRepositoryUrl)}.
+     * The URLs should haven been converted to the internal URL format using {@link JenkinsInternalUrlService#toInternalVcsUrl(VcsRepositoryUri)}.
      *
      * @param assignmentRepositoryUrl The URL to the VCS repository of the student.
      * @param testRepositoryUrl       The URL to the VCS repository of the tests for the exercise.
      * @param solutionRepositoryUrl   The URL to the VCS repository of the solution of the exercise.
      */
-    record InternalVcsRepositoryURLs(VcsRepositoryUrl assignmentRepositoryUrl, VcsRepositoryUrl testRepositoryUrl, VcsRepositoryUrl solutionRepositoryUrl) {
+    record InternalVcsRepositoryURLs(VcsRepositoryUri assignmentRepositoryUrl, VcsRepositoryUri testRepositoryUrl, VcsRepositoryUri solutionRepositoryUrl) {
     }
 
     /**

@@ -578,7 +578,7 @@ public class ProgrammingExerciseService {
      * @throws IOException     If the URLs cannot be converted to actual {@link Path paths}
      * @throws GitAPIException If the checkout fails
      */
-    public boolean generateStructureOracleFile(VcsRepositoryUrl solutionRepoURL, VcsRepositoryUrl exerciseRepoURL, VcsRepositoryUrl testRepoURL, String testsPath, User user)
+    public boolean generateStructureOracleFile(VcsRepositoryUri solutionRepoURL, VcsRepositoryUri exerciseRepoURL, VcsRepositoryUri testRepoURL, String testsPath, User user)
             throws IOException, GitAPIException {
         Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL, true);
         Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL, true);

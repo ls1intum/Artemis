@@ -118,7 +118,7 @@ public class ProgrammingExerciseRepositoryService {
         final ProjectType projectType = programmingExercise.getProjectType();
         final Path projectTypeTemplateDir = getTemplateDirectoryForRepositoryType(repositoryType);
 
-        final VcsRepositoryUrl repoUrl = programmingExercise.getRepositoryURL(repositoryType);
+        final VcsRepositoryUri repoUrl = programmingExercise.getRepositoryURL(repositoryType);
         final Repository repo = gitService.getOrCheckoutRepository(repoUrl, true);
 
         // Get path, files and prefix for the programming-language dependent files. They are copied first.

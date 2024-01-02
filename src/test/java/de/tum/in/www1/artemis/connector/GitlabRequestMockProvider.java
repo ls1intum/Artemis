@@ -35,7 +35,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -323,7 +323,7 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    private void mockAddMemberToRepository(VcsRepositoryUrl repositoryUrl, String login) throws GitLabApiException {
+    private void mockAddMemberToRepository(VcsRepositoryUri repositoryUrl, String login) throws GitLabApiException {
         final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
         mockAddMemberToRepository(repositoryPath, login, false);
     }
@@ -346,7 +346,7 @@ public class GitlabRequestMockProvider {
         doReturn(mockProject).when(projectApi).getProject(notNull());
     }
 
-    private void mockProtectBranch(String branch, VcsRepositoryUrl repositoryUrl) throws GitLabApiException {
+    private void mockProtectBranch(String branch, VcsRepositoryUri repositoryUrl) throws GitLabApiException {
         final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
         doReturn(new Branch()).when(repositoryApi).unprotectBranch(repositoryPath, branch);
         doReturn(new ProtectedBranch()).when(protectedBranchesApi).protectBranch(repositoryPath, branch);
@@ -646,7 +646,7 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    public void mockRepositoryUrlIsValid(VcsRepositoryUrl repositoryUrl, boolean isUrlValid) throws GitLabApiException {
+    public void mockRepositoryUrlIsValid(VcsRepositoryUri repositoryUrl, boolean isUrlValid) throws GitLabApiException {
         if (repositoryUrl == null || repositoryUrl.getURI() == null) {
             return;
         }
@@ -662,7 +662,7 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    public void setRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, Set<de.tum.in.www1.artemis.domain.User> users) throws GitLabApiException {
+    public void setRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUrl, Set<de.tum.in.www1.artemis.domain.User> users) throws GitLabApiException {
         for (var user : users) {
             mockGetUserId(user.getLogin(), true, false);
             final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);

@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationGitlabCIGitlabSamlTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.domain.enumeration.ParticipationLifecycle;
@@ -148,7 +148,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
 
     private void mockStudentRepoLocks() throws GitAPIException, GitLabApiException {
         for (final var participation : programmingExercise.getStudentParticipations()) {
-            final VcsRepositoryUrl repositoryUrl = ((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl();
+            final VcsRepositoryUri repositoryUrl = ((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl();
             gitlabRequestMockProvider.setRepositoryPermissionsToReadOnly(repositoryUrl, participation.getStudents());
             doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
                     .getOrCheckoutRepository((ProgrammingExerciseParticipation) participation);
@@ -336,7 +336,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCombineTemplateBeforeRelease() throws Exception {
         ProgrammingExercise programmingExerciseWithTemplate = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
-        VcsRepositoryUrl repositoryUrl = programmingExerciseWithTemplate.getVcsTemplateRepositoryUrl();
+        VcsRepositoryUri repositoryUrl = programmingExerciseWithTemplate.getVcsTemplateRepositoryUrl();
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(repositoryUrl);
 
         programmingExercise.setReleaseDate(nowPlusMillis(DELAY_MS).plusSeconds(Constants.SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS));

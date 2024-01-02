@@ -466,14 +466,14 @@ public class ProgrammingExercise extends Exercise {
      * @return a URL object of the templateRepositoryUrl or null if there is no templateRepositoryUrl
      */
     @JsonIgnore
-    public VcsRepositoryUrl getVcsTemplateRepositoryUrl() {
+    public VcsRepositoryUri getVcsTemplateRepositoryUrl() {
         var templateRepositoryUrl = getTemplateRepositoryUrl();
         if (templateRepositoryUrl == null || templateRepositoryUrl.isEmpty()) {
             return null;
         }
 
         try {
-            return new VcsRepositoryUrl(templateRepositoryUrl);
+            return new VcsRepositoryUri(templateRepositoryUrl);
         }
         catch (URISyntaxException e) {
             log.warn("Cannot create URI for templateRepositoryUrl: {} due to the following error: {}", templateRepositoryUrl, e.getMessage());
@@ -487,14 +487,14 @@ public class ProgrammingExercise extends Exercise {
      * @return a URL object of the solutionRepositoryUrl or null if there is no solutionRepositoryUrl
      */
     @JsonIgnore
-    public VcsRepositoryUrl getVcsSolutionRepositoryUrl() {
+    public VcsRepositoryUri getVcsSolutionRepositoryUrl() {
         var solutionRepositoryUrl = getSolutionRepositoryUrl();
         if (solutionRepositoryUrl == null || solutionRepositoryUrl.isEmpty()) {
             return null;
         }
 
         try {
-            return new VcsRepositoryUrl(solutionRepositoryUrl);
+            return new VcsRepositoryUri(solutionRepositoryUrl);
         }
         catch (URISyntaxException e) {
             log.warn("Cannot create URI for solutionRepositoryUrl: {} due to the following error: {}", solutionRepositoryUrl, e.getMessage());
@@ -508,13 +508,13 @@ public class ProgrammingExercise extends Exercise {
      * @return a URL object of the testRepositoryURl or null if there is no testRepositoryUrl
      */
     @JsonIgnore
-    public VcsRepositoryUrl getVcsTestRepositoryUrl() {
+    public VcsRepositoryUri getVcsTestRepositoryUrl() {
         if (testRepositoryUrl == null || testRepositoryUrl.isEmpty()) {
             return null;
         }
 
         try {
-            return new VcsRepositoryUrl(testRepositoryUrl);
+            return new VcsRepositoryUri(testRepositoryUrl);
         }
         catch (URISyntaxException e) {
             log.warn("Cannot create URI for testRepositoryUrl: {} due to the following error: {}", testRepositoryUrl, e.getMessage());
@@ -529,7 +529,7 @@ public class ProgrammingExercise extends Exercise {
      * @return The repository url
      */
     @JsonIgnore
-    public VcsRepositoryUrl getRepositoryURL(RepositoryType repositoryType) {
+    public VcsRepositoryUri getRepositoryURL(RepositoryType repositoryType) {
         return switch (repositoryType) {
             case TEMPLATE -> this.getVcsTemplateRepositoryUrl();
             case SOLUTION -> this.getVcsSolutionRepositoryUrl();

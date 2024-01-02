@@ -113,7 +113,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     @Override
-    VcsRepositoryUrl getRepositoryUrl(Long participationId) throws IllegalArgumentException {
+    VcsRepositoryUri getRepositoryUrl(Long participationId) throws IllegalArgumentException {
         return getProgrammingExerciseParticipation(participationId).getVcsRepositoryUrl();
     }
 

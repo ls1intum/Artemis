@@ -49,7 +49,7 @@ public interface VersionControlService {
      *
      * @param repositoryUrl of the repository that should be deleted
      */
-    void deleteRepository(VcsRepositoryUrl repositoryUrl);
+    void deleteRepository(VcsRepositoryUri repositoryUrl);
 
     /**
      * Get the clone URL used for cloning
@@ -58,7 +58,7 @@ public interface VersionControlService {
      * @param repositorySlug The repository slug
      * @return The clone URL
      */
-    VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug);
+    VcsRepositoryUri getCloneRepositoryUrl(String projectKey, String repositorySlug);
 
     /**
      * Check if the given repository url is valid and accessible.
@@ -66,7 +66,7 @@ public interface VersionControlService {
      * @param repositoryUrl the VCS repository URL
      * @return whether the repository is valid
      */
-    Boolean repositoryUrlIsValid(@Nullable VcsRepositoryUrl repositoryUrl);
+    Boolean repositoryUrlIsValid(@Nullable VcsRepositoryUri repositoryUrl);
 
     /**
      * Get the last commit details that are included in the given requestBody that notifies about a push
@@ -125,7 +125,7 @@ public interface VersionControlService {
      * @return The URL for cloning the repository
      * @throws VersionControlException if the repository could not be copied on the VCS server (e.g. because the source repo does not exist)
      */
-    VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName)
+    VcsRepositoryUri copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName)
             throws VersionControlException;
 
     /**
@@ -135,7 +135,7 @@ public interface VersionControlService {
      * @param user          User which to add to the repository
      * @param permissions   The permissions the user should get for the repository.
      */
-    void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user, VersionControlRepositoryPermission permissions);
+    void addMemberToRepository(VcsRepositoryUri repositoryUrl, User user, VersionControlRepositoryPermission permissions);
 
     /**
      * Remove the user from the repository
@@ -143,7 +143,7 @@ public interface VersionControlService {
      * @param repositoryUrl The repository url of the repository from which to remove the user. It contains the project key & the repository name.
      * @param user          User which to remove from the repository
      */
-    void removeMemberFromRepository(VcsRepositoryUrl repositoryUrl, User user);
+    void removeMemberFromRepository(VcsRepositoryUri repositoryUrl, User user);
 
     /**
      * Removes the user's write permissions for a repository.
@@ -153,7 +153,7 @@ public interface VersionControlService {
      * @param users         Set of users for which to change permissions
      * @throws VersionControlException If the communication with the VCS fails.
      */
-    void setRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) throws VersionControlException;
+    void setRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUrl, String projectKey, Set<User> users) throws VersionControlException;
 
     /**
      * Get the default branch of the repository
@@ -161,7 +161,7 @@ public interface VersionControlService {
      * @param repositoryUrl The repository url to get the default branch for.
      * @return the name of the default branch, e.g. 'main'
      */
-    String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) throws VersionControlException;
+    String getDefaultBranchOfRepository(VcsRepositoryUri repositoryUrl) throws VersionControlException;
 
     /**
      * Get the default branch of the repository
@@ -181,7 +181,7 @@ public interface VersionControlService {
      * @param branch        The name of the branch to unprotect (e.g "main")
      * @throws VersionControlException If the communication with the VCS fails.
      */
-    void unprotectBranch(VcsRepositoryUrl repositoryUrl, String branch) throws VersionControlException;
+    void unprotectBranch(VcsRepositoryUri repositoryUrl, String branch) throws VersionControlException;
 
     /**
      * Checks if the underlying VCS server is up and running and gives some additional information about the running

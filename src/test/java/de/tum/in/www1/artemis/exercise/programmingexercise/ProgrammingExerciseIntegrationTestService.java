@@ -244,7 +244,7 @@ class ProgrammingExerciseIntegrationTestService {
 
         // we use the temp repository as remote origin for all repositories that are created during the
         // TODO: distinguish between template, test and solution
-        doReturn(new GitUtilService.MockFileRepositoryUrl(remoteRepoFile)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString());
+        doReturn(new GitUtilService.MockFileRepositoryUri(remoteRepoFile)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString());
     }
 
     void tearDown() throws IOException {
@@ -769,7 +769,7 @@ class ProgrammingExerciseIntegrationTestService {
 
     void testGenerateStructureOracle() throws Exception {
         var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
-        doReturn(repository).when(gitService).getOrCheckoutRepository(any(VcsRepositoryUrl.class), anyString(), anyBoolean());
+        doReturn(repository).when(gitService).getOrCheckoutRepository(any(VcsRepositoryUri.class), anyString(), anyBoolean());
         final var path = ROOT + GENERATE_TESTS.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         var result = request.putWithResponseBody(path, programmingExercise, String.class, HttpStatus.OK);
         assertThat(result).startsWith("Successfully generated the structure oracle");

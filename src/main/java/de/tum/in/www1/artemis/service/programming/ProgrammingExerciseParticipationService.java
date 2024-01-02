@@ -377,7 +377,7 @@ public class ProgrammingExerciseParticipationService {
      * @param targetURL the repository where all files should be replaced
      * @param sourceURL the repository that should be used as source for all files
      */
-    public void resetRepository(VcsRepositoryUrl targetURL, VcsRepositoryUrl sourceURL) throws GitAPIException, IOException {
+    public void resetRepository(VcsRepositoryUri targetURL, VcsRepositoryUri sourceURL) throws GitAPIException, IOException {
         Repository targetRepo = gitService.getOrCheckoutRepository(targetURL, true);
         Repository sourceRepo = gitService.getOrCheckoutRepository(sourceURL, true);
 

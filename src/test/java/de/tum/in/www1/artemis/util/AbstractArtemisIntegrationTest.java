@@ -18,7 +18,7 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.mail.javamail.JavaMailSender;
 
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.exercise.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -157,19 +157,19 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     }
 
     @Override
-    public void mockGetRepositorySlugFromRepositoryUrl(String repositorySlug, VcsRepositoryUrl repositoryUrl) {
+    public void mockGetRepositorySlugFromRepositoryUrl(String repositorySlug, VcsRepositoryUri repositoryUrl) {
         // mock both versions to be independent
         doReturn(repositorySlug).when(urlService).getRepositorySlugFromRepositoryUrl(repositoryUrl);
         doReturn(repositorySlug).when(urlService).getRepositorySlugFromRepositoryUrlString(repositoryUrl.toString());
     }
 
     @Override
-    public void mockGetProjectKeyFromRepositoryUrl(String projectKey, VcsRepositoryUrl repositoryUrl) {
+    public void mockGetProjectKeyFromRepositoryUrl(String projectKey, VcsRepositoryUri repositoryUrl) {
         doReturn(projectKey).when(urlService).getProjectKeyFromRepositoryUrl(repositoryUrl);
     }
 
     @Override
-    public void mockGetRepositoryPathFromRepositoryUrl(String projectPath, VcsRepositoryUrl repositoryUrl) {
+    public void mockGetRepositoryPathFromRepositoryUrl(String projectPath, VcsRepositoryUri repositoryUrl) {
         doReturn(projectPath).when(urlService).getRepositoryPathFromRepositoryUrl(repositoryUrl);
     }
 

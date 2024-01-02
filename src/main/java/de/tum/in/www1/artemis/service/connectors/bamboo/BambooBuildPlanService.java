@@ -114,8 +114,8 @@ public class BambooBuildPlanService {
      * @param auxiliaryRepositories List of auxiliary repositories to be included in
      *                                  the build plan
      */
-    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl repositoryUrl, VcsRepositoryUrl testRepositoryUrl,
-            VcsRepositoryUrl solutionRepositoryUrl, List<AuxiliaryRepository.AuxRepoNameWithUrl> auxiliaryRepositories) {
+    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUri repositoryUrl, VcsRepositoryUri testRepositoryUrl,
+            VcsRepositoryUri solutionRepositoryUrl, List<AuxiliaryRepository.AuxRepoNameWithUrl> auxiliaryRepositories) {
         final String planDescription = planKey + " Build Plan for Exercise " + programmingExercise.getTitle();
         final String projectKey = programmingExercise.getProjectKey();
         final String projectName = programmingExercise.getProjectName();
@@ -400,8 +400,8 @@ public class BambooBuildPlanService {
     }
 
     // TODO: aux repos also need to have a URL and not a slug
-    private Plan createDefaultBuildPlan(String planKey, String planDescription, String projectKey, String projectName, VcsRepositoryUrl assignmentRepoUrl,
-            VcsRepositoryUrl testRepoUrl, boolean checkoutSolutionRepository, VcsRepositoryUrl solutionRepoUrl,
+    private Plan createDefaultBuildPlan(String planKey, String planDescription, String projectKey, String projectName, VcsRepositoryUri assignmentRepoUrl,
+            VcsRepositoryUri testRepoUrl, boolean checkoutSolutionRepository, VcsRepositoryUri solutionRepoUrl,
             List<AuxiliaryRepository.AuxRepoNameWithUrl> auxiliaryRepositories) {
 
         VersionControlService versionControl = versionControlService.orElseThrow();
@@ -581,8 +581,8 @@ public class BambooBuildPlanService {
      * @param auxiliaryRepositories List of auxiliary repositories to be included in the build plan
      * @return the key of the created build plan, or null if it could not be created
      */
-    private String createCustomAeolusBuildPlanForExercise(ProgrammingExercise programmingExercise, String buildPlanId, String planDescription, VcsRepositoryUrl repositoryUrl,
-            VcsRepositoryUrl testRepositoryUrl, VcsRepositoryUrl solutionRepositoryUrl, List<AuxiliaryRepository.AuxRepoNameWithUrl> auxiliaryRepositories)
+    private String createCustomAeolusBuildPlanForExercise(ProgrammingExercise programmingExercise, String buildPlanId, String planDescription, VcsRepositoryUri repositoryUrl,
+            VcsRepositoryUri testRepositoryUrl, VcsRepositoryUri solutionRepositoryUrl, List<AuxiliaryRepository.AuxRepoNameWithUrl> auxiliaryRepositories)
             throws ContinuousIntegrationBuildPlanException {
         if (aeolusBuildPlanService.isEmpty()) {
             return null;

@@ -198,7 +198,7 @@ public class ProgrammingExerciseGitDiffReportService {
      * @param localPathRepoB local path to the checked out instance of the second repo to compare
      * @return cumulative number of lines in the git diff of given repositories
      */
-    public int calculateNumberOfDiffLinesBetweenRepos(VcsRepositoryUrl urlRepoA, Path localPathRepoA, VcsRepositoryUrl urlRepoB, Path localPathRepoB) {
+    public int calculateNumberOfDiffLinesBetweenRepos(VcsRepositoryUri urlRepoA, Path localPathRepoA, VcsRepositoryUri urlRepoB, Path localPathRepoB) {
         var repoA = gitService.getExistingCheckedOutRepositoryByLocalPath(localPathRepoA, urlRepoA);
         var repoB = gitService.getExistingCheckedOutRepositoryByLocalPath(localPathRepoB, urlRepoB);
 

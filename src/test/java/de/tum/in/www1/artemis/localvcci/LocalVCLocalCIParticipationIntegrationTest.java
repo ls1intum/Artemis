@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
 class LocalVCLocalCIParticipationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -57,7 +57,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractSpringIntegrati
         assertThat(participation).isNotNull();
         assertThat(participation.isPracticeMode()).isFalse();
         assertThat(participation.getStudent()).contains(user);
-        LocalVCRepositoryUrl studentAssignmentRepositoryUrl = new LocalVCRepositoryUrl(projectKey, projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1", localVCBaseUrl);
+        LocalVCRepositoryUri studentAssignmentRepositoryUrl = new LocalVCRepositoryUri(projectKey, projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1", localVCBaseUrl);
         assertThat(studentAssignmentRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).exists();
 
         templateRepository.resetLocalRepo();

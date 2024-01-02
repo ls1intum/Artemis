@@ -54,7 +54,7 @@ import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.ZipFileService;
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.web.rest.dto.CommitInfoDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -254,36 +254,36 @@ public class GitService {
         // password is optional and will only be applied if the ssh private key was encrypted using a password
     }
 
-    private String getGitUriAsString(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
-        return getGitUri(vcsRepositoryUrl).toString();
+    private String getGitUriAsString(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
+        return getGitUri(vcsRepositoryUri).toString();
     }
 
     /**
-     * Get the URI for a {@link VcsRepositoryUrl}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS is
+     * Get the URI for a {@link VcsRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS is
      * used.
      * This method is for internal use (getting the URI for cloning the repository into the Artemis file system).
      * For Bitbucket and GitLab, the URI is the same internally as the one that is used by the students to clone the repository using their local Git client.
      * For the local VCS however, the repository is cloned from the folder defined in the environment variable "artemis.version-control.local-vcs-repo-path".
      *
-     * @param vcsRepositoryUrl the {@link VcsRepositoryUrl} for which to get the URI
+     * @param vcsRepositoryUri the {@link VcsRepositoryUri} for which to get the URI
      * @return the URI (SSH, HTTP(S), or local path)
      * @throws URISyntaxException if SSH is used and the SSH URI could not be retrieved.
      */
-    private URI getGitUri(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
+    private URI getGitUri(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
         if (profileService.isLocalVcsCi()) {
             // Create less generic LocalVCRepositoryUrl out of VcsRepositoryUrl.
-            LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(vcsRepositoryUrl.toString(), gitUrl);
+            LocalVCRepositoryUri localVCRepositoryUrl = new LocalVCRepositoryUri(vcsRepositoryUri.toString(), gitUrl);
             String localVCBasePath = environment.getProperty("artemis.version-control.local-vcs-repo-path");
             return localVCRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toUri();
         }
-        return useSsh() ? getSshUri(vcsRepositoryUrl) : vcsRepositoryUrl.getURI();
+        return useSsh() ? getSshUri(vcsRepositoryUri) : vcsRepositoryUri.getURI();
     }
 
-    private URI getSshUri(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
+    private URI getSshUri(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
         URI templateUri = new URI(sshUrlTemplate.orElseThrow());
         // Example Bitbucket: ssh://git@bitbucket.ase.in.tum.de:7999/se2021w07h02/se2021w07h02-ga27yox.git
         // Example Gitlab: ssh://git@gitlab.ase.in.tum.de:2222/se2021w07h02/se2021w07h02-ga27yox.git
-        final var repositoryUri = vcsRepositoryUrl.getURI();
+        final var repositoryUri = vcsRepositoryUri.getURI();
         // Bitbucket repository urls (until now mainly used with username and password authentication) include "/scm" in the url, which cannot be used in ssh urls,
         // therefore we need to replace it here
         final var path = repositoryUri.getPath().replace("/scm", "");
@@ -356,7 +356,7 @@ public class GitService {
      * @return the repository if it could be checked out.
      * @throws GitAPIException if the repository could not be checked out.
      */
-    public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, boolean pullOnGet) throws GitAPIException {
+    public Repository getOrCheckoutRepository(VcsRepositoryUri repoUrl, boolean pullOnGet) throws GitAPIException {
         return getOrCheckoutRepository(repoUrl, repoClonePath, pullOnGet);
     }
 
@@ -370,7 +370,7 @@ public class GitService {
      * @throws GitAPIException if the repository could not be checked out.
      * @throws GitException    if the same repository is attempted to be cloned multiple times.
      */
-    public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, String targetPath, boolean pullOnGet) throws GitAPIException, GitException {
+    public Repository getOrCheckoutRepository(VcsRepositoryUri repoUrl, String targetPath, boolean pullOnGet) throws GitAPIException, GitException {
         Path localPath = getLocalPathOfRepo(targetPath, repoUrl);
         return getOrCheckoutRepository(repoUrl, localPath, pullOnGet);
     }
@@ -398,14 +398,14 @@ public class GitService {
      * If the local repo does not exist yet, it will be checked out.
      * After retrieving the repository, the commit for the given hash will be checked out.
      *
-     * @param vcsRepositoryUrl the url of the remote repository
+     * @param vcsRepositoryUri the url of the remote repository
      * @param commitHash       the hash of the commit to checkout
      * @param pullOnGet        pull from the remote on the checked out repository, if it does not need to be cloned
      * @return the repository if it could be checked out
      * @throws GitAPIException if the repository could not be checked out
      */
-    public Repository checkoutRepositoryAtCommit(VcsRepositoryUrl vcsRepositoryUrl, String commitHash, boolean pullOnGet) throws GitAPIException {
-        var repository = getOrCheckoutRepository(vcsRepositoryUrl, pullOnGet);
+    public Repository checkoutRepositoryAtCommit(VcsRepositoryUri vcsRepositoryUri, String commitHash, boolean pullOnGet) throws GitAPIException {
+        var repository = getOrCheckoutRepository(vcsRepositoryUri, pullOnGet);
         return checkoutRepositoryAtCommit(repository, commitHash);
     }
 
@@ -419,18 +419,18 @@ public class GitService {
      * @throws GitAPIException if the repository could not be checked out.
      * @throws GitException    if the same repository is attempted to be cloned multiple times.
      */
-    public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, boolean pullOnGet, String defaultBranch) throws GitAPIException, GitException {
+    public Repository getOrCheckoutRepository(VcsRepositoryUri repoUrl, boolean pullOnGet, String defaultBranch) throws GitAPIException, GitException {
         Path localPath = getLocalPathOfRepo(repoClonePath, repoUrl);
         return getOrCheckoutRepository(repoUrl, repoUrl, localPath, pullOnGet, defaultBranch);
     }
 
-    public Repository getOrCheckoutRepositoryIntoTargetDirectory(VcsRepositoryUrl repoUrl, VcsRepositoryUrl targetUrl, boolean pullOnGet)
+    public Repository getOrCheckoutRepositoryIntoTargetDirectory(VcsRepositoryUri repoUrl, VcsRepositoryUri targetUrl, boolean pullOnGet)
             throws GitAPIException, GitException, InvalidPathException {
         Path localPath = getDefaultLocalPathOfRepo(targetUrl);
         return getOrCheckoutRepository(repoUrl, targetUrl, localPath, pullOnGet);
     }
 
-    public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, Path localPath, boolean pullOnGet) throws GitAPIException, GitException, InvalidPathException {
+    public Repository getOrCheckoutRepository(VcsRepositoryUri repoUrl, Path localPath, boolean pullOnGet) throws GitAPIException, GitException, InvalidPathException {
         return getOrCheckoutRepository(repoUrl, repoUrl, localPath, pullOnGet);
     }
 
@@ -446,7 +446,7 @@ public class GitService {
      * @throws GitException         if the same repository is attempted to be cloned multiple times.
      * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
      */
-    public Repository getOrCheckoutRepository(VcsRepositoryUrl sourceRepoUrl, VcsRepositoryUrl targetRepoUrl, Path localPath, boolean pullOnGet)
+    public Repository getOrCheckoutRepository(VcsRepositoryUri sourceRepoUrl, VcsRepositoryUri targetRepoUrl, Path localPath, boolean pullOnGet)
             throws GitAPIException, GitException, InvalidPathException {
         return getOrCheckoutRepository(sourceRepoUrl, targetRepoUrl, localPath, pullOnGet, defaultBranch);
     }
@@ -464,7 +464,7 @@ public class GitService {
      * @throws GitException         if the same repository is attempted to be cloned multiple times.
      * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
      */
-    public Repository getOrCheckoutRepository(VcsRepositoryUrl sourceRepoUrl, VcsRepositoryUrl targetRepoUrl, Path localPath, boolean pullOnGet, String defaultBranch)
+    public Repository getOrCheckoutRepository(VcsRepositoryUri sourceRepoUrl, VcsRepositoryUri targetRepoUrl, Path localPath, boolean pullOnGet, String defaultBranch)
             throws GitAPIException, GitException, InvalidPathException {
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         // If the sourceRepoUrl differs from the targetRepoUrl, we attempt to clone the source repo into the target directory
@@ -556,7 +556,7 @@ public class GitService {
      * @param repositoryUrl the url of the repository
      * @return returns true if the repository is already cached
      */
-    public boolean isRepositoryCached(VcsRepositoryUrl repositoryUrl) {
+    public boolean isRepositoryCached(VcsRepositoryUri repositoryUrl) {
         Path localPath = getLocalPathOfRepo(repoClonePath, repositoryUrl);
         if (localPath == null) {
             return false;
@@ -571,12 +571,12 @@ public class GitService {
      * @param repoUrl of the repository to combine.
      * @throws GitAPIException If the checkout fails
      */
-    public void combineAllCommitsOfRepositoryIntoOne(VcsRepositoryUrl repoUrl) throws GitAPIException {
+    public void combineAllCommitsOfRepositoryIntoOne(VcsRepositoryUri repoUrl) throws GitAPIException {
         Repository exerciseRepository = getOrCheckoutRepository(repoUrl, true);
         combineAllCommitsIntoInitialCommit(exerciseRepository);
     }
 
-    public Path getDefaultLocalPathOfRepo(VcsRepositoryUrl targetUrl) {
+    public Path getDefaultLocalPathOfRepo(VcsRepositoryUri targetUrl) {
         return getLocalPathOfRepo(repoClonePath, targetUrl);
     }
 
@@ -587,7 +587,7 @@ public class GitService {
      * @param targetUrl  url of the repository
      * @return path of the local file system
      */
-    public Path getLocalPathOfRepo(String targetPath, VcsRepositoryUrl targetUrl) {
+    public Path getLocalPathOfRepo(String targetPath, VcsRepositoryUri targetUrl) {
         if (targetUrl == null) {
             return null;
         }
@@ -602,7 +602,7 @@ public class GitService {
      * @param remoteRepositoryUrl the remote repository url for the git repository, will be added to the Repository object for later use, can be null
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
-    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUrl remoteRepositoryUrl) {
+    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUri remoteRepositoryUrl) {
         return getExistingCheckedOutRepositoryByLocalPath(localPath, remoteRepositoryUrl, defaultBranch);
     }
 
@@ -615,7 +615,7 @@ public class GitService {
      * @param defaultBranch       the name of the branch that should be used as default branch
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
-    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUrl remoteRepositoryUrl, String defaultBranch) {
+    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUri remoteRepositoryUrl, String defaultBranch) {
         try {
             // Check if there is a folder with the provided path of the git repository.
             if (!Files.exists(localPath)) {
@@ -663,7 +663,7 @@ public class GitService {
      * @throws IOException if the configuration file cannot be accessed.
      */
     @NotNull
-    private static Repository createRepository(Path localPath, VcsRepositoryUrl remoteRepositoryUrl, String defaultBranch, FileRepositoryBuilder builder) throws IOException {
+    private static Repository createRepository(Path localPath, VcsRepositoryUri remoteRepositoryUrl, String defaultBranch, FileRepositoryBuilder builder) throws IOException {
         // Create the JGit repository object
         Repository repository = new Repository(builder, localPath, remoteRepositoryUrl);
         // disable auto garbage collection because it can lead to problems (especially with deleting local repositories)
@@ -741,7 +741,7 @@ public class GitService {
      * @param oldBranch     default branch that was used when the exercise was created (might differ from the default branch of a participation)
      * @throws GitAPIException if the repo could not be pushed
      */
-    public void pushSourceToTargetRepo(Repository targetRepo, VcsRepositoryUrl targetRepoUrl, String oldBranch) throws GitAPIException {
+    public void pushSourceToTargetRepo(Repository targetRepo, VcsRepositoryUri targetRepoUrl, String oldBranch) throws GitAPIException {
         try (Git git = new Git(targetRepo)) {
             // overwrite the old remote uri with the target uri
             git.remoteSetUrl().setRemoteName(REMOTE_NAME).setRemoteUri(new URIish(getGitUriAsString(targetRepoUrl))).call();
@@ -926,7 +926,7 @@ public class GitService {
      * @return the latestHash of the given repo.
      * @throws EntityNotFoundException if retrieving the latestHash from the git repo failed.
      */
-    public ObjectId getLastCommitHash(VcsRepositoryUrl repoUrl) throws EntityNotFoundException {
+    public ObjectId getLastCommitHash(VcsRepositoryUri repoUrl) throws EntityNotFoundException {
         if (repoUrl == null || repoUrl.getURI() == null) {
             return null;
         }
@@ -1271,7 +1271,7 @@ public class GitService {
      *
      * @param repoUrl url of the repository.
      */
-    public void deleteLocalRepository(VcsRepositoryUrl repoUrl) {
+    public void deleteLocalRepository(VcsRepositoryUri repoUrl) {
         try {
             if (repoUrl != null && repositoryAlreadyExists(repoUrl)) {
                 // We need to close the possibly still open repository otherwise an IOException will be thrown on Windows
@@ -1360,7 +1360,7 @@ public class GitService {
      * @param repoUrl URL of the remote repository.
      * @return True if repo exists on disk
      */
-    public boolean repositoryAlreadyExists(VcsRepositoryUrl repoUrl) {
+    public boolean repositoryAlreadyExists(VcsRepositoryUri repoUrl) {
         Path localPath = getDefaultLocalPathOfRepo(repoUrl);
         return Files.exists(localPath);
     }
@@ -1408,14 +1408,14 @@ public class GitService {
     /**
      * Checkout a repository and get the git log for a given repository url.
      *
-     * @param vcsRepositoryUrl the repository url for which the git log should be retrieved
+     * @param vcsRepositoryUri the repository url for which the git log should be retrieved
      * @return a list of commit info DTOs containing author, timestamp, commit message, and hash
      * @throws GitAPIException if an error occurs while retrieving the git log
      */
-    public List<CommitInfoDTO> getCommitInfos(VcsRepositoryUrl vcsRepositoryUrl) throws GitAPIException {
+    public List<CommitInfoDTO> getCommitInfos(VcsRepositoryUri vcsRepositoryUri) throws GitAPIException {
         List<CommitInfoDTO> commitInfos = new ArrayList<>();
 
-        try (var repo = getOrCheckoutRepository(vcsRepositoryUrl, true); var git = new Git(repo)) {
+        try (var repo = getOrCheckoutRepository(vcsRepositoryUri, true); var git = new Git(repo)) {
             var commits = git.log().call();
             commits.forEach(commit -> {
                 var commitInfo = CommitInfoDTO.of(commit);

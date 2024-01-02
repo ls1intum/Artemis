@@ -107,7 +107,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user, VersionControlRepositoryPermission permissions) {
+    public void addMemberToRepository(VcsRepositoryUri repositoryUrl, User user, VersionControlRepositoryPermission permissions) {
         final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
         final Long userId = gitLabUserManagementService.getUserId(user.getLogin());
         final AccessLevel repositoryPermissions = permissionsToAccessLevel(permissions);
@@ -140,7 +140,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void removeMemberFromRepository(VcsRepositoryUrl repositoryUrl, User user) {
+    public void removeMemberFromRepository(VcsRepositoryUri repositoryUrl, User user) {
         final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
         final var userId = gitLabUserManagementService.getUserId(user.getLogin());
 
@@ -159,7 +159,7 @@ public class GitLabService extends AbstractVersionControlService {
      * @return the name of the default branch, e.g. 'main'
      */
     @Override
-    public String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) throws GitLabException {
+    public String getDefaultBranchOfRepository(VcsRepositoryUri repositoryUrl) throws GitLabException {
         var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
 
         try {
@@ -170,7 +170,7 @@ public class GitLabService extends AbstractVersionControlService {
         }
     }
 
-    private String getPathIDFromRepositoryURL(VcsRepositoryUrl repositoryUrl) {
+    private String getPathIDFromRepositoryURL(VcsRepositoryUri repositoryUrl) {
         final var namespaces = repositoryUrl.getURI().toString().split("/");
         final var last = namespaces.length - 1;
         return namespaces[last - 1] + "/" + namespaces[last].replace(".git", "");
@@ -183,7 +183,7 @@ public class GitLabService extends AbstractVersionControlService {
      * @param branch        The name of the branch to protect (e.g "main")
      * @throws VersionControlException If the communication with the VCS fails.
      */
-    private void protectBranch(VcsRepositoryUrl repositoryUrl, String branch) {
+    private void protectBranch(VcsRepositoryUri repositoryUrl, String branch) {
         final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
         // we have to first unprotect the branch in order to set the correct access level, this is the case, because the main branch is protected for maintainers by default
         // Unprotect the branch in 8 seconds first and then protect the branch in 12 seconds.
@@ -213,7 +213,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void unprotectBranch(VcsRepositoryUrl repositoryUrl, String branch) throws VersionControlException {
+    public void unprotectBranch(VcsRepositoryUri repositoryUrl, String branch) throws VersionControlException {
         final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
         // Unprotect the branch in 10 seconds. We do this to wait on any async calls to Gitlab and make sure that the branch really exists before unprotecting it.
         unprotectBranch(repositoryPath, branch, 10L, TimeUnit.SECONDS);
@@ -240,12 +240,12 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    protected void addWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName) {
+    protected void addWebHook(VcsRepositoryUri repositoryUrl, String notificationUrl, String webHookName) {
         addAuthenticatedWebHook(repositoryUrl, notificationUrl, webHookName, "noSecretNeeded");
     }
 
     @Override
-    protected void addAuthenticatedWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
+    protected void addAuthenticatedWebHook(VcsRepositoryUri repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
         final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
         final var hook = new ProjectHook().withPushEvents(true).withIssuesEvents(false).withMergeRequestsEvents(false).withWikiPageEvents(false)
                 // Note: Trigger hook on push events for matching branches only (this avoids unnecessary Jenkins builds for pushes to other branches)
@@ -273,7 +273,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void deleteRepository(VcsRepositoryUrl repositoryUrl) {
+    public void deleteRepository(VcsRepositoryUri repositoryUrl) {
         final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
         final var repositoryName = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
         try {
@@ -288,12 +288,12 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug) {
-        return new GitLabRepositoryUrl(projectKey, repositorySlug);
+    public VcsRepositoryUri getCloneRepositoryUrl(String projectKey, String repositorySlug) {
+        return new GitLabRepositoryUri(projectKey, repositorySlug);
     }
 
     @Override
-    public Boolean repositoryUrlIsValid(@Nullable VcsRepositoryUrl repositoryUrl) {
+    public Boolean repositoryUrlIsValid(@Nullable VcsRepositoryUri repositoryUrl) {
         if (repositoryUrl == null || repositoryUrl.getURI() == null) {
             return false;
         }
@@ -451,7 +451,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void setRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) {
+    public void setRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUrl, String projectKey, Set<User> users) {
         users.forEach(user -> updateMemberPermissionInRepository(repositoryUrl, user, VersionControlRepositoryPermission.REPO_READ));
     }
 
@@ -462,7 +462,7 @@ public class GitLabService extends AbstractVersionControlService {
      * @param user          The GitLab user
      * @param permissions   The new access level for the user
      */
-    private void updateMemberPermissionInRepository(VcsRepositoryUrl repositoryUrl, User user, VersionControlRepositoryPermission permissions) {
+    private void updateMemberPermissionInRepository(VcsRepositoryUri repositoryUrl, User user, VersionControlRepositoryPermission permissions) {
         final var userId = gitLabUserManagementService.getUserId(user.getLogin());
         final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
         try {
@@ -527,16 +527,16 @@ public class GitLabService extends AbstractVersionControlService {
         }
     }
 
-    public final class GitLabRepositoryUrl extends VcsRepositoryUrl {
+    public final class GitLabRepositoryUri extends VcsRepositoryUri {
 
-        public GitLabRepositoryUrl(String projectKey, String repositorySlug) {
+        public GitLabRepositoryUri(String projectKey, String repositorySlug) {
             final var path = projectKey + "/" + repositorySlug;
             final var urlString = gitlabServerUrl + "/" + path + ".git";
 
             stringToURL(urlString);
         }
 
-        private GitLabRepositoryUrl(String urlString) {
+        private GitLabRepositoryUri(String urlString) {
             stringToURL(urlString);
         }
 
@@ -550,9 +550,9 @@ public class GitLabService extends AbstractVersionControlService {
         }
 
         @Override
-        public VcsRepositoryUrl withUser(String username) {
+        public VcsRepositoryUri withUser(String username) {
             this.username = username;
-            return new GitLabRepositoryUrl(uri.toString().replaceAll("(https?://)(.*)", "$1" + username + "@$2"));
+            return new GitLabRepositoryUri(uri.toString().replaceAll("(https?://)(.*)", "$1" + username + "@$2"));
         }
     }
 }

@@ -93,7 +93,7 @@ import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.*;
-import de.tum.in.www1.artemis.util.GitUtilService.MockFileRepositoryUrl;
+import de.tum.in.www1.artemis.util.GitUtilService.MockFileRepositoryUri;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
@@ -338,10 +338,10 @@ public class ProgrammingExerciseTestService {
      */
     public void setupRepositoryMocks(String projectKey, LocalRepository exerciseRepository, String exerciseRepoName, LocalRepository solutionRepository, String solutionRepoName,
             LocalRepository testRepository, String testRepoName, LocalRepository auxRepository, String auxRepoName) throws Exception {
-        var exerciseRepoTestUrl = new MockFileRepositoryUrl(exerciseRepository.originRepoFile);
-        var testRepoTestUrl = new MockFileRepositoryUrl(testRepository.originRepoFile);
-        var solutionRepoTestUrl = new MockFileRepositoryUrl(solutionRepository.originRepoFile);
-        var auxRepoTestUrl = new MockFileRepositoryUrl(auxRepository.originRepoFile);
+        var exerciseRepoTestUrl = new MockFileRepositoryUri(exerciseRepository.originRepoFile);
+        var testRepoTestUrl = new MockFileRepositoryUri(testRepository.originRepoFile);
+        var solutionRepoTestUrl = new MockFileRepositoryUri(solutionRepository.originRepoFile);
+        var auxRepoTestUrl = new MockFileRepositoryUri(auxRepository.originRepoFile);
 
         doReturn(exerciseRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, exerciseRepoName);
         doReturn(testRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, testRepoName);
@@ -632,7 +632,7 @@ public class ProgrammingExerciseTestService {
 
     private AuxiliaryRepository addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) {
         AuxiliaryRepository repository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(sourceExercise);
-        var url = versionControlService.getCloneRepositoryUrl(sourceExercise.getProjectKey(), new MockFileRepositoryUrl(sourceAuxRepo.originRepoFile).toString());
+        var url = versionControlService.getCloneRepositoryUrl(sourceExercise.getProjectKey(), new MockFileRepositoryUri(sourceAuxRepo.originRepoFile).toString());
         repository.setRepositoryUrl(url.toString());
         return auxiliaryRepositoryRepository.save(repository);
     }
@@ -1597,7 +1597,7 @@ public class ProgrammingExerciseTestService {
     }
 
     private void setupMockRepo(LocalRepository localRepo, RepositoryType repoType, String fileName) throws GitAPIException, IOException {
-        VcsRepositoryUrl vcsUrl = exercise.getRepositoryURL(repoType);
+        VcsRepositoryUri vcsUrl = exercise.getRepositoryURL(repoType);
         Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null);
 
         createAndCommitDummyFileInLocalRepository(localRepo, fileName);

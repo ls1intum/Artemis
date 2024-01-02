@@ -255,8 +255,8 @@ public class TestwiseCoverageService {
      * the same lines, but referencing a different test case. This mapping is still required, but simple summing may
      * count the same covered lines multiple times.
      *
-     * @param report the report for which the line counts of its file reports should be caluclated and saved
-     * @return the number of covered lines by file path
+     * @param report the report for which the line counts of its file reports should be calculated and saved
+     * @return a map with the number of covered lines (value) by file path (key)
      */
     private Map<String, Integer> calculateAndSaveUniqueLineCountsByFilePath(CoverageReport report) {
         var coveredLinesByFilePath = new HashMap<String, Integer>();
@@ -272,10 +272,10 @@ public class TestwiseCoverageService {
     }
 
     /**
-     * Return the testwise coverage report for the latest solution submission for a programming exercise without the file reports.
+     * Return the test-wise coverage report for the latest solution submission for a programming exercise without the file reports.
      *
      * @param programmingExercise the exercise for which the latest coverage report should be retrieved
-     * @return an Optional of the testwise coverage report for the latest solution submission without the file reports
+     * @return an Optional of the test-wise coverage report for the latest solution submission without the file reports
      *         if a report exists for the latest submission, otherwise an empty Optional
      */
     public Optional<CoverageReport> getCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(ProgrammingExercise programmingExercise) {
@@ -287,10 +287,10 @@ public class TestwiseCoverageService {
     }
 
     /**
-     * Return the full testwise coverage report for the latest solution submission for a programming exercise containing all file reports
+     * Return the full test-wise coverage report for the latest solution submission for a programming exercise containing all file reports
      *
      * @param programmingExercise the exercise for which the latest coverage report should be retrieved
-     * @return an Optional of the full testwise coverage report for the latest solution submission with all file reports
+     * @return an Optional of the full test-wise coverage report for the latest solution submission with all file reports
      *         if a report exists for the latest submission, otherwise an empty Optional
      */
     public Optional<CoverageReport> getFullCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(ProgrammingExercise programmingExercise) {

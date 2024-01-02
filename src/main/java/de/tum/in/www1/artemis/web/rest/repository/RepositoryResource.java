@@ -101,7 +101,7 @@ public abstract class RepositoryResource {
      * @param domainId that serves as an abstract identifier for retrieving the repository.
      * @return the repositoryUrl.
      */
-    abstract VcsRepositoryUrl getRepositoryUrl(Long domainId);
+    abstract VcsRepositoryUri getRepositoryUrl(Long domainId);
 
     /**
      * Check if the current user can access the given repository.
@@ -301,7 +301,7 @@ public abstract class RepositoryResource {
         }
 
         RepositoryStatusDTOType repositoryStatus;
-        VcsRepositoryUrl repositoryUrl = getRepositoryUrl(domainId);
+        VcsRepositoryUri repositoryUrl = getRepositoryUrl(domainId);
 
         try {
             boolean isClean;

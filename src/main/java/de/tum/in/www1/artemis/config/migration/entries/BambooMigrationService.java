@@ -27,7 +27,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
@@ -116,7 +116,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
     }
 
     @Override
-    public void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl vcsRepositoryUrl) {
+    public void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUri vcsRepositoryUri) {
         Map<Long, String> notificationIds = getAllArtemisBuildPlanServerNotificationIds(buildPlanKey);
         log.info("Found {} notifications for build plan {}", notificationIds.size(), buildPlanKey);
 
@@ -143,12 +143,12 @@ public class BambooMigrationService implements CIVCSMigrationService {
     }
 
     @Override
-    public void removeWebHook(VcsRepositoryUrl repositoryUrl) {
+    public void removeWebHook(VcsRepositoryUri repositoryUrl) {
         // nothing to do
     }
 
     @Override
-    public void deleteBuildTriggers(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl) {
+    public void deleteBuildTriggers(String projectKey, String buildPlanKey, VcsRepositoryUri repositoryUrl) {
         if (buildPlanKey == null) {
             return;
         }

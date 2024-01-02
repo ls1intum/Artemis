@@ -416,7 +416,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockRepositoryUrlIsValid(VcsRepositoryUrl repositoryUrl, String projectKey, boolean isUrlValid) throws Exception {
+    public void mockRepositoryUrlIsValid(VcsRepositoryUri repositoryUrl, String projectKey, boolean isUrlValid) throws Exception {
         gitlabRequestMockProvider.mockRepositoryUrlIsValid(repositoryUrl, isUrlValid);
     }
 
@@ -440,7 +440,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) throws Exception {
+    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUrl, String projectKey, Set<User> users) throws Exception {
         gitlabRequestMockProvider.setRepositoryPermissionsToReadOnly(repositoryUrl, users);
     }
 

@@ -24,7 +24,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.google.gson.Gson;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
@@ -125,7 +125,7 @@ public class AeolusBuildPlanService {
      * @return a map of repositories used in Aeolus to create the checkout task in the custom build plan
      */
     public Map<String, AeolusRepository> createRepositoryMapForWindfile(ProgrammingLanguage programmingLanguage, String branch, boolean checkoutSolutionRepository,
-            VcsRepositoryUrl repositoryUrl, VcsRepositoryUrl testRepositoryUrl, VcsRepositoryUrl solutionRepositoryUrl,
+            VcsRepositoryUri repositoryUrl, VcsRepositoryUri testRepositoryUrl, VcsRepositoryUri solutionRepositoryUrl,
             List<AuxiliaryRepository.AuxRepoNameWithUrl> auxiliaryRepositories) {
         if (bambooInternalUrlService.isEmpty()) {
             throw new ContinuousIntegrationBuildPlanException("Internal URL service for Bamboo is not configured");

@@ -77,7 +77,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         filePath = Path.of(testRepo.localRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(filePath);
 
-        var testRepoUrl = new GitUtilService.MockFileRepositoryUrl(testRepo.localRepoFile);
+        var testRepoUrl = new GitUtilService.MockFileRepositoryUri(testRepo.localRepoFile);
         programmingExercise.setTestRepositoryUrl(testRepoUrl.toString());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoUrl, true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoUrl, false);

@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 
 @Service
@@ -22,7 +22,7 @@ public class UrlService {
      * @return The repository slug
      * @throws VersionControlException if the URL is invalid and no repository slug could be extracted
      */
-    public String getRepositorySlugFromRepositoryUrl(VcsRepositoryUrl repositoryUrl) throws VersionControlException {
+    public String getRepositorySlugFromRepositoryUrl(VcsRepositoryUri repositoryUrl) throws VersionControlException {
         return getRepositorySlugFromUrl(repositoryUrl.getURI());
     }
 
@@ -78,7 +78,7 @@ public class UrlService {
      * @return <project key>/<repositorySlug>
      * @throws VersionControlException if the URL is invalid and no project key could be extracted
      */
-    public String getRepositoryPathFromRepositoryUrl(VcsRepositoryUrl repositoryUrl) throws VersionControlException {
+    public String getRepositoryPathFromRepositoryUrl(VcsRepositoryUri repositoryUrl) throws VersionControlException {
         return getRepositoryPathFromUrl(repositoryUrl.getURI());
     }
 
@@ -109,7 +109,7 @@ public class UrlService {
      * @return The project key
      * @throws VersionControlException if the URL is invalid and no project key could be extracted
      */
-    public String getProjectKeyFromRepositoryUrl(VcsRepositoryUrl repositoryUrl) throws VersionControlException {
+    public String getProjectKeyFromRepositoryUrl(VcsRepositoryUri repositoryUrl) throws VersionControlException {
         return getProjectKeyFromUrl(repositoryUrl.getURI());
     }
 
@@ -147,7 +147,7 @@ public class UrlService {
      * @return The plain URL
      * @throws VersionControlException if the URL is invalid and no plain URL could be extracted
      */
-    public String getPlainUrlFromRepositoryUrl(VcsRepositoryUrl repositoryUrl) throws VersionControlException {
+    public String getPlainUrlFromRepositoryUrl(VcsRepositoryUri repositoryUrl) throws VersionControlException {
         var uri = repositoryUrl.getURI();
         try {
             var updatedUri = new URI(uri.getScheme(), null, uri.getHost(), uri.getPort(), uri.getPath(), null, uri.getFragment());

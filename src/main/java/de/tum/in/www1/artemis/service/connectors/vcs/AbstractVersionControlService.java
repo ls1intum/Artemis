@@ -15,7 +15,7 @@ import org.springframework.context.ApplicationContext;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -67,7 +67,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
      * @param notificationUrl The URL the hook should notify
      * @param webHookName     Any arbitrary name for the webhook
      */
-    protected abstract void addWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName);
+    protected abstract void addWebHook(VcsRepositoryUri repositoryUrl, String notificationUrl, String webHookName);
 
     /**
      * Adds an authenticated webhook for the specified repository to the given notification URL.
@@ -77,7 +77,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
      * @param webHookName     Any arbitrary name for the webhook
      * @param secretToken     A secret token that authenticates the webhook against the system behind the notification URL
      */
-    protected abstract void addAuthenticatedWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName, String secretToken);
+    protected abstract void addAuthenticatedWebHook(VcsRepositoryUri repositoryUrl, String notificationUrl, String webHookName, String secretToken);
 
     protected ContinuousIntegrationService getContinuousIntegrationService() {
         // We need to get the CI service from the context, because Bamboo and Bitbucket would end up in a circular dependency otherwise
@@ -105,7 +105,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     }
 
     @Override
-    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName)
+    public VcsRepositoryUri copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName)
             throws VersionControlException {
         sourceRepositoryName = sourceRepositoryName.toLowerCase();
         targetRepositoryName = targetRepositoryName.toLowerCase();

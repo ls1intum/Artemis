@@ -153,13 +153,13 @@ public class AuxiliaryRepository extends DomainObject {
      * @return a URL object of the repositoryUrl or null if there is no repositoryUrl
      */
     @JsonIgnore
-    public VcsRepositoryUrl getVcsRepositoryUrl() {
+    public VcsRepositoryUri getVcsRepositoryUrl() {
         String repositoryUrl = getRepositoryUrl();
         if (repositoryUrl == null || repositoryUrl.isEmpty()) {
             return null;
         }
         try {
-            return new VcsRepositoryUrl(repositoryUrl);
+            return new VcsRepositoryUri(repositoryUrl);
         }
         catch (URISyntaxException e) {
             log.error("Malformed URI {} could not be used to instantiate VcsRepositoryUrl.", getRepositoryUrl(), e);
@@ -176,7 +176,7 @@ public class AuxiliaryRepository extends DomainObject {
     /**
      * Used in Bamboo Service to map the name of an auxiliary repository to its repository url.
      */
-    public record AuxRepoNameWithUrl(String name, VcsRepositoryUrl repositoryUrl) {
+    public record AuxRepoNameWithUrl(String name, VcsRepositoryUri repositoryUrl) {
     }
 
     public boolean containsEqualStringValues(AuxiliaryRepository other) {

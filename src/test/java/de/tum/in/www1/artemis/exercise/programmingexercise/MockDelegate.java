@@ -45,11 +45,11 @@ public interface MockDelegate {
 
     void mockRetrieveArtifacts(ProgrammingExerciseStudentParticipation participation) throws MalformedURLException, URISyntaxException, JsonProcessingException;
 
-    void mockGetRepositorySlugFromRepositoryUrl(String repositorySlug, VcsRepositoryUrl repositoryUrl);
+    void mockGetRepositorySlugFromRepositoryUrl(String repositorySlug, VcsRepositoryUri repositoryUrl);
 
-    void mockGetProjectKeyFromRepositoryUrl(String projectKey, VcsRepositoryUrl repositoryUrl);
+    void mockGetProjectKeyFromRepositoryUrl(String projectKey, VcsRepositoryUri repositoryUrl);
 
-    void mockGetRepositoryPathFromRepositoryUrl(String projectPath, VcsRepositoryUrl repositoryUrl);
+    void mockGetRepositoryPathFromRepositoryUrl(String projectPath, VcsRepositoryUri repositoryUrl);
 
     void mockGetProjectKeyFromAnyUrl(String projectKey);
 
@@ -114,13 +114,13 @@ public interface MockDelegate {
 
     void mockCheckIfBuildPlanExists(String projectKey, String templateBuildPlanId, boolean buildPlanExists, boolean shouldFail) throws Exception;
 
-    void mockRepositoryUrlIsValid(VcsRepositoryUrl vcsTemplateRepositoryUrl, String projectKey, boolean b) throws Exception;
+    void mockRepositoryUrlIsValid(VcsRepositoryUri vcsTemplateRepositoryUrl, String projectKey, boolean b) throws Exception;
 
     void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation solutionParticipation) throws Exception;
 
     void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation solutionParticipation) throws Exception;
 
-    void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) throws Exception;
+    void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUrl, String projectKey, Set<User> users) throws Exception;
 
     void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean userExists) throws Exception;
 

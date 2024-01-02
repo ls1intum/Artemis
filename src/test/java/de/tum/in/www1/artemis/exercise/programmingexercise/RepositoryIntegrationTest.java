@@ -189,7 +189,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         Path folderPath = Path.of(studentRepository.localRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(folderPath);
 
-        var localRepoUrl = new GitUtilService.MockFileRepositoryUrl(studentRepository.localRepoFile);
+        var localRepoUrl = new GitUtilService.MockFileRepositoryUri(studentRepository.localRepoFile);
         participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, TEST_PREFIX + "student1", localRepoUrl.getURI());
         programmingExercise.setTestRepositoryUrl(localRepoUrl.toString());
 
@@ -696,7 +696,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         // Create assignment repository and participation for the instructor.
         tempRepository = new LocalRepository(defaultBranch);
         tempRepository.configureRepos("localInstructorAssignmentRepo", "remoteInstructorAssignmentRepo");
-        var instructorAssignmentRepoUrl = new GitUtilService.MockFileRepositoryUrl(tempRepository.localRepoFile);
+        var instructorAssignmentRepoUrl = new GitUtilService.MockFileRepositoryUri(tempRepository.localRepoFile);
         ProgrammingExerciseStudentParticipation instructorAssignmentParticipation = participationUtilService
                 .addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, TEST_PREFIX + "instructor1", instructorAssignmentRepoUrl.getURI());
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfStudentParticipation(instructorAssignmentParticipation);

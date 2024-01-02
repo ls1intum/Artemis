@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.BuildPlan;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
@@ -109,14 +109,14 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL,
-            VcsRepositoryUrl solutionRepositoryURL) {
+    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryURL, VcsRepositoryUri testRepositoryURL,
+            VcsRepositoryUri solutionRepositoryURL) {
         addBuildPlanToProgrammingExerciseIfUnset(exercise);
         setupGitLabCIConfiguration(repositoryURL, exercise, planKey);
         // TODO: triggerBuild(repositoryURL, exercise.getBranch());
     }
 
-    private void setupGitLabCIConfiguration(VcsRepositoryUrl repositoryURL, ProgrammingExercise exercise, String buildPlanId) {
+    private void setupGitLabCIConfiguration(VcsRepositoryUri repositoryURL, ProgrammingExercise exercise, String buildPlanId) {
         final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryURL);
         ProjectApi projectApi = gitlab.getProjectApi();
         try {
@@ -183,11 +183,11 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     public void recreateBuildPlansForExercise(ProgrammingExercise exercise) {
         addBuildPlanToProgrammingExerciseIfUnset(exercise);
 
-        VcsRepositoryUrl templateUrl = exercise.getVcsTemplateRepositoryUrl();
+        VcsRepositoryUri templateUrl = exercise.getVcsTemplateRepositoryUrl();
         setupGitLabCIConfiguration(templateUrl, exercise, exercise.getTemplateBuildPlanId());
         // TODO: triggerBuild(templateUrl, exercise.getBranch());
 
-        VcsRepositoryUrl solutionUrl = exercise.getVcsSolutionRepositoryUrl();
+        VcsRepositoryUri solutionUrl = exercise.getVcsSolutionRepositoryUrl();
         setupGitLabCIConfiguration(solutionUrl, exercise, exercise.getSolutionBuildPlanId());
         // TODO: triggerBuild(solutionUrl, exercise.getBranch());
     }

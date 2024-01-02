@@ -427,7 +427,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * @param url The URL to fetch the repository for
      * @return The repository
      */
-    private Repository repositoryAt(VcsRepositoryUrl url) {
+    private Repository repositoryAt(VcsRepositoryUri url) {
         try {
             return gitService.getOrCheckoutRepository(url, true);
         }

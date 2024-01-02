@@ -21,7 +21,7 @@ import org.springframework.web.client.RestTemplate;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.AeolusRequestMockProvider;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildPlanService;
@@ -93,11 +93,11 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     void testRepositoryMapForJavaWindfileCreation() throws URISyntaxException {
         ProgrammingLanguage language = ProgrammingLanguage.JAVA;
         String branch = "develop";
-        VcsRepositoryUrl repositoryUrl = new VcsRepositoryUrl("https://bitbucket.server/scm/PROJECT/REPO.git");
-        VcsRepositoryUrl testRepositoryUrl = new VcsRepositoryUrl("https://bitbucket.server/scm/PROJECT/REPO-test.git");
-        VcsRepositoryUrl solutionRepositoryUrl = new VcsRepositoryUrl("https://bitbucket.server/scm/PROJECT/REPO-solution.git");
-        var auxiliaryRepositories = List.of(new AuxiliaryRepository.AuxRepoNameWithUrl("aux1", new VcsRepositoryUrl("https://bitbucket.server/scm/PROJECT/REPO-aux1.git")),
-                new AuxiliaryRepository.AuxRepoNameWithUrl("aux2", new VcsRepositoryUrl("https://bitbucket.server/scm/PROJECT/REPO-aux2.git")));
+        VcsRepositoryUri repositoryUrl = new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO.git");
+        VcsRepositoryUri testRepositoryUrl = new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO-test.git");
+        VcsRepositoryUri solutionRepositoryUrl = new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO-solution.git");
+        var auxiliaryRepositories = List.of(new AuxiliaryRepository.AuxRepoNameWithUrl("aux1", new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO-aux1.git")),
+                new AuxiliaryRepository.AuxRepoNameWithUrl("aux2", new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO-aux2.git")));
         var map = aeolusBuildPlanService.createRepositoryMapForWindfile(language, branch, false, repositoryUrl, testRepositoryUrl, solutionRepositoryUrl, auxiliaryRepositories);
         assertThat(map).isNotNull();
         var assignmentDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(language);
@@ -121,11 +121,11 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     void testRepositoryMapForHaskellWindfileCreation() throws URISyntaxException {
         ProgrammingLanguage language = ProgrammingLanguage.HASKELL;
         String branch = "develop";
-        VcsRepositoryUrl repositoryUrl = new VcsRepositoryUrl("https://bitbucket.server/scm/PROJECT/REPO.git");
-        VcsRepositoryUrl testRepositoryUrl = new VcsRepositoryUrl("https://bitbucket.server/scm/PROJECT/REPO-test.git");
-        VcsRepositoryUrl solutionRepositoryUrl = new VcsRepositoryUrl("https://bitbucket.server/scm/PROJECT/REPO-solution.git");
-        var auxiliaryRepositories = List.of(new AuxiliaryRepository.AuxRepoNameWithUrl("aux1", new VcsRepositoryUrl("https://bitbucket.server/scm/PROJECT/REPO-aux1.git")),
-                new AuxiliaryRepository.AuxRepoNameWithUrl("aux2", new VcsRepositoryUrl("https://bitbucket.server/scm/PROJECT/REPO-aux2.git")));
+        VcsRepositoryUri repositoryUrl = new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO.git");
+        VcsRepositoryUri testRepositoryUrl = new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO-test.git");
+        VcsRepositoryUri solutionRepositoryUrl = new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO-solution.git");
+        var auxiliaryRepositories = List.of(new AuxiliaryRepository.AuxRepoNameWithUrl("aux1", new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO-aux1.git")),
+                new AuxiliaryRepository.AuxRepoNameWithUrl("aux2", new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO-aux2.git")));
         var map = aeolusBuildPlanService.createRepositoryMapForWindfile(language, branch, true, repositoryUrl, testRepositoryUrl, solutionRepositoryUrl, auxiliaryRepositories);
         assertThat(map).isNotNull();
         var assignmentDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(language);

@@ -26,7 +26,7 @@ import com.google.common.collect.Lists;
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
@@ -369,10 +369,10 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
      * @param auxiliaryRepositories The auxiliary repositories to migrate
      */
     private void migrateStudentBuildPlan(ProgrammingExerciseStudentParticipation participation, List<AuxiliaryRepository> auxiliaryRepositories) {
-        VcsRepositoryUrl repositoryUrl;
+        VcsRepositoryUri repositoryUrl;
         ProgrammingExercise exercise = participation.getProgrammingExercise();
         try {
-            repositoryUrl = new VcsRepositoryUrl(urlService.getPlainUrlFromRepositoryUrl(participation.getVcsRepositoryUrl()));
+            repositoryUrl = new VcsRepositoryUri(urlService.getPlainUrlFromRepositoryUrl(participation.getVcsRepositoryUrl()));
         }
         catch (URISyntaxException e) {
             log.warn("Failed to convert git url {} for studentParticipationId {} exerciseId {} with buildPlanId {}, will abort migration for this Participation",

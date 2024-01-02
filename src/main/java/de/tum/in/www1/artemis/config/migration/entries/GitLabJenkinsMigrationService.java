@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
@@ -67,7 +67,7 @@ public class GitLabJenkinsMigrationService implements CIVCSMigrationService {
     }
 
     @Override
-    public void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl) {
+    public void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUri repositoryUrl) {
         try {
             Document currentConfig = jenkinsJobService.getJobConfig(projectKey, buildPlanKey);
             Document newConfig = replaceNotificationUrlInJobConfig(currentConfig);
@@ -80,7 +80,7 @@ public class GitLabJenkinsMigrationService implements CIVCSMigrationService {
     }
 
     @Override
-    public void deleteBuildTriggers(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl) {
+    public void deleteBuildTriggers(String projectKey, String buildPlanKey, VcsRepositoryUri repositoryUrl) {
         removeWebHook(repositoryUrl);
 
         if (projectKey != null && buildPlanKey != null) {
@@ -123,7 +123,7 @@ public class GitLabJenkinsMigrationService implements CIVCSMigrationService {
     }
 
     @Override
-    public void removeWebHook(VcsRepositoryUrl repositoryUrl) {
+    public void removeWebHook(VcsRepositoryUri repositoryUrl) {
         final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
 
         try {
