@@ -600,8 +600,8 @@ public class ProgrammingExerciseTestService {
         assertThat(staticCodeAnalysisCategories).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise")
                 .isEqualTo(StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(exercise.getProgrammingLanguage()));
         StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(exercise.getProgrammingLanguage()).forEach(config -> config.getCategoryMappings().forEach(mapping -> {
-            assertThat(mapping.getTool()).isNotNull();
-            assertThat(mapping.getCategory()).isNotNull();
+            assertThat(mapping.tool()).isNotNull();
+            assertThat(mapping.category()).isNotNull();
         }));
     }
 
