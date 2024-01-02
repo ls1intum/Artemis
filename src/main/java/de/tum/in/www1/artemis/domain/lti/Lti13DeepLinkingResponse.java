@@ -61,7 +61,9 @@ public class Lti13DeepLinkingResponse {
     public Lti13DeepLinkingResponse(OidcIdToken ltiIdToken, String clientRegistrationId) {
         validateClaims(ltiIdToken);
 
-        this.deepLinkingSettings = JsonParser.parseString(ltiIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS).toString()).getAsJsonObject();
+        var claim = ltiIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS).toString();
+
+        this.deepLinkingSettings = JsonParser.parseString(claim).getAsJsonObject();
         this.setReturnUrl(this.deepLinkingSettings.get("deep_link_return_url").getAsString());
         this.clientRegistrationId = clientRegistrationId;
 
