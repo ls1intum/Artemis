@@ -25,6 +25,7 @@ import { CourseForDashboardDTO, ParticipationResultDTO } from 'app/course/manage
 import { CourseScores } from 'app/course/course-scores/course-scores';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
 
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;
@@ -45,6 +46,7 @@ describe('Course Management Service', () => {
 
     let course: Course;
     let courseForDashboard: CourseForDashboardDTO;
+    let coursesForDashboard: CoursesForDashboardDTO;
     let courseScores: CourseScores;
     let scoresPerExerciseType: ScoresPerExerciseType;
     let participationResult: ParticipationResultDTO;
@@ -98,6 +100,9 @@ describe('Course Management Service', () => {
         participationResult = new ParticipationResultDTO();
         participationResult.participationId = 432;
         courseForDashboard.participationResults = [participationResult];
+
+        coursesForDashboard = new CoursesForDashboardDTO();
+        coursesForDashboard.courses = [courseForDashboard];
 
         scoresPerExerciseType = new Map<ExerciseType, CourseScores>();
         scoresPerExerciseType.set(ExerciseType.PROGRAMMING, courseScores);
@@ -202,12 +207,12 @@ describe('Course Management Service', () => {
 
     it('should find all courses for dashboard', fakeAsync(() => {
         const courseStorageServiceSpy = jest.spyOn(courseStorageService, 'setCourses');
-        returnedFromService = [{ ...courseForDashboard }];
+        returnedFromService = coursesForDashboard;
         courseManagementService
             .findAllForDashboard()
             .pipe(take(1))
             .subscribe((res) => {
-                expect(res.body).toEqual([{ ...course }]);
+                expect(res.body!.courses[0].course).toEqual(course);
                 expect(courseStorageServiceSpy).toHaveBeenCalledOnce();
             });
         requestAndExpectDateConversion('GET', `${resourceUrl}/for-dashboard`, returnedFromService, course);
@@ -331,17 +336,6 @@ describe('Course Management Service', () => {
         const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/unenroll` });
         req.flush(groups);
         expect(syncGroupsSpy).toHaveBeenCalledWith(groups);
-        tick();
-    }));
-
-    it('should get all courses', fakeAsync(() => {
-        returnedFromService = [{ ...course }];
-        const params = { testParam: 'testParamValue' };
-        courseManagementService
-            .getAll(params)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
-        requestAndExpectDateConversion('GET', `${resourceUrl}?testParam=testParamValue`, returnedFromService, course, true);
         tick();
     }));
 

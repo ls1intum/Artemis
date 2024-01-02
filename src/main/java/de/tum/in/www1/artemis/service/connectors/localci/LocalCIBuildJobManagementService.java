@@ -93,9 +93,6 @@ public class LocalCIBuildJobManagementService {
         // Prepare a Callable that will later be called. It contains the actual steps needed to execute the build job.
         Callable<LocalCIBuildResult> buildJob = () -> localCIBuildJobExecutionService.runBuildJob(participation, commitHash, isPushToTestRepository, containerName, dockerImage);
 
-        // Wrap the buildJob Callable in a BuildJobTimeoutCallable, so that the build job is cancelled if it takes too long.
-        BuildJobTimeoutCallable<LocalCIBuildResult> timedBuildJob = new BuildJobTimeoutCallable<>(buildJob, timeoutSeconds);
-
         /*
          * Submit the build job to the executor service. This runs in a separate thread, so it does not block the main thread.
          * createCompletableFuture() is only used to provide a way to run build jobs synchronously for testing and debugging purposes and depends on the
@@ -104,9 +101,9 @@ public class LocalCIBuildJobManagementService {
          */
         CompletableFuture<LocalCIBuildResult> futureResult = createCompletableFuture(() -> {
             try {
-                return localCIBuildExecutorService.submit(timedBuildJob).get();
+                return localCIBuildExecutorService.submit(buildJob).get(timeoutSeconds, TimeUnit.SECONDS);
             }
-            catch (RejectedExecutionException | CancellationException | ExecutionException | InterruptedException e) {
+            catch (RejectedExecutionException | CancellationException | ExecutionException | InterruptedException | TimeoutException e) {
                 // RejectedExecutionException is thrown if the queue size limit (defined in "artemis.continuous-integration.queue-size-limit") is reached.
                 finishBuildJobExceptionally(participation, commitHash, containerName, isRetry, e);
                 // Wrap the exception in a CompletionException so that the future is completed exceptionally and the thenAccept block is not run.
@@ -172,49 +169,4 @@ public class LocalCIBuildJobManagementService {
 
         localCIContainerService.stopContainer(containerName);
     }
-
-    /**
-     * Wrapper for the buildJob Callable that adds a timeout when the build job is called.
-     *
-     * @param buildJobCallable The build job that should be called.
-     * @param timeoutSeconds   The number of seconds after which the build job is cancelled.
-     */
-    private record BuildJobTimeoutCallable<LocalCIBuildResult>(Callable<LocalCIBuildResult> buildJobCallable, long timeoutSeconds) implements Callable<LocalCIBuildResult> {
-
-        /**
-         * Calls the buildJobCallable and waits for the result or for the timeout to pass.
-         *
-         * @return the LocalCIBuildResult
-         * @throws ExecutionException   if there was an error when calling the buildJobCallable or during the execution of the buildJobCallable, i.e. a LocalCIException.
-         * @throws InterruptedException if the thread was interrupted while waiting for the buildJobCallable to finish, e.g. if the ExecutorService was terminated from somewhere
-         *                                  else.
-         * @throws TimeoutException     if the timeout passed before the buildJobCallable finished.
-         */
-        @Override
-        public LocalCIBuildResult call() throws ExecutionException, InterruptedException, TimeoutException {
-            Future<LocalCIBuildResult> future = CompletableFuture.supplyAsync(() -> {
-                try {
-                    return buildJobCallable.call();
-                }
-                catch (Exception e) {
-                    // Something went wrong while executing the build job.
-                    // The exception is stored in the Future and will resurface as an ExecutionException when running "future.get()" below.
-                    throw new CompletionException(e);
-                }
-            });
-
-            try {
-                // When the build job is called, wait for the result or for the timeout to pass.
-                return future.get(timeoutSeconds, TimeUnit.SECONDS);
-            }
-            catch (ExecutionException | InterruptedException | TimeoutException e) {
-                // Cancel the future if it is not completed or cancelled yet.
-                future.cancel(true);
-                // This exception will resurface in the catch block of "localCIBuildExecutorService.submit(timedBuildJob).get()"
-                // where the container is stopped and the user is notified.
-                throw e;
-            }
-        }
-    }
-
 }
