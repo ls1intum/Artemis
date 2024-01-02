@@ -607,7 +607,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         checkQuizExercises(quizExercise, quizExerciseGet);
 
         assertThat(quizExerciseGet).as("Quiz exercise was retrieved").isEqualTo(quizExercise).isNotNull();
-        assertThat(quizExerciseGet.getId()).as("Quiz exercise with the right id was retrieved").isEqualTo(quizExerciseGet.getId());
+        assertThat(quizExerciseGet.getId()).as("Quiz exercise with the right id was retrieved").isEqualTo(quizExercise.getId());
         assertThat(quizExerciseGet.getQuizBatches()).isEmpty();
     }
 
@@ -625,9 +625,10 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         long exerciseId = quizExercise.getId();
 
         var searchTerm = pageableSearchUtilService.configureSearch(String.valueOf(exerciseId));
-        SearchResultPageDTO<?> searchResult = request.get("/api/quiz-exercises", HttpStatus.OK, SearchResultPageDTO.class, pageableSearchUtilService.searchMapping(searchTerm));
+        SearchResultPageDTO<QuizExercise> searchResult = request.getSearchResult("/api/quiz-exercises", HttpStatus.OK, QuizExercise.class,
+                pageableSearchUtilService.searchMapping(searchTerm));
 
-        assertThat(searchResult.getResultsOnPage()).filteredOn(result -> ((int) ((LinkedHashMap<String, ?>) result).get("id")) == exerciseId).hasSize(1);
+        assertThat(searchResult.getResultsOnPage()).filteredOn(quiz -> quiz.getId() == exerciseId).hasSize(1);
     }
 
     @Test
@@ -1583,7 +1584,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         quizScheduleService.updateSubmission(quizExercise.getId(), TEST_PREFIX + "student1", quizSubmission);
 
-        exerciseService.filterForCourseDashboard(quizExercise, List.of(), TEST_PREFIX + "student1", true);
+        exerciseService.filterForCourseDashboard(quizExercise, Set.of(), TEST_PREFIX + "student1", true);
 
         assertThat(quizExercise.getStudentParticipations()).hasSize(1);
         assertThat(quizExercise.getStudentParticipations().stream().findFirst().get().getInitializationState()).isEqualTo(InitializationState.INITIALIZED);

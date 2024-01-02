@@ -17,10 +17,12 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface TutorialGroupFreePeriodRepository extends JpaRepository<TutorialGroupFreePeriod, Long> {
 
     @Query("""
-            SELECT tutorialGroupFreePeriod
-            FROM TutorialGroupFreePeriod tutorialGroupFreePeriod
-            WHERE tutorialGroupFreePeriod.start <= :#{#toInclusive} AND tutorialGroupFreePeriod.end >= :#{#fromInclusive}
-            AND tutorialGroupFreePeriod.tutorialGroupsConfiguration.course = :#{#course}""")
+            SELECT period
+            FROM TutorialGroupFreePeriod period
+            WHERE period.start <= :#{#toInclusive}
+                AND period.end >= :#{#fromInclusive}
+                AND period.tutorialGroupsConfiguration.course = :#{#course}
+            """)
     Optional<TutorialGroupFreePeriod> findOverlappingInSameCourse(@Param("course") Course course, @Param("fromInclusive") ZonedDateTime fromInclusive,
             @Param("toInclusive") ZonedDateTime toInclusive);
 

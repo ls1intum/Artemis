@@ -42,6 +42,7 @@ public class UMLModelV3Parser {
             case PetriNet -> PetriNetParser.buildPetriNetFromJSON(modelElements, relationships, modelSubmissionId);
             case SyntaxTree -> SyntaxTreeParser.buildSyntaxTreeFromJSON(modelElements, relationships, modelSubmissionId);
             case Flowchart -> FlowchartParser.buildFlowchartFromJSON(modelElements, relationships, modelSubmissionId);
+            case BPMN -> BPMNDiagramParser.buildBPMNDiagramFromJSON(modelElements, relationships, modelSubmissionId);
         };
     }
 }

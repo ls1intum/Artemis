@@ -10,7 +10,7 @@ public class LocalCIPriorityQueueComparator implements Comparator<LocalCIBuildJo
     public int compare(LocalCIBuildJobQueueItem o1, LocalCIBuildJobQueueItem o2) {
         int priorityComparison = Integer.compare(o1.getPriority(), o2.getPriority());
         if (priorityComparison == 0) {
-            return Long.compare(o1.getSubmissionDate(), o2.getSubmissionDate());
+            return o1.getSubmissionDate().compareTo(o2.getSubmissionDate());
         }
         return priorityComparison;
     }
