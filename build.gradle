@@ -242,7 +242,10 @@ dependencies {
     implementation "org.eclipse.jgit:org.eclipse.jgit.http.server:${jgit_version}"
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:1.2023.12"
-    implementation "org.imsglobal:basiclti-util:1.2.0"
+    implementation ("org.imsglobal:basiclti-util:1.2.0") {
+        // NOTE: this module contains security vulnerabilities and is not needed
+        exclude module: "jackson-mapper-asl"
+    }
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation "com.atlassian.bamboo:bamboo-specs:9.3.5"
@@ -308,9 +311,11 @@ dependencies {
     implementation "org.springframework.ldap:spring-ldap-core:2.4.1"
     implementation "org.springframework.data:spring-data-ldap:2.7.17"
 
-    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:3.1.7"
+    implementation ("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:3.1.7") {
+        // NOTE: this module contains security vulnerabilities and is not needed
+        exclude module: "commons-jxpath"
+    }
     implementation "org.springframework.cloud:spring-cloud-starter-config:3.1.8"
-    implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
 
     // TODO: updating to a later version breaks the build
     implementation "io.netty:netty-all:4.1.101.Final"
@@ -350,6 +355,7 @@ dependencies {
     implementation "net.lingala.zip4j:zip4j:2.11.5"
     implementation "org.jgrapht:jgrapht-core:1.5.2"
     implementation "com.github.seancfoley:ipaddress:5.4.0"
+    // make sure the dependencies use the latest version without security vulnerabilities
     implementation "com.google.guava:guava:33.0.0-jre"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
