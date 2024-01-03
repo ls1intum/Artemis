@@ -60,9 +60,9 @@
             },
             "parseDescription": {
                 "title": "Kompetenzvorschläge",
-                "seenTooltip": "aktiviert, wenn der Vorschlag angesehen wurde",
-                "unseenModalTitle": "Speichern bestätigen",
-                "unseenModalText": "Du hast nicht alle Empfehlungen angesehen, möchtest du trotzdem fortfahren?",
+                "viewedTooltip": "aktiviert, wenn der Vorschlag angesehen wurde",
+                "confirmationModalTitle": "Speichern bestätigen",
+                "confirmationModalText": "Du hast nicht alle Empfehlungen angesehen, möchtest du trotzdem fortfahren?",
                 "errorWarning": "Speichern nicht möglich, weil fehlerhafte Kompetenzen vorliegen",
                 "courseDescription": {
                     "title": "Kursbeschreibung eingeben",

@@ -3,6 +3,7 @@ import { CompetencyTaxonomy, CompetencyValidators } from 'app/entities/competenc
 import { faChevronRight, faEdit, faSave, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FormGroup, Validators } from '@angular/forms';
+import { CompetencyFormControlsWithViewed } from 'app/course/competencies/parse-description/parse-course-description.component';
 
 @Component({
     selector: 'jhi-competency-recommendation',
@@ -10,53 +11,65 @@ import { FormGroup, Validators } from '@angular/forms';
     styleUrls: ['competency-recommendation-detail.component.scss'],
 })
 export class CompetencyRecommendationDetailComponent implements OnInit {
-    //TODO: Specify type of FormGroup?
-    @Input({ required: true }) form: FormGroup;
+    @Input({ required: true }) form: FormGroup<CompetencyFormControlsWithViewed>;
     @Input({ required: true }) index: number;
-    seen = false;
-
     @Input() isCollapsed = true;
     isInEditMode = false;
 
-    @Output()
-    onDelete: EventEmitter<void> = new EventEmitter<void>();
-
-    @Output()
-    onSeen: EventEmitter<void> = new EventEmitter<void>();
+    @Output() onDelete: EventEmitter<void> = new EventEmitter<void>();
 
     //Icons
     protected readonly faChevronRight = faChevronRight;
     protected readonly faTrash = faTrash;
     protected readonly faWrench = faWrench;
     protected readonly faSave = faSave;
+    protected readonly faEdit = faEdit;
 
-    toggle() {
-        this.isCollapsed = !this.isCollapsed;
-        this.seen = true;
-        this.onSeen.emit();
-    }
-    constructor() {}
+    //Other constants for html
+    protected readonly competencyTaxonomy = CompetencyTaxonomy;
+    protected readonly competencyValidators = CompetencyValidators;
+    protected readonly ButtonType = ButtonType;
+    protected readonly ButtonSize = ButtonSize;
 
     ngOnInit(): void {
-        this.titleControl?.addValidators([Validators.required, Validators.maxLength(this.competencyValidators.TITLE_MAX)]);
-        this.descriptionControl?.addValidators([Validators.maxLength(this.competencyValidators.DESCRIPTION_MAX)]);
-        this.form.disable();
+        this.titleControl.addValidators([Validators.required, Validators.maxLength(CompetencyValidators.TITLE_MAX)]);
+        this.descriptionControl.addValidators([Validators.maxLength(CompetencyValidators.DESCRIPTION_MAX)]);
+        //disable all competency controls as component is not in edit mode
+        this.form.controls.competency.disable();
+        //viewed checkbox is always disabled and only updated through toggle/edit
+        this.viewedControl.disable();
     }
 
+    /**
+     * Toggles collapsed status and sets viewed to true
+     */
+    toggle() {
+        this.isCollapsed = !this.isCollapsed;
+        this.viewedControl.setValue(true);
+    }
+
+    /**
+     * Sends event to parent to handle delete
+     */
     delete() {
         this.onDelete.emit();
     }
 
+    /**
+     * Enters edit mode: Enables all form fields and expands the element
+     */
     edit() {
-        this.form.enable();
+        this.form.controls.competency.enable();
         this.isInEditMode = true;
         this.isCollapsed = false;
-        this.seen = true;
-        this.onSeen.emit();
+        this.viewedControl.setValue(true);
     }
 
+    /**
+     * Leaves edit mode: Disables all form fields again and collapses the element
+     */
     save() {
-        this.form.disable();
+        this.form.controls.competency.disable();
         this.isInEditMode = false;
         this.isCollapsed = true;
     }
@@ -68,21 +81,24 @@ export class CompetencyRecommendationDetailComponent implements OnInit {
         return 0;
     };
 
-    get titleControl() {
-        return this.form.get('title');
-    }
-
-    get descriptionControl() {
-        return this.form.get('description');
-    }
-
+    /**
+     * Only allows save if no form controls have validation errors
+     */
     get isSavePossible() {
         return !this.form.invalid;
     }
 
-    protected readonly competencyTaxonomy = CompetencyTaxonomy;
-    protected readonly competencyValidators = CompetencyValidators;
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
-    protected readonly faEdit = faEdit;
+    //getters for the form controls
+
+    get titleControl() {
+        return this.form.controls.competency.controls.title;
+    }
+
+    get descriptionControl() {
+        return this.form.controls.competency.controls.description;
+    }
+
+    get viewedControl() {
+        return this.form.controls.viewed;
+    }
 }

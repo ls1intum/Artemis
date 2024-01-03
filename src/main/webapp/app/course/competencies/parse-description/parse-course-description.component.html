@@ -8,21 +8,20 @@
             </div>
         </div>
     }
-    <form [formGroup]="form" (ngSubmit)="submit()">
-        @if (!recommendations.length && !isLoading) {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        @if (!competencies.length && !isLoading) {
             <div class="mb-1">
                 {{ 'global.generic.emptyList' | artemisTranslate }}
             </div>
         }
-        <div class="border-0" formArrayName="recommendations">
-            @for (recommendation of recommendations.controls; track recommendation; let i = $index) {
-                <jhi-competency-recommendation [form]="getRecommendationFormGroup(i)" (onSeen)="onSeen(i)" [index]="i" (onDelete)="onDelete(i)" />
+        <div class="border-0" formArrayName="competencies">
+            @for (competencies of competencies.controls; track competencies; let i = $index) {
+                <jhi-competency-recommendation [form]="competencies" [index]="i" (onDelete)="onDelete(i)" />
             }
         </div>
         <div>
-            <jhi-button [btnType]="ButtonType.SECONDARY" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="cancel()" [shouldSubmit]="false" />
-            <jhi-button [title]="'entity.action.save'" [icon]="faSave" [disabled]="!isSubmitPossible" />
-            <!-- TODO: warning here if a competency is invalid -->
+            <jhi-button [btnType]="ButtonType.SECONDARY" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="onCancel()" [shouldSubmit]="false" />
+            <jhi-button [title]="'entity.action.save'" [icon]="faSave" [disabled]="!isSubmitPossible" [isLoading]="isLoading" />
         </div>
     </form>
 </div>

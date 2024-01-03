@@ -4,8 +4,8 @@
             <div class="icon-container pe-3">
                 <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="isCollapsed" (click)="toggle()"></fa-icon>
             </div>
-            <h6 class="mb-0 pe-1">{{ titleControl?.value }}</h6>
-            <input type="checkbox" disabled [checked]="seen" [ngbTooltip]="'artemisApp.competency.parseDescription.seenTooltip' | artemisTranslate" />
+            <h6 class="mb-0 pe-1">{{ titleControl.value }}</h6>
+            <input type="checkbox" formControlName="viewed" [ngbTooltip]="'artemisApp.competency.parseDescription.viewedTooltip' | artemisTranslate" />
         </div>
         <div>
             @if (!isInEditMode) {
@@ -24,20 +24,20 @@
             <jhi-button [btnType]="ButtonType.ERROR" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.delete'" [icon]="faTrash" (click)="delete()" [shouldSubmit]="false" />
         </div>
     </div>
-    <div class="card-body" [ngbCollapse]="isCollapsed">
+    <div class="card-body border-0" [ngbCollapse]="isCollapsed" formGroupName="competency">
         <div class="form-group">
             <label for="title-{{ index }}">{{ 'artemisApp.competency.title' | artemisTranslate }}</label>
             <input type="text" class="form-control" id="title-{{ index }}" formControlName="title" />
-            @if (titleControl?.invalid && (titleControl?.dirty || titleControl?.touched)) {
+            @if (titleControl.invalid && (titleControl.dirty || titleControl.touched)) {
                 <div class="alert alert-danger">
-                    @if (titleControl?.errors?.required) {
+                    @if (titleControl.errors?.required) {
                         <div>
-                            {{ 'artemisApp.competency.createCompetency.titleRequiredValidationError' | artemisTranslate: { max: competencyValidators.TITLE_MAX } }}
+                            {{ 'artemisApp.competency.createCompetency.titleRequiredValidationError' | artemisTranslate }}
                         </div>
                     }
-                    @if (titleControl?.errors?.maxlength) {
+                    @if (titleControl.errors?.maxlength) {
                         <div>
-                            {{ 'artemisApp.competency.createCompetency.titleMaxLengthValidationError' | artemisTranslate: { max: competencyValidators.DESCRIPTION_MAX } }}
+                            {{ 'artemisApp.competency.createCompetency.titleMaxLengthValidationError' | artemisTranslate: { max: competencyValidators.TITLE_MAX } }}
                         </div>
                     }
                 </div>
@@ -45,12 +45,12 @@
         </div>
         <div class="form-group">
             <label for="description-{{ index }}">{{ 'artemisApp.competency.description' | artemisTranslate }}</label>
-            <textarea class="form-control" id="description-{{ index }}" formControlName="description"></textarea>
-            @if (descriptionControl?.invalid && (descriptionControl?.dirty || descriptionControl?.touched)) {
+            <textarea class="form-control" rows="5" id="description-{{ index }}" formControlName="description"></textarea>
+            @if (descriptionControl.invalid && (descriptionControl.dirty || descriptionControl.touched)) {
                 <div class="alert alert-danger">
-                    @if (descriptionControl?.errors?.maxlength) {
+                    @if (descriptionControl.errors?.maxlength) {
                         <div>
-                            {{ 'artemisApp.competency.createCompetency.descriptionMaxLengthValidationError' | artemisTranslate }}
+                            {{ 'artemisApp.competency.createCompetency.descriptionMaxLengthValidationError' | artemisTranslate: { max: competencyValidators.DESCRIPTION_MAX } }}
                         </div>
                     }
                 </div>
@@ -58,6 +58,7 @@
         </div>
         <div class="form-group">
             <label for="taxonomy-{{ index }}">{{ 'artemisApp.competency.taxonomy' | artemisTranslate }}</label>
+            <!-- TODO: extract select to own component? -->
             <select formControlName="taxonomy" class="form-select" id="taxonomy-{{ index }}">
                 <option [ngValue]="undefined" selected></option>
                 @for (taxonomy of competencyTaxonomy | keyvalue: keepOrder; track taxonomy; let i = $index) {

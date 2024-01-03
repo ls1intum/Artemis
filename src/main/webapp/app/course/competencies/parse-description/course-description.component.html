@@ -8,19 +8,19 @@
             formControlName="courseDescription"
             [placeholder]="'artemisApp.competency.parseDescription.courseDescription.placeholder' | artemisTranslate"
         ></textarea>
-        @if (courseDescriptionControl?.invalid && (courseDescriptionControl?.dirty || courseDescriptionControl?.touched)) {
+        @if (courseDescriptionControl.invalid && (courseDescriptionControl.dirty || courseDescriptionControl.touched)) {
             <div class="alert alert-danger">
-                @if (courseDescriptionControl?.errors?.required) {
+                @if (courseDescriptionControl.errors?.required) {
                     <div>
                         {{ 'artemisApp.competency.parseDescription.courseDescription.requiredValidationError' | artemisTranslate }}
                     </div>
                 }
-                @if (courseDescriptionControl?.errors?.minlength) {
+                @if (courseDescriptionControl.errors?.minlength) {
                     <div>
                         {{ 'artemisApp.competency.parseDescription.courseDescription.minlengthValidationError' | artemisTranslate: { min: DESCRIPTION_MIN } }}
                     </div>
                 }
-                @if (courseDescriptionControl?.errors?.maxlength) {
+                @if (courseDescriptionControl.errors?.maxlength) {
                     <div>
                         {{ 'artemisApp.competency.parseDescription.courseDescription.maxlengthValidationError' | artemisTranslate: { max: DESCRIPTION_MAX } }}
                     </div>

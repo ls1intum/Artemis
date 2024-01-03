@@ -59,9 +59,9 @@
             },
             "parseDescription": {
                 "title": "Competency Recommendations",
-                "seenTooltip": "Checked if the recommendation was viewed",
-                "unseenModalTitle": "Confirm Save",
-                "unseenModalText": "You have not viewed all recommendations, do you still want to continue?",
+                "viewedTooltip": "Checked if the recommendation was viewed",
+                "confirmationModalTitle": "Confirm Save",
+                "confirmationModalText": "You have not viewed all recommendations, do you still want to continue?",
                 "errorWarning": "You may not save because some competencies are invalid",
                 "courseDescription": {
                     "title": "Enter a Course Description",

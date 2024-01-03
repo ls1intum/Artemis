@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { faCode, faRotateRight } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
 
@@ -9,38 +9,45 @@ import { ButtonType } from 'app/shared/components/button.component';
 })
 export class CourseDescriptionComponent implements OnInit {
     @Input() isLoading = false;
-    @Output()
-    formSubmitted: EventEmitter<string> = new EventEmitter<string>();
+    @Output() formSubmitted: EventEmitter<string> = new EventEmitter<string>();
 
-    form: FormGroup;
+    form: FormGroup<{ courseDescription: FormControl<string | null> }>;
     hasBeenSubmitted = false;
 
     //icons
     protected readonly faRotateRight = faRotateRight;
     protected readonly faCode = faCode;
 
+    //other constants
+    protected readonly DESCRIPTION_MAX = 10000;
+    protected readonly DESCRIPTION_MIN = 100;
+    protected readonly ButtonType = ButtonType;
+
     constructor(private formBuilder: FormBuilder) {}
 
     ngOnInit(): void {
         this.form = this.formBuilder.group({
-            courseDescription: [undefined as string | undefined, [Validators.required, Validators.minLength(this.DESCRIPTION_MIN), Validators.maxLength(this.DESCRIPTION_MAX)]],
+            courseDescription: ['', [Validators.required, Validators.minLength(this.DESCRIPTION_MIN), Validators.maxLength(this.DESCRIPTION_MAX)]],
         });
     }
 
+    /**
+     * Sends event to parent to handle submission
+     */
     submitForm() {
-        this.formSubmitted.emit(this.form.value.courseDescription);
+        this.formSubmitted.emit(this.form.value.courseDescription ?? '');
+        //save that form has been submitted to change look of the submit button
         this.hasBeenSubmitted = true;
     }
 
-    get courseDescriptionControl() {
-        return this.form.get('courseDescription');
-    }
-
+    /**
+     * Only allows submitting if no form controls have validation errors
+     */
     get isSubmitPossible() {
         return !this.form.invalid;
     }
 
-    protected readonly DESCRIPTION_MAX = 10000;
-    protected readonly DESCRIPTION_MIN = 100;
-    protected readonly ButtonType = ButtonType;
+    get courseDescriptionControl() {
+        return this.form.controls.courseDescription;
+    }
 }
