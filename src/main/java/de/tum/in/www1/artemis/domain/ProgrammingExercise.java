@@ -17,8 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -151,12 +149,10 @@ public class ProgrammingExercise extends Exercise {
 
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
-     * This property is only used when creating the exercise (the client sets this value when POSTing the new exercise to the server).
-     * It is not persisted as this setting can not be changed afterwards.
      * This is currently only supported for HASKELL and OCAML on BAMBOO, thus the default value is false.
      */
-    @Transient
-    private boolean checkoutSolutionRepositoryTransient = false;
+    @Column(name = "checkout_solution_repository", table = "programming_exercise_details", columnDefinition = "boolean default false")
+    private boolean checkoutSolutionRepository;
 
     /**
      * Convenience getter. The actual URL is stored in the {@link TemplateProgrammingExerciseParticipation}
@@ -671,17 +667,17 @@ public class ProgrammingExercise extends Exercise {
 
     /**
      * Find relevant participations for this exercise. Normally there are only one practice and graded participation.
-     * In case there are multiple, they are filtered as implemented in {@link Exercise#findRelevantParticipation(List)}
+     * In case there are multiple, they are filtered as implemented in {@link Exercise#findRelevantParticipation(Set)}
      *
      * @param participations the list of available participations
      * @return the found participation in an unmodifiable list or the empty list, if none exists
      */
     @Override
-    public List<StudentParticipation> findRelevantParticipation(List<StudentParticipation> participations) {
-        List<StudentParticipation> participationOfExercise = participations.stream()
-                .filter(participation -> participation.getExercise() != null && participation.getExercise().equals(this)).toList();
-        List<StudentParticipation> gradedParticipations = participationOfExercise.stream().filter(participation -> !participation.isPracticeMode()).toList();
-        List<StudentParticipation> practiceParticipations = participationOfExercise.stream().filter(Participation::isPracticeMode).toList();
+    public Set<StudentParticipation> findRelevantParticipation(Set<StudentParticipation> participations) {
+        Set<StudentParticipation> participationOfExercise = participations.stream()
+                .filter(participation -> participation.getExercise() != null && participation.getExercise().equals(this)).collect(Collectors.toSet());
+        Set<StudentParticipation> gradedParticipations = participationOfExercise.stream().filter(participation -> !participation.isPracticeMode()).collect(Collectors.toSet());
+        Set<StudentParticipation> practiceParticipations = participationOfExercise.stream().filter(Participation::isPracticeMode).collect(Collectors.toSet());
 
         if (gradedParticipations.size() > 1) {
             gradedParticipations = super.findRelevantParticipation(gradedParticipations);
@@ -690,7 +686,7 @@ public class ProgrammingExercise extends Exercise {
             practiceParticipations = super.findRelevantParticipation(practiceParticipations);
         }
 
-        return Stream.concat(gradedParticipations.stream(), practiceParticipations.stream()).toList();
+        return Stream.concat(gradedParticipations.stream(), practiceParticipations.stream()).collect(Collectors.toSet());
     }
 
     /**
@@ -743,11 +739,11 @@ public class ProgrammingExercise extends Exercise {
     }
 
     public boolean getCheckoutSolutionRepository() {
-        return this.checkoutSolutionRepositoryTransient;
+        return this.checkoutSolutionRepository;
     }
 
     public void setCheckoutSolutionRepository(boolean checkoutSolutionRepository) {
-        this.checkoutSolutionRepositoryTransient = checkoutSolutionRepository;
+        this.checkoutSolutionRepository = checkoutSolutionRepository;
     }
 
     /**
@@ -896,10 +892,9 @@ public class ProgrammingExercise extends Exercise {
             return null;
         }
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            return mapper.readValue(buildPlanConfiguration, Windfile.class);
+            return Windfile.deserialize(buildPlanConfiguration);
         }
-        catch (JsonSyntaxException | JsonProcessingException e) {
+        catch (JsonSyntaxException e) {
             log.error("Could not parse build plan configuration for programming exercise {}", this.getId(), e);
         }
         return null;

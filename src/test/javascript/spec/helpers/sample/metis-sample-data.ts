@@ -1,6 +1,6 @@
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
-import { CourseWideContext, DisplayPriority, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
+import { VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -66,11 +66,59 @@ export const metisAnswerPostToCreateUser1 = {
     creationDate: undefined,
 } as AnswerPost;
 
+const courseWideChannelTemplate = {
+    type: ConversationType.CHANNEL,
+    course: metisCourse,
+    isAnnouncementChannel: false,
+    isArchived: false,
+    isPublic: true,
+    isCourseWide: true,
+    description: 'Course-wide channel',
+};
+
+const metisExerciseChannel = {
+    ...courseWideChannelTemplate,
+    id: 14,
+    name: 'exercise-channel',
+    exercise: metisExercise,
+} as Channel;
+
+const metisLectureChannel = {
+    ...courseWideChannelTemplate,
+    id: 15,
+    name: 'lecture-channel',
+    lecture: metisLecture,
+} as Channel;
+
+const metisTechSupportChannel = {
+    ...courseWideChannelTemplate,
+    id: 16,
+    name: 'tech-support',
+} as Channel;
+
+const metisOrganizationChannel = {
+    ...courseWideChannelTemplate,
+    id: 17,
+    name: 'organization',
+} as Channel;
+
+const metisRandomChannel = {
+    ...courseWideChannelTemplate,
+    id: 18,
+    name: 'random',
+} as Channel;
+
+const metisAnnouncementChannel = {
+    ...courseWideChannelTemplate,
+    id: 19,
+    name: 'announcement',
+    isAnnouncementChannel: true,
+} as Channel;
+
 export const metisPostTechSupport = {
     id: 1,
     author: metisUser1,
-    courseWideContext: CourseWideContext.TECH_SUPPORT,
-    course: metisCourse,
+    conversation: metisTechSupportChannel,
     title: 'title',
     content: 'metisPostTechSupport',
     creationDate: undefined,
@@ -79,8 +127,7 @@ export const metisPostTechSupport = {
 export const metisPostRandom = {
     id: 2,
     author: metisUser1,
-    courseWideContext: CourseWideContext.RANDOM,
-    course: metisCourse,
+    conversation: metisRandomChannel,
     title: 'title',
     content: 'metisPostRandom',
     creationDate: undefined,
@@ -89,8 +136,7 @@ export const metisPostRandom = {
 export const metisPostOrganization = {
     id: 3,
     author: metisUser1,
-    courseWideContext: CourseWideContext.ORGANIZATION,
-    course: metisCourse,
+    conversation: metisOrganizationChannel,
     title: 'title',
     content: 'metisPostOrganization',
     creationDate: undefined,
@@ -99,19 +145,18 @@ export const metisPostOrganization = {
 export const metisAnnouncement = {
     id: 4,
     author: metisUser1,
-    courseWideContext: CourseWideContext.ORGANIZATION,
-    course: metisCourse,
+    conversation: metisAnnouncementChannel,
     title: 'title',
     content: 'metisPostOrganization',
     creationDate: undefined,
 } as Post;
 
-export const metisCoursePostsWithCourseWideContext = [metisPostTechSupport, metisPostRandom, metisPostOrganization];
+export const metisGeneralCourseWidePosts = [metisPostTechSupport, metisPostRandom, metisPostOrganization];
 
 export const metisPostExerciseUser1 = {
     id: 5,
     author: metisUser1,
-    exercise: metisExercise,
+    conversation: metisExerciseChannel,
     title: 'title',
     content: 'metisPostExerciseUser1',
     creationDate: undefined,
@@ -120,7 +165,7 @@ export const metisPostExerciseUser1 = {
 export const metisPostExerciseUser2 = {
     id: 6,
     author: metisUser2,
-    exercise: metisExercise,
+    conversation: metisExerciseChannel,
     title: 'title',
     content: 'metisPostExerciseUser2',
     creationDate: undefined,
@@ -131,7 +176,7 @@ export const metisExercisePosts = [metisPostExerciseUser1, metisPostExerciseUser
 export const metisPostLectureUser1 = {
     id: 7,
     author: metisUser1,
-    lecture: metisLecture,
+    conversation: metisLectureChannel,
     title: 'title',
     content: 'metisPostLectureUser1',
     creationDate: undefined,
@@ -140,7 +185,7 @@ export const metisPostLectureUser1 = {
 export const metisPostLectureUser2 = {
     id: 8,
     author: metisUser2,
-    lecture: metisLecture,
+    conversation: metisLectureChannel,
     title: 'title',
     content: 'metisPostLectureUser2',
     creationDate: undefined,
@@ -151,7 +196,7 @@ metisResolvingAnswerPostUser1.post = metisPostLectureUser2;
 
 export const metisLecturePosts = [metisPostLectureUser1, metisPostLectureUser2];
 
-export const metisCoursePosts = metisCoursePostsWithCourseWideContext.concat(metisExercisePosts, metisLecturePosts);
+export const metisCoursePosts = metisGeneralCourseWidePosts.concat(metisExercisePosts, metisLecturePosts);
 
 export const metisPostToCreateUser1 = {
     author: metisUser1,
@@ -189,62 +234,6 @@ export const post = {
     answers: unsortedAnswerArray,
 } as Post;
 
-export const post1WithCreationDate = {
-    ...metisPostExerciseUser1,
-    creationDate: dayjs(),
-    displayPriority: DisplayPriority.PINNED,
-};
-
-export const post2WithCreationDate = {
-    ...metisPostExerciseUser2,
-    creationDate: dayjs().subtract(2, 'day'),
-    displayPriority: DisplayPriority.NONE,
-};
-
-export const post3WithCreationDate = {
-    ...metisPostExerciseUser1,
-    creationDate: dayjs().subtract(1, 'day'),
-    reactions: [metisUpVoteReactionUser1, metisUpVoteReactionUser1],
-    displayPriority: DisplayPriority.NONE,
-};
-
-export const post4WithCreationDate = {
-    ...metisPostLectureUser2,
-    creationDate: dayjs().subtract(2, 'minute'),
-    reactions: [metisUpVoteReactionUser1],
-    displayPriority: DisplayPriority.ARCHIVED,
-};
-
-export const post5WithCreationDate = {
-    ...metisPostLectureUser2,
-    creationDate: dayjs().subtract(3, 'minute'),
-    reactions: [metisUpVoteReactionUser1],
-    displayPriority: DisplayPriority.NONE,
-};
-
-export const post6WithCreationDate = {
-    ...metisPostLectureUser2,
-    creationDate: dayjs().subtract(4, 'minute'),
-    reactions: [metisUpVoteReactionUser1],
-    displayPriority: DisplayPriority.NONE,
-};
-
-export const post7WithCreationDate = {
-    ...metisPostLectureUser2,
-    creationDate: dayjs().subtract(1, 'minute'),
-    displayPriority: DisplayPriority.NONE,
-};
-
-export const postsWithCreationDate = [
-    post1WithCreationDate,
-    post2WithCreationDate,
-    post3WithCreationDate,
-    post4WithCreationDate,
-    post5WithCreationDate,
-    post6WithCreationDate,
-    post7WithCreationDate,
-];
-
 const conversationParticipantUser1 = { id: 1, user: metisUser1, unreadMessagesCount: 1 } as ConversationParticipant;
 
 const conversationParticipantUser2 = { id: 2, user: metisUser2, unreadMessagesCount: 0 } as ConversationParticipant;
@@ -274,37 +263,20 @@ export const directMessageUser2 = {
 
 export const messagesBetweenUser1User2 = [directMessageUser1, directMessageUser2];
 
-export const metisExerciseChannel = {
-    id: 14,
-    name: 'exercise-channel',
-    description: 'Channel for exercise related questions',
-    isAnnouncementChannel: false,
-    isArchived: false,
-    isPublic: true,
-} as Channel;
-
-export const metisLectureChannel = {
-    id: 15,
-    name: 'lecture-channel',
-    description: 'Channel for lecture related',
-    isAnnouncementChannel: false,
-    isArchived: false,
-    isPublic: true,
-} as Channel;
-
 export const metisChannel = {
-    id: 16,
+    id: 21,
+    type: ConversationType.CHANNEL,
     name: 'example-channel',
     description: 'Example course-wide channel',
     isAnnouncementChannel: false,
     isArchived: false,
     isPublic: true,
+    isCourseWide: true,
 } as Channel;
 
 export const metisPostInChannel = {
     id: 4,
     author: metisUser1,
-    course: metisCourse,
     title: 'title',
     content: 'metisPostOrganization',
     creationDate: undefined,
@@ -320,7 +292,7 @@ export const metisGeneralChannelDto = {
 } as ChannelDTO;
 
 export const metisExerciseChannelDto = {
-    id: 18,
+    id: 14,
     type: ConversationType.CHANNEL,
     subType: ChannelSubType.EXERCISE,
     isCourseWide: true,
@@ -330,7 +302,7 @@ export const metisExerciseChannelDto = {
 } as ChannelDTO;
 
 export const metisLectureChannelDto = {
-    id: 19,
+    id: 15,
     type: ConversationType.CHANNEL,
     subType: ChannelSubType.LECTURE,
     isCourseWide: true,
@@ -339,7 +311,7 @@ export const metisLectureChannelDto = {
 } as ChannelDTO;
 
 export const metisExamChannelDto = {
-    id: 19,
+    id: 20,
     type: ConversationType.CHANNEL,
     subType: ChannelSubType.EXAM,
     isCourseWide: true,

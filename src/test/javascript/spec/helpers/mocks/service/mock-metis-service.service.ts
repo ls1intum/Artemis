@@ -8,11 +8,14 @@ import { ContextInformation, PageType, PostContextFilter, RouteComponents } from
 import { Course } from 'app/entities/course.model';
 import { Params } from '@angular/router';
 import { metisCourse, metisCoursePosts, metisTags, metisUser1 } from '../../sample/metis-sample-data';
-import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, ChannelSubType, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 
 let pageType: PageType;
 
 export class MockMetisService {
+    currentConversation = undefined;
+
     get tags(): Observable<string[]> {
         return of(metisTags);
     }
@@ -35,6 +38,10 @@ export class MockMetisService {
 
     setPageType(newPageType: PageType) {
         pageType = newPageType;
+    }
+
+    getCurrentConversation(): ConversationDto | undefined {
+        return this.currentConversation;
     }
 
     createPost = (post: Post): Observable<Post> => of(post);
@@ -72,12 +79,6 @@ export class MockMetisService {
     }
 
     getLinkForPost(post?: Post): RouteComponents {
-        if (post?.lecture) {
-            return ['/courses', metisCourse.id!, 'lectures', post.lecture.id!];
-        }
-        if (post?.exercise) {
-            return ['/courses', metisCourse.id!, 'exercises', post.exercise.id!];
-        }
         return ['/courses', metisCourse.id!, 'discussion'];
     }
 
@@ -112,32 +113,21 @@ export class MockMetisService {
     }
 
     getContextInformation(post: Post): ContextInformation {
-        let routerLinkComponents = undefined;
-        let displayName;
-        if (post.exercise) {
-            displayName = post.exercise.title!;
-            routerLinkComponents = ['/courses', metisCourse.id!, 'exercises', post.exercise.id!];
-        } else if (post.lecture) {
-            displayName = post.lecture.title!;
-            routerLinkComponents = ['/courses', metisCourse.id!, 'lectures', post.lecture.id!];
-            // course-wide topics are not linked
-        } else {
-            displayName = 'some context';
-        }
-        return { routerLinkComponents, displayName };
+        const routerLinkComponents = ['/courses', post.conversation?.course?.id ?? 1, 'messages'];
+        const queryParams = { conversationId: post.conversation?.id };
+        const displayName = getAsChannelDto(post.conversation)?.name ?? 'some context';
+        return { routerLinkComponents, displayName, queryParams };
     }
 
     getQueryParamsForPost(post: Post): Params {
         const params: Params = {};
-        if (post.courseWideContext) {
-            params.searchText = `#${post.id}`;
-        } else {
-            params.postId = post.id;
-        }
+        params.searchText = `#${post.id}`;
         return params;
     }
 
     getSimilarPosts(title: string): Observable<Post[]> {
         return of(metisCoursePosts.slice(0, 5));
     }
+
+    setCourse(course: Course | undefined): void {}
 }

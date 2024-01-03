@@ -11,13 +11,10 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
+import javax.validation.*;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -42,22 +39,25 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
+import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
-import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.domain.notification.ConversationNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
-import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ConversationNotificationRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -92,21 +92,19 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ConversationUtilService conversationUtilService;
 
-    private List<Post> existingPostsAndConversationPosts;
+    @Autowired
+    private CourseUtilService courseUtilService;
 
-    private List<Post> existingConversationPosts;
+    @Autowired
+    private ConversationNotificationRepository conversationNotificationRepository;
 
-    private List<Post> existingExercisePosts;
+    private List<Post> existingCourseWideMessages;
 
-    private List<Post> existingLecturePosts;
+    private List<Post> existingConversationMessages;
 
     private Course course;
 
     private Long courseId;
-
-    private Validator validator;
-
-    private ValidatorFactory validatorFactory;
 
     private static final int NUMBER_OF_POSTS = 5;
 
@@ -116,44 +114,35 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final int EQUAL_PAGE_SIZE = NUMBER_OF_POSTS;
 
-    @Autowired
-    private CourseUtilService courseUtilService;
-
     @BeforeEach
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void initTestCase() {
-        // used to test hibernate validation using custom PostContextConstraintValidator
-        validatorFactory = Validation.buildDefaultValidatorFactory();
-        validator = validatorFactory.getValidator();
-
         userUtilService.addUsers(TEST_PREFIX, 4, 4, 4, 1);
 
         // initialize test setup and get all existing posts
         // (there are 4 posts with lecture context, 4 with exercise context, 3 with course-wide context and 3 with conversation initialized): 14 posts in total
-        existingPostsAndConversationPosts = conversationUtilService.createPostsWithinCourse(TEST_PREFIX);
+        List<Post> existingPostsAndConversationPosts = conversationUtilService.createPostsWithinCourse(TEST_PREFIX);
 
-        List<Post> existingPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() == null).toList();
+        existingCourseWideMessages = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide())
+                .toList();
 
         // filters existing posts with conversation
-        existingConversationPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() != null).toList();
+        existingConversationMessages = existingPostsAndConversationPosts.stream().filter(
+                post -> post.getConversation() != null && !(post.getConversation() instanceof Channel channel && (channel.getExercise() != null || channel.getLecture() != null)))
+                .toList();
 
         // filter existing posts with exercise context
-        existingExercisePosts = existingPosts.stream().filter(coursePost -> (coursePost.getExercise() != null)).toList();
+        List<Post> existingExercisePosts = existingPostsAndConversationPosts.stream()
+                .filter(coursePost -> (coursePost.getConversation() instanceof Channel channel && channel.getExercise() != null)).toList();
 
-        // filter existing posts with lecture context
-        existingLecturePosts = existingPosts.stream().filter(coursePost -> (coursePost.getLecture() != null)).toList();
+        // filter existing posts with first exercise context
+        Channel exerciseChannel = ((Channel) existingExercisePosts.get(0).getConversation());
+        Exercise exercise = exerciseChannel.getExercise();
 
-        course = existingExercisePosts.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember();
+        course = exercise.getCourseViaExerciseGroupOrCourseMember();
         courseUtilService.enableMessagingForCourse(course);
 
         courseId = course.getId();
-    }
-
-    @AfterEach
-    void tearDown() {
-        if (validatorFactory != null) {
-            validatorFactory.close();
-        }
     }
 
     @ParameterizedTest
@@ -167,7 +156,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
 
-        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
+        Post createdPost = createPostAndAwaitAsyncCode(postToSave);
         checkCreatedMessagePost(postToSave, createdPost);
         assertThat(createdPost.getConversation().getId()).isNotNull();
         var requestingUser = userRepository.getUser();
@@ -177,7 +166,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(1);
 
         // both conversation participants should be notified
-        verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(anyString(),
+                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(createdPost)));
     }
 
     @ParameterizedTest
@@ -193,7 +183,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         postToSave.setConversation(channel);
         postToSave.setContent("message");
 
-        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
+        Post createdPost = createPostAndAwaitAsyncCode(postToSave);
         checkCreatedMessagePost(postToSave, createdPost);
 
         // conversation participants should be notified via one broadcast
@@ -207,6 +197,50 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         else {
             verify(mailService, never()).sendNotification(any(Notification.class), any(User.class), any(Post.class));
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateAnnouncementInPrivateChannel() throws Exception {
+        Channel channel = conversationUtilService.createAnnouncementChannel(course, "test");
+        ConversationParticipant otherParticipant = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
+        ConversationParticipant author = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "instructor1");
+
+        Post postToSave = new Post();
+        postToSave.setAuthor(author.getUser());
+        postToSave.setConversation(channel);
+        postToSave.setContent("message");
+
+        Post createdPost = createPostAndAwaitAsyncCode(postToSave);
+        checkCreatedMessagePost(postToSave, createdPost);
+
+        // conversation participants should be notified individually
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(anyString(),
+                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(createdPost)));
+        verify(websocketMessagingService, never()).sendMessage(eq("/topic/metis/courses/" + courseId), any(PostDTO.class));
+
+        verify(mailService, timeout(2000).times(1)).sendNotification(any(ConversationNotification.class), eq(otherParticipant.getUser()), any(Post.class));
+        verify(mailService, timeout(2000).times(1)).sendNotification(any(ConversationNotification.class), eq(author.getUser()), any(Post.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateConversationPostInCourseWideChannel_onlyFewDatabaseCalls() throws Exception {
+        Course course = courseUtilService.createCourseWithMessagingEnabled();
+        userUtilService.addStudents(TEST_PREFIX + "createMessageDbTest", 1, 5);
+
+        // given
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "test");
+        ConversationParticipant author = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
+        Post postToSave = new Post();
+        postToSave.setAuthor(author.getUser());
+        postToSave.setConversation(channel);
+
+        // then
+        // expected are 7 database calls independent of the number of students in the course.
+        // 4 calls are for user authentication checks, 3 calls to update database
+        // further database calls are made in async code
+        assertThatDb(() -> request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED)).hasBeenCalledTimes(7);
     }
 
     @ParameterizedTest
@@ -228,7 +262,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             return;
         }
 
-        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
+        Post createdPost = createPostAndAwaitAsyncCode(postToSave);
         checkCreatedMessagePost(postToSave, createdPost);
 
         // conversation participants should be notified via one broadcast
@@ -251,39 +285,37 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         String authorMention = "[user]" + author.getUser().getName() + "(" + author.getUser().getLogin() + ")[/user]";
         postToSave.setContent(userMention + authorMention);
 
-        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
+        Post createdPost = createPostAndAwaitAsyncCode(postToSave);
         checkCreatedMessagePost(postToSave, createdPost);
 
-        // author should not get a notification
-        verify(websocketMessagingService, never()).sendMessage(eq("/topic/user/" + author.getUser().getId() + "/notifications/conversations"), any());
-        // mentioned user should get a notification
-        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/user/" + mentionedUserParticipant.getUser().getId() + "/notifications"),
-                any(SingleUserNotification.class));
+        // both users are updated
+        verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/user/" + author.getUser().getId() + "/notifications/conversations"),
+                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(createdPost)));
+        verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/user/" + mentionedUserParticipant.getUser().getId() + "/notifications/conversations"),
+                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(createdPost)));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testNoNotificationIfConversationHidden() throws Exception {
+    void testBroadCastWithNotification() throws Exception {
         Channel channel = conversationUtilService.createCourseWideChannel(course, "test");
         ConversationParticipant recipientWithHiddenTrue = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student2");
         recipientWithHiddenTrue.setIsHidden(true);
         conversationParticipantRepository.save(recipientWithHiddenTrue);
-        ConversationParticipant recipientWithHiddenFalse = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "tutor1");
         ConversationParticipant author = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
 
         Post postToSave = new Post();
         postToSave.setAuthor(author.getUser());
         postToSave.setConversation(channel);
 
-        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
+        Post createdPost = createPostAndAwaitAsyncCode(postToSave);
         checkCreatedMessagePost(postToSave, createdPost);
 
-        // participants who hid the conversation should not be notified
-        verify(websocketMessagingService, never()).sendMessage(eq("/topic/user/" + recipientWithHiddenTrue.getUser().getId() + "/notifications/conversations"),
-                any(Notification.class));
-        // participants who have not hidden the conversation should be notified
-        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/user/" + recipientWithHiddenFalse.getUser().getId() + "/notifications/conversations"),
-                any(Notification.class));
+        ConversationNotification notificationForPost = conversationNotificationRepository.findAll().stream().filter(notification -> createdPost.equals(notification.getMessage()))
+                .findFirst().orElseThrow();
+
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/metis/courses/" + course.getId()),
+                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(createdPost) && postDTO.notification().equals(notificationForPost)));
     }
 
     @ParameterizedTest
@@ -346,7 +378,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
         // attempt to save new post under someone else's conversation
-        postToSave.setConversation(existingConversationPosts.get(0).getConversation());
+        postToSave.setConversation(existingConversationMessages.get(0).getConversation());
         var requestingUser = userRepository.getUser();
 
         PostContextFilter postContextFilter = new PostContextFilter(courseId);
@@ -364,30 +396,13 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testValidatePostContextConstraintViolation() throws Exception {
+        ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
+        Validator validator = validatorFactory.getValidator();
+        validatorFactory.close();
         Post invalidPost = createPostWithOneToOneChat(TEST_PREFIX);
-        invalidPost.setCourseWideContext(CourseWideContext.RANDOM);
+        invalidPost.setPlagiarismCase(new PlagiarismCase());
         request.postWithResponseBody("/api/courses/" + courseId + "/messages", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
         Set<ConstraintViolation<Post>> constraintViolations = validator.validate(invalidPost);
-        assertThat(constraintViolations).hasSize(1);
-
-        invalidPost = createPostWithOneToOneChat(TEST_PREFIX);
-        invalidPost.setLecture(existingLecturePosts.get(0).getLecture());
-        request.postWithResponseBody("/api/courses/" + courseId + "/messages", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
-        constraintViolations = validator.validate(invalidPost);
-        assertThat(constraintViolations).hasSize(1);
-
-        invalidPost = createPostWithOneToOneChat(TEST_PREFIX);
-        invalidPost.setCourseWideContext(CourseWideContext.ORGANIZATION);
-        invalidPost.setExercise(existingExercisePosts.get(0).getExercise());
-        request.postWithResponseBody("/api/courses/" + courseId + "/messages", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
-        constraintViolations = validator.validate(invalidPost);
-        assertThat(constraintViolations).hasSize(1);
-
-        invalidPost = createPostWithOneToOneChat(TEST_PREFIX);
-        invalidPost.setLecture(existingLecturePosts.get(0).getLecture());
-        invalidPost.setExercise(existingExercisePosts.get(0).getExercise());
-        request.postWithResponseBody("/api/courses/" + courseId + "/messages", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
-        constraintViolations = validator.validate(invalidPost);
         assertThat(constraintViolations).hasSize(1);
     }
 
@@ -410,12 +425,12 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetConversationPost() throws Exception {
         // conversation set will fetch all posts of conversation if the user is involved
         var params = new LinkedMultiValueMap<String, String>();
-        Long conversationId = existingConversationPosts.get(0).getConversation().getId();
+        Long conversationId = existingConversationMessages.get(0).getConversation().getId();
         params.add("conversationId", conversationId.toString());
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         // get amount of posts with that certain
-        assertThat(returnedPosts).hasSize(existingConversationPosts.stream().filter(post -> post.getConversation().getId() == conversationId).toList().size());
+        assertThat(returnedPosts).hasSize(existingConversationMessages.stream().filter(post -> post.getConversation().getId() == conversationId).toList().size());
     }
 
     @Test
@@ -424,13 +439,78 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // conversation set will fetch all posts of conversation if the user is involved
         var params = new LinkedMultiValueMap<String, String>();
         params.add("courseWideChannelIds", "");
+        params.add("size", "50");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+
+        assertThat(returnedPosts).isNotEmpty();
+        assertThat(returnedPosts).hasSize(existingCourseWideMessages.size());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseWideMessages_WithOwnWithCourseWideContent() throws Exception {
+        // conversation set will fetch all posts of conversation if the user is involved
+        var params = new LinkedMultiValueMap<String, String>();
+        var courseWidePosts = existingConversationMessages.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList();
+        var courseWideChannelId = courseWidePosts.get(0).getConversation().getId();
+        params.add("courseWideChannelIds", courseWideChannelId.toString());
+        params.add("filterToOwn", "true");
+        params.add("size", "50");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         // get amount of posts with that certain
-        int numberOfCourseWidePosts = existingConversationPosts.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList()
-                .size();
-        assertThat(returnedPosts).isNotEmpty();
-        assertThat(returnedPosts).hasSize(numberOfCourseWidePosts);
+        assertThat(returnedPosts).hasSize(existingCourseWideMessages.stream()
+                .filter(post -> post.getConversation().getId().equals(courseWideChannelId) && post.getAuthor().getLogin().equals(TEST_PREFIX + "student1")).toList().size());
+        assertThat(returnedPosts.size()).isLessThan(courseWidePosts.size());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseWideMessages_OrderByAnswerCountDESC() throws Exception {
+        var params = new LinkedMultiValueMap<String, String>();
+
+        // ordering only available in course discussions page, where paging is enabled
+        params.add("pagingEnabled", "true");
+        params.add("page", "0");
+        params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
+
+        params.add("postSortCriterion", PostSortCriterion.ANSWER_COUNT.toString());
+        params.add("sortingOrder", SortingOrder.DESCENDING.toString());
+        params.add("courseWideChannelIds", "");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
+
+        int numberOfMaxAnswersSeenOnAnyPost = Integer.MAX_VALUE;
+        for (Post post : returnedPosts) {
+            assertThat(post.getAnswers().size()).isLessThanOrEqualTo(numberOfMaxAnswersSeenOnAnyPost);
+            numberOfMaxAnswersSeenOnAnyPost = post.getAnswers().size();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseWideMessages_OrderByAnswerCountASC() throws Exception {
+        var params = new LinkedMultiValueMap<String, String>();
+
+        // ordering only available in course discussions page, where paging is enabled
+        params.add("pagingEnabled", "true");
+        params.add("page", "0");
+        params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
+
+        params.add("postSortCriterion", PostSortCriterion.ANSWER_COUNT.toString());
+        params.add("sortingOrder", SortingOrder.ASCENDING.toString());
+        params.add("courseWideChannelIds", "");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
+
+        int numberOfMaxAnswersSeenOnAnyPost = 0;
+        for (Post post : returnedPosts) {
+            assertThat(post.getAnswers().size()).isGreaterThanOrEqualTo(numberOfMaxAnswersSeenOnAnyPost);
+            numberOfMaxAnswersSeenOnAnyPost = post.getAnswers().size();
+        }
     }
 
     @Test
@@ -438,13 +518,14 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetCourseWideMessagesFromOneChannel() throws Exception {
         // conversation set will fetch all posts of conversation if the user is involved
         var params = new LinkedMultiValueMap<String, String>();
-        var courseWidePosts = existingConversationPosts.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList();
+        var courseWidePosts = existingConversationMessages.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList();
         var courseWideChannelId = courseWidePosts.get(0).getConversation().getId();
         params.add("courseWideChannelIds", courseWideChannelId.toString());
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         // get amount of posts with that certain
-        assertThat(returnedPosts).hasSize(existingConversationPosts.stream().filter(post -> post.getConversation().getId() == courseWideChannelId).toList().size());
+        assertThat(returnedPosts)
+                .hasSize(existingConversationMessages.stream().filter(post -> Objects.equals(post.getConversation().getId(), courseWideChannelId)).toList().size());
         assertThat(returnedPosts.size()).isLessThan(courseWidePosts.size());
     }
 
@@ -452,7 +533,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1")
     void testEditConversationPost() throws Exception {
         // conversation post of tutor1 must be only editable by them
-        Post conversationPostToUpdate = existingConversationPosts.get(0);
+        Post conversationPostToUpdate = existingConversationMessages.get(0);
         conversationPostToUpdate.setContent("User changes one of their conversation posts");
 
         Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/messages/" + conversationPostToUpdate.getId(), conversationPostToUpdate, Post.class,
@@ -461,13 +542,14 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(conversationPostToUpdate).isEqualTo(updatedPost);
 
         // both conversation participants should be notified about the update
-        verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(anyString(),
+                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(updatedPost)));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testPinPost_asTutor() throws Exception {
-        Post postToPin = existingConversationPosts.get(0);
+        Post postToPin = existingConversationMessages.get(0);
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("displayPriority", DisplayPriority.PINNED.toString());
 
@@ -483,7 +565,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1")
     void testEditConversationPostWithUserMention(String userMention, boolean isUserMentionValid) throws Exception {
         // conversation post of tutor1 must be only editable by them
-        Post conversationPostToUpdate = existingConversationPosts.get(0);
+        Post conversationPostToUpdate = existingConversationMessages.get(0);
         conversationPostToUpdate.setContent("User changes one of their conversation posts" + userMention);
 
         if (!isUserMentionValid) {
@@ -498,14 +580,15 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(conversationPostToUpdate).isEqualTo(updatedPost);
 
         // both conversation participants should be notified about the update
-        verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(anyString(),
+                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(updatedPost)));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void testEditConversationPost_forbidden() throws Exception {
         // conversation post of tutor1 must not be editable by tutor2
-        Post conversationPostToUpdate = existingConversationPosts.get(0);
+        Post conversationPostToUpdate = existingConversationMessages.get(0);
         conversationPostToUpdate.setContent("Tutor attempts to change some other user's conversation post");
 
         Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/messages/" + conversationPostToUpdate.getId(), conversationPostToUpdate, Post.class,
@@ -521,19 +604,20 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1")
     void testDeleteConversationPost() throws Exception {
         // conversation post of tutor1 must be deletable by them
-        Post conversationPostToDelete = existingConversationPosts.get(0);
+        Post conversationPostToDelete = existingConversationMessages.get(0);
         request.delete("/api/courses/" + courseId + "/messages/" + conversationPostToDelete.getId(), HttpStatus.OK);
 
         assertThat(conversationMessageRepository.findById(conversationPostToDelete.getId())).isEmpty();
         // both conversation participants should be notified
-        verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(anyString(),
+                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(conversationPostToDelete)));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void testDeleteConversationPost_forbidden() throws Exception {
         // conversation post of user must not be deletable by tutors
-        Post conversationPostToDelete = existingConversationPosts.get(0);
+        Post conversationPostToDelete = existingConversationMessages.get(0);
         request.delete("/api/courses/" + courseId + "/messages/" + conversationPostToDelete.getId(), HttpStatus.FORBIDDEN);
 
         assertThat(conversationMessageRepository.findById(conversationPostToDelete.getId())).isPresent();
@@ -545,13 +629,16 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testIncreaseUnreadMessageCountAfterMessageSend() throws Exception {
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
-        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
+        Post createdPost = createPostAndAwaitAsyncCode(postToSave);
 
-        long unreadMessages = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(createdPost.getConversation().getId()).orElseThrow()
-                .getConversationParticipants().stream()
-                .filter(conversationParticipant -> !Objects.equals(conversationParticipant.getUser().getId(), postToSave.getAuthor().getId())).findAny().orElseThrow()
-                .getUnreadMessagesCount();
-        assertThat(unreadMessages).isEqualTo(1L);
+        await().untilAsserted(() -> {
+            SecurityUtils.setAuthorizationObject();
+            long unreadMessages = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(createdPost.getConversation().getId()).orElseThrow()
+                    .getConversationParticipants().stream()
+                    .filter(conversationParticipant -> !Objects.equals(conversationParticipant.getUser().getId(), postToSave.getAuthor().getId())).findAny().orElseThrow()
+                    .getUnreadMessagesCount();
+            assertThat(unreadMessages).isEqualTo(1L);
+        });
     }
 
     @Test
@@ -664,17 +751,54 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // check if conversation is set correctly on creation
         assertThat(createdMessagePost.getConversation()).isNotNull();
         assertThat(createdMessagePost.getConversation().getId()).isNotNull();
-
-        // conversation posts should not have course initialized
-        assertThat(createdMessagePost.getCourse()).isNull();
     }
 
     protected static List<Arguments> userMentionProvider() {
         return userMentionProvider(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
     }
 
+    /**
+     * Calls the POST /messages endpoint to create a new message and awaits the asynchronously executed code
+     * <p>
+     * This method awaits the asynchronous calls, by checking that the notification for the new message has been stored in the database,
+     * which is a call close to the end of the asynchronously executed code.
+     *
+     * @param postToSave post to save in the database
+     * @return saved post
+     */
+    private Post createPostAndAwaitAsyncCode(Post postToSave) throws Exception {
+        Post savedPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
+        await().until(() -> conversationNotificationRepository.findAll().stream().map(ConversationNotification::getMessage).collect(Collectors.toSet()).contains(savedPost));
+        return savedPost;
+    }
+
     private static List<CourseInformationSharingConfiguration> courseInformationSharingConfigurationProvider() {
         return List.of(CourseInformationSharingConfiguration.MESSAGING_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_ONLY,
                 CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSimilarityCheck() throws Exception {
+        Post postToCheck = new Post();
+        postToCheck.setTitle("Title Post");
+
+        List<Post> similarPosts = request.postListWithResponseBody("/api/courses/" + courseId + "/messages/similarity-check", postToCheck, Post.class, HttpStatus.OK);
+        assertThat(similarPosts).hasSize(5);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetPostTagsForCourse() throws Exception {
+        List<String> returnedTags = request.getList("/api/courses/" + courseId + "/messages/tags", HttpStatus.OK, String.class);
+        // 4 different tags were used for the posts
+        assertThat(returnedTags).hasSameSizeAs(conversationMessageRepository.findPostTagsForCourse(courseId));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetPostTagsForCourseWithNonExistentCourseId_notFound() throws Exception {
+        List<String> returnedTags = request.getList("/api/courses/" + 9999L + "/messages/tags", HttpStatus.NOT_FOUND, String.class);
+        assertThat(returnedTags).isNull();
     }
 }

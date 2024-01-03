@@ -41,6 +41,11 @@ public class OneToOneChatService {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         var existingChatBetweenUsers = oneToOneChatRepository.findBetweenUsersWithParticipantsAndUserGroups(course.getId(), userA.getId(), userB.getId());
         if (existingChatBetweenUsers.isPresent()) {
+            OneToOneChat chat = existingChatBetweenUsers.get();
+            if (chat.getLastMessageDate() == null && !requestingUser.getId().equals(chat.getCreator().getId())) {
+                chat.setCreator(requestingUser);
+                return oneToOneChatRepository.save(existingChatBetweenUsers.get());
+            }
             return existingChatBetweenUsers.get();
         }
         var oneToOneChat = new OneToOneChat();

@@ -32,8 +32,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     constructor(
         private router: Router,
         private activatedRoute: ActivatedRoute,
-        public metisConversationService: MetisConversationService,
-        public metisService: MetisService,
+        private metisConversationService: MetisConversationService,
+        private metisService: MetisService,
     ) {}
 
     getAsChannel = getAsChannelDto;
@@ -76,6 +76,11 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             if (queryParams.conversationId) {
                 this.metisConversationService.setActiveConversation(Number(queryParams.conversationId));
             }
+            if (queryParams.messageId) {
+                this.postInThread = { id: Number(queryParams.messageId) } as Post;
+            } else {
+                this.postInThread = undefined;
+            }
         });
     }
 
@@ -86,7 +91,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 conversationId: this.activeConversation?.id,
             },
             replaceUrl: true,
-            queryParamsHandling: 'merge',
         });
     }
 
@@ -98,7 +102,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private subscribeToActiveConversation() {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDto) => {
             this.activeConversation = conversation;
-            this.postInThread = undefined;
             this.updateQueryParameters();
         });
     }

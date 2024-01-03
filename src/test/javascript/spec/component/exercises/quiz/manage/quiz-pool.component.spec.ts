@@ -8,12 +8,12 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { QuizPoolComponent } from 'app/exercises/quiz/manage/quiz-pool.component';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { QuizPoolService } from 'app/exercises/quiz/manage/quiz-pool.service';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { QuizPool } from 'app/entities/quiz/quiz-pool.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizGroup } from 'app/entities/quiz/quiz-group.model';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs/esm';
@@ -23,6 +23,7 @@ import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AlertService } from 'app/core/util/alert.service';
+import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
 
 describe('QuizPoolComponent', () => {
     let fixture: ComponentFixture<QuizPoolComponent>;
@@ -76,7 +77,7 @@ describe('QuizPoolComponent', () => {
     });
 
     it('should initialize quiz pool with new object if existing quiz pool is not found', () => {
-        jest.spyOn(quizPoolService, 'find').mockReturnValue(throwError(() => ({ status: 404 })));
+        jest.spyOn(quizPoolService, 'find').mockReturnValue(of(new HttpResponse<QuizPool>({ body: null })));
         component.ngOnInit();
         expect(component.quizPool.quizGroups).toBeArrayOfSize(0);
         expect(component.quizPool.quizQuestions).toBeArrayOfSize(0);
@@ -125,7 +126,7 @@ describe('QuizPoolComponent', () => {
         component.quizPool = quizPool;
         component.hasPendingChanges = true;
         component.isValid = true;
-        component.quizQuestionsEditComponent = new QuizQuestionListEditComponent();
+        component.quizQuestionsEditComponent = new QuizQuestionListEditComponent(new MockNgbModalService() as any as NgbModal);
         component.quizPoolMappingComponent = new QuizPoolMappingComponent(alertService);
         const parseAllQuestionsSpy = jest.spyOn(component.quizQuestionsEditComponent, 'parseAllQuestions').mockImplementation();
         const getMaxPointsSpy = jest.spyOn(component.quizPoolMappingComponent, 'getMaxPoints').mockImplementation();

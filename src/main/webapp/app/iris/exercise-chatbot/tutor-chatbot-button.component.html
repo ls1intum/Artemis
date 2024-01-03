@@ -1,6 +1,8 @@
-<div class="chatbot-button">
-    <button class="btn btn-primary btn-md btn-circle" title="{{ 'artemisApp.exerciseChatbot.buttonTooltip' | artemisTranslate }}" (click)="handleButtonClick()">
-        <fa-icon size="lg" [icon]="chatOpen ? faChevronDown : faCommentDots"></fa-icon>
-        <fa-icon *ngIf="hasNewMessages && !chatOpen" [icon]="faCircle" size="xs" class="unread-indicator"></fa-icon>
-    </button>
-</div>
+@if (!chatOpen) {
+    <div class="chatbot-button">
+        <jhi-iris-logo [size]="IrisLogoSize.MEDIUM" [look]="IrisLogoLookDirection.LEFT" (click)="handleButtonClick()" />
+        @if (hasNewMessages) {
+            <fa-icon [icon]="faCircle" size="xl" class="unread-indicator"></fa-icon>
+        }
+    </div>
+}

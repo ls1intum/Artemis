@@ -13,14 +13,9 @@ import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
-import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
-import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
-import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -106,8 +101,9 @@ public class AnswerMessageService extends PostingService {
         AnswerPost savedAnswerMessage = answerPostRepository.save(answerMessage);
         savedAnswerMessage.getPost().setConversation(conversation);
         setAuthorRoleForPosting(savedAnswerMessage, course);
-        this.preparePostAndBroadcast(savedAnswerMessage, course);
-        this.singleUserNotificationService.notifyInvolvedUsersAboutNewMessageReply(post, mentionedUsers, savedAnswerMessage, author);
+        SingleUserNotification notification = singleUserNotificationService.createNotificationAboutNewMessageReply(savedAnswerMessage, author, conversation);
+        this.preparePostAndBroadcast(savedAnswerMessage, course, notification);
+        this.singleUserNotificationService.notifyInvolvedUsersAboutNewMessageReply(post, notification, mentionedUsers, savedAnswerMessage, author);
         return savedAnswerMessage;
     }
 
@@ -157,18 +153,22 @@ public class AnswerMessageService extends PostingService {
         updatedAnswerMessage = answerPostRepository.save(existingAnswerMessage);
         updatedAnswerMessage.getPost().setConversation(conversation);
 
-        this.preparePostAndBroadcast(updatedAnswerMessage, course);
+        this.preparePostAndBroadcast(updatedAnswerMessage, course, null);
         return updatedAnswerMessage;
     }
 
     private Conversation mayUpdateOrDeleteAnswerMessageElseThrow(AnswerPost existingAnswerPost, User user) {
-        // only the author of an answerMessage having postMessage with conversation context should edit or delete the entity
-        if (existingAnswerPost.getPost().getConversation() != null && !existingAnswerPost.getAuthor().getId().equals(user.getId())) {
+        boolean userIsAuthor = existingAnswerPost.getAuthor().getId().equals(user.getId());
+        Conversation conversation = existingAnswerPost.getPost().getConversation();
+        boolean isAllowedToEditOrDeleteOtherUsersMessage = conversation instanceof Channel channel
+                && this.channelAuthorizationService.isAllowedToEditOrDeleteMessagesOfOtherUsers(channel, user);
+        boolean isArchivedChannel = conversation instanceof Channel channel && channel.getIsArchived();
+
+        if ((!userIsAuthor && !isAllowedToEditOrDeleteOtherUsersMessage) || isArchivedChannel) {
             throw new AccessForbiddenException("Answer Post", existingAnswerPost.getId());
         }
-        else {
-            return conversationService.getConversationById(existingAnswerPost.getPost().getConversation().getId());
-        }
+
+        return conversationService.getConversationById(existingAnswerPost.getPost().getConversation().getId());
     }
 
     /**
@@ -197,7 +197,7 @@ public class AnswerMessageService extends PostingService {
         // delete
         answerPostRepository.deleteById(answerMessageId);
 
-        broadcastForPost(new PostDTO(updatedMessage, MetisCrudAction.UPDATE), course, null);
+        broadcastForPost(new PostDTO(updatedMessage, MetisCrudAction.UPDATE), course.getId(), null, null);
     }
 
     /**

@@ -213,4 +213,11 @@ data-exports/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/.nx
 /local-ci-scripts
+/checked-out-repos
+
+##############################
+# Supporting scripts config
+##############################
+/supporting_scripts/**/*.ini

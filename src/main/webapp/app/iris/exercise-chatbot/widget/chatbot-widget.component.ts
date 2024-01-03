@@ -291,8 +291,8 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
             return;
         }
 
-        const initX = this.fullSize ? (cntRect.width * (1 - this.fullWidthFactor)) / 2.0 : cntRect.width - this.initialWidth - 50;
-        const initY = this.fullSize ? (cntRect.height * (1 - this.fullHeightFactor)) / 2.0 : cntRect.height - this.initialHeight - 100;
+        const initX = this.fullSize ? (cntRect.width * (1 - this.fullWidthFactor)) / 2.0 : cntRect.width - this.initialWidth - 20;
+        const initY = this.fullSize ? (cntRect.height * (1 - this.fullHeightFactor)) / 2.0 : cntRect.height - this.initialHeight - 20;
 
         const nE = this.document.querySelector('.chat-widget') as HTMLElement;
         nE.style.transform = `translate(${initX}px, ${initY}px)`;
@@ -854,9 +854,9 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
 
     toggleScrollLock(lockParent: boolean): void {
         if (lockParent) {
-            document.body.classList.add('cdk-global-scrollblock');
+            document.body.classList.add('cdk-global-scroll');
         } else {
-            document.body.classList.remove('cdk-global-scrollblock');
+            document.body.classList.remove('cdk-global-scroll');
         }
     }
 
@@ -879,11 +879,11 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
 
     getConvertedErrorMap() {
         if (this.error?.paramsMap) {
-            if (typeof this.error.paramsMap === 'object') {
-                return this.error.paramsMap;
-            } else {
+            // Check if paramsMap is iterable.
+            if (typeof this.error?.paramsMap[Symbol.iterator] === 'function') {
                 return Object.fromEntries(this.error.paramsMap);
             }
+            return this.error.paramsMap;
         }
         return null;
     }

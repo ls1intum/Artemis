@@ -4,7 +4,7 @@ import { Overlay } from '@angular/cdk/overlay';
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject } from 'rxjs';
 import { IrisChatSessionService } from 'app/iris/chat-session.service';
@@ -16,6 +16,7 @@ import { IrisStateStore } from 'app/iris/state-store.service';
 import { ActiveConversationMessageLoadedAction, NumNewMessagesResetAction, SessionReceivedAction } from 'app/iris/state-store.model';
 import { mockServerMessage } from './../../../helpers/sample/iris-sample-data';
 import { IrisTutorChatbotButtonComponent } from 'app/iris/exercise-chatbot/tutor-chatbot-button.component';
+import { IrisLogoComponent } from 'app/iris/iris-logo/iris-logo.component';
 
 describe('TutorChatbotButtonComponent', () => {
     let component: IrisTutorChatbotButtonComponent;
@@ -54,7 +55,7 @@ describe('TutorChatbotButtonComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [FormsModule, FontAwesomeModule, HttpClientTestingModule],
-            declarations: [IrisTutorChatbotButtonComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [IrisTutorChatbotButtonComponent, MockComponent(IrisLogoComponent), MockPipe(ArtemisTranslatePipe)],
             providers: [
                 IrisHttpChatSessionService,
                 IrisStateStore,

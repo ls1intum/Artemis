@@ -42,6 +42,8 @@
                 "reviewExplanation": "You can review the assessment until ",
                 "realExamsHeading": "Exams",
                 "testExamsHeading": "Test Exams",
+                "noExams": "No exams present",
+                "goToExercises": "Go to exercises",
                 "testExam": {
                     "upcoming": "Upcoming Test Exam",
                     "imminent": "The Test Exam will start ",
@@ -627,7 +629,7 @@
                     "resolveComplaints": "Complaints can be resolved from the Assessment Dashboard.",
                     "testRun": "Try out different combinations of exercise variants from the student perspective.",
                     "exportResults": "Exports the exam results as a .csv file.",
-                    "editWorkingTime": "Until five minutes before the end of the exam, you can extend its duration.",
+                    "editWorkingTime": "Until one minute before the end of the exam, you can extend its duration.",
                     "createAnnouncement": "To communicate important information to all students working on the exam right now, you can make an announcement. It will be distributed and displayed to all students immediately.",
                     "suspiciousBehavior": "Check for suspicious behaviour and plagiarism in the suspicious behavior dashboard."
                 },

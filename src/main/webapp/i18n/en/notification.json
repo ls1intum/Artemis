@@ -47,19 +47,23 @@
                 "exerciseReleased": "Exercise released",
                 "exercisePractice": "Exercise open for practice",
                 "quizExerciseStarted": "Quiz started",
-                "liveExamExerciseUpdate": "Live Exam Exercise Update",
+                "liveExamExerciseUpdate": "Live exam exercise update",
                 "exerciseUpdated": "Exercise updated",
                 "programmingTestCasesChanged": "Test cases for programming exercise changed",
                 "newManualFeedbackRequest": "A new manual feedback request has been submitted",
                 "duplicateTestCase": "Duplicate test case was found.",
+                "repositoryLocks": "Repository permissions changed",
+                "buildRun": "Build run update",
                 "illegalSubmission": "Illegal submission of a student.",
-                "newExercisePost": "New exercise post",
-                "newLecturePost": "New lecture post",
-                "newCoursePost": "New course-wide post",
+                "newExercisePost": "New exercise message",
+                "newLecturePost": "New lecture message",
+                "newCoursePost": "New course-wide message",
+                "newExamPost": "New exam message",
                 "newAnnouncementPost": "New announcement",
-                "newReplyForExercisePost": "New reply for exercise post",
-                "newReplyForLecturePost": "New reply for lecture post",
-                "newReplyForCoursePost": "New reply for course-wide post",
+                "newReplyForExercisePost": "New reply for exercise message",
+                "newReplyForLecturePost": "New reply for lecture message",
+                "newReplyForExamPost": "New reply for exam message",
+                "newReplyForCoursePost": "New reply for course-wide message",
                 "courseArchiveStarted": "Course archival started",
                 "courseArchiveFinished": "Course archival finished",
                 "courseArchiveFailed": "Course archival failed",
@@ -135,7 +139,8 @@
                 "tutorialGroupMultipleRegistrationTutor": "{{ placeholderValues.1 }} students have been registered to your tutorial group {{ placeholderValues.2 }} by {{ placeholderValues.3 }}.",
                 "tutorialGroupAssigned": "You have been assigned to lead the tutorial group {{ placeholderValues.1 }} by {{ placeholderValues.2 }}.",
                 "tutorialGroupUnassigned": "You have been unassigned from leading the tutorial group {{ placeholderValues.1 }} by {{ placeholderValues.2 }}.",
-                "messageReply": "You have new reply in a message by {{ placeholderValues.6 }} in course {{ placeholderValues.0 }}.",
+                "channelMessageReply": "A message in \"{{ placeholderValues.7 }}\" in course \"{{ placeholderValues.0 }}\" got a new reply: {{ placeholderValues.4 }}",
+                "messageReply": "A message in course \"{{ placeholderValues.0 }}\" got a new reply: {{ placeholderValues.4 }}",
                 "deleteChannel": "{{ placeholderValues.1 }} channel has been deleted by {{ placeholderValues.2 }} in course {{ placeholderValues.0 }}.",
                 "removeUserChannel": "You have been removed from channel {{ placeholderValues.1 }} by {{ placeholderValues.2 }} in course {{ placeholderValues.0 }}.",
                 "addUserChannel": "You have been added to channel {{ placeholderValues.1 }} by {{ placeholderValues.2 }} in course {{ placeholderValues.0 }}.",
@@ -161,9 +166,9 @@
                 "newMessage": "New message"
             },
             "text": {
-                "newMessageChannel": "New message in {{ placeholderValues.3 }} channel from {{ placeholderValues.4 }} in course {{ placeholderValues.0 }}.",
-                "newMessageGroupChat": "New message in group chat from {{ placeholderValues.3 }} in course {{ placeholderValues.0 }}.",
-                "newMessageDirect": "New direct message from {{ placeholderValues.3 }} in course {{ placeholderValues.0 }}."
+                "newMessageChannel": "New message in channel \"{{ placeholderValues.3 }}\" in course \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}",
+                "newMessageGroupChat": "New message in group chat in course \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}",
+                "newMessageDirect": "New direct message in course \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}"
             }
         }
     }

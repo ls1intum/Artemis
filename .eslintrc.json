@@ -1,19 +1,13 @@
 {
     "root": true,
-    "ignorePatterns": [
-        "projects/**/*"
-    ],
+    "ignorePatterns": ["projects/**/*"],
     "parserOptions": {
         "project": ["./tsconfig.json", "./tsconfig.app.json", "./tsconfig.spec.json", "src/test/cypress/tsconfig.json", "src/test/playwright/tsconfig.json"]
     },
-    "extends": [
-        "plugin:prettier/recommended"
-    ],
+    "extends": ["plugin:prettier/recommended"],
     "overrides": [
         {
-            "files": [
-                "*.ts"
-            ],
+            "files": ["*.ts"],
             "extends": [
                 "eslint:recommended",
                 "plugin:@typescript-eslint/recommended",
@@ -60,34 +54,28 @@
             }
         },
         {
-            "files": [
-                "*.html"
-            ],
-            "extends": [
-                "plugin:@angular-eslint/template/recommended"
-            ]
+            "files": ["*.html"],
+            "extends": ["plugin:@angular-eslint/template/recommended", "plugin:prettier/recommended"],
+            "rules": {
+                "@angular-eslint/template/prefer-control-flow": "error",
+                "prettier/prettier": [
+                    "error",
+                    {
+                        "parser": "angular"
+                    }
+                ]
+            }
         },
         {
-            "files": [
-                "mock-*.ts"
-            ],
+            "files": ["mock-*.ts"],
             "rules": {
                 "@typescript-eslint/no-unused-vars": "off"
             }
         },
         {
-            "files": [
-                "src/test/javascript/**"
-            ],
-            "plugins": [
-                "jest",
-                "jest-extended"
-            ],
-            "extends": [
-                "plugin:jest/recommended",
-                "plugin:jest/style",
-                "plugin:jest-extended/all"
-            ],
+            "files": ["src/test/javascript/**"],
+            "plugins": ["jest", "jest-extended"],
+            "extends": ["plugin:jest/recommended", "plugin:jest/style", "plugin:jest-extended/all"],
             "rules": {
                 "jest/expect-expect": "off",
                 "jest/no-conditional-expect": "off",

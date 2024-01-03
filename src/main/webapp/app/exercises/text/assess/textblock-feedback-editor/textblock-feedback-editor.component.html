@@ -1,63 +1,75 @@
 <div>
-    <jhi-feedback-suggestion-badge *ngIf="Feedback.isFeedbackSuggestion(feedback)" [feedback]="feedback" [useDefaultText]="true"></jhi-feedback-suggestion-badge>
-
-    <div class="close" *ngIf="!readOnly">
-        <ng-container *ngIf="canDismiss; then closeButton; else trashButton"></ng-container>
-        <ng-template #closeButton>
-            <fa-icon [icon]="faTimes" [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate" (click)="dismiss()"> </fa-icon>
-        </ng-template>
-        <ng-template #trashButton>
-            <jhi-confirm-icon
-                [initialIcon]="faTimes"
-                [confirmIcon]="faTrash"
-                [initialTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate"
-                [confirmTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation' | artemisTranslate"
-                (confirmEvent)="dismiss()"
-            ></jhi-confirm-icon>
-        </ng-template>
-    </div>
-
+    @if (Feedback.isFeedbackSuggestion(feedback)) {
+        <jhi-feedback-suggestion-badge [feedback]="feedback" [useDefaultText]="true"></jhi-feedback-suggestion-badge>
+    }
+    @if (!readOnly) {
+        <div class="close">
+            @if (canDismiss) {
+                <fa-icon [icon]="faTimes" [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate" (click)="dismiss()"> </fa-icon>
+            } @else {
+                <jhi-confirm-icon
+                    [initialIcon]="faTimes"
+                    [confirmIcon]="faTrash"
+                    [initialTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate"
+                    [confirmTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation' | artemisTranslate"
+                    (confirmEvent)="dismiss()"
+                ></jhi-confirm-icon>
+            }
+        </div>
+    }
     <div class="row">
         <div class="form-group col-md-10 m-0">
             <label class="d-inline" jhiTranslate="artemisApp.assessment.detail.feedbackWithColon" for="detailText-{{ textBlock.id }}"></label>
-            <div class="d-inline" *ngIf="feedback.gradingInstruction!">
-                <span class="fw-bold">{{ feedback.gradingInstruction!.feedback }}</span>
-                <fa-icon [icon]="faQuestionCircle" class="text-secondary" [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate"></fa-icon>
-            </div>
+            @if (feedback.gradingInstruction!) {
+                <div class="d-inline">
+                    <span class="fw-bold">{{ feedback.gradingInstruction!.feedback }}</span>
+                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate"></fa-icon>
+                </div>
+            }
         </div>
         <div class="form-group col-md-1 text-end m-0">
             <label jhiTranslate="artemisApp.exercise.score" for="'score-{{ textBlock.id }}"></label>
         </div>
-        <div class="form-group col-md-1 m-0" *ngIf="feedback.gradingInstruction!">
-            <jhi-grading-instruction-link-icon [feedback]="feedback"></jhi-grading-instruction-link-icon>
-        </div>
+        @if (feedback.gradingInstruction!) {
+            <div class="form-group col-md-1 m-0">
+                <jhi-grading-instruction-link-icon [feedback]="feedback"></jhi-grading-instruction-link-icon>
+            </div>
+        }
     </div>
     <div class="row" (drop)="connectFeedbackWithInstruction($event)" (dragover)="$event.preventDefault()">
         <div class="input-group">
             <div class="input-group-prepend">
-                <div *ngIf="criteria" class="dropdown" ngbDropdown>
-                    <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button"></button>
-                    <!--if there is only one criterion, dropdown-menu contains its instructions-->
-                    <ul ngbDropdownMenu *ngIf="criteria.length === 1; else multipleCriteria">
-                        <jhi-textblock-feedback-dropdown [criterion]="criteria[0]" [feedback]="feedback" (didChange)="didChange()"></jhi-textblock-feedback-dropdown>
-                    </ul>
-                    <!--if there is more than one criterion, the dropdown-menu contains the criteria titles with submenus of the corresponding instructions-->
-                    <ng-template #multipleCriteria>
-                        <ul class="dropdown-menu" ngbDropdownMenu>
-                            <li *ngFor="let criterion of criteria">
-                                <a class="dropdown-item" *ngIf="criterion.title; else withoutTitle">
-                                    {{ criterion.title }}&nbsp;<fa-icon class="float-end" [icon]="faAngleRight"></fa-icon>
-                                </a>
-                                <ng-template #withoutTitle>
-                                    <a class="dropdown-item">(No title) <fa-icon class="float-end" [icon]="faAngleRight"></fa-icon></a>
-                                </ng-template>
-                                <ul class="dropdown-menu dropdown-submenu">
-                                    <jhi-textblock-feedback-dropdown [criterion]="criterion" [feedback]="feedback" (didChange)="didChange()"></jhi-textblock-feedback-dropdown>
-                                </ul>
-                            </li>
-                        </ul>
-                    </ng-template>
-                </div>
+                @if (criteria) {
+                    <div class="dropdown" ngbDropdown>
+                        <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button"></button>
+                        <!--if there is only one criterion, dropdown-menu contains its instructions-->
+                        @if (criteria.length === 1) {
+                            <ul ngbDropdownMenu>
+                                <jhi-textblock-feedback-dropdown [criterion]="criteria[0]" [feedback]="feedback" (didChange)="didChange()"></jhi-textblock-feedback-dropdown>
+                            </ul>
+                        } @else {
+                            <ul class="dropdown-menu" ngbDropdownMenu>
+                                @for (criterion of criteria; track criterion) {
+                                    <li>
+                                        @if (criterion.title) {
+                                            <a class="dropdown-item"> {{ criterion.title }}&nbsp;<fa-icon class="float-end" [icon]="faAngleRight"></fa-icon> </a>
+                                        } @else {
+                                            <a class="dropdown-item">(No title) <fa-icon class="float-end" [icon]="faAngleRight"></fa-icon></a>
+                                        }
+                                        <ul class="dropdown-menu dropdown-submenu">
+                                            <jhi-textblock-feedback-dropdown
+                                                [criterion]="criterion"
+                                                [feedback]="feedback"
+                                                (didChange)="didChange()"
+                                            ></jhi-textblock-feedback-dropdown>
+                                        </ul>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                        <!--if there is more than one criterion, the dropdown-menu contains the criteria titles with submenus of the corresponding instructions-->
+                    </div>
+                }
             </div>
             <div class="form-group col-md-10">
                 <textarea
@@ -94,23 +106,24 @@
             </div>
         </div>
     </div>
-
     <!-- Text showing whether the tutor feedback is correct or not (upon validation on the server) -->
-    <div *ngIf="feedback.correctionStatus !== undefined">
-        <span *ngIf="feedback.correctionStatus === 'CORRECT'" class="text-success"
-            >{{ 'artemisApp.exampleSubmission.feedback.' + feedback.correctionStatus! | artemisTranslate }}
-        </span>
-        <span *ngIf="feedback.correctionStatus !== 'CORRECT'" class="text-danger"
-            >{{ 'artemisApp.exampleSubmission.feedback.' + feedback.correctionStatus! | artemisTranslate }}
-        </span>
-
-        <!-- :warning: emoji was rendered as a black-white glyph, hence the solution with the fa-icon -->
-        <fa-layers *ngIf="feedback.correctionStatus !== 'CORRECT'">
-            <fa-icon class="text-warning" [icon]="faExclamationTriangle"></fa-icon>
-            <fa-icon [icon]="faExclamation" size="2x" [styles]="{ width: '16px', 'margin-top': '-6px' }" [classes]="['text-dark']" transform="shrink-10"></fa-icon>
-        </fa-layers>
-    </div>
-
+    @if (feedback.correctionStatus !== undefined) {
+        <div>
+            @if (feedback.correctionStatus === 'CORRECT') {
+                <span class="text-success">{{ 'artemisApp.exampleSubmission.feedback.' + feedback.correctionStatus! | artemisTranslate }} </span>
+            }
+            @if (feedback.correctionStatus !== 'CORRECT') {
+                <span class="text-danger">{{ 'artemisApp.exampleSubmission.feedback.' + feedback.correctionStatus! | artemisTranslate }} </span>
+            }
+            <!-- :warning: emoji was rendered as a black-white glyph, hence the solution with the fa-icon -->
+            @if (feedback.correctionStatus !== 'CORRECT') {
+                <fa-layers>
+                    <fa-icon class="text-warning" [icon]="faExclamationTriangle"></fa-icon>
+                    <fa-icon [icon]="faExclamation" size="2x" [styles]="{ width: '16px', 'margin-top': '-6px' }" [classes]="['text-dark']" transform="shrink-10"></fa-icon>
+                </fa-layers>
+            }
+        </div>
+    }
     <!-- correction round label-->
     <jhi-assessment-correction-round-badge [feedback]="feedback" [highlightDifferences]="highlightDifferences"></jhi-assessment-correction-round-badge>
 </div>
