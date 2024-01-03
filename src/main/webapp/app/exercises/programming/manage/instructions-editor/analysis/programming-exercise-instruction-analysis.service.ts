@@ -31,18 +31,19 @@ export class ProgrammingExerciseInstructionAnalysisService {
         // Look for task regex matches in the problem statement including their line numbers.
         const tasksFromProblemStatement = matchRegexWithLineNumbers(problemStatement, taskRegex);
 
-        const { invalidTestCases, missingTestCases, invalidTestCaseAnalysis } = this.analyzeTestCases(tasksFromProblemStatement, exerciseTestCases);
+        const { invalidTestCases, missingTestCases, duplicatedTestCases, invalidTestCaseAnalysis } = this.analyzeTestCases(tasksFromProblemStatement, exerciseTestCases);
 
         const completeAnalysis: ProblemStatementAnalysis = this.mergeAnalysis(invalidTestCaseAnalysis);
-        return { invalidTestCases, missingTestCases, completeAnalysis, numOfTasks: tasksFromProblemStatement.length };
+        return { invalidTestCases, missingTestCases, duplicatedTestCases, completeAnalysis, numOfTasks: tasksFromProblemStatement.length };
     };
 
     /**
      * Analyze the test cases for the following criteria:
      * - Are test cases in the problem statement that don't exist for the exercise?
      * - Do test cases exist for this exercise that are not part of the problem statement?
+     * - Are any test cases in the problem statement duplicated?
      *
-     * Will also set the invalidTestCases & missingTestCases attributes of the component.
+     * Will also set the invalidTestCases & missingTestCases & duplicatedTestCases attributes of the component.
      *
      * @param tasksFromProblemStatement to analyze.
      * @param exerciseTestCases to double check the test cases found in the problem statement.
@@ -75,13 +76,15 @@ export class ProgrammingExerciseInstructionAnalysisService {
             return acc;
         }, new Map<string, number[]>());
 
-        const duplicatedTestCases = [...testCaseOccurrences.entries()]
+        const duplicatedTestCaseAnalysis = [...testCaseOccurrences.entries()]
             .filter(([, lineNumbers]) => lineNumbers.length > 1)
             .flatMap(([testCase, lineNumbers]) => uniq(lineNumbers).map((lineNumber) => [lineNumber, [testCase], ProblemStatementIssue.DUPLICATED_TEST_CASES] as AnalysisItem));
 
-        invalidTestCaseAnalysis.push(...duplicatedTestCases);
+        const duplicatedTestCases = uniq(duplicatedTestCaseAnalysis.flatMap(([, testCases]) => testCases));
 
-        return { missingTestCases, invalidTestCases, invalidTestCaseAnalysis };
+        invalidTestCaseAnalysis.push(...duplicatedTestCaseAnalysis);
+
+        return { missingTestCases, invalidTestCases, duplicatedTestCases, invalidTestCaseAnalysis };
     };
 
     /**

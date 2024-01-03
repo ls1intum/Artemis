@@ -20,6 +20,7 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
 
     invalidTestCases: string[] = [];
     missingTestCases: string[] = [];
+    duplicatedTestCases: string[] = [];
     numOfTasks = 0;
 
     // Icons
@@ -33,13 +34,14 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
             .pipe(
                 debounceTime(500),
                 map(() => {
-                    const { completeAnalysis, missingTestCases, invalidTestCases, numOfTasks } = this.analysisService.analyzeProblemStatement(
+                    const { completeAnalysis, missingTestCases, invalidTestCases, duplicatedTestCases, numOfTasks } = this.analysisService.analyzeProblemStatement(
                         this.problemStatement,
                         this.taskRegex,
                         this.exerciseTestCases,
                     );
                     this.missingTestCases = missingTestCases;
                     this.invalidTestCases = invalidTestCases;
+                    this.duplicatedTestCases = duplicatedTestCases;
                     this.numOfTasks = numOfTasks;
                     return completeAnalysis;
                 }),
@@ -61,9 +63,10 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
 
     /**
      * Checks if test cases are used in the right way in the problem statement.
-     * This includes two possible errors:
+     * This includes three possible errors:
      * - having invalid test cases (that are not part of the test files)
      * - not using existing test cases in the markup
+     * - having duplicated test cases
      * The method makes sure to filter out duplicates in the test case list.
      */
     analyzeTasks() {

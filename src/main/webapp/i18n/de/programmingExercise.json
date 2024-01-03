@@ -207,7 +207,9 @@
                 "missingTestCases": "{{number}} Testfälle wurde im Test-Repository gefunden, die nicht Teil der Aufgabenstellung sind:",
                 "issues": "Testfallprobleme.",
                 "ok": "Testfälle ok.",
-                "invalidTestCase": "Der Testfall '{{id}}' konnte nicht im Test-Repository gefunden werden."
+                "invalidTestCase": "Der Testfall '{{id}}' konnte nicht im Test-Repository gefunden werden.",
+                "duplicatedTestCase": "Der Testfall '{{id}}' ist dupliziert.",
+                "duplicatedTestCases": "{{number}} Testfälle sind dupliziert. Das kann unerwartetes Verhalten verursachen:"
             },
             "tasksAnalysis": {
                 "issues": "Aufgabenprobleme.",
