@@ -89,14 +89,8 @@ export class CourseCardComponent implements OnChanges {
             this.ngxDoughnutData = [...this.ngxDoughnutData];
         }
 
-        if (this.course.lectures) {
-            this.lectureCount = this.course.lectures.length;
-        }
-
-        if (this.course.exams) {
-            this.examCount = this.course.exams.length;
-        }
-
+        this.lectureCount = this.course.numberOfLectures ?? this.course.lectures?.length ?? 0;
+        this.examCount = this.course.numberOfExams ?? this.course.exams?.length ?? 0;
         this.courseColor = this.course.color || this.ARTEMIS_DEFAULT_COLOR;
     }
 
@@ -105,6 +99,16 @@ export class CourseCardComponent implements OnChanges {
      */
     onSelect(): void {
         this.router.navigate(['courses', this.course.id]);
+    }
+
+    /**
+     * Navigates to the exam page of the course.
+     * We stop the propagation of the click event to avoid navigating to the exercise page.
+     * @param event the click event
+     */
+    navigateToExams(event: Event) {
+        event.stopPropagation();
+        this.router.navigate(['courses', this.course.id, 'exams']);
     }
 
     private updateNextDueDate() {

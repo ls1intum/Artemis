@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -57,11 +58,11 @@ public class LocalCISharedBuildJobQueueService {
     /**
      * Map of build jobs currently being processed across all nodes
      */
-    private final IMap<String, LocalCIBuildJobQueueItem> processingJobs;
+    private final IMap<Long, LocalCIBuildJobQueueItem> processingJobs;
 
     private final IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
 
-    private AtomicInteger localProcessingJobs = new AtomicInteger(0);
+    private final AtomicInteger localProcessingJobs = new AtomicInteger(0);
 
     /**
      * Lock to prevent multiple nodes from processing the same build job.
@@ -95,16 +96,19 @@ public class LocalCISharedBuildJobQueueService {
     /**
      * Create build job item object and add it to the queue.
      *
-     * @param name                   name of the build job
-     * @param participationId        participation id of the build job
-     * @param commitHash             commit hash of the build job
-     * @param submissionDate         submission date of the build job
-     * @param priority               priority of the build job
-     * @param courseId               course id of the build job
-     * @param isPushToTestRepository defines if the build job is triggered by a push to a test repository
+     * @param name                     name of the build job
+     * @param participationId          participation id of the build job
+     * @param repositoryTypeOrUsername repository type (if template or solution) or username (if student repository)
+     * @param commitHash               commit hash of the build job
+     * @param submissionDate           submission date of the build job
+     * @param priority                 priority of the build job
+     * @param courseId                 course id of the build job
+     * @param isPushToTestRepository   defines if the build job is triggered by a push to a test repository
      */
-    public void addBuildJob(String name, long participationId, String commitHash, long submissionDate, int priority, long courseId, boolean isPushToTestRepository) {
-        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(name, participationId, commitHash, submissionDate, priority, courseId, isPushToTestRepository);
+    public void addBuildJob(String name, long participationId, String repositoryTypeOrUsername, String commitHash, ZonedDateTime submissionDate, int priority, long courseId,
+            boolean isPushToTestRepository) {
+        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(name, participationId, repositoryTypeOrUsername, commitHash, submissionDate, priority, courseId,
+                isPushToTestRepository);
         queue.add(buildJobQueueItem);
     }
 
@@ -146,7 +150,7 @@ public class LocalCISharedBuildJobQueueService {
     }
 
     /**
-     * Wait 3 minutes after startup and then every 1 minute update the build agent information of the local hazelcast member.
+     * Wait 1 minute after startup and then every 1 minute update the build agent information of the local hazelcast member.
      * This is necessary because the build agent information is not updated automatically when a node joins the cluster.
      */
     @Scheduled(initialDelay = 60000, fixedRate = 60000) // 1 minute initial delay, 1 minute fixed rate
@@ -158,6 +162,15 @@ public class LocalCISharedBuildJobQueueService {
         if (!buildAgentInformation.containsKey(hazelcastInstance.getCluster().getLocalMember().getAddress().toString())) {
             updateLocalBuildAgentInformation();
         }
+    }
+
+    /**
+     * Check every 10 seconds whether the node has at least one thread available for a new build job.
+     * If so, process the next build job.
+     */
+    @Scheduled(fixedRate = 10000)
+    public void checkForBuildJobs() {
+        checkAvailabilityAndProcessNextBuild();
     }
 
     /**
@@ -210,8 +223,7 @@ public class LocalCISharedBuildJobQueueService {
         if (buildJob != null) {
             String hazelcastMemberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
             buildJob.setBuildAgentAddress(hazelcastMemberAddress);
-            buildJob.setBuildStartDate(System.currentTimeMillis());
-            buildJob.setExpirationTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(180));
+            buildJob.setBuildStartDate(ZonedDateTime.now());
             processingJobs.put(buildJob.getId(), buildJob);
             localProcessingJobs.incrementAndGet();
 
@@ -248,6 +260,9 @@ public class LocalCISharedBuildJobQueueService {
      * On completion, check for next job.
      */
     private void processBuild(LocalCIBuildJobQueueItem buildJob) {
+        // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
+        // Therefore, a mock auth object has to be created.
+        SecurityUtils.setAuthorizationObject();
 
         if (buildJob == null) {
             return;
@@ -282,6 +297,7 @@ public class LocalCISharedBuildJobQueueService {
 
         // For some reason, it is possible that the participation object does not have the programming exercise
         if (participation.getProgrammingExercise() == null) {
+            SecurityUtils.setAuthorizationObject();
             participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
         }
 
@@ -292,8 +308,6 @@ public class LocalCISharedBuildJobQueueService {
             // Do not process the result if the participation has been deleted in the meantime
             Optional<Participation> participationOptional = participationRepository.findById(participation.getId());
             if (participationOptional.isPresent()) {
-                // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
-                // Therefore, a mock auth object has to be created.
                 SecurityUtils.setAuthorizationObject();
                 Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
                 if (result != null) {
@@ -328,6 +342,7 @@ public class LocalCISharedBuildJobQueueService {
             }
 
             // Do not requeue the build job if the participation has been deleted in the meantime
+            SecurityUtils.setAuthorizationObject();
             Optional<Participation> participationOptional = participationRepository.findById(participation.getId());
             if (participationOptional.isPresent()) {
                 log.warn("Requeueing failed build job: {}", buildJob);
@@ -345,7 +360,8 @@ public class LocalCISharedBuildJobQueueService {
      * Checks whether the node has at least one thread available for a new build job.
      */
     private boolean nodeIsAvailable() {
-        log.info("Current active threads: {}", localCIBuildExecutorService.getActiveCount());
+        log.debug("Currently processing jobs on this node: {}, maximum pool size of thread executor : {}", localProcessingJobs.get(),
+                localCIBuildExecutorService.getMaximumPoolSize());
         return localProcessingJobs.get() < localCIBuildExecutorService.getMaximumPoolSize();
     }
 
@@ -361,6 +377,7 @@ public class LocalCISharedBuildJobQueueService {
         ProgrammingExerciseParticipation participation;
         Optional<Participation> tempParticipation;
         while (retries < maxRetries) {
+            SecurityUtils.setAuthorizationObject();
             tempParticipation = participationRepository.findById(participationId);
             if (tempParticipation.isPresent()) {
                 participation = (ProgrammingExerciseParticipation) tempParticipation.get();
@@ -385,13 +402,13 @@ public class LocalCISharedBuildJobQueueService {
 
         @Override
         public void itemAdded(ItemEvent<LocalCIBuildJobQueueItem> item) {
-            log.info("CIBuildJobQueueItem added to queue: {}", item.getItem());
+            log.debug("CIBuildJobQueueItem added to queue: {}", item.getItem());
             checkAvailabilityAndProcessNextBuild();
         }
 
         @Override
         public void itemRemoved(ItemEvent<LocalCIBuildJobQueueItem> item) {
-            log.info("CIBuildJobQueueItem removed from queue: {}", item.getItem());
+            log.debug("CIBuildJobQueueItem removed from queue: {}", item.getItem());
         }
     }
 }
