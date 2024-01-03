@@ -4,7 +4,6 @@
             "home": {
                 "title": "Vorlesungen",
                 "createLabel": "Vorlesung erstellen",
-                "importLabel": "Vorlesung importieren",
                 "filterLabel": "Filter",
                 "filterOptions": {
                     "filterPast": "Vergangene",
@@ -58,13 +57,14 @@
             },
             "import": {
                 "table": {
-                    "title": "Titel",
-                    "course": "Kurs",
-                    "semester": "Semester",
+                    "TITLE": "Titel",
+                    "COURSE_TITLE": "Kurs",
+                    "SEMESTER": "Semester",
                     "doImport": "Importieren"
                 },
-                "searchLecture": "Nach Vorlesung suchen:",
-                "loading": "Lade..."
+                "search": "Nach Vorlesung suchen:",
+                "loading": "Lade...",
+                "label": "Vorlesung importieren"
             },
             "wizardMode": {
                 "steps": {

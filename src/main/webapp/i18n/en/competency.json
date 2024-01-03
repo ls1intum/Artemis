@@ -45,15 +45,15 @@
                 "import": "Import competency",
                 "create": "Create competency"
             },
-            "importCompetency": {
-                "title": "Import a Competency",
+            "import": {
+                "label": "Import a Competency",
                 "search": "Search for a competency:",
                 "loading": "Loading...",
                 "table": {
-                    "title": "Title",
-                    "course": "Course",
-                    "semester": "Semester",
-                    "doSelect": "Select"
+                    "TITLE": "Title",
+                    "COURSE_TITLE": "Course",
+                    "SEMESTER": "Semester",
+                    "doImport": "Select"
                 }
             },
             "createCompetency": {
@@ -122,14 +122,14 @@
                     "select": "Select Prerequisite"
                 },
                 "import": {
-                    "title": "Add prerequisites",
+                    "label": "Add prerequisites",
                     "table": {
-                        "title": "Title",
-                        "course": "Course",
-                        "semester": "Semester",
-                        "doSelect": "Select"
+                        "TITLE": "Title",
+                        "COURSE_TITLE": "Course",
+                        "SEMESTER": "Semester",
+                        "doImport": "Select"
                     },
-                    "searchCompetency": "Search competency:",
+                    "search": "Search competency:",
                     "loading": "Loading..."
                 }
             },

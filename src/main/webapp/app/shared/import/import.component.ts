@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -13,6 +13,12 @@ import { Subject, debounceTime, switchMap, tap } from 'rxjs';
  *
  * @template T generic class parameter of the entity that gets imported
  */
+
+export type Column<T extends BaseEntity> = {
+    name: string;
+    getProperty(entity: T): string | undefined;
+};
+
 @Component({ template: '' })
 export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     loading = false;
@@ -25,6 +31,12 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
         sortingOrder: SortingOrder.DESCENDING,
         sortedColumn: 'ID',
     };
+
+    // These two attributes should be set when using the common template (import.component.html)
+    entityName: string;
+    columns: Column<T>[];
+
+    @Input() public disabledIds: number[] = [];
 
     // Icons
     readonly faSort = faSort;
