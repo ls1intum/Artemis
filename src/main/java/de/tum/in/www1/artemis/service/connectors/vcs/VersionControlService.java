@@ -45,11 +45,11 @@ public interface VersionControlService {
     void deleteProject(String projectKey);
 
     /**
-     * Deletes the repository at the given url
+     * Deletes the repository at the given uri
      *
-     * @param repositoryUrl of the repository that should be deleted
+     * @param repositoryUri of the repository that should be deleted
      */
-    void deleteRepository(VcsRepositoryUri repositoryUrl);
+    void deleteRepository(VcsRepositoryUri repositoryUri);
 
     /**
      * Get the clone URL used for cloning
@@ -58,15 +58,15 @@ public interface VersionControlService {
      * @param repositorySlug The repository slug
      * @return The clone URL
      */
-    VcsRepositoryUri getCloneRepositoryUrl(String projectKey, String repositorySlug);
+    VcsRepositoryUri getCloneRepositoryUri(String projectKey, String repositorySlug);
 
     /**
-     * Check if the given repository url is valid and accessible.
+     * Check if the given repository uri is valid and accessible.
      *
-     * @param repositoryUrl the VCS repository URL
+     * @param repositoryUri the VCS repository URI
      * @return whether the repository is valid
      */
-    Boolean repositoryUrlIsValid(@Nullable VcsRepositoryUri repositoryUrl);
+    Boolean repositoryUriIsValid(@Nullable VcsRepositoryUri repositoryUri);
 
     /**
      * Get the last commit details that are included in the given requestBody that notifies about a push
@@ -131,37 +131,37 @@ public interface VersionControlService {
     /**
      * Add the user to the repository
      *
-     * @param repositoryUrl The repository url of the repository to which to add the user. It contains the project key & the repository name.
+     * @param repositoryUri The repository uri of the repository to which to add the user. It contains the project key & the repository name.
      * @param user          User which to add to the repository
      * @param permissions   The permissions the user should get for the repository.
      */
-    void addMemberToRepository(VcsRepositoryUri repositoryUrl, User user, VersionControlRepositoryPermission permissions);
+    void addMemberToRepository(VcsRepositoryUri repositoryUri, User user, VersionControlRepositoryPermission permissions);
 
     /**
      * Remove the user from the repository
      *
-     * @param repositoryUrl The repository url of the repository from which to remove the user. It contains the project key & the repository name.
+     * @param repositoryUri The repository uri of the repository from which to remove the user. It contains the project key & the repository name.
      * @param user          User which to remove from the repository
      */
-    void removeMemberFromRepository(VcsRepositoryUri repositoryUrl, User user);
+    void removeMemberFromRepository(VcsRepositoryUri repositoryUri, User user);
 
     /**
      * Removes the user's write permissions for a repository.
      *
-     * @param repositoryUrl The repository url of the repository to update. It contains the project key & the repository name.
+     * @param repositoryUri The repository uri of the repository to update. It contains the project key & the repository name.
      * @param projectKey    The projectKey that the repo is part of in the VCS.
      * @param users         Set of users for which to change permissions
      * @throws VersionControlException If the communication with the VCS fails.
      */
-    void setRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUrl, String projectKey, Set<User> users) throws VersionControlException;
+    void setRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUri, String projectKey, Set<User> users) throws VersionControlException;
 
     /**
      * Get the default branch of the repository
      *
-     * @param repositoryUrl The repository url to get the default branch for.
+     * @param repositoryUri The repository uri to get the default branch for.
      * @return the name of the default branch, e.g. 'main'
      */
-    String getDefaultBranchOfRepository(VcsRepositoryUri repositoryUrl) throws VersionControlException;
+    String getDefaultBranchOfRepository(VcsRepositoryUri repositoryUri) throws VersionControlException;
 
     /**
      * Get the default branch of the repository
@@ -171,17 +171,17 @@ public interface VersionControlService {
      * @return the name of the default branch, e.g. 'main'
      */
     default String getDefaultBranchOfRepository(String projectKey, String repositorySlug) throws VersionControlException {
-        return getDefaultBranchOfRepository(getCloneRepositoryUrl(projectKey, repositorySlug));
+        return getDefaultBranchOfRepository(getCloneRepositoryUri(projectKey, repositorySlug));
     }
 
     /**
      * Unprotects a branch from the repository, so that the history can be changed (important for combine template commits).
      *
-     * @param repositoryUrl The repository url of the repository to update. It contains the project key & the repository name.
+     * @param repositoryUri The repository uri of the repository to update. It contains the project key & the repository name.
      * @param branch        The name of the branch to unprotect (e.g "main")
      * @throws VersionControlException If the communication with the VCS fails.
      */
-    void unprotectBranch(VcsRepositoryUri repositoryUrl, String branch) throws VersionControlException;
+    void unprotectBranch(VcsRepositoryUri repositoryUri, String branch) throws VersionControlException;
 
     /**
      * Checks if the underlying VCS server is up and running and gives some additional information about the running

@@ -258,7 +258,7 @@ public class GitUtilService {
         return repo == REPOS.LOCAL ? localPath.toString() : remotePath.toString();
     }
 
-    public VcsRepositoryUri getRepoUrlByType(REPOS repo) {
+    public VcsRepositoryUri getRepoUriByType(REPOS repo) {
         return new VcsRepositoryUri(new File(getCompleteRepoPathStringByType(repo)));
     }
 

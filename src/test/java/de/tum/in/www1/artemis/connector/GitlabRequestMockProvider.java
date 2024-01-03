@@ -39,7 +39,7 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserDoesNotExistException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
@@ -103,7 +103,7 @@ public class GitlabRequestMockProvider {
     private UserRepository userRepository;
 
     @Autowired
-    private UrlService urlService;
+    private UriService uriService;
 
     private AutoCloseable closeable;
 
@@ -244,7 +244,7 @@ public class GitlabRequestMockProvider {
             event.setPushData(pushData);
             events.add(0, event); // The latest event has to be at the front
         }
-        var path = urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl());
+        var path = uriService.getRepositoryPathFromRepositoryUri(participation.getVcsRepositoryUri());
         doAnswer((invocation) -> events.stream()).when(eventsApi).getProjectEventsStream(eq(path), eq(Constants.ActionType.PUSHED), eq(null), eq(null), eq(null),
                 eq(Constants.SortOrder.DESC));
     }
@@ -295,16 +295,16 @@ public class GitlabRequestMockProvider {
     }
 
     public void mockConfigureRepository(ProgrammingExercise exercise, Set<de.tum.in.www1.artemis.domain.User> users, boolean userExists) throws GitLabApiException {
-        var repositoryUrl = exercise.getVcsTemplateRepositoryUrl();
+        var repositoryUri = exercise.getVcsTemplateRepositoryUri();
         for (var user : users) {
             String loginName = user.getLogin();
             mockUserExists(loginName, userExists);
             if (userExists) {
-                mockAddMemberToRepository(repositoryUrl, user.getLogin());
+                mockAddMemberToRepository(repositoryUri, user.getLogin());
             }
         }
         mockGetDefaultBranch(defaultBranch);
-        mockProtectBranch(defaultBranch, repositoryUrl);
+        mockProtectBranch(defaultBranch, repositoryUri);
     }
 
     public void mockUserExists(String username, boolean exists) throws GitLabApiException {
@@ -323,8 +323,8 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    private void mockAddMemberToRepository(VcsRepositoryUri repositoryUrl, String login) throws GitLabApiException {
-        final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+    private void mockAddMemberToRepository(VcsRepositoryUri repositoryUri, String login) throws GitLabApiException {
+        final var repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
         mockAddMemberToRepository(repositoryPath, login, false);
     }
 
@@ -346,8 +346,8 @@ public class GitlabRequestMockProvider {
         doReturn(mockProject).when(projectApi).getProject(notNull());
     }
 
-    private void mockProtectBranch(String branch, VcsRepositoryUri repositoryUrl) throws GitLabApiException {
-        final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+    private void mockProtectBranch(String branch, VcsRepositoryUri repositoryUri) throws GitLabApiException {
+        final var repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
         doReturn(new Branch()).when(repositoryApi).unprotectBranch(repositoryPath, branch);
         doReturn(new ProtectedBranch()).when(protectedBranchesApi).protectBranch(repositoryPath, branch);
     }
@@ -646,12 +646,12 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    public void mockRepositoryUrlIsValid(VcsRepositoryUri repositoryUrl, boolean isUrlValid) throws GitLabApiException {
-        if (repositoryUrl == null || repositoryUrl.getURI() == null) {
+    public void mockRepositoryUriIsValid(VcsRepositoryUri repositoryUri, boolean isUrlValid) throws GitLabApiException {
+        if (repositoryUri == null || repositoryUri.getURI() == null) {
             return;
         }
 
-        final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+        final var repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
         if (isUrlValid) {
             doReturn(new Project()).when(projectApi).getProject(repositoryPath);
         }
@@ -662,10 +662,10 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    public void setRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUrl, Set<de.tum.in.www1.artemis.domain.User> users) throws GitLabApiException {
+    public void setRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUri, Set<de.tum.in.www1.artemis.domain.User> users) throws GitLabApiException {
         for (var user : users) {
             mockGetUserId(user.getLogin(), true, false);
-            final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+            final var repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
             doReturn(new Member()).when(projectApi).updateMember(repositoryPath, 1L, GUEST);
         }
     }

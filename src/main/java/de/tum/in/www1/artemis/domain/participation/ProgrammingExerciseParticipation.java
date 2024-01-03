@@ -20,9 +20,9 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
 
     Logger log = LoggerFactory.getLogger(ProgrammingExerciseParticipation.class);
 
-    String getRepositoryUrl();
+    String getRepositoryUri();
 
-    void setRepositoryUrl(String repositoryUrl);
+    void setRepositoryUri(String repositoryUri);
 
     String getBuildPlanId();
 
@@ -41,36 +41,36 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
      */
     @Nullable
     @JsonInclude
-    default String getUserIndependentRepositoryUrl() {
-        if (getRepositoryUrl() == null) {
+    default String getUserIndependentRepositoryUri() {
+        if (getRepositoryUri() == null) {
             return null;
         }
         try {
-            URI repoUrl = new URI(getRepositoryUrl());
+            URI repoUri = new URI(getRepositoryUri());
             // Note: the following line reconstructs the URL without using the authority, it removes ’username@' before the host
-            return new URI(repoUrl.getScheme(), null, repoUrl.getHost(), repoUrl.getPort(), repoUrl.getPath(), null, null).toString();
+            return new URI(repoUri.getScheme(), null, repoUri.getHost(), repoUri.getPort(), repoUri.getPath(), null, null).toString();
         }
         catch (URISyntaxException e) {
-            log.debug("Cannot create user independent repository url from {} due to malformed URL exception", getRepositoryUrl(), e);
+            log.debug("Cannot create user independent repository uri from {} due to malformed URL exception", getRepositoryUri(), e);
             return null;
         }
     }
 
     /**
-     * @return the repository url of the programming exercise participation wrapped in an object
+     * @return the repository uri of the programming exercise participation wrapped in an object
      */
     @JsonIgnore
-    default VcsRepositoryUri getVcsRepositoryUrl() {
-        var repoUrl = getRepositoryUrl();
-        if (repoUrl == null) {
+    default VcsRepositoryUri getVcsRepositoryUri() {
+        var repoUri = getRepositoryUri();
+        if (repoUri == null) {
             return null;
         }
 
         try {
-            return new VcsRepositoryUri(repoUrl);
+            return new VcsRepositoryUri(repoUri);
         }
         catch (URISyntaxException e) {
-            log.warn("Cannot create URI for repositoryUrl: {} due to the following error: {}", repoUrl, e.getMessage());
+            log.warn("Cannot create URI for repositoryUri: {} due to the following error: {}", repoUri, e.getMessage());
         }
         return null;
     }

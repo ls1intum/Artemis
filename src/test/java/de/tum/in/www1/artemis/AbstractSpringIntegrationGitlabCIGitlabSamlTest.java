@@ -338,8 +338,8 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     }
 
     @Override
-    public void mockRepositoryUrlIsValid(VcsRepositoryUri repositoryUrl, String projectKey, boolean isUrlValid) throws GitLabApiException {
-        gitlabRequestMockProvider.mockRepositoryUrlIsValid(repositoryUrl, isUrlValid);
+    public void mockRepositoryUriIsValid(VcsRepositoryUri repositoryUri, String projectKey, boolean isUrlValid) throws GitLabApiException {
+        gitlabRequestMockProvider.mockRepositoryUriIsValid(repositoryUri, isUrlValid);
     }
 
     @Override
@@ -364,8 +364,8 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     }
 
     @Override
-    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUrl, String projectKey, Set<User> users) throws GitLabApiException {
-        gitlabRequestMockProvider.setRepositoryPermissionsToReadOnly(repositoryUrl, users);
+    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUri, String projectKey, Set<User> users) throws GitLabApiException {
+        gitlabRequestMockProvider.setRepositoryPermissionsToReadOnly(repositoryUri, users);
     }
 
     @Override

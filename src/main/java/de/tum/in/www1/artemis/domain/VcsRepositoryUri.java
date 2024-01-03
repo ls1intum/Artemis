@@ -57,7 +57,7 @@ public class VcsRepositoryUri {
             return this.uri.toString();
         }
         else {
-            return "VcsRepositoryUrl: empty";
+            return "VcsRepositoryUri: empty";
         }
     }
 
@@ -74,7 +74,7 @@ public class VcsRepositoryUri {
      *
      * @return the folderName as a string.
      */
-    public String folderNameForRepositoryUrl() {
+    public String folderNameForRepositoryUri() {
         if ("file".equals(uri.getScheme())) {
             // Take the last element of the path
             final var segments = uri.getPath().split("/");

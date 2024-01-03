@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExercisePa
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
@@ -53,7 +53,7 @@ public class ProgrammingExerciseImportService {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
-    private final UrlService urlService;
+    private final UriService uriService;
 
     private final TemplateUpgradePolicy templateUpgradePolicy;
 
@@ -62,7 +62,7 @@ public class ProgrammingExerciseImportService {
     public ProgrammingExerciseImportService(Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseService programmingExerciseService,
             ProgrammingExerciseTaskService programmingExerciseTaskService, GitService gitService, FileService fileService, UserRepository userRepository,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UrlService urlService, TemplateUpgradePolicy templateUpgradePolicy,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UriService uriService, TemplateUpgradePolicy templateUpgradePolicy,
             ProgrammingExerciseImportBasicService programmingExerciseImportBasicService) {
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -73,7 +73,7 @@ public class ProgrammingExerciseImportService {
         this.fileService = fileService;
         this.userRepository = userRepository;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
-        this.urlService = urlService;
+        this.uriService = uriService;
         this.templateUpgradePolicy = templateUpgradePolicy;
         this.programmingExerciseImportBasicService = programmingExerciseImportBasicService;
     }
@@ -93,9 +93,9 @@ public class ProgrammingExerciseImportService {
         VersionControlService versionControl = versionControlService.orElseThrow();
         versionControl.createProjectForExercise(newExercise);
         // Copy all repositories
-        String templateRepoName = urlService.getRepositorySlugFromRepositoryUrlString(templateExercise.getTemplateRepositoryUrl());
-        String testRepoName = urlService.getRepositorySlugFromRepositoryUrlString(templateExercise.getTestRepositoryUrl());
-        String solutionRepoName = urlService.getRepositorySlugFromRepositoryUrlString(templateExercise.getSolutionRepositoryUrl());
+        String templateRepoName = uriService.getRepositorySlugFromRepositoryUriString(templateExercise.getTemplateRepositoryUri());
+        String testRepoName = uriService.getRepositorySlugFromRepositoryUriString(templateExercise.getTestRepositoryUri());
+        String solutionRepoName = uriService.getRepositorySlugFromRepositoryUriString(templateExercise.getSolutionRepositoryUri());
 
         String sourceBranch = versionControl.getOrRetrieveBranchOfExercise(templateExercise);
 
@@ -107,14 +107,14 @@ public class ProgrammingExerciseImportService {
         List<AuxiliaryRepository> auxRepos = templateExercise.getAuxiliaryRepositories();
         for (int i = 0; i < auxRepos.size(); i++) {
             AuxiliaryRepository auxRepo = auxRepos.get(i);
-            var repoUrl = versionControl.copyRepository(sourceProjectKey, auxRepo.getRepositoryName(), sourceBranch, targetProjectKey, auxRepo.getName()).toString();
+            var repoUri = versionControl.copyRepository(sourceProjectKey, auxRepo.getRepositoryName(), sourceBranch, targetProjectKey, auxRepo.getName()).toString();
             AuxiliaryRepository newAuxRepo = newExercise.getAuxiliaryRepositories().get(i);
-            newAuxRepo.setRepositoryUrl(repoUrl);
+            newAuxRepo.setRepositoryUri(repoUri);
             auxiliaryRepositoryRepository.save(newAuxRepo);
         }
 
         // Unprotect the default branch of the template exercise repo.
-        VcsRepositoryUri templateVcsRepositoryUri = newExercise.getVcsTemplateRepositoryUrl();
+        VcsRepositoryUri templateVcsRepositoryUri = newExercise.getVcsTemplateRepositoryUri();
         String templateVcsRepositoryBranch = versionControl.getOrRetrieveBranchOfExercise(templateExercise);
         versionControl.unprotectBranch(templateVcsRepositoryUri, templateVcsRepositoryBranch);
 
@@ -142,12 +142,12 @@ public class ProgrammingExerciseImportService {
         final var solutionParticipation = newExercise.getSolutionParticipation();
         final var targetExerciseProjectKey = newExercise.getProjectKey();
 
-        // Clone all build plans, enable them and set up the initial participations, i.e. setting the correct repo URLs and
+        // Clone all build plans, enable them and set up the initial participations, i.e. setting the correct repo URIs and
         // running the plan for the first time
         cloneAndEnableAllBuildPlans(templateExercise, newExercise);
 
-        updatePlanRepositoriesInBuildPlans(newExercise, templateParticipation, solutionParticipation, targetExerciseProjectKey, templateExercise.getTemplateRepositoryUrl(),
-                templateExercise.getSolutionRepositoryUrl(), templateExercise.getTestRepositoryUrl(), templateExercise.getAuxiliaryRepositoriesForBuildPlan());
+        updatePlanRepositoriesInBuildPlans(newExercise, templateParticipation, solutionParticipation, targetExerciseProjectKey, templateExercise.getTemplateRepositoryUri(),
+                templateExercise.getSolutionRepositoryUri(), templateExercise.getTestRepositoryUri(), templateExercise.getAuxiliaryRepositoriesForBuildPlan());
 
         ContinuousIntegrationTriggerService triggerService = continuousIntegrationTriggerService.orElseThrow();
         triggerService.triggerBuild(templateParticipation);
@@ -155,26 +155,26 @@ public class ProgrammingExerciseImportService {
     }
 
     private void updatePlanRepositoriesInBuildPlans(ProgrammingExercise newExercise, TemplateProgrammingExerciseParticipation templateParticipation,
-            SolutionProgrammingExerciseParticipation solutionParticipation, String targetExerciseProjectKey, String oldExerciseRepoUrl, String oldSolutionRepoUrl,
-            String oldTestRepoUrl, List<AuxiliaryRepository> oldBuildPlanAuxiliaryRepositories) {
+            SolutionProgrammingExerciseParticipation solutionParticipation, String targetExerciseProjectKey, String oldExerciseRepoUri, String oldSolutionRepoUri,
+            String oldTestRepoUri, List<AuxiliaryRepository> oldBuildPlanAuxiliaryRepositories) {
         String newExerciseBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(newExercise);
 
         // update 2 repositories for the BASE build plan --> adapt the triggers so that only the assignment repo (and not the tests' repo) will trigger the BASE build plan
         ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
         continuousIntegration.updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getTemplateRepositoryUrl(), oldExerciseRepoUrl, newExerciseBranch);
+                newExercise.getTemplateRepositoryUri(), oldExerciseRepoUri, newExerciseBranch);
 
         continuousIntegration.updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getTestRepositoryUrl(), oldTestRepoUrl, newExerciseBranch);
+                newExercise.getTestRepositoryUri(), oldTestRepoUri, newExerciseBranch);
 
         updateAuxiliaryRepositoriesForNewExercise(newExercise.getAuxiliaryRepositoriesForBuildPlan(), oldBuildPlanAuxiliaryRepositories, templateParticipation,
                 targetExerciseProjectKey, newExercise);
 
         // update 2 repositories for the SOLUTION build plan
         continuousIntegration.updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getSolutionRepositoryUrl(), oldSolutionRepoUrl, newExerciseBranch);
+                newExercise.getSolutionRepositoryUri(), oldSolutionRepoUri, newExerciseBranch);
         continuousIntegration.updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getTestRepositoryUrl(), oldTestRepoUrl, newExerciseBranch);
+                newExercise.getTestRepositoryUri(), oldTestRepoUri, newExerciseBranch);
 
         updateAuxiliaryRepositoriesForNewExercise(newExercise.getAuxiliaryRepositoriesForBuildPlan(), oldBuildPlanAuxiliaryRepositories, solutionParticipation,
                 targetExerciseProjectKey, newExercise);
@@ -187,7 +187,7 @@ public class ProgrammingExerciseImportService {
             AuxiliaryRepository oldAuxiliaryRepository = oldRepositories.get(i);
             String auxiliaryBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(newExercise);
             continuousIntegrationService.orElseThrow().updatePlanRepository(targetExerciseProjectKey, participation.getBuildPlanId(), newAuxiliaryRepository.getName(),
-                    targetExerciseProjectKey, newAuxiliaryRepository.getRepositoryUrl(), oldAuxiliaryRepository.getRepositoryUrl(), auxiliaryBranch);
+                    targetExerciseProjectKey, newAuxiliaryRepository.getRepositoryUri(), oldAuxiliaryRepository.getRepositoryUri(), auxiliaryBranch);
         }
     }
 
@@ -253,8 +253,8 @@ public class ProgrammingExerciseImportService {
      * @throws GitAPIException If the checkout/push of one repository fails
      */
     private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user) throws GitAPIException {
-        final var repositoryUrl = versionControlService.orElseThrow().getCloneRepositoryUrl(projectKey, repositoryName);
-        Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true);
+        final var repositoryUri = versionControlService.orElseThrow().getCloneRepositoryUri(projectKey, repositoryName);
+        Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true);
         fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"));
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, "Template adjusted by Artemis", true, user);

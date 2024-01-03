@@ -271,10 +271,10 @@ public class GitService {
      */
     private URI getGitUri(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
         if (profileService.isLocalVcsCi()) {
-            // Create less generic LocalVCRepositoryUrl out of VcsRepositoryUrl.
-            LocalVCRepositoryUri localVCRepositoryUrl = new LocalVCRepositoryUri(vcsRepositoryUri.toString(), gitUrl);
+            // Create less generic LocalVCRepositoryUri out of VcsRepositoryUri.
+            LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(vcsRepositoryUri.toString(), gitUrl);
             String localVCBasePath = environment.getProperty("artemis.version-control.local-vcs-repo-path");
-            return localVCRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toUri();
+            return localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath).toUri();
         }
         return useSsh() ? getSshUri(vcsRepositoryUri) : vcsRepositoryUri.getURI();
     }
@@ -284,7 +284,7 @@ public class GitService {
         // Example Bitbucket: ssh://git@bitbucket.ase.in.tum.de:7999/se2021w07h02/se2021w07h02-ga27yox.git
         // Example Gitlab: ssh://git@gitlab.ase.in.tum.de:2222/se2021w07h02/se2021w07h02-ga27yox.git
         final var repositoryUri = vcsRepositoryUri.getURI();
-        // Bitbucket repository urls (until now mainly used with username and password authentication) include "/scm" in the url, which cannot be used in ssh urls,
+        // Bitbucket repository uris (until now mainly used with username and password authentication) include "/scm" in the url, which cannot be used in ssh urls,
         // therefore we need to replace it here
         final var path = repositoryUri.getPath().replace("/scm", "");
         return new URI(templateUri.getScheme(), templateUri.getUserInfo(), templateUri.getHost(), templateUri.getPort(), path, null, repositoryUri.getFragment());
@@ -313,8 +313,8 @@ public class GitService {
      * @throws GitException    if the same repository is attempted to be cloned multiple times.
      */
     public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation, String targetPath) throws GitAPIException, GitException {
-        var repoUrl = participation.getVcsRepositoryUrl();
-        Repository repository = getOrCheckoutRepository(repoUrl, targetPath, true);
+        var repoUri = participation.getVcsRepositoryUri();
+        Repository repository = getOrCheckoutRepository(repoUri, targetPath, true);
         repository.setParticipation(participation);
         return repository;
     }
@@ -333,46 +333,46 @@ public class GitService {
      * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
      */
     public Repository getOrCheckoutRepositoryForJPlag(ProgrammingExerciseParticipation participation, String targetPath) throws GitAPIException, InvalidPathException {
-        var repoUrl = participation.getVcsRepositoryUrl();
-        String repoFolderName = repoUrl.folderNameForRepositoryUrl();
+        var repoUri = participation.getVcsRepositoryUri();
+        String repoFolderName = repoUri.folderNameForRepositoryUri();
 
         // Replace the exercise name in the repository folder name with the participation ID.
         // This is necessary to be able to refer back to the correct participation after the JPlag detection run.
         String updatedRepoFolderName = repoFolderName.replaceAll("/[a-zA-Z0-9]*-", "/" + participation.getId() + "-");
         Path localPath = Path.of(targetPath, updatedRepoFolderName);
 
-        Repository repository = getOrCheckoutRepository(repoUrl, localPath, true);
+        Repository repository = getOrCheckoutRepository(repoUri, localPath, true);
         repository.setParticipation(participation);
 
         return repository;
     }
 
     /**
-     * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
+     * Get the local repository for a given remote repository URI. If the local repo does not exist yet, it will be checked out.
      * Saves the repo in the default path
      *
-     * @param repoUrl   The remote repository.
+     * @param repoUri   The remote repository.
      * @param pullOnGet Pull from the remote on the checked out repository, if it does not need to be cloned.
      * @return the repository if it could be checked out.
      * @throws GitAPIException if the repository could not be checked out.
      */
-    public Repository getOrCheckoutRepository(VcsRepositoryUri repoUrl, boolean pullOnGet) throws GitAPIException {
-        return getOrCheckoutRepository(repoUrl, repoClonePath, pullOnGet);
+    public Repository getOrCheckoutRepository(VcsRepositoryUri repoUri, boolean pullOnGet) throws GitAPIException {
+        return getOrCheckoutRepository(repoUri, repoClonePath, pullOnGet);
     }
 
     /**
-     * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
+     * Get the local repository for a given remote repository URI. If the local repo does not exist yet, it will be checked out.
      *
-     * @param repoUrl    The remote repository.
+     * @param repoUri    The remote repository.
      * @param targetPath path where the repo is located on disk
      * @param pullOnGet  Pull from the remote on the checked out repository, if it does not need to be cloned.
      * @return the repository if it could be checked out.
      * @throws GitAPIException if the repository could not be checked out.
      * @throws GitException    if the same repository is attempted to be cloned multiple times.
      */
-    public Repository getOrCheckoutRepository(VcsRepositoryUri repoUrl, String targetPath, boolean pullOnGet) throws GitAPIException, GitException {
-        Path localPath = getLocalPathOfRepo(targetPath, repoUrl);
-        return getOrCheckoutRepository(repoUrl, localPath, pullOnGet);
+    public Repository getOrCheckoutRepository(VcsRepositoryUri repoUri, String targetPath, boolean pullOnGet) throws GitAPIException, GitException {
+        Path localPath = getLocalPathOfRepo(targetPath, repoUri);
+        return getOrCheckoutRepository(repoUri, localPath, pullOnGet);
     }
 
     /**
@@ -393,7 +393,7 @@ public class GitService {
     }
 
     /**
-     * Get the local repository for a given remote repository URL.
+     * Get the local repository for a given remote repository URI.
      * <p>
      * If the local repo does not exist yet, it will be checked out.
      * After retrieving the repository, the commit for the given hash will be checked out.
@@ -410,35 +410,35 @@ public class GitService {
     }
 
     /**
-     * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
+     * Get the local repository for a given remote repository URI. If the local repo does not exist yet, it will be checked out.
      *
-     * @param repoUrl       The remote repository.
+     * @param repoUri       The remote repository.
      * @param pullOnGet     Pull from the remote on the checked out repository, if it does not need to be cloned.
      * @param defaultBranch The default branch of the target repository.
      * @return the repository if it could be checked out.
      * @throws GitAPIException if the repository could not be checked out.
      * @throws GitException    if the same repository is attempted to be cloned multiple times.
      */
-    public Repository getOrCheckoutRepository(VcsRepositoryUri repoUrl, boolean pullOnGet, String defaultBranch) throws GitAPIException, GitException {
-        Path localPath = getLocalPathOfRepo(repoClonePath, repoUrl);
-        return getOrCheckoutRepository(repoUrl, repoUrl, localPath, pullOnGet, defaultBranch);
+    public Repository getOrCheckoutRepository(VcsRepositoryUri repoUri, boolean pullOnGet, String defaultBranch) throws GitAPIException, GitException {
+        Path localPath = getLocalPathOfRepo(repoClonePath, repoUri);
+        return getOrCheckoutRepository(repoUri, repoUri, localPath, pullOnGet, defaultBranch);
     }
 
-    public Repository getOrCheckoutRepositoryIntoTargetDirectory(VcsRepositoryUri repoUrl, VcsRepositoryUri targetUrl, boolean pullOnGet)
+    public Repository getOrCheckoutRepositoryIntoTargetDirectory(VcsRepositoryUri repoUri, VcsRepositoryUri targetUrl, boolean pullOnGet)
             throws GitAPIException, GitException, InvalidPathException {
         Path localPath = getDefaultLocalPathOfRepo(targetUrl);
-        return getOrCheckoutRepository(repoUrl, targetUrl, localPath, pullOnGet);
+        return getOrCheckoutRepository(repoUri, targetUrl, localPath, pullOnGet);
     }
 
-    public Repository getOrCheckoutRepository(VcsRepositoryUri repoUrl, Path localPath, boolean pullOnGet) throws GitAPIException, GitException, InvalidPathException {
-        return getOrCheckoutRepository(repoUrl, repoUrl, localPath, pullOnGet);
+    public Repository getOrCheckoutRepository(VcsRepositoryUri repoUri, Path localPath, boolean pullOnGet) throws GitAPIException, GitException, InvalidPathException {
+        return getOrCheckoutRepository(repoUri, repoUri, localPath, pullOnGet);
     }
 
     /**
-     * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
+     * Get the local repository for a given remote repository URI. If the local repo does not exist yet, it will be checked out.
      *
-     * @param sourceRepoUrl The source remote repository.
-     * @param targetRepoUrl The target remote repository.
+     * @param sourceRepoUri The source remote repository.
+     * @param targetRepoUri The target remote repository.
      * @param localPath     The local path to clone the repository to.
      * @param pullOnGet     Pull from the remote on the checked out repository, if it does not need to be cloned.
      * @return the repository if it could be checked out.
@@ -446,16 +446,16 @@ public class GitService {
      * @throws GitException         if the same repository is attempted to be cloned multiple times.
      * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
      */
-    public Repository getOrCheckoutRepository(VcsRepositoryUri sourceRepoUrl, VcsRepositoryUri targetRepoUrl, Path localPath, boolean pullOnGet)
+    public Repository getOrCheckoutRepository(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet)
             throws GitAPIException, GitException, InvalidPathException {
-        return getOrCheckoutRepository(sourceRepoUrl, targetRepoUrl, localPath, pullOnGet, defaultBranch);
+        return getOrCheckoutRepository(sourceRepoUri, targetRepoUri, localPath, pullOnGet, defaultBranch);
     }
 
     /**
-     * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
+     * Get the local repository for a given remote repository URI. If the local repo does not exist yet, it will be checked out.
      *
-     * @param sourceRepoUrl The source remote repository.
-     * @param targetRepoUrl The target remote repository.
+     * @param sourceRepoUri The source remote repository.
+     * @param targetRepoUri The target remote repository.
      * @param localPath     The local path to clone the repository to.
      * @param pullOnGet     Pull from the remote on the checked out repository, if it does not need to be cloned.
      * @param defaultBranch The default branch of the target repository
@@ -464,11 +464,11 @@ public class GitService {
      * @throws GitException         if the same repository is attempted to be cloned multiple times.
      * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
      */
-    public Repository getOrCheckoutRepository(VcsRepositoryUri sourceRepoUrl, VcsRepositoryUri targetRepoUrl, Path localPath, boolean pullOnGet, String defaultBranch)
+    public Repository getOrCheckoutRepository(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet, String defaultBranch)
             throws GitAPIException, GitException, InvalidPathException {
         // First try to just retrieve the git repository from our server, as it might already be checked out.
-        // If the sourceRepoUrl differs from the targetRepoUrl, we attempt to clone the source repo into the target directory
-        Repository repository = getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUrl, defaultBranch);
+        // If the sourceRepoUri differs from the targetRepoUri, we attempt to clone the source repo into the target directory
+        Repository repository = getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUri, defaultBranch);
 
         // Note: in case the actual git repository in the file system is corrupt (e.g. by accident), we will get an exception here
         // the exception will then delete the folder, so that the next attempt would be successful.
@@ -495,7 +495,7 @@ public class GitService {
 
             // Clone repository.
             try {
-                var gitUriAsString = getGitUriAsString(sourceRepoUrl);
+                var gitUriAsString = getGitUriAsString(sourceRepoUri);
                 log.debug("Cloning from {} to {}", gitUriAsString, localPath);
                 cloneInProgressOperations.put(localPath, localPath);
                 // make sure the directory to copy into is empty
@@ -515,7 +515,7 @@ public class GitService {
                 // make sure that cloneInProgress is released
                 cloneInProgressOperations.remove(localPath);
             }
-            return getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUrl, defaultBranch);
+            return getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUri, defaultBranch);
         }
     }
 
@@ -553,11 +553,11 @@ public class GitService {
      * Checks whether the repository is cached.
      * This method does only support repositories that use the repoClonePath which is set in the application-artemis.yml file!
      *
-     * @param repositoryUrl the url of the repository
+     * @param repositoryUri the url of the repository
      * @return returns true if the repository is already cached
      */
-    public boolean isRepositoryCached(VcsRepositoryUri repositoryUrl) {
-        Path localPath = getLocalPathOfRepo(repoClonePath, repositoryUrl);
+    public boolean isRepositoryCached(VcsRepositoryUri repositoryUri) {
+        Path localPath = getLocalPathOfRepo(repoClonePath, repositoryUri);
         if (localPath == null) {
             return false;
         }
@@ -568,11 +568,11 @@ public class GitService {
     /**
      * Combine all commits of the given repository into one.
      *
-     * @param repoUrl of the repository to combine.
+     * @param repoUri of the repository to combine.
      * @throws GitAPIException If the checkout fails
      */
-    public void combineAllCommitsOfRepositoryIntoOne(VcsRepositoryUri repoUrl) throws GitAPIException {
-        Repository exerciseRepository = getOrCheckoutRepository(repoUrl, true);
+    public void combineAllCommitsOfRepositoryIntoOne(VcsRepositoryUri repoUri) throws GitAPIException {
+        Repository exerciseRepository = getOrCheckoutRepository(repoUri, true);
         combineAllCommitsIntoInitialCommit(exerciseRepository);
     }
 
@@ -591,7 +591,7 @@ public class GitService {
         if (targetUrl == null) {
             return null;
         }
-        return Path.of(targetPath.replaceAll("^\\." + Pattern.quote(java.io.File.separator), ""), targetUrl.folderNameForRepositoryUrl());
+        return Path.of(targetPath.replaceAll("^\\." + Pattern.quote(java.io.File.separator), ""), targetUrl.folderNameForRepositoryUri());
     }
 
     /**
@@ -599,11 +599,11 @@ public class GitService {
      * from cachedRepositories. Side effect: This method caches retrieved repositories in a HashMap, so continuous retrievals can be avoided (reduces load).
      *
      * @param localPath           to git repo on server.
-     * @param remoteRepositoryUrl the remote repository url for the git repository, will be added to the Repository object for later use, can be null
+     * @param remoteRepositoryUri the remote repository uri for the git repository, will be added to the Repository object for later use, can be null
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
-    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUri remoteRepositoryUrl) {
-        return getExistingCheckedOutRepositoryByLocalPath(localPath, remoteRepositoryUrl, defaultBranch);
+    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUri remoteRepositoryUri) {
+        return getExistingCheckedOutRepositoryByLocalPath(localPath, remoteRepositoryUri, defaultBranch);
     }
 
     /**
@@ -611,11 +611,11 @@ public class GitService {
      * from cachedRepositories. Side effect: This method caches retrieved repositories in a HashMap, so continuous retrievals can be avoided (reduces load).
      *
      * @param localPath           to git repo on server.
-     * @param remoteRepositoryUrl the remote repository url for the git repository, will be added to the Repository object for later use, can be null
+     * @param remoteRepositoryUri the remote repository uri for the git repository, will be added to the Repository object for later use, can be null
      * @param defaultBranch       the name of the branch that should be used as default branch
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
-    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUri remoteRepositoryUrl, String defaultBranch) {
+    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUri remoteRepositoryUri, String defaultBranch) {
         try {
             // Check if there is a folder with the provided path of the git repository.
             if (!Files.exists(localPath)) {
@@ -636,7 +636,7 @@ public class GitService {
             FileRepositoryBuilder builder = new FileRepositoryBuilder();
             builder.setGitDir(gitPath.toFile()).setInitialBranch(defaultBranch).readEnvironment().findGitDir().setup(); // scan environment GIT_* variables
 
-            Repository repository = createRepository(localPath, remoteRepositoryUrl, defaultBranch, builder);
+            Repository repository = createRepository(localPath, remoteRepositoryUri, defaultBranch, builder);
 
             RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
             refUpdate.setForceUpdate(true);
@@ -656,16 +656,16 @@ public class GitService {
      * Creates a new Repository with the given parameters and saves the Repository's StoredConfig.
      *
      * @param localPath           The local path of the repository.
-     * @param remoteRepositoryUrl The remote repository url for the git repository.
+     * @param remoteRepositoryUri The remote repository uri for the git repository.
      * @param defaultBranch       The default branch of the repository.
      * @param builder             The FileRepositoryBuilder.
      * @return The created Repository.
      * @throws IOException if the configuration file cannot be accessed.
      */
     @NotNull
-    private static Repository createRepository(Path localPath, VcsRepositoryUri remoteRepositoryUrl, String defaultBranch, FileRepositoryBuilder builder) throws IOException {
+    private static Repository createRepository(Path localPath, VcsRepositoryUri remoteRepositoryUri, String defaultBranch, FileRepositoryBuilder builder) throws IOException {
         // Create the JGit repository object
-        Repository repository = new Repository(builder, localPath, remoteRepositoryUrl);
+        Repository repository = new Repository(builder, localPath, remoteRepositoryUri);
         // disable auto garbage collection because it can lead to problems (especially with deleting local repositories)
         // see https://stackoverflow.com/questions/45266021/java-jgit-files-delete-fails-to-delete-a-file-but-file-delete-succeeds
         // and https://git-scm.com/docs/git-gc for an explanation of the parameter
@@ -737,15 +737,15 @@ public class GitService {
      * The content to be copied then gets pushed to the new repo.
      *
      * @param targetRepo    Local target repo
-     * @param targetRepoUrl URI of targets repo
+     * @param targetRepoUri URI of targets repo
      * @param oldBranch     default branch that was used when the exercise was created (might differ from the default branch of a participation)
      * @throws GitAPIException if the repo could not be pushed
      */
-    public void pushSourceToTargetRepo(Repository targetRepo, VcsRepositoryUri targetRepoUrl, String oldBranch) throws GitAPIException {
+    public void pushSourceToTargetRepo(Repository targetRepo, VcsRepositoryUri targetRepoUri, String oldBranch) throws GitAPIException {
         try (Git git = new Git(targetRepo)) {
             // overwrite the old remote uri with the target uri
-            git.remoteSetUrl().setRemoteName(REMOTE_NAME).setRemoteUri(new URIish(getGitUriAsString(targetRepoUrl))).call();
-            log.debug("pushSourceToTargetRepo -> Push {}", targetRepoUrl.getURI());
+            git.remoteSetUrl().setRemoteName(REMOTE_NAME).setRemoteUri(new URIish(getGitUriAsString(targetRepoUri))).call();
+            log.debug("pushSourceToTargetRepo -> Push {}", targetRepoUri.getURI());
 
             if (!defaultBranch.equals(oldBranch)) {
                 targetRepo.getConfig().unsetSection(ConfigConstants.CONFIG_BRANCH_SECTION, oldBranch);
@@ -804,19 +804,19 @@ public class GitService {
     }
 
     /**
-     * Change the remote repository url to the currently used authentication mechanism (either ssh or https)
+     * Change the remote repository uri to the currently used authentication mechanism (either ssh or https)
      *
      * @param repo the git repository for which the remote url should be change
      */
     private void setRemoteUrl(Repository repo) {
-        if (repo == null || repo.getRemoteRepositoryUrl() == null) {
+        if (repo == null || repo.getRemoteRepositoryUri() == null) {
             log.warn("Cannot set remoteUrl because it is null!");
             return;
         }
         // Note: we reset the remote url, because it might have changed from https to ssh or ssh to https
         try {
             var existingRemoteUrl = repo.getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME, "url");
-            var newRemoteUrl = getGitUriAsString(repo.getRemoteRepositoryUrl());
+            var newRemoteUrl = getGitUriAsString(repo.getRemoteRepositoryUri());
             if (!Objects.equals(newRemoteUrl, existingRemoteUrl)) {
                 log.info("Replace existing remote url {} with new remote url {}", existingRemoteUrl, newRemoteUrl);
                 repo.getConfig().setString(ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME, "url", newRemoteUrl);
@@ -903,7 +903,7 @@ public class GitService {
             reset(repo, "origin/" + originHead);
         }
         catch (GitAPIException | JGitInternalException ex) {
-            log.error("Cannot fetch/hard reset the repo {} with url {} to origin/HEAD due to the following exception", repo.getLocalPath(), repo.getRemoteRepositoryUrl(), ex);
+            log.error("Cannot fetch/hard reset the repo {} with url {} to origin/HEAD due to the following exception", repo.getLocalPath(), repo.getRemoteRepositoryUri(), ex);
         }
     }
 
@@ -922,18 +922,18 @@ public class GitService {
     /**
      * Get last commit hash from HEAD
      *
-     * @param repoUrl to get the latest hash from.
+     * @param repoUri to get the latest hash from.
      * @return the latestHash of the given repo.
      * @throws EntityNotFoundException if retrieving the latestHash from the git repo failed.
      */
-    public ObjectId getLastCommitHash(VcsRepositoryUri repoUrl) throws EntityNotFoundException {
-        if (repoUrl == null || repoUrl.getURI() == null) {
+    public ObjectId getLastCommitHash(VcsRepositoryUri repoUri) throws EntityNotFoundException {
+        if (repoUri == null || repoUri.getURI() == null) {
             return null;
         }
         // Get HEAD ref of repo without cloning it locally
         try {
-            log.debug("getLastCommitHash {}", repoUrl);
-            var headRef = lsRemoteCommand().setRemote(getGitUriAsString(repoUrl)).callAsMap().get(Constants.HEAD);
+            log.debug("getLastCommitHash {}", repoUri);
+            var headRef = lsRemoteCommand().setRemote(getGitUriAsString(repoUri)).callAsMap().get(Constants.HEAD);
 
             if (headRef == null) {
                 return null;
@@ -942,7 +942,7 @@ public class GitService {
             return headRef.getObjectId();
         }
         catch (GitAPIException | URISyntaxException ex) {
-            throw new EntityNotFoundException("Could not retrieve the last commit hash for repoUrl " + repoUrl + " due to the following exception: " + ex);
+            throw new EntityNotFoundException("Could not retrieve the last commit hash for repoUri " + repoUri + " due to the following exception: " + ex);
         }
     }
 
@@ -1002,7 +1002,7 @@ public class GitService {
         try (Git studentGit = new Git(repository)) {
             setRemoteUrl(repository);
             // Get last commit hash from template repo
-            ObjectId latestHash = getLastCommitHash(programmingExercise.getVcsTemplateRepositoryUrl());
+            ObjectId latestHash = getLastCommitHash(programmingExercise.getVcsTemplateRepositoryUri());
 
             if (latestHash == null) {
                 // Template Repository is somehow empty. Should never happen
@@ -1050,7 +1050,7 @@ public class GitService {
             String headName = "HEAD";
 
             // Get last commit hash from template repo
-            ObjectId latestHash = getLastCommitHash(programmingExercise.getVcsTemplateRepositoryUrl());
+            ObjectId latestHash = getLastCommitHash(programmingExercise.getVcsTemplateRepositoryUri());
 
             if (latestHash == null) {
                 // Template Repository is somehow empty. Should never happen
@@ -1267,15 +1267,15 @@ public class GitService {
     }
 
     /**
-     * Deletes a local repository folder for a repoUrl.
+     * Deletes a local repository folder for a repoUri.
      *
-     * @param repoUrl url of the repository.
+     * @param repoUri url of the repository.
      */
-    public void deleteLocalRepository(VcsRepositoryUri repoUrl) {
+    public void deleteLocalRepository(VcsRepositoryUri repoUri) {
         try {
-            if (repoUrl != null && repositoryAlreadyExists(repoUrl)) {
+            if (repoUri != null && repositoryAlreadyExists(repoUri)) {
                 // We need to close the possibly still open repository otherwise an IOException will be thrown on Windows
-                Repository repo = getOrCheckoutRepository(repoUrl, false);
+                Repository repo = getOrCheckoutRepository(repoUri, false);
                 deleteLocalRepository(repo);
             }
         }
@@ -1357,11 +1357,11 @@ public class GitService {
     /**
      * Checks if repo was already checked out and is present on disk
      *
-     * @param repoUrl URL of the remote repository.
+     * @param repoUri URL of the remote repository.
      * @return True if repo exists on disk
      */
-    public boolean repositoryAlreadyExists(VcsRepositoryUri repoUrl) {
-        Path localPath = getDefaultLocalPathOfRepo(repoUrl);
+    public boolean repositoryAlreadyExists(VcsRepositoryUri repoUri) {
+        Path localPath = getDefaultLocalPathOfRepo(repoUri);
         return Files.exists(localPath);
     }
 
@@ -1406,9 +1406,9 @@ public class GitService {
     }
 
     /**
-     * Checkout a repository and get the git log for a given repository url.
+     * Checkout a repository and get the git log for a given repository uri.
      *
-     * @param vcsRepositoryUri the repository url for which the git log should be retrieved
+     * @param vcsRepositoryUri the repository uri for which the git log should be retrieved
      * @return a list of commit info DTOs containing author, timestamp, commit message, and hash
      * @throws GitAPIException if an error occurs while retrieving the git log
      */

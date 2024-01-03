@@ -36,12 +36,12 @@ public interface ContinuousIntegrationService {
      *
      * @param exercise              a programming exercise with the required information to create the base build plan
      * @param planKey               the key of the plan
-     * @param repositoryURL         the URL of the assignment repository (used to separate between exercise and solution)
-     * @param testRepositoryURL     the URL of the test repository
-     * @param solutionRepositoryURL the URL of the solution repository. Only used for HASKELL exercises with checkoutSolutionRepository=true. Otherwise ignored.
+     * @param repositoryUri         the URI of the assignment repository (used to separate between exercise and solution)
+     * @param testRepositoryUri     the URI of the test repository
+     * @param solutionRepositoryUri the URI of the solution repository. Only used for HASKELL exercises with checkoutSolutionRepository=true. Otherwise ignored.
      */
-    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryURL, VcsRepositoryUri testRepositoryURL,
-            VcsRepositoryUri solutionRepositoryURL);
+    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri,
+            VcsRepositoryUri solutionRepositoryUri);
 
     /**
      * Recreates BASE and SOLUTION Build Plan for the given programming exercise
@@ -150,11 +150,11 @@ public interface ContinuousIntegrationService {
      * @param buildPlanKey    The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
      * @param ciRepoName      The name of the configured repository in the CI plan, normally 'assignment' (or 'test').
      * @param repoProjectKey  The key of the project that contains the repository, e.g. 'EIST16W1', which is normally the programming exercise project key.
-     * @param newRepoUrl      The url of the newly to be referenced repository.
-     * @param existingRepoUrl The url of the existing repository (which should be replaced).
+     * @param newRepoUri      The url of the newly to be referenced repository.
+     * @param existingRepoUri The url of the existing repository (which should be replaced).
      * @param newBranch       The default branch for the new repository
      */
-    void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl, String newBranch);
+    void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUri, String existingRepoUri, String newBranch);
 
     /**
      * Gives overall roles permissions for the defined project. A role can e.g. be all logged-in users

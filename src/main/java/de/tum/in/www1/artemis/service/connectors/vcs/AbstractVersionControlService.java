@@ -11,7 +11,6 @@ import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationContext;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
@@ -23,9 +22,8 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 
 public abstract class AbstractVersionControlService implements VersionControlService {
 
@@ -37,11 +35,9 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
 
-    private final ApplicationContext applicationContext;
-
     protected final GitService gitService;
 
-    protected final UrlService urlService;
+    protected final UriService uriService;
 
     protected final ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
 
@@ -49,12 +45,10 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     protected final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
-    public AbstractVersionControlService(ApplicationContext applicationContext, GitService gitService, UrlService urlService,
-            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository) {
-        this.applicationContext = applicationContext;
+    public AbstractVersionControlService(GitService gitService, UriService uriService, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository) {
         this.gitService = gitService;
-        this.urlService = urlService;
+        this.uriService = uriService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -63,26 +57,21 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     /**
      * Adds a webhook for the specified repository to the given notification URL.
      *
-     * @param repositoryUrl   The repository to which the webhook should get added to
+     * @param repositoryUri   The repository to which the webhook should get added to
      * @param notificationUrl The URL the hook should notify
      * @param webHookName     Any arbitrary name for the webhook
      */
-    protected abstract void addWebHook(VcsRepositoryUri repositoryUrl, String notificationUrl, String webHookName);
+    protected abstract void addWebHook(VcsRepositoryUri repositoryUri, String notificationUrl, String webHookName);
 
     /**
      * Adds an authenticated webhook for the specified repository to the given notification URL.
      *
-     * @param repositoryUrl   The repository to which the webhook should get added to
+     * @param repositoryUri   The repository to which the webhook should get added to
      * @param notificationUrl The URL the hook should notify
      * @param webHookName     Any arbitrary name for the webhook
      * @param secretToken     A secret token that authenticates the webhook against the system behind the notification URL
      */
-    protected abstract void addAuthenticatedWebHook(VcsRepositoryUri repositoryUrl, String notificationUrl, String webHookName, String secretToken);
-
-    protected ContinuousIntegrationService getContinuousIntegrationService() {
-        // We need to get the CI service from the context, because Bamboo and Bitbucket would end up in a circular dependency otherwise
-        return applicationContext.getBean(ContinuousIntegrationService.class);
-    }
+    protected abstract void addAuthenticatedWebHook(VcsRepositoryUri repositoryUri, String notificationUrl, String webHookName, String secretToken);
 
     @Override
     public void addWebHooksForExercise(ProgrammingExercise exercise) {
@@ -91,16 +80,16 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         final var artemisTestsHookPath = ARTEMIS_SERVER_URL + "/api/public/programming-exercises/test-cases-changed/" + exercise.getId();
         // first add web hooks from the version control service to Artemis, so that Artemis is notified and can create ProgrammingSubmission when instructors push their template or
         // solution code
-        addWebHook(exercise.getVcsTemplateRepositoryUrl(), artemisTemplateHookPath, "Artemis WebHook");
-        addWebHook(exercise.getVcsSolutionRepositoryUrl(), artemisSolutionHookPath, "Artemis WebHook");
-        addWebHook(exercise.getVcsTestRepositoryUrl(), artemisTestsHookPath, "Artemis WebHook");
+        addWebHook(exercise.getVcsTemplateRepositoryUri(), artemisTemplateHookPath, "Artemis WebHook");
+        addWebHook(exercise.getVcsSolutionRepositoryUri(), artemisSolutionHookPath, "Artemis WebHook");
+        addWebHook(exercise.getVcsTestRepositoryUri(), artemisTestsHookPath, "Artemis WebHook");
     }
 
     @Override
     public void addWebHookForParticipation(ProgrammingExerciseParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
             // first add a web hook from the version control service to Artemis, so that Artemis is notified can create a ProgrammingSubmission when students push their code
-            addWebHook(participation.getVcsRepositoryUrl(), ARTEMIS_SERVER_URL + "/api/public/programming-submissions/" + participation.getId(), "Artemis WebHook");
+            addWebHook(participation.getVcsRepositoryUri(), ARTEMIS_SERVER_URL + "/api/public/programming-submissions/" + participation.getId(), "Artemis WebHook");
         }
     }
 
@@ -111,26 +100,26 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         targetRepositoryName = targetRepositoryName.toLowerCase();
         final String targetRepoSlug = targetProjectKey.toLowerCase() + "-" + targetRepositoryName;
         // get the remote url of the source repo
-        final var sourceRepoUrl = getCloneRepositoryUrl(sourceProjectKey, sourceRepositoryName);
+        final var sourceRepoUri = getCloneRepositoryUri(sourceProjectKey, sourceRepositoryName);
         // get the remote url of the target repo
-        final var targetRepoUrl = getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);
+        final var targetRepoUri = getCloneRepositoryUri(targetProjectKey, targetRepoSlug);
         Repository targetRepo = null;
         try {
             // create the new target repo
             createRepository(targetProjectKey, targetRepoSlug, null);
             // clone the source repo to the target directory
-            targetRepo = gitService.getOrCheckoutRepositoryIntoTargetDirectory(sourceRepoUrl, targetRepoUrl, true);
+            targetRepo = gitService.getOrCheckoutRepositoryIntoTargetDirectory(sourceRepoUri, targetRepoUri, true);
             // copy by pushing the source's content to the target's repo
-            gitService.pushSourceToTargetRepo(targetRepo, targetRepoUrl, sourceBranch);
+            gitService.pushSourceToTargetRepo(targetRepo, targetRepoUri, sourceBranch);
         }
         catch (GitAPIException | VersionControlException ex) {
             if (isReadFullyShortReadOfBlockException(ex)) {
                 // NOTE: we ignore this particular error: it sometimes happens when pushing code that includes binary files, however the push operation typically worked correctly
                 // TODO: verify that the push operation actually worked correctly, e.g. by comparing the number of commits in the source and target repo
-                log.warn("TransportException/EOFException with 'Short read of block' when copying repository {} to {}. Will ignore it", sourceRepoUrl, targetRepoUrl);
-                return targetRepoUrl;
+                log.warn("TransportException/EOFException with 'Short read of block' when copying repository {} to {}. Will ignore it", sourceRepoUri, targetRepoUri);
+                return targetRepoUri;
             }
-            Path localPath = gitService.getDefaultLocalPathOfRepo(targetRepoUrl);
+            Path localPath = gitService.getDefaultLocalPathOfRepo(targetRepoUri);
             // clean up in case of an error
             try {
                 if (targetRepo != null) {
@@ -149,7 +138,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             throw new VersionControlException("Could not copy repository " + sourceRepositoryName + " to the target repository " + targetRepositoryName, ex);
         }
 
-        return targetRepoUrl;
+        return targetRepoUri;
     }
 
     /**
@@ -179,7 +168,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     @Override
     public String getOrRetrieveBranchOfStudentParticipation(ProgrammingExerciseStudentParticipation participation) {
         if (participation.getBranch() == null) {
-            String branch = getDefaultBranchOfRepository(participation.getVcsRepositoryUrl());
+            String branch = getDefaultBranchOfRepository(participation.getVcsRepositoryUri());
             participation.setBranch(branch);
             studentParticipationRepository.save(participation);
         }
@@ -193,7 +182,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             if (!Hibernate.isInitialized(programmingExercise.getTemplateParticipation())) {
                 programmingExercise.setTemplateParticipation(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(programmingExercise.getId()));
             }
-            String branch = getDefaultBranchOfRepository(programmingExercise.getVcsTemplateRepositoryUrl());
+            String branch = getDefaultBranchOfRepository(programmingExercise.getVcsTemplateRepositoryUri());
             programmingExercise.setBranch(branch);
             programmingExerciseRepository.save(programmingExercise);
         }

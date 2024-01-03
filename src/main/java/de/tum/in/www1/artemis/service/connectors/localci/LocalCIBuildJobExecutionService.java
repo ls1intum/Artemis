@@ -179,15 +179,15 @@ public class LocalCIBuildJobExecutionService {
         // Retrieve the paths to the repositories that the build job needs.
         // This includes the assignment repository (the one to be tested, e.g. the student's repository, or the template repository), and the tests repository which includes
         // the tests to be executed.
-        LocalVCRepositoryUri assignmentRepositoryUrl;
-        LocalVCRepositoryUri testsRepositoryUrl;
+        LocalVCRepositoryUri assignmentRepositoryUri;
+        LocalVCRepositoryUri testsRepositoryUri;
         LocalVCRepositoryUri[] auxiliaryRepositoriesUrls;
         Path[] auxiliaryRepositoriesPaths;
         String[] auxiliaryRepositoryCheckoutDirectories;
 
         try {
-            assignmentRepositoryUrl = new LocalVCRepositoryUri(participation.getRepositoryUrl(), localVCBaseUrl);
-            testsRepositoryUrl = new LocalVCRepositoryUri(participation.getProgrammingExercise().getTestRepositoryUrl(), localVCBaseUrl);
+            assignmentRepositoryUri = new LocalVCRepositoryUri(participation.getRepositoryUri(), localVCBaseUrl);
+            testsRepositoryUri = new LocalVCRepositoryUri(participation.getProgrammingExercise().getTestRepositoryUri(), localVCBaseUrl);
 
             if (!auxiliaryRepositories.isEmpty()) {
                 auxiliaryRepositoriesUrls = new LocalVCRepositoryUri[auxiliaryRepositories.size()];
@@ -195,7 +195,7 @@ public class LocalCIBuildJobExecutionService {
                 auxiliaryRepositoryCheckoutDirectories = new String[auxiliaryRepositories.size()];
 
                 for (int i = 0; i < auxiliaryRepositories.size(); i++) {
-                    auxiliaryRepositoriesUrls[i] = new LocalVCRepositoryUri(auxiliaryRepositories.get(i).getRepositoryUrl(), localVCBaseUrl);
+                    auxiliaryRepositoriesUrls[i] = new LocalVCRepositoryUri(auxiliaryRepositories.get(i).getRepositoryUri(), localVCBaseUrl);
                     auxiliaryRepositoriesPaths[i] = auxiliaryRepositoriesUrls[i].getRepoClonePath(repoClonePath).toAbsolutePath();
                     auxiliaryRepositoryCheckoutDirectories[i] = auxiliaryRepositories.get(i).getCheckoutDirectory();
                 }
@@ -206,11 +206,11 @@ public class LocalCIBuildJobExecutionService {
             }
         }
         catch (LocalVCInternalException e) {
-            throw new LocalCIException("Error while creating LocalVCRepositoryUrl", e);
+            throw new LocalCIException("Error while creating LocalVCRepositoryUri", e);
         }
 
-        Path assignmentRepositoryPath = assignmentRepositoryUrl.getRepoClonePath(repoClonePath).toAbsolutePath();
-        Path testsRepositoryPath = testsRepositoryUrl.getRepoClonePath(repoClonePath).toAbsolutePath();
+        Path assignmentRepositoryPath = assignmentRepositoryUri.getRepoClonePath(repoClonePath).toAbsolutePath();
+        Path testsRepositoryPath = testsRepositoryUri.getRepoClonePath(repoClonePath).toAbsolutePath();
         Path solutionRepositoryPath = null;
         if (participation.getProgrammingExercise().getCheckoutSolutionRepository()) {
             try {
@@ -220,14 +220,14 @@ public class LocalCIBuildJobExecutionService {
                     if (programmingLanguageFeature.checkoutSolutionRepositoryAllowed()) {
                         var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(participation.getProgrammingExercise().getId());
                         if (solutionParticipation.isPresent()) {
-                            solutionRepositoryPath = new LocalVCRepositoryUri(solutionParticipation.get().getRepositoryUrl(), localVCBaseUrl).getRepoClonePath(repoClonePath)
+                            solutionRepositoryPath = new LocalVCRepositoryUri(solutionParticipation.get().getRepositoryUri(), localVCBaseUrl).getRepoClonePath(repoClonePath)
                                     .toAbsolutePath();
                         }
                     }
                 }
             }
             catch (Exception e) {
-                throw new LocalCIException("Error while creating solution LocalVCRepositoryUrl", e);
+                throw new LocalCIException("Error while creating solution LocalVCRepositoryUri", e);
             }
         }
 
@@ -347,7 +347,7 @@ public class LocalCIBuildJobExecutionService {
         // Set the build status to "INACTIVE" to indicate that the build is not running anymore.
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);
 
-        log.info("Building and testing submission for repository {} and commit hash {} took {}", participation.getRepositoryUrl(), commitHash,
+        log.info("Building and testing submission for repository {} and commit hash {} took {}", participation.getRepositoryUri(), commitHash,
                 TimeLogUtil.formatDurationFrom(timeNanoStart));
 
         return buildResult;
@@ -619,7 +619,7 @@ public class LocalCIBuildJobExecutionService {
     private Path cloneAndCheckoutRepository(ProgrammingExerciseParticipation participation, String commitHash) {
         try {
             // Clone the assignment repository into a temporary directory with the name of the commit hash and then checkout the commit hash.
-            Repository repository = gitService.getOrCheckoutRepository(participation.getVcsRepositoryUrl(), Paths.get("checked-out-repos", commitHash), false);
+            Repository repository = gitService.getOrCheckoutRepository(participation.getVcsRepositoryUri(), Paths.get("checked-out-repos", commitHash), false);
             gitService.checkoutRepositoryAtCommit(repository, commitHash);
             return repository.getLocalPath();
         }
@@ -630,7 +630,7 @@ public class LocalCIBuildJobExecutionService {
 
     private void deleteCloneRepo(ProgrammingExerciseParticipation participation, String commitHash) {
         try {
-            Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(Paths.get("checked-out-repos", commitHash), participation.getVcsRepositoryUrl(),
+            Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(Paths.get("checked-out-repos", commitHash), participation.getVcsRepositoryUri(),
                     defaultBranch);
             if (repository == null) {
                 throw new EntityNotFoundException("Repository with commit hash " + commitHash + " not found");

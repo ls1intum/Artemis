@@ -206,13 +206,13 @@ public class ProgrammingExerciseParticipationResource {
             ProgrammingExerciseStudentParticipation gradedParticipation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(gradedParticipationId);
             participationAuthCheckService.checkCanAccessParticipationElseThrow(gradedParticipation);
 
-            sourceURL = gradedParticipation.getVcsRepositoryUrl();
+            sourceURL = gradedParticipation.getVcsRepositoryUri();
         }
         else {
-            sourceURL = exercise.getVcsTemplateRepositoryUrl();
+            sourceURL = exercise.getVcsTemplateRepositoryUri();
         }
 
-        programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUrl(), sourceURL);
+        programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUri(), sourceURL);
 
         return ResponseEntity.ok().build();
     }

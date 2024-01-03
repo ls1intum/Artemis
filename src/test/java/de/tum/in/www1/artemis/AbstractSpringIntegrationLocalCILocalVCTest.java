@@ -359,7 +359,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockRepositoryUrlIsValid(VcsRepositoryUri vcsTemplateRepositoryUrl, String projectKey1, boolean b) throws Exception {
+    public void mockRepositoryUriIsValid(VcsRepositoryUri vcsTemplateRepositoryUri, String projectKey1, boolean b) throws Exception {
         // Not implemented for local VC and local CI
     }
 
@@ -374,7 +374,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUrl, String projectKey1, Set<User> users) throws Exception {
+    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUri, String projectKey1, Set<User> users) throws Exception {
         // Not implemented for local VC and local CI
     }
 

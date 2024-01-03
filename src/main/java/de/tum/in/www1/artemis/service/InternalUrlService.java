@@ -28,11 +28,11 @@ public abstract class InternalUrlService {
     }
 
     /**
-     * Replaces the url of the vcs repository url to the internal url if it's
+     * Replaces the url of the vcs repository uri to the internal url if it's
      * defined.
      *
-     * @param vcsRepositoryUri the vcs repository url
-     * @return the vcs repository url with the internal url
+     * @param vcsRepositoryUri the vcs repository uri
+     * @return the vcs repository uri with the internal url
      */
     public VcsRepositoryUri toInternalVcsUrl(VcsRepositoryUri vcsRepositoryUri) {
         if (vcsRepositoryUri.getURI() == null) {
@@ -51,23 +51,23 @@ public abstract class InternalUrlService {
     }
 
     /**
-     * Replaces the url of the vcs repository url to the internal url if it's
+     * Replaces the url of the vcs repository uri to the internal url if it's
      * defined.
      *
-     * @param vcsRepositoryUrl the vcs repository url
-     * @return the vcs repository url with the internal url
+     * @param vcsRepositoryUri the vcs repository uri
+     * @return the vcs repository uri with the internal url
      */
-    public String toInternalVcsUrl(String vcsRepositoryUrl) {
+    public String toInternalVcsUrl(String vcsRepositoryUri) {
         if (internalVcsUrl.isEmpty()) {
-            return vcsRepositoryUrl;
+            return vcsRepositoryUri;
         }
 
-        if (vcsRepositoryUrl == null) {
+        if (vcsRepositoryUri == null) {
             log.warn("Cannot replace url to internal url {} because the url is null.", internalVcsUrl);
-            return vcsRepositoryUrl;
+            return vcsRepositoryUri;
         }
 
-        return replaceUrl(vcsRepositoryUrl, internalVcsUrl.get());
+        return replaceUrl(vcsRepositoryUri, internalVcsUrl.get());
     }
 
     /**

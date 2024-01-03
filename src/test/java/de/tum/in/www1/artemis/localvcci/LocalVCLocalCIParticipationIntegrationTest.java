@@ -46,7 +46,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractSpringIntegrati
         // Prepare the template repository to copy the student assignment repository from.
         String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
         TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
-        templateParticipation.setRepositoryUrl(localVCBaseUrl + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
+        templateParticipation.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         LocalRepository templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
 
@@ -57,8 +57,8 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractSpringIntegrati
         assertThat(participation).isNotNull();
         assertThat(participation.isPracticeMode()).isFalse();
         assertThat(participation.getStudent()).contains(user);
-        LocalVCRepositoryUri studentAssignmentRepositoryUrl = new LocalVCRepositoryUri(projectKey, projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1", localVCBaseUrl);
-        assertThat(studentAssignmentRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).exists();
+        LocalVCRepositoryUri studentAssignmentRepositoryUri = new LocalVCRepositoryUri(projectKey, projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1", localVCBaseUrl);
+        assertThat(studentAssignmentRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
 
         templateRepository.resetLocalRepo();
     }

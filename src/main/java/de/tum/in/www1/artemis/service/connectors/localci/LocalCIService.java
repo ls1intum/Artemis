@@ -41,8 +41,8 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUri sourceCodeRepositoryURL, VcsRepositoryUri testRepositoryURL,
-            VcsRepositoryUri solutionRepositoryURL) {
+    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri,
+            VcsRepositoryUri solutionRepositoryUri) {
         // Not implemented for local CI. no build plans must be created, because all the information for building
         // a submission and running tests is contained in the participation.
     }
@@ -119,7 +119,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
+    public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUri, String existingRepoUri,
             String newBranch) throws LocalCIException {
         // Not implemented for local CI. No build plans exist.
         // When a student pushes to a repository, a build is triggered using the information contained in the participation which includes the relevant repository.

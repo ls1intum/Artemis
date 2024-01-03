@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUt
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 
 /**
@@ -46,7 +46,7 @@ public class HestiaUtilTestService {
     private GitService gitService;
 
     @Autowired
-    private UrlService urlService;
+    private UriService uriService;
 
     @Autowired
     private ProgrammingExerciseRepository exerciseRepository;
@@ -108,24 +108,24 @@ public class HestiaUtilTestService {
             FileUtils.write(solutionFile, content, Charset.defaultCharset());
         }
 
-        var templateRepoUrl = new GitUtilService.MockFileRepositoryUri(templateRepo.localRepoFile);
-        exercise.setTemplateRepositoryUrl(templateRepoUrl.toString());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(templateRepoUrl, true);
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(templateRepoUrl, false);
+        var templateRepoUri = new GitUtilService.MockFileRepositoryUri(templateRepo.localRepoFile);
+        exercise.setTemplateRepositoryUri(templateRepoUri.toString());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(templateRepoUri, true);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(templateRepoUri, false);
 
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(templateRepoUrl),
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(templateRepoUri),
                 eq(true), any());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(templateRepoUrl),
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(templateRepoUri),
                 eq(false), any());
         doNothing().when(gitService).pullIgnoreConflicts(any(Repository.class));
 
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, urlService.getProjectKeyFromRepositoryUrl(templateRepoUrl));
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, uriService.getProjectKeyFromRepositoryUri(templateRepoUri));
 
         var savedExercise = exerciseRepository.save(exercise);
         programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(savedExercise);
         var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(savedExercise.getId()).orElseThrow();
-        templateParticipation.setRepositoryUrl(templateRepoUrl.toString());
+        templateParticipation.setRepositoryUri(templateRepoUri.toString());
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         var templateSubmission = new ProgrammingSubmission();
         templateSubmission.setParticipation(templateParticipation);
@@ -170,23 +170,23 @@ public class HestiaUtilTestService {
             FileUtils.write(solutionFile, content, Charset.defaultCharset());
         }
 
-        var solutionRepoUrl = new GitUtilService.MockFileRepositoryUri(solutionRepo.localRepoFile);
-        exercise.setSolutionRepositoryUrl(solutionRepoUrl.toString());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(solutionRepoUrl, true);
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(solutionRepoUrl, false);
+        var solutionRepoUri = new GitUtilService.MockFileRepositoryUri(solutionRepo.localRepoFile);
+        exercise.setSolutionRepositoryUri(solutionRepoUri.toString());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(solutionRepoUri, true);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(solutionRepoUri, false);
 
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(solutionRepoUrl),
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(solutionRepoUri),
                 eq(true), any());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(solutionRepoUrl),
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(solutionRepoUri),
                 eq(false), any());
 
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, urlService.getProjectKeyFromRepositoryUrl(solutionRepoUrl));
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, uriService.getProjectKeyFromRepositoryUri(solutionRepoUri));
 
         var savedExercise = exerciseRepository.save(exercise);
         programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(savedExercise);
         var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(savedExercise.getId()).orElseThrow();
-        solutionParticipation.setRepositoryUrl(solutionRepoUrl.toString());
+        solutionParticipation.setRepositoryUri(solutionRepoUri.toString());
         solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
         var solutionSubmission = new ProgrammingSubmission();
         solutionSubmission.setParticipation(solutionParticipation);
@@ -214,21 +214,21 @@ public class HestiaUtilTestService {
         var commits = participationRepo.localGit.log().call();
         var commitsList = StreamSupport.stream(commits.spliterator(), false).toList();
 
-        var participationRepoUrl = new GitUtilService.MockFileRepositoryUri(participationRepo.localRepoFile);
+        var participationRepoUri = new GitUtilService.MockFileRepositoryUri(participationRepo.localRepoFile);
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(participationRepoUrl, true);
+                .getOrCheckoutRepository(participationRepoUri, true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(participationRepoUrl, false);
+                .getOrCheckoutRepository(participationRepoUri, false);
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(participationRepoUrl), eq(true), any());
+                .getOrCheckoutRepository(eq(participationRepoUri), eq(true), any());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(participationRepoUrl), eq(false), any());
+                .getOrCheckoutRepository(eq(participationRepoUri), eq(false), any());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(any(),
                 anyBoolean());
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, urlService.getProjectKeyFromRepositoryUrl(participationRepoUrl));
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, uriService.getProjectKeyFromRepositoryUri(participationRepoUri));
         var participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(exercise, login, participationRepo.localRepoFile.toURI());
         var submission = ParticipationFactory.generateProgrammingSubmission(true, commitsList.get(0).getId().getName(), SubmissionType.MANUAL);
         participation = programmingExerciseStudentParticipationRepository
@@ -271,18 +271,18 @@ public class HestiaUtilTestService {
             FileUtils.write(solutionFile, content, Charset.defaultCharset());
         }
 
-        var testRepoUrl = new GitUtilService.MockFileRepositoryUri(testRepo.localRepoFile);
-        exercise.setTestRepositoryUrl(testRepoUrl.toString());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoUrl, true);
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoUrl, false);
+        var testRepoUri = new GitUtilService.MockFileRepositoryUri(testRepo.localRepoFile);
+        exercise.setTestRepositoryUri(testRepoUri.toString());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoUri, true);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoUri, false);
 
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUrl), eq(true),
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri), eq(true),
                 any());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUrl), eq(false),
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri), eq(false),
                 any());
 
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, urlService.getProjectKeyFromRepositoryUrl(testRepoUrl));
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, uriService.getProjectKeyFromRepositoryUri(testRepoUri));
 
         return exerciseRepository.save(exercise);
     }

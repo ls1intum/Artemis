@@ -99,22 +99,22 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new AccessForbiddenException(e);
         }
 
-        var repositoryUrl = programmingParticipation.getVcsRepositoryUrl();
+        var repositoryUri = programmingParticipation.getVcsRepositoryUri();
 
         // This check reduces the amount of REST-calls that retrieve the default branch of a repository.
         // Retrieving the default branch is not necessary if the repository is already cached.
-        if (gitService.isRepositoryCached(repositoryUrl)) {
-            return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet);
+        if (gitService.isRepositoryCached(repositoryUri)) {
+            return gitService.getOrCheckoutRepository(repositoryUri, pullOnGet);
         }
         else {
             String branch = versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(programmingParticipation);
-            return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet, branch);
+            return gitService.getOrCheckoutRepository(repositoryUri, pullOnGet, branch);
         }
     }
 
     @Override
-    VcsRepositoryUri getRepositoryUrl(Long participationId) throws IllegalArgumentException {
-        return getProgrammingExerciseParticipation(participationId).getVcsRepositoryUrl();
+    VcsRepositoryUri getRepositoryUri(Long participationId) throws IllegalArgumentException {
+        return getProgrammingExerciseParticipation(participationId).getVcsRepositoryUri();
     }
 
     /**
@@ -189,7 +189,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new AccessForbiddenException(e);
         }
         return executeAndCheckForExceptions(() -> {
-            Repository repository = gitService.checkoutRepositoryAtCommit(getRepositoryUrl(participationId), commitId, true);
+            Repository repository = gitService.checkoutRepositoryAtCommit(getRepositoryUri(participationId), commitId, true);
             Map<String, String> filesWithContent = super.repositoryService.getFilesWithContent(repository);
             gitService.switchBackToDefaultBranchHead(repository);
             return new ResponseEntity<>(filesWithContent, HttpStatus.OK);

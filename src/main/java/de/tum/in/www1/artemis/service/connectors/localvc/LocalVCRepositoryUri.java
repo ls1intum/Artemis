@@ -23,7 +23,7 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
     private final boolean isPracticeRepository;
 
     /**
-     * Constructor that builds a LocalVCRepositoryUrl from a project key and a repository slug.
+     * Constructor that builds a LocalVCRepositoryUri from a project key and a repository slug.
      *
      * @param projectKey     the project key.
      * @param repositorySlug the repository slug.
@@ -36,7 +36,7 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
             this.uri = new URI(urlString);
         }
         catch (URISyntaxException e) {
-            throw new LocalVCInternalException("Could not create local VC Repository URL", e);
+            throw new LocalVCInternalException("Could not create local VC Repository URI", e);
         }
 
         this.projectKey = projectKey;
@@ -46,7 +46,7 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
     }
 
     /**
-     * Constructor that builds a LocalVCRepositoryUrl from a URL string.
+     * Constructor that builds a LocalVCRepositoryUri from a URL string.
      *
      * @param urlString      the enire URL string (should already contain the base URL, otherwise an exception is thrown).
      * @param localVCBaseUrl the base URL of the local VC server defined in an environment variable.
@@ -54,13 +54,13 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      */
     public LocalVCRepositoryUri(String urlString, URL localVCBaseUrl) {
         if (!urlString.startsWith(localVCBaseUrl.toString())) {
-            throw new LocalVCInternalException("Invalid local VC Repository URL: " + urlString);
+            throw new LocalVCInternalException("Invalid local VC Repository URI: " + urlString);
         }
 
         Path urlPath = Paths.get(urlString.replaceFirst(localVCBaseUrl.toString(), ""));
 
         if (!("git".equals(urlPath.getName(0).toString())) || !urlPath.getName(2).toString().endsWith(".git")) {
-            throw new LocalVCInternalException("Invalid local VC Repository URL: " + urlString);
+            throw new LocalVCInternalException("Invalid local VC Repository URI: " + urlString);
         }
 
         this.projectKey = urlPath.getName(1).toString();
@@ -71,7 +71,7 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
             this.uri = new URI(urlString);
         }
         catch (URISyntaxException e) {
-            throw new LocalVCInternalException("Could not create local VC Repository URL", e);
+            throw new LocalVCInternalException("Could not create local VC Repository URI", e);
         }
 
         this.repositoryTypeOrUserName = getRepositoryTypeOrUserName(repositorySlug, projectKey);
@@ -79,7 +79,7 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
     }
 
     /**
-     * Constructor that builds a LocalVCRepositoryUrl from a repository path.
+     * Constructor that builds a LocalVCRepositoryUri from a repository path.
      *
      * @param repositoryPath   the path to the repository, also works with a path to a local checked out repository.
      * @param localVCServerUrl the base URL of the local VC server defined in an environment variable.
@@ -101,7 +101,7 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
             this.uri = new URI(urlString);
         }
         catch (URISyntaxException e) {
-            throw new LocalVCInternalException("Could not create local VC Repository URL", e);
+            throw new LocalVCInternalException("Could not create local VC Repository URI", e);
         }
 
         this.repositoryTypeOrUserName = getRepositoryTypeOrUserName(repositorySlug, projectKey);

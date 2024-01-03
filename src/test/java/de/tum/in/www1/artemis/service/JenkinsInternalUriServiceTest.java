@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsInternalUrlService;
 
-class JenkinsInternalUrlServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class JenkinsInternalUriServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private JenkinsInternalUrlService jenkinsInternalUrlService;
@@ -52,9 +52,9 @@ class JenkinsInternalUrlServiceTest extends AbstractSpringIntegrationJenkinsGitl
         var newVcsUrl = jenkinsInternalUrlService.toInternalVcsUrl(vcsRepositoryUri);
         assertThat(newVcsUrl).hasToString("http://1.2.3.4:123/some-repo.git");
 
-        var vcsRepositoryUrl = mock(VcsRepositoryUri.class);
-        doReturn(null).when(vcsRepositoryUrl).getURI();
-        assertThat(jenkinsInternalUrlService.toInternalVcsUrl(vcsRepositoryUrl)).isEqualTo(vcsRepositoryUrl);
+        var vcsRepositoryUri = mock(VcsRepositoryUri.class);
+        doReturn(null).when(vcsRepositoryUri).getURI();
+        assertThat(jenkinsInternalUrlService.toInternalVcsUrl(vcsRepositoryUri)).isEqualTo(vcsRepositoryUri);
 
         String nullUrl = null;
         assertThat(jenkinsInternalUrlService.toInternalVcsUrl(nullUrl)).isNull();

@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
@@ -55,19 +55,19 @@ public class GitLabJenkinsMigrationService implements CIVCSMigrationService {
 
     private final JenkinsService jenkinsService;
 
-    private final UrlService urlService;
+    private final UriService uriService;
 
     private final GitLabApi gitlab;
 
-    public GitLabJenkinsMigrationService(JenkinsJobService jenkinsJobService, GitLabApi gitlab, JenkinsService jenkinsService, UrlService urlService) {
+    public GitLabJenkinsMigrationService(JenkinsJobService jenkinsJobService, GitLabApi gitlab, JenkinsService jenkinsService, UriService uriService) {
         this.jenkinsJobService = jenkinsJobService;
         this.gitlab = gitlab;
         this.jenkinsService = jenkinsService;
-        this.urlService = urlService;
+        this.uriService = uriService;
     }
 
     @Override
-    public void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUri repositoryUrl) {
+    public void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUri repositoryUri) {
         try {
             Document currentConfig = jenkinsJobService.getJobConfig(projectKey, buildPlanKey);
             Document newConfig = replaceNotificationUrlInJobConfig(currentConfig);
@@ -80,8 +80,8 @@ public class GitLabJenkinsMigrationService implements CIVCSMigrationService {
     }
 
     @Override
-    public void deleteBuildTriggers(String projectKey, String buildPlanKey, VcsRepositoryUri repositoryUrl) {
-        removeWebHook(repositoryUrl);
+    public void deleteBuildTriggers(String projectKey, String buildPlanKey, VcsRepositoryUri repositoryUri) {
+        removeWebHook(repositoryUri);
 
         if (projectKey != null && buildPlanKey != null) {
             try {
@@ -97,7 +97,7 @@ public class GitLabJenkinsMigrationService implements CIVCSMigrationService {
     }
 
     @Override
-    public void overrideBuildPlanRepository(String buildPlanKey, String name, String repositoryUrl, String defaultBranch) {
+    public void overrideBuildPlanRepository(String buildPlanKey, String name, String repositoryUri, String defaultBranch) {
         // not needed for Jenkins
     }
 
@@ -109,7 +109,7 @@ public class GitLabJenkinsMigrationService implements CIVCSMigrationService {
     @Override
     public Page<ProgrammingExerciseStudentParticipation> getPageableStudentParticipations(
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Pageable pageable) {
-        return programmingExerciseStudentParticipationRepository.findAllWithRepositoryUrlOrBuildPlanId(pageable);
+        return programmingExerciseStudentParticipationRepository.findAllWithRepositoryUriOrBuildPlanId(pageable);
     }
 
     @Override
@@ -123,8 +123,8 @@ public class GitLabJenkinsMigrationService implements CIVCSMigrationService {
     }
 
     @Override
-    public void removeWebHook(VcsRepositoryUri repositoryUrl) {
-        final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+    public void removeWebHook(VcsRepositoryUri repositoryUri) {
+        final var repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
 
         try {
             List<ProjectHook> hooks = gitlab.getProjectApi().getHooks(repositoryPath);
@@ -153,7 +153,7 @@ public class GitLabJenkinsMigrationService implements CIVCSMigrationService {
             }
         }
         catch (GitLabApiException e) {
-            throw new GitLabException("Unable to remove webhook for " + repositoryUrl, e);
+            throw new GitLabException("Unable to remove webhook for " + repositoryUri, e);
         }
     }
 

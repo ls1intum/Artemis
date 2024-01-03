@@ -104,10 +104,10 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         var newObjectId = new ObjectId(4, 5, 2, 5, 3);
         doReturn(newObjectId).when(gitService).getLastCommitHash(null);
-        doReturn(newObjectId).when(gitService).getLastCommitHash(exercise.getTemplateParticipation().getVcsRepositoryUrl());
+        doReturn(newObjectId).when(gitService).getLastCommitHash(exercise.getTemplateParticipation().getVcsRepositoryUri());
 
         var dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(programmingExerciseStudentParticipation.getVcsRepositoryUrl());
+        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(programmingExerciseStudentParticipation.getVcsRepositoryUri());
     }
 
     @AfterEach
@@ -396,8 +396,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         var participation = createExerciseWithSubmissionAndParticipation();
         bambooRequestMockProvider.enableMockingOfRequests(true);
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        var repoUrl = urlService.getRepositorySlugFromRepositoryUrl(participation.getVcsRepositoryUrl());
-        doReturn(participation.getVcsRepositoryUrl()).when(versionControlService).getCloneRepositoryUrl(exercise.getProjectKey(), repoUrl);
+        var repoUri = uriService.getRepositorySlugFromRepositoryUri(participation.getVcsRepositoryUri());
+        doReturn(participation.getVcsRepositoryUri()).when(versionControlService).getCloneRepositoryUri(exercise.getProjectKey(), repoUri);
         mockConnectorRequestsForResumeParticipation(exercise, participation.getParticipantIdentifier(), participation.getParticipant().getParticipants(), true);
 
         doThrow(ContinuousIntegrationException.class).when(continuousIntegrationTriggerService).triggerBuild(participation);

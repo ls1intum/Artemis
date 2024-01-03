@@ -124,9 +124,9 @@ class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "master", "main", "someOtherName" })
     void testGetDefaultBranch(String defaultBranch) throws URISyntaxException, GitLabApiException {
-        VcsRepositoryUri repoURL = new VcsRepositoryUri("http://some.test.url/scm/PROJECTNAME/REPONAME-exercise.git");
+        VcsRepositoryUri repoUri = new VcsRepositoryUri("http://some.test.url/scm/PROJECTNAME/REPONAME-exercise.git");
         gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
-        String actualDefaultBranch = versionControlService.getDefaultBranchOfRepository(repoURL);
+        String actualDefaultBranch = versionControlService.getDefaultBranchOfRepository(repoUri);
         assertThat(actualDefaultBranch).isEqualTo(defaultBranch);
     }
 

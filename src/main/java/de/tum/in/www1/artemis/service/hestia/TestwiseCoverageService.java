@@ -211,7 +211,7 @@ public class TestwiseCoverageService {
     private Map<String, Integer> getLineCountByFilePath(ProgrammingSubmission submission) {
         try {
             var solutionParticipation = (SolutionProgrammingExerciseParticipation) submission.getParticipation();
-            var solutionRepo = gitService.getOrCheckoutRepository(solutionParticipation.getVcsRepositoryUrl(), true);
+            var solutionRepo = gitService.getOrCheckoutRepository(solutionParticipation.getVcsRepositoryUri(), true);
             gitService.resetToOriginHead(solutionRepo);
             gitService.pullIgnoreConflicts(solutionRepo);
             var solutionFiles = repositoryService.getFilesWithContent(solutionRepo);

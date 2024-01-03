@@ -140,7 +140,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
         int callCount = wasCalled ? 1 : 0;
         for (StudentParticipation studentParticipation : studentParticipations) {
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
-            verify(versionControlService, timeout(timeoutInMs).times(callCount)).setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getVcsRepositoryUrl(),
+            verify(versionControlService, timeout(timeoutInMs).times(callCount)).setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getVcsRepositoryUri(),
                     programmingExercise.getProjectKey(), programmingExerciseStudentParticipation.getStudents());
             verify(programmingExerciseParticipationService, timeout(timeoutInMs).times(callCount)).lockStudentParticipation(programmingExerciseStudentParticipation);
         }
@@ -148,8 +148,8 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
 
     private void mockStudentRepoLocks() throws GitAPIException, GitLabApiException {
         for (final var participation : programmingExercise.getStudentParticipations()) {
-            final VcsRepositoryUri repositoryUrl = ((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl();
-            gitlabRequestMockProvider.setRepositoryPermissionsToReadOnly(repositoryUrl, participation.getStudents());
+            final VcsRepositoryUri repositoryUri = ((ProgrammingExerciseParticipation) participation).getVcsRepositoryUri();
+            gitlabRequestMockProvider.setRepositoryPermissionsToReadOnly(repositoryUri, participation.getStudents());
             doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
                     .getOrCheckoutRepository((ProgrammingExerciseParticipation) participation);
         }
@@ -336,14 +336,14 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCombineTemplateBeforeRelease() throws Exception {
         ProgrammingExercise programmingExerciseWithTemplate = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
-        VcsRepositoryUri repositoryUrl = programmingExerciseWithTemplate.getVcsTemplateRepositoryUrl();
-        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(repositoryUrl);
+        VcsRepositoryUri repositoryUri = programmingExerciseWithTemplate.getVcsTemplateRepositoryUri();
+        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(repositoryUri);
 
         programmingExercise.setReleaseDate(nowPlusMillis(DELAY_MS).plusSeconds(Constants.SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS));
         programmingExerciseRepository.saveAndFlush(programmingExercise);
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
-        verify(gitService, timeout(TIMEOUT_MS)).combineAllCommitsOfRepositoryIntoOne(repositoryUrl);
+        verify(gitService, timeout(TIMEOUT_MS)).combineAllCommitsOfRepositoryIntoOne(repositoryUri);
     }
 
     @Test
@@ -630,7 +630,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
 
         instanceMessageReceiveService.processStudentExamIndividualWorkingTimeChangeDuringConduction(studentExam.getId());
 
-        verify(versionControlService, timeout(TIMEOUT_MS)).setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUrl(), examExercise.getProjectKey(),
+        verify(versionControlService, timeout(TIMEOUT_MS)).setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUri(), examExercise.getProjectKey(),
                 participation.getStudents());
     }
 
@@ -651,7 +651,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
 
         instanceMessageReceiveService.processRescheduleExamDuringConduction(exam.getId());
 
-        verify(versionControlService, timeout(TIMEOUT_MS)).setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUrl(), examExercise.getProjectKey(),
+        verify(versionControlService, timeout(TIMEOUT_MS)).setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUri(), examExercise.getProjectKey(),
                 participation.getStudents());
         verify(programmingExerciseParticipationService, timeout(TIMEOUT_MS)).lockStudentRepositoryAndParticipation(examExercise, participation);
     }

@@ -15,15 +15,15 @@ public interface JenkinsXmlConfigBuilder {
      * <p>
      * The URLs should haven been converted to the internal URL format using {@link JenkinsInternalUrlService#toInternalVcsUrl(VcsRepositoryUri)}.
      *
-     * @param assignmentRepositoryUrl The URL to the VCS repository of the student.
-     * @param testRepositoryUrl       The URL to the VCS repository of the tests for the exercise.
-     * @param solutionRepositoryUrl   The URL to the VCS repository of the solution of the exercise.
+     * @param assignmentRepositoryUri The URL to the VCS repository of the student.
+     * @param testRepositoryUri       The URL to the VCS repository of the tests for the exercise.
+     * @param solutionRepositoryUri   The URL to the VCS repository of the solution of the exercise.
      */
-    record InternalVcsRepositoryURLs(VcsRepositoryUri assignmentRepositoryUrl, VcsRepositoryUri testRepositoryUrl, VcsRepositoryUri solutionRepositoryUrl) {
+    record InternalVcsRepositoryURLs(VcsRepositoryUri assignmentRepositoryUri, VcsRepositoryUri testRepositoryUri, VcsRepositoryUri solutionRepositoryUri) {
     }
 
     /**
-     * Creates a basic build config for Jenkins based on the given repository URLs. I.e. a build that tests the assignment
+     * Creates a basic build config for Jenkins based on the given repository URIs. I.e. a build that tests the assignment
      * code and exports the build results to Artemis afterwards. If static code analysis is activated, the plan will additionally
      * execute supported static code analysis tools.
      *

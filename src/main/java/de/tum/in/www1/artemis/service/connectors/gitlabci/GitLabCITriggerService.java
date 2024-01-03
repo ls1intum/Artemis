@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
-import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 
 @Profile("gitlabci")
@@ -19,20 +19,20 @@ public class GitLabCITriggerService implements ContinuousIntegrationTriggerServi
 
     private final GitLabApi gitlab;
 
-    private final UrlService urlService;
+    private final UriService uriService;
 
-    public GitLabCITriggerService(GitLabApi gitlab, UrlService urlService) {
+    public GitLabCITriggerService(GitLabApi gitlab, UriService uriService) {
         this.gitlab = gitlab;
-        this.urlService = urlService;
+        this.uriService = uriService;
     }
 
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws ContinuousIntegrationException {
-        triggerBuild(participation.getVcsRepositoryUrl(), participation.getProgrammingExercise().getBranch());
+        triggerBuild(participation.getVcsRepositoryUri(), participation.getProgrammingExercise().getBranch());
     }
 
     private void triggerBuild(VcsRepositoryUri vcsRepositoryUri, String branch) {
-        final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(vcsRepositoryUri);
+        final String repositoryPath = uriService.getRepositoryPathFromRepositoryUri(vcsRepositoryUri);
         try {
             Trigger trigger = gitlab.getPipelineApi().createPipelineTrigger(repositoryPath, "Trigger build");
             gitlab.getPipelineApi().triggerPipeline(repositoryPath, trigger, branch, null);

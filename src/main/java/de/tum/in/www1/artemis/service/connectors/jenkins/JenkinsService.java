@@ -72,9 +72,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryURL, VcsRepositoryUri testRepositoryURL,
-            VcsRepositoryUri solutionRepositoryURL) {
-        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, planKey, repositoryURL);
+    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri,
+            VcsRepositoryUri solutionRepositoryUri) {
+        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, planKey, repositoryUri);
     }
 
     @Override
@@ -109,9 +109,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
+    public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUri, String existingRepoUri,
             String newDefaultBranch) {
-        jenkinsBuildPlanService.updateBuildPlanRepositories(buildProjectKey, buildPlanKey, newRepoUrl, existingRepoUrl);
+        jenkinsBuildPlanService.updateBuildPlanRepositories(buildProjectKey, buildPlanKey, newRepoUri, existingRepoUri);
     }
 
     @Override
