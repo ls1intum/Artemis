@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.ProjectType.*;
 
 import java.util.List;
 
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureServ
  * Sets the features provided for the different programming languages when using the local CI system.
  */
 @Service
+@Primary // only needed for the bamboo to local ci migration
 @Profile("localci")
 public class LocalCIProgrammingLanguageFeatureService extends ProgrammingLanguageFeatureService {
 
