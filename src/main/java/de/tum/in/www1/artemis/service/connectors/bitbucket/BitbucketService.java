@@ -8,10 +8,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -762,37 +759,35 @@ public class BitbucketService extends AbstractVersionControlService {
         // {"eventKey":"...","date":"...","actor":{...},"repository":{...},"changes":[{"ref":{...},"refId":"refs/heads/main",
         // "fromHash":"5626436a443eb898a5c5f74b6352f26ea2b7c84e","toHash":"662868d5e16406d1dd4dcfa8ac6c46ee3d677924","type":"UPDATE"}]}
         // we are interested in the toHash
-        Commit commit = new Commit();
         try {
             // TODO: use a DTO (e.g. something similar to CommitDTO)
             final var commitData = new ObjectMapper().convertValue(requestBody, JsonNode.class);
             var lastChange = commitData.get("changes").get(0);
             var ref = lastChange.get("ref");
+            String branch = null;
             if (ref != null) {
-                var branch = ref.get("displayId").asText();
-                commit.setBranch(branch);
+                branch = ref.get("displayId").asText();
             }
             var hash = lastChange.get("toHash").asText();
-            commit.setCommitHash(hash);
             var actor = commitData.get("actor");
             String name = actor.get("name").asText();
             String email = actor.get("emailAddress").asText();
+            String message = null;
             if (artemisGitName.equalsIgnoreCase(name)) {
                 final var commitInfo = fetchCommitInfo(commitData, hash);
                 if (commitInfo != null) {
-                    commit.setMessage(commitInfo.get("message").asText());
+                    message = commitInfo.get("message").asText();
                     name = commitInfo.get("author").get("name").asText();
                     email = commitInfo.get("author").get("emailAddress").asText();
                 }
             }
-            commit.setAuthorName(name);
-            commit.setAuthorEmail(email);
+            return new Commit(hash, name, message, email, branch);
         }
         catch (Exception e) {
             // silently fail because this step is not absolutely necessary
             log.error("Error when getting hash of last commit. Able to continue.", e);
         }
-        return commit;
+        return new Commit(null, null, null, null, null);
     }
 
     @Override
