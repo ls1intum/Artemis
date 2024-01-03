@@ -562,8 +562,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCaseChanged() throws Exception {
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        Commit commit = new Commit();
-        commit.setCommitHash(dummyHash);
+        Commit commit = new Commit(dummyHash, null, null, null, null);
 
         setBuildAndTestAfterDueDateForProgrammingExercise(null);
 
