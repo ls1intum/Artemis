@@ -425,6 +425,34 @@ public class LocalCISharedBuildJobQueueService {
         throw new IllegalStateException("Could not retrieve participation with id " + participationId + " from database after " + maxRetries + " retries.");
     }
 
+    public void cancelAllQueuedBuildJobs() {
+        queue.clear();
+    }
+
+    public void cancelAllRunningBuildJobs() {
+        for (LocalCIBuildJobQueueItem buildJob : processingJobs.values()) {
+            cancelBuildJob(buildJob.getCommitHash());
+        }
+    }
+
+    public void cancelAllQueuedBuildJobsForCourse(long courseId) {
+        List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
+        for (LocalCIBuildJobQueueItem job : queue) {
+            if (job.getCourseId() == courseId) {
+                toRemove.add(job);
+            }
+        }
+        queue.removeAll(toRemove);
+    }
+
+    public void cancelAllRunningBuildJobsForCourse(long courseId) {
+        for (LocalCIBuildJobQueueItem buildJob : processingJobs.values()) {
+            if (buildJob.getCourseId() == courseId) {
+                cancelBuildJob(buildJob.getCommitHash());
+            }
+        }
+    }
+
     private class BuildJobItemListener implements ItemListener<LocalCIBuildJobQueueItem> {
 
         @Override

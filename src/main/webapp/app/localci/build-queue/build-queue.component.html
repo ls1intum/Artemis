@@ -21,7 +21,7 @@
                 [rowClass]="settings.rowClass"
                 [scrollbarH]="settings.scrollbarH"
             >
-                <ngx-datatable-column prop="name" [minWidth]="150" [width]="200" [maxWidth]="200">
+                <ngx-datatable-column prop="name" [minWidth]="150" [width]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.name"> Name </span>
@@ -32,7 +32,7 @@
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="participationId" [minWidth]="150" [width]="150" [maxWidth]="200">
+                <ngx-datatable-column prop="participationId" [minWidth]="150" [width]="150">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('participationId')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.participationId"> Participation ID </span>
@@ -43,7 +43,7 @@
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="repositoryTypeOrUserName" [minWidth]="150" [width]="200" [maxWidth]="200">
+                <ngx-datatable-column prop="repositoryTypeOrUserName" [minWidth]="150" [width]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('repositoryTypeOrUserName')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.repositoryType"> Repository Type </span>
@@ -54,7 +54,7 @@
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="commitHash" [minWidth]="150" [width]="200" [maxWidth]="200">
+                <ngx-datatable-column prop="commitHash" [minWidth]="150" [width]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('commitHash')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.commitHash"> Commit Hash </span>
@@ -65,7 +65,7 @@
                         <span class="wrap-long-text">{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="submissionDate" [minWidth]="150" [width]="200" [maxWidth]="200">
+                <ngx-datatable-column prop="submissionDate" [minWidth]="150" [width]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submissionDate')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.submissionDate"> Submission Date </span>
@@ -76,7 +76,7 @@
                         <span>{{ value | artemisDate: 'long' : true }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="buildStartDate" [minWidth]="150" [width]="200" [maxWidth]="200">
+                <ngx-datatable-column prop="buildStartDate" [minWidth]="150" [width]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildStartDate')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.buildStartDate"> Build Start Date </span>
@@ -87,7 +87,7 @@
                         <span>{{ value | artemisDate: 'long' : true }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="courseId" [minWidth]="150" [width]="200" [maxWidth]="200">
+                <ngx-datatable-column prop="courseId" [minWidth]="150" [width]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('courseId')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.courseId"> Course ID </span>
@@ -109,16 +109,22 @@
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column [minWidth]="150" [width]="100" [maxWidth]="150">
-                    <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.buildQueue.buildJob.actions"> Actions </span>
-                    </ng-template>
-                    <ng-template ngx-datatable-cell-template let-row="row">
-                        <button class="btn btn-danger btn-sm" (click)="cancelBuildJob(row.commitHash)">
-                            <fa-icon [icon]="faTimes"></fa-icon>
-                            <span jhiTranslate="artemisApp.buildQueue.buildJob.cancel"> Cancel </span>
-                        </button>
-                    </ng-template>
+                <ngx-datatable-column prop="cancel" [minWidth]="150" [width]="100">
+                    <div class="d-flex justify-content-center align-items-center">
+                        <ng-template ngx-datatable-header-template>
+                            <span class="datatable-header-cell-wrapper">
+                                <button class="btn btn-danger btn-sm" (click)="cancelAllRunningBuildJobs()">
+                                    <fa-icon [icon]="faTimes"></fa-icon>
+                                    <span jhiTranslate="artemisApp.buildQueue.cancelAll"> Cancel All </span>
+                                </button>
+                            </span>
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-row="row">
+                            <button class="btn btn-danger btn-sm" (click)="cancelBuildJob(row.commitHash)">
+                                <fa-icon [icon]="faTimes"></fa-icon>
+                            </button>
+                        </ng-template>
+                    </div>
                 </ngx-datatable-column>
             </ngx-datatable>
         </ng-template>
@@ -141,7 +147,7 @@
                 [rowClass]="settings.rowClass"
                 [scrollbarH]="settings.scrollbarH"
             >
-                <ngx-datatable-column prop="name" [minWidth]="150" [width]="200" [maxWidth]="200">
+                <ngx-datatable-column prop="name" [minWidth]="150" [width]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.name"> Name </span>
@@ -152,7 +158,7 @@
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="participationId" [minWidth]="150" [width]="150" [maxWidth]="200">
+                <ngx-datatable-column prop="participationId" [minWidth]="150" [width]="150">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('participationId')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.participationId"> Participation ID </span>
@@ -163,7 +169,7 @@
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="repositoryTypeOrUserName" [minWidth]="150" [width]="200" [maxWidth]="200">
+                <ngx-datatable-column prop="repositoryTypeOrUserName" [minWidth]="150" [width]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('repositoryTypeOrUserName')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.repositoryType"> Repository Type </span>
@@ -174,7 +180,7 @@
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="commitHash" [minWidth]="150" [width]="200" [maxWidth]="200">
+                <ngx-datatable-column prop="commitHash" [minWidth]="150" [width]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('commitHash')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.commitHash"> Commit Hash </span>
@@ -185,7 +191,7 @@
                         <span class="wrap-long-text">{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="submissionDate" [minWidth]="150" [width]="200" [maxWidth]="200">
+                <ngx-datatable-column prop="submissionDate" [minWidth]="150" [width]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submissionDate')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.submissionDate"> Submission Date </span>
@@ -196,7 +202,7 @@
                         <span>{{ value | artemisDate: 'long' : true }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="courseId" [minWidth]="150" [width]="200" [maxWidth]="200">
+                <ngx-datatable-column prop="courseId" [minWidth]="150" [width]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('courseId')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.courseId"> Course ID </span>
@@ -218,16 +224,22 @@
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column [minWidth]="150" [width]="100" [maxWidth]="150">
-                    <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.buildQueue.buildJob.actions"> Actions </span>
-                    </ng-template>
-                    <ng-template ngx-datatable-cell-template let-row="row">
-                        <button class="btn btn-danger btn-sm" (click)="cancelBuildJob(row.commitHash)">
-                            <fa-icon [icon]="faTimes"></fa-icon>
-                            <span jhiTranslate="artemisApp.buildQueue.buildJob.cancel"> Cancel </span>
-                        </button>
-                    </ng-template>
+                <ngx-datatable-column prop="cancel" [minWidth]="150" [width]="100">
+                    <div class="d-flex justify-content-center align-items-center">
+                        <ng-template ngx-datatable-header-template>
+                            <span class="datatable-header-cell-wrapper">
+                                <button class="btn btn-danger btn-sm" (click)="cancelAllQueuedBuildJobs()">
+                                    <fa-icon [icon]="faTimes"></fa-icon>
+                                    <span jhiTranslate="artemisApp.buildQueue.cancelAll"> Cancel All </span>
+                                </button>
+                            </span>
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-row="row">
+                            <button class="btn btn-danger btn-sm" (click)="cancelBuildJob(row.commitHash)">
+                                <fa-icon [icon]="faTimes"></fa-icon>
+                            </button>
+                        </ng-template>
+                    </div>
                 </ngx-datatable-column>
             </ngx-datatable>
         </ng-template>

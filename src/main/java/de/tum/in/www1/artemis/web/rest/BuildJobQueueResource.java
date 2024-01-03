@@ -94,4 +94,44 @@ public class BuildJobQueueResource {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Cancels all queued build jobs for the given course.
+     *
+     * @param courseId the id of the course
+     * @return the ResponseEntity with the result of the cancellation
+     */
+    @DeleteMapping("/build-job-queue/cancel-all-queued/{courseId}")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Void> cancelAllQueuedBuildJobs(@PathVariable long courseId) {
+        log.debug("REST request to cancel all queued build jobs for course {}", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+            throw new AccessForbiddenException("You are not allowed to cancel the build job of this course!");
+        }
+        // Call the cancelAllQueuedBuildJobs method in LocalCIBuildJobManagementService
+        localCIBuildJobQueueService.cancelAllQueuedBuildJobsForCourse(courseId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Cancels all running build jobs for the given course.
+     *
+     * @param courseId the id of the course
+     * @return the ResponseEntity with the result of the cancellation
+     */
+    @DeleteMapping("/build-job-queue/cancel-all-running/{courseId}")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Void> cancelAllRunningBuildJobs(@PathVariable long courseId) {
+        log.debug("REST request to cancel all running build jobs for course {}", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+            throw new AccessForbiddenException("You are not allowed to cancel the build job of this course!");
+        }
+        // Call the cancelAllRunningBuildJobs method in LocalCIBuildJobManagementService
+        localCIBuildJobQueueService.cancelAllRunningBuildJobsForCourse(courseId);
+
+        return ResponseEntity.noContent().build();
+    }
+
 }

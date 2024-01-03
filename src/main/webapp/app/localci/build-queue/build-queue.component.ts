@@ -49,6 +49,10 @@ export class BuildQueueComponent implements OnInit {
         });
     }
 
+    /**
+     * Cancel a specific build job associated with a commit hash
+     * @param commitHash the commit hash of the participation for which to cancel the build job
+     */
     cancelBuildJob(commitHash: string) {
         this.route.paramMap.subscribe((params) => {
             const courseId = Number(params.get('courseId'));
@@ -56,6 +60,34 @@ export class BuildQueueComponent implements OnInit {
                 this.buildQueueService.cancelBuildJobInCourse(courseId, commitHash).subscribe(() => this.load());
             } else {
                 this.buildQueueService.cancelBuildJob(commitHash).subscribe(() => this.load());
+            }
+        });
+    }
+
+    /**
+     * Cancel all queued build jobs
+     */
+    cancelAllQueuedBuildJobs() {
+        this.route.paramMap.subscribe((params) => {
+            const courseId = Number(params.get('courseId'));
+            if (courseId) {
+                this.buildQueueService.cancelAllQueuedBuildJobsInCourse(courseId).subscribe(() => this.load());
+            } else {
+                this.buildQueueService.cancelAllQueuedBuildJobs().subscribe(() => this.load());
+            }
+        });
+    }
+
+    /**
+     * Cancel all running build jobs
+     */
+    cancelAllRunningBuildJobs() {
+        this.route.paramMap.subscribe((params) => {
+            const courseId = Number(params.get('courseId'));
+            if (courseId) {
+                this.buildQueueService.cancelAllRunningBuildJobsInCourse(courseId).subscribe(() => this.load());
+            } else {
+                this.buildQueueService.cancelAllRunningBuildJobs().subscribe(() => this.load());
             }
         });
     }

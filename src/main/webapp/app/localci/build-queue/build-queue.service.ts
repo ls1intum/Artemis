@@ -56,4 +56,32 @@ export class BuildQueueService {
     cancelBuildJob(commitHash: string): Observable<void> {
         return this.http.delete<void>(`${this.adminResourceUrl}/cancel/${commitHash}`);
     }
+
+    /**
+     * Cancel all running build jobs
+     */
+    cancelAllRunningBuildJobs(): Observable<void> {
+        return this.http.delete<void>(`${this.adminResourceUrl}/cancel-all-running`);
+    }
+
+    /**
+     * Cancel all running build jobs associated with a course
+     */
+    cancelAllRunningBuildJobsInCourse(courseId: number): Observable<void> {
+        return this.http.delete<void>(`${this.resourceUrl}/cancel-all-running/${courseId}`);
+    }
+
+    /**
+     * Cancel all queued build jobs
+     */
+    cancelAllQueuedBuildJobs(): Observable<void> {
+        return this.http.delete<void>(`${this.adminResourceUrl}/cancel-all-queued`);
+    }
+
+    /**
+     * Cancel all queued build jobs associated with a course
+     */
+    cancelAllQueuedBuildJobsInCourse(courseId: number): Observable<void> {
+        return this.http.delete<void>(`${this.resourceUrl}/cancel-all-queued/${courseId}`);
+    }
 }
