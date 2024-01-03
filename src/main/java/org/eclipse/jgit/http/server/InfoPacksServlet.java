@@ -9,6 +9,7 @@
 package org.eclipse.jgit.http.server;
 
 import java.io.IOException;
+import java.io.Serial;
 
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,6 +22,7 @@ import org.eclipse.jgit.lib.ObjectDatabase;
 /** Sends the current list of pack files, sorted most recent first. */
 class InfoPacksServlet extends HttpServlet {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @Override

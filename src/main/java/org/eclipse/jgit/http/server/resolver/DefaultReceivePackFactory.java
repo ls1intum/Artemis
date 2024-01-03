@@ -53,14 +53,14 @@ public class DefaultReceivePackFactory implements ReceivePackFactory<HttpServlet
 
         if (cfg.set) {
             if (cfg.enabled) {
-                if (user == null || "".equals(user))
+                if (user == null || user.isEmpty())
                     user = "anonymous";
                 return createFor(req, db, user);
             }
             throw new ServiceNotEnabledException();
         }
 
-        if (user != null && !"".equals(user))
+        if (user != null && !user.isEmpty())
             return createFor(req, db, user);
         throw new ServiceNotAuthorizedException();
     }

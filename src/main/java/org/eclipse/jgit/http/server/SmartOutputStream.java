@@ -39,7 +39,7 @@ class SmartOutputStream extends TemporaryBuffer {
 
     private final HttpServletResponse rsp;
 
-    private boolean compressStream;
+    private final boolean compressStream;
 
     private boolean startedOutput;
 

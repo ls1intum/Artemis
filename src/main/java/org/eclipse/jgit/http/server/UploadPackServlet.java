@@ -15,6 +15,7 @@ import static org.eclipse.jgit.http.server.UploadPackErrorHandler.statusCodeForT
 import static org.eclipse.jgit.util.HttpSupport.HDR_USER_AGENT;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.text.MessageFormat;
 import java.util.List;
 
@@ -36,6 +37,7 @@ import org.eclipse.jgit.transport.resolver.UploadPackFactory;
 /** Server side implementation of smart fetch over HTTP. */
 class UploadPackServlet extends HttpServlet {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     static class InfoRefs extends SmartServiceInfoRefs {
@@ -55,7 +57,7 @@ class UploadPackServlet extends HttpServlet {
         }
 
         @Override
-        protected void advertise(HttpServletRequest req, PacketLineOutRefAdvertiser pck) throws IOException, ServiceNotEnabledException, ServiceNotAuthorizedException {
+        protected void advertise(HttpServletRequest req, PacketLineOutRefAdvertiser pck) throws IOException {
             UploadPack up = (UploadPack) req.getAttribute(ATTRIBUTE_HANDLER);
             try {
                 up.setBiDirectionalPipe(false);
@@ -143,16 +145,13 @@ class UploadPackServlet extends HttpServlet {
             return;
         }
 
-        UploadPackRunnable r = () -> {
-            upload(req, rsp);
-        };
+        UploadPackRunnable r = () -> upload(req, rsp);
 
         handler.upload(req, rsp, r);
     }
 
-    private void upload(HttpServletRequest req, HttpServletResponse rsp) throws IOException, ServiceMayNotContinueException {
+    private void upload(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
         // to be explicitly closed by caller
-        @SuppressWarnings("resource")
         SmartOutputStream out = new SmartOutputStream(req, rsp, false) {
 
             @Override

@@ -142,9 +142,10 @@ final class FileSender {
         }
 
         try {
+            final var dashPosition = Long.parseLong(range.substring(dash + 1));
             if (eq + 1 == dash) {
                 // "bytes=-500" means last 500 bytes
-                pos = Long.parseLong(range.substring(dash + 1));
+                pos = dashPosition;
                 pos = fileLen - pos;
             }
             else {
@@ -152,7 +153,7 @@ final class FileSender {
                 // "bytes=500-1000" (position 500 to 1000)
                 pos = Long.parseLong(range.substring(eq + 1, dash));
                 if (dash < range.length() - 1) {
-                    end = Long.parseLong(range.substring(dash + 1));
+                    end = dashPosition;
                     end++; // range was inclusive, want exclusive
                 }
             }

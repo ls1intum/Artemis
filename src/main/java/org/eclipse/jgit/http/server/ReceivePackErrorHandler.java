@@ -48,7 +48,7 @@ public interface ReceivePackErrorHandler {
     void receive(HttpServletRequest req, HttpServletResponse rsp, ReceivePackRunnable r) throws IOException;
 
     /** Process a git-receive-pack request. */
-    public interface ReceivePackRunnable {
+    interface ReceivePackRunnable {
 
         /**
          * See {@link ReceivePack#receiveWithExceptionPropagation}.

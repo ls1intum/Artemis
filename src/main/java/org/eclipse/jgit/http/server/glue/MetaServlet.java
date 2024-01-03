@@ -11,6 +11,7 @@ package org.eclipse.jgit.http.server.glue;
 import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
 
 import java.io.IOException;
+import java.io.Serial;
 
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServlet;
@@ -31,6 +32,7 @@ import jakarta.servlet.http.HttpServletResponse;
  */
 public class MetaServlet extends HttpServlet {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final org.eclipse.jgit.http.server.glue.MetaFilter filter;
@@ -97,9 +99,7 @@ public class MetaServlet extends HttpServlet {
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-        filter.doFilter(req, res, (ServletRequest request, ServletResponse response) -> {
-            ((HttpServletResponse) response).sendError(SC_NOT_FOUND);
-        });
+        filter.doFilter(req, res, (ServletRequest request, ServletResponse response) -> ((HttpServletResponse) response).sendError(SC_NOT_FOUND));
     }
 
     /**

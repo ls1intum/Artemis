@@ -83,9 +83,9 @@ public class RepositoryFilter implements Filter {
         }
 
         String name = req.getPathInfo();
-        while (name != null && 0 < name.length() && name.charAt(0) == '/')
+        while (name != null && !name.isEmpty() && name.charAt(0) == '/')
             name = name.substring(1);
-        if (name == null || name.length() == 0) {
+        if (name == null || name.isEmpty()) {
             sendError(req, res, SC_NOT_FOUND);
             return;
         }
@@ -96,19 +96,15 @@ public class RepositoryFilter implements Filter {
         }
         catch (RepositoryNotFoundException e) {
             sendError(req, res, SC_NOT_FOUND);
-            return;
         }
         catch (ServiceNotEnabledException e) {
             sendError(req, res, SC_FORBIDDEN, e.getMessage());
-            return;
         }
         catch (ServiceNotAuthorizedException e) {
             res.sendError(SC_UNAUTHORIZED, e.getMessage());
-            return;
         }
         catch (ServiceMayNotContinueException e) {
             sendError(req, res, e.getStatusCode(), e.getMessage());
-            return;
         }
         finally {
             request.removeAttribute(ATTRIBUTE_REPOSITORY);

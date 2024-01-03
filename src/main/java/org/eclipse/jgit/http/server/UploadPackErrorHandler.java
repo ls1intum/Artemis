@@ -45,7 +45,7 @@ public interface UploadPackErrorHandler {
      * @return the HTTP status code as an int
      * @since 6.1.1
      */
-    public static int statusCodeForThrowable(Throwable error) {
+    static int statusCodeForThrowable(Throwable error) {
         if (error instanceof ServiceNotEnabledException) {
             return SC_FORBIDDEN;
         }
@@ -71,7 +71,7 @@ public interface UploadPackErrorHandler {
     void upload(HttpServletRequest req, HttpServletResponse rsp, UploadPackRunnable r) throws IOException;
 
     /** Process a git-upload-pack request. */
-    public interface UploadPackRunnable {
+    interface UploadPackRunnable {
 
         /**
          * See {@link UploadPack#uploadWithExceptionPropagation}.

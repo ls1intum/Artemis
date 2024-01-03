@@ -10,9 +10,7 @@ package org.eclipse.jgit.http.server;
 
 import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +22,7 @@ import org.eclipse.jgit.util.IO;
 /** Sends a small text meta file from the repository. */
 class TextFileServlet extends HttpServlet {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final String fileName;

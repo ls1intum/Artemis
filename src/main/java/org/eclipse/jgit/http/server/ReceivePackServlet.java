@@ -14,6 +14,7 @@ import static org.eclipse.jgit.http.server.ServletUtils.*;
 import static org.eclipse.jgit.util.HttpSupport.HDR_USER_AGENT;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.text.MessageFormat;
 import java.util.List;
 
@@ -37,6 +38,7 @@ import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException;
 /** Server side implementation of smart push over HTTP. */
 class ReceivePackServlet extends HttpServlet {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     static class InfoRefs extends SmartServiceInfoRefs {
@@ -56,7 +58,7 @@ class ReceivePackServlet extends HttpServlet {
         }
 
         @Override
-        protected void advertise(HttpServletRequest req, PacketLineOutRefAdvertiser pck) throws IOException, ServiceNotEnabledException, ServiceNotAuthorizedException {
+        protected void advertise(HttpServletRequest req, PacketLineOutRefAdvertiser pck) throws IOException {
             ReceivePack rp = (ReceivePack) req.getAttribute(ATTRIBUTE_HANDLER);
             try {
                 rp.sendAdvertisedRefs(pck);
@@ -169,7 +171,6 @@ class ReceivePackServlet extends HttpServlet {
                     rsp.reset();
                     GitSmartHttpTools.sendError(req, rsp, SC_INTERNAL_SERVER_ERROR);
                 }
-                return;
             }
         }
     }

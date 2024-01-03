@@ -12,6 +12,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.Serial;
 
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,6 +26,7 @@ import org.eclipse.jgit.util.HttpSupport;
 /** Send a complete list of current refs, including peeled values for tags. */
 class InfoRefsServlet extends HttpServlet {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @Override

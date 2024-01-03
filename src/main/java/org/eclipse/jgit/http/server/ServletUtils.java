@@ -108,21 +108,13 @@ public final class ServletUtils {
     public static void consumeRequestBody(InputStream in) {
         if (in == null)
             return;
-        try {
+        try (in) {
             while (0 < in.skip(2048) || 0 <= in.read()) {
                 // Discard until EOF.
             }
         }
         catch (IOException err) {
             // Discard IOException during read or skip.
-        }
-        finally {
-            try {
-                in.close();
-            }
-            catch (IOException err) {
-                // Discard IOException during close of input stream.
-            }
         }
     }
 

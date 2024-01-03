@@ -13,12 +13,9 @@ import static javax.servlet.http.HttpServletResponse.SC_NOT_MODIFIED;
 import static org.eclipse.jgit.http.server.ServletUtils.getRepository;
 import static org.eclipse.jgit.util.HttpSupport.*;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.time.Instant;
 
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -29,10 +26,12 @@ import org.eclipse.jgit.lib.Repository;
 /** Sends any object from {@code GIT_DIR/objects/??/0 38}, or any pack file. */
 abstract class ObjectFileServlet extends HttpServlet {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     static class Loose extends ObjectFileServlet {
 
+        @Serial
         private static final long serialVersionUID = 1L;
 
         Loose() {
@@ -40,7 +39,7 @@ abstract class ObjectFileServlet extends HttpServlet {
         }
 
         @Override
-        String etag(FileSender sender) throws IOException {
+        String etag(FileSender sender) {
             Instant lastModified = sender.getLastModified();
             return Long.toHexString(lastModified.getEpochSecond()) + Long.toHexString(lastModified.getNano());
         }
@@ -48,6 +47,7 @@ abstract class ObjectFileServlet extends HttpServlet {
 
     private abstract static class PackData extends ObjectFileServlet {
 
+        @Serial
         private static final long serialVersionUID = 1L;
 
         PackData(String contentType) {
@@ -62,6 +62,7 @@ abstract class ObjectFileServlet extends HttpServlet {
 
     static class Pack extends PackData {
 
+        @Serial
         private static final long serialVersionUID = 1L;
 
         Pack() {
@@ -71,6 +72,7 @@ abstract class ObjectFileServlet extends HttpServlet {
 
     static class PackIdx extends PackData {
 
+        @Serial
         private static final long serialVersionUID = 1L;
 
         PackIdx() {
@@ -92,7 +94,7 @@ abstract class ObjectFileServlet extends HttpServlet {
     }
 
     @Override
-    protected void doHead(final HttpServletRequest req, final HttpServletResponse rsp) throws ServletException, IOException {
+    protected void doHead(final HttpServletRequest req, final HttpServletResponse rsp) throws IOException {
         serve(req, rsp, false);
     }
 

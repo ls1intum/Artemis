@@ -99,7 +99,7 @@ public class MetaFilter implements Filter {
     }
 
     private static Set<Object> newIdentitySet() {
-        final IdentityHashMap<Object, Object> m = new IdentityHashMap<>();
+        final Map<Object, Object> m = new IdentityHashMap<>();
         return new AbstractSet<>() {
 
             @Override

@@ -8,6 +8,7 @@
 
 package org.eclipse.jgit.http.server;
 
+import java.io.Serial;
 import java.util.Enumeration;
 
 import jakarta.servlet.*;
@@ -55,6 +56,7 @@ import org.eclipse.jgit.transport.resolver.UploadPackFactory;
  */
 public class GitServlet extends MetaServlet {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final GitFilter gitFilter;
