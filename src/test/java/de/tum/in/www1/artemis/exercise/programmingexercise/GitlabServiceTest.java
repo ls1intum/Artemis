@@ -152,11 +152,11 @@ class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         String latestCommitHash = "11028e4104243d8cbae9175f2bc938cb8c2d7924";
         Object body = new ObjectMapper().readValue(GITLAB_PUSH_EVENT_REQUEST, Object.class);
         Commit commit = versionControlService.getLastCommitDetails(body);
-        assertThat(commit.getCommitHash()).isEqualTo(latestCommitHash);
-        assertThat(commit.getBranch()).isNotNull();
-        assertThat(commit.getMessage()).isNotNull();
-        assertThat(commit.getAuthorEmail()).isNotNull();
-        assertThat(commit.getAuthorName()).isNotNull();
+        assertThat(commit.commitHash()).isEqualTo(latestCommitHash);
+        assertThat(commit.branch()).isNotNull();
+        assertThat(commit.message()).isNotNull();
+        assertThat(commit.authorEmail()).isNotNull();
+        assertThat(commit.authorName()).isNotNull();
     }
 
     @Test
@@ -164,11 +164,11 @@ class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         String latestCommitHash = "11028e4104243d8cbae9175f2bc938cb8c2d7924";
         Object body = new ObjectMapper().readValue(GITLAB_PUSH_EVENT_REQUEST_WRONG_COMMIT_ORDER, Object.class);
         Commit commit = versionControlService.getLastCommitDetails(body);
-        assertThat(commit.getCommitHash()).isEqualTo(latestCommitHash);
-        assertThat(commit.getBranch()).isNotNull();
-        assertThat(commit.getMessage()).isNotNull();
-        assertThat(commit.getAuthorEmail()).isNotNull();
-        assertThat(commit.getAuthorName()).isNotNull();
+        assertThat(commit.commitHash()).isEqualTo(latestCommitHash);
+        assertThat(commit.branch()).isNotNull();
+        assertThat(commit.message()).isNotNull();
+        assertThat(commit.authorEmail()).isNotNull();
+        assertThat(commit.authorName()).isNotNull();
     }
 
     @Test
@@ -176,10 +176,10 @@ class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         String latestCommitHash = "11028e4104243d8cbae9175f2bc938cb8c2d7924";
         Object body = new ObjectMapper().readValue(GITLAB_PUSH_EVENT_REQUEST_WITHOUT_COMMIT, Object.class);
         Commit commit = versionControlService.getLastCommitDetails(body);
-        assertThat(commit.getCommitHash()).isEqualTo(latestCommitHash);
-        assertThat(commit.getBranch()).isNull();
-        assertThat(commit.getMessage()).isNull();
-        assertThat(commit.getAuthorEmail()).isNull();
-        assertThat(commit.getAuthorName()).isNull();
+        assertThat(commit.commitHash()).isEqualTo(latestCommitHash);
+        assertThat(commit.branch()).isNull();
+        assertThat(commit.message()).isNull();
+        assertThat(commit.authorEmail()).isNull();
+        assertThat(commit.authorName()).isNull();
     }
 }
