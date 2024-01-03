@@ -8,17 +8,29 @@ echo "$DB"
 echo "Test framework:"
 echo "$TEST_FRAMEWORK"
 
-if [ "$DB" = "mysql" ] && [ "$TEST_FRAMEWORK" = "playwright" ]; then
-  COMPOSE_FILE="playwright-E2E-tests-mysql.yml"
-elif [ "$DB" = "mysql" ]; then
-  COMPOSE_FILE="cypress-E2E-tests-mysql.yml"
-elif [ "$DB" = "postgres" ]; then
-  COMPOSE_FILE="cypress-E2E-tests-postgres.yml"
-elif [ "$DB" = "local" ]; then
-  COMPOSE_FILE="cypress-E2E-tests-local.yml"
+if [ "$TEST_FRAMEWORK" = "playwright" ]; then
+  if [ "$DB" = "mysql" ]; then
+    COMPOSE_FILE="playwright-E2E-tests-mysql.yml"
+  elif [ "$DB" = "local" ]; then
+    COMPOSE_FILE="playwright-E2E-tests-local.yml"
+  else
+      echo "Invalid database type. Please choose among mysql, postgres or local."
+      exit 1
+  fi
+elif [ "$TEST_FRAMEWORK" = "playwright" ]; then
+  if [ "$DB" = "mysql" ]; then
+    COMPOSE_FILE="cypress-E2E-tests-mysql.yml"
+  elif [ "$DB" = "postgres" ]; then
+    COMPOSE_FILE="cypress-E2E-tests-postgres.yml"
+  elif [ "$DB" = "local" ]; then
+    COMPOSE_FILE="cypress-E2E-tests-local.yml"
+  else
+    echo "Invalid database type. Please choose among mysql, postgres or local."
+    exit 1
+  fi
 else
-  echo "Invalid database type. Please choose either mysql or postgres."
-  exit 1
+    echo "Invalid test framework. Please choose either cypress or playwright."
+    exit 1
 fi
 
 echo "Compose file:"
