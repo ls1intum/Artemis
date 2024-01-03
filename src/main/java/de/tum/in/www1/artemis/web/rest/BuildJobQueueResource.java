@@ -72,4 +72,26 @@ public class BuildJobQueueResource {
         return ResponseEntity.ok(runningBuildJobs);
     }
 
+    /**
+     * Cancels the build job for the given participation in the specified course.
+     *
+     * @param courseId   the id of the course
+     * @param commitHash the commitHash of the build job to cancel
+     * @return the ResponseEntity with the result of the cancellation
+     */
+    @DeleteMapping("/build-job-queue/cancel/{courseId}/{commitHash}")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Void> cancelBuildJob(@PathVariable long courseId, @PathVariable String commitHash) {
+        log.debug("REST request to cancel the build job for course {} and commitHash {}", courseId, commitHash);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+            throw new AccessForbiddenException("You are not allowed to cancel the build job of this course!");
+        }
+
+        // Call the cancelBuildJob method in LocalCIBuildJobManagementService
+        localCIBuildJobQueueService.cancelBuildJob(commitHash);
+
+        return ResponseEntity.noContent().build();
+    }
+
 }

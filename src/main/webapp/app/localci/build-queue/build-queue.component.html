@@ -109,6 +109,17 @@
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
+                <ngx-datatable-column [minWidth]="150" [width]="100" [maxWidth]="150">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.buildQueue.buildJob.actions"> Actions </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-row="row">
+                        <button class="btn btn-danger btn-sm" (click)="cancelBuildJob(row.commitHash)">
+                            <fa-icon [icon]="faTimes"></fa-icon>
+                            <span jhiTranslate="artemisApp.buildQueue.buildJob.cancel"> Cancel </span>
+                        </button>
+                    </ng-template>
+                </ngx-datatable-column>
             </ngx-datatable>
         </ng-template>
     </jhi-data-table>
@@ -205,6 +216,17 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <span>{{ value }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+                <ngx-datatable-column [minWidth]="150" [width]="100" [maxWidth]="150">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.buildQueue.buildJob.actions"> Actions </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-row="row">
+                        <button class="btn btn-danger btn-sm" (click)="cancelBuildJob(row.commitHash)">
+                            <fa-icon [icon]="faTimes"></fa-icon>
+                            <span jhiTranslate="artemisApp.buildQueue.buildJob.cancel"> Cancel </span>
+                        </button>
                     </ng-template>
                 </ngx-datatable-column>
             </ngx-datatable>

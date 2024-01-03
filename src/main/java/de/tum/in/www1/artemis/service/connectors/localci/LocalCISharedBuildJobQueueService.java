@@ -330,27 +330,33 @@ public class LocalCISharedBuildJobQueueService {
             // process next build job if node is available
             checkAvailabilityAndProcessNextBuild();
         }).exceptionally(ex -> {
-            log.error("Error while processing build job: {}", buildJob, ex);
-
-            processingJobs.remove(buildJob.getId());
-            localProcessingJobs.decrementAndGet();
-            updateLocalBuildAgentInformation();
-
-            if (buildJob.getRetryCount() > 0) {
-                log.error("Build job failed for the second time: {}", buildJob);
-                return null;
-            }
-
-            // Do not requeue the build job if the participation has been deleted in the meantime
-            SecurityUtils.setAuthorizationObject();
-            Optional<Participation> participationOptional = participationRepository.findById(participation.getId());
-            if (participationOptional.isPresent()) {
-                log.warn("Requeueing failed build job: {}", buildJob);
-                buildJob.setRetryCount(buildJob.getRetryCount() + 1);
-                queue.add(buildJob);
+            if (ex.getCause() instanceof CancellationException) {
+                localProcessingJobs.decrementAndGet();
+                updateLocalBuildAgentInformation();
             }
             else {
-                log.warn("Participation with id {} has been deleted. Cancelling the requeueing of the build job.", participation.getId());
+                log.error("Error while processing build job: {}", buildJob, ex);
+
+                processingJobs.remove(buildJob.getId());
+                localProcessingJobs.decrementAndGet();
+                updateLocalBuildAgentInformation();
+
+                if (buildJob.getRetryCount() > 0) {
+                    log.error("Build job failed for the second time: {}", buildJob);
+                    return null;
+                }
+
+                // Do not requeue the build job if the participation has been deleted in the meantime
+                SecurityUtils.setAuthorizationObject();
+                Optional<Participation> participationOptional = participationRepository.findById(participation.getId());
+                if (participationOptional.isPresent()) {
+                    log.warn("Requeueing failed build job: {}", buildJob);
+                    buildJob.setRetryCount(buildJob.getRetryCount() + 1);
+                    queue.add(buildJob);
+                }
+                else {
+                    log.warn("Participation with id {} has been deleted. Cancelling the requeueing of the build job.", participation.getId());
+                }
             }
             return null;
         });
@@ -363,6 +369,27 @@ public class LocalCISharedBuildJobQueueService {
         log.debug("Currently processing jobs on this node: {}, maximum pool size of thread executor : {}", localProcessingJobs.get(),
                 localCIBuildExecutorService.getMaximumPoolSize());
         return localProcessingJobs.get() < localCIBuildExecutorService.getMaximumPoolSize();
+    }
+
+    public void cancelBuildJob(String commitHash) {
+        // Remove build job if it is queued
+        if (queue.stream().anyMatch(job -> Objects.equals(job.getCommitHash(), commitHash))) {
+            List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
+            for (LocalCIBuildJobQueueItem job : queue) {
+                if (Objects.equals(job.getCommitHash(), commitHash)) {
+                    toRemove.add(job);
+                }
+            }
+            queue.removeAll(toRemove);
+        }
+        else {
+            // Remove build job if it is currently being processed
+            LocalCIBuildJobQueueItem buildJob = processingJobs.values().stream().filter(job -> Objects.equals(job.getCommitHash(), commitHash)).findFirst().orElse(null);
+            if (buildJob != null) {
+                processingJobs.remove(buildJob.getId());
+                localCIBuildJobManagementService.cancelBuildJob(commitHash);
+            }
+        }
     }
 
     /**

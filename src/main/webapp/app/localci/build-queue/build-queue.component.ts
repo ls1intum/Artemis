@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 import { BuildJob } from 'app/entities/build-job.model';
-import { faRefresh } from '@fortawesome/free-solid-svg-icons';
+import { faRefresh, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-build-queue',
@@ -16,6 +16,7 @@ export class BuildQueueComponent implements OnInit {
 
     //icons
     faRefresh = faRefresh;
+    faTimes = faTimes;
 
     constructor(
         private route: ActivatedRoute,
@@ -44,6 +45,17 @@ export class BuildQueueComponent implements OnInit {
                 this.buildQueueService.getRunningBuildJobs().subscribe((runningBuildJobs) => {
                     this.runningBuildJobs = runningBuildJobs;
                 });
+            }
+        });
+    }
+
+    cancelBuildJob(commitHash: string) {
+        this.route.paramMap.subscribe((params) => {
+            const courseId = Number(params.get('courseId'));
+            if (courseId) {
+                this.buildQueueService.cancelBuildJobInCourse(courseId, commitHash).subscribe(() => this.load());
+            } else {
+                this.buildQueueService.cancelBuildJob(commitHash).subscribe(() => this.load());
             }
         });
     }

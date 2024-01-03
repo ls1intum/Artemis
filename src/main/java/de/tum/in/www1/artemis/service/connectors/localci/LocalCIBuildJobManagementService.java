@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
 
@@ -54,6 +54,10 @@ public class LocalCIBuildJobManagementService {
     @Value("${artemis.continuous-integration.asynchronous:true}")
     private boolean runBuildJobsAsynchronously;
 
+    private final Map<String, Future<LocalCIBuildResult>> runningBuildJobs = new ConcurrentHashMap<>();
+
+    private final Set<String> cancelledBuildJobs = new HashSet<>();
+
     public LocalCIBuildJobManagementService(LocalCIBuildJobExecutionService localCIBuildJobExecutionService, ExecutorService localCIBuildExecutorService,
             ProgrammingMessagingService programmingMessagingService, LocalCIBuildPlanService localCIBuildPlanService, LocalCIContainerService localCIContainerService,
             LocalCIDockerService localCIDockerService, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
@@ -99,16 +103,25 @@ public class LocalCIBuildJobManagementService {
          * artemis.continuous-integration.asynchronous environment variable.
          * Usually, when using asynchronous build jobs, it will just resolve to "CompletableFuture.supplyAsync".
          */
+        Future<LocalCIBuildResult> future = localCIBuildExecutorService.submit(buildJob);
+        runningBuildJobs.put(commitHash, future);
+
         CompletableFuture<LocalCIBuildResult> futureResult = createCompletableFuture(() -> {
             try {
-                return localCIBuildExecutorService.submit(buildJob).get(timeoutSeconds, TimeUnit.SECONDS);
+                return future.get(timeoutSeconds, TimeUnit.SECONDS);
             }
             catch (RejectedExecutionException | CancellationException | ExecutionException | InterruptedException | TimeoutException e) {
                 // RejectedExecutionException is thrown if the queue size limit (defined in "artemis.continuous-integration.queue-size-limit") is reached.
-                finishBuildJobExceptionally(participation, commitHash, containerName, isRetry, e);
                 // Wrap the exception in a CompletionException so that the future is completed exceptionally and the thenAccept block is not run.
                 // This CompletionException will not resurface anywhere else as it is thrown in this completable future's separate thread.
-                throw new CompletionException(e);
+                if (cancelledBuildJobs.contains(commitHash)) {
+                    finishCancelledBuildJob(participation, commitHash, containerName);
+                    throw new CancellationException("Build job with commitHash " + commitHash + " was cancelled.");
+                }
+                else {
+                    finishBuildJobExceptionally(participation, commitHash, containerName, isRetry, e);
+                    throw new CompletionException(e);
+                }
             }
         });
 
@@ -138,6 +151,7 @@ public class LocalCIBuildJobManagementService {
                 future.complete(result);
             }
             catch (Exception e) {
+
                 future.completeExceptionally(e);
             }
             return future;
@@ -169,4 +183,42 @@ public class LocalCIBuildJobManagementService {
 
         localCIContainerService.stopContainer(containerName);
     }
+
+    public void cancelBuildJob(String commitHash) {
+        Future<LocalCIBuildResult> future = runningBuildJobs.get(commitHash);
+        if (future != null) {
+            try {
+                runningBuildJobs.remove(commitHash);
+                cancelledBuildJobs.add(commitHash);
+                future.cancel(true); // Attempt to interrupt the build job
+            }
+            catch (CancellationException e) {
+                log.warn("Build job already cancelled or completed for commitHash {}", commitHash);
+            }
+        }
+    }
+
+    /**
+     * Finish the build job if it was cancelled by the user.
+     *
+     * @param participation The participation of the repository for which the build job was executed.
+     * @param containerName The name of the Docker container that was used to execute the build job.
+     */
+    private void finishCancelledBuildJob(ProgrammingExerciseParticipation participation, String commitHash, String containerName) {
+        log.debug("Build job for commit {} in repository {} was cancelled", commitHash, participation.getRepositoryUrl());
+
+        // Set the build status to "INACTIVE" to indicate that the build is not running anymore.
+        localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);
+
+        // Notify the user, that the build job produced an exception.
+        BuildTriggerWebsocketError error = new BuildTriggerWebsocketError("Build job was cancelled", participation.getId());
+        // This cast to Participation is safe as the participation is either a ProgrammingExerciseStudentParticipation, a TemplateProgrammingExerciseParticipation, or a
+        // SolutionProgrammingExerciseParticipation, which all extend Participation.
+        programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation, error);
+
+        localCIContainerService.deleteScriptFile(containerName);
+
+        localCIContainerService.stopContainer(containerName);
+    }
+
 }

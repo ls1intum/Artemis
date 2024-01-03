@@ -14,7 +14,9 @@
                 "submissionDate": "Abgabe Datum",
                 "buildStartDate": "Build Start Datum",
                 "courseId": "Kurs ID",
-                "priority": "Priorität"
+                "priority": "Priorität",
+                "actions": "Aktionen",
+                "cancel": "Abbrechen"
             }
         }
     }

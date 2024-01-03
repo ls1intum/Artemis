@@ -6,11 +6,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCISharedBuildJobQueueService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
@@ -65,5 +64,21 @@ public class AdminBuildJobQueueResource {
         log.debug("REST request to get information on available build agents");
         List<LocalCIBuildAgentInformation> buildAgentInfo = localCIBuildJobQueueService.getBuildAgentInformation();
         return ResponseEntity.ok(buildAgentInfo);
+    }
+
+    /**
+     * Cancels the build job for the given participation.
+     *
+     * @param commitHash the commitHash of the build job to cancel
+     * @return the ResponseEntity with the result of the cancellation
+     */
+    @DeleteMapping("/build-job-queue/cancel/{commitHash}")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Void> cancelBuildJob(@PathVariable String commitHash) {
+        log.debug("REST request to cancel the build job for commitHash {}", commitHash);
+        // Call the cancelBuildJob method in LocalCIBuildJobManagementService
+        localCIBuildJobQueueService.cancelBuildJob(commitHash);
+
+        return ResponseEntity.noContent().build();
     }
 }

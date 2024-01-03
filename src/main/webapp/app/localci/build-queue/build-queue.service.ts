@@ -39,4 +39,21 @@ export class BuildQueueService {
     getRunningBuildJobs(): Observable<BuildJob[]> {
         return this.http.get<BuildJob[]>(`${this.adminResourceUrl}/running`);
     }
+
+    /**
+     * Cancel a specific build job associated with a participation in a course
+     * @param courseId the id of the course
+     * @param commitHash the commit hash of the participation for which to cancel the build job
+     */
+    cancelBuildJobInCourse(courseId: number, commitHash: string): Observable<void> {
+        return this.http.delete<void>(`${this.resourceUrl}/cancel/${courseId}/${commitHash}`);
+    }
+
+    /**
+     * Cancel a specific build job associated with a participation
+     * @param commitHash the commit hash of the participation for which to cancel the build job
+     */
+    cancelBuildJob(commitHash: string): Observable<void> {
+        return this.http.delete<void>(`${this.adminResourceUrl}/cancel/${commitHash}`);
+    }
 }
