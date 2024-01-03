@@ -4,18 +4,19 @@
     "private": true,
     "license": "MIT",
     "devDependencies": {
-        "@playwright/test": "1.40.0",
+        "@playwright/test": "file:playwright-test-1.41.0-next.tgz",
         "@types/request": "^2.48.12",
-        "axios": "^1.6.2",
         "dayjs": "^1.11.10",
         "dotenv": "^16.3.1",
-        "playwright": "1.40.0",
+        "playwright": "file:playwright-1.41.0-next.tgz",
+        "playwright-core": "file:playwright-core-1.41.0-next.tgz",
         "request": "^2.88.2",
         "uuid": "9.0.1"
     },
     "scripts": {
         "playwright:test": "npx playwright test",
         "playwright:open": "npx playwright test --ui",
-        "playwright:setup": "npx playwright test init/ImportUsers.spec.ts"
+        "playwright:setup": "npx playwright test init/ImportUsers.spec.ts",
+        "playwright:local": "playwright test"
     }
 }
