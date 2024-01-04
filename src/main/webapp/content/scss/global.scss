@@ -268,10 +268,14 @@ Generic styles
 }
 
 .page-wrapper {
-    //Space reserved at bottom for footer
-    padding-bottom: 5rem;
-    min-height: 100vh;
-    position: relative;
+    // min-height: 100vh;
+    height: calc(100vh - 124px);
+    position: fixed;
+    min-width: 100vw;
+    top: 87px;
+    overflow-y: auto;
+    // Todo Darkmode
+    background-color: white;
 }
 
 .main-container {
@@ -424,7 +428,19 @@ ui bootstrap tweaks
         max-width: 100%;
     }
 
-    padding: 1rem 1rem;
+    // //Todo only for new design
+    // // overflow-y: scroll;
+    // overflow-x: hidden;
+    // height: calc(100vh - 124px);
+    // // TODO:
+    // // &.sidenav-height-dev {
+    // //     height: calc(100vh - 148px);
+    // // }
+    // padding: 1rem 1rem;
+    // top: 87px;
+    // position: relative;
+    // // background-color: white;
+    // width: 100vw;
 }
 
 .header-container {

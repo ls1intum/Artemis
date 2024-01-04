@@ -11,14 +11,14 @@
             <h5 class="text-center text-white">{{ exam.title }}</h5>
         </div>
         <!-- Body of the Component. Content changes depending on the exam state-->
-        <div class="row card-body d-flex justify-content-center">
+        <div class="row d-flex justify-content-center">
             @if (examState === 'UNDEFINED') {
                 <h4 class="icon-settings">
                     <!-- Case 7: Undefined exam state. show Pencil without further information -->
                     <fa-icon [icon]="faPenAlt" size="3x" />
                 </h4>
             } @else {
-                <h4 class="col-3 icon-settings">
+                <div class="col-3 icon-settings my-3">
                     @switch (examState) {
                         <!-- Calender to indicate an upcoming exam -->
                         @case ('UPCOMING') {
@@ -49,8 +49,8 @@
                             <fa-icon [icon]="faCircleStop" size="2x" />
                         }
                     }
-                </h4>
-                <div class="col-9 row card-body justify-content-center">
+                </div>
+                <div class="col-9 row justify-content-center align-content-center">
                     @switch (examState) {
                         @case ('UPCOMING') {
                             <div>
