@@ -127,11 +127,9 @@ public class LocalCIBuildJobManagementService {
                 }
             }
         });
-
         // Update the build plan status to "QUEUED".
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.QUEUED);
-
-        return futureResult;
+        return futureResult.whenComplete(((result, throwable) -> runningBuildJobs.remove(commitHash)));
     }
 
     /**
@@ -190,13 +188,15 @@ public class LocalCIBuildJobManagementService {
         Future<LocalCIBuildResult> future = runningBuildJobs.get(commitHash);
         if (future != null) {
             try {
-                runningBuildJobs.remove(commitHash);
                 cancelledBuildJobs.add(commitHash);
                 future.cancel(true); // Attempt to interrupt the build job
             }
             catch (CancellationException e) {
                 log.warn("Build job already cancelled or completed for commitHash {}", commitHash);
             }
+        }
+        else {
+            log.warn("Attempted to cancel a non-existent build job for commitHash {}", commitHash);
         }
     }
 

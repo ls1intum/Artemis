@@ -4,6 +4,8 @@ import { BuildJob } from 'app/entities/build-job.model';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
+import { take } from 'rxjs/operators';
+
 @Component({
     selector: 'jhi-build-queue',
     templateUrl: './build-queue.component.html',
@@ -103,9 +105,9 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
         this.route.paramMap.subscribe((params) => {
             const courseId = Number(params.get('courseId'));
             if (courseId) {
-                this.buildQueueService.cancelBuildJobInCourse(courseId, commitHash).subscribe(() => this.load());
+                this.buildQueueService.cancelBuildJobInCourse(courseId, commitHash).subscribe();
             } else {
-                this.buildQueueService.cancelBuildJob(commitHash).subscribe(() => this.load());
+                this.buildQueueService.cancelBuildJob(commitHash).subscribe();
             }
         });
     }
@@ -117,9 +119,9 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
         this.route.paramMap.subscribe((params) => {
             const courseId = Number(params.get('courseId'));
             if (courseId) {
-                this.buildQueueService.cancelAllQueuedBuildJobsInCourse(courseId).subscribe(() => this.load());
+                this.buildQueueService.cancelAllQueuedBuildJobsInCourse(courseId).subscribe();
             } else {
-                this.buildQueueService.cancelAllQueuedBuildJobs().subscribe(() => this.load());
+                this.buildQueueService.cancelAllQueuedBuildJobs().subscribe();
             }
         });
     }
@@ -128,12 +130,12 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * Cancel all running build jobs
      */
     cancelAllRunningBuildJobs() {
-        this.route.paramMap.subscribe((params) => {
+        this.route.paramMap.pipe(take(1)).subscribe((params) => {
             const courseId = Number(params.get('courseId'));
             if (courseId) {
-                this.buildQueueService.cancelAllRunningBuildJobsInCourse(courseId).subscribe(() => this.load());
+                this.buildQueueService.cancelAllRunningBuildJobsInCourse(courseId).subscribe();
             } else {
-                this.buildQueueService.cancelAllRunningBuildJobs().subscribe(() => this.load());
+                this.buildQueueService.cancelAllRunningBuildJobs().subscribe();
             }
         });
     }
