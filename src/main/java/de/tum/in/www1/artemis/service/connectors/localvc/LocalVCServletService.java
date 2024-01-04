@@ -112,6 +112,8 @@ public class LocalVCServletService {
     }
 
     /**
+     * Resolves the repository for the given path by first trying to use a cached one.
+     * If the cache does not hit, it creates a JGit repository and opens the local repository.
      *
      * @param repositoryPath the path of the repository, as parsed out of the URL (everything after /git).
      * @return the opened repository instance.
@@ -153,18 +155,17 @@ public class LocalVCServletService {
     /**
      * Determines whether a given request to access a local VC repository (either via fetch of push) is authenticated and authorized.
      *
-     * @param servletRequest       The object containing all information about the incoming request.
-     * @param repositoryActionType Indicates whether the method should authenticate a fetch or a push request. For a push request, additional checks are conducted.
+     * @param request          The object containing all information about the incoming request.
+     * @param repositoryAction Indicates whether the method should authenticate a fetch or a push request. For a push request, additional checks are conducted.
      * @throws LocalVCAuthException      If the user authentication fails or the user is not authorized to access a certain repository.
      * @throws LocalVCForbiddenException If the user is not allowed to access the repository, e.g. because offline IDE usage is not allowed or the due date has passed.
      * @throws LocalVCInternalException  If an internal error occurs, e.g. because the LocalVCRepositoryUrl could not be created.
      */
-    public void authenticateAndAuthorizeGitRequest(HttpServletRequest servletRequest, RepositoryActionType repositoryActionType)
-            throws LocalVCAuthException, LocalVCForbiddenException {
+    public void authenticateAndAuthorizeGitRequest(HttpServletRequest request, RepositoryActionType repositoryAction) throws LocalVCAuthException, LocalVCForbiddenException {
 
         long timeNanoStart = System.nanoTime();
 
-        User user = authenticateUser(servletRequest.getHeader(LocalVCServletService.AUTHORIZATION_HEADER));
+        User user = authenticateUser(request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER));
 
         // Optimization.
         // For each git command (i.e. 'git fetch' or 'git push'), the git client sends three requests.
@@ -172,11 +173,11 @@ public class LocalVCServletService {
         // URL]/git-upload-pack' (for fetch).
         // The following checks will only be conducted for the second request, so we do not have to access the database too often.
         // The first request does not contain credentials and will thus already be blocked by the 'authenticateUser' method above.
-        if (!servletRequest.getRequestURI().endsWith("/info/refs")) {
+        if (!request.getRequestURI().endsWith("/info/refs")) {
             return;
         }
 
-        LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(servletRequest.getRequestURL().toString().replace("/info/refs", ""), localVCBaseUrl);
+        LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(request.getRequestURL().toString().replace("/info/refs", ""), localVCBaseUrl);
 
         String projectKey = localVCRepositoryUrl.getProjectKey();
         String repositoryTypeOrUserName = localVCRepositoryUrl.getRepositoryTypeOrUserName();
@@ -195,7 +196,7 @@ public class LocalVCServletService {
             throw new LocalVCForbiddenException();
         }
 
-        authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryActionType, localVCRepositoryUrl.isPracticeRepository());
+        authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUrl.isPracticeRepository());
 
         log.info("Authorizing user {} for repository {} took {}", user.getLogin(), localVCRepositoryUrl, TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
@@ -214,7 +215,7 @@ public class LocalVCServletService {
         try {
             SecurityUtils.checkUsernameAndPasswordValidity(username, password);
 
-            // Try to authenticate the user.
+            // Try to authenticate the user based on the configured options, this can include sending the data to an external system (e.g. LDAP) or using internal authentication.
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
             authenticationManagerBuilder.getObject().authenticate(authenticationToken);
         }
@@ -431,6 +432,7 @@ public class LocalVCServletService {
     }
 
     /**
+     * TODO: this could be done asynchronously to shorten the duration of the push operation
      * Process a new push to a student's repository or to the template or solution repository of the exercise.
      *
      * @param participation the participation for which the push was made
@@ -480,13 +482,7 @@ public class LocalVCServletService {
             throw new VersionControlException("Something went wrong retrieving the revCommit or the branch.");
         }
 
-        Commit commit = new Commit();
-        commit.setCommitHash(commitHash);
-        commit.setAuthorName(revCommit.getAuthorIdent().getName());
-        commit.setAuthorEmail(revCommit.getAuthorIdent().getEmailAddress());
-        commit.setBranch(branch);
-        commit.setMessage(revCommit.getFullMessage());
-
-        return commit;
+        var author = revCommit.getAuthorIdent();
+        return new Commit(commitHash, author.getName(), revCommit.getFullMessage(), author.getEmailAddress(), branch);
     }
 }

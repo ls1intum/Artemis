@@ -62,7 +62,7 @@ public class LocalCISharedBuildJobQueueService {
 
     private final IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
 
-    private AtomicInteger localProcessingJobs = new AtomicInteger(0);
+    private final AtomicInteger localProcessingJobs = new AtomicInteger(0);
 
     /**
      * Lock to prevent multiple nodes from processing the same build job.

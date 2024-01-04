@@ -9,5 +9,4 @@ public record LocalCIBuildAgentInformation(String name, int maxNumberOfConcurren
 
     @Serial
     private static final long serialVersionUID = 1L;
-
 }
