@@ -104,10 +104,10 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         var newObjectId = new ObjectId(4, 5, 2, 5, 3);
         doReturn(newObjectId).when(gitService).getLastCommitHash(null);
-        doReturn(newObjectId).when(gitService).getLastCommitHash(exercise.getTemplateParticipation().getVcsRepositoryUrl());
+        doReturn(newObjectId).when(gitService).getLastCommitHash(exercise.getTemplateParticipation().getVcsRepositoryUri());
 
         var dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(programmingExerciseStudentParticipation.getVcsRepositoryUrl());
+        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(programmingExerciseStudentParticipation.getVcsRepositoryUri());
     }
 
     @AfterEach
@@ -396,8 +396,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         var participation = createExerciseWithSubmissionAndParticipation();
         bambooRequestMockProvider.enableMockingOfRequests(true);
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        var repoUrl = urlService.getRepositorySlugFromRepositoryUrl(participation.getVcsRepositoryUrl());
-        doReturn(participation.getVcsRepositoryUrl()).when(versionControlService).getCloneRepositoryUrl(exercise.getProjectKey(), repoUrl);
+        var repoUri = uriService.getRepositorySlugFromRepositoryUri(participation.getVcsRepositoryUri());
+        doReturn(participation.getVcsRepositoryUri()).when(versionControlService).getCloneRepositoryUri(exercise.getProjectKey(), repoUri);
         mockConnectorRequestsForResumeParticipation(exercise, participation.getParticipantIdentifier(), participation.getParticipant().getParticipants(), true);
 
         doThrow(ContinuousIntegrationException.class).when(continuousIntegrationTriggerService).triggerBuild(participation);
@@ -491,7 +491,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         Commit mockCommit = mock(Commit.class);
         doReturn(mockCommit).when(versionControlService).getLastCommitDetails(any());
         doReturn("branch").when(versionControlService).getDefaultBranchOfRepository(any());
-        doReturn("another-branch").when(mockCommit).getBranch();
+        doReturn("another-branch").when(mockCommit).branch();
 
         String url = "/api/public/programming-submissions/" + participation.getId();
         request.postWithoutLocation(url, "test", HttpStatus.OK, new HttpHeaders());
@@ -506,10 +506,10 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         doReturn(mockCommit).when(versionControlService).getLastCommitDetails(any());
         doReturn("default-branch").when(versionControlService).getDefaultBranchOfRepository(any());
 
-        doReturn("default-branch").when(mockCommit).getBranch();
-        doReturn(artemisGitName).when(mockCommit).getAuthorName();
-        doReturn(artemisGitEmail).when(mockCommit).getAuthorEmail();
-        doReturn(SETUP_COMMIT_MESSAGE).when(mockCommit).getMessage();
+        doReturn("default-branch").when(mockCommit).branch();
+        doReturn(artemisGitName).when(mockCommit).authorName();
+        doReturn(artemisGitEmail).when(mockCommit).authorEmail();
+        doReturn(SETUP_COMMIT_MESSAGE).when(mockCommit).message();
 
         String url = "/api/public/programming-submissions/" + participation.getId();
         request.postWithoutLocation(url, "test", HttpStatus.OK, new HttpHeaders());
@@ -526,11 +526,11 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         doReturn(mockCommit).when(versionControlService).getLastCommitDetails(any());
         doReturn("default-branch").when(versionControlService).getDefaultBranchOfRepository(any());
 
-        doReturn("hash1").when(mockCommit).getCommitHash();
-        doReturn("default-branch").when(mockCommit).getBranch();
-        doReturn("Student 1").when(mockCommit).getAuthorName();
-        doReturn("student@tum.de").when(mockCommit).getAuthorEmail();
-        doReturn("my nice little solution").when(mockCommit).getMessage();
+        doReturn("hash1").when(mockCommit).commitHash();
+        doReturn("default-branch").when(mockCommit).branch();
+        doReturn("Student 1").when(mockCommit).authorName();
+        doReturn("student@tum.de").when(mockCommit).authorEmail();
+        doReturn("my nice little solution").when(mockCommit).message();
 
         String url = "/api/public/programming-submissions/" + participation.getId();
         // no request body needed since the commit information are mocked above
@@ -540,7 +540,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
                 argThat(arg -> arg instanceof SubmissionDTO submissionDTO && submissionDTO.participation().submissionCount() == 1));
 
         // second push
-        doReturn("hash2").when(mockCommit).getCommitHash();
+        doReturn("hash2").when(mockCommit).commitHash();
         request.postWithoutLocation(url, "test", HttpStatus.OK, null);
 
         verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq(NEW_SUBMISSION_TOPIC),
@@ -560,7 +560,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         String url = "/api/exercises/" + exercise.getId() + "/programming-submissions";
         final var responseSubmissions = request.getList(url, HttpStatus.OK, ProgrammingSubmission.class);
 
-        assertThat(responseSubmissions).containsExactly(submissions.toArray(new ProgrammingSubmission[0]));
+        assertThat(responseSubmissions).containsExactly(submissions.toArray(ProgrammingSubmission[]::new));
     }
 
     @Test
