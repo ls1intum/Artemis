@@ -80,16 +80,16 @@ public class ContinuousIntegrationTestService {
         filePath = Path.of(localRepo.localRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(filePath);
 
-        GitUtilService.MockFileRepositoryUrl localRepoUrl = new GitUtilService.MockFileRepositoryUrl(localRepo.localRepoFile);
+        GitUtilService.MockFileRepositoryUri localRepoUri = new GitUtilService.MockFileRepositoryUri(localRepo.localRepoFile);
         // create a participation
-        participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, testPrefix + "student1", localRepoUrl.getURI());
+        participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, testPrefix + "student1", localRepoUri.getURI());
         assertThat(programmingExercise).as("Exercise was correctly set").isEqualTo(participation.getProgrammingExercise());
 
         // mock return of git path
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(participation.getVcsRepositoryUrl(), true);
+                .getOrCheckoutRepository(participation.getVcsRepositoryUri(), true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(participation.getVcsRepositoryUrl(), false);
+                .getOrCheckoutRepository(participation.getVcsRepositoryUri(), false);
     }
 
     public void tearDown() throws IOException {

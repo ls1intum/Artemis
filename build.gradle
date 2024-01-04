@@ -244,7 +244,7 @@ dependencies {
     implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}"
     implementation "org.eclipse.jgit:org.eclipse.jgit.http.server:${jgit_version}"
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
-    implementation "net.sourceforge.plantuml:plantuml:1.2023.12"
+    implementation "net.sourceforge.plantuml:plantuml:1.2023.13"
     implementation ("org.imsglobal:basiclti-util:1.2.0") {
         // NOTE: this module contains security vulnerabilities and is not needed
         exclude module: "jackson-mapper-asl"
