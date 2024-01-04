@@ -181,7 +181,7 @@ public class LocalCIBuildJobExecutionService {
         // the tests to be executed.
         LocalVCRepositoryUri assignmentRepositoryUri;
         LocalVCRepositoryUri testsRepositoryUri;
-        LocalVCRepositoryUri[] auxiliaryRepositoriesUrls;
+        LocalVCRepositoryUri[] auxiliaryRepositoriesUris;
         Path[] auxiliaryRepositoriesPaths;
         String[] auxiliaryRepositoryCheckoutDirectories;
 
@@ -190,13 +190,13 @@ public class LocalCIBuildJobExecutionService {
             testsRepositoryUri = new LocalVCRepositoryUri(participation.getProgrammingExercise().getTestRepositoryUri(), localVCBaseUrl);
 
             if (!auxiliaryRepositories.isEmpty()) {
-                auxiliaryRepositoriesUrls = new LocalVCRepositoryUri[auxiliaryRepositories.size()];
+                auxiliaryRepositoriesUris = new LocalVCRepositoryUri[auxiliaryRepositories.size()];
                 auxiliaryRepositoriesPaths = new Path[auxiliaryRepositories.size()];
                 auxiliaryRepositoryCheckoutDirectories = new String[auxiliaryRepositories.size()];
 
                 for (int i = 0; i < auxiliaryRepositories.size(); i++) {
-                    auxiliaryRepositoriesUrls[i] = new LocalVCRepositoryUri(auxiliaryRepositories.get(i).getRepositoryUri(), localVCBaseUrl);
-                    auxiliaryRepositoriesPaths[i] = auxiliaryRepositoriesUrls[i].getRepoClonePath(repoClonePath).toAbsolutePath();
+                    auxiliaryRepositoriesUris[i] = new LocalVCRepositoryUri(auxiliaryRepositories.get(i).getRepositoryUri(), localVCBaseUrl);
+                    auxiliaryRepositoriesPaths[i] = auxiliaryRepositoriesUris[i].getRepoClonePath(repoClonePath).toAbsolutePath();
                     auxiliaryRepositoryCheckoutDirectories[i] = auxiliaryRepositories.get(i).getCheckoutDirectory();
                 }
             }
