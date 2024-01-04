@@ -41,7 +41,7 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
     protected StudentExamRepository studentExamRepository;
 
     @Autowired
-    private UserUtilService userUtilService;
+    protected UserUtilService userUtilService;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
