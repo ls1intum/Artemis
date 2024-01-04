@@ -54,6 +54,9 @@ public class LocalCIBuildJobManagementService {
     @Value("${artemis.continuous-integration.asynchronous:true}")
     private boolean runBuildJobsAsynchronously;
 
+    @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
+    private String buildContainerPrefix;
+
     private final Map<String, Future<LocalCIBuildResult>> runningBuildJobs = new ConcurrentHashMap<>();
 
     private final Set<String> cancelledBuildJobs = new HashSet<>();
@@ -92,7 +95,7 @@ public class LocalCIBuildJobManagementService {
         localCIDockerService.pullDockerImage(dockerImage);
 
         // Prepare the Docker container name before submitting the build job to the executor service, so we can remove the container if something goes wrong.
-        String containerName = "local-ci-" + participation.getId() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
+        String containerName = buildContainerPrefix + participation.getId() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
 
         // Prepare a Callable that will later be called. It contains the actual steps needed to execute the build job.
         Callable<LocalCIBuildResult> buildJob = () -> localCIBuildJobExecutionService.runBuildJob(participation, commitHash, isPushToTestRepository, containerName, dockerImage);
@@ -151,7 +154,6 @@ public class LocalCIBuildJobManagementService {
                 future.complete(result);
             }
             catch (Exception e) {
-
                 future.completeExceptionally(e);
             }
             return future;
@@ -220,5 +222,4 @@ public class LocalCIBuildJobManagementService {
 
         localCIContainerService.stopContainer(containerName);
     }
-
 }
