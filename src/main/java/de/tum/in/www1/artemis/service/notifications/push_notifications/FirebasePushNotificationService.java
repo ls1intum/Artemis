@@ -38,7 +38,7 @@ public class FirebasePushNotificationService extends PushNotificationService {
         // The relay server accepts at most 500 messages per batch
         List<List<RelayNotificationRequest>> batches = Lists.partition(requests, 500);
         var futures = batches.stream().map(batch -> CompletableFuture.runAsync(() -> sendSpecificNotificationRequestsToEndpoint(batch, relayBaseUrl))).toList()
-                .toArray(new CompletableFuture[0]);
+                .toArray(CompletableFuture[]::new);
 
         CompletableFuture.allOf(futures);
     }
