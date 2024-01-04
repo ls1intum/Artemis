@@ -562,7 +562,7 @@ public class ExamService {
         }
 
         if (exercise instanceof ProgrammingExercise programmingExercise) {
-            programmingExercise.setTestRepositoryUrl(null);
+            programmingExercise.setTestRepositoryUri(null);
         }
 
         // get user's participation for the exercise
@@ -1321,7 +1321,7 @@ public class ExamService {
             try {
                 ProgrammingExercise programmingExerciseWithTemplateParticipation = programmingExerciseRepository
                         .findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-                gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUrl());
+                gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUri());
                 log.debug("Finished combination of template commits for programming exercise {}", programmingExerciseWithTemplateParticipation);
             }
             catch (GitAPIException e) {
