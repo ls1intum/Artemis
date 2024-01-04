@@ -90,7 +90,7 @@ public class NotificationSettingsResource {
         if (resultAsList.isEmpty()) {
             throw new BadRequestAlertException("Error occurred during saving of Notification Settings", "NotificationSettings", "notificationSettingsEmptyAfterSave");
         }
-        NotificationSetting[] resultAsArray = resultAsList.toArray(new NotificationSetting[0]);
+        NotificationSetting[] resultAsArray = resultAsList.toArray(NotificationSetting[]::new);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "notificationSetting", "test")).body(resultAsArray);
     }
 
