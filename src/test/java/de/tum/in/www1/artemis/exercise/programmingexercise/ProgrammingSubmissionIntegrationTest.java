@@ -560,7 +560,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         String url = "/api/exercises/" + exercise.getId() + "/programming-submissions";
         final var responseSubmissions = request.getList(url, HttpStatus.OK, ProgrammingSubmission.class);
 
-        assertThat(responseSubmissions).containsExactly(submissions.toArray(new ProgrammingSubmission[0]));
+        assertThat(responseSubmissions).containsExactly(submissions.toArray(ProgrammingSubmission[]::new));
     }
 
     @Test
