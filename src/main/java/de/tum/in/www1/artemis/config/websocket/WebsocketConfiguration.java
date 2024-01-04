@@ -7,6 +7,7 @@ import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsock
 import java.net.InetSocketAddress;
 import java.security.Principal;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.Cookie;
@@ -46,13 +47,11 @@ import org.springframework.web.util.WebUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterators;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.JWTFilter;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
@@ -96,9 +95,11 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     @Value("${spring.websocket.broker.password}")
     private String brokerPassword;
 
+    private final CourseRepository courseRepository;
+
     public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
-            UserRepository userRepository, ExamRepository examRepository) {
+            UserRepository userRepository, ExamRepository examRepository, CourseRepository courseRepository) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.tokenProvider = tokenProvider;
@@ -107,6 +108,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
         this.examRepository = examRepository;
+        this.courseRepository = courseRepository;
     }
 
     @Override
@@ -268,6 +270,32 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
          * @return flag whether subscription is allowed
          */
         private boolean allowSubscription(Principal principal, String destination) {
+            User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
+            if (destination.equals("/topic/admin/queued-jobs") || destination.equals("/topic/admin/running-jobs")) {
+                if (!authorizationCheckService.isAdmin(user)) {
+                    log.warn("User {} is not an admin and is not allowed to subscribe to the protected topic: {}", principal.getName(), destination);
+                    return false;
+                }
+            }
+            // Define a pattern to match the expected course-related topic format
+            Pattern pattern = Pattern.compile("^/topic/courses/(\\d+)/(queued-jobs|running-jobs)$");
+            Matcher matcher = pattern.matcher(destination);
+
+            // Check if the destination matches the pattern
+            if (matcher.matches()) {
+                // Extract the courseId from the matched groups
+                String courseIdString = matcher.group(1);
+                long courseId = Long.parseLong(courseIdString);
+
+                // Check if the principal is an instructor of the course
+                Course course = courseRepository.findByIdElseThrow(courseId);
+                if (!authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
+                    log.warn("User {} is not an admin or instructor of course {} and is not allowed to subscribe to the protected topic: {}", principal.getName(), courseId,
+                            destination);
+                    return false;
+                }
+            }
+
             if (isParticipationTeamDestination(destination)) {
                 Long participationId = getParticipationIdFromDestination(destination);
                 return isParticipationOwnedByUser(principal, participationId);
@@ -288,7 +316,6 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             var examId = getExamIdFromExamRootDestination(destination);
             if (examId.isPresent()) {
                 var exam = examRepository.findByIdElseThrow(examId.get());
-                User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
                 return authorizationCheckService.isAtLeastInstructorInCourse(exam.getCourse(), user);
             }
             return true;
