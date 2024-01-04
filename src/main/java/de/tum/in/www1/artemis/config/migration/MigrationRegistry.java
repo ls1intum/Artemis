@@ -31,6 +31,7 @@ public class MigrationRegistry {
         this.migrationEntryMap.put(2, MigrationEntry20230810_150000.class);
         this.migrationEntryMap.put(3, MigrationEntry20230920_181600.class);
         this.migrationEntryMap.put(4, MigrationEntry20231206_163000.class);
+        this.migrationEntryMap.put(5, MigrationEntry20240103_143700.class);
     }
 
     /**

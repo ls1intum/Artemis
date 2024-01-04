@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTrigger
  * Service for triggering builds on the local CI system.
  */
 @Service
+@Primary // only needed for the bamboo to local ci migration
 @Profile("localci")
 public class LocalCITriggerService implements ContinuousIntegrationTriggerService {
 

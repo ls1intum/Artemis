@@ -78,7 +78,7 @@ public class LocalVCServletService {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
-    @Value("${artemis.version-control.url}")
+    @Value("${artemis.version-control.base-url}")
     private URL localVCBaseUrl;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
