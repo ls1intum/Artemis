@@ -3,7 +3,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-detail-line-chart.component';
+import { CourseDetailLineChartComponent, SwitchTimeSpanDirection } from 'app/course/manage/detail/course-detail-line-chart.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
@@ -59,7 +59,7 @@ describe('CourseDetailLineChartComponent', () => {
             expect(component.absoluteSeries[i]['absoluteValue']).toBe(initialStats[initialStats.length - component.absoluteSeries.length + i]);
         }
 
-        component.switchTimeSpan(true);
+        component.switchTimeSpan(SwitchTimeSpanDirection.RIGHT);
 
         expect(component.data[0].series).toHaveLength(Math.min(component.initialStats.length, component.displayedNumberOfWeeks));
         for (let i = 0; i < Math.min(component.initialStats.length, component.displayedNumberOfWeeks); i++) {
@@ -67,7 +67,7 @@ describe('CourseDetailLineChartComponent', () => {
         }
 
         component.numberOfStudentsInCourse = 0;
-        component.switchTimeSpan(true);
+        component.switchTimeSpan(SwitchTimeSpanDirection.RIGHT);
 
         expect(component.data[0].series).toHaveLength(Math.min(component.initialStats.length, component.displayedNumberOfWeeks));
         for (let i = 0; i < Math.min(component.initialStats.length, component.displayedNumberOfWeeks); i++) {
@@ -133,7 +133,7 @@ describe('CourseDetailLineChartComponent', () => {
         expect(component.data[0].series).toHaveLength(Math.min(component.initialStats.length, component.displayedNumberOfWeeks));
 
         // we switch back in time
-        component.switchTimeSpan(false);
+        component.switchTimeSpan(SwitchTimeSpanDirection.LEFT);
 
         expect(component.data[0].series).toHaveLength(1);
         expect(component.data[0].series[0].value).toBe(84);

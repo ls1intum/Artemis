@@ -11,6 +11,11 @@ import { GraphColors } from 'app/entities/statistics.model';
 import { ActiveStudentsChart } from 'app/shared/chart/active-students-chart';
 import { mean } from 'simple-statistics';
 
+export enum SwitchTimeSpanDirection {
+    LEFT,
+    RIGHT,
+}
+
 @Component({
     selector: 'jhi-course-detail-line-chart',
     templateUrl: './course-detail-line-chart.component.html',
@@ -25,8 +30,6 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
     initialStats: number[] | undefined;
     loading = true;
 
-    LEFT = false;
-    RIGHT = true;
     displayedNumberOfWeeks: number = 8;
     showsCurrentWeek = true;
 
@@ -159,10 +162,10 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
         this.dataCopy[0].name = this.amountOfStudents;
     }
 
-    switchTimeSpan(index: boolean): void {
-        if (index) {
+    switchTimeSpan(direction: SwitchTimeSpanDirection): void {
+        if (direction === SwitchTimeSpanDirection.RIGHT) {
             this.currentPeriod += 1;
-        } else {
+        } else if (direction === SwitchTimeSpanDirection.LEFT) {
             this.currentPeriod -= 1;
         }
         this.showsCurrentWeek = this.currentPeriod === 0;
@@ -259,4 +262,6 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
         this.xAxisLabel = this.translateService.instant('artemisApp.courseStatistics.calendarWeek');
         this.average.name = this.translateService.instant('artemisApp.courseStatistics.average') + this.average.value.toFixed(2) + '%';
     }
+
+    protected readonly SwitchTimeSpanDirection = SwitchTimeSpanDirection;
 }
