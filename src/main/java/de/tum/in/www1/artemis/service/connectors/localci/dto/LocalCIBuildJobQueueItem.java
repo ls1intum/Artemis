@@ -4,35 +4,36 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 
+// TODO: we should convert this into a record to make objects immutable
 public class LocalCIBuildJobQueueItem implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private long id;
+    private final long id;
 
-    private String name;
+    private final String name;
 
     private String buildAgentAddress;
 
-    private long participationId;
+    private final long participationId;
 
-    private String repositoryTypeOrUserName;
+    private final String repositoryTypeOrUserName;
 
-    private String commitHash;
+    private final String commitHash;
 
-    private ZonedDateTime submissionDate;
+    private final ZonedDateTime submissionDate;
 
     private int retryCount;
 
     private ZonedDateTime buildStartDate;
 
     // 1-5, 1 is highest priority
-    private int priority;
+    private final int priority;
 
-    private long courseId;
+    private final long courseId;
 
-    private boolean isPushToTestRepository;
+    private final boolean isPushToTestRepository;
 
     public LocalCIBuildJobQueueItem(String name, long participationId, String repositoryTypeOrUserName, String commitHash, ZonedDateTime submissionDate, int priority,
             long courseId, boolean isPushToTestRepository) {
@@ -51,16 +52,8 @@ public class LocalCIBuildJobQueueItem implements Serializable {
         return id;
     }
 
-    public void setId(long id) {
-        this.id = id;
-    }
-
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getBuildAgentAddress() {
@@ -75,32 +68,16 @@ public class LocalCIBuildJobQueueItem implements Serializable {
         return participationId;
     }
 
-    public void setParticipationId(long participationId) {
-        this.participationId = participationId;
-    }
-
     public String getRepositoryTypeOrUserName() {
         return repositoryTypeOrUserName;
-    }
-
-    public void setRepositoryTypeOrUserName(String repositoryTypeOrUserName) {
-        this.repositoryTypeOrUserName = repositoryTypeOrUserName;
     }
 
     public String getCommitHash() {
         return commitHash;
     }
 
-    public void setCommitHash(String commitHash) {
-        this.commitHash = commitHash;
-    }
-
     public ZonedDateTime getSubmissionDate() {
         return submissionDate;
-    }
-
-    public void setSubmissionDate(ZonedDateTime submissionDate) {
-        this.submissionDate = submissionDate;
     }
 
     public ZonedDateTime getBuildStartDate() {
@@ -115,10 +92,6 @@ public class LocalCIBuildJobQueueItem implements Serializable {
         return priority;
     }
 
-    public void setPriority(int priority) {
-        this.priority = priority;
-    }
-
     public int getRetryCount() {
         return retryCount;
     }
@@ -131,10 +104,6 @@ public class LocalCIBuildJobQueueItem implements Serializable {
         return courseId;
     }
 
-    public void setCourseId(long courseId) {
-        this.courseId = courseId;
-    }
-
     /**
      * When pushing to the test repository, build jobs are triggered for the template and solution repository.
      * However, getCommitHash() then returns the commit hash of the test repository.
@@ -144,10 +113,6 @@ public class LocalCIBuildJobQueueItem implements Serializable {
      */
     public boolean isPushToTestRepository() {
         return isPushToTestRepository;
-    }
-
-    public void setPushToTestRepository(boolean isPushToTestRepository) {
-        this.isPushToTestRepository = isPushToTestRepository;
     }
 
     @Override
