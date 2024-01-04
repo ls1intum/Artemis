@@ -32,7 +32,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCService;
 
@@ -59,8 +58,6 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    private final Optional<BitbucketService> bitbucketService;
-
     private final Optional<LocalVCService> localVCService;
 
     private final Optional<BambooMigrationService> ciMigrationService;
@@ -83,14 +80,13 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
     public MigrationEntry20240103_143700(ProgrammingExerciseRepository programmingExerciseRepository, Optional<BambooMigrationService> ciMigrationService, Environment environment,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<BitbucketService> bitbucketService,
-            Optional<LocalVCService> localVCService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, GitService gitService) throws MalformedURLException {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<LocalVCService> localVCService,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, GitService gitService) throws MalformedURLException {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.environment = environment;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
-        this.bitbucketService = bitbucketService;
         this.localVCService = localVCService;
         this.ciMigrationService = ciMigrationService;
         this.gitService = gitService;
