@@ -19,6 +19,8 @@ import com.hazelcast.collection.ItemListener;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.cp.lock.FencedLock;
 import com.hazelcast.map.IMap;
+import com.hazelcast.map.listener.EntryAddedListener;
+import com.hazelcast.map.listener.EntryRemovedListener;
 
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -31,6 +33,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueu
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
+import de.tum.in.www1.artemis.web.websocket.localci.LocalCIBuildQueueWebsocketService;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 @Service
@@ -74,11 +77,13 @@ public class LocalCISharedBuildJobQueueService {
      */
     private final ReentrantLock instanceLock = new ReentrantLock();
 
+    private final LocalCIBuildQueueWebsocketService localCIBuildQueueWebsocketService;
+
     @Autowired
     public LocalCISharedBuildJobQueueService(HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
             LocalCIBuildJobManagementService localCIBuildJobManagementService, ParticipationRepository participationRepository,
             ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, LocalCIBuildQueueWebsocketService localCIBuildQueueWebsocketService) {
         this.hazelcastInstance = hazelcastInstance;
         this.localCIBuildExecutorService = (ThreadPoolExecutor) localCIBuildExecutorService;
         this.localCIBuildJobManagementService = localCIBuildJobManagementService;
@@ -90,7 +95,10 @@ public class LocalCISharedBuildJobQueueService {
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
         this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
-        this.queue.addItemListener(new BuildJobItemListener(), true);
+        this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
+        this.processingJobs.addLocalEntryListener(new ProcessingBuildJobItemListener());
+        this.buildAgentInformation.addLocalEntryListener(new BuildAgentListener());
+        this.localCIBuildQueueWebsocketService = localCIBuildQueueWebsocketService;
     }
 
     /**
@@ -398,17 +406,57 @@ public class LocalCISharedBuildJobQueueService {
         throw new IllegalStateException("Could not retrieve participation with id " + participationId + " from database after " + maxRetries + " retries.");
     }
 
-    private class BuildJobItemListener implements ItemListener<LocalCIBuildJobQueueItem> {
+    private class QueuedBuildJobItemListener implements ItemListener<LocalCIBuildJobQueueItem> {
 
         @Override
         public void itemAdded(ItemEvent<LocalCIBuildJobQueueItem> item) {
             log.debug("CIBuildJobQueueItem added to queue: {}", item.getItem());
             checkAvailabilityAndProcessNextBuild();
+            localCIBuildQueueWebsocketService.sendQueuedBuildJobs(getQueuedJobs());
+            long courseID = item.getItem().getCourseId();
+            localCIBuildQueueWebsocketService.sendQueuedBuildJobsForCourse(courseID, getQueuedJobsForCourse(courseID));
         }
 
         @Override
         public void itemRemoved(ItemEvent<LocalCIBuildJobQueueItem> item) {
             log.debug("CIBuildJobQueueItem removed from queue: {}", item.getItem());
+            localCIBuildQueueWebsocketService.sendQueuedBuildJobs(getQueuedJobs());
+            long courseID = item.getItem().getCourseId();
+            localCIBuildQueueWebsocketService.sendQueuedBuildJobsForCourse(courseID, getQueuedJobsForCourse(courseID));
+        }
+    }
+
+    private class ProcessingBuildJobItemListener implements EntryAddedListener<Long, LocalCIBuildJobQueueItem>, EntryRemovedListener<Long, LocalCIBuildJobQueueItem> {
+
+        @Override
+        public void entryAdded(com.hazelcast.core.EntryEvent<Long, LocalCIBuildJobQueueItem> event) {
+            log.debug("CIBuildJobQueueItem added to processing jobs: {}", event.getValue());
+            localCIBuildQueueWebsocketService.sendRunningBuildJobs(getProcessingJobs());
+            long courseID = event.getValue().getCourseId();
+            localCIBuildQueueWebsocketService.sendRunningBuildJobsForCourse(courseID, getProcessingJobsForCourse(courseID));
+        }
+
+        @Override
+        public void entryRemoved(com.hazelcast.core.EntryEvent<Long, LocalCIBuildJobQueueItem> event) {
+            log.debug("CIBuildJobQueueItem removed from processing jobs: {}", event.getOldValue());
+            localCIBuildQueueWebsocketService.sendRunningBuildJobs(getProcessingJobs());
+            long courseID = event.getOldValue().getCourseId();
+            localCIBuildQueueWebsocketService.sendRunningBuildJobsForCourse(courseID, getProcessingJobsForCourse(courseID));
+        }
+    }
+
+    private class BuildAgentListener implements EntryAddedListener<String, LocalCIBuildAgentInformation>, EntryRemovedListener<String, LocalCIBuildAgentInformation> {
+
+        @Override
+        public void entryAdded(com.hazelcast.core.EntryEvent<String, LocalCIBuildAgentInformation> event) {
+            log.debug("Build agent added: {}", event.getValue());
+            localCIBuildQueueWebsocketService.sendBuildAgentInformation(getBuildAgentInformation());
+        }
+
+        @Override
+        public void entryRemoved(com.hazelcast.core.EntryEvent<String, LocalCIBuildAgentInformation> event) {
+            log.debug("Build agent removed: {}", event.getOldValue());
+            localCIBuildQueueWebsocketService.sendBuildAgentInformation(getBuildAgentInformation());
         }
     }
 }
