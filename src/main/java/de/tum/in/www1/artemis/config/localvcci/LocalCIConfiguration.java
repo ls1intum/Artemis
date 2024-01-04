@@ -42,10 +42,10 @@ public class LocalCIConfiguration {
     @Value("${artemis.continuous-integration.docker-connection-uri}")
     String dockerConnectionUri;
 
-    @Value("${artemis.continuous-integration.thread-pool-size:1}")
+    @Value("${artemis.continuous-integration.concurrent-build-size:1}")
     int fixedThreadPoolSize;
 
-    @Value("${artemis.continuous-integration.specify-thread-pool-size:false}")
+    @Value("${artemis.continuous-integration.specify-concurrent-builds:false}")
     boolean specifyThreadPoolSize;
 
     public LocalCIConfiguration(ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
