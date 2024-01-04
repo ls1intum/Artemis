@@ -379,6 +379,10 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         const routePageTitle: string = this.route.snapshot.firstChild?.data?.pageTitle;
         this.pageTitle = routePageTitle?.substring(routePageTitle.indexOf('.') + 1);
     }
+    getPageTitle(): void {
+        const routePageTitle: string = this.route.snapshot.firstChild?.data?.pageTitle;
+        this.pageTitle = routePageTitle?.substring(routePageTitle.indexOf('.') + 1);
+    }
 
     /**
      * Removes the controls component from the DOM and cancels the listener for controls changes.
