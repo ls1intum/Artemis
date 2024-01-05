@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.collection.IQueue;
@@ -464,8 +463,6 @@ public class LocalCISharedBuildJobQueueService {
         }
     }
 
-    @Component
-    @Profile("scheduling")
     public class BuildAgentListener implements EntryAddedListener<String, LocalCIBuildAgentInformation>, EntryRemovedListener<String, LocalCIBuildAgentInformation> {
 
         @Override
