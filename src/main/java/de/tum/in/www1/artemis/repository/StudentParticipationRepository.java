@@ -39,7 +39,11 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     Set<StudentParticipation> findByExerciseId(@Param("exerciseId") Long exerciseId);
 
     @Query("""
-            SELECT DISTINCT p FROM StudentParticipation p LEFT JOIN FETCH p.results r
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.results r
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
             WHERE p.exercise.course.id = :#{#courseId}
                 AND (r.rated IS NULL OR r.rated = true)
             """)

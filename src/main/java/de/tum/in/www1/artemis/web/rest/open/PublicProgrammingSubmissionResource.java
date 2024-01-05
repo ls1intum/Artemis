@@ -80,7 +80,7 @@ public class PublicProgrammingSubmissionResource {
             // Therefore, a mock auth object has to be created.
             SecurityUtils.setAuthorizationObject();
 
-            Participation participation = participationRepository.findByIdWithSubmissionsElseThrow(participationId);
+            Participation participation = participationRepository.findWithEagerSubmissionsByIdWithTeamStudentsElseThrow(participationId);
             if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
                 throw new BadRequestAlertException("The referenced participation " + participationId + " is not of type ProgrammingExerciseParticipation", "ProgrammingSubmission",
                         "participationWrongType");

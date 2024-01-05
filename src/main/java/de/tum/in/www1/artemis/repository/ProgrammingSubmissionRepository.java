@@ -34,8 +34,23 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
         return findById(submissionId).orElseThrow(() -> new EntityNotFoundException("ProgrammingSubmission", submissionId));
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "results.feedbacks" })
-    ProgrammingSubmission findFirstByParticipationIdAndCommitHashOrderByIdDesc(Long participationId, String commitHash);
+    @Query("""
+            SELECT s
+            FROM ProgrammingSubmission s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH s.participation p
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
+            WHERE p.id = :participationId
+                AND s.commitHash = :commitHash
+            ORDER BY s.id DESC
+            """)
+    List<ProgrammingSubmission> findByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(Long participationId, String commitHash);
+
+    default ProgrammingSubmission findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(Long participationId, String commitHash) {
+        return findByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participationId, commitHash).stream().findFirst().orElse(null);
+    }
 
     @Query("""
             SELECT s FROM ProgrammingSubmission s

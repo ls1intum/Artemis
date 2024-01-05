@@ -45,10 +45,11 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
             SELECT t, SUM(s.lastRatedPoints)
             FROM TeamScore s
                 LEFT JOIN s.team t
+                LEFT JOIN FETCH t.students
             WHERE s.exercise IN :exercises
             GROUP BY t.id
             """)
-    List<Object[]> getAchievedPointsOfTeams(@Param("exercises") Set<Exercise> exercises);
+    List<Object[]> getAchievedPointsOfTeamsWithStudents(@Param("exercises") Set<Exercise> exercises);
 
     @Query("""
             SELECT s
