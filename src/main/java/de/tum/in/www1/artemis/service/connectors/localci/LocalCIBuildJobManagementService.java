@@ -119,7 +119,7 @@ public class LocalCIBuildJobManagementService {
                 // This CompletionException will not resurface anywhere else as it is thrown in this completable future's separate thread.
                 if (cancelledBuildJobs.contains(commitHash)) {
                     finishCancelledBuildJob(participation, commitHash, containerName);
-                    throw new CancellationException("Build job with commitHash " + commitHash + " was cancelled.");
+                    throw new CompletionException(new CancellationException("Build job with commitHash " + commitHash + " was cancelled."));
                 }
                 else {
                     finishBuildJobExceptionally(participation, commitHash, containerName, isRetry, e);
@@ -184,6 +184,11 @@ public class LocalCIBuildJobManagementService {
         localCIContainerService.stopContainer(containerName);
     }
 
+    /**
+     * Cancel the build job for the given commitHash.
+     *
+     * @param commitHash The commit hash of the build job that should be cancelled.
+     */
     public void cancelBuildJob(String commitHash) {
         Future<LocalCIBuildResult> future = runningBuildJobs.get(commitHash);
         if (future != null) {

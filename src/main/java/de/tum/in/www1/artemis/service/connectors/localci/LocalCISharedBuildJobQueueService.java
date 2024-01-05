@@ -379,6 +379,11 @@ public class LocalCISharedBuildJobQueueService {
         return localProcessingJobs.get() < localCIBuildExecutorService.getMaximumPoolSize();
     }
 
+    /**
+     * Cancel a build job by removing it from the queue or stopping the build process.
+     *
+     * @param commitHash commit hash of the build job to cancel
+     */
     public void cancelBuildJob(String commitHash) {
         // Remove build job if it is queued
         if (queue.stream().anyMatch(job -> Objects.equals(job.getCommitHash(), commitHash))) {
@@ -433,16 +438,27 @@ public class LocalCISharedBuildJobQueueService {
         throw new IllegalStateException("Could not retrieve participation with id " + participationId + " from database after " + maxRetries + " retries.");
     }
 
+    /**
+     * Cancel all queued build jobs.
+     */
     public void cancelAllQueuedBuildJobs() {
         queue.clear();
     }
 
+    /**
+     * Cancel all running build jobs.
+     */
     public void cancelAllRunningBuildJobs() {
         for (LocalCIBuildJobQueueItem buildJob : processingJobs.values()) {
             cancelBuildJob(buildJob.getCommitHash());
         }
     }
 
+    /**
+     * Cancel all queued build jobs for a course.
+     *
+     * @param courseId id of the course
+     */
     public void cancelAllQueuedBuildJobsForCourse(long courseId) {
         List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
         for (LocalCIBuildJobQueueItem job : queue) {
@@ -453,6 +469,11 @@ public class LocalCISharedBuildJobQueueService {
         queue.removeAll(toRemove);
     }
 
+    /**
+     * Cancel all running build jobs for a course.
+     *
+     * @param courseId id of the course
+     */
     public void cancelAllRunningBuildJobsForCourse(long courseId) {
         for (LocalCIBuildJobQueueItem buildJob : processingJobs.values()) {
             if (buildJob.getCourseId() == courseId) {
