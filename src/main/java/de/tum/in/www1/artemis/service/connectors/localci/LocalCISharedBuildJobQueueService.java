@@ -10,8 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
-import org.springframework.core.env.Profiles;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +28,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
@@ -81,13 +80,13 @@ public class LocalCISharedBuildJobQueueService {
 
     private final LocalCIBuildQueueWebsocketService localCIBuildQueueWebsocketService;
 
-    private boolean schedulingActive = false;
+    private final boolean schedulingActive;
 
     @Autowired
-    public LocalCISharedBuildJobQueueService(HazelcastInstance hazelcastInstance, Environment env, ExecutorService localCIBuildExecutorService,
+    public LocalCISharedBuildJobQueueService(HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
             LocalCIBuildJobManagementService localCIBuildJobManagementService, ParticipationRepository participationRepository,
             ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService,
-            ProgrammingExerciseRepository programmingExerciseRepository, LocalCIBuildQueueWebsocketService localCIBuildQueueWebsocketService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ProfileService profileService, LocalCIBuildQueueWebsocketService localCIBuildQueueWebsocketService) {
         this.hazelcastInstance = hazelcastInstance;
         this.localCIBuildExecutorService = (ThreadPoolExecutor) localCIBuildExecutorService;
         this.localCIBuildJobManagementService = localCIBuildJobManagementService;
@@ -103,10 +102,8 @@ public class LocalCISharedBuildJobQueueService {
         this.processingJobs.addLocalEntryListener(new ProcessingBuildJobItemListener());
         this.buildAgentInformation.addLocalEntryListener(new BuildAgentListener());
         this.localCIBuildQueueWebsocketService = localCIBuildQueueWebsocketService;
+        this.schedulingActive = profileService.isScheduling();
 
-        if (env.acceptsProfiles(Profiles.of("scheduling"))) {
-            this.schedulingActive = true;
-        }
     }
 
     /**
@@ -355,7 +352,7 @@ public class LocalCISharedBuildJobQueueService {
             localProcessingJobs.decrementAndGet();
             updateLocalBuildAgentInformation();
 
-            if (buildJob.retryCount() > 0) {
+            if (isRetry) {
                 log.error("Build job failed for the second time: {}", buildJob);
                 return null;
             }
@@ -429,6 +426,10 @@ public class LocalCISharedBuildJobQueueService {
         localCIBuildQueueWebsocketService.sendRunningBuildJobsForCourse(courseId, getProcessingJobsForCourse(courseId));
     }
 
+    private void sendBuildAgentInformationOverWebsocket() {
+        localCIBuildQueueWebsocketService.sendBuildAgentInformation(getBuildAgentInformation());
+    }
+
     public class QueuedBuildJobItemListener implements ItemListener<LocalCIBuildJobQueueItem> {
 
         @Override
@@ -474,7 +475,7 @@ public class LocalCISharedBuildJobQueueService {
         public void entryAdded(com.hazelcast.core.EntryEvent<String, LocalCIBuildAgentInformation> event) {
             if (schedulingActive) {
                 log.debug("Build agent added: {}", event.getValue());
-                localCIBuildQueueWebsocketService.sendBuildAgentInformation(getBuildAgentInformation());
+                sendBuildAgentInformationOverWebsocket();
             }
         }
 
@@ -482,7 +483,7 @@ public class LocalCISharedBuildJobQueueService {
         public void entryRemoved(com.hazelcast.core.EntryEvent<String, LocalCIBuildAgentInformation> event) {
             if (schedulingActive) {
                 log.debug("Build agent removed: {}", event.getOldValue());
-                localCIBuildQueueWebsocketService.sendBuildAgentInformation(getBuildAgentInformation());
+                sendBuildAgentInformationOverWebsocket();
             }
         }
     }
