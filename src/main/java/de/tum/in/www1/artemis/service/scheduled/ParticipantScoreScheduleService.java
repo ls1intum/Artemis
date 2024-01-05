@@ -246,7 +246,7 @@ public class ParticipantScoreScheduleService {
             Optional<ParticipantScore> participantScore;
             if (exercise.isTeamMode()) {
                 // Fetch the team and its score for the given exercise
-                participant = teamRepository.findById(participantId).orElse(null);
+                participant = teamRepository.findWithStudentsById(participantId).orElse(null);
                 if (participant == null) {
                     // If the team was deleted, we can delete all participant scores for it as well and skip
                     logger.debug("Team {} no longer exists, deleting all participant scores for it.", participantId);
