@@ -279,7 +279,6 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
             Optional<Long> courseId = isBuildQueueCourseDestination(destination);
             if (courseId.isPresent()) {
-                // Check if the principal is an instructor of the course
                 Course course = courseRepository.findByIdElseThrow(courseId.get());
                 return authorizationCheckService.isAtLeastInstructorInCourse(course, user);
             }
