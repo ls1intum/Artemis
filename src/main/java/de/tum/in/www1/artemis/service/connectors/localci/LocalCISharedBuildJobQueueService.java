@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.collection.IQueue;
@@ -437,7 +436,7 @@ public class LocalCISharedBuildJobQueueService {
             log.debug("CIBuildJobQueueItem added to queue: {}", event.getItem());
             checkAvailabilityAndProcessNextBuild();
             if (schedulingActive) {
-                sendQueuedJobsOverWebsocket(event.getItem().getCourseId());
+                sendQueuedJobsOverWebsocket(event.getItem().courseId());
             }
         }
 
@@ -445,7 +444,7 @@ public class LocalCISharedBuildJobQueueService {
         public void itemRemoved(ItemEvent<LocalCIBuildJobQueueItem> event) {
             if (schedulingActive) {
                 log.debug("CIBuildJobQueueItem removed from queue: {}", event.getItem());
-                sendQueuedJobsOverWebsocket(event.getItem().getCourseId());
+                sendQueuedJobsOverWebsocket(event.getItem().courseId());
             }
         }
     }
@@ -456,7 +455,7 @@ public class LocalCISharedBuildJobQueueService {
         public void entryAdded(com.hazelcast.core.EntryEvent<Long, LocalCIBuildJobQueueItem> event) {
             if (schedulingActive) {
                 log.debug("CIBuildJobQueueItem added to processing jobs: {}", event.getValue());
-                sendProcessingJobsOverWebsocket(event.getValue().getCourseId());
+                sendProcessingJobsOverWebsocket(event.getValue().courseId());
             }
         }
 
@@ -464,13 +463,11 @@ public class LocalCISharedBuildJobQueueService {
         public void entryRemoved(com.hazelcast.core.EntryEvent<Long, LocalCIBuildJobQueueItem> event) {
             if (schedulingActive) {
                 log.debug("CIBuildJobQueueItem removed from processing jobs: {}", event.getOldValue());
-                sendProcessingJobsOverWebsocket(event.getOldValue().getCourseId());
+                sendProcessingJobsOverWebsocket(event.getOldValue().courseId());
             }
         }
     }
 
-    @Component
-    @Profile("scheduling")
     public class BuildAgentListener implements EntryAddedListener<String, LocalCIBuildAgentInformation>, EntryRemovedListener<String, LocalCIBuildAgentInformation> {
 
         @Override
