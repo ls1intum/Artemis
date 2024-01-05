@@ -55,4 +55,8 @@ public class AeolusBuildScriptGenerationService extends BuildScriptGenerationSer
         }
         return null;
     }
+
+    public String translateBuildPlan(String buildPlanKey) {
+        return aeolusBuildPlanService.translateBuildPlan(buildPlanKey);
+    }
 }

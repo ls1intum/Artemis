@@ -172,4 +172,26 @@ public class AeolusBuildPlanService {
         }
         return repositoryMap;
     }
+
+    /**
+     * Generates a windfile for a programming exercise using Aeolus
+     *
+     * @param buildPlanKey the key of the build plan to generate the windfile for
+     * @return the generated windfile
+     */
+    public String translateBuildPlan(String buildPlanKey) {
+        String requestUrl = aeolusUrl + "/translate/";
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
+
+        try {
+            ResponseEntity<AeolusGenerationResponseDTO> response = restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, AeolusGenerationResponseDTO.class);
+            if (response.getBody() != null) {
+                return response.getBody().getResult();
+            }
+        }
+        catch (RestClientException e) {
+            LOGGER.error("Error while generating build script for build plan {}", buildPlanKey, e);
+        }
+        return null;
+    }
 }
