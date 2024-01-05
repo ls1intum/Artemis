@@ -284,8 +284,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             // Check if the destination matches the pattern
             if (matcher.matches()) {
                 // Extract the courseId from the matched groups
-                String courseIdString = matcher.group(1);
-                long courseId = Long.parseLong(courseIdString);
+                long courseId = Long.parseLong(matcher.group(1));
 
                 // Check if the principal is an instructor of the course
                 Course course = courseRepository.findByIdElseThrow(courseId);
