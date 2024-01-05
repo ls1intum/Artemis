@@ -80,6 +80,6 @@ export class ProgrammingExerciseCreationPage {
         const ariaLabelDate = date.format(OWL_DATEPICKER_ARIA_LABEL_DATE_FORMAT);
         cy.get(`td[aria-label="${ariaLabelDate}"]`).click();
 
-        cy.get('.owl-dt-control-content.owl-dt-control-button-content').contains('Set').should('exist').click();
+        cy.get('button').contains('Set').should('exist').click();
     }
 }
