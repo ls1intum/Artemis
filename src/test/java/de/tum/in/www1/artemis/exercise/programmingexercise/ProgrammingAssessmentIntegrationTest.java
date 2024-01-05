@@ -577,7 +577,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, Result.class,
                 HttpStatus.OK);
 
-        Feedback savedAutomaticLongFeedback = response.getFeedbacks().stream().filter(feedback -> feedback.getHasLongFeedbackText()).findFirst().get();
+        Feedback savedAutomaticLongFeedback = response.getFeedbacks().stream().filter(Feedback::getHasLongFeedbackText).findFirst().orElse(null);
+
+        assertThat(savedAutomaticLongFeedback).isNotNull();
 
         // Retrieve long feedback text with id.
         String longFeedbackText = request.get(String.format("/api/results/%d/feedbacks/%d/long-feedback", response.getId(), savedAutomaticLongFeedback.getId()), HttpStatus.OK,
@@ -588,7 +590,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
             assertThat(feedback.getHasLongFeedbackText()).isTrue();
             assertThat(feedback.getType()).isEqualTo(FeedbackType.MANUAL_UNREFERENCED);
         });
-        assertThat(longFeedbackText).isEqualTo(manualLongFeedback.getLongFeedback().get().getText());
+        assertThat(longFeedbackText).isEqualTo(manualLongFeedback.getLongFeedback().map(LongFeedbackText::getText).orElse(""));
     }
 
     @Test
@@ -612,7 +614,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, Result.class,
                 HttpStatus.OK);
 
-        Feedback savedAutomaticLongFeedback = response.getFeedbacks().stream().filter(feedback -> feedback.getHasLongFeedbackText()).findFirst().get();
+        Feedback savedAutomaticLongFeedback = response.getFeedbacks().stream().filter(Feedback::getHasLongFeedbackText).findFirst().orElse(null);
+
+        assertThat(savedAutomaticLongFeedback).isNotNull();
 
         // Retrieve long feedback text with id.
         String longFeedbackText = request.get(String.format("/api/results/%d/feedbacks/%d/long-feedback", response.getId(), savedAutomaticLongFeedback.getId()), HttpStatus.OK,
@@ -623,7 +627,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
             assertThat(feedback.getType()).isEqualTo(FeedbackType.AUTOMATIC);
             assertThat(feedback.getHasLongFeedbackText()).isTrue();
         });
-        assertThat(longFeedbackText).isEqualTo(automaticLongFeedback.getLongFeedback().get().getText());
+        assertThat(longFeedbackText).isEqualTo(automaticLongFeedback.getLongFeedback().map(LongFeedbackText::getText).orElse(""));
     }
 
     @NotNull
