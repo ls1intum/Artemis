@@ -104,7 +104,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
 
     /**
      * Called when the user clicks on the clone repo button. Sometimes the VCS access token is not present in the user
-     * object, so the resulting repo URL is wrong. This method tries to retrieve the token from the server by requesting
+     * object, so the resulting repo url is wrong. This method tries to retrieve the token from the server by requesting
      * the user object again.
      * This case only happens when a user is created before VCS access tokens are enabled. For those users, a token is
      * created the first time they start participating in a programming exercise. In that case, however, they do not
