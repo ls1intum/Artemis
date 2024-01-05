@@ -338,7 +338,7 @@ public class LocalCISharedBuildJobQueueService {
             // process next build job if node is available
             checkAvailabilityAndProcessNextBuild();
         }).exceptionally(ex -> {
-            if (ex.getCause() instanceof CancellationException) {
+            if (ex.getCause() instanceof CancellationException && ex.getMessage().equals("Build job with commitHash " + commitHash + " was cancelled.")) {
                 localProcessingJobs.decrementAndGet();
                 updateLocalBuildAgentInformation();
             }
