@@ -41,20 +41,20 @@ export class BuildQueueService {
     }
 
     /**
-     * Cancel a specific build job associated with a participation in a course
+     * Cancel a specific build job associated with the build job id
      * @param courseId the id of the course
-     * @param commitHash the commit hash of the participation for which to cancel the build job
+     * @param buildJobId the id of the build job to cancel
      */
-    cancelBuildJobInCourse(courseId: number, commitHash: string): Observable<void> {
-        return this.http.delete<void>(`${this.resourceUrl}/cancel/${courseId}/${commitHash}`);
+    cancelBuildJobInCourse(courseId: number, buildJobId: number): Observable<void> {
+        return this.http.delete<void>(`${this.resourceUrl}/cancel/${courseId}/${buildJobId}`);
     }
 
     /**
-     * Cancel a specific build job associated with a participation
-     * @param commitHash the commit hash of the participation for which to cancel the build job
+     * Cancel a specific build job associated with the build job id
+     * @param buildJobId the id of the build job to cancel
      */
-    cancelBuildJob(commitHash: string): Observable<void> {
-        return this.http.delete<void>(`${this.adminResourceUrl}/cancel/${commitHash}`);
+    cancelBuildJob(buildJobId: number): Observable<void> {
+        return this.http.delete<void>(`${this.adminResourceUrl}/cancel/${buildJobId}`);
     }
 
     /**

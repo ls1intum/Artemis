@@ -98,16 +98,16 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Cancel a specific build job associated with a commit hash
-     * @param commitHash the commit hash of the participation for which to cancel the build job
+     * Cancel a specific build job associated with the build job id
+     * @param buildJobId    the id of the build job to cancel
      */
-    cancelBuildJob(commitHash: string) {
+    cancelBuildJob(buildJobId: number) {
         this.route.paramMap.subscribe((params) => {
             const courseId = Number(params.get('courseId'));
             if (courseId) {
-                this.buildQueueService.cancelBuildJobInCourse(courseId, commitHash).subscribe();
+                this.buildQueueService.cancelBuildJobInCourse(courseId, buildJobId).subscribe();
             } else {
-                this.buildQueueService.cancelBuildJob(commitHash).subscribe();
+                this.buildQueueService.cancelBuildJob(buildJobId).subscribe();
             }
         });
     }

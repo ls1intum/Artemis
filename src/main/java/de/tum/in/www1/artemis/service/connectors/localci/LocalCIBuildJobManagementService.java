@@ -188,7 +188,7 @@ public class LocalCIBuildJobManagementService {
     }
 
     /**
-     * Cancel the build job for the given commitHash.
+     * Cancel the build job for the given buildJobId.
      *
      * @param buildJobId The id of the build job that should be cancelled.
      */

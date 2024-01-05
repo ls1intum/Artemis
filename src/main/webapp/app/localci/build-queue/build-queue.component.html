@@ -114,7 +114,7 @@
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-row="row">
-                            <button class="btn btn-danger btn-sm" (click)="cancelBuildJob(row.commitHash)">
+                            <button class="btn btn-danger btn-sm" (click)="cancelBuildJob(row.id)">
                                 <fa-icon [icon]="faTimes"></fa-icon>
                             </button>
                         </ng-template>
@@ -229,7 +229,7 @@
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-row="row">
-                            <button class="btn btn-danger btn-sm" (click)="cancelBuildJob(row.commitHash)">
+                            <button class="btn btn-danger btn-sm" (click)="cancelBuildJob(row.id)">
                                 <fa-icon [icon]="faTimes"></fa-icon>
                             </button>
                         </ng-template>
