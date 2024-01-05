@@ -466,7 +466,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         var commitInfo = new CommitInfoDTO("hash", "msg1", ZonedDateTime.of(2020, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC")), "author");
         var commitInfo2 = new CommitInfoDTO("hash2", "msg2", ZonedDateTime.of(2020, 1, 2, 0, 0, 0, 0, ZoneId.of("UTC")), "author2");
-        doReturn(List.of(commitInfo, commitInfo2)).when(gitService).getCommitInfos(participation.getVcsRepositoryUrl());
+        doReturn(List.of(commitInfo, commitInfo2)).when(gitService).getCommitInfos(participation.getVcsRepositoryUri());
         request.getList("/api/programming-exercise-participations/" + participation.getId() + "/commits-info", HttpStatus.OK, CommitInfoDTO.class);
     }
 
@@ -474,7 +474,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void retrieveCommitInfoGitExceptionEmptyList() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        doThrow(new NoHeadException("error")).when(gitService).getCommitInfos(participation.getVcsRepositoryUrl());
+        doThrow(new NoHeadException("error")).when(gitService).getCommitInfos(participation.getVcsRepositoryUri());
         assertThat(request.getList("/api/programming-exercise-participations/" + participation.getId() + "/commits-info", HttpStatus.OK, CommitInfoDTO.class)).isEmpty();
     }
 

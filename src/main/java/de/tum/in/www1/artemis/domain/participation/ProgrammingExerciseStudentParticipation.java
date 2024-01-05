@@ -20,7 +20,7 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
 
     @Column(name = "repository_url")
     @JsonView(QuizView.Before.class)
-    private String repositoryUrl;
+    private String repositoryUri;
 
     @Column(name = "build_plan_id")
     @JsonView(QuizView.Before.class)
@@ -50,12 +50,12 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
         this.branch = branch;
     }
 
-    public String getRepositoryUrl() {
-        return repositoryUrl;
+    public String getRepositoryUri() {
+        return repositoryUri;
     }
 
-    public void setRepositoryUrl(String repositoryUrl) {
-        this.repositoryUrl = repositoryUrl;
+    public void setRepositoryUri(String repositoryUri) {
+        this.repositoryUri = repositoryUri;
     }
 
     public String getBuildPlanId() {
@@ -115,7 +115,7 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "{" + "id=" + getId() + ", repositoryUrl='" + getRepositoryUrl() + "'" + ", buildPlanId='" + getBuildPlanId() + "'"
+        return getClass().getSimpleName() + "{" + "id=" + getId() + ", repositoryUri='" + getRepositoryUri() + "'" + ", buildPlanId='" + getBuildPlanId() + "'"
                 + ", initializationState='" + getInitializationState() + "'" + ", initializationDate='" + getInitializationDate() + "'" + ", individualDueDate="
                 + getIndividualDueDate() + "'" + ", presentationScore=" + getPresentationScore() + "}";
     }
