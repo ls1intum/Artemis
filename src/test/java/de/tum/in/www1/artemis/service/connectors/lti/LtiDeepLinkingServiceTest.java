@@ -172,30 +172,4 @@ class LtiDeepLinkingServiceTest {
         exercise.setCourse(course);
         return exercise;
     }
-
-    private String getDeepLinkingSettingsJson() {
-        return """
-                {
-                  "deep_link_return_url": "",
-                  "accept_types": [
-                    "link",
-                    "file",
-                    "html",
-                    "ltiResourceLink",
-                    "image"
-                  ],
-                  "accept_media_types": "image/*,text/html",
-                  "accept_presentation_document_targets": [
-                    "iframe",
-                    "window",
-                    "embed"
-                  ],
-                  "accept_multiple": true,
-                  "auto_create": true,
-                  "title": "This is the default title",
-                  "text": "This is the default text",
-                  "data": "csrftoken:c7fbba78-7b75-46e3-9201-11e6d5f36f53"
-                }
-                """;
-    }
 }
