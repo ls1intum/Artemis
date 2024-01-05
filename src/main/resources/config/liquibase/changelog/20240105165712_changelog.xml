@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20240105165712" author="laurenzfb">
+        <createTable tableName="build_job">
+            <column name="build_job_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="varchar(255)"/>
+            <column name="exercise_id" type="bigint"/>
+            <column name="course_id" type="bigint"/>
+            <column name="participation_id" type="bigint"/>
+            <column name="build_agent_address" type="varchar(255)"/>
+            <column name="build_start_date" type="timestamp"/>
+            <column name="build_completion_date" type="timestamp"/>
+            <column name="repository_type_or_user_name" type="varchar(255)"/>
+            <column name="commit_hash" type="varchar(40)"/>
+            <column name="retry_count" type="int"/>
+            <column name="priority" type="int"/>
+            <column name="is_push_to_test_repository" type="boolean"/>
+            <column name="result" type="varchar(10)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="docker_image" type="varchar(255)"/>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>
