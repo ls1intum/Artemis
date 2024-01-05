@@ -424,7 +424,7 @@ public class LocalCISharedBuildJobQueueService {
         localCIBuildQueueWebsocketService.sendRunningBuildJobsForCourse(courseId, getProcessingJobsForCourse(courseId));
     }
 
-    public class QueuedBuildJobItemListener implements ItemListener<LocalCIBuildJobQueueItem> {
+    private class QueuedBuildJobItemListener implements ItemListener<LocalCIBuildJobQueueItem> {
 
         @Override
         public void itemAdded(ItemEvent<LocalCIBuildJobQueueItem> event) {
@@ -463,7 +463,7 @@ public class LocalCISharedBuildJobQueueService {
         }
     }
 
-    public class BuildAgentListener implements EntryAddedListener<String, LocalCIBuildAgentInformation>, EntryRemovedListener<String, LocalCIBuildAgentInformation> {
+    private class BuildAgentListener implements EntryAddedListener<String, LocalCIBuildAgentInformation>, EntryRemovedListener<String, LocalCIBuildAgentInformation> {
 
         @Override
         public void entryAdded(com.hazelcast.core.EntryEvent<String, LocalCIBuildAgentInformation> event) {

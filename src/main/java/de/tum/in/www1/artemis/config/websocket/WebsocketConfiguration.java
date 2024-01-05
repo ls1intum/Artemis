@@ -2,12 +2,13 @@ package de.tum.in.www1.artemis.config.websocket;
 
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.getExerciseIdFromNonPersonalExerciseResultDestination;
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.isNonPersonalExerciseResultDestination;
+import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIBuildQueueWebsocketService.isBuildQueueAdminDestination;
+import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIBuildQueueWebsocketService.isBuildQueueCourseDestination;
 import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.*;
 
 import java.net.InetSocketAddress;
 import java.security.Principal;
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.Cookie;
@@ -271,28 +272,16 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
          */
         private boolean allowSubscription(Principal principal, String destination) {
             User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
-            if ("/topic/admin/queued-jobs".equals(destination) || "/topic/admin/running-jobs".equals(destination)) {
-                if (!authorizationCheckService.isAdmin(user)) {
-                    log.warn("User {} is not an admin and is not allowed to subscribe to the protected topic: {}", principal.getName(), destination);
-                    return false;
-                }
+
+            if (isBuildQueueAdminDestination(destination)) {
+                return authorizationCheckService.isAdmin(user);
             }
-            // Define a pattern to match the expected course-related topic format
-            Pattern pattern = Pattern.compile("^/topic/courses/(\\d+)/(queued-jobs|running-jobs)$");
-            Matcher matcher = pattern.matcher(destination);
 
-            // Check if the destination matches the pattern
-            if (matcher.matches()) {
-                // Extract the courseId from the matched groups
-                long courseId = Long.parseLong(matcher.group(1));
-
+            Optional<Long> courseId = isBuildQueueCourseDestination(destination);
+            if (courseId.isPresent()) {
                 // Check if the principal is an instructor of the course
-                Course course = courseRepository.findByIdElseThrow(courseId);
-                if (!authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
-                    log.warn("User {} is not an admin or instructor of course {} and is not allowed to subscribe to the protected topic: {}", principal.getName(), courseId,
-                            destination);
-                    return false;
-                }
+                Course course = courseRepository.findByIdElseThrow(courseId.get());
+                return authorizationCheckService.isAtLeastInstructorInCourse(course, user);
             }
 
             if (isParticipationTeamDestination(destination)) {
