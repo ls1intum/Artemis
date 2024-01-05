@@ -57,9 +57,9 @@ public class LocalCIBuildJobManagementService {
     @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
     private String buildContainerPrefix;
 
-    private final Map<String, Future<LocalCIBuildResult>> runningBuildJobs = new ConcurrentHashMap<>();
+    private final Map<Long, Future<LocalCIBuildResult>> runningBuildJobs = new ConcurrentHashMap<>();
 
-    private final Set<String> cancelledBuildJobs = new HashSet<>();
+    private final Set<Long> cancelledBuildJobs = new HashSet<>();
 
     public LocalCIBuildJobManagementService(LocalCIBuildJobExecutionService localCIBuildJobExecutionService, ExecutorService localCIBuildExecutorService,
             ProgrammingMessagingService programmingMessagingService, LocalCIBuildPlanService localCIBuildPlanService, LocalCIContainerService localCIContainerService,
@@ -80,11 +80,12 @@ public class LocalCIBuildJobManagementService {
      * @param commitHash             The commit hash of the submission that led to this build. If it is "null", the latest commit of the repository will be used.
      * @param isRetry                Whether this build job is a retry of a previous build job.
      * @param isPushToTestRepository Defines if the build job is triggered by a push to a test repository.
+     * @param buildJobId             The id of the build job.
      * @return A future that will be completed with the build result.
      * @throws LocalCIException If the build job could not be submitted to the executor service.
      */
-    public CompletableFuture<LocalCIBuildResult> executeBuildJob(ProgrammingExerciseParticipation participation, String commitHash, boolean isRetry, boolean isPushToTestRepository)
-            throws LocalCIException {
+    public CompletableFuture<LocalCIBuildResult> executeBuildJob(ProgrammingExerciseParticipation participation, String commitHash, boolean isRetry, boolean isPushToTestRepository,
+            long buildJobId) throws LocalCIException {
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
@@ -107,7 +108,7 @@ public class LocalCIBuildJobManagementService {
          * Usually, when using asynchronous build jobs, it will just resolve to "CompletableFuture.supplyAsync".
          */
         Future<LocalCIBuildResult> future = localCIBuildExecutorService.submit(buildJob);
-        runningBuildJobs.put(commitHash, future);
+        runningBuildJobs.put(buildJobId, future);
 
         CompletableFuture<LocalCIBuildResult> futureResult = createCompletableFuture(() -> {
             try {
@@ -117,9 +118,9 @@ public class LocalCIBuildJobManagementService {
                 // RejectedExecutionException is thrown if the queue size limit (defined in "artemis.continuous-integration.queue-size-limit") is reached.
                 // Wrap the exception in a CompletionException so that the future is completed exceptionally and the thenAccept block is not run.
                 // This CompletionException will not resurface anywhere else as it is thrown in this completable future's separate thread.
-                if (cancelledBuildJobs.contains(commitHash)) {
-                    finishCancelledBuildJob(participation, commitHash, containerName);
-                    throw new CompletionException("Build job with commitHash " + commitHash + " was cancelled.", e);
+                if (cancelledBuildJobs.contains(buildJobId)) {
+                    finishCancelledBuildJob(participation, buildJobId, containerName);
+                    throw new CompletionException("Build job with id " + buildJobId + " was cancelled.", e);
                 }
                 else {
                     finishBuildJobExceptionally(participation, commitHash, containerName, isRetry, e);
@@ -129,7 +130,9 @@ public class LocalCIBuildJobManagementService {
         });
         // Update the build plan status to "QUEUED".
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.QUEUED);
-        return futureResult.whenComplete(((result, throwable) -> runningBuildJobs.remove(commitHash)));
+        futureResult.whenComplete(((result, throwable) -> runningBuildJobs.remove(buildJobId)));
+
+        return futureResult;
     }
 
     /**
@@ -187,21 +190,21 @@ public class LocalCIBuildJobManagementService {
     /**
      * Cancel the build job for the given commitHash.
      *
-     * @param commitHash The commit hash of the build job that should be cancelled.
+     * @param buildJobId The id of the build job that should be cancelled.
      */
-    public void cancelBuildJob(String commitHash) {
-        Future<LocalCIBuildResult> future = runningBuildJobs.get(commitHash);
+    public void cancelBuildJob(long buildJobId) {
+        Future<LocalCIBuildResult> future = runningBuildJobs.get(buildJobId);
         if (future != null) {
             try {
-                cancelledBuildJobs.add(commitHash);
+                cancelledBuildJobs.add(buildJobId);
                 future.cancel(true); // Attempt to interrupt the build job
             }
             catch (CancellationException e) {
-                log.warn("Build job already cancelled or completed for commitHash {}", commitHash);
+                log.warn("Build job already cancelled or completed for id {}", buildJobId);
             }
         }
         else {
-            log.warn("Attempted to cancel a non-existent build job for commitHash {}", commitHash);
+            log.warn("Attempted to cancel a non-existent build job for id {}", buildJobId);
         }
     }
 
@@ -209,10 +212,11 @@ public class LocalCIBuildJobManagementService {
      * Finish the build job if it was cancelled by the user.
      *
      * @param participation The participation of the repository for which the build job was executed.
+     * @param buildJobId    The id of the cancelled build job
      * @param containerName The name of the Docker container that was used to execute the build job.
      */
-    private void finishCancelledBuildJob(ProgrammingExerciseParticipation participation, String commitHash, String containerName) {
-        log.debug("Build job for commit {} in repository {} was cancelled", commitHash, participation.getRepositoryUri());
+    private void finishCancelledBuildJob(ProgrammingExerciseParticipation participation, long buildJobId, String containerName) {
+        log.debug("Build job with id {} in repository {} was cancelled", buildJobId, participation.getRepositoryUri());
 
         // Set the build status to "INACTIVE" to indicate that the build is not running anymore.
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);

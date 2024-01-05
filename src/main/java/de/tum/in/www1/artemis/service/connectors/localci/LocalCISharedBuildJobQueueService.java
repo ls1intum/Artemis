@@ -309,8 +309,8 @@ public class LocalCISharedBuildJobQueueService {
             participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
         }
 
-        CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.executeBuildJob(participation, commitHash, isRetry,
-                buildJob.isPushToTestRepository());
+        CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.executeBuildJob(participation, commitHash, isRetry, buildJob.isPushToTestRepository(),
+                buildJob.getId());
         futureResult.thenAccept(buildResult -> {
 
             // Do not process the result if the participation has been deleted in the meantime
@@ -382,14 +382,14 @@ public class LocalCISharedBuildJobQueueService {
     /**
      * Cancel a build job by removing it from the queue or stopping the build process.
      *
-     * @param commitHash commit hash of the build job to cancel
+     * @param buildJobId id of the build job to cancel
      */
-    public void cancelBuildJob(String commitHash) {
+    public void cancelBuildJob(long buildJobId) {
         // Remove build job if it is queued
-        if (queue.stream().anyMatch(job -> Objects.equals(job.getCommitHash(), commitHash))) {
+        if (queue.stream().anyMatch(job -> Objects.equals(job.getId(), buildJobId))) {
             List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
             for (LocalCIBuildJobQueueItem job : queue) {
-                if (Objects.equals(job.getCommitHash(), commitHash)) {
+                if (Objects.equals(job.getId(), buildJobId)) {
                     toRemove.add(job);
                 }
             }
@@ -397,10 +397,10 @@ public class LocalCISharedBuildJobQueueService {
         }
         else {
             // Remove build job if it is currently being processed
-            LocalCIBuildJobQueueItem buildJob = processingJobs.values().stream().filter(job -> Objects.equals(job.getCommitHash(), commitHash)).findFirst().orElse(null);
+            LocalCIBuildJobQueueItem buildJob = processingJobs.values().stream().filter(job -> Objects.equals(job.getId(), buildJobId)).findFirst().orElse(null);
             if (buildJob != null) {
                 processingJobs.remove(buildJob.getId());
-                localCIBuildJobManagementService.cancelBuildJob(commitHash);
+                localCIBuildJobManagementService.cancelBuildJob(buildJobId);
             }
         }
     }
@@ -450,7 +450,7 @@ public class LocalCISharedBuildJobQueueService {
      */
     public void cancelAllRunningBuildJobs() {
         for (LocalCIBuildJobQueueItem buildJob : processingJobs.values()) {
-            cancelBuildJob(buildJob.getCommitHash());
+            cancelBuildJob(buildJob.getId());
         }
     }
 
@@ -477,7 +477,7 @@ public class LocalCISharedBuildJobQueueService {
     public void cancelAllRunningBuildJobsForCourse(long courseId) {
         for (LocalCIBuildJobQueueItem buildJob : processingJobs.values()) {
             if (buildJob.getCourseId() == courseId) {
-                cancelBuildJob(buildJob.getCommitHash());
+                cancelBuildJob(buildJob.getId());
             }
         }
     }

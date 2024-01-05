@@ -68,15 +68,15 @@ public class AdminBuildJobQueueResource {
     /**
      * Cancels the build job for the given participation.
      *
-     * @param commitHash the commitHash of the build job to cancel
+     * @param buildJobId the id of the build job to cancel
      * @return the ResponseEntity with the result of the cancellation
      */
-    @DeleteMapping("/build-job-queue/cancel/{commitHash}")
+    @DeleteMapping("/build-job-queue/cancel/{buildJobId}")
     @EnforceAdmin
-    public ResponseEntity<Void> cancelBuildJob(@PathVariable String commitHash) {
-        log.debug("REST request to cancel the build job for commitHash {}", commitHash);
+    public ResponseEntity<Void> cancelBuildJob(@PathVariable long buildJobId) {
+        log.debug("REST request to cancel the build job with id {}", buildJobId);
         // Call the cancelBuildJob method in LocalCIBuildJobManagementService
-        localCIBuildJobQueueService.cancelBuildJob(commitHash);
+        localCIBuildJobQueueService.cancelBuildJob(buildJobId);
 
         return ResponseEntity.noContent().build();
     }
