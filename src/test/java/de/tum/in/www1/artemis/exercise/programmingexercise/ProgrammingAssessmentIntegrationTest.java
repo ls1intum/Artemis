@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 
 import org.assertj.core.data.Offset;
 import org.eclipse.jgit.lib.ObjectId;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
@@ -630,8 +629,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         assertThat(longFeedbackText).isEqualTo(automaticLongFeedback.getLongFeedback().map(LongFeedbackText::getText).orElse(""));
     }
 
-    @NotNull
-    private Result setUpManualResultForUpdate(@NotNull List<Feedback> feedbacks) {
+    private Result setUpManualResultForUpdate(List<Feedback> feedbacks) {
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
         programmingSubmission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, programmingSubmission, TEST_PREFIX + "student1");
         var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
