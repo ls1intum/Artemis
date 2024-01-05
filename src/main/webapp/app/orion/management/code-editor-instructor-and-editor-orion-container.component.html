@@ -41,7 +41,7 @@
                 <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>{{ selectedRepository }}</button>
                 <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
                     <button
-                        [disabled]="!exercise || !exercise.templateParticipation || !exercise.templateParticipation.id || !exercise.templateParticipation.repositoryUrl"
+                        [disabled]="!exercise || !exercise.templateParticipation || !exercise.templateParticipation.id || !exercise.templateParticipation.repositoryUri"
                         (click)="selectTemplateParticipation()"
                         ngbDropdownItem
                         [style.background-color]="selectedRepository === REPOSITORY.TEMPLATE ? '#3e8acc' : 'transparent'"
@@ -49,7 +49,7 @@
                         <span jhiTranslate="artemisApp.editor.repoSelect.templateRepo">Template Repository</span>
                     </button>
                     <button
-                        [disabled]="!exercise || !exercise.solutionParticipation || !exercise.solutionParticipation.id || !exercise.solutionParticipation.repositoryUrl"
+                        [disabled]="!exercise || !exercise.solutionParticipation || !exercise.solutionParticipation.id || !exercise.solutionParticipation.repositoryUri"
                         (click)="selectSolutionParticipation()"
                         ngbDropdownItem
                         [style.background-color]="selectedRepository === REPOSITORY.SOLUTION ? '#3e8acc' : 'transparent'"

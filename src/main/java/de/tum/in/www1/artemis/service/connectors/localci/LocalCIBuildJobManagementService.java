@@ -54,6 +54,9 @@ public class LocalCIBuildJobManagementService {
     @Value("${artemis.continuous-integration.asynchronous:true}")
     private boolean runBuildJobsAsynchronously;
 
+    @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
+    private String buildContainerPrefix;
+
     public LocalCIBuildJobManagementService(LocalCIBuildJobExecutionService localCIBuildJobExecutionService, ExecutorService localCIBuildExecutorService,
             ProgrammingMessagingService programmingMessagingService, LocalCIBuildPlanService localCIBuildPlanService, LocalCIContainerService localCIContainerService,
             LocalCIDockerService localCIDockerService, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
@@ -88,7 +91,7 @@ public class LocalCIBuildJobManagementService {
         localCIDockerService.pullDockerImage(dockerImage);
 
         // Prepare the Docker container name before submitting the build job to the executor service, so we can remove the container if something goes wrong.
-        String containerName = "local-ci-" + participation.getId() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
+        String containerName = buildContainerPrefix + participation.getId() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
 
         // Prepare a Callable that will later be called. It contains the actual steps needed to execute the build job.
         Callable<LocalCIBuildResult> buildJob = () -> localCIBuildJobExecutionService.runBuildJob(participation, commitHash, isPushToTestRepository, containerName, dockerImage);
@@ -152,7 +155,7 @@ public class LocalCIBuildJobManagementService {
      * @param exception     The exception that occurred while building and testing the repository.
      */
     private void finishBuildJobExceptionally(ProgrammingExerciseParticipation participation, String commitHash, String containerName, boolean isRetry, Exception exception) {
-        log.error("Error while building and testing commit {} in repository {}", commitHash, participation.getRepositoryUrl(), exception);
+        log.error("Error while building and testing commit {} in repository {}", commitHash, participation.getRepositoryUri(), exception);
 
         // Set the build status to "INACTIVE" to indicate that the build is not running anymore.
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);
