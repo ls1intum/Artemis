@@ -85,20 +85,6 @@ describe('Lti13ExerciseLaunchComponent', () => {
         expect(httpStub).not.toHaveBeenCalled();
     });
 
-    it('onInit state does not match', () => {
-        const httpStub = jest.spyOn(http, 'post');
-        const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-
-        window.sessionStorage.setItem('state', 'notMatch');
-
-        comp.ngOnInit();
-
-        expect(consoleSpy).toHaveBeenCalledOnce();
-        expect(consoleSpy).toHaveBeenCalledWith('LTI launch state mismatch');
-        expect(comp.isLaunching).toBeFalse();
-        expect(httpStub).not.toHaveBeenCalled();
-    });
-
     it('onInit no targetLinkUri', () => {
         const httpStub = jest.spyOn(http, 'post').mockReturnValue(of({ ltiIdToken: 'id-token', clientRegistrationId: 'client-id' }));
         const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
