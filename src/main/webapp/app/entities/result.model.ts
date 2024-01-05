@@ -53,7 +53,7 @@ export class Result implements BaseEntity {
      *
      * @return true if the assessment note exists and is not empty, false otherwise
      */
-    public static hasNonEmptyAssessmentNote(that: Result): boolean {
-        return !!that.assessmentNote?.note?.length;
+    public static hasNonEmptyAssessmentNote(that: Result | undefined): boolean {
+        return that ? !!that.assessmentNote?.note?.length : false;
     }
 }
