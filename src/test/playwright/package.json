@@ -16,7 +16,7 @@
     "scripts": {
         "playwright:test": "playwright test",
         "playwright:open": "npx playwright test --ui",
-        "playwright:setup": "playwright test init/ImportUsers.spec.ts",
+        "playwright:setup": "npx playwright install --with-deps chromium && playwright test init/ImportUsers.spec.ts",
         "playwright:local": "playwright test"
     }
 }
