@@ -225,7 +225,7 @@ public class BambooRequestMockProvider {
         parameters.add("save", "Save repository");
         parameters.add("bamboo.successReturnMode", "json");
         parameters.add("repository.git.branch", defaultBranch);
-        parameters.add("repository.git.repositoryUri", newRepoUri);
+        parameters.add("repository.git.repositoryUrl", newRepoUri);
         parameters.add("repository.git.authenticationType", "PASSWORD");
         parameters.add("repository.git.passwordCredentialsSource", "SHARED_CREDENTIALS");
         parameters.add("___advancedOptionsPresent___", "true");
