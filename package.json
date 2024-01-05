@@ -13,7 +13,6 @@
         "node_modules"
     ],
     "dependencies": {
-        "ngx-slider-v2": "17.0.0",
         "@angular/animations": "17.0.8",
         "@angular/cdk": "17.0.4",
         "@angular/common": "17.0.8",
@@ -61,6 +60,7 @@
         "lodash-es": "4.17.21",
         "mobile-drag-drop": "3.0.0-rc.0",
         "ngx-infinite-scroll": "17.0.0",
+        "ngx-slider-v2": "17.0.0",
         "ngx-webstorage": "13.0.1",
         "papaparse": "5.3.2",
         "process": "0.11.10",
@@ -147,8 +147,7 @@
         "sass": "1.69.5",
         "ts-jest": "29.1.1",
         "typescript": "5.2.2",
-        "weak-napi": "2.0.2",
-        "webpack-bundle-analyzer": "4.10.1"
+        "weak-napi": "2.0.2"
     },
     "engines": {
         "node": ">=18.17.0"
@@ -182,13 +181,12 @@
         "test:watch": "npm run prebuild && npm run test -- --watch",
         "webapp:build": "npm run clean-www && npm run webapp:build:dev",
         "webapp:build:dev": "npm run prebuild -- --develop && ng build --configuration development",
-        "webapp:build:prod": "npm run prebuild && ng build --configuration production --stats-json",
+        "webapp:build:prod": "npm run prebuild && ng build --configuration production",
         "webapp:dev": "npm run prebuild -- --develop && ng serve",
         "webapp:dev-verbose": "npm run prebuild -- --develop && ng serve --verbose",
         "webapp:dev-ssl": "npm run prebuild -- --develop && ng serve --ssl",
         "webapp:prod": "npm run clean-www && npm run webapp:build:prod",
         "webapp:test": "npm run test --",
-        "bundle-analyze": "webpack-bundle-analyzer 'build/resources/main/static/stats.json' --mode static --no-open --report 'build/resources/main/stats.html'",
         "prepare": "husky install",
         "java:war": "./gradlew bootWar -Pwar -x test -x integrationTest",
         "java:war:dev": "npm run java:war -- -Pdev,webapp",
