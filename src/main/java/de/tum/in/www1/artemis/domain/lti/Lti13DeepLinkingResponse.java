@@ -6,7 +6,7 @@ import java.util.Map;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.gson.GsonBuilder;
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 /**
@@ -77,7 +77,7 @@ public class Lti13DeepLinkingResponse {
 
         Map<String, Object> deepLinkingSettings = ltiIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS);
         // convert the map to json
-        this.deepLinkingSettings = new GsonBuilder().setPrettyPrinting().create().toJsonTree(deepLinkingSettings).getAsJsonObject();
+        this.deepLinkingSettings = new Gson().toJsonTree(deepLinkingSettings).getAsJsonObject();
         this.setReturnUrl(this.deepLinkingSettings.get("deep_link_return_url").getAsString());
         this.clientRegistrationId = clientRegistrationId;
 
