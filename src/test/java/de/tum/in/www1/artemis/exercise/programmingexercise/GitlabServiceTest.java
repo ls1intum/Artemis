@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 
@@ -124,9 +124,9 @@ class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "master", "main", "someOtherName" })
     void testGetDefaultBranch(String defaultBranch) throws URISyntaxException, GitLabApiException {
-        VcsRepositoryUrl repoURL = new VcsRepositoryUrl("http://some.test.url/scm/PROJECTNAME/REPONAME-exercise.git");
+        VcsRepositoryUri repoUri = new VcsRepositoryUri("http://some.test.url/scm/PROJECTNAME/REPONAME-exercise.git");
         gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
-        String actualDefaultBranch = versionControlService.getDefaultBranchOfRepository(repoURL);
+        String actualDefaultBranch = versionControlService.getDefaultBranchOfRepository(repoUri);
         assertThat(actualDefaultBranch).isEqualTo(defaultBranch);
     }
 

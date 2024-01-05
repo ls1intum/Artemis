@@ -73,7 +73,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     void testFeedbackSuggestionsProgramming() throws NetworkingException {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming", jsonPath("$.exercise.id").value(programmingExercise.getId()),
                 jsonPath("$.exercise.title").value(programmingExercise.getTitle()), jsonPath("$.submission.id").value(programmingSubmission.getId()),
-                jsonPath("$.submission.repositoryUrl")
+                jsonPath("$.submission.repositoryUri")
                         .value("https://artemislocal.ase.in.tum.de/api/public/athena/programming-exercises/" + programmingExercise.getId() + "/submissions/3/repository"));
         List<ProgrammingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, programmingSubmission);
         assertThat(suggestions.get(0).title()).isEqualTo("Not so good");
