@@ -12,11 +12,11 @@ export class Commands {
             .then((cookies) => cookies.find((cookie) => cookie.name === 'jwt'));
         if (!jwtCookie) {
             const response = await page.request.post(BASE_API + 'public/authenticate', {
-                // certificateOptions: {
-                //     ca: fs.readFileSync('./certs/rootCA.pem'),
-                //     cert: fs.readFileSync('./certs/artemis-nginx+4.pem'),
-                //     key: fs.readFileSync('./certs/artemis-nginx+4-key.pem'),
-                // },
+                certificateOptions: {
+                    ca: fs.readFileSync('./certs/rootCA.pem'),
+                    cert: fs.readFileSync('./certs/artemis-nginx+4.pem'),
+                    key: fs.readFileSync('./certs/artemis-nginx+4-key.pem'),
+                },
                 data: {
                     username,
                     password,
