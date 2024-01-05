@@ -27,6 +27,8 @@ public class LocalCIBuildQueueWebsocketService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
+    private static final Pattern COURSE_DESTINATION_PATTERN = Pattern.compile("^/topic/courses/(\\d+)/(queued-jobs|running-jobs)$");
+
     /**
      * Constructor for dependency injection
      *
@@ -115,8 +117,7 @@ public class LocalCIBuildQueueWebsocketService {
      */
     public static Optional<Long> isBuildQueueCourseDestination(String destination) {
         // Define a pattern to match the expected course-related topic format
-        Pattern pattern = Pattern.compile("^/topic/courses/(\\d+)/(queued-jobs|running-jobs)$");
-        Matcher matcher = pattern.matcher(destination);
+        Matcher matcher = COURSE_DESTINATION_PATTERN.matcher(destination);
 
         // Check if the destination matches the pattern
         if (matcher.matches()) {
