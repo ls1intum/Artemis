@@ -13,6 +13,16 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class BuildJob extends DomainObject {
 
+    public enum Result {
+        SUCCESSFUL, FAILED, ERROR, CANCELED
+    }
+
+    @Column(name = "build_job_id")
+    private Long buildJobId;
+
+    @Column(name = "name")
+    private String name;
+
     @Column(name = "exercise_id")
     private Long exerciseId;
 
@@ -22,71 +32,34 @@ public class BuildJob extends DomainObject {
     @Column(name = "participation_id")
     private Long participationId;
 
+    @Column(name = "build_agent_address")
+    private String buildAgentAddress;
+
     @Column(name = "build_start_date")
     private ZonedDateTime buildStartDate;
 
     @Column(name = "build_completion_date")
     private ZonedDateTime buildCompletionDate;
 
+    @Column(name = "repository_type_or_user_name")
+    private String repositoryTypeOrUserName;
+
+    @Column(name = "commit_hash")
+    private String commitHash;
+
     @Column(name = "retry_count")
     private int retryCount;
 
-    @Column(name = "exception_occurred")
-    private boolean exceptionOccurred;
+    @Column(name = "priority")
+    private int priority;
 
-    public Long getExerciseId() {
-        return exerciseId;
-    }
+    @Column(name = "is_push_to_test_repository")
+    private boolean isPushToTestRepository;
 
-    public void setExerciseId(Long exerciseId) {
-        this.exerciseId = exerciseId;
-    }
+    @Column(name = "result")
+    private Result result;
 
-    public Long getCourseId() {
-        return courseId;
-    }
+    @Column(name = "docker_image")
+    private String dockerImage;
 
-    public void setCourseId(Long courseId) {
-        this.courseId = courseId;
-    }
-
-    public Long getParticipationId() {
-        return participationId;
-    }
-
-    public void setParticipationId(Long participationId) {
-        this.participationId = participationId;
-    }
-
-    public ZonedDateTime getBuildStartDate() {
-        return buildStartDate;
-    }
-
-    public void setBuildStartDate(ZonedDateTime buildStartDate) {
-        this.buildStartDate = buildStartDate;
-    }
-
-    public ZonedDateTime getBuildCompletionDate() {
-        return buildCompletionDate;
-    }
-
-    public void setBuildCompletionDate(ZonedDateTime buildCompletionDate) {
-        this.buildCompletionDate = buildCompletionDate;
-    }
-
-    public int getRetryCount() {
-        return retryCount;
-    }
-
-    public void setRetryCount(int retryCount) {
-        this.retryCount = retryCount;
-    }
-
-    public boolean isExceptionOccurred() {
-        return exceptionOccurred;
-    }
-
-    public void setExceptionOccurred(boolean exceptionOccurred) {
-        this.exceptionOccurred = exceptionOccurred;
-    }
 }
