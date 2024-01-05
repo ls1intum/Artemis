@@ -341,18 +341,18 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 },
                 {
                     type: DetailType.ProgrammingRepositoryButtons,
-                    title: 'artemisApp.programmingExercise.templateRepositoryUrl',
+                    title: 'artemisApp.programmingExercise.templateRepositoryUri',
                     data: { participation: exercise.templateParticipation, exerciseId: exercise.id, type: ProgrammingExerciseParticipationType.TEMPLATE },
                 },
                 {
                     type: DetailType.ProgrammingRepositoryButtons,
-                    title: 'artemisApp.programmingExercise.solutionRepositoryUrl',
+                    title: 'artemisApp.programmingExercise.solutionRepositoryUri',
                     data: { participation: exercise.solutionParticipation, exerciseId: exercise.id, type: ProgrammingExerciseParticipationType.SOLUTION },
                 },
                 {
                     type: DetailType.ProgrammingRepositoryButtons,
-                    title: 'artemisApp.programmingExercise.testRepositoryUrl',
-                    data: { participation: { repositoryUrl: exercise.testRepositoryUrl }, exerciseId: exercise.id },
+                    title: 'artemisApp.programmingExercise.testRepositoryUri',
+                    data: { participation: { repositoryUri: exercise.testRepositoryUri }, exerciseId: exercise.id },
                 },
                 this.supportsAuxiliaryRepositories &&
                     !!exercise.auxiliaryRepositories?.length && {
