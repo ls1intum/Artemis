@@ -189,9 +189,9 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         Path folderPath = Path.of(studentRepository.localRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(folderPath);
 
-        var localRepoUrl = new GitUtilService.MockFileRepositoryUrl(studentRepository.localRepoFile);
-        participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, TEST_PREFIX + "student1", localRepoUrl.getURI());
-        programmingExercise.setTestRepositoryUrl(localRepoUrl.toString());
+        var localRepoUri = new GitUtilService.MockFileRepositoryUri(studentRepository.localRepoFile);
+        participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, TEST_PREFIX + "student1", localRepoUri.getURI());
+        programmingExercise.setTestRepositoryUri(localRepoUri.toString());
 
         // Create template repo
         templateRepository = new LocalRepository(defaultBranch);
@@ -212,18 +212,18 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepository.localRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl()), eq(true), any());
+                .getOrCheckoutRepository(eq(programmingExercise.getTemplateParticipation().getVcsRepositoryUri()), eq(true), any());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), eq(true), any());
+                .getOrCheckoutRepository(eq(participation.getVcsRepositoryUri()), eq(true), any());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), eq(false), any());
+                .getOrCheckoutRepository(eq(participation.getVcsRepositoryUri()), eq(false), any());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepository.localRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(), true);
+                .getOrCheckoutRepository(programmingExercise.getTemplateParticipation().getVcsRepositoryUri(), true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(participation.getVcsRepositoryUrl(), true);
+                .getOrCheckoutRepository(participation.getVcsRepositoryUri(), true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(participation.getVcsRepositoryUrl(), false);
+                .getOrCheckoutRepository(participation.getVcsRepositoryUri(), false);
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participation);
 
@@ -425,7 +425,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(tempRepository.localRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(programmingExercise.getSolutionParticipation().getVcsRepositoryUrl()), eq(true), any());
+                .getOrCheckoutRepository(eq(programmingExercise.getSolutionParticipation().getVcsRepositoryUri()), eq(true), any());
 
         var files = request.getMap(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/files", HttpStatus.OK, String.class, FileType.class);
 
@@ -712,12 +712,12 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         // Create assignment repository and participation for the instructor.
         tempRepository = new LocalRepository(defaultBranch);
         tempRepository.configureRepos("localInstructorAssignmentRepo", "remoteInstructorAssignmentRepo");
-        var instructorAssignmentRepoUrl = new GitUtilService.MockFileRepositoryUrl(tempRepository.localRepoFile);
+        var instructorAssignmentRepoUri = new GitUtilService.MockFileRepositoryUri(tempRepository.localRepoFile);
         ProgrammingExerciseStudentParticipation instructorAssignmentParticipation = participationUtilService
-                .addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, TEST_PREFIX + "instructor1", instructorAssignmentRepoUrl.getURI());
+                .addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, TEST_PREFIX + "instructor1", instructorAssignmentRepoUri.getURI());
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfStudentParticipation(instructorAssignmentParticipation);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(tempRepository.localRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(instructorAssignmentParticipation.getVcsRepositoryUrl(), true, defaultBranch);
+                .getOrCheckoutRepository(instructorAssignmentParticipation.getVcsRepositoryUri(), true, defaultBranch);
 
         request.put(studentRepoBaseUrl + instructorAssignmentParticipation.getId() + "/files?commit=true", List.of(), HttpStatus.OK);
     }
@@ -1117,7 +1117,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         doAnswer((Answer<Void>) invocation -> {
             ((ProgrammingExercise) participation.getExercise()).setBuildAndTestStudentSubmissionsAfterDueDate(null);
             return null;
-        }).when(versionControlService).addMemberToRepository(participation.getVcsRepositoryUrl(), participation.getStudent().orElseThrow(),
+        }).when(versionControlService).addMemberToRepository(participation.getVcsRepositoryUri(), participation.getStudent().orElseThrow(),
                 VersionControlRepositoryPermission.REPO_WRITE);
 
         programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(participation);
@@ -1144,7 +1144,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         doAnswer((Answer<Void>) invocation -> {
             participation.getExercise().setDueDate(ZonedDateTime.now().minusHours(1));
             return null;
-        }).when(versionControlService).setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUrl(), programmingExercise.getProjectKey(), participation.getStudents());
+        }).when(versionControlService).setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUri(), programmingExercise.getProjectKey(), participation.getStudents());
 
         programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, participation);
         assertThat(participation.isLocked()).isTrue();
