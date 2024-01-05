@@ -98,7 +98,7 @@ describe('Participation Service', () => {
         const participation1: ProgrammingExerciseStudentParticipation = {
             id: 1,
             type: ParticipationType.PROGRAMMING,
-            repositoryUrl: 'repo-url',
+            repositoryUri: 'repo-url',
             buildPlanId: 'build-plan-id',
             student: { id: 1, login: 'student1', guidedTourSettings: [], internal: true },
             team: { id: 1, name: 'team1' },
@@ -109,7 +109,7 @@ describe('Participation Service', () => {
         const participation2: ProgrammingExerciseStudentParticipation = {
             id: 2,
             type: ParticipationType.PROGRAMMING,
-            repositoryUrl: 'repo-url-1',
+            repositoryUri: 'repo-url-1',
             buildPlanId: 'build-plan-id-1',
             student: { id: 2, login: 'student2', guidedTourSettings: [], internal: true },
             results: [{ id: 1 }, { id: 2 }],
@@ -130,7 +130,7 @@ describe('Participation Service', () => {
         const participation1: ProgrammingExerciseStudentParticipation = {
             id: 1,
             type: ParticipationType.PROGRAMMING,
-            repositoryUrl: 'repo-url',
+            repositoryUri: 'repo-url',
             buildPlanId: 'build-plan-id',
             student: { id: 1, login: 'student1', guidedTourSettings: [], internal: true },
             results: [{ id: 3 }],
@@ -141,7 +141,7 @@ describe('Participation Service', () => {
         const participation2: ProgrammingExerciseStudentParticipation = {
             id: 2,
             type: ParticipationType.PROGRAMMING,
-            repositoryUrl: 'repo-url-1',
+            repositoryUri: 'repo-url-1',
             buildPlanId: 'build-plan-id-1',
             student: { id: 2, login: 'student2', guidedTourSettings: [], internal: true },
             results: [{ id: 1 }, { id: 2 }],
@@ -187,7 +187,7 @@ describe('Participation Service', () => {
 
         const returnedFromService = {
             ...participationDefault,
-            repositoryUrl: 'BBBBBB',
+            repositoryUri: 'BBBBBB',
             buildPlanId: 'BBBBBB',
             initializationState: 'BBBBBB',
             initializationDate: currentDate,
@@ -214,7 +214,7 @@ describe('Participation Service', () => {
     it('should return a list of Participation', fakeAsync(() => {
         const returnedFromService = Object.assign(
             {
-                repositoryUrl: 'BBBBBB',
+                repositoryUri: 'BBBBBB',
                 buildPlanId: 'BBBBBB',
                 initializationState: 'BBBBBB',
                 initializationDate: currentDate,
