@@ -118,8 +118,8 @@ public class ProgrammingExerciseRepositoryService {
         final ProjectType projectType = programmingExercise.getProjectType();
         final Path projectTypeTemplateDir = getTemplateDirectoryForRepositoryType(repositoryType);
 
-        final VcsRepositoryUrl repoUrl = programmingExercise.getRepositoryURL(repositoryType);
-        final Repository repo = gitService.getOrCheckoutRepository(repoUrl, true);
+        final VcsRepositoryUri repoUri = programmingExercise.getRepositoryURL(repositoryType);
+        final Repository repo = gitService.getOrCheckoutRepository(repoUri, true);
 
         // Get path, files and prefix for the programming-language dependent files. They are copied first.
         final Path generalTemplatePath = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage())
@@ -180,10 +180,10 @@ public class ProgrammingExerciseRepositoryService {
         try {
             setupTemplateAndPush(exerciseResources, "Exercise", programmingExercise, exerciseCreator);
             // The template repo can be re-written, so we can unprotect the default branch.
-            final var templateVcsRepositoryUrl = programmingExercise.getVcsTemplateRepositoryUrl();
+            final var templateVcsRepositoryUri = programmingExercise.getVcsTemplateRepositoryUri();
             VersionControlService versionControl = versionControlService.orElseThrow();
             final String templateBranch = versionControl.getOrRetrieveBranchOfExercise(programmingExercise);
-            versionControl.unprotectBranch(templateVcsRepositoryUrl, templateBranch);
+            versionControl.unprotectBranch(templateVcsRepositoryUri, templateBranch);
 
             setupTemplateAndPush(solutionResources, "Solution", programmingExercise, exerciseCreator);
             setupTestTemplateAndPush(testResources, programmingExercise, exerciseCreator);
@@ -221,9 +221,9 @@ public class ProgrammingExerciseRepositoryService {
         for (final AuxiliaryRepository repo : programmingExercise.getAuxiliaryRepositories()) {
             final String repositoryName = programmingExercise.generateRepositoryName(repo.getName());
             versionControlService.orElseThrow().createRepository(projectKey, repositoryName, null);
-            repo.setRepositoryUrl(versionControlService.orElseThrow().getCloneRepositoryUrl(programmingExercise.getProjectKey(), repositoryName).toString());
+            repo.setRepositoryUri(versionControlService.orElseThrow().getCloneRepositoryUri(programmingExercise.getProjectKey(), repositoryName).toString());
 
-            final Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUrl(), true);
+            final Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUri(), true);
             gitService.commitAndPush(vcsRepository, SETUP_COMMIT_MESSAGE, true, null);
         }
     }
@@ -721,23 +721,23 @@ public class ProgrammingExerciseRepositoryService {
      * @param programmingExercise The programming exercise for which the repositories should be deleted.
      */
     void deleteRepositories(final ProgrammingExercise programmingExercise) {
-        if (programmingExercise.getTemplateRepositoryUrl() != null) {
-            final var templateRepositoryUrlAsUrl = programmingExercise.getVcsTemplateRepositoryUrl();
-            versionControlService.orElseThrow().deleteRepository(templateRepositoryUrlAsUrl);
+        if (programmingExercise.getTemplateRepositoryUri() != null) {
+            final var templateRepositoryUriAsUrl = programmingExercise.getVcsTemplateRepositoryUri();
+            versionControlService.orElseThrow().deleteRepository(templateRepositoryUriAsUrl);
         }
-        if (programmingExercise.getSolutionRepositoryUrl() != null) {
-            final var solutionRepositoryUrlAsUrl = programmingExercise.getVcsSolutionRepositoryUrl();
-            versionControlService.orElseThrow().deleteRepository(solutionRepositoryUrlAsUrl);
+        if (programmingExercise.getSolutionRepositoryUri() != null) {
+            final var solutionRepositoryUriAsUrl = programmingExercise.getVcsSolutionRepositoryUri();
+            versionControlService.orElseThrow().deleteRepository(solutionRepositoryUriAsUrl);
         }
-        if (programmingExercise.getTestRepositoryUrl() != null) {
-            final var testRepositoryUrlAsUrl = programmingExercise.getVcsTestRepositoryUrl();
-            versionControlService.orElseThrow().deleteRepository(testRepositoryUrlAsUrl);
+        if (programmingExercise.getTestRepositoryUri() != null) {
+            final var testRepositoryUriAsUrl = programmingExercise.getVcsTestRepositoryUri();
+            versionControlService.orElseThrow().deleteRepository(testRepositoryUriAsUrl);
         }
 
         // We also want to delete any auxiliary repositories
         programmingExercise.getAuxiliaryRepositories().forEach(repo -> {
-            if (repo.getRepositoryUrl() != null) {
-                versionControlService.orElseThrow().deleteRepository(repo.getVcsRepositoryUrl());
+            if (repo.getRepositoryUri() != null) {
+                versionControlService.orElseThrow().deleteRepository(repo.getVcsRepositoryUri());
             }
         });
 
@@ -758,17 +758,17 @@ public class ProgrammingExerciseRepositoryService {
      * @param programmingExercise The exercise for which the local repository copies should be deleted.
      */
     void deleteLocalRepoCopies(final ProgrammingExercise programmingExercise) {
-        if (programmingExercise.getTemplateRepositoryUrl() != null) {
-            final var templateRepositoryUrlAsUrl = programmingExercise.getVcsTemplateRepositoryUrl();
-            gitService.deleteLocalRepository(templateRepositoryUrlAsUrl);
+        if (programmingExercise.getTemplateRepositoryUri() != null) {
+            final var templateRepositoryUriAsUrl = programmingExercise.getVcsTemplateRepositoryUri();
+            gitService.deleteLocalRepository(templateRepositoryUriAsUrl);
         }
-        if (programmingExercise.getSolutionRepositoryUrl() != null) {
-            final var solutionRepositoryUrlAsUrl = programmingExercise.getVcsSolutionRepositoryUrl();
-            gitService.deleteLocalRepository(solutionRepositoryUrlAsUrl);
+        if (programmingExercise.getSolutionRepositoryUri() != null) {
+            final var solutionRepositoryUriAsUrl = programmingExercise.getVcsSolutionRepositoryUri();
+            gitService.deleteLocalRepository(solutionRepositoryUriAsUrl);
         }
-        if (programmingExercise.getTestRepositoryUrl() != null) {
-            final var testRepositoryUrlAsUrl = programmingExercise.getVcsTestRepositoryUrl();
-            gitService.deleteLocalRepository(testRepositoryUrlAsUrl);
+        if (programmingExercise.getTestRepositoryUri() != null) {
+            final var testRepositoryUriAsUrl = programmingExercise.getVcsTestRepositoryUri();
+            gitService.deleteLocalRepository(testRepositoryUriAsUrl);
         }
     }
 }

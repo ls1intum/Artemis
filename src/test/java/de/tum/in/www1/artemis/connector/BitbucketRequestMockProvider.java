@@ -38,9 +38,9 @@ import com.google.gson.JsonParser;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.exception.BitbucketException;
-import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
@@ -58,7 +58,7 @@ public class BitbucketRequestMockProvider {
     private String adminGroupName;
 
     @Autowired
-    private UrlService urlService;
+    private UriService uriService;
 
     private final RestTemplate restTemplate;
 
@@ -393,8 +393,8 @@ public class BitbucketRequestMockProvider {
                 .andExpect(content().contentType("application/vnd.atl.bitbucket.bulk+json")).andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockRepositoryUrlIsValid(final VcsRepositoryUrl repositoryUrl, final String projectKey, final boolean isValid) throws URISyntaxException {
-        final var repositoryName = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
+    public void mockRepositoryUriIsValid(final VcsRepositoryUri repositoryUri, final String projectKey, final boolean isValid) throws URISyntaxException {
+        final var repositoryName = uriService.getRepositorySlugFromRepositoryUri(repositoryUri);
         final var uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(projectKey).pathSegment("repos")
                 .pathSegment(repositoryName).build().toUri();
 
@@ -468,8 +468,8 @@ public class BitbucketRequestMockProvider {
         mockPutDefaultBranch(projectKey);
     }
 
-    public void mockDefaultBranch(String defaultBranch, VcsRepositoryUrl repoURL) throws BitbucketException, IOException {
-        String projectKey = urlService.getProjectKeyFromRepositoryUrl(repoURL);
+    public void mockDefaultBranch(String defaultBranch, VcsRepositoryUri repoUri) throws BitbucketException, IOException {
+        String projectKey = uriService.getProjectKeyFromRepositoryUri(repoUri);
         mockGetDefaultBranch(defaultBranch, projectKey);
         mockPutDefaultBranch(projectKey);
     }

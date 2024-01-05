@@ -71,7 +71,7 @@ describe('CommitsInfoComponent', () => {
                     id: 1,
                     type: ParticipationType.PROGRAMMING,
                     participantIdentifier: '1',
-                    repositoryUrl: 'repo.abc',
+                    repositoryUri: 'repo.abc',
                 } as unknown as ProgrammingExerciseStudentParticipation,
             },
         ];
