@@ -48,19 +48,11 @@ public class LocalCIConfiguration {
     @Value("${artemis.continuous-integration.specify-concurrent-builds:false}")
     boolean specifyThreadPoolSize;
 
+    @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
+    private String buildContainerPrefix;
+
     public LocalCIConfiguration(ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
-    }
-
-    /**
-     * Defines the thread pool size for the local CI ExecutorService based on system resources.
-     *
-     * @return The thread pool size bean.
-     */
-    @Bean
-    public int calculatedThreadPoolSize() {
-        int availableProcessors = Runtime.getRuntime().availableProcessors();
-        return Math.max(1, (availableProcessors - 2) / 2);
     }
 
     /**
@@ -101,11 +93,10 @@ public class LocalCIConfiguration {
     /**
      * Creates an executor service that manages the queue of build jobs.
      *
-     * @param calculatedThreadPoolSize The calculatedThreadPoolSize bean.
      * @return The executor service bean.
      */
     @Bean
-    public ExecutorService localCIBuildExecutorService(int calculatedThreadPoolSize) {
+    public ExecutorService localCIBuildExecutorService() {
 
         int threadPoolSize;
 
@@ -113,7 +104,8 @@ public class LocalCIConfiguration {
             threadPoolSize = fixedThreadPoolSize;
         }
         else {
-            threadPoolSize = calculatedThreadPoolSize;
+            int availableProcessors = Runtime.getRuntime().availableProcessors();
+            threadPoolSize = Math.max(1, (availableProcessors - 2) / 2);
         }
 
         log.info("Using ExecutorService with thread pool size {} and a queue size limit of {}.", threadPoolSize, queueSizeLimit);
@@ -152,6 +144,13 @@ public class LocalCIConfiguration {
         DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
 
         log.info("Docker client created with connection URI: {}", dockerConnectionUri);
+
+        // remove all stranded build containers
+        dockerClient.listContainersCmd().withShowAll(true).exec().forEach(container -> {
+            if (container.getNames()[0].startsWith("/" + buildContainerPrefix)) {
+                dockerClient.removeContainerCmd(container.getId()).withForce(true).exec();
+            }
+        });
 
         return dockerClient;
     }

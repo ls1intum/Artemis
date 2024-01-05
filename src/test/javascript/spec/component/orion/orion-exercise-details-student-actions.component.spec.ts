@@ -67,7 +67,7 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
     });
 
     it('should clone the correct repository in the IDE', () => {
-        const participation = { id: 123, repositoryUrl: 'testUrl' } as ProgrammingExerciseStudentParticipation;
+        const participation = { id: 123, repositoryUri: 'testUrl' } as ProgrammingExerciseStudentParticipation;
         const programmingExercise = { id: 42, title: 'Test Title' } as Exercise;
         programmingExercise.studentParticipations = [participation];
         comp.exercise = programmingExercise;
