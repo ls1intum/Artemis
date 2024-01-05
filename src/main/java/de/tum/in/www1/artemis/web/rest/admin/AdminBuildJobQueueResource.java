@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCISharedBuildJobQueueService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
@@ -73,7 +72,7 @@ public class AdminBuildJobQueueResource {
      * @return the ResponseEntity with the result of the cancellation
      */
     @DeleteMapping("/build-job-queue/cancel/{commitHash}")
-    @EnforceAtLeastInstructor
+    @EnforceAdmin
     public ResponseEntity<Void> cancelBuildJob(@PathVariable String commitHash) {
         log.debug("REST request to cancel the build job for commitHash {}", commitHash);
         // Call the cancelBuildJob method in LocalCIBuildJobManagementService
