@@ -1,6 +1,7 @@
 import { UserCredentials } from './users';
 import { BASE_API } from '../../cypress/support/constants';
 import { Page, expect } from '@playwright/test';
+import * as fs from 'fs';
 
 export class Commands {
     static login = async (page: Page, credentials: UserCredentials, url?: string): Promise<void> => {
