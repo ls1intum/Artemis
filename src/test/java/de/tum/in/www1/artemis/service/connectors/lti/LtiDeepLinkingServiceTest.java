@@ -18,6 +18,7 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -118,7 +119,8 @@ class LtiDeepLinkingServiceTest {
     void testEmptyReturnUrlBuildLtiDeepLinkResponse() {
         createMockOidcIdToken();
         when(tokenRetriever.createDeepLinkingJWT(anyString(), anyMap())).thenReturn("test_jwt");
-        var deepLinkingSettingsAsMap = new Gson().fromJson(deepLinkingSettingsAsJsonString, Map.class);
+        var deepLinkingSettingsAsMap = new Gson().fromJson(deepLinkingSettingsAsJsonString, new TypeToken<Map<String, Object>>() {
+        }.getType());
         when(oidcIdToken.getClaim(de.tum.in.www1.artemis.domain.lti.Claims.DEEP_LINKING_SETTINGS)).thenReturn(deepLinkingSettingsAsMap);
 
         long exerciseId = 3;
