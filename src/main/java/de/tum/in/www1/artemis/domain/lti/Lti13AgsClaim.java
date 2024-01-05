@@ -50,7 +50,7 @@ public class Lti13AgsClaim {
             return Optional.of(agsClaim);
         }
         catch (IllegalStateException | ClassCastException ex) {
-            throw new IllegalStateException("Failed to parse LTI 1.3 ags claim: " + ex.getMessage());
+            throw new IllegalStateException("Failed to parse LTI 1.3 ags claim.", ex);
         }
     }
 
