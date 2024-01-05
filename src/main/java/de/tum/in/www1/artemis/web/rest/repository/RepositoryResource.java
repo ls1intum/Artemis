@@ -99,9 +99,9 @@ public abstract class RepositoryResource {
      * Get the url for a repository.
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
-     * @return the repositoryUrl.
+     * @return the repositoryUri.
      */
-    abstract VcsRepositoryUrl getRepositoryUrl(Long domainId);
+    abstract VcsRepositoryUri getRepositoryUri(Long domainId);
 
     /**
      * Check if the current user can access the given repository.
@@ -301,18 +301,18 @@ public abstract class RepositoryResource {
         }
 
         RepositoryStatusDTOType repositoryStatus;
-        VcsRepositoryUrl repositoryUrl = getRepositoryUrl(domainId);
+        VcsRepositoryUri repositoryUri = getRepositoryUri(domainId);
 
         try {
             boolean isClean;
             // This check reduces the amount of REST-calls that retrieve the default branch of a repository.
             // Retrieving the default branch is not necessary if the repository is already cached.
-            if (gitService.isRepositoryCached(repositoryUrl)) {
-                isClean = repositoryService.isClean(repositoryUrl);
+            if (gitService.isRepositoryCached(repositoryUri)) {
+                isClean = repositoryService.isClean(repositoryUri);
             }
             else {
                 String branch = getOrRetrieveBranchOfDomainObject(domainId);
-                isClean = repositoryService.isClean(repositoryUrl, branch);
+                isClean = repositoryService.isClean(repositoryUri, branch);
             }
             repositoryStatus = isClean ? CLEAN : UNCOMMITTED_CHANGES;
         }

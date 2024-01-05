@@ -49,7 +49,7 @@ public class BambooBuildPlanUpdateService implements ContinuousIntegrationUpdate
     }
 
     @Override
-    public void updatePlanRepository(String buildPlanKey, String bambooRepositoryName, String newRepoUrl, String branchName) {
+    public void updatePlanRepository(String buildPlanKey, String bambooRepositoryName, String newRepoUri, String branchName) {
         try {
             log.debug("Update plan repository for build plan {}", buildPlanKey);
             BambooRepositoryDTO bambooRepository = findBambooRepository(bambooRepositoryName, OLD_ASSIGNMENT_REPO_NAME, buildPlanKey);
@@ -58,7 +58,7 @@ public class BambooBuildPlanUpdateService implements ContinuousIntegrationUpdate
                         + " to the student repository : Could not find assignment nor Assignment repository");
             }
 
-            updateBambooPlanRepository(bambooRepository, buildPlanKey, branchName, bambooInternalUrlService.toInternalVcsUrl(newRepoUrl));
+            updateBambooPlanRepository(bambooRepository, buildPlanKey, branchName, bambooInternalUrlService.toInternalVcsUrl(newRepoUri));
 
             log.info("Update plan repository for build plan {} was successful", buildPlanKey);
         }
@@ -75,7 +75,7 @@ public class BambooBuildPlanUpdateService implements ContinuousIntegrationUpdate
      * @param bambooRepository the bamboo repository which was obtained before
      * @param buildPlanKey     the complete name of the plan
      */
-    private void updateBambooPlanRepository(@NotNull BambooRepositoryDTO bambooRepository, String buildPlanKey, String branchName, String newRepoUrl) {
+    private void updateBambooPlanRepository(@NotNull BambooRepositoryDTO bambooRepository, String buildPlanKey, String branchName, String newRepoUri) {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("planKey", buildPlanKey);
         parameters.add("selectedRepository", "com.atlassian.bamboo.plugins.atlassian-bamboo-plugin-git:gitv2");
@@ -86,7 +86,7 @@ public class BambooBuildPlanUpdateService implements ContinuousIntegrationUpdate
         parameters.add("save", "Save repository");
         parameters.add("bamboo.successReturnMode", "json");
         parameters.add("repository.git.branch", branchName);
-        parameters.add("repository.git.repositoryUrl", newRepoUrl);
+        parameters.add("repository.git.repositoryUri", newRepoUri);
         parameters.add("repository.git.authenticationType", "PASSWORD");
         parameters.add("repository.git.passwordCredentialsSource", "SHARED_CREDENTIALS");
         parameters.add("___advancedOptionsPresent___", "true");
