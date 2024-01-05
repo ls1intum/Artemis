@@ -14,9 +14,9 @@
         "uuid": "9.0.1"
     },
     "scripts": {
-        "playwright:test": "npx playwright test",
+        "playwright:test": "playwright test",
         "playwright:open": "npx playwright test --ui",
-        "playwright:setup": "npx playwright test init/ImportUsers.spec.ts",
+        "playwright:setup": "playwright test init/ImportUsers.spec.ts",
         "playwright:local": "playwright test"
     }
 }
