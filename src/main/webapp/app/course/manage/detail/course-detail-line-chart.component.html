@@ -8,15 +8,7 @@
     @if (startDateAlreadyPassed) {
         <ng-container>
             <div>
-                <div class="d-flex justify-content-between me-3">
-                    <div class="d-flex gap-1">
-                        <button class="btn" [disabled]="startDateDisplayed" (click)="switchTimeSpan(LEFT)">
-                            <fa-icon [icon]="faArrowLeft" />
-                        </button>
-                        <button class="btn" [disabled]="showsCurrentWeek" (click)="switchTimeSpan(RIGHT)">
-                            <fa-icon [icon]="faArrowRight" />
-                        </button>
-                    </div>
+                <div class="d-flex gap-3 justify-content-end me-3">
                     @if (course.startDate) {
                         <div class="d-flex">
                             <button
@@ -44,7 +36,16 @@
                                 {{ 'artemisApp.courseStatistics.scopeButton.overview' | artemisTranslate }}
                             </button>
                         </div>
+                        <span class="pt-1">|</span>
                     }
+                    <div class="d-flex gap-1">
+                        <button class="btn" [disabled]="startDateDisplayed" (click)="switchTimeSpan(SwitchTimeSpanDirection.LEFT)">
+                            <fa-icon [icon]="faArrowLeft" />
+                        </button>
+                        <button class="btn" [disabled]="showsCurrentWeek" (click)="switchTimeSpan(SwitchTimeSpanDirection.RIGHT)">
+                            <fa-icon [icon]="faArrowRight" />
+                        </button>
+                    </div>
                 </div>
                 <div #containerRef class="d-flex mt-1 justify-content-center align-items-center h-99">
                     @if (!loading) {
