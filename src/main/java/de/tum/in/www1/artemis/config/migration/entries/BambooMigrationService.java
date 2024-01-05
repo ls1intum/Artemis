@@ -27,7 +27,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
@@ -116,7 +116,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
     }
 
     @Override
-    public void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl vcsRepositoryUrl) {
+    public void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUri repositoryUri) {
         Map<Long, String> notificationIds = getAllArtemisBuildPlanServerNotificationIds(buildPlanKey);
         log.info("Found {} notifications for build plan {}", notificationIds.size(), buildPlanKey);
 
@@ -143,12 +143,12 @@ public class BambooMigrationService implements CIVCSMigrationService {
     }
 
     @Override
-    public void removeWebHook(VcsRepositoryUrl repositoryUrl) {
+    public void removeWebHook(VcsRepositoryUri repositoryUri) {
         // nothing to do
     }
 
     @Override
-    public void deleteBuildTriggers(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl) {
+    public void deleteBuildTriggers(String projectKey, String buildPlanKey, VcsRepositoryUri repositoryUri) {
         if (buildPlanKey == null) {
             return;
         }
@@ -179,7 +179,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
     }
 
     @Override
-    public void overrideBuildPlanRepository(String buildPlanId, String name, String repositoryUrl, String defaultBranch) {
+    public void overrideBuildPlanRepository(String buildPlanId, String name, String repositoryUri, String defaultBranch) {
         if (this.sharedCredentialId.isEmpty()) {
             Optional<Long> credentialsId = getSharedCredential();
             if (credentialsId.isEmpty()) {
@@ -203,7 +203,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
             deleteLinkedRepository(buildPlanId, repositoryId.get());
         }
         log.debug("Adding repository {} for build plan {}", name, buildPlanId);
-        addGitRepository(buildPlanId, bambooInternalUrlService.toInternalVcsUrl(repositoryUrl), name, this.sharedCredentialId.orElseThrow(), defaultBranch);
+        addGitRepository(buildPlanId, bambooInternalUrlService.toInternalVcsUrl(repositoryUri), name, this.sharedCredentialId.orElseThrow(), defaultBranch);
     }
 
     /**
@@ -549,7 +549,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
         body.add("selectedRepository", "com.atlassian.bamboo.plugins.atlassian-bamboo-plugin-git:gitv2");
         body.add("respositoryPluginKey", "com.atlassian.bamboo.plugins.atlassian-bamboo-plugin-git:gitv2");
         body.add("repositoryName", name);
-        body.add("repository.git.repositoryUrl", repository);
+        body.add("repository.git.repositoryUri", repository);
         body.add("repository.git.authenticationType", "PASSWORD");
         body.add("selectFields", "repository.git.authenticationType");
         body.add("repository.git.passwordCredentialsSource", "SHARED_CREDENTIALS");

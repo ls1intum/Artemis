@@ -24,7 +24,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -95,7 +95,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationInd
         GitService.commit(localGit).setMessage("add test3.json").setAuthor("test", "test@test.com").call();
 
         var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
-        doReturn(repository).when(gitService).getOrCheckoutRepository(any(VcsRepositoryUrl.class), anyString(), anyBoolean());
+        doReturn(repository).when(gitService).getOrCheckoutRepository(any(VcsRepositoryUri.class), anyString(), anyBoolean());
         doNothing().when(gitService).fetchAll(any());
         var objectId = localGit.reflog().call().iterator().next().getNewId();
         doReturn(objectId).when(gitService).getLastCommitHash(any());
