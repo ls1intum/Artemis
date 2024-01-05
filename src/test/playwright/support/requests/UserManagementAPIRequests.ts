@@ -1,7 +1,6 @@
 import { UserRole } from '../users';
 import { BASE_API } from '../constants';
 import { Page } from '@playwright/test';
-import * as fs from 'fs';
 import { APIResponse } from 'playwright-core';
 
 /**
@@ -50,11 +49,11 @@ export class UserManagementAPIRequests {
 
         // console.log(options);
         return await this.page.request.post(`${BASE_API}admin/users`, {
-            certificateOptions: {
-                ca: fs.readFileSync('./certs/rootCA.pem'),
-                cert: fs.readFileSync('./certs/artemis-nginx+4.pem'),
-                key: fs.readFileSync('./certs/artemis-nginx+4-key.pem'),
-            },
+            // certificateOptions: {
+            //     ca: fs.readFileSync('./certs/rootCA.pem'),
+            //     cert: fs.readFileSync('./certs/artemis-nginx+4.pem'),
+            //     key: fs.readFileSync('./certs/artemis-nginx+4-key.pem'),
+            // },
             data: {
                 login: username,
                 password,
@@ -94,11 +93,11 @@ export class UserManagementAPIRequests {
         //     // }),
         // };
         return await this.page.request.get(`${BASE_API}users/${username}`, {
-            certificateOptions: {
-                ca: fs.readFileSync('./certs/rootCA.pem'),
-                cert: fs.readFileSync('./certs/artemis-nginx+4.pem'),
-                key: fs.readFileSync('./certs/artemis-nginx+4-key.pem'),
-            },
+            // certificateOptions: {
+            //     ca: fs.readFileSync('./certs/rootCA.pem'),
+            //     cert: fs.readFileSync('./certs/artemis-nginx+4.pem'),
+            //     key: fs.readFileSync('./certs/artemis-nginx+4-key.pem'),
+            // },
         });
         // return new Promise((resolve) => {
         //     console.log(options);

@@ -6,7 +6,7 @@ services:
     artemis-playwright:
         # Cypress image with node and chrome browser installed (Cypress installation needs to be done separately because we require additional dependencies)
         # Change with playwright docker url
-        image: muradium/playwright-v1.41.0-next-jammy:latest-amd64
+        image: mcr.microsoft.com/playwright:v1.40.0-jammy
         pull_policy: if_not_present
         environment:
             CYPRESS_baseUrl: "https://artemis-nginx"
