@@ -75,11 +75,13 @@ export class ProgrammingExerciseCreationPage {
         cy.get('#programming-exercise-due-date-picker').click();
 
         // Important to make sure that all event listeners are registered, see https://www.cypress.io/blog/2019/01/22/when-can-the-test-click for more information
+        // An alternative to using "wait" is to use 3rd party plugin cypress-pipe
+        cy.wait(1000);
         cy.get('.owl-dt-popup').should('be.visible');
 
         const ariaLabelDate = date.format(OWL_DATEPICKER_ARIA_LABEL_DATE_FORMAT);
         cy.get(`td[aria-label="${ariaLabelDate}"]`).click();
 
-        cy.get('button').contains('Set').should('exist').click();
+        cy.get('.owl-dt-control-content.owl-dt-control-button-content').contains('Set').should('exist').click();
     }
 }
