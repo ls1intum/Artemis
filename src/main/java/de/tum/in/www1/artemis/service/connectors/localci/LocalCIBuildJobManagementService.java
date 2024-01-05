@@ -207,7 +207,7 @@ public class LocalCIBuildJobManagementService {
      * @param containerName The name of the Docker container that was used to execute the build job.
      */
     private void finishCancelledBuildJob(ProgrammingExerciseParticipation participation, String commitHash, String containerName) {
-        log.debug("Build job for commit {} in repository {} was cancelled", commitHash, participation.getRepositoryUrl());
+        log.debug("Build job for commit {} in repository {} was cancelled", commitHash, participation.getRepositoryUri());
 
         // Set the build status to "INACTIVE" to indicate that the build is not running anymore.
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);
