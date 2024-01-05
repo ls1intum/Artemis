@@ -271,7 +271,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
          */
         private boolean allowSubscription(Principal principal, String destination) {
             User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
-            if (destination.equals("/topic/admin/queued-jobs") || destination.equals("/topic/admin/running-jobs")) {
+            if ("/topic/admin/queued-jobs".equals(destination) || "/topic/admin/running-jobs".equals(destination)) {
                 if (!authorizationCheckService.isAdmin(user)) {
                     log.warn("User {} is not an admin and is not allowed to subscribe to the protected topic: {}", principal.getName(), destination);
                     return false;
