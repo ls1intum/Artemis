@@ -83,6 +83,17 @@ public class AeolusRequestMockProvider {
     }
 
     /**
+     * Mocks a failed generate build plan request
+     *
+     * @param target the target to generate for
+     */
+    public void mockFailedGenerateBuildPlan(AeolusTarget target) {
+        final var uriPattern = Pattern.compile(aeolusUrl + "/generate/" + target.getName());
+
+        mockServer.expect(requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR));
+    }
+
+    /**
      * Mocks a successful generate preview request
      *
      * @param target the target to generate for
