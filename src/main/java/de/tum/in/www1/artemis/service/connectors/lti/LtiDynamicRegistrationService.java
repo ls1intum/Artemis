@@ -12,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
@@ -49,24 +50,33 @@ public class LtiDynamicRegistrationService {
      * @param registrationToken      the token to be used to authenticate the POST request
      */
     public void performDynamicRegistration(String openIdConfigurationUrl, String registrationToken) {
+        try {
+            // Get platform's configuration
+            Lti13PlatformConfiguration platformConfiguration = getLti13PlatformConfiguration(openIdConfigurationUrl);
 
-        // Get platform's configuration
-        Lti13PlatformConfiguration platformConfiguration = getLti13PlatformConfiguration(openIdConfigurationUrl);
+            String clientRegistrationId = "artemis-" + UUID.randomUUID();
 
-        String clientRegistrationId = "artemis-" + UUID.randomUUID().toString();
+            if (platformConfiguration.getAuthorizationEndpoint() == null || platformConfiguration.getTokenEndpoint() == null || platformConfiguration.getJwksUri() == null
+                    || platformConfiguration.getRegistrationEndpoint() == null) {
+                throw new BadRequestAlertException("Invalid platform configuration", "LTI", "invalidPlatformConfiguration");
+            }
 
-        if (platformConfiguration.getAuthorizationEndpoint() == null || platformConfiguration.getTokenEndpoint() == null || platformConfiguration.getJwksUri() == null
-                || platformConfiguration.getRegistrationEndpoint() == null) {
-            throw new BadRequestAlertException("Invalid platform configuration", "LTI", "invalidPlatformConfiguration");
+            Lti13ClientRegistration clientRegistrationResponse = postClientRegistrationToPlatform(platformConfiguration.getRegistrationEndpoint(), clientRegistrationId,
+                    registrationToken);
+
+            LtiPlatformConfiguration ltiPlatformConfiguration = updateLtiPlatformConfiguration(clientRegistrationId, platformConfiguration, clientRegistrationResponse);
+            ltiPlatformConfigurationRepository.save(ltiPlatformConfiguration);
+
+            oAuth2JWKSService.updateKey(clientRegistrationId);
         }
-
-        Lti13ClientRegistration clientRegistrationResponse = postClientRegistrationToPlatform(platformConfiguration.getRegistrationEndpoint(), clientRegistrationId,
-                registrationToken);
-
-        LtiPlatformConfiguration ltiPlatformConfiguration = updateLtiPlatformConfiguration(clientRegistrationId, platformConfiguration, clientRegistrationResponse);
-        ltiPlatformConfigurationRepository.save(ltiPlatformConfiguration);
-
-        oAuth2JWKSService.updateKey(clientRegistrationId);
+        catch (HttpClientErrorException | HttpServerErrorException ex) {
+            log.error("HTTP error during dynamic registration", ex);
+            throw new IllegalStateException("Error during LTI dynamic registration: " + ex.getMessage(), ex);
+        }
+        catch (Exception ex) {
+            log.error("Unexpected error during dynamic registration", ex);
+            throw ex;
+        }
     }
 
     private Lti13PlatformConfiguration getLti13PlatformConfiguration(String openIdConfigurationUrl) {
@@ -104,6 +114,10 @@ public class LtiDynamicRegistrationService {
         catch (HttpClientErrorException e) {
             String message = "Could not register new client in external LMS at " + registrationEndpoint;
             log.error(message);
+        }
+        catch (Exception ex) {
+            log.error("Unexpected error during posting client registration to platform", ex);
+            throw ex;
         }
 
         if (registrationResponse == null) {
