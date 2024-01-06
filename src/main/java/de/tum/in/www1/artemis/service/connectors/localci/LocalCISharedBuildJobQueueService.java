@@ -10,7 +10,6 @@ import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
@@ -83,12 +82,12 @@ public class LocalCISharedBuildJobQueueService {
 
     private final Environment env;
 
-    private LocalCIBuildQueueWebsocketService localCIBuildQueueWebsocketService;
+    private final LocalCIBuildQueueWebsocketService localCIBuildQueueWebsocketService;
 
     public LocalCISharedBuildJobQueueService(HazelcastInstance hazelcastInstance, Environment env, ExecutorService localCIBuildExecutorService,
             LocalCIBuildJobManagementService localCIBuildJobManagementService, ParticipationRepository participationRepository,
             ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, LocalCIBuildQueueWebsocketService localCIBuildQueueWebsocketService) {
         this.hazelcastInstance = hazelcastInstance;
         this.localCIBuildExecutorService = (ThreadPoolExecutor) localCIBuildExecutorService;
         this.localCIBuildJobManagementService = localCIBuildJobManagementService;
@@ -101,10 +100,6 @@ public class LocalCISharedBuildJobQueueService {
         this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
         this.env = env;
-    }
-
-    @Autowired(required = false)
-    public void setLocalCIBuildQueueWebsocketService(LocalCIBuildQueueWebsocketService localCIBuildQueueWebsocketService) {
         this.localCIBuildQueueWebsocketService = localCIBuildQueueWebsocketService;
     }
 
@@ -114,8 +109,6 @@ public class LocalCISharedBuildJobQueueService {
             this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
             this.processingJobs.addLocalEntryListener(new ProcessingBuildJobItemListener());
             this.buildAgentInformation.addLocalEntryListener(new BuildAgentListener());
-            // localCIBuildQueueWebsocketService will be autowired only if scheduling is active
-            Objects.requireNonNull(localCIBuildQueueWebsocketService, "localCIBuildQueueWebsocketService must be non-null when scheduling is active.");
         }
     }
 
