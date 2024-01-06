@@ -7,6 +7,7 @@ import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configu
 import { SortService } from 'app/shared/service/sort.service';
 import { Subject } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-lti-configuration',
@@ -35,6 +36,7 @@ export class LtiConfigurationComponent implements OnInit {
         private router: Router,
         private ltiConfigurationService: LtiConfigurationService,
         private sortService: SortService,
+        private alertService: AlertService,
     ) {}
 
     /**
@@ -110,7 +112,10 @@ export class LtiConfigurationComponent implements OnInit {
                 this.dialogErrorSource.next('');
                 this.router.navigate(['admin', 'lti-configuration']);
             },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+            error: (error: HttpErrorResponse) => {
+                this.dialogErrorSource.next(error.message);
+                this.alertService.error('artemisApp.lti13.deletePlatformError');
+            },
         });
     }
 }

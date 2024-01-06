@@ -95,7 +95,8 @@
             },
             "missingConfigurationWarning": "Missing values in the LTI1.3 configuration. Launches will not work.",
             "selectContentFromCourse": "Select content from course {{ title }}",
-            "selectContentTooltip": "Simply select your preferred exercise and then click the Import button to integrate it into the platform."
+            "selectContentTooltip": "Simply select your preferred exercise and then click the Import button to integrate it into the platform.",
+            "deletePlatformError": "Could not delete LTI Platform"
         }
     }
 }

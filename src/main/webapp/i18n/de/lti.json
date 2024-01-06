@@ -95,7 +95,8 @@
             },
             "missingConfigurationWarning": "Fehlende Werte in der LTI1.3-Konfiguration. Starts werden nicht funktionieren.",
             "selectContentFromCourse": "Wähle Inhalte aus dem Kurs {{ title }} aus",
-            "selectContentTooltip": "Wähle eine Übung aus und klicke dann auf die Schaltfläche Importieren, um sie in die Plattform zu integrieren."
+            "selectContentTooltip": "Wähle eine Übung aus und klicke dann auf die Schaltfläche Importieren, um sie in die Plattform zu integrieren.",
+            "deletePlatformError": "Die LTI-Plattform konnte nicht gelöscht werden"
         }
     }
 }

@@ -80,7 +80,7 @@ class LtiDynamicRegistrationServiceTest {
         if (closeable != null) {
             closeable.close();
         }
-        reset(oAuth2JWKSService, onlineCourseConfigurationRepository, restTemplate);
+        reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, restTemplate);
     }
 
     @Test
