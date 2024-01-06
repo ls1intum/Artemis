@@ -25,7 +25,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.google.gson.Gson;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
@@ -146,29 +146,29 @@ public class AeolusBuildPlanService {
      * @param programmingLanguage        the programming language of the exercise
      * @param branch                     the branch of the exercise
      * @param checkoutSolutionRepository whether the solution repository should be checked out (only used in OCAML and Haskell exercises)
-     * @param repositoryUrl              the url of the assignment repository
-     * @param testRepositoryUrl          the url of the test repository
-     * @param solutionRepositoryUrl      the url of the solution repository
+     * @param repositoryUri              the uri of the assignment repository
+     * @param testRepositoryUri          the uri of the test repository
+     * @param solutionRepositoryUri      the uri of the solution repository
      * @param auxiliaryRepositories      List of auxiliary repositories to be included in the build plan
      * @return a map of repositories used in Aeolus to create the checkout task in the custom build plan
      */
     public Map<String, AeolusRepository> createRepositoryMapForWindfile(ProgrammingLanguage programmingLanguage, String branch, boolean checkoutSolutionRepository,
-            VcsRepositoryUrl repositoryUrl, VcsRepositoryUrl testRepositoryUrl, VcsRepositoryUrl solutionRepositoryUrl,
-            List<AuxiliaryRepository.AuxRepoNameWithUrl> auxiliaryRepositories) {
+            VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri, VcsRepositoryUri solutionRepositoryUri,
+            List<AuxiliaryRepository.AuxRepoNameWithUri> auxiliaryRepositories) {
         if (bambooInternalUrlService.isEmpty()) {
             throw new ContinuousIntegrationBuildPlanException("Internal URL service for Bamboo is not configured");
         }
         Map<String, AeolusRepository> repositoryMap = new HashMap<>();
-        repositoryMap.put(ASSIGNMENT_REPO_NAME, new AeolusRepository(bambooInternalUrlService.get().toInternalVcsUrl(repositoryUrl).toString(), branch,
+        repositoryMap.put(ASSIGNMENT_REPO_NAME, new AeolusRepository(bambooInternalUrlService.get().toInternalVcsUrl(repositoryUri).toString(), branch,
                 ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage)));
         if (checkoutSolutionRepository) {
-            repositoryMap.put(SOLUTION_REPO_NAME, new AeolusRepository(bambooInternalUrlService.get().toInternalVcsUrl(solutionRepositoryUrl).toString(), branch,
+            repositoryMap.put(SOLUTION_REPO_NAME, new AeolusRepository(bambooInternalUrlService.get().toInternalVcsUrl(solutionRepositoryUri).toString(), branch,
                     ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage)));
         }
-        repositoryMap.put(TEST_REPO_NAME, new AeolusRepository(bambooInternalUrlService.get().toInternalVcsUrl(testRepositoryUrl).toString(), branch,
+        repositoryMap.put(TEST_REPO_NAME, new AeolusRepository(bambooInternalUrlService.get().toInternalVcsUrl(testRepositoryUri).toString(), branch,
                 ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage)));
         for (var auxRepo : auxiliaryRepositories) {
-            repositoryMap.put(auxRepo.name(), new AeolusRepository(auxRepo.repositoryUrl().toString(), branch, auxRepo.name()));
+            repositoryMap.put(auxRepo.name(), new AeolusRepository(auxRepo.repositoryUri().toString(), branch, auxRepo.name()));
         }
         return repositoryMap;
     }

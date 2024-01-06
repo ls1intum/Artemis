@@ -357,7 +357,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private String getLastCommitHashForParticipation(ProgrammingExerciseParticipation participation) throws IllegalStateException {
         try {
-            return gitService.getLastCommitHash(participation.getVcsRepositoryUrl()).getName();
+            return gitService.getLastCommitHash(participation.getVcsRepositoryUri()).getName();
         }
         catch (EntityNotFoundException ex) {
             var message = "Last commit hash for participation " + participation.getId() + " could not be retrieved due to exception: " + ex.getMessage();
@@ -382,7 +382,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         if (commitHash == null) {
             ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExerciseId);
             try {
-                commitHash = gitService.getLastCommitHash(programmingExercise.getVcsTestRepositoryUrl()).getName();
+                commitHash = gitService.getLastCommitHash(programmingExercise.getVcsTestRepositoryUri()).getName();
             }
             catch (EntityNotFoundException ex) {
                 throw new IllegalStateException("Last commit hash for test repository of programming exercise with id " + programmingExercise.getId() + " could not be retrieved");
@@ -623,7 +623,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      */
     private void createInitialSubmission(ProgrammingExercise programmingExercise, AbstractBaseProgrammingExerciseParticipation participation) {
         ProgrammingSubmission submission = (ProgrammingSubmission) submissionRepository.initializeSubmission(participation, programmingExercise, SubmissionType.INSTRUCTOR);
-        var latestHash = gitService.getLastCommitHash(participation.getVcsRepositoryUrl());
+        var latestHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri());
         submission.setCommitHash(latestHash.getName());
         submission.setSubmissionDate(ZonedDateTime.now());
         submissionRepository.save(submission);

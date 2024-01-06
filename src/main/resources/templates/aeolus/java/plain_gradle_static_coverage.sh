@@ -13,17 +13,11 @@ static_code_analysis () {
   ./gradlew check -x test
 }
 
-setup_working_directory_for_cleanup () {
-  echo '⚙️ executing setup_working_directory_for_cleanup'
-  chmod -R 777 .
-}
-
 final_aeolus_post_action () {
   set +e # from now on, we don't exit on errors
   echo '⚙️ executing final_aeolus_post_action'
   cd "${AEOLUS_INITIAL_DIRECTORY}"
   static_code_analysis
-  setup_working_directory_for_cleanup
 }
 
 main () {

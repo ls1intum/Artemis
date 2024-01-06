@@ -155,7 +155,7 @@ public class LocalCIBuildJobManagementService {
      * @param exception     The exception that occurred while building and testing the repository.
      */
     private void finishBuildJobExceptionally(ProgrammingExerciseParticipation participation, String commitHash, String containerName, boolean isRetry, Exception exception) {
-        log.error("Error while building and testing commit {} in repository {}", commitHash, participation.getRepositoryUrl(), exception);
+        log.error("Error while building and testing commit {} in repository {}", commitHash, participation.getRepositoryUri(), exception);
 
         // Set the build status to "INACTIVE" to indicate that the build is not running anymore.
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);

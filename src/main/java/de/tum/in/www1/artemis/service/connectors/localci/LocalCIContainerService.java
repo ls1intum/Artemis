@@ -403,7 +403,7 @@ public class LocalCIContainerService {
             buildScript.append(customScript);
         }
         else {
-            List<ScriptAction> actions = List.of();
+            List<ScriptAction> actions;
 
             Windfile windfile = programmingExercise.getWindfile();
 
@@ -412,6 +412,9 @@ public class LocalCIContainerService {
             }
             if (windfile != null) {
                 actions = windfile.getScriptActions();
+            }
+            else {
+                throw new LocalCIException("No windfile found for programming exercise " + programmingExercise.getId());
             }
 
             actions.forEach(action -> {

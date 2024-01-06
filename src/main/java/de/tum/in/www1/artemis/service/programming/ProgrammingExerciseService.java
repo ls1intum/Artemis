@@ -379,16 +379,16 @@ public class ProgrammingExerciseService {
     public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise, boolean isImportedFromFile) {
         String projectKey = programmingExercise.getProjectKey();
         // Get URLs for repos
-        var exerciseRepoUrl = programmingExercise.getVcsTemplateRepositoryUrl();
-        var testsRepoUrl = programmingExercise.getVcsTestRepositoryUrl();
-        var solutionRepoUrl = programmingExercise.getVcsSolutionRepositoryUrl();
+        var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
+        var testsRepoUri = programmingExercise.getVcsTestRepositoryUri();
+        var solutionRepoUri = programmingExercise.getVcsSolutionRepositoryUri();
 
         ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
         continuousIntegration.createProjectForExercise(programmingExercise);
         // template build plan
-        continuousIntegration.createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
+        continuousIntegration.createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUri, testsRepoUri, solutionRepoUri);
         // solution build plan
-        continuousIntegration.createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUrl, testsRepoUrl, solutionRepoUrl);
+        continuousIntegration.createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUri, testsRepoUri, solutionRepoUri);
 
         // Give appropriate permissions for CI projects
         continuousIntegration.removeAllDefaultProjectPermissions(projectKey);
@@ -454,15 +454,15 @@ public class ProgrammingExerciseService {
 
         VersionControlService versionControl = versionControlService.orElseThrow();
         templateParticipation.setBuildPlanId(templatePlanId); // Set build plan id to newly created BaseBuild plan
-        templateParticipation.setRepositoryUrl(versionControl.getCloneRepositoryUrl(projectKey, exerciseRepoName).toString());
+        templateParticipation.setRepositoryUri(versionControl.getCloneRepositoryUri(projectKey, exerciseRepoName).toString());
         solutionParticipation.setBuildPlanId(solutionPlanId);
-        solutionParticipation.setRepositoryUrl(versionControl.getCloneRepositoryUrl(projectKey, solutionRepoName).toString());
-        programmingExercise.setTestRepositoryUrl(versionControl.getCloneRepositoryUrl(projectKey, testRepoName).toString());
+        solutionParticipation.setRepositoryUri(versionControl.getCloneRepositoryUri(projectKey, solutionRepoName).toString());
+        programmingExercise.setTestRepositoryUri(versionControl.getCloneRepositoryUri(projectKey, testRepoName).toString());
     }
 
     private void setURLsForAuxiliaryRepositoriesOfExercise(ProgrammingExercise programmingExercise) {
-        programmingExercise.getAuxiliaryRepositories().forEach(repo -> repo.setRepositoryUrl(versionControlService.orElseThrow()
-                .getCloneRepositoryUrl(programmingExercise.getProjectKey(), programmingExercise.generateRepositoryName(repo.getName())).toString()));
+        programmingExercise.getAuxiliaryRepositories().forEach(repo -> repo.setRepositoryUri(versionControlService.orElseThrow()
+                .getCloneRepositoryUri(programmingExercise.getProjectKey(), programmingExercise.generateRepositoryName(repo.getName())).toString()));
     }
 
     public static Path getProgrammingLanguageProjectTypePath(ProgrammingLanguage programmingLanguage, ProjectType projectType) {
@@ -583,20 +583,20 @@ public class ProgrammingExerciseService {
      * This method calls the StructureOracleGenerator, generates the string out of the JSON representation of the structure oracle of the programming exercise and returns true if
      * the file was updated or generated, false otherwise. This can happen if the contents of the file have not changed.
      *
-     * @param solutionRepoURL The URL of the solution repository.
-     * @param exerciseRepoURL The URL of the exercise repository.
-     * @param testRepoURL     The URL of the tests' repository.
+     * @param solutionRepoUri The URL of the solution repository.
+     * @param exerciseRepoUri The URL of the exercise repository.
+     * @param testRepoUri     The URL of the tests' repository.
      * @param testsPath       The path to the tests' folder, e.g. the path inside the repository where the structure oracle file will be saved in.
      * @param user            The user who has initiated the action
      * @return True, if the structure oracle was successfully generated or updated, false if no changes to the file were made.
      * @throws IOException     If the URLs cannot be converted to actual {@link Path paths}
      * @throws GitAPIException If the checkout fails
      */
-    public boolean generateStructureOracleFile(VcsRepositoryUrl solutionRepoURL, VcsRepositoryUrl exerciseRepoURL, VcsRepositoryUrl testRepoURL, String testsPath, User user)
+    public boolean generateStructureOracleFile(VcsRepositoryUri solutionRepoUri, VcsRepositoryUri exerciseRepoUri, VcsRepositoryUri testRepoUri, String testsPath, User user)
             throws IOException, GitAPIException {
-        Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL, true);
-        Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL, true);
-        Repository testRepository = gitService.getOrCheckoutRepository(testRepoURL, true);
+        Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoUri, true);
+        Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoUri, true);
+        Repository testRepository = gitService.getOrCheckoutRepository(testRepoUri, true);
 
         gitService.resetToOriginHead(solutionRepository);
         gitService.pullIgnoreConflicts(solutionRepository);

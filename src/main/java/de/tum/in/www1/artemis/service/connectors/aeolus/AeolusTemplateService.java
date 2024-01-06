@@ -120,6 +120,10 @@ public class AeolusTemplateService {
      */
     public Windfile getWindfileFor(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, Boolean staticAnalysis, Boolean sequentialRuns, Boolean testCoverage)
             throws IOException {
+        if (programmingLanguage.equals(ProgrammingLanguage.JAVA) && projectType.isEmpty()) {
+            // to be backwards compatible, we assume that java exercises without project type are plain maven projects
+            projectType = Optional.of(ProjectType.PLAIN_MAVEN);
+        }
         String templateFileName = buildScriptProvider.buildTemplateName(projectType, staticAnalysis, sequentialRuns, testCoverage, "yaml");
         String uniqueKey = programmingLanguage.name().toLowerCase() + "_" + templateFileName;
         if (templateCache.containsKey(uniqueKey)) {

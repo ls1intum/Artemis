@@ -115,8 +115,8 @@ public class ProgrammingExerciseFactory {
         }
         programmingExercise.setPackageName(programmingLanguage == ProgrammingLanguage.SWIFT ? "swiftTest" : "de.test");
         final var repoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
-        String testRepoUrl = String.format("http://some.test.url/scm/%s/%s.git", programmingExercise.getProjectKey(), repoName);
-        programmingExercise.setTestRepositoryUrl(testRepoUrl);
+        String testRepoUri = String.format("http://some.test.url/scm/%s/%s.git", programmingExercise.getProjectKey(), repoName);
+        programmingExercise.setTestRepositoryUri(testRepoUri);
         programmingExercise.setBranch(DEFAULT_BRANCH);
     }
 
@@ -163,7 +163,7 @@ public class ProgrammingExerciseFactory {
         toBeImported.setStudentParticipations(null);
         toBeImported.setNumberOfSubmissions(template.getNumberOfSubmissions());
         toBeImported.setExampleSubmissions(null);
-        toBeImported.setTestRepositoryUrl(template.getTestRepositoryUrl());
+        toBeImported.setTestRepositoryUri(template.getTestRepositoryUri());
         toBeImported.setProgrammingLanguage(template.getProgrammingLanguage());
         toBeImported.setProjectType(template.getProjectType());
         toBeImported.setAssessmentDueDate(template.getAssessmentDueDate());
@@ -592,7 +592,7 @@ public class ProgrammingExerciseFactory {
             programmingExercise.setPackageName("de.test");
         }
         programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2")));
-        programmingExercise.setTestRepositoryUrl("http://nadnasidni.tum/scm/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey() + "-tests.git");
+        programmingExercise.setTestRepositoryUri("http://nadnasidni.tum/scm/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey() + "-tests.git");
         programmingExercise.setShowTestNamesToStudents(false);
         programmingExercise.setBranch(DEFAULT_BRANCH);
     }
