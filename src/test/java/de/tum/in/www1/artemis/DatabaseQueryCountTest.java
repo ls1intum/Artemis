@@ -56,18 +56,17 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
             var userCourses = request.get("/api/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
             log.info("Finish courses for dashboard call for multiple courses");
             return userCourses;
-        }).hasBeenCalledAtMostTimes(11);
-        // TODO: update the following description, we only have 9 and not 11 calls
+        }).hasBeenCalledAtMostTimes(10);
         // 1 DB call to get the user from the DB
         // 1 DB call to get all active courses
         // 1 DB call to load all exercises
         // 1 DB call to count the exams
         // 1 DB call to count the lectures
-        // 1 DB call to get the active exams
-        // 1 DB call to get all presentation configurations via grading scales
         // 1 DB call to get all individual student participations with submissions and results
         // 1 DB call to get all team student participations with submissions and results
         // 1 DB call to get all plagiarism cases
+        // 1 DB call to get all grading scales
+        // 1 DB call to get the active exams
 
         var course = courses.get(0);
         assertThatDb(() -> {
@@ -76,20 +75,15 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
             log.info("Finish courses for dashboard call for one course");
             return userCourse;
         }).hasBeenCalledAtMostTimes(11);
-        // TODO: update the following description, we only have 11 and not 15 calls
         // 1 DB call to get the user from the DB
-        // 2 DB calls to get the course with exercise, lectures, exams
-        // 1 DB call to load all exercises
+        // 1 DB call to get the course with lectures
+        // 1 DB call to load all exercises with categories
         // 1 DB call to load all exams
-        // 1 DB call to load all competencies
-        // 1 DB call to load all prerequisite
-        // 1 DB call to load all tutorial groups
-        // 1 DB call to load the tutorial group configuration
-        // 1 DB call to get the presentation configuration via grading scale
+        // 3 DB calls to load the numbers of competencies, prerequisites and tutorial groups
         // 1 DB call to get all individual student participations with submissions and results
         // 1 DB call to get all team student participations with submissions and results
-        // 2 DB calls to get the quiz batches for active quiz exercises
         // 1 DB call to get all plagiarism cases
+        // 1 DB call to get the grading scale
     }
 
     @Test
