@@ -23,7 +23,6 @@
                     "chatSettings": "Chat Einstellungen",
                     "hestiaSettings": "Hestia Einstellungen",
                     "codeEditorSettings": "Code Editor Einstellungen",
-                    "enabled-disabled": "Aktiviert/Deaktiviert",
                     "models": {
                         "title": "Modelle",
                         "allowedModels": {

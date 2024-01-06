@@ -1,13 +1,10 @@
-<div class="form-check form-switch">
-    <input
-        class="form-check-input"
-        type="checkbox"
-        id="enabledDisabledSwitch"
-        [disabled]="!isAdmin && settingsType !== EXERCISE"
-        [(ngModel)]="enabled"
-        (change)="onEnabledChange()"
-    />
-    <label class="form-check-label" for="enabledDisabledSwitch" jhiTranslate="artemisApp.iris.settings.subSettings.enabled-disabled"> Enabled/Disabled </label>
+<div class="btn-group">
+    <div class="btn" [ngClass]="{ 'btn-success selected': subSettings!.enabled, 'btn-default': !subSettings!.enabled }" (click)="onEnable()">
+        {{ 'artemisApp.iris.settings.subSettings.enabled.on' | artemisTranslate }}
+    </div>
+    <div class="btn" [ngClass]="{ 'btn-danger selected': !subSettings!.enabled, 'btn-default': subSettings!.enabled }" (click)="onDisable()">
+        {{ 'artemisApp.iris.settings.subSettings.enabled.off' | artemisTranslate }}
+    </div>
 </div>
 <h4 class="form-label mt-3" jhiTranslate="artemisApp.iris.settings.subSettings.models.title">Models</h4>
 <span><span class="fw-bold fs-5" jhiTranslate="artemisApp.iris.settings.subSettings.models.allowedModels.title">Allowed Models</span>: </span>

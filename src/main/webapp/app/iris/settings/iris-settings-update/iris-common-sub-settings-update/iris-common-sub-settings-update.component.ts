@@ -32,8 +32,6 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
 
     allowedIrisModels: IrisModel[];
 
-    enabled: boolean;
-
     // Settings types
     EXERCISE = IrisSettingsType.EXERCISE;
     // Button types
@@ -46,7 +44,6 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     }
 
     ngOnInit() {
-        this.enabled = this.subSettings?.enabled ?? false;
         this.allowedIrisModels = this.getAvailableModels();
         this.inheritAllowedModels = !!(!this.subSettings?.allowedModels && this.parentSubSettings);
     }
@@ -54,9 +51,6 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.allIrisModels) {
             this.allowedIrisModels = this.getAvailableModels();
-        }
-        if (changes.subSettings) {
-            this.enabled = this.subSettings?.enabled ?? false;
         }
     }
 
@@ -86,8 +80,16 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
         this.subSettings!.preferredModel = model?.id;
     }
 
-    onEnabledChange() {
-        this.subSettings!.enabled = this.enabled;
+    onEnable() {
+        if (this.isAdmin || this.settingsType === this.EXERCISE) {
+            this.subSettings!.enabled = true;
+        }
+    }
+
+    onDisable() {
+        if (this.isAdmin || this.settingsType === this.EXERCISE) {
+            this.subSettings!.enabled = false;
+        }
     }
 
     onInheritAllowedModelsChange() {
