@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.RepositoryAccessService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCIConnectorService;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -61,9 +61,9 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             ParticipationAuthorizationCheckService participationAuthCheckService, GitService gitService, Optional<VersionControlService> versionControlService,
             RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService, Optional<LocalCIConnectorService> localCIConnectorService) {
+            SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService) {
         super(profileService, userRepository, authCheckService, gitService, repositoryService, versionControlService, programmingExerciseRepository, repositoryAccessService,
-                localCIConnectorService);
+                localVCServletService);
         this.participationAuthCheckService = participationAuthCheckService;
         this.participationService = participationService;
         this.buildLogService = buildLogService;
@@ -99,22 +99,22 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new AccessForbiddenException(e);
         }
 
-        var repositoryUrl = programmingParticipation.getVcsRepositoryUrl();
+        var repositoryUri = programmingParticipation.getVcsRepositoryUri();
 
         // This check reduces the amount of REST-calls that retrieve the default branch of a repository.
         // Retrieving the default branch is not necessary if the repository is already cached.
-        if (gitService.isRepositoryCached(repositoryUrl)) {
-            return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet);
+        if (gitService.isRepositoryCached(repositoryUri)) {
+            return gitService.getOrCheckoutRepository(repositoryUri, pullOnGet);
         }
         else {
             String branch = versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(programmingParticipation);
-            return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet, branch);
+            return gitService.getOrCheckoutRepository(repositoryUri, pullOnGet, branch);
         }
     }
 
     @Override
-    VcsRepositoryUrl getRepositoryUrl(Long participationId) throws IllegalArgumentException {
-        return getProgrammingExerciseParticipation(participationId).getVcsRepositoryUrl();
+    VcsRepositoryUri getRepositoryUri(Long participationId) throws IllegalArgumentException {
+        return getProgrammingExerciseParticipation(participationId).getVcsRepositoryUri();
     }
 
     /**
@@ -189,7 +189,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new AccessForbiddenException(e);
         }
         return executeAndCheckForExceptions(() -> {
-            Repository repository = gitService.checkoutRepositoryAtCommit(getRepositoryUrl(participationId), commitId, true);
+            Repository repository = gitService.checkoutRepositoryAtCommit(getRepositoryUri(participationId), commitId, true);
             Map<String, String> filesWithContent = super.repositoryService.getFilesWithContent(repository);
             gitService.switchBackToDefaultBranchHead(repository);
             return new ResponseEntity<>(filesWithContent, HttpStatus.OK);

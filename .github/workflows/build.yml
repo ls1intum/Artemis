@@ -59,7 +59,7 @@ jobs:
     - name: Production Build
       run: ./gradlew -Pprod -Pwar clean bootWar
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Artemis.war
         path: build/libs/Artemis-*.war

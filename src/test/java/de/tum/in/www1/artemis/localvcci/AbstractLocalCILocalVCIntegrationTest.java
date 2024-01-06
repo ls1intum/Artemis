@@ -115,17 +115,17 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setAllowOfflineIde(true);
-        programmingExercise.setTestRepositoryUrl(localVCBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-tests.git");
+        programmingExercise.setTestRepositoryUri(localVCBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-tests.git");
         programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
-        // Set the correct repository URLs for the template and the solution participation.
+        // Set the correct repository URIs for the template and the solution participation.
         templateRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, "exercise");
         templateParticipation = programmingExercise.getTemplateParticipation();
-        templateParticipation.setRepositoryUrl(localVCBaseUrl + "/git/" + projectKey1 + "/" + templateRepositorySlug + ".git");
+        templateParticipation.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey1 + "/" + templateRepositorySlug + ".git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         solutionRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, "solution");
         solutionParticipation = programmingExercise.getSolutionParticipation();
-        solutionParticipation.setRepositoryUrl(localVCBaseUrl + "/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git");
+        solutionParticipation.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git");
         solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
 
         assignmentRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, student1Login);
