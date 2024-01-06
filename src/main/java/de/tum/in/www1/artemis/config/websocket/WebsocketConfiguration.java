@@ -265,21 +265,23 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
         /**
          * Returns whether the subscription of the given principal to the given destination is permitted
+         * Database calls should be avoided as much as possible in this method.
+         * Only for very specific topics, database calls are allowed.
          *
          * @param principal   User principal of the user who wants to subscribe
          * @param destination Destination topic to which the user wants to subscribe
          * @return flag whether subscription is allowed
          */
         private boolean allowSubscription(Principal principal, String destination) {
-            User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
-
             if (isBuildQueueAdminDestination(destination)) {
+                var user = userRepository.getUserWithAuthorities(principal.getName());
                 return authorizationCheckService.isAdmin(user);
             }
 
             Optional<Long> courseId = isBuildQueueCourseDestination(destination);
             if (courseId.isPresent()) {
                 Course course = courseRepository.findByIdElseThrow(courseId.get());
+                var user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
                 return authorizationCheckService.isAtLeastInstructorInCourse(course, user);
             }
 
@@ -303,6 +305,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             var examId = getExamIdFromExamRootDestination(destination);
             if (examId.isPresent()) {
                 var exam = examRepository.findByIdElseThrow(examId.get());
+                var user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
                 return authorizationCheckService.isAtLeastInstructorInCourse(exam.getCourse(), user);
             }
             return true;
