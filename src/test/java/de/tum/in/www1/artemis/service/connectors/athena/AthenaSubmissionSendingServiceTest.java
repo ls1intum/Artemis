@@ -132,7 +132,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
                 jsonPath("$.exercise.bonusPoints").value(programmingExercise.getBonusPoints()),
                 jsonPath("$.exercise.gradingInstructions").value(programmingExercise.getGradingInstructions()),
                 jsonPath("$.exercise.problemStatement").value(programmingExercise.getProblemStatement()),
-                jsonPath("$.submissions[0].exerciseId").value(programmingExercise.getId()), jsonPath("$.submissions[0].repositoryUrl").isString());
+                jsonPath("$.submissions[0].exerciseId").value(programmingExercise.getId()), jsonPath("$.submissions[0].repositoryUri").isString());
 
         athenaSubmissionSendingService.sendSubmissions(programmingExercise);
         athenaRequestMockProvider.verify();

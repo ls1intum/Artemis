@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.util.Objects;
-
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
@@ -99,50 +97,5 @@ public class NotificationSetting extends DomainObject {
     @Override
     public String toString() {
         return "NotificationSetting{" + ", settingId='" + settingId + '\'' + ", webapp=" + webapp + ", email=" + email + ", push=" + push + ", user=" + user + '}';
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getSettingId(), getUser(), isWebapp(), isEmail());
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        DomainObject domainObject = (DomainObject) obj;
-        if (domainObject.getId() == null || getId() == null) {
-            return false;
-        }
-        boolean domainObjectCheck = Objects.equals(getId(), domainObject.getId());
-        NotificationSetting providedSetting = (NotificationSetting) obj;
-        boolean userCheck = checkUser(this.user, providedSetting.user);
-        boolean settingIdCheck = checkSettingId(this.settingId, providedSetting.settingId);
-        return domainObjectCheck && userCheck && settingIdCheck && this.webapp == providedSetting.webapp && this.email == providedSetting.email
-                && this.push == providedSetting.push;
-    }
-
-    private boolean checkUser(User thisUser, User providedUser) {
-        if (thisUser == null && providedUser == null) {
-            return true;
-        }
-        if (thisUser != null && providedUser != null) {
-            return thisUser.equals(providedUser);
-        }
-        return false;
-    }
-
-    private boolean checkSettingId(String thisSettingId, String providedSettingId) {
-        if (thisSettingId == null && providedSettingId == null) {
-            return true;
-        }
-        if (thisSettingId != null) {
-            return thisSettingId.equals(providedSettingId);
-        }
-        return false;
     }
 }
