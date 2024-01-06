@@ -50,7 +50,7 @@
         "crypto-js": "4.2.0",
         "dayjs": "1.11.10",
         "diff-match-patch-typescript": "1.0.8",
-        "dompurify": "3.0.7",
+        "dompurify": "3.0.8",
         "export-to-csv": "0.2.1",
         "franc-min": "6.1.0",
         "interactjs": "1.10.26",
@@ -150,7 +150,7 @@
         "weak-napi": "2.0.2"
     },
     "engines": {
-        "node": ">=18.17.0"
+        "node": ">=20.10.0"
     },
     "scripts": {
         "postinstall": "husky install",
