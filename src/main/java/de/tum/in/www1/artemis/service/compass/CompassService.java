@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.compass;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,7 +106,8 @@ public class CompassService {
                 if (modelElement != null) {
                     ModelCluster cluster = modelClusters.get(modelClusters.indexOf(modelElement.getCluster()));
                     Set<ModelElement> similarElements = cluster.getModelElements();
-                    List<String> similarReferences = similarElements.stream().map(element -> element.getModelElementType() + ":" + element.getModelElementId()).toList();
+                    HashSet<String> similarReferences = similarElements.stream().map(element -> element.getModelElementType() + ":" + element.getModelElementId())
+                            .collect(Collectors.toCollection(HashSet::new));
                     List<Feedback> similarFeedbacks = feedbacks.stream().filter(feedback -> similarReferences.contains(feedback.getReference())).toList();
                     Feedback suggestedFeedback = FeedbackSelector.selectFeedback(modelElement, similarFeedbacks, result);
                     if (suggestedFeedback != null) {

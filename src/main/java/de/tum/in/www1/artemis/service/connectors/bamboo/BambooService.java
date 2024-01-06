@@ -4,9 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -512,7 +510,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
             // Filter out build log and static code analysis artifacts
             if (buildResult != null && buildResult.getArtifacts() != null) {
-                List<String> artifactLabelFilter = StaticCodeAnalysisTool.getAllArtifactLabels();
+                HashSet<String> artifactLabelFilter = StaticCodeAnalysisTool.getAllArtifactLabels();
                 artifactLabelFilter.add("Build log");
                 buildResult.getArtifacts()
                         .setArtifacts(buildResult.getArtifacts().getArtifacts().stream().filter(artifact -> !artifactLabelFilter.contains(artifact.getName())).toList());

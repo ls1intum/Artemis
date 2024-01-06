@@ -1,10 +1,6 @@
 package de.tum.in.www1.artemis.domain.enumeration;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.StringJoiner;
+import java.util.*;
 
 /**
  * Enumeration for supported static code analysis tools
@@ -42,10 +38,10 @@ public enum StaticCodeAnalysisTool {
     /**
      * Returns the artifact labels of all static code analysis tools.
      *
-     * @return List of static code analysis tool artifact labels
+     * @return Set of static code analysis tool artifact labels
      */
-    public static List<String> getAllArtifactLabels() {
-        List<String> artifactLabels = new ArrayList<>();
+    public static HashSet<String> getAllArtifactLabels() {
+        HashSet<String> artifactLabels = new HashSet<>();
         for (var tool : StaticCodeAnalysisTool.values()) {
             artifactLabels.add(tool.getArtifactLabel());
         }

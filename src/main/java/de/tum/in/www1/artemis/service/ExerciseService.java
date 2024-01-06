@@ -722,7 +722,7 @@ public class ExerciseService {
         List<Feedback> feedbackToBeDeleted = new ArrayList<>();
         // check if the user decided to remove the feedback after deleting the associated grading instructions
         if (deleteFeedbackAfterGradingInstructionUpdate) {
-            List<Long> updatedInstructionIds = gradingInstructions.stream().map(GradingInstruction::getId).toList();
+            HashSet<Long> updatedInstructionIds = gradingInstructions.stream().map(GradingInstruction::getId).collect(Collectors.toCollection(HashSet::new));
             // retrieve the grading instructions from database for backup
             List<GradingCriterion> backupGradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
             List<Long> backupInstructionIds = backupGradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream())

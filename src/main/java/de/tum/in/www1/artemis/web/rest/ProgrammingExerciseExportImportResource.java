@@ -377,10 +377,10 @@ public class ProgrammingExerciseExportImportResource {
             repositoryExportOptions.setFilterLateSubmissionsDate(programmingExercise.getDueDate());
         }
 
-        List<String> participantIdentifierList = new ArrayList<>();
+        HashSet<String> participantIdentifierList = new HashSet<>();
         if (!repositoryExportOptions.isExportAllParticipants()) {
             participantIdentifiers = participantIdentifiers.replaceAll("\\s+", "");
-            participantIdentifierList = Arrays.asList(participantIdentifiers.split(","));
+            participantIdentifierList.addAll(List.of(participantIdentifiers.split(",")));
         }
 
         // Select the participations that should be exported

@@ -634,7 +634,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             usersInSameSlot.add(username);
             users.put(index, usersInSameSlot);
         }   // if the value of the map for this index does not contain this username
-        else if (!usersInSameSlot.contains(username)) {
+        else if (!new HashSet<>(usersInSameSlot).contains(username)) {
             usersInSameSlot.add(username);
         }
     }

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.hestia.structural;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,8 +33,9 @@ public interface StructuralElement {
             return String.join("\n", structuralAnnotations) + "\n";
         }
         else {
+            HashSet<String> structuralAnnotationsSet = new HashSet<>(structuralAnnotations);
             return annotatedElement.getAnnotations().stream()
-                    .filter(solutionAnnotation -> structuralAnnotations.contains(solutionAnnotation.getType().getSimpleName())
+                    .filter(solutionAnnotation -> structuralAnnotationsSet.contains(solutionAnnotation.getType().getSimpleName())
                             || "Override".equals(solutionAnnotation.getType().getSimpleName()))
                     .map(annotation -> annotation.getCodeBlock().replace(annotation.getType().getGenericCanonicalName(), annotation.getType().getSimpleName()))
                     .collect(Collectors.joining());
