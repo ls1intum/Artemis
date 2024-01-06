@@ -62,6 +62,7 @@ export class UserManagementAPIRequests {
                 email: username + '@example.com',
                 authorities: [role],
             },
+            ignoreHTTPSErrors: true,
         });
         // const req = http.request(options, (res) => {
         //     console.log(`statusCode: ${res.statusCode}`);
@@ -98,6 +99,7 @@ export class UserManagementAPIRequests {
             //     cert: fs.readFileSync('./certs/artemis-nginx+4.pem'),
             //     key: fs.readFileSync('./certs/artemis-nginx+4-key.pem'),
             // },
+            ignoreHTTPSErrors: true,
         });
         // return new Promise((resolve) => {
         //     console.log(options);
