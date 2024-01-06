@@ -12,8 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
-import org.springframework.core.env.Profiles;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +30,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
@@ -81,14 +80,14 @@ public class LocalCISharedBuildJobQueueService {
      */
     private final ReentrantLock instanceLock = new ReentrantLock();
 
-    private final Environment env;
+    private final ProfileService profileService;
 
     private LocalCIBuildQueueWebsocketService localCIBuildQueueWebsocketService;
 
-    public LocalCISharedBuildJobQueueService(HazelcastInstance hazelcastInstance, Environment env, ExecutorService localCIBuildExecutorService,
+    public LocalCISharedBuildJobQueueService(HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
             LocalCIBuildJobManagementService localCIBuildJobManagementService, ParticipationRepository participationRepository,
             ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ProfileService profileService) {
         this.hazelcastInstance = hazelcastInstance;
         this.localCIBuildExecutorService = (ThreadPoolExecutor) localCIBuildExecutorService;
         this.localCIBuildJobManagementService = localCIBuildJobManagementService;
@@ -96,11 +95,11 @@ public class LocalCISharedBuildJobQueueService {
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.programmingMessagingService = programmingMessagingService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.profileService = profileService;
         this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
         this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
-        this.env = env;
     }
 
     @Autowired(required = false)
@@ -110,8 +109,8 @@ public class LocalCISharedBuildJobQueueService {
 
     @PostConstruct
     public void enableWebsocketFunctionalityIfSchedulingActive() {
-        if (env.acceptsProfiles(Profiles.of("scheduling"))) {
-            this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
+        this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
+        if (profileService.isScheduling()) {
             this.processingJobs.addLocalEntryListener(new ProcessingBuildJobItemListener());
             this.buildAgentInformation.addLocalEntryListener(new BuildAgentListener());
             // localCIBuildQueueWebsocketService will be autowired only if scheduling is active
@@ -136,7 +135,6 @@ public class LocalCISharedBuildJobQueueService {
         LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(name, participationId, repositoryTypeOrUsername, commitHash, submissionDate, priority, courseId,
                 isPushToTestRepository);
         queue.add(buildJobQueueItem);
-        checkAvailabilityAndProcessNextBuild();
     }
 
     public List<LocalCIBuildJobQueueItem> getQueuedJobs() {
@@ -212,7 +210,7 @@ public class LocalCISharedBuildJobQueueService {
                 updateLocalBuildAgentInformation();
             }
 
-            log.info("Node has no available threads currently");
+            log.debug("Node has no available threads currently");
             return;
         }
 
@@ -441,13 +439,18 @@ public class LocalCISharedBuildJobQueueService {
         @Override
         public void itemAdded(ItemEvent<LocalCIBuildJobQueueItem> event) {
             log.debug("CIBuildJobQueueItem added to queue: {}", event.getItem());
-            sendQueuedJobsOverWebsocket(event.getItem().getCourseId());
+            checkAvailabilityAndProcessNextBuild();
+            if (profileService.isScheduling()) {
+                sendQueuedJobsOverWebsocket(event.getItem().getCourseId());
+            }
         }
 
         @Override
         public void itemRemoved(ItemEvent<LocalCIBuildJobQueueItem> event) {
             log.debug("CIBuildJobQueueItem removed from queue: {}", event.getItem());
-            sendQueuedJobsOverWebsocket(event.getItem().getCourseId());
+            if (profileService.isScheduling()) {
+                sendQueuedJobsOverWebsocket(event.getItem().getCourseId());
+            }
         }
     }
 
