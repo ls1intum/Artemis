@@ -663,10 +663,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(result.getSubmission().getId());
         for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
             // MC submitted answers 0 points as one correct and one false -> ALL_OR_NOTHING
-            if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
-                assertThat(submittedAnswer.getScoreInPoints()).isZero();
-            } // DND submitted answers 0 points as one correct and two false -> PROPORTIONAL_WITH_PENALTY
-            else if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
+            // or
+            // DND submitted answers 0 points as one correct and two false -> PROPORTIONAL_WITH_PENALTY
+            if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer || submittedAnswer instanceof DragAndDropSubmittedAnswer) {
                 assertThat(submittedAnswer.getScoreInPoints()).isZero();
             } // SA submitted answers 1 points as one correct and one false -> PROPORTIONAL_WITHOUT_PENALTY
             else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {

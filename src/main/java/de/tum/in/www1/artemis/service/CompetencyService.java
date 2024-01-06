@@ -145,11 +145,8 @@ public class CompetencyService {
             public boolean vertexIsPartOfCycle(Vertex sourceVertex) {
                 sourceVertex.setBeingVisited(true);
                 for (Vertex neighbor : sourceVertex.getAdjacencyList()) {
-                    if (neighbor.isBeingVisited()) {
-                        // backward edge exists
-                        return true;
-                    }
-                    else if (!neighbor.isVisited() && vertexIsPartOfCycle(neighbor)) {
+                    if (neighbor.isBeingVisited() || (!neighbor.isVisited() && vertexIsPartOfCycle(neighbor))) {
+                        // backward edge exists -> cycle
                         return true;
                     }
                 }

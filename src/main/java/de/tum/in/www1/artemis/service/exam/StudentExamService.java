@@ -367,23 +367,13 @@ public class StudentExamService {
                 // we should still be able to compare even if the quizQuestion or the quizQuestion id is null
                 if (quizQuestion1 == null || quizQuestion1.getId() == null || quizQuestion2 == null || quizQuestion2.getId() == null
                         || quizQuestion1.getId().equals(quizQuestion2.getId())) {
-                    boolean equal;
-
-                    if (answer1 instanceof DragAndDropSubmittedAnswer submittedAnswer1 && answer2 instanceof DragAndDropSubmittedAnswer submittedAnswer2) {
-                        equal = isContentEqualTo(submittedAnswer1, submittedAnswer2);
+                    try {
+                        if (!isContentEqualTo(answer1, answer2)) {
+                            return false;
+                        }
                     }
-                    else if (answer1 instanceof MultipleChoiceSubmittedAnswer submittedAnswer1 && answer2 instanceof MultipleChoiceSubmittedAnswer submittedAnswer2) {
-                        equal = isContentEqualTo(submittedAnswer1, submittedAnswer2);
-                    }
-                    else if (answer1 instanceof ShortAnswerSubmittedAnswer submittedAnswer1 && answer2 instanceof ShortAnswerSubmittedAnswer submittedAnswer2) {
-                        equal = isContentEqualTo(submittedAnswer1, submittedAnswer2);
-                    }
-                    else {
-                        LoggerFactory.getLogger(StudentExamService.class).error("Cannot compare {} and {} for equality, classes unknown", answer1, answer2);
-                        return false;
-                    }
-
-                    if (!equal) {
+                    catch (RuntimeException ex) {
+                        LoggerFactory.getLogger(StudentExamService.class).error("Cannot compare {} and {} for equality, classes unknown", answer1, answer2, ex);
                         return false;
                     }
                 }
@@ -391,6 +381,28 @@ public class StudentExamService {
         }
         // we did not find any differences
         return true;
+    }
+
+    /**
+     * Returns {@code true} if the quiz submissions are equal to each other
+     * and {@code false} otherwise.
+     *
+     * @param answer1 a quiz submission
+     * @param answer2 a quiz submission to be compared with {@code submission1} for equality
+     * @return {@code true} if the quiz submissions are equal to each other and {@code false} otherwise
+     * @throws RuntimeException if the answer types are not supported
+     */
+    public static boolean isContentEqualTo(SubmittedAnswer answer1, SubmittedAnswer answer2) {
+        if (answer1 instanceof DragAndDropSubmittedAnswer submittedAnswer1 && answer2 instanceof DragAndDropSubmittedAnswer submittedAnswer2) {
+            return isContentEqualTo(submittedAnswer1, submittedAnswer2);
+        }
+        else if (answer1 instanceof MultipleChoiceSubmittedAnswer submittedAnswer1 && answer2 instanceof MultipleChoiceSubmittedAnswer submittedAnswer2) {
+            return isContentEqualTo(submittedAnswer1, submittedAnswer2);
+        }
+        else if (answer1 instanceof ShortAnswerSubmittedAnswer submittedAnswer1 && answer2 instanceof ShortAnswerSubmittedAnswer submittedAnswer2) {
+            return isContentEqualTo(submittedAnswer1, submittedAnswer2);
+        }
+        throw new RuntimeException("Not supported");
     }
 
     /**

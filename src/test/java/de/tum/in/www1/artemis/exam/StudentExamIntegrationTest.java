@@ -2487,10 +2487,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
                 assertThat(submittedAnswer.getScoreInPoints()).isEqualTo(4D);
             } // DND submitted answers 0 points as one correct and two false -> PROPORTIONAL_WITH_PENALTY
-            else if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
-                assertThat(submittedAnswer.getScoreInPoints()).isZero();
-            } // SA submitted answers 0 points as one correct and one false -> PROPORTIONAL_WITHOUT_PENALTY
-            else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
+              // or
+              // SA submitted answers 0 points as one correct and one false -> PROPORTIONAL_WITHOUT_PENALTY
+            else if (submittedAnswer instanceof DragAndDropSubmittedAnswer || submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
                 assertThat(submittedAnswer.getScoreInPoints()).isZero();
             }
         }
