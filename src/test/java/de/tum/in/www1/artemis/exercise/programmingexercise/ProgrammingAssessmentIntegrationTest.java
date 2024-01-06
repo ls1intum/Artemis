@@ -903,8 +903,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         params.add("submit", "true");
         var response = request.putWithResponseBodyAndParams("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.OK, params);
 
-        var responseParticipation = response.getParticipation();
+        var responseParticipation = (ProgrammingExerciseStudentParticipation) response.getParticipation();
         assertThat(responseParticipation.getIndividualDueDate()).isNull();
+        assertThat(responseParticipation.isLocked()).isFalse();
 
         verify(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(participation);
     }
