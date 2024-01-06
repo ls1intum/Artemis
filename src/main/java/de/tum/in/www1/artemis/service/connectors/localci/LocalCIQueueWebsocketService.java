@@ -21,6 +21,11 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentIn
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.web.websocket.localci.LocalCIBuildQueueWebsocketService;
 
+/**
+ * This service is responsible for sending build job queue information over websockets.
+ * It listens to changes in the build job queue and sends the updated information to the client.
+ * NOTE: This service is only active if the profile "localci" and "scheduling" are active.
+ */
 @Service
 @Profile("localci & scheduling")
 public class LocalCIQueueWebsocketService {
@@ -39,6 +44,13 @@ public class LocalCIQueueWebsocketService {
 
     private final LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService;
 
+    /**
+     * Instantiates a new Local ci queue websocket service.
+     *
+     * @param hazelcastInstance                 the hazelcast instance
+     * @param localCIBuildQueueWebsocketService the local ci build queue websocket service
+     * @param localCISharedBuildJobQueueService the local ci shared build job queue service
+     */
     public LocalCIQueueWebsocketService(HazelcastInstance hazelcastInstance, LocalCIBuildQueueWebsocketService localCIBuildQueueWebsocketService,
             LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService) {
         this.hazelcastInstance = hazelcastInstance;
@@ -49,6 +61,9 @@ public class LocalCIQueueWebsocketService {
         this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
     }
 
+    /**
+     * Add listeners for build job queue changes.
+     */
     @PostConstruct
     public void addListeners() {
         this.queue.addItemListener(new QueuedBuildJobItemListener(), true);

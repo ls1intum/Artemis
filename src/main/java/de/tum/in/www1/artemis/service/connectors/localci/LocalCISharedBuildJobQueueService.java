@@ -92,6 +92,9 @@ public class LocalCISharedBuildJobQueueService {
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
     }
 
+    /**
+     * Add listener to the shared build job queue.
+     */
     @PostConstruct
     public void addListener() {
         this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
