@@ -487,10 +487,8 @@ export class Graph {
         sourceVertex.setBeingVisited(true);
 
         for (const neighbor of sourceVertex.getAdjacencyList()) {
-            if (neighbor.isBeingVisited()) {
+            if (neighbor.isBeingVisited() || (!neighbor.isVisited() && this.vertexHasCycle(neighbor))) {
                 // backward edge exists
-                return true;
-            } else if (!neighbor.isVisited() && this.vertexHasCycle(neighbor)) {
                 return true;
             }
         }
