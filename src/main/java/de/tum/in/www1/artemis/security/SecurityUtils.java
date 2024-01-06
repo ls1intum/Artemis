@@ -51,6 +51,16 @@ public final class SecurityUtils {
     }
 
     /**
+     * Return true if the current users' login matches the provided login
+     *
+     * @param login user login
+     * @return true if both logins match
+     */
+    public static boolean isCurrentUser(String login) {
+        return SecurityUtils.getCurrentUserLogin().map(currentLogin -> currentLogin.equals(login)).orElse(false);
+    }
+
+    /**
      * Get the login of the current user.
      *
      * @return the login of the current user.

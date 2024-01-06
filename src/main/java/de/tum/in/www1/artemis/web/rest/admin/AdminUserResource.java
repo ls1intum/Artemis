@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.admin;
 
+import static de.tum.in.www1.artemis.security.SecurityUtils.isCurrentUser;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -226,7 +228,7 @@ public class AdminUserResource {
     @EnforceAdmin
     public ResponseEntity<Void> deleteUser(@PathVariable String login) {
         log.debug("REST request to delete User: {}", login);
-        if (userRepository.isCurrentUser(login)) {
+        if (isCurrentUser(login)) {
             throw new BadRequestAlertException("You cannot delete yourself", "userManagement", "cannotDeleteYourself");
         }
         userService.softDeleteUser(login);
@@ -251,7 +253,7 @@ public class AdminUserResource {
 
         for (String login : logins) {
             try {
-                if (!userRepository.isCurrentUser(login)) {
+                if (!isCurrentUser(login)) {
                     userService.softDeleteUser(login);
                     deletedUsers.add(login);
                 }

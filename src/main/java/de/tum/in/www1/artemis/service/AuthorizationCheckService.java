@@ -115,10 +115,23 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * Checks if the user based on the passed login is at least an editor in the given course.
+     *
+     * @param course the course that needs to be checked
+     * @param login  the user login whose permissions should be checked
+     * @return true if the passed user is at least a teaching assistant in the course (also if the user is instructor or admin), false otherwise or if the user does not exist
+     */
+    @CheckReturnValue
+    public boolean isUserWithLoginAtLeastEditorInCourse(@NotNull Course course, @NotNull String login) {
+        var editorGroup = course.getEditorGroupName();
+        var instructorGroup = course.getInstructorGroupName();
+        return userRepository.isUserMemberOfGroupsOrAdmin(login, Set.of(editorGroup, instructorGroup));
+    }
+
+    /**
      * Given any type of exercise, the method returns if the current user is at least TA for the course the exercise belongs to. If exercise is not present, it will return false,
-     * because the optional will be empty, and therefore `isPresent()` will return false This is due how `filter` works: If a value is present, apply the provided mapping function
-     * to it, and if the result is non-null, return an Optional describing the result. Otherwise, return an empty Optional.
-     * https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html#filter(java.util.function.Predicate)
+     * because the optional will be empty, and therefore `isPresent()` will return false
+     * This is due how `filter` works on Optional (see Javadoc)
      *
      * @param exercise the exercise that needs to be checked
      * @param <T>      The type of the concrete exercise, because Exercise is an abstract class
@@ -206,6 +219,22 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * Checks if the user based on the passed login is at least a teaching assistant in the given course.
+     *
+     * @param course the course that needs to be checked
+     * @param login  the user login whose permissions should be checked
+     * @return true if the passed user is at least a teaching assistant in the course (also if the user is editor, instructor or admin), false otherwise or if the user does not
+     *         exist
+     */
+    @CheckReturnValue
+    public boolean isUserWithLoginAtLeastTeachingAssistantInCourse(@NotNull Course course, @NotNull String login) {
+        var taGroup = course.getTeachingAssistantGroupName();
+        var editorGroup = course.getEditorGroupName();
+        var instructorGroup = course.getInstructorGroupName();
+        return userRepository.isUserMemberOfGroupsOrAdmin(login, Set.of(taGroup, editorGroup, instructorGroup));
+    }
+
+    /**
      * Checks if the passed user is at least a student in the given course.
      * Throws an AccessForbiddenException if the user has no access which returns a 403
      *
@@ -238,7 +267,7 @@ public class AuthorizationCheckService {
      *         or the reason why the user is not allowed to self enroll in the course otherwise
      */
     @CheckReturnValue
-    public EnrollmentAuthorization getUserEnrollmentAuthorizationForCourse(User user, Course course) {
+    private EnrollmentAuthorization getUserEnrollmentAuthorizationForCourse(User user, Course course) {
         if (allowedCourseEnrollmentUsernamePattern != null && !allowedCourseEnrollmentUsernamePattern.matcher(user.getLogin()).matches()) {
             return EnrollmentAuthorization.USERNAME_PATTERN;
         }
@@ -302,15 +331,14 @@ public class AuthorizationCheckService {
      * Checks if the user is allowed to unenroll from the given course.
      * Returns `UnenrollmentAuthorization.ALLOWED` if the user is allowed to unenroll from the course,
      * or the reason why the user is not allowed to unenroll from the course otherwise.
-     * See also: {@link #checkUserAllowedToUnenrollFromCourseElseThrow(User, Course)}
+     * See also: {@link #checkUserAllowedToUnenrollFromCourseElseThrow(Course)}
      *
-     * @param user   The user that wants to unenroll
      * @param course The course from which the user wants to unenroll
      * @return `UnenrollmentAuthorization.ALLOWED` if the user is allowed to self unenroll from the course,
      *         or the reason why the user is not allowed to self unenroll from the course otherwise
      */
     @CheckReturnValue
-    public UnenrollmentAuthorization getUserUnenrollmentAuthorizationForCourse(User user, Course course) {
+    private UnenrollmentAuthorization getUserUnenrollmentAuthorizationForCourse(Course course) {
         if (!course.isUnenrollmentEnabled()) {
             return UnenrollmentAuthorization.UNENROLLMENT_STATUS;
         }
@@ -326,13 +354,12 @@ public class AuthorizationCheckService {
     /**
      * Checks if the user is allowed to unenroll from the given course.
      * Throws an AccessForbiddenException if the user is not allowed to unenroll from the course.
-     * See also: {@link #getUserUnenrollmentAuthorizationForCourse(User, Course)}
+     * See also: {@link #getUserUnenrollmentAuthorizationForCourse(Course)}
      *
-     * @param user   The user that wants to unenroll
      * @param course The course from which the user wants to unenroll
      */
-    public void checkUserAllowedToUnenrollFromCourseElseThrow(User user, Course course) throws AccessForbiddenException {
-        UnenrollmentAuthorization auth = getUserUnenrollmentAuthorizationForCourse(user, course);
+    public void checkUserAllowedToUnenrollFromCourseElseThrow(Course course) throws AccessForbiddenException {
+        UnenrollmentAuthorization auth = getUserUnenrollmentAuthorizationForCourse(course);
         switch (auth) {
             case UNENROLLMENT_STATUS, UNENROLLMENT_PERIOD -> throw new AccessForbiddenException("The course does currently not allow unenrollment.");
             case ONLINE -> throw new AccessForbiddenException("Online courses cannot be unenrolled from.");
@@ -340,17 +367,35 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * checks if the passed user is at least a teaching assistant in the given course
+     * checks if the passed user is at least a student in the given course
      *
      * @param course the course that needs to be checked
      * @param user   the user whose permissions should be checked
-     * @return true if the passed user is at least a teaching assistant in the course (also if the user is instructor or admin), false otherwise
+     * @return true if the passed user is at least a student in the course (also if the user is teaching assistant, instructor or admin), false otherwise
      */
     @CheckReturnValue
     public boolean isAtLeastStudentInCourse(@NotNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
         return isStudentInCourse(course, user) || isTeachingAssistantInCourse(course, user) || isEditorInCourse(course, user) || isInstructorInCourse(course, user)
                 || isAdmin(user);
+    }
+
+    /**
+     * Checks if the user based on the passed login is at least a student in the given course.
+     *
+     * @param course the course that needs to be checked
+     * @param login  the user login whose permissions should be checked
+     * @return true if the passed user is at least a student in the course (also if the user is teaching assistant, editor, instructor or admin), false otherwise or if the user
+     *         does not
+     *         exist
+     */
+    @CheckReturnValue
+    public boolean isUserWithLoginAtLeastStudentInCourse(@NotNull Course course, @NotNull String login) {
+        var studentGroup = course.getStudentGroupName();
+        var taGroup = course.getTeachingAssistantGroupName();
+        var editorGroup = course.getEditorGroupName();
+        var instructorGroup = course.getInstructorGroupName();
+        return userRepository.isUserMemberOfGroupsOrAdmin(login, Set.of(studentGroup, taGroup, editorGroup, instructorGroup));
     }
 
     /**
@@ -447,6 +492,19 @@ public class AuthorizationCheckService {
     public boolean isAtLeastInstructorInCourse(@NotNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
         return user.getGroups().contains(course.getInstructorGroupName()) || isAdmin(user);
+    }
+
+    /**
+     * Checks if the user based on the passed login is at least a instructor in the given course.
+     *
+     * @param course the course that needs to be checked
+     * @param login  the user login whose permissions should be checked
+     * @return true if the passed user is at least a instructor in the course (also if the user is admin), false otherwise or if the user does not exist
+     */
+    @CheckReturnValue
+    public boolean isUserWithLoginAtLeastInstructorInCourse(@NotNull Course course, @NotNull String login) {
+        var instructorGroup = course.getInstructorGroupName();
+        return userRepository.isUserMemberOfGroupsOrAdmin(login, Set.of(instructorGroup));
     }
 
     /**
