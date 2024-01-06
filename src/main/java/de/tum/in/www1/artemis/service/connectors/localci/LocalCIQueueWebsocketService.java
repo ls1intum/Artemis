@@ -68,6 +68,10 @@ public class LocalCIQueueWebsocketService {
         localCIBuildQueueWebsocketService.sendRunningBuildJobsForCourse(courseId, localCISharedBuildJobQueueService.getProcessingJobsForCourse(courseId));
     }
 
+    private void sendBuildAgentInformationOverWebsocket() {
+        localCIBuildQueueWebsocketService.sendBuildAgentInformation(localCISharedBuildJobQueueService.getBuildAgentInformation());
+    }
+
     private class QueuedBuildJobItemListener implements ItemListener<LocalCIBuildJobQueueItem> {
 
         @Override
@@ -101,13 +105,13 @@ public class LocalCIQueueWebsocketService {
         @Override
         public void entryAdded(com.hazelcast.core.EntryEvent<String, LocalCIBuildAgentInformation> event) {
             log.debug("Build agent added: {}", event.getValue());
-            localCIBuildQueueWebsocketService.sendBuildAgentInformation(localCISharedBuildJobQueueService.getBuildAgentInformation());
+            sendBuildAgentInformationOverWebsocket();
         }
 
         @Override
         public void entryRemoved(com.hazelcast.core.EntryEvent<String, LocalCIBuildAgentInformation> event) {
             log.debug("Build agent removed: {}", event.getOldValue());
-            localCIBuildQueueWebsocketService.sendBuildAgentInformation(localCISharedBuildJobQueueService.getBuildAgentInformation());
+            sendBuildAgentInformationOverWebsocket();
         }
     }
 }
