@@ -83,7 +83,7 @@ export class ProgrammingExerciseCreationPage {
         // There is a race condition, where an event listener already attaches and is ready to process the actual click on a date element
         // but no event listener has been attached yet to close the modal. Thus, we need to keep clicking until the calendar modal is closed.
         // Another idea would be to use cy.wait(), however it's not recommended by the developers.
-        // Cypress-pipe does not retry any Cypress commands so we need to click on the element using jQuery method "$el.click()" and not "cy.click()"
+        // Cypress-pipe does not retry any Cypress commands so we need to click on the element using jQuery method "$el.trigger('click')" and not "cy.click()"
         // See https://www.cypress.io/blog/2019/01/22/when-can-the-test-click for more information
         const click = ($el: JQuery<HTMLElement>) => $el.trigger('click');
 
