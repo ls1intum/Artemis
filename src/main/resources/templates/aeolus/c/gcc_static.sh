@@ -71,12 +71,6 @@ build_and_run_all_tests () {
 
 }
 
-cleanup () {
-  echo '⚙️ executing cleanup'
-  sudo rm -rf tests/ assignment/ test-reports/ || true
-  chmod -R 777 .
-}
-
 main () {
   if [[ "${1}" == "aeolus_sourcing" ]]; then
     return 0 # just source to use the methods in the subshell, no execution
