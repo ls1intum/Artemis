@@ -84,7 +84,7 @@ describe('Exercise Scores Component', () => {
 
     const participation: ProgrammingExerciseStudentParticipation = {
         buildPlanId: '1',
-        userIndependentRepositoryUrl: 'url',
+        userIndependentRepositoryUri: 'url',
         participantIdentifier: 'participationId',
         participantName: 'participantName',
         results: [{ assessmentType: AssessmentType.MANUAL }],
