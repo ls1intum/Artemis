@@ -147,7 +147,7 @@ public class PublicProgrammingSubmissionResource {
         String lastCommitHash = null;
         try {
             Commit commit = versionControlService.orElseThrow().getLastCommitDetails(requestBody);
-            lastCommitHash = commit.getCommitHash();
+            lastCommitHash = commit.commitHash();
             log.info("create new programmingSubmission with commitHash: {} for exercise {}", lastCommitHash, exerciseId);
         }
         catch (Exception ex) {

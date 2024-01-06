@@ -180,7 +180,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     @Query("""
             SELECT DISTINCT p
             FROM ProgrammingExerciseStudentParticipation p
-                WHERE p.buildPlanId IS NOT NULL or p.repositoryUrl IS NOT NULL
+                WHERE p.buildPlanId IS NOT NULL or p.repositoryUri IS NOT NULL
             """)
-    Page<ProgrammingExerciseStudentParticipation> findAllWithRepositoryUrlOrBuildPlanId(Pageable pageable);
+    Page<ProgrammingExerciseStudentParticipation> findAllWithRepositoryUriOrBuildPlanId(Pageable pageable);
 }

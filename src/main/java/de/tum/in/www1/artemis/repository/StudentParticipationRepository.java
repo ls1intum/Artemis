@@ -574,15 +574,16 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     List<StudentParticipation> findAllForPlagiarism(@Param("exerciseId") long exerciseId);
 
     @Query("""
-            SELECT DISTINCT p FROM StudentParticipation p
-            LEFT JOIN FETCH p.submissions s
-            LEFT JOIN FETCH s.results r
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
             WHERE p.student.id = :studentId
                 AND p.exercise in :exercises
                 AND (p.testRun = FALSE OR :includeTestRuns = TRUE)
             """)
-    List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(@Param("studentId") Long studentId, @Param("exercises") List<Exercise> exercises,
-            @Param("includeTestRuns") boolean includeTestRuns);
+    Set<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(@Param("studentId") Long studentId,
+            @Param("exercises") Collection<Exercise> exercises, @Param("includeTestRuns") boolean includeTestRuns);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
@@ -639,16 +640,18 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             @Param("exercises") List<Exercise> exercises);
 
     @Query("""
-                SELECT DISTINCT p FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results r
-                LEFT JOIN FETCH p.team t
-                LEFT JOIN FETCH t.students teamStudent
-                    WHERE teamStudent.id = :#{#studentId}
-                    AND p.exercise in :#{#exercises}
+                SELECT DISTINCT p
+                FROM StudentParticipation p
+                    LEFT JOIN FETCH p.submissions s
+                    LEFT JOIN FETCH s.results r
+                    LEFT JOIN FETCH p.team t
+                    LEFT JOIN FETCH t.students teamStudent
+                WHERE teamStudent.id = :studentId
+                    AND p.exercise in :exercises
                     AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)
-    List<StudentParticipation> findByStudentIdAndTeamExercisesWithEagerLegalSubmissionsResult(@Param("studentId") Long studentId, @Param("exercises") List<Exercise> exercises);
+    Set<StudentParticipation> findByStudentIdAndTeamExercisesWithEagerLegalSubmissionsResult(@Param("studentId") Long studentId,
+            @Param("exercises") Collection<Exercise> exercises);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
@@ -930,26 +933,27 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param includeTestRuns flag that indicates whether test run participations should be included
      * @return an unmodifiable list of participations of the user in the exercises
      */
-    default List<StudentParticipation> getAllParticipationsOfUserInExercises(User user, Set<Exercise> exercises, boolean includeTestRuns) {
+    default Set<StudentParticipation> getAllParticipationsOfUserInExercises(User user, Set<Exercise> exercises, boolean includeTestRuns) {
         Map<ExerciseMode, List<Exercise>> exercisesGroupedByExerciseMode = exercises.stream().collect(Collectors.groupingBy(Exercise::getMode));
-        List<Exercise> individualExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL), List.of());
-        List<Exercise> teamExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM), List.of());
 
-        if (individualExercises.isEmpty() && teamExercises.isEmpty()) {
-            return List.of();
-        }
+        Set<Exercise> individualExercises = exercisesGroupedByExerciseMode.getOrDefault(ExerciseMode.INDIVIDUAL, List.of()).stream().filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Set<Exercise> teamExercises = exercisesGroupedByExerciseMode.getOrDefault(ExerciseMode.TEAM, List.of()).stream().filter(Objects::nonNull).collect(Collectors.toSet());
 
         // Note: we need two database calls here, because of performance reasons: the entity structure for team is significantly different and a combined database call
-        // would lead to a SQL statement that cannot be optimized
+        // would lead to a SQL statement that cannot be optimized. However, we only call the database if needed, i.e. if the exercise set is not empty
 
         // 1st: fetch participations, submissions and results for individual exercises
-        var individualParticipations = findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(), individualExercises, includeTestRuns);
+        Set<StudentParticipation> individualParticipations = individualExercises.isEmpty() ? Set.of()
+                : findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(), individualExercises, includeTestRuns);
 
         // 2nd: fetch participations, submissions and results for team exercises
-        var teamParticipations = findByStudentIdAndTeamExercisesWithEagerLegalSubmissionsResult(user.getId(), teamExercises);
+        Set<StudentParticipation> teamParticipations = teamExercises.isEmpty() ? Set.of()
+                : findByStudentIdAndTeamExercisesWithEagerLegalSubmissionsResult(user.getId(), teamExercises);
 
-        // 3rd: merge both into one list for further processing
-        return Stream.concat(individualParticipations.stream(), teamParticipations.stream()).toList();
+        // 3rd: merge both into one set for further processing
+        return Stream.concat(individualParticipations.stream(), teamParticipations.stream()).collect(Collectors.toSet());
     }
 
     /**

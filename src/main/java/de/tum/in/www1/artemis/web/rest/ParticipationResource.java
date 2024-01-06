@@ -603,7 +603,7 @@ public class ParticipationResource {
             if (exercise instanceof ProgrammingExercise programmingExercise) {
                 programmingExercise.setSolutionParticipation(null);
                 programmingExercise.setTemplateParticipation(null);
-                programmingExercise.setTestRepositoryUrl(null);
+                programmingExercise.setTestRepositoryUri(null);
                 programmingExercise.setShortName(null);
                 programmingExercise.setPublishBuildPlanUrl(null);
                 programmingExercise.setProgrammingLanguage(null);
