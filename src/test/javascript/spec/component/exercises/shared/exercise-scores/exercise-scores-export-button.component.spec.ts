@@ -302,7 +302,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
         participation.participantIdentifier = studentLogin;
         participation.participantName = studentName;
         if (isProgramming) {
-            (participation as ProgrammingExerciseStudentParticipation).repositoryUrl = `https://www.gitlab.local/${studentLogin}`;
+            (participation as ProgrammingExerciseStudentParticipation).repositoryUri = `https://www.gitlab.local/${studentLogin}`;
         }
 
         return participation;
