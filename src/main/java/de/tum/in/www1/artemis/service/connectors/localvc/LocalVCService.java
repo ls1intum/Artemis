@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
@@ -56,38 +56,38 @@ public class LocalVCService extends AbstractVersionControlService {
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private String localVCBasePath;
 
-    public LocalVCService(UrlService urlService, GitService gitService, ApplicationContext applicationContext,
+    public LocalVCService(UriService uriService, GitService gitService, ApplicationContext applicationContext,
             ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository) {
-        super(applicationContext, gitService, urlService, studentParticipationRepository, programmingExerciseRepository, templateProgrammingExerciseParticipationRepository);
+        super(gitService, uriService, studentParticipationRepository, programmingExerciseRepository, templateProgrammingExerciseParticipationRepository);
     }
 
     @Override
     public void configureRepository(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean allowAccess) {
         // For Bitbucket and GitLab, users are added to the respective repository to allow them to fetch from there and push to it
         // if the exercise allows for usage of an offline IDE.
-        // For local VCS, users are allowed to access the repository by default if they have access to the repository URL.
+        // For local VCS, users are allowed to access the repository by default if they have access to the repository URI.
         // Instead, the LocalVCFetchFilter and LocalVCPushFilter block requests if offline IDE usage is not allowed.
     }
 
     @Override
-    public void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user, VersionControlRepositoryPermission permissions) {
+    public void addMemberToRepository(VcsRepositoryUri repositoryUri, User user, VersionControlRepositoryPermission permissions) {
         // Members cannot be added to a local repository. Authenticated users have access by default and are authorized in the LocalVCFetchFilter and LocalVCPushFilter.
     }
 
     @Override
-    public void removeMemberFromRepository(VcsRepositoryUrl repositoryUrl, User user) {
+    public void removeMemberFromRepository(VcsRepositoryUri repositoryUri, User user) {
         // Members cannot be removed from a local repository.
         // Authorization is checked in the LocalVCFetchFilter and LocalVCPushFilter.
     }
 
     @Override
-    protected void addWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName) {
+    protected void addWebHook(VcsRepositoryUri repositoryUri, String notificationUrl, String webHookName) {
         // Webhooks must not be added for the local VC system. The LocalVCPostPushHook notifies Artemis on every push.
     }
 
     @Override
-    protected void addAuthenticatedWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
+    protected void addAuthenticatedWebHook(VcsRepositoryUri repositoryUri, String notificationUrl, String webHookName, String secretToken) {
         // Webhooks must not be added for the local VC system. The LocalVCPostPushHook notifies Artemis on every push.
     }
 
@@ -109,16 +109,16 @@ public class LocalVCService extends AbstractVersionControlService {
     }
 
     /**
-     * Delete the repository at the given repository URL
+     * Delete the repository at the given repository URI
      *
-     * @param repositoryUrl of the repository that should be deleted
+     * @param repositoryUri of the repository that should be deleted
      * @throws LocalVCInternalException if the repository cannot be deleted
      */
     @Override
-    public void deleteRepository(VcsRepositoryUrl repositoryUrl) {
+    public void deleteRepository(VcsRepositoryUri repositoryUri) {
 
-        LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(repositoryUrl.toString(), localVCBaseUrl);
-        Path localRepositoryPath = localVCRepositoryUrl.getLocalRepositoryPath(localVCBasePath);
+        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(repositoryUri.toString(), localVCBaseUrl);
+        Path localRepositoryPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath);
 
         try {
             FileUtils.deleteDirectory(localRepositoryPath.toFile());
@@ -129,34 +129,34 @@ public class LocalVCService extends AbstractVersionControlService {
     }
 
     /**
-     * Get the VcsRepositoryUrl for the given project key and repository slug
+     * Get the VcsRepositoryUri for the given project key and repository slug
      *
      * @param projectKey     The project key
      * @param repositorySlug The repository slug
-     * @return The VcsRepositoryUrl
-     * @throws LocalVCInternalException if the repository URL cannot be constructed
+     * @return The VcsRepositoryUri
+     * @throws LocalVCInternalException if the repository URI cannot be constructed
      */
     @Override
-    public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug) {
-        return new LocalVCRepositoryUrl(projectKey, repositorySlug, localVCBaseUrl);
+    public VcsRepositoryUri getCloneRepositoryUri(String projectKey, String repositorySlug) {
+        return new LocalVCRepositoryUri(projectKey, repositorySlug, localVCBaseUrl);
     }
 
     @Override
-    public void setRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) {
+    public void setRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUri, String projectKey, Set<User> users) {
         // Not implemented for local VC. All checks for whether a student can access a repository are conducted in the LocalVCFetchFilter and LocalVCPushFilter.
     }
 
     /**
      * Get the default branch of the repository
      *
-     * @param repositoryUrl The repository url to get the default branch for.
+     * @param repositoryUri The repository uri to get the default branch for.
      * @return the name of the default branch, e.g. 'main'
      * @throws LocalVCInternalException if the default branch cannot be determined
      */
     @Override
-    public String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) {
-        LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(repositoryUrl.toString(), localVCBaseUrl);
-        String localRepositoryPath = localVCRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toString();
+    public String getDefaultBranchOfRepository(VcsRepositoryUri repositoryUri) {
+        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(repositoryUri.toString(), localVCBaseUrl);
+        String localRepositoryPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath).toString();
         Map<String, Ref> remoteRepositoryRefs;
         try {
             remoteRepositoryRefs = Git.lsRemoteRepository().setRemote(localRepositoryPath).callAsMap();
@@ -174,7 +174,7 @@ public class LocalVCService extends AbstractVersionControlService {
     }
 
     @Override
-    public void unprotectBranch(VcsRepositoryUrl repositoryUrl, String branch) {
+    public void unprotectBranch(VcsRepositoryUri repositoryUri, String branch) {
         // Not implemented. It is not needed for local VC for the current use
         // case, because the main branch is unprotected by default.
     }
@@ -235,9 +235,9 @@ public class LocalVCService extends AbstractVersionControlService {
 
     private void createRepository(String projectKey, String repositorySlug) {
 
-        LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(projectKey, repositorySlug, localVCBaseUrl);
+        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(projectKey, repositorySlug, localVCBaseUrl);
 
-        Path remoteDirPath = localVCRepositoryUrl.getLocalRepositoryPath(localVCBasePath);
+        Path remoteDirPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath);
 
         try {
             Files.createDirectories(remoteDirPath);
@@ -261,13 +261,13 @@ public class LocalVCService extends AbstractVersionControlService {
     }
 
     @Override
-    public Boolean repositoryUrlIsValid(@Nullable VcsRepositoryUrl repositoryUrl) {
-        if (repositoryUrl == null || repositoryUrl.getURI() == null) {
+    public Boolean repositoryUriIsValid(@Nullable VcsRepositoryUri repositoryUri) {
+        if (repositoryUri == null || repositoryUri.getURI() == null) {
             return false;
         }
 
         try {
-            new LocalVCRepositoryUrl(repositoryUrl.toString(), localVCBaseUrl);
+            new LocalVCRepositoryUri(repositoryUri.toString(), localVCBaseUrl);
         }
         catch (LocalVCInternalException e) {
             return false;
@@ -303,7 +303,7 @@ public class LocalVCService extends AbstractVersionControlService {
             repository = gitService.getOrCheckoutRepository(participation);
         }
         catch (GitAPIException e) {
-            throw new LocalVCInternalException("Unable to get the repository from participation " + participation.getId() + ": " + participation.getRepositoryUrl(), e);
+            throw new LocalVCInternalException("Unable to get the repository from participation " + participation.getId() + ": " + participation.getRepositoryUri(), e);
         }
 
         try (RevWalk revWalk = new RevWalk(repository)) {
@@ -315,7 +315,7 @@ public class LocalVCService extends AbstractVersionControlService {
             return ZonedDateTime.ofInstant(instant, zoneId);
         }
         catch (IOException e) {
-            throw new LocalVCInternalException("Unable to get the push date from participation " + participation.getId() + ": " + participation.getRepositoryUrl(), e);
+            throw new LocalVCInternalException("Unable to get the push date from participation " + participation.getId() + ": " + participation.getRepositoryUri(), e);
         }
     }
 }

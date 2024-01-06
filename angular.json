@@ -123,7 +123,7 @@
                 "scripts": true,
                 "styles": {
                   "minify": true,
-                  "inlineCritical": false
+                  "inlineCritical": true
                 },
                 "fonts": true
               },
@@ -136,9 +136,10 @@
               },
               "namedChunks": true,
               "aot": true,
-              "extractLicenses": true,
+              "extractLicenses": false,
               "serviceWorker": true,
               "ngswConfigPath": "src/main/webapp/ngsw-config.json",
+              "statsJson": false,
               "budgets": [
                 {
                   "type": "initial",

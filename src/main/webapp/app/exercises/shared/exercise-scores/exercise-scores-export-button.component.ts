@@ -229,7 +229,7 @@ class ExerciseScoresRowBuilder {
      */
     private setProgrammingExerciseInformation() {
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            const repoLink = (this.participation as ProgrammingExerciseStudentParticipation).repositoryUrl;
+            const repoLink = (this.participation as ProgrammingExerciseStudentParticipation).repositoryUri;
             this.set('Repo Link', repoLink);
         }
     }
