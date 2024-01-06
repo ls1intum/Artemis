@@ -26,13 +26,13 @@ import com.google.common.collect.Lists;
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCService;
 
 @Component
@@ -64,7 +64,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
-    private final UrlService urlService = new UrlService();
+    private final UriService uriService = new UriService();
 
     private final Environment environment;
 
@@ -216,7 +216,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
     }
 
     private String migrateTestRepo(ProgrammingExercise programmingExercise) throws GitAPIException, URISyntaxException, IOException {
-        return cloneRepositoryFromBitbucketAndMoveToLocalVCS(programmingExercise, programmingExercise.getTestRepositoryUrl());
+        return cloneRepositoryFromBitbucketAndMoveToLocalVCS(programmingExercise, programmingExercise.getTestRepositoryUri());
     }
 
     private void migrateAuxiliaryRepositories(ProgrammingExercise programmingExercise) {
@@ -225,8 +225,8 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         }
         for (var repo : programmingExercise.getAuxiliaryRepositories()) {
             try {
-                var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(programmingExercise, repo.getRepositoryUrl());
-                repo.setRepositoryUrl(url);
+                var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(programmingExercise, repo.getRepositoryUri());
+                repo.setRepositoryUri(url);
                 auxiliaryRepositoryRepository.save(repo);
             }
             catch (Exception e) {
@@ -238,12 +238,12 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
     private void migrateSolutions(List<SolutionProgrammingExerciseParticipation> solutionParticipations) {
         for (var solutionParticipation : solutionParticipations) {
             try {
-                var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(solutionParticipation.getProgrammingExercise(), solutionParticipation.getRepositoryUrl());
-                solutionParticipation.setRepositoryUrl(url);
+                var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(solutionParticipation.getProgrammingExercise(), solutionParticipation.getRepositoryUri());
+                solutionParticipation.setRepositoryUri(url);
                 solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
                 url = migrateTestRepo(solutionParticipation.getProgrammingExercise());
                 var programmingExercise = solutionParticipation.getProgrammingExercise();
-                programmingExercise.setTestRepositoryUrl(url);
+                programmingExercise.setTestRepositoryUri(url);
                 programmingExerciseRepository.save(programmingExercise);
                 migrateAuxiliaryRepositories(programmingExercise);
             }
@@ -257,8 +257,8 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
     private void migrateTemplates(List<TemplateProgrammingExerciseParticipation> templateParticipations) {
         for (var templateParticipation : templateParticipations) {
             try {
-                var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(templateParticipation.getProgrammingExercise(), templateParticipation.getRepositoryUrl());
-                templateParticipation.setRepositoryUrl(url);
+                var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(templateParticipation.getProgrammingExercise(), templateParticipation.getRepositoryUri());
+                templateParticipation.setRepositoryUri(url);
                 templateProgrammingExerciseParticipationRepository.save(templateParticipation);
             }
             catch (Exception e) {
@@ -271,8 +271,8 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
     private void migrateStudents(List<ProgrammingExerciseStudentParticipation> participations) {
         for (var participation : participations)
             try {
-                var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(participation.getProgrammingExercise(), participation.getRepositoryUrl());
-                participation.setRepositoryUrl(url);
+                var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(participation.getProgrammingExercise(), participation.getRepositoryUri());
+                participation.setRepositoryUri(url);
                 programmingExerciseStudentParticipationRepository.save(participation);
             }
             catch (Exception e) {
@@ -313,18 +313,18 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             log.error("Failed to clone repository from Bitbucket: {}", repositoryUrl);
             return null;
         }
-        var repositoryName = urlService.getRepositorySlugFromRepositoryUrlString(repositoryUrl);
+        var repositoryName = uriService.getRepositorySlugFromRepositoryUriString(repositoryUrl);
         var projectKey = exercise.getProjectKey();
-        Repository oldRepository = gitService.getOrCheckoutRepository(new VcsRepositoryUrl(repositoryUrl), true, defaultBranch);
+        Repository oldRepository = gitService.getOrCheckoutRepository(new VcsRepositoryUri(repositoryUrl), true, defaultBranch);
         if (oldRepository == null) {
             log.error("Failed to clone repository from Bitbucket: {}", repositoryUrl);
             return null;
         }
         localVCService.get().createProjectForExercise(exercise);
         localVCService.get().createRepository(projectKey, repositoryName, null);
-        var url = new LocalVCRepositoryUrl(projectKey, repositoryName, localVCBaseUrl);
+        var url = new LocalVCRepositoryUri(projectKey, repositoryName, localVCBaseUrl);
         SecurityUtils.setAuthorizationObject();
-        var targetRepo = gitService.getOrCheckoutRepositoryIntoTargetDirectory(new VcsRepositoryUrl(repositoryUrl), url, false);
+        var targetRepo = gitService.getOrCheckoutRepositoryIntoTargetDirectory(new VcsRepositoryUri(repositoryUrl), url, false);
         copyRepo(oldRepository, targetRepo);
         gitService.stageAllChanges(targetRepo);
         gitService.commitAndPush(targetRepo, "Migrate repository from Bitbucket to local VCS", true, null);
