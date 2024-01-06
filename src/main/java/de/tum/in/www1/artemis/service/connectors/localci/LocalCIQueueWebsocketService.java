@@ -24,7 +24,8 @@ import de.tum.in.www1.artemis.web.websocket.localci.LocalCIBuildQueueWebsocketSe
 /**
  * This service is responsible for sending build job queue information over websockets.
  * It listens to changes in the build job queue and sends the updated information to the client.
- * NOTE: This service is only active if the profile "localci" and "scheduling" are active.
+ * NOTE: This service is only active if the profile "localci" and "scheduling" are active. This avoids sending the
+ * same information multiple times and thus also avoids unnecessary load on the server.
  */
 @Service
 @Profile("localci & scheduling")

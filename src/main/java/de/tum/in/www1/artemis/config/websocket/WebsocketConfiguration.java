@@ -273,6 +273,14 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
          * @return flag whether subscription is allowed
          */
         private boolean allowSubscription(Principal principal, String destination) {
+            /*
+             * IMPORTANT: Avoid database calls in this method as much as possible (e.g. checking if the user
+             * is an instructor in a course)
+             * This method is called for every subscription request, so it should be as fast as possible.
+             * If you need to do a database call, make sure to first check if the destination is valid for your specific
+             * use case.
+             */
+
             if (isBuildQueueAdminDestination(destination)) {
                 var user = userRepository.getUserWithAuthorities(principal.getName());
                 return authorizationCheckService.isAdmin(user);
