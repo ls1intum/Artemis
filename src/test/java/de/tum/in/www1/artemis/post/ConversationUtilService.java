@@ -353,7 +353,7 @@ public class ConversationUtilService {
      *
      * @param postings The list of Postings to check
      */
-    public <T extends Posting> void assertSensitiveInformationHidden(@NotNull List<T> postings) {
+    public <T extends Posting> void assertSensitiveInformationHidden(@NotNull Collection<T> postings) {
         for (Posting posting : postings) {
             assertSensitiveInformationHidden(posting);
         }
