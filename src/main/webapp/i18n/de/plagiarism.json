@@ -19,7 +19,7 @@
             "generateJplagReport": "JPlag Report generieren",
             "noFileSelected": "Keine Datei ausgewählt",
             "binaryFileNotRendered": "Binäre Datei nicht angezeigt.",
-            "cannotLoadFiles": "Cannot load the submission due to invalid repository state.",
+            "cannotLoadFiles": "Die Abgabe kann aufgrund eines ungültigen Repository-Status nicht geladen werden.",
             "noFilesFound": "Keine Dateien gefunden",
             "numberOfDetectedSubmissions": "Gefundene Abgaben",
             "averageSimilarity": "Durchschn. Ähnlichkeit",
