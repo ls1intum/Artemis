@@ -94,6 +94,8 @@ export class AssessmentHeaderComponent {
         if (this.result?.completionDate) {
             return true;
         } else if (Result.hasNonEmptyAssessmentNote(this.result)) {
+            // this is almost identical to submitDisabled, but without the assessmentsAreValid check
+            // otherwise, we wouldn't be able to save the assessment note without making prior changes to the feedback
             return !this.isAssessor || this.saveBusy || this.submitBusy || this.cancelBusy;
         } else {
             return this.submitDisabled;
@@ -106,7 +108,11 @@ export class AssessmentHeaderComponent {
 
     get overrideDisabled() {
         if (this.overrideVisible) {
-            return !this.assessmentsAreValid || this.submitBusy;
+            if (Result.hasNonEmptyAssessmentNote(this.result)) {
+                return this.submitBusy;
+            } else {
+                return !this.assessmentsAreValid || this.submitBusy;
+            }
         } else {
             return true;
         }
