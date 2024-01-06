@@ -47,12 +47,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterators;
 
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.JWTFilter;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
@@ -80,8 +78,6 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final UserRepository userRepository;
-
     private final ExerciseRepository exerciseRepository;
 
     private final ExamRepository examRepository;
@@ -98,14 +94,13 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
-            UserRepository userRepository, ExamRepository examRepository) {
+            ExamRepository examRepository) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.tokenProvider = tokenProvider;
         this.studentParticipationRepository = studentParticipationRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.exerciseRepository = exerciseRepository;
-        this.userRepository = userRepository;
         this.examRepository = examRepository;
     }
 
@@ -275,7 +270,6 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             if (isNonPersonalExerciseResultDestination(destination)) {
                 Long exerciseId = getExerciseIdFromNonPersonalExerciseResultDestination(destination);
 
-                // TODO: Is it right that TAs are not allowed to subscribe to exam exercises?
                 Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
                 if (exercise.isExamExercise()) {
                     return isUserInstructorOrHigherForExercise(principal, exercise);
@@ -288,8 +282,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             var examId = getExamIdFromExamRootDestination(destination);
             if (examId.isPresent()) {
                 var exam = examRepository.findByIdElseThrow(examId.get());
-                User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
-                return authorizationCheckService.isAtLeastInstructorInCourse(exam.getCourse(), user);
+                return authorizationCheckService.isUserWithLoginAtLeastInstructorInCourse(exam.getCourse(), principal.getName());
             }
             return true;
         }
@@ -310,13 +303,11 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     }
 
     private boolean isUserInstructorOrHigherForExercise(Principal principal, Exercise exercise) {
-        User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
-        return authorizationCheckService.isAtLeastInstructorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        return authorizationCheckService.isUserWithLoginAtLeastInstructorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), principal.getName());
     }
 
     private boolean isUserTAOrHigherForExercise(Principal principal, Exercise exercise) {
-        User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
-        return authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
+        return authorizationCheckService.isUserWithLoginAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), principal.getName());
     }
 
     /**

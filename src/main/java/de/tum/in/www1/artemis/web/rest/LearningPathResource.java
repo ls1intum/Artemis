@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.security.Principal;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -215,15 +216,16 @@ public class LearningPathResource {
      * GET /courses/:courseId/learning-path-id : Gets the id of the learning path.
      * If the learning path has not been generated although the course has learning paths enabled, the corresponding learning path will be created.
      *
-     * @param courseId the id of the course from which the learning path id should be fetched
+     * @param courseId  the id of the course from which the learning path id should be fetched
+     * @param principal the user
      * @return the ResponseEntity with status 200 (OK) and with body the id of the learning path
      */
     @GetMapping("/courses/{courseId}/learning-path-id")
     @EnforceAtLeastStudent
-    public ResponseEntity<Long> getLearningPathId(@PathVariable Long courseId) {
+    public ResponseEntity<Long> getLearningPathId(@PathVariable Long courseId, Principal principal) {
         log.debug("REST request to get learning path id for course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authorizationCheckService.isAtLeastStudentInCourse(course, null)) {
+        if (!authorizationCheckService.isUserWithLoginAtLeastStudentInCourse(course, principal.getName())) {
             throw new AccessForbiddenException("You are not a student in this course.");
         }
         if (!course.getLearningPathsEnabled()) {

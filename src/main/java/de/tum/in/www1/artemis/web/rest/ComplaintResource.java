@@ -112,7 +112,7 @@ public class ComplaintResource {
      * POST complaints/exam/examId: create a new complaint for an exam exercise
      *
      * @param complaint the complaint to create
-     * @param principal that wants to complain
+     * @param principal the user who wants to complain
      * @param examId    the examId of the exam which contains the exercise
      * @return the ResponseEntity with status 201 (Created) and with body the new complaints
      * @throws URISyntaxException if the Location URI syntax is incorrect

@@ -62,8 +62,9 @@ public class RepositoryAccessService {
             throw new AccessUnauthorizedException();
         }
 
-        boolean isAtLeastEditor = authorizationCheckService.isAtLeastEditorInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        boolean isStudent = authorizationCheckService.isOnlyStudentInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        boolean isAtLeastEditor = authorizationCheckService.isAtLeastEditorInCourse(course, user);
+        boolean isStudent = authorizationCheckService.isOnlyStudentInCourse(course, user);
         boolean isTeachingAssistant = !isStudent && !isAtLeastEditor;
 
         // Error case 2: The user's participation is locked.
