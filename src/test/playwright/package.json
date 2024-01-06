@@ -14,9 +14,9 @@
         "uuid": "9.0.1"
     },
     "scripts": {
-        "playwright:test": "playwright test",
+        "playwright:test": "playwright test e2e",
         "playwright:open": "npx playwright test --ui",
-        "playwright:setup": "npx playwright install --with-deps chromium && playwright test init/ImportUsers.spec.ts",
+        "playwright:setup": "npx playwright install --with-deps chromium && playwright test init",
         "playwright:local": "playwright test"
     }
 }
