@@ -85,7 +85,7 @@ export class ProgrammingExercise extends Exercise {
     public projectKey?: string;
     public templateParticipation?: TemplateProgrammingExerciseParticipation;
     public solutionParticipation?: SolutionProgrammingExerciseParticipation;
-    public testRepositoryUrl?: string;
+    public testRepositoryUri?: string;
     public publishBuildPlanUrl?: boolean;
     public customizeBuildPlanWithAeolus?: boolean;
     public allowOnlineEditor?: boolean;

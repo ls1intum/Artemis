@@ -50,7 +50,7 @@ public class ProgrammingExercise extends Exercise {
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);
 
     @Column(name = "test_repository_url")
-    private String testRepositoryUrl;
+    private String testRepositoryUri;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties(value = "exercise", allowSetters = true)
@@ -164,16 +164,16 @@ public class ProgrammingExercise extends Exercise {
      */
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     @JsonIgnore
-    public String getTemplateRepositoryUrl() {
+    public String getTemplateRepositoryUri() {
         if (templateParticipation != null && Hibernate.isInitialized(templateParticipation)) {
-            return templateParticipation.getRepositoryUrl();
+            return templateParticipation.getRepositoryUri();
         }
         return null;
     }
 
-    public void setTemplateRepositoryUrl(String templateRepositoryUrl) {
+    public void setTemplateRepositoryUri(String templateRepositoryUri) {
         if (templateParticipation != null && Hibernate.isInitialized(templateParticipation)) {
-            this.templateParticipation.setRepositoryUrl(templateRepositoryUrl);
+            this.templateParticipation.setRepositoryUri(templateRepositoryUri);
         }
     }
 
@@ -183,25 +183,25 @@ public class ProgrammingExercise extends Exercise {
      * @return The URL of the solution repository as a String
      */
     @JsonIgnore
-    public String getSolutionRepositoryUrl() {
+    public String getSolutionRepositoryUri() {
         if (solutionParticipation != null && Hibernate.isInitialized(solutionParticipation)) {
-            return solutionParticipation.getRepositoryUrl();
+            return solutionParticipation.getRepositoryUri();
         }
         return null;
     }
 
-    public void setSolutionRepositoryUrl(String solutionRepositoryUrl) {
+    public void setSolutionRepositoryUri(String solutionRepositoryUri) {
         if (solutionParticipation != null && Hibernate.isInitialized(solutionParticipation)) {
-            this.solutionParticipation.setRepositoryUrl(solutionRepositoryUrl);
+            this.solutionParticipation.setRepositoryUri(solutionRepositoryUri);
         }
     }
 
-    public void setTestRepositoryUrl(String testRepositoryUrl) {
-        this.testRepositoryUrl = testRepositoryUrl;
+    public void setTestRepositoryUri(String testRepositoryUri) {
+        this.testRepositoryUri = testRepositoryUri;
     }
 
-    public String getTestRepositoryUrl() {
-        return testRepositoryUrl;
+    public String getTestRepositoryUri() {
+        return testRepositoryUri;
     }
 
     public List<AuxiliaryRepository> getAuxiliaryRepositories() {
@@ -464,43 +464,43 @@ public class ProgrammingExercise extends Exercise {
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     /**
-     * Gets a URL of the templateRepositoryUrl if there is one
+     * Gets a URL of the templateRepositoryUri if there is one
      *
-     * @return a URL object of the templateRepositoryUrl or null if there is no templateRepositoryUrl
+     * @return a URL object of the templateRepositoryUri or null if there is no templateRepositoryUri
      */
     @JsonIgnore
-    public VcsRepositoryUrl getVcsTemplateRepositoryUrl() {
-        var templateRepositoryUrl = getTemplateRepositoryUrl();
-        if (templateRepositoryUrl == null || templateRepositoryUrl.isEmpty()) {
+    public VcsRepositoryUri getVcsTemplateRepositoryUri() {
+        var templateRepositoryUri = getTemplateRepositoryUri();
+        if (templateRepositoryUri == null || templateRepositoryUri.isEmpty()) {
             return null;
         }
 
         try {
-            return new VcsRepositoryUrl(templateRepositoryUrl);
+            return new VcsRepositoryUri(templateRepositoryUri);
         }
         catch (URISyntaxException e) {
-            log.warn("Cannot create URI for templateRepositoryUrl: {} due to the following error: {}", templateRepositoryUrl, e.getMessage());
+            log.warn("Cannot create URI for templateRepositoryUri: {} due to the following error: {}", templateRepositoryUri, e.getMessage());
         }
         return null;
     }
 
     /**
-     * Gets a URL of the solutionRepositoryUrl if there is one
+     * Gets a URL of the solutionRepositoryUri if there is one
      *
-     * @return a URL object of the solutionRepositoryUrl or null if there is no solutionRepositoryUrl
+     * @return a URL object of the solutionRepositoryUri or null if there is no solutionRepositoryUri
      */
     @JsonIgnore
-    public VcsRepositoryUrl getVcsSolutionRepositoryUrl() {
-        var solutionRepositoryUrl = getSolutionRepositoryUrl();
-        if (solutionRepositoryUrl == null || solutionRepositoryUrl.isEmpty()) {
+    public VcsRepositoryUri getVcsSolutionRepositoryUri() {
+        var solutionRepositoryUri = getSolutionRepositoryUri();
+        if (solutionRepositoryUri == null || solutionRepositoryUri.isEmpty()) {
             return null;
         }
 
         try {
-            return new VcsRepositoryUrl(solutionRepositoryUrl);
+            return new VcsRepositoryUri(solutionRepositoryUri);
         }
         catch (URISyntaxException e) {
-            log.warn("Cannot create URI for solutionRepositoryUrl: {} due to the following error: {}", solutionRepositoryUrl, e.getMessage());
+            log.warn("Cannot create URI for solutionRepositoryUri: {} due to the following error: {}", solutionRepositoryUri, e.getMessage());
         }
         return null;
     }
@@ -508,35 +508,35 @@ public class ProgrammingExercise extends Exercise {
     /**
      * Gets a URL of the testRepositoryURL if there is one
      *
-     * @return a URL object of the testRepositoryURl or null if there is no testRepositoryUrl
+     * @return a URL object of the testRepositoryURl or null if there is no testRepositoryUri
      */
     @JsonIgnore
-    public VcsRepositoryUrl getVcsTestRepositoryUrl() {
-        if (testRepositoryUrl == null || testRepositoryUrl.isEmpty()) {
+    public VcsRepositoryUri getVcsTestRepositoryUri() {
+        if (testRepositoryUri == null || testRepositoryUri.isEmpty()) {
             return null;
         }
 
         try {
-            return new VcsRepositoryUrl(testRepositoryUrl);
+            return new VcsRepositoryUri(testRepositoryUri);
         }
         catch (URISyntaxException e) {
-            log.warn("Cannot create URI for testRepositoryUrl: {} due to the following error: {}", testRepositoryUrl, e.getMessage());
+            log.warn("Cannot create URI for testRepositoryUri: {} due to the following error: {}", testRepositoryUri, e.getMessage());
         }
         return null;
     }
 
     /**
-     * Returns the repository url for the given repository type.
+     * Returns the repository uri for the given repository type.
      *
      * @param repositoryType The repository type for which the url should be returned
-     * @return The repository url
+     * @return The repository uri
      */
     @JsonIgnore
-    public VcsRepositoryUrl getRepositoryURL(RepositoryType repositoryType) {
+    public VcsRepositoryUri getRepositoryURL(RepositoryType repositoryType) {
         return switch (repositoryType) {
-            case TEMPLATE -> this.getVcsTemplateRepositoryUrl();
-            case SOLUTION -> this.getVcsSolutionRepositoryUrl();
-            case TESTS -> this.getVcsTestRepositoryUrl();
+            case TEMPLATE -> this.getVcsTemplateRepositoryUri();
+            case SOLUTION -> this.getVcsSolutionRepositoryUri();
+            case TESTS -> this.getVcsTestRepositoryUri();
             default -> throw new UnsupportedOperationException("Can retrieve URL for repository type " + repositoryType);
         };
     }
@@ -649,9 +649,9 @@ public class ProgrammingExercise extends Exercise {
      */
     @Override
     public void filterSensitiveInformation() {
-        setTemplateRepositoryUrl(null);
-        setSolutionRepositoryUrl(null);
-        setTestRepositoryUrl(null);
+        setTemplateRepositoryUri(null);
+        setSolutionRepositoryUri(null);
+        setTestRepositoryUri(null);
         setTemplateBuildPlanId(null);
         setSolutionBuildPlanId(null);
         super.filterSensitiveInformation();
@@ -735,7 +735,7 @@ public class ProgrammingExercise extends Exercise {
 
     @Override
     public String toString() {
-        return "ProgrammingExercise{" + "id=" + getId() + ", templateRepositoryUrl='" + getTemplateRepositoryUrl() + "'" + ", solutionRepositoryUrl='" + getSolutionRepositoryUrl()
+        return "ProgrammingExercise{" + "id=" + getId() + ", templateRepositoryUri='" + getTemplateRepositoryUri() + "'" + ", solutionRepositoryUri='" + getSolutionRepositoryUri()
                 + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", publishBuildPlanUrl='"
                 + isPublishBuildPlanUrl() + "'" + ", allowOnlineEditor='" + isAllowOnlineEditor() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'"
                 + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";

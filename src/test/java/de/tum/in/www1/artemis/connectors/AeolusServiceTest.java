@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.AeolusRequestMockProvider;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
@@ -101,12 +101,12 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     void testRepositoryMapForJavaWindfileCreation() throws URISyntaxException {
         ProgrammingLanguage language = ProgrammingLanguage.JAVA;
         String branch = "develop";
-        VcsRepositoryUrl repositoryUrl = new VcsRepositoryUrl("https://bitbucket.server/scm/PROJECT/REPO.git");
-        VcsRepositoryUrl testRepositoryUrl = new VcsRepositoryUrl("https://bitbucket.server/scm/PROJECT/REPO-test.git");
-        VcsRepositoryUrl solutionRepositoryUrl = new VcsRepositoryUrl("https://bitbucket.server/scm/PROJECT/REPO-solution.git");
-        var auxiliaryRepositories = List.of(new AuxiliaryRepository.AuxRepoNameWithUrl("aux1", new VcsRepositoryUrl("https://bitbucket.server/scm/PROJECT/REPO-aux1.git")),
-                new AuxiliaryRepository.AuxRepoNameWithUrl("aux2", new VcsRepositoryUrl("https://bitbucket.server/scm/PROJECT/REPO-aux2.git")));
-        var map = aeolusBuildPlanService.createRepositoryMapForWindfile(language, branch, false, repositoryUrl, testRepositoryUrl, solutionRepositoryUrl, auxiliaryRepositories);
+        VcsRepositoryUri repositoryUri = new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO.git");
+        VcsRepositoryUri testRepositoryUri = new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO-test.git");
+        VcsRepositoryUri solutionRepositoryUri = new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO-solution.git");
+        var auxiliaryRepositories = List.of(new AuxiliaryRepository.AuxRepoNameWithUri("aux1", new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO-aux1.git")),
+                new AuxiliaryRepository.AuxRepoNameWithUri("aux2", new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO-aux2.git")));
+        var map = aeolusBuildPlanService.createRepositoryMapForWindfile(language, branch, false, repositoryUri, testRepositoryUri, solutionRepositoryUri, auxiliaryRepositories);
         assertThat(map).isNotNull();
         var assignmentDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(language);
         var testDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(language);
@@ -116,12 +116,12 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         assertThat(testRepo).isNotNull();
         assertThat(testRepo.getBranch()).isEqualTo(branch);
         assertThat(testRepo.getPath()).isEqualTo(testDirectory);
-        assertThat(testRepo.getUrl()).isEqualTo(testRepositoryUrl.toString());
+        assertThat(testRepo.getUrl()).isEqualTo(testRepositoryUri.toString());
         AeolusRepository assignmentRepo = map.get(ASSIGNMENT_REPO_NAME);
         assertThat(assignmentRepo).isNotNull();
         assertThat(assignmentRepo.getBranch()).isEqualTo(branch);
         assertThat(assignmentRepo.getPath()).isEqualTo(assignmentDirectory);
-        assertThat(assignmentRepo.getUrl()).isEqualTo(repositoryUrl.toString());
+        assertThat(assignmentRepo.getUrl()).isEqualTo(repositoryUri.toString());
         assertThat(map).doesNotContainKey(SOLUTION_REPO_NAME);
     }
 
@@ -129,12 +129,12 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     void testRepositoryMapForHaskellWindfileCreation() throws URISyntaxException {
         ProgrammingLanguage language = ProgrammingLanguage.HASKELL;
         String branch = "develop";
-        VcsRepositoryUrl repositoryUrl = new VcsRepositoryUrl("https://bitbucket.server/scm/PROJECT/REPO.git");
-        VcsRepositoryUrl testRepositoryUrl = new VcsRepositoryUrl("https://bitbucket.server/scm/PROJECT/REPO-test.git");
-        VcsRepositoryUrl solutionRepositoryUrl = new VcsRepositoryUrl("https://bitbucket.server/scm/PROJECT/REPO-solution.git");
-        var auxiliaryRepositories = List.of(new AuxiliaryRepository.AuxRepoNameWithUrl("aux1", new VcsRepositoryUrl("https://bitbucket.server/scm/PROJECT/REPO-aux1.git")),
-                new AuxiliaryRepository.AuxRepoNameWithUrl("aux2", new VcsRepositoryUrl("https://bitbucket.server/scm/PROJECT/REPO-aux2.git")));
-        var map = aeolusBuildPlanService.createRepositoryMapForWindfile(language, branch, true, repositoryUrl, testRepositoryUrl, solutionRepositoryUrl, auxiliaryRepositories);
+        VcsRepositoryUri repositoryUri = new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO.git");
+        VcsRepositoryUri testRepositoryUri = new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO-test.git");
+        VcsRepositoryUri solutionRepositoryUri = new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO-solution.git");
+        var auxiliaryRepositories = List.of(new AuxiliaryRepository.AuxRepoNameWithUri("aux1", new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO-aux1.git")),
+                new AuxiliaryRepository.AuxRepoNameWithUri("aux2", new VcsRepositoryUri("https://bitbucket.server/scm/PROJECT/REPO-aux2.git")));
+        var map = aeolusBuildPlanService.createRepositoryMapForWindfile(language, branch, true, repositoryUri, testRepositoryUri, solutionRepositoryUri, auxiliaryRepositories);
         assertThat(map).isNotNull();
         var assignmentDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(language);
         var solutionDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(language);
@@ -145,18 +145,18 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         assertThat(testRepo).isNotNull();
         assertThat(testRepo.getBranch()).isEqualTo(branch);
         assertThat(testRepo.getPath()).isEqualTo(testDirectory);
-        assertThat(testRepo.getUrl()).isEqualTo(testRepositoryUrl.toString());
+        assertThat(testRepo.getUrl()).isEqualTo(testRepositoryUri.toString());
         AeolusRepository assignmentRepo = map.get(ASSIGNMENT_REPO_NAME);
         assertThat(assignmentRepo).isNotNull();
         assertThat(assignmentRepo.getBranch()).isEqualTo(branch);
         assertThat(assignmentRepo.getPath()).isEqualTo(assignmentDirectory);
-        assertThat(assignmentRepo.getUrl()).isEqualTo(repositoryUrl.toString());
+        assertThat(assignmentRepo.getUrl()).isEqualTo(repositoryUri.toString());
         assertThat(map).containsKey(SOLUTION_REPO_NAME);
         AeolusRepository solutionRepo = map.get(SOLUTION_REPO_NAME);
         assertThat(solutionRepo).isNotNull();
         assertThat(solutionRepo.getBranch()).isEqualTo(branch);
         assertThat(solutionRepo.getPath()).isEqualTo(solutionDirectory);
-        assertThat(solutionRepo.getUrl()).isEqualTo(solutionRepositoryUrl.toString());
+        assertThat(solutionRepo.getUrl()).isEqualTo(solutionRepositoryUri.toString());
     }
 
     @Test
