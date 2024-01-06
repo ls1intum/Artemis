@@ -43,7 +43,6 @@ describe('UserManagementComponent', () => {
     let userService: AdminUserService;
     let accountService: AccountService;
     let eventManager: EventManager;
-    let courseManagementService: CourseManagementService;
     let localStorageService: LocalStorageService;
     let httpMock: HttpTestingController;
     let profileService: ProfileService;
@@ -54,7 +53,6 @@ describe('UserManagementComponent', () => {
     const course2 = new Course();
     course2.id = 2;
     course2.title = 'b';
-    const courses = [course2, course1];
 
     const route = {
         params: of({ courseId: 123, sort: 'id,desc' }),
@@ -106,7 +104,6 @@ describe('UserManagementComponent', () => {
                 userService = TestBed.inject(AdminUserService);
                 accountService = TestBed.inject(AccountService);
                 eventManager = TestBed.inject(EventManager);
-                courseManagementService = TestBed.inject(CourseManagementService);
                 localStorageService = TestBed.inject(LocalStorageService);
                 httpMock = TestBed.inject(HttpTestingController);
                 profileService = TestBed.inject(ProfileService);
@@ -249,24 +246,6 @@ describe('UserManagementComponent', () => {
         expect(comp.validateUserSearch({ value: [0, 0, 0] } as AbstractControl)).toBeNull();
     });
 
-    it('should sort courses', () => {
-        const spy = jest.spyOn(courseManagementService, 'getAll').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: courses,
-                }),
-            ),
-        );
-
-        const profileSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(new ProfileInfo()));
-
-        comp.ngOnInit();
-
-        expect(spy).toHaveBeenCalledOnce();
-        expect(profileSpy).toHaveBeenCalledOnce();
-        expect(comp.courses).toEqual(courses.sort((c1, c2) => c1.title!.localeCompare(c2.title!)));
-    });
-
     it('should call initFilters', () => {
         const spy = jest.spyOn(comp, 'initFilters');
         const initSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(new ProfileInfo()));
@@ -288,17 +267,6 @@ describe('UserManagementComponent', () => {
 
         const filter = comp.initFilter(param.key, param.input);
         expect(filter).toEqual(new Set(Object.keys(param.input).map((value) => param.input[value])));
-    });
-
-    it('should toggle course filters', () => {
-        comp.courses = courses;
-
-        // Course
-        comp.toggleFilter(comp.filters.courseFilter, course1.id!);
-        expect(comp.filters.courseFilter).toEqual(new Set([course1.id!]));
-
-        comp.toggleFilter(comp.filters.courseFilter, course1.id!);
-        expect(comp.filters.courseFilter).toEqual(new Set([]));
     });
 
     it.each`
@@ -357,24 +325,11 @@ describe('UserManagementComponent', () => {
     });
 
     it('should return correct filter values', () => {
-        comp.courses = courses;
         comp.initFilters();
 
         expect(comp.authorityFilters).toEqual(Object.keys(AuthorityFilter).map((key) => AuthorityFilter[key]));
         expect(comp.originFilters).toEqual(Object.keys(OriginFilter).map((key) => OriginFilter[key]));
         expect(comp.statusFilters).toEqual(Object.keys(StatusFilter).map((key) => StatusFilter[key]));
-        expect(comp.courseFilters).toEqual(courses);
-    });
-
-    it('should select and deselect all courses', () => {
-        comp.courses = courses;
-        comp.initFilters();
-
-        comp.deselectAllCourses();
-        expect(comp.filters.courseFilter).toEqual(new Set());
-
-        comp.selectAllCourses();
-        expect(comp.filters.courseFilter).toEqual(new Set(courses.map((course) => course.id!)));
     });
 
     it('should select and deselect all roles', () => {
@@ -423,35 +378,17 @@ describe('UserManagementComponent', () => {
         comp.filters = new UserFilter();
         expect(comp.filters.numberOfAppliedFilters).toBe(0);
 
-        comp.filters.noCourse = true;
         comp.filters.noAuthority = true;
-        expect(comp.filters.numberOfAppliedFilters).toBe(2);
+        expect(comp.filters.numberOfAppliedFilters).toBe(1);
 
         comp.filters.registrationNumberFilter.add(RegistrationNumberFilter.WITH_REG_NO);
-        expect(comp.filters.numberOfAppliedFilters).toBe(3);
+        expect(comp.filters.numberOfAppliedFilters).toBe(2);
 
         comp.filters.authorityFilter.add(AuthorityFilter.ADMIN);
-        expect(comp.filters.numberOfAppliedFilters).toBe(4);
+        expect(comp.filters.numberOfAppliedFilters).toBe(3);
 
         comp.filters.authorityFilter.delete(AuthorityFilter.ADMIN);
-        expect(comp.filters.numberOfAppliedFilters).toBe(3);
-    });
-
-    it('should toggle course filter', () => {
-        const spy = jest.spyOn(localStorageService, 'store');
-
-        comp.filters = new UserFilter();
-        comp.filters.noCourse = true;
-
-        comp.toggleCourseFilter(comp.filters.courseFilter, 1);
-
-        expect(comp.filters.courseFilter).toEqual(new Set<number>([1]));
-        expect(comp.filters.noCourse).toBeFalse();
-        expect(spy).toHaveBeenCalledOnce();
-        expect(spy).toHaveBeenCalledWith(UserStorageKey.NO_COURSE, false);
-
-        comp.toggleCourseFilter(comp.filters.courseFilter, 1);
-        expect(comp.filters.courseFilter).toEqual(new Set<number>());
+        expect(comp.filters.numberOfAppliedFilters).toBe(2);
     });
 
     it('should toggle authority filter', () => {
@@ -536,17 +473,6 @@ describe('UserManagementComponent', () => {
         expect(comp.filters.originFilter).toEqual(new Set());
     });
 
-    it('should select empty courses', () => {
-        comp.filters = new UserFilter();
-
-        comp.filters.courseFilter.add(1);
-        comp.filters.noCourse = false;
-
-        comp.selectEmptyCourses();
-        expect(comp.filters.courseFilter).toEqual(new Set());
-        expect(comp.filters.noCourse).toBeTrue();
-    });
-
     it('should select empty roles', () => {
         comp.filters = new UserFilter();
 
@@ -599,32 +525,26 @@ describe('UserManagementComponent', () => {
         let httpParams = new HttpParams();
         comp.filters = new UserFilter();
 
-        httpParams = httpParams.append('authorities', 'NO_AUTHORITY').append('origins', '').append('registrationNumbers', '').append('status', '').append('courseIds', '');
+        httpParams = httpParams.append('authorities', 'NO_AUTHORITY').append('origins', '').append('registrationNumbers', '').append('status', '');
         comp.filters.noAuthority = true;
 
         expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
 
         comp.filters.noAuthority = false;
-        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('registrationNumbers', '').append('status', '').append('courseIds', '');
+        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('registrationNumbers', '').append('status', '');
         expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
 
-        comp.filters.noCourse = true;
-        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('registrationNumbers', '').append('status', '').append('courseIds', -1);
+        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('registrationNumbers', '').append('status', '');
         expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
 
         comp.filters.registrationNumberFilter.add(RegistrationNumberFilter.WITH_REG_NO);
-        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('registrationNumbers', 'WITH_REG_NO').append('status', '').append('courseIds', -1);
+        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('registrationNumbers', 'WITH_REG_NO').append('status', '');
         expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
 
         comp.filters.originFilter.add(OriginFilter.INTERNAL);
         comp.filters.authorityFilter.add(AuthorityFilter.ADMIN);
         comp.filters.statusFilter.add(StatusFilter.ACTIVATED);
-        httpParams = new HttpParams()
-            .append('authorities', 'ADMIN')
-            .append('origins', 'INTERNAL')
-            .append('registrationNumbers', 'WITH_REG_NO')
-            .append('status', 'ACTIVATED')
-            .append('courseIds', -1);
+        httpParams = new HttpParams().append('authorities', 'ADMIN').append('origins', 'INTERNAL').append('registrationNumbers', 'WITH_REG_NO').append('status', 'ACTIVATED');
         expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
     });
 });

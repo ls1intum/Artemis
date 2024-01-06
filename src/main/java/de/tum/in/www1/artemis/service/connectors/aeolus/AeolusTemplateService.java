@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.service.ResourceLoaderService;
 @Profile("aeolus | localci")
 public class AeolusTemplateService {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(AeolusTemplateService.class);
+    private final Logger logger = LoggerFactory.getLogger(AeolusTemplateService.class);
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
@@ -44,6 +44,35 @@ public class AeolusTemplateService {
     public AeolusTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.resourceLoaderService = resourceLoaderService;
+        // load all scripts into the cache
+        cacheOnBoot();
+    }
+
+    private void cacheOnBoot() {
+        var resources = this.resourceLoaderService.getResources(Path.of("templates", "aeolus"));
+        for (var resource : resources) {
+            try {
+                String filename = resource.getFilename();
+                if (filename == null) {
+                    continue;
+                }
+                String directory = resource.getURL().getPath().split("templates/aeolus/")[1].split("/")[0];
+                String projectType = filename.split("_")[0].replace(".yaml", "");
+                Optional<ProjectType> optionalProjectType = Optional.empty();
+                if (!projectType.equals("default")) {
+                    optionalProjectType = Optional.of(ProjectType.valueOf(projectType.toUpperCase()));
+                }
+                String uniqueKey = directory + "_" + filename;
+                byte[] fileContent = IOUtils.toByteArray(resource.getInputStream());
+                String script = new String(fileContent, StandardCharsets.UTF_8);
+                Windfile windfile = readWindfile(script);
+                this.addInstanceVariablesToWindfile(windfile, ProgrammingLanguage.valueOf(directory.toUpperCase()), optionalProjectType);
+                templateCache.put(uniqueKey, windfile);
+            }
+            catch (IOException | IllegalArgumentException e) {
+                logger.error("Failed to load windfile {}", resource.getFilename(), e);
+            }
+        }
     }
 
     /**
@@ -118,7 +147,7 @@ public class AeolusTemplateService {
                     exercise.hasSequentialTestRuns(), exercise.isTestwiseCoverageEnabled());
         }
         catch (IOException e) {
-            LOGGER.info("No windfile for the settings of exercise {}", exercise.getId(), e);
+            logger.info("No windfile for the settings of exercise {}", exercise.getId(), e);
         }
         return null;
     }

@@ -6,19 +6,29 @@ import java.util.Map;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 /**
  * Represents the LTI 1.3 Deep Linking Response.
- * It encapsulates the necessary information to construct a valid deep linking response
- * according to the LTI 1.3 specification.
+ * It encapsulates the necessary information to construct a valid deep linking response according to the LTI 1.3 specification.
+ * For more details, refer to <a href="https://www.imsglobal.org/spec/lti-dl/v2p0#deep-linking-response-message">LTI 1.3 Deep Linking Response Specification</a>
  */
 public class Lti13DeepLinkingResponse {
 
+    /**
+     * The 'aud' (Audience) field is used to specify the intended recipient of the response
+     * In the context of LTI Deep Linking, this field is set to the 'iss' (Issuer) value from the original request.
+     * This indicates that the response is specifically intended for the issuer of the original request.
+     */
     @JsonProperty("aud")
     private String aud;
 
+    /**
+     * The 'iss' (Issuer) field identifies the principal that issued the response.
+     * For LTI Deep Linking, this field is set to the 'aud' (Audience) value from the original request.
+     * This reversal signifies that the tool (originally the audience) is now the issuer of the response.
+     */
     @JsonProperty("iss")
     private String iss;
 
@@ -54,6 +64,10 @@ public class Lti13DeepLinkingResponse {
 
     /**
      * Constructs an Lti13DeepLinkingResponse from an OIDC ID token and client registration ID.
+     * The 'aud' and 'iss' fields are reversed in the response compared to the request. This is a specific requirement in LTI 1.3 Deep Linking:
+     * - The 'iss' (Issuer) claim in the Deep Linking Request becomes the 'aud' (Audience) claim in the Response.
+     * - The 'aud' claim in the Request becomes the 'iss' claim in the Response.
+     * This reversal ensures that the response is directed to and validated by the correct entity, adhering to the OIDC and LTI 1.3 protocols.
      *
      * @param ltiIdToken           the OIDC ID token
      * @param clientRegistrationId the client registration ID
@@ -61,12 +75,17 @@ public class Lti13DeepLinkingResponse {
     public Lti13DeepLinkingResponse(OidcIdToken ltiIdToken, String clientRegistrationId) {
         validateClaims(ltiIdToken);
 
-        this.deepLinkingSettings = JsonParser.parseString(ltiIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS).toString()).getAsJsonObject();
+        Map<String, Object> deepLinkingSettings = ltiIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS);
+        // convert the map to json
+        this.deepLinkingSettings = new Gson().toJsonTree(deepLinkingSettings).getAsJsonObject();
         this.setReturnUrl(this.deepLinkingSettings.get("deep_link_return_url").getAsString());
         this.clientRegistrationId = clientRegistrationId;
 
+        // the issuer claim in the deep linking request becomes the audience claim in the response
         this.setAud(ltiIdToken.getClaim("iss").toString());
+        // the audience claim in the request becomes the issuer claim in the response
         this.setIss(ltiIdToken.getClaim("aud").toString().replace("[", "").replace("]", ""));
+
         this.setExp(ltiIdToken.getClaim("exp").toString());
         this.setIat(ltiIdToken.getClaim("iat").toString());
         this.setNonce(ltiIdToken.getClaim("nonce").toString());
