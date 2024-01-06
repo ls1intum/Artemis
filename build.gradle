@@ -18,12 +18,12 @@ plugins {
     id "io.spring.dependency-management" version "1.1.4"
     id "com.google.cloud.tools.jib" version "3.4.0"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
-    id "com.diffplug.spotless" version "6.22.0"
+    id "com.diffplug.spotless" version "6.23.3"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.50.0"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
     id "com.gorylenko.gradle-git-properties" version "2.4.1"
-    id "org.owasp.dependencycheck" version "9.0.3"
+    id "org.owasp.dependencycheck" version "9.0.7"
     id "com.adarshr.test-logger" version "4.0.0"
 }
 
@@ -99,7 +99,7 @@ modernizer {
 }
 
 // Execute the test cases: ./gradlew test
-// Execute only architecture tests: ./gradlew test -DincludeTags='ArchitectureTest'
+// Execute only architecture tests: ./gradlew test -DincludeTags="ArchitectureTest"
 test {
     if (System.getProperty("includeTags")) {
         useJUnitPlatform {
@@ -187,15 +187,14 @@ repositories {
     maven {
         url "https://repo.gradle.org/gradle/libs-releases/"
     }
+    maven {
+        url "https://build.shibboleth.net/maven/releases/"
+    }
 }
 
 ext["jackson.version"] = fasterxml_version
 
 dependencies {
-
-    // This will make sure that e.g. src/main/java/de/tum/in/www1/artemis/config/BeanInfoProcessor.java is invoked during the build
-    annotationProcessor "com.google.auto.service:auto-service:1.1.1"
-    compileOnly "com.google.auto.service:auto-service:1.1.1"
 
     // Note: jenkins-client is not well maintained and includes dependencies to libraries with critical security issues (e.g. CVE-2020-10683 for dom4j@1.6.1)
     //    implementation "com.offbytwo.jenkins:jenkins-client:0.3.8"
@@ -216,7 +215,7 @@ dependencies {
     }
 
 
-    implementation "org.gitlab4j:gitlab4j-api:5.4.0"
+    implementation "org.gitlab4j:gitlab4j-api:5.5.0"
 
     implementation "de.jplag:jplag:${jplag_version}"
     implementation "de.jplag:java:${jplag_version}"
@@ -236,31 +235,45 @@ dependencies {
         }
     }
 
-    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.22.0"
+    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.22.1"
 
-    implementation "uk.ac.ox.ctl:spring-security-lti13:0.0.4"
+    implementation "uk.ac.ox.ctl:spring-security-lti13:0.1.11"
 
     // https://search.maven.org/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
     implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}"
     implementation "org.eclipse.jgit:org.eclipse.jgit.http.server:${jgit_version}"
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
-    implementation "net.sourceforge.plantuml:plantuml:1.2023.12"
-    implementation "org.imsglobal:basiclti-util:1.2.0"
+    implementation "net.sourceforge.plantuml:plantuml:1.2023.13"
+    implementation ("org.imsglobal:basiclti-util:1.2.0") {
+        // NOTE: this module contains security vulnerabilities and is not needed
+        exclude module: "jackson-mapper-asl"
+    }
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation "com.atlassian.bamboo:bamboo-specs:9.3.5"
     implementation ("org.yaml:snakeyaml") {
         version {
-            strictly "2.0" // needed for Bamboo-specs and to reduce the number of vulnerabilities, also see https://mvnrepository.com/artifact/org.yaml/snakeyaml
+            strictly "2.2" // needed for Bamboo-specs and to reduce the number of vulnerabilities, also see https://mvnrepository.com/artifact/org.yaml/snakeyaml
         }
     }
-
 
     implementation "com.thoughtworks.qdox:qdox:2.0.3"
     implementation "io.sentry:sentry-logback:${sentry_version}"
     implementation "io.sentry:sentry-spring-boot-starter:${sentry_version}"
-    implementation "org.jsoup:jsoup:1.17.1"
+
+    // NOTE: the following six dependencies use the newer versions explicitly to avoid other dependencies to use older versions
+    implementation "ch.qos.logback:logback-classic:${logback_version}"
+    implementation "ch.qos.logback:logback-core:${logback_version}"
+    implementation "com.thoughtworks.xstream:xstream:1.4.20"
+    implementation "xerces:xercesImpl:2.12.2"
+    implementation "xalan:xalan:2.7.3"
+    implementation "xalan:serializer:2.7.3"
+
+    // NOTE: use the latest 2.x version to avoid security vulnerabilities
+    implementation "org.apache.santuario:xmlsec:2.3.4"
+
+    implementation "org.jsoup:jsoup:1.17.2"
     implementation "commons-codec:commons-codec:1.16.0"   // needed for spring security saml2
 
     implementation "org.springdoc:springdoc-openapi-ui:1.7.0"
@@ -274,7 +287,7 @@ dependencies {
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.12.0"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.12.1"
     implementation "net.logstash.logback:logstash-logback-encoder:7.4"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
@@ -292,7 +305,7 @@ dependencies {
     implementation "org.apache.commons:commons-math3:3.6.1"
     implementation "javax.transaction:javax.transaction-api:1.3"
     implementation "org.hibernate:hibernate-entitymanager:${hibernate_version}"
-    // TODO: we cannot upgrade because 4.24.0 would not work with H2 in the tests due to the reserved keyword 'groups', see https://github.com/liquibase/liquibase/pull/4052
+    // TODO: we cannot upgrade because 4.24.0 would not work with H2 in the tests due to the reserved keyword "groups", see https://github.com/liquibase/liquibase/pull/4052
     implementation "org.liquibase:liquibase-core:4.23.2"
     implementation "org.springframework.boot:spring-boot-starter-validation:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
@@ -312,24 +325,41 @@ dependencies {
     implementation "org.springframework.ldap:spring-ldap-core:2.4.1"
     implementation "org.springframework.data:spring-data-ldap:2.7.17"
 
-    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:3.1.7"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:3.1.8"
-    implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
+    implementation ("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:3.1.8") {
+        // NOTE: these modules contain security vulnerabilities and are not needed
+        exclude module: "commons-jxpath"
+        exclude module: "woodstox-core"
+    }
+    implementation "org.springframework.cloud:spring-cloud-starter:3.1.8"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:3.1.9"
 
+    // TODO: updating to a later version breaks the build
     implementation "io.netty:netty-all:4.1.101.Final"
-    implementation "io.projectreactor.netty:reactor-netty:1.1.13"
+    implementation "io.projectreactor.netty:reactor-netty:1.1.14"
     implementation "org.springframework:spring-messaging:5.3.31"
-    implementation "org.springframework.retry:spring-retry:2.0.4"
+    implementation "org.springframework.retry:spring-retry:2.0.5"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
+    implementation "org.springframework.security:spring-security-core:${spring_security_version}"
+    implementation "org.springframework.security:spring-security-oauth2-core:${spring_security_version}"
+    implementation "org.springframework.security:spring-security-oauth2-client:${spring_security_version}"
+    implementation "org.springframework.security:spring-security-oauth2-jose:${spring_security_version}"
+    implementation "org.springframework.security:spring-security-crypto:${spring_security_version}"
     implementation "org.springframework.security:spring-security-web:${spring_security_version}"
     implementation "org.springframework.security:spring-security-messaging:${spring_security_version}"
     implementation "org.springframework.security:spring-security-ldap:${spring_security_version}"
     implementation "org.springframework.security:spring-security-saml2-service-provider:${spring_security_version}"
+
+    implementation "org.opensaml:opensaml-security-api:${opensaml_version}"
+    implementation "org.opensaml:opensaml-core:${opensaml_version}"
+    implementation "org.opensaml:opensaml-saml-impl:${opensaml_version}"
+    implementation "org.opensaml:opensaml-saml-api:${opensaml_version}"
+
     implementation "org.xmlbeam:xmlprojector:1.4.24"
     implementation "io.jsonwebtoken:jjwt-api:0.12.3"
-    implementation "org.bouncycastle:bcprov-jdk15on:1.70"
+    implementation "org.bouncycastle:bcpkix-jdk18on:1.77"
+    implementation "org.bouncycastle:bcprov-jdk18on:1.77"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:0.12.3"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.12.3"
     implementation ("io.springfox:springfox-swagger2:3.0.0") {
@@ -342,7 +372,7 @@ dependencies {
 
     // zalando problem spring web can only be updated when we support Spring 6
     implementation "org.zalando:problem-spring-web:0.27.0"
-    implementation "com.ibm.icu:icu4j:74.1"
+    implementation "com.ibm.icu:icu4j:74.2"
     implementation "com.github.seancfoley:ipaddress:5.4.0"
     implementation "org.apache.maven:maven-model:3.9.6"
     implementation "org.apache.pdfbox:pdfbox:3.0.1"
@@ -352,8 +382,12 @@ dependencies {
     implementation "commons-fileupload:commons-fileupload:1.5"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
     implementation "org.jgrapht:jgrapht-core:1.5.2"
-    implementation 'com.github.seancfoley:ipaddress:5.4.0'
+    implementation "com.github.seancfoley:ipaddress:5.4.0"
+    // make sure the dependencies use the latest version without security vulnerabilities
+    implementation "com.google.guava:guava:33.0.0-jre"
 
+    // make sure the dependencies use the latest version
+    implementation "com.google.code.gson:gson:2.10.1"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
@@ -373,7 +407,7 @@ dependencies {
     }
     testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
-    testImplementation "org.assertj:assertj-core:3.24.2"
+    testImplementation "org.assertj:assertj-core:3.25.0"
     testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
@@ -381,17 +415,19 @@ dependencies {
     testImplementation "org.awaitility:awaitility:4.2.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.2.0"
     testImplementation "org.gradle:gradle-tooling-api:8.5"
-    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.2.2"
+    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.2.3"
     testImplementation "com.opencsv:opencsv:5.9"
     testImplementation("io.zonky.test:embedded-database-spring-test:2.4.0") {
-        exclude group: 'org.testcontainers', module: 'mariadb'
-        exclude group: 'org.testcontainers', module: 'mssqlserver'
+        exclude group: "org.testcontainers", module: "mariadb"
+        exclude group: "org.testcontainers", module: "mssqlserver"
     }
     testImplementation "com.tngtech.archunit:archunit:1.2.1"
-    testImplementation "org.skyscreamer:jsonassert:1.5.1"
+    testImplementation ("org.skyscreamer:jsonassert:1.5.1") {
+        exclude module: "android-json"
+    }
     testImplementation ("net.bytebuddy:byte-buddy") {
         version {
-            strictly "1.14.10"
+            strictly "1.14.11"
         }
     }
 
@@ -450,8 +486,8 @@ node {
 }
 
 // Set the npm cache (used in the Dockerfile)
-tasks.register('npmSetCacheDockerfile', NpmTask) {
-    args = ['set', 'cache', '/opt/artemis/.npm']
+tasks.register("npmSetCacheDockerfile", NpmTask) {
+    args = ["set", "cache", "/opt/artemis/.npm"]
 }
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
@@ -484,6 +520,8 @@ tasks.named("dependencyUpdates").configure {
 // 2) Execute tests with coverage report:           ./gradlew test jacocoTestReport -x webapp
 // 2a) Execute tests without coverage report:       ./gradlew test -x webapp
 // 2b) Run a single test:                           ./gradlew test --tests ExamIntegrationTest -x webapp or ./gradlew test --tests ExamIntegrationTest.testGetExamScore -x webapp
+// 2c) Execute tests with Postgres container:       SPRING_PROFILES_INCLUDE=postgres ./gradlew test -x webapp
+// 2d) Execute tests with MySQL container:          SPRING_PROFILES_INCLUDE=mysql ./gradlew test -x webapp
 // 3) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification
 // 4) Check Java code format:                       ./gradlew spotlessCheck -x webapp
 // 5) Apply Java code formatter:                    ./gradlew spotlessApply -x webapp

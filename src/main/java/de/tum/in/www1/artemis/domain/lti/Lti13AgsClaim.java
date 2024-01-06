@@ -20,33 +20,38 @@ public class Lti13AgsClaim {
      *
      * @param idToken to be parsed
      * @return an Ags-Claim if one was present in idToken.
+     * @throws IllegalStateException if the AGS claim is present but malformed or cannot be processed.
      */
     public static Optional<Lti13AgsClaim> from(OidcIdToken idToken) {
         if (idToken.getClaim(Claims.AGS_CLAIM) == null) {
             return Optional.empty();
         }
 
-        JsonObject agsClaimJson = JsonParser.parseString(idToken.getClaim(Claims.AGS_CLAIM).toString()).getAsJsonObject();
+        try {
+            JsonObject agsClaimJson = new Gson().toJsonTree(idToken.getClaim(Claims.AGS_CLAIM)).getAsJsonObject();
+            Lti13AgsClaim agsClaim = new Lti13AgsClaim();
+            JsonArray scopes = agsClaimJson.get("scope").getAsJsonArray();
 
-        Lti13AgsClaim agsClaim = new Lti13AgsClaim();
-        JsonArray scopes = agsClaimJson.get("scope").getAsJsonArray();
+            if (scopes == null) {
+                return Optional.empty();
+            }
 
-        if (scopes == null) {
-            return Optional.empty();
-        }
+            if (scopes.contains(new JsonPrimitive(Scopes.AGS_SCORE))) {
+                agsClaim.setScope(Collections.singletonList(Scopes.AGS_SCORE));
+            }
 
-        if (scopes.contains(new JsonPrimitive(Scopes.AGS_SCORE))) {
-            agsClaim.setScope(Collections.singletonList(Scopes.AGS_SCORE));
+            JsonElement lineItem = agsClaimJson.get("lineitem");
+            if (lineItem != null) {
+                agsClaim.setLineItem(lineItem.getAsString());
+            }
+            else {
+                agsClaim.setLineItem(null);
+            }
+            return Optional.of(agsClaim);
         }
-
-        JsonElement lineItem = agsClaimJson.get("lineitem");
-        if (lineItem != null) {
-            agsClaim.setLineItem(lineItem.getAsString());
+        catch (IllegalStateException | ClassCastException ex) {
+            throw new IllegalStateException("Failed to parse LTI 1.3 ags claim.", ex);
         }
-        else {
-            agsClaim.setLineItem(null);
-        }
-        return Optional.of(agsClaim);
     }
 
     public List<String> getScope() {
