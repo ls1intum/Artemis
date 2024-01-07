@@ -51,7 +51,7 @@ public class StudentExamService {
 
     private static final String EXAM_EXERCISE_START_STATUS_TOPIC = "/topic/exams/%s/exercise-start-status";
 
-    private final Logger log = LoggerFactory.getLogger(StudentExamService.class);
+    private static final Logger log = LoggerFactory.getLogger(StudentExamService.class);
 
     private final ParticipationService participationService;
 
@@ -367,13 +367,7 @@ public class StudentExamService {
                 // we should still be able to compare even if the quizQuestion or the quizQuestion id is null
                 if (quizQuestion1 == null || quizQuestion1.getId() == null || quizQuestion2 == null || quizQuestion2.getId() == null
                         || quizQuestion1.getId().equals(quizQuestion2.getId())) {
-                    try {
-                        if (!isContentEqualTo(answer1, answer2)) {
-                            return false;
-                        }
-                    }
-                    catch (RuntimeException ex) {
-                        LoggerFactory.getLogger(StudentExamService.class).error("Cannot compare {} and {} for equality, classes unknown", answer1, answer2, ex);
+                    if (!isContentEqualTo(answer1, answer2)) {
                         return false;
                     }
                 }
@@ -402,7 +396,8 @@ public class StudentExamService {
         else if (answer1 instanceof ShortAnswerSubmittedAnswer submittedAnswer1 && answer2 instanceof ShortAnswerSubmittedAnswer submittedAnswer2) {
             return isContentEqualTo(submittedAnswer1, submittedAnswer2);
         }
-        throw new RuntimeException("Not supported");
+        log.error("Cannot compare {} and {} for equality, classes unknown", answer1, answer2);
+        return false;
     }
 
     /**

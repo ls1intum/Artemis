@@ -40,8 +40,8 @@ public enum StaticCodeAnalysisTool {
      *
      * @return Set of static code analysis tool artifact labels
      */
-    public static HashSet<String> getAllArtifactLabels() {
-        HashSet<String> artifactLabels = new HashSet<>();
+    public static Set<String> getAllArtifactLabels() {
+        Set<String> artifactLabels = new HashSet<>();
         for (var tool : StaticCodeAnalysisTool.values()) {
             artifactLabels.add(tool.getArtifactLabel());
         }

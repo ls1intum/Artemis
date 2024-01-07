@@ -266,7 +266,7 @@ public class TutorParticipationService {
             validateTutorialExampleSubmission(tutorExampleSubmission);
         }
 
-        HashSet<ExampleSubmission> alreadyAssessedSubmissions = new HashSet<>(existingTutorParticipation.getTrainedExampleSubmissions());
+        Set<ExampleSubmission> alreadyAssessedSubmissions = new HashSet<>(existingTutorParticipation.getTrainedExampleSubmissions());
 
         // If the example submission was already assessed, we do not assess it again, we just return the current participation
         if (alreadyAssessedSubmissions.contains(tutorExampleSubmission)) {

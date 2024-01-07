@@ -69,7 +69,7 @@ public class MigrationService {
             log.info("Integrity check passed.");
         }
 
-        HashSet<String> executedChanges = migrationChangeRepository.findAll().stream().map(MigrationChangelog::getDateString).collect(Collectors.toCollection(HashSet::new));
+        Set<String> executedChanges = migrationChangeRepository.findAll().stream().map(MigrationChangelog::getDateString).collect(Collectors.toCollection(HashSet::new));
 
         Map<Integer, MigrationEntry> migrationEntryMap = entryMap.entrySet().stream().filter(entry -> !executedChanges.contains(entry.getValue().date()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));

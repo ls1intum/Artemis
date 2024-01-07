@@ -377,7 +377,7 @@ public class ProgrammingExerciseExportImportResource {
             repositoryExportOptions.setFilterLateSubmissionsDate(programmingExercise.getDueDate());
         }
 
-        HashSet<String> participantIdentifierList = new HashSet<>();
+        Set<String> participantIdentifierList = new HashSet<>();
         if (!repositoryExportOptions.isExportAllParticipants()) {
             participantIdentifiers = participantIdentifiers.replaceAll("\\s+", "");
             participantIdentifierList.addAll(List.of(participantIdentifiers.split(",")));

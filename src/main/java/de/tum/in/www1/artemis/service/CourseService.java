@@ -591,7 +591,7 @@ public class CourseService {
 
     private List<StatisticsEntry> removeDuplicateActiveUserRows(List<StatisticsEntry> activeUserRows, ZonedDateTime startDate) {
         int startIndex = statisticsRepository.getWeekOfDate(startDate);
-        Map<Integer, HashSet<String>> usersByDate = new HashMap<>();
+        Map<Integer, Set<String>> usersByDate = new HashMap<>();
         for (StatisticsEntry listElement : activeUserRows) {
             // listElement.date has the form "2021-05-04", to convert it to ZonedDateTime, it needs a time
             String dateOfElement = listElement.getDate() + " 10:00";

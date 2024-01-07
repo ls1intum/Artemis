@@ -17,7 +17,7 @@ public class ScoringStrategyShortAnswerUtil {
         boolean foundCorrectSolution;
         int correctSolutionsCount = 0;
         int incorrectSolutionsCount = 0;
-        HashSet<ShortAnswerSolution> notUsedSolutions = new HashSet<>(shortAnswerQuestion.getSolutions());
+        Set<ShortAnswerSolution> notUsedSolutions = new HashSet<>(shortAnswerQuestion.getSolutions());
 
         // iterate through each spot and compare its correct solutions with the submitted texts
         for (ShortAnswerSpot spot : shortAnswerQuestion.getSpots()) {

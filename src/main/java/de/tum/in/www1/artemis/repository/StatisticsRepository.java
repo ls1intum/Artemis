@@ -597,7 +597,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
      * @return A List<StatisticsData> with only distinct users per timeslot
      */
     private List<StatisticsEntry> filterDuplicatedUsers(SpanType span, List<StatisticsEntry> result, ZonedDateTime startDate, GraphType graphType) {
-        Map<Integer, HashSet<String>> users = new HashMap<>();
+        Map<Integer, Set<String>> users = new HashMap<>();
         for (StatisticsEntry listElement : result) {
             ZonedDateTime date;
             if (graphType == GraphType.LOGGED_IN_USERS) {
@@ -625,7 +625,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
      * @param userStatisticEntry the statistic entry which contains a username and a potentially new user
      * @param index              the index of the map which should be considered, can be a date or an integer
      */
-    default void addUserToTimeslot(Map<Integer, HashSet<String>> users, StatisticsEntry userStatisticEntry, Integer index) {
+    default void addUserToTimeslot(Map<Integer, Set<String>> users, StatisticsEntry userStatisticEntry, Integer index) {
         String username = userStatisticEntry.getUsername();
         // if this index is not yet existing in users
         // if the value of the map for this index does not contain this username
@@ -642,7 +642,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
      * @param startDate the startDate which we need for mapping into timeslots
      * @return A List<StatisticsData> with no duplicated user per timeslot
      */
-    private List<StatisticsEntry> mergeUsersPerTimeslotIntoList(Map<Integer, HashSet<String>> users, SpanType span, ZonedDateTime startDate) {
+    private List<StatisticsEntry> mergeUsersPerTimeslotIntoList(Map<Integer, Set<String>> users, SpanType span, ZonedDateTime startDate) {
         List<StatisticsEntry> returnList = new ArrayList<>();
         users.forEach((timeIndex, userSet) -> {
             ZonedDateTime start = switch (span) {

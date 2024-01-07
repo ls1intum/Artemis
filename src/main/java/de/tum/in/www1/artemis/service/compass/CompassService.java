@@ -106,7 +106,7 @@ public class CompassService {
                 if (modelElement != null) {
                     ModelCluster cluster = modelClusters.get(modelClusters.indexOf(modelElement.getCluster()));
                     Set<ModelElement> similarElements = cluster.getModelElements();
-                    HashSet<String> similarReferences = similarElements.stream().map(element -> element.getModelElementType() + ":" + element.getModelElementId())
+                    Set<String> similarReferences = similarElements.stream().map(element -> element.getModelElementType() + ":" + element.getModelElementId())
                             .collect(Collectors.toCollection(HashSet::new));
                     List<Feedback> similarFeedbacks = feedbacks.stream().filter(feedback -> similarReferences.contains(feedback.getReference())).toList();
                     Feedback suggestedFeedback = FeedbackSelector.selectFeedback(modelElement, similarFeedbacks, result);
