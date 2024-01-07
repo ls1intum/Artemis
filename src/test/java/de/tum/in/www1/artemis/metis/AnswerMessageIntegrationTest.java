@@ -5,6 +5,8 @@ import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -375,11 +377,11 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         params.add("filterToUnresolved", "true");
         params.add("size", "50");
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        Set<Post> returnedPosts = request.getSet("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
         // get posts of current user and compare
-        List<Post> unresolvedPosts = existingCourseWideMessages.stream()
-                .filter(post -> post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))).toList();
+        Set<Post> unresolvedPosts = existingCourseWideMessages.stream()
+                .filter(post -> post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))).collect(Collectors.toSet());
 
         assertThat(returnedPosts).isEqualTo(unresolvedPosts);
     }
@@ -394,11 +396,11 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         params.add("courseWideChannelIds", "");
         params.add("size", "50");
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        Set<Post> returnedPosts = request.getSet("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
         // get unresolved posts of current user and compare
-        List<Post> resolvedPosts = existingCourseWideMessages.stream().filter(post -> student1.getId().equals(post.getAuthor().getId())
-                && (post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost())))).toList();
+        Set<Post> resolvedPosts = existingCourseWideMessages.stream().filter(post -> student1.getId().equals(post.getAuthor().getId())
+                && (post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost())))).collect(Collectors.toSet());
 
         assertThat(returnedPosts).isEqualTo(resolvedPosts);
     }
@@ -412,12 +414,12 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         params.add("filterToOwn", "true");
         params.add("courseWideChannelIds", "");
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        Set<Post> returnedPosts = request.getSet("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
         // get unresolved posts of current user and compare
-        List<Post> resolvedPosts = existingCourseWideMessages.stream().filter(
+        Set<Post> resolvedPosts = existingCourseWideMessages.stream().filter(
                 post -> student1.getId().equals(post.getAuthor().getId()) && post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost())))
-                .toList();
+                .collect(Collectors.toSet());
 
         assertThat(returnedPosts).isEqualTo(resolvedPosts);
     }
@@ -430,12 +432,12 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         params.add("filterToAnsweredOrReacted", "true");
         params.add("courseWideChannelIds", "");
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        Set<Post> returnedPosts = request.getSet("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
-        List<Post> filteredExistingCourseWideMessages = existingCourseWideMessages.stream()
+        Set<Post> filteredExistingCourseWideMessages = existingCourseWideMessages.stream()
                 .filter(post -> post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(answerPost.getAuthor().getId()))
                         || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(post.getAuthor().getId())))
-                .toList();
+                .collect(Collectors.toSet());
 
         assertThat(returnedPosts).isEqualTo(filteredExistingCourseWideMessages);
     }
@@ -449,12 +451,12 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         params.add("filterToOwn", "true");
         params.add("courseWideChannelIds", "");
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        Set<Post> returnedPosts = request.getSet("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
-        List<Post> filteredExistingCourseWideMessages = existingCourseWideMessages.stream().filter(
+        Set<Post> filteredExistingCourseWideMessages = existingCourseWideMessages.stream().filter(
                 post -> student1.getId().equals(post.getAuthor().getId()) && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
                         || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(post.getAuthor().getId()))))
-                .toList();
+                .collect(Collectors.toSet());
 
         assertThat(returnedPosts).isEqualTo(filteredExistingCourseWideMessages);
     }
@@ -468,13 +470,13 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         params.add("filterToUnresolved", "true");
         params.add("courseWideChannelIds", "");
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        Set<Post> returnedPosts = request.getSet("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
-        List<Post> filteredExistingCourseWideMessages = existingCourseWideMessages.stream()
+        Set<Post> filteredExistingCourseWideMessages = existingCourseWideMessages.stream()
                 .filter(post -> post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
                         && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(answerPost.getAuthor().getId()))
                                 || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(reaction.getUser().getId()))))
-                .toList();
+                .collect(Collectors.toSet());
 
         assertThat(returnedPosts).isEqualTo(filteredExistingCourseWideMessages);
     }
@@ -489,13 +491,13 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         params.add("filterToAnsweredOrReacted", "true");
         params.add("courseWideChannelIds", "");
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        Set<Post> returnedPosts = request.getSet("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
-        List<Post> filteredExistingCourseWideMessages = existingCourseWideMessages.stream().filter(
+        Set<Post> filteredExistingCourseWideMessages = existingCourseWideMessages.stream().filter(
                 post -> student1.getId().equals(post.getAuthor().getId()) && (post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
                         && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
                                 || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(reaction.getUser().getId())))))
-                .toList();
+                .collect(Collectors.toSet());
 
         assertThat(returnedPosts).isEqualTo(filteredExistingCourseWideMessages);
     }
@@ -509,12 +511,12 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         params.add("filterToOwn", "true");
         params.add("courseWideChannelIds", "");
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        Set<Post> returnedPosts = request.getSet("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
-        List<Post> filteredExistingCourseWideMessages = existingCourseWideMessages.stream().filter(
+        Set<Post> filteredExistingCourseWideMessages = existingCourseWideMessages.stream().filter(
                 post -> student1.getId().equals(post.getAuthor().getId()) && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
                         || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(reaction.getUser().getId()))))
-                .toList();
+                .collect(Collectors.toSet());
 
         assertThat(returnedPosts).isEqualTo(filteredExistingCourseWideMessages);
     }
