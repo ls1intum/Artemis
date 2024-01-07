@@ -302,7 +302,7 @@
                                                         Repository
                                                     </a>
                                                 } @else {
-                                                    <jhi-clone-repo-button class="me-1" [smallButtons]="true" [repositoryUrl]="getRepositoryLink(value) || ''" />
+                                                    <jhi-clone-repo-button class="me-1" [smallButtons]="true" [repositoryUri]="getRepositoryLink(value) || ''" />
                                                 }
                                             }
                                             @if (buildPlanId(value) && !localVCEnabled) {

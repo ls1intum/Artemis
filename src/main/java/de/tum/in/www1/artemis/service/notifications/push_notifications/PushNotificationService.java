@@ -73,7 +73,7 @@ public abstract class PushNotificationService implements InstantNotificationServ
     void sendNotificationRequestsToEndpoint(List<RelayNotificationRequest> requests, String relayServerBaseUrl) {
         var futures = requests.stream()
                 .map(request -> CompletableFuture.runAsync(() -> sendSpecificNotificationRequestsToEndpoint(Collections.singletonList(request), relayServerBaseUrl))).toList()
-                .toArray(new CompletableFuture[0]);
+                .toArray(CompletableFuture[]::new);
 
         CompletableFuture.allOf(futures);
     }

@@ -11,7 +11,7 @@
 <div class="row align-items-center">
     <div class="col">
         <div class="mb-1">
-            @if (posting.resolved && posting.courseWideContext !== CourseWideContext.ANNOUNCEMENT) {
+            @if (posting.resolved) {
                 <fa-icon
                     [icon]="faCheckSquare"
                     iconSize="xs"
@@ -19,7 +19,7 @@
                     [ngbTooltip]="'artemisApp.metis.post.postMarkedAsResolvedTooltip' | artemisTranslate"
                 />
             }
-            @if (getAsChannelDto(posting.conversation)?.isAnnouncementChannel && !isCourseMessagesPage) {
+            @if (showAnnouncementIcon) {
                 <fa-icon
                     [icon]="faBullhorn"
                     iconSize="xs"
@@ -54,12 +54,7 @@
                     }
                     <!-- show id only on communication page -->
                     @if (!isCourseMessagesPage && isCommunicationPage) {
-                        <a
-                            class="reference-hash"
-                            [routerLink]="metisService.getLinkForPost(posting)"
-                            [queryParams]="metisService.getQueryParamsForPost(posting)"
-                            (click)="onNavigateToPostById($event)"
-                            routerLinkActive="active"
+                        <a class="reference-hash" [routerLink]="routerLink" [queryParams]="queryParams" (click)="onNavigateToPostById($event)" routerLinkActive="active"
                             >#{{ posting.id }}</a
                         >
                     }
@@ -74,7 +69,6 @@
                 [isEdited]="!!posting.updatedDate"
                 [posting]="posting"
                 [isReply]="false"
-                [isAnnouncement]="posting.courseWideContext === CourseWideContext.ANNOUNCEMENT"
                 (userReferenceClicked)="onUserReferenceClicked($event)"
                 (channelReferenceClicked)="onChannelReferenceClicked($event)"
             />

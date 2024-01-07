@@ -4,9 +4,9 @@
             <span class="conversation-name">
                 @if (conversationAsChannel) {
                     <jhi-channel-icon
-                        [isPublic]="conversationAsChannel.isPublic!"
-                        [isArchived]="conversationAsChannel.isArchived!"
-                        [isAnnouncementChannel]="conversationAsChannel.isAnnouncementChannel!"
+                        [isPublic]="(conversationAsChannel.isPublic || conversationAsChannel.isCourseWide) ?? false"
+                        [isArchived]="conversationAsChannel.isArchived ?? false"
+                        [isAnnouncementChannel]="conversationAsChannel.isAnnouncementChannel ?? false"
                     />
                 }
                 @if (getAsGroupChat(conversation); as groupChatDto) {

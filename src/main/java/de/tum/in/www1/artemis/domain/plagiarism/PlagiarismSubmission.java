@@ -197,25 +197,4 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
     public String toString() {
         return "PlagiarismSubmission{" + "submissionId=" + submissionId + ", studentLogin='" + studentLogin + '\'' + ", size=" + size + ", score=" + score + '}';
     }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        if (!super.equals(obj)) {
-            return false;
-        }
-        PlagiarismSubmission<?> that = (PlagiarismSubmission<?>) obj;
-        return getSubmissionId() == that.getSubmissionId() && getSize() == that.getSize() && Objects.equals(getStudentLogin(), that.getStudentLogin())
-                && Objects.equals(getScore(), that.getScore());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), getSubmissionId(), getStudentLogin(), getSize(), getScore());
-    }
 }

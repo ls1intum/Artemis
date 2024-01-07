@@ -19,9 +19,9 @@
                         </div>
                     </div>
                     <!-- body -->
-                    @if (isNotAChannelMember || noChannelAvailable) {
+                    @if (noChannelAvailable) {
                         <div class="card-body">
-                            {{ (isNotAChannelMember ? 'artemisApp.metis.channel.notAMember' : 'artemisApp.metis.channel.noChannel') | artemisTranslate }}
+                            {{ 'artemisApp.metis.channel.noChannel' | artemisTranslate }}
                         </div>
                     } @else {
                         <div class="card-body pt-0">

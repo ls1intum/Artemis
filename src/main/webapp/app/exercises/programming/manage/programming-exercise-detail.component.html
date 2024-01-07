@@ -317,54 +317,54 @@
                         <jhi-programming-exercise-plans-and-repositories-preview [programmingExercise]="programmingExercise" />
                     </dd>
                     <dt>
-                        <span jhiTranslate="artemisApp.programmingExercise.templateRepositoryUrl">Template Repository Url</span>
-                        @if (programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl) {
+                        <span jhiTranslate="artemisApp.programmingExercise.templateRepositoryUri">Template Repository Uri</span>
+                        @if (programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUri) {
                             <div class="clone-buttons">
-                                <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUrl]="programmingExercise?.templateParticipation?.repositoryUrl || ''" />
+                                <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUri]="programmingExercise?.templateParticipation?.repositoryUri || ''" />
                                 <jhi-programming-exercise-instructor-repo-download class="ms-2" [exerciseId]="programmingExercise.id!" [repositoryType]="'TEMPLATE'" />
                             </div>
                         }
                     </dt>
                     <dd>
-                        @if (programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl && !localVCEnabled) {
+                        @if (programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUri && !localVCEnabled) {
                             <div class="d-flex align-items-center">
-                                <a href="{{ programmingExercise.templateParticipation.repositoryUrl }}" target="_blank" rel="noopener noreferrer">{{
-                                    programmingExercise.templateParticipation.repositoryUrl
+                                <a href="{{ programmingExercise.templateParticipation.repositoryUri }}" target="_blank" rel="noopener noreferrer">{{
+                                    programmingExercise.templateParticipation.repositoryUri
                                 }}</a>
                             </div>
                         }
                     </dd>
                     <dt>
-                        <span jhiTranslate="artemisApp.programmingExercise.solutionRepositoryUrl">Solution Repository Url</span>
-                        @if (programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.repositoryUrl) {
+                        <span jhiTranslate="artemisApp.programmingExercise.solutionRepositoryUri">Solution Repository Uri</span>
+                        @if (programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.repositoryUri) {
                             <div class="clone-buttons">
-                                <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUrl]="programmingExercise.solutionParticipation.repositoryUrl" />
+                                <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUri]="programmingExercise.solutionParticipation.repositoryUri" />
                                 <jhi-programming-exercise-instructor-repo-download class="ms-2" [exerciseId]="programmingExercise.id!" [repositoryType]="'SOLUTION'" />
                             </div>
                         }
                     </dt>
                     <dd>
-                        @if (programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.repositoryUrl && !localVCEnabled) {
+                        @if (programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.repositoryUri && !localVCEnabled) {
                             <div class="d-flex align-items-center">
-                                <a href="{{ programmingExercise.solutionParticipation.repositoryUrl }}" target="_blank" rel="noopener noreferrer">{{
-                                    programmingExercise.solutionParticipation.repositoryUrl
+                                <a href="{{ programmingExercise.solutionParticipation.repositoryUri }}" target="_blank" rel="noopener noreferrer">{{
+                                    programmingExercise.solutionParticipation.repositoryUri
                                 }}</a>
                             </div>
                         }
                     </dd>
                     <dt>
-                        <span jhiTranslate="artemisApp.programmingExercise.testRepositoryUrl">Test Repository Url</span>
-                        @if (programmingExercise.testRepositoryUrl) {
+                        <span jhiTranslate="artemisApp.programmingExercise.testRepositoryUri">Test Repository Uri</span>
+                        @if (programmingExercise.testRepositoryUri) {
                             <div class="clone-buttons">
-                                <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUrl]="programmingExercise.testRepositoryUrl" />
+                                <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUri]="programmingExercise.testRepositoryUri" />
                                 <jhi-programming-exercise-instructor-repo-download class="ms-2" [exerciseId]="programmingExercise.id!" [repositoryType]="'TESTS'" />
                             </div>
                         }
                     </dt>
                     <dd>
-                        @if (programmingExercise.testRepositoryUrl && !localVCEnabled) {
+                        @if (programmingExercise.testRepositoryUri && !localVCEnabled) {
                             <div class="d-flex align-items-center">
-                                <a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank" rel="noopener noreferrer">{{ programmingExercise.testRepositoryUrl }}</a>
+                                <a href="{{ programmingExercise.testRepositoryUri }}" target="_blank" rel="noopener noreferrer">{{ programmingExercise.testRepositoryUri }}</a>
                             </div>
                         }
                     </dd>
@@ -381,7 +381,7 @@
                                     <li>
                                         <dt>
                                             <span>{{ auxiliaryRepository.name }} Repository</span>
-                                            <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUrl]="auxiliaryRepository.repositoryUrl!" />
+                                            <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUri]="auxiliaryRepository.repositoryUri!" />
                                             <jhi-programming-exercise-instructor-repo-download
                                                 class="ms-2"
                                                 [exerciseId]="programmingExercise.id!"
@@ -402,8 +402,8 @@
                                         </dt>
                                         <dd>
                                             <ng-container *ngif="!localVCEnabled">
-                                                <a href="{{ auxiliaryRepository.repositoryUrl }}" target="_blank" rel="noopener noreferrer" class="repository-url">{{
-                                                    auxiliaryRepository.repositoryUrl
+                                                <a href="{{ auxiliaryRepository.repositoryUri }}" target="_blank" rel="noopener noreferrer" class="repository-url">{{
+                                                    auxiliaryRepository.repositoryUri
                                                 }}</a>
                                             </ng-container>
                                         </dd>

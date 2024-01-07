@@ -79,6 +79,12 @@
                     <span class="tab-link-text" jhiTranslate="entity.action.scores">Scores</span>
                 </a>
             }
+            @if (course.isAtLeastInstructor && localCIActive) {
+                <a class="tab-link" [routerLink]="['/course-management', course.id, 'build-queue']" routerLinkActive="active">
+                    <fa-icon [icon]="faList" />
+                    <span class="tab-link-text" jhiTranslate="artemisApp.buildQueue.title">Build Queue</span>
+                </a>
+            }
             @if (shouldShowControlButtons()) {
                 <div class="controls">
                     @if (course.isAtLeastInstructor) {

@@ -7,7 +7,7 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 
 /**
- * The blackboard for creating SolutionEntries for behavioral test cases utilizing the git-diff and teswise coverage report.
+ * The blackboard for creating SolutionEntries for behavioral test cases utilizing the git-diff and test-wise coverage report.
  */
 public class BehavioralBlackboard {
 
