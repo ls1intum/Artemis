@@ -8,10 +8,7 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_PRODUCTION;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Principal;
-import java.time.DayOfWeek;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.IsoFields;
@@ -40,7 +37,6 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
@@ -49,7 +45,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
-import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupsConfigurationRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -59,13 +54,9 @@ import de.tum.in.www1.artemis.service.export.CourseExamExportService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
-import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
-import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
-import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
-import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
-import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -111,8 +102,6 @@ public class CourseService {
 
     private final AuditEventRepository auditEventRepository;
 
-    private final CompetencyService competencyService;
-
     private final CompetencyRepository competencyRepository;
 
     private final GradingScaleRepository gradingScaleRepository;
@@ -145,10 +134,6 @@ public class CourseService {
 
     private final TutorialGroupRepository tutorialGroupRepository;
 
-    private final TutorialGroupService tutorialGroupService;
-
-    private final TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
-
     private final PlagiarismCaseRepository plagiarismCaseRepository;
 
     private final ConversationRepository conversationRepository;
@@ -157,18 +142,19 @@ public class CourseService {
 
     private final Optional<IrisSettingsService> irisSettingsService;
 
+    private final LectureRepository lectureRepository;
+
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
             UserService userService, ExamDeletionService examDeletionService, CompetencyRepository competencyRepository, GroupNotificationService groupNotificationService,
-            ExamRepository examRepository, CourseExamExportService courseExamExportService, CompetencyService competencyService, GradingScaleRepository gradingScaleRepository,
+            ExamRepository examRepository, CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository,
             StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService,
             RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
             ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
-            TutorialGroupRepository tutorialGroupRepository, TutorialGroupService tutorialGroupService, TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository,
-            PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository, LearningPathService learningPathService,
-            Optional<IrisSettingsService> irisSettingsService) {
+            TutorialGroupRepository tutorialGroupRepository, PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository,
+            LearningPathService learningPathService, Optional<IrisSettingsService> irisSettingsService, LectureRepository lectureRepository) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.courseRepository = courseRepository;
@@ -186,7 +172,6 @@ public class CourseService {
         this.groupNotificationService = groupNotificationService;
         this.examRepository = examRepository;
         this.courseExamExportService = courseExamExportService;
-        this.competencyService = competencyService;
         this.gradingScaleRepository = gradingScaleRepository;
         this.statisticsRepository = statisticsRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -202,12 +187,11 @@ public class CourseService {
         this.participantScoreRepository = participantScoreRepository;
         this.presentationPointsCalculationService = presentationPointsCalculationService;
         this.tutorialGroupRepository = tutorialGroupRepository;
-        this.tutorialGroupService = tutorialGroupService;
-        this.tutorialGroupsConfigurationRepository = tutorialGroupsConfigurationRepository;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.conversationRepository = conversationRepository;
         this.learningPathService = learningPathService;
         this.irisSettingsService = irisSettingsService;
+        this.lectureRepository = lectureRepository;
     }
 
     /**
@@ -217,9 +201,9 @@ public class CourseService {
      * @param user            the user for which the participations should be fetched
      * @param includeTestRuns flag that indicates whether test run participations should be included
      */
-    public void fetchParticipationsWithSubmissionsAndResultsForCourses(List<Course> courses, User user, boolean includeTestRuns) {
-        Set<Exercise> exercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
-        List<StudentParticipation> participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises, includeTestRuns);
+    public void fetchParticipationsWithSubmissionsAndResultsForCourses(Collection<Course> courses, User user, boolean includeTestRuns) {
+        var exercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
+        var participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises, includeTestRuns);
         if (participationsOfUserInExercises.isEmpty()) {
             return;
         }
@@ -292,27 +276,32 @@ public class CourseService {
     }
 
     /**
-     * Get all courses with exercises, lectures and exams (filtered for given user)
+     * Get all courses with exercises (filtered for given user)
      *
      * @param user the user entity
-     * @return an unmodifiable list of all courses including exercises, lectures and exams for the user
+     * @return an unmodifiable list of all courses including exercises for the user
      */
-    public List<Course> findAllActiveWithExercisesAndLecturesAndExamsForUser(User user) {
+    public Set<Course> findAllActiveWithExercisesForUser(User user) {
         long start = System.nanoTime();
-        // TODO: in the future we only need the number of lectures and no additional values
-        var userVisibleCourses = courseRepository.findAllActiveWithLectures().stream().filter(course -> isCourseVisibleForUser(user, course)).toList();
+
+        var userVisibleCourses = courseRepository.findAllActive().stream().filter(course -> isCourseVisibleForUser(user, course)).filter(Objects::nonNull)
+                .collect(Collectors.toSet());
 
         if (log.isDebugEnabled()) {
             log.debug("Find user visible courses finished after {}", TimeLogUtil.formatDurationFrom(start));
         }
         long startFindAllExercises = System.nanoTime();
         var courseIds = userVisibleCourses.stream().map(DomainObject::getId).collect(Collectors.toSet());
+        // TODO Performance: we only need the total score, the number of exercises and exams and - in case there is one - the currently active exercise(s)/exam(s)
+        // we do NOT need to retrieve this information and send it to the client
         Set<Exercise> allExercises = exerciseRepository.findByCourseIdsWithCategories(courseIds);
-        Set<Exam> allExams = examRepository.findByCourseIdsForUser(courseIds, user.getId(), user.getGroups(), ZonedDateTime.now());
+
         if (log.isDebugEnabled()) {
-            log.debug("findAllExercisesByCourseIdsWithCategories finished with {} exercises and {} exams after {}", allExercises.size(), allExams.size(),
-                    TimeLogUtil.formatDurationFrom(startFindAllExercises));
+            log.debug("findAllExercisesByCourseIdsWithCategories finished with {} exercises after {}", allExercises.size(), TimeLogUtil.formatDurationFrom(startFindAllExercises));
         }
+        var examCounts = examRepository.countVisibleExams(courseIds, ZonedDateTime.now());
+
+        var lectureCounts = lectureRepository.countVisibleLectures(courseIds, ZonedDateTime.now());
 
         long startFilterAll = System.nanoTime();
         var courses = userVisibleCourses.stream().peek(course -> {
@@ -320,13 +309,14 @@ public class CourseService {
             course.setExercises(allExercises.stream().filter(ex -> ex.getCourseViaExerciseGroupOrCourseMember().getId().equals(course.getId())).collect(Collectors.toSet()));
             course.setExercises(exerciseService.filterExercisesForCourse(course, user));
             exerciseService.loadExerciseDetailsIfNecessary(course, user);
-            course.setExams(allExams.stream().filter(ex -> ex.getCourse().getId().equals(course.getId())).collect(Collectors.toSet()));
-            // TODO: we only need the number of exams here
-            course.setLectures(lectureService.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), user));
-            course.setNumberOfLectures((long) course.getLectures().size());
-            // we do not send them to the client, not needed
+            long numberOfLectures = lectureCounts.stream().filter(count -> count.courseId() == course.getId()).map(CourseContentCount::count).findFirst().orElse(0L);
+            course.setNumberOfLectures(numberOfLectures);
+            long numberOfExams = examCounts.stream().filter(count -> count.courseId() == course.getId()).map(CourseContentCount::count).findFirst().orElse(0L);
+            course.setNumberOfExams(numberOfExams);
+            // we do not send actual lectures or exams to the client, not needed
             course.setLectures(Set.of());
-        }).toList();
+            course.setExams(Set.of());
+        }).collect(Collectors.toSet());
 
         if (log.isDebugEnabled()) {
             log.debug("all {} filterExercisesForCourse individually finished together after {}", courses.size(), TimeLogUtil.formatDurationFrom(startFilterAll));

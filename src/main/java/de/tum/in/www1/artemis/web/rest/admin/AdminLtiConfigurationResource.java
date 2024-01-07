@@ -85,12 +85,20 @@ public class AdminLtiConfigurationResource {
      * Updates an existing LTI platform configuration.
      *
      * @param platform the updated LTI platform configuration to be saved.
+     * @return a {@link ResponseEntity} with status 200 (OK) if the update was successful,
+     *         or with status 400 (Bad Request) if the provided platform configuration is invalid (e.g., missing ID)
      */
     @PutMapping("lti-platform")
     @EnforceAdmin
-    public void updateLtiPlatformConfiguration(@RequestBody LtiPlatformConfiguration platform) {
+    public ResponseEntity<Void> updateLtiPlatformConfiguration(@RequestBody LtiPlatformConfiguration platform) {
         log.debug("REST request to update configured lti platform");
+
+        if (platform.getId() == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
         ltiPlatformConfigurationRepository.save(platform);
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -99,14 +107,16 @@ public class AdminLtiConfigurationResource {
      *
      * @param openIdConfiguration The OpenID Connect discovery configuration URL.
      * @param registrationToken   Optional token for the registration process.
+     * @return a {@link ResponseEntity} with status 200 (OK) if the dynamic registration process was successful.
      */
     @PostMapping("/lti13/dynamic-registration")
     @EnforceAdmin
-    public void lti13DynamicRegistration(@RequestParam(name = "openid_configuration") String openIdConfiguration,
+    public ResponseEntity<Void> lti13DynamicRegistration(@RequestParam(name = "openid_configuration") String openIdConfiguration,
             @RequestParam(name = "registration_token", required = false) String registrationToken) {
 
         authCheckService.checkIsAdminElseThrow(null);
         ltiDynamicRegistrationService.performDynamicRegistration(openIdConfiguration, registrationToken);
+        return ResponseEntity.ok().build();
     }
 
 }

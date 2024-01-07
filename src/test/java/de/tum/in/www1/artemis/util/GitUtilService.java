@@ -19,7 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 
 @Service
@@ -258,18 +258,18 @@ public class GitUtilService {
         return repo == REPOS.LOCAL ? localPath.toString() : remotePath.toString();
     }
 
-    public VcsRepositoryUrl getRepoUrlByType(REPOS repo) {
-        return new VcsRepositoryUrl(new File(getCompleteRepoPathStringByType(repo)));
+    public VcsRepositoryUri getRepoUriByType(REPOS repo) {
+        return new VcsRepositoryUri(new File(getCompleteRepoPathStringByType(repo)));
     }
 
-    public static final class MockFileRepositoryUrl extends VcsRepositoryUrl {
+    public static final class MockFileRepositoryUri extends VcsRepositoryUri {
 
-        public MockFileRepositoryUrl(File file) {
+        public MockFileRepositoryUri(File file) {
             super(file);
         }
 
         @Override
-        public VcsRepositoryUrl withUser(String username) {
+        public VcsRepositoryUri withUser(String username) {
             // the mocked url should already include the user specific part
             return this;
         }
