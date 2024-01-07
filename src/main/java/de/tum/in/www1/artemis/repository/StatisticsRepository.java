@@ -629,8 +629,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
         String username = userStatisticEntry.getUsername();
         // if this index is not yet existing in users
         // if the value of the map for this index does not contain this username
-        users.computeIfAbsent(index, k -> new HashSet<>(Collections.singletonList(username)));
-        users.get(index).add(username);
+        users.computeIfAbsent(index, k -> new HashSet<>(Collections.singletonList(username))).add(username);
     }
 
     /**
