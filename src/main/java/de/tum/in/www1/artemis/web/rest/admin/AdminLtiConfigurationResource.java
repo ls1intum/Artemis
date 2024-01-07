@@ -100,6 +100,8 @@ public class AdminLtiConfigurationResource {
      * Updates an existing LTI platform configuration.
      *
      * @param platform the updated LTI platform configuration to be saved.
+     * @return a {@link ResponseEntity} with status 200 (OK) if the update was successful,
+     *         or with status 400 (Bad Request) if the provided platform configuration is invalid (e.g., missing ID)
      */
     @PutMapping("lti-platform")
     @EnforceAdmin
@@ -120,6 +122,7 @@ public class AdminLtiConfigurationResource {
      *
      * @param openIdConfiguration The OpenID Connect discovery configuration URL.
      * @param registrationToken   Optional token for the registration process.
+     * @return a {@link ResponseEntity} with status 200 (OK) if the dynamic registration process was successful.
      */
     @PostMapping("/lti13/dynamic-registration")
     @EnforceAdmin
