@@ -597,7 +597,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
      * @return A List<StatisticsData> with only distinct users per timeslot
      */
     private List<StatisticsEntry> filterDuplicatedUsers(SpanType span, List<StatisticsEntry> result, ZonedDateTime startDate, GraphType graphType) {
-        Map<Integer, List<String>> users = new HashMap<>();
+        Map<Integer, HashSet<String>> users = new HashMap<>();
         for (StatisticsEntry listElement : result) {
             ZonedDateTime date;
             if (graphType == GraphType.LOGGED_IN_USERS) {
@@ -619,24 +619,18 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     }
 
     /**
-     * This method is normally invoked in a for each loop and adds a user based on the list element in case it does not yet exist in the users map
+     * This method is normally invoked in a for each loop and adds a user based on the set element in case it does not yet exist in the users map
      *
      * @param users              the map of existing users
      * @param userStatisticEntry the statistic entry which contains a username and a potentially new user
      * @param index              the index of the map which should be considered, can be a date or an integer
      */
-    default void addUserToTimeslot(Map<Integer, List<String>> users, StatisticsEntry userStatisticEntry, Integer index) {
+    default void addUserToTimeslot(Map<Integer, HashSet<String>> users, StatisticsEntry userStatisticEntry, Integer index) {
         String username = userStatisticEntry.getUsername();
-        List<String> usersInSameSlot = users.get(index);
         // if this index is not yet existing in users
-        if (usersInSameSlot == null) {
-            usersInSameSlot = new ArrayList<>();
-            usersInSameSlot.add(username);
-            users.put(index, usersInSameSlot);
-        }   // if the value of the map for this index does not contain this username
-        else if (!new HashSet<>(usersInSameSlot).contains(username)) {
-            usersInSameSlot.add(username);
-        }
+        // if the value of the map for this index does not contain this username
+        users.computeIfAbsent(index, k -> new HashSet<>(Collections.singletonList(username)));
+        users.get(index).add(username);
     }
 
     /**
@@ -648,9 +642,9 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
      * @param startDate the startDate which we need for mapping into timeslots
      * @return A List<StatisticsData> with no duplicated user per timeslot
      */
-    private List<StatisticsEntry> mergeUsersPerTimeslotIntoList(Map<Integer, List<String>> users, SpanType span, ZonedDateTime startDate) {
+    private List<StatisticsEntry> mergeUsersPerTimeslotIntoList(Map<Integer, HashSet<String>> users, SpanType span, ZonedDateTime startDate) {
         List<StatisticsEntry> returnList = new ArrayList<>();
-        users.forEach((timeIndex, userList) -> {
+        users.forEach((timeIndex, userSet) -> {
             ZonedDateTime start = switch (span) {
                 case DAY -> startDate.withHour(timeIndex);
                 case WEEK, MONTH -> startDate.plusDays(timeIndex);
@@ -661,7 +655,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 }
                 case YEAR -> startDate.withMonth(timeIndex);
             };
-            StatisticsEntry listElement = new StatisticsEntry(start, userList.size());
+            StatisticsEntry listElement = new StatisticsEntry(start, userSet.size());
             returnList.add(listElement);
         });
         return returnList;

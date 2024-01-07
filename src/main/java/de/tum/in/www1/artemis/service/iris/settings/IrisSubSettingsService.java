@@ -167,6 +167,12 @@ public class IrisSubSettingsService {
         if (newPreferredModel == null || newPreferredModel.isBlank()) {
             return null;
         }
+        var canChangePreferredModel = authCheckService.isAdmin() || (allowedModels != null && !allowedModels.isEmpty() && allowedModels.contains(newPreferredModel))
+                || ((allowedModels == null || allowedModels.isEmpty()) && parentAllowedModels != null && parentAllowedModels.contains(newPreferredModel));
+        if (canChangePreferredModel) {
+            return newPreferredModel;
+        }
+
         return preferredModel;
     }
 
