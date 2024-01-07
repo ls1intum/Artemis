@@ -51,7 +51,7 @@ import de.tum.in.www1.artemis.web.rest.repository.util.RepositoryExecutor;
  */
 public abstract class RepositoryResource {
 
-    protected static final Logger log = LoggerFactory.getLogger(RepositoryResource.class);
+    protected final Logger log = LoggerFactory.getLogger(getClass());
 
     private final ProfileService profileService;
 
