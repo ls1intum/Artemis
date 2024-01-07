@@ -230,8 +230,6 @@ export class TextSubmissionViewerComponent implements OnChanges {
 
         if (matches[0].from.line == 1 && matches[0].from.column != 0) {
             result += escape(fileLines[0].slice(0, matches[0].from.column - 1));
-        } else if (matches[0].from.line == 1 && matches[0].from.column == 0) {
-            result += '';
         } else {
             for (let i = 0; i < matches[0].from.line - 1; i++) {
                 result += escape(fileLines[i]) + '\n';
@@ -268,13 +266,13 @@ export class TextSubmissionViewerComponent implements OnChanges {
         if (idxLineFrom === idxLineTo) {
             result += escape(fileLines[idxLineFrom].slice(idxColumnFrom, idxColumnTo)) + this.tokenEnd;
         } else {
+            let j = idxLineFrom;
             if (idxColumnFrom > 0) {
                 result += escape(fileLines[idxLineFrom].slice(idxColumnFrom));
+                j += 1;
             }
-            for (let j = idxLineFrom + (idxColumnFrom > 0 ? 1 : 0); j < idxLineTo; j++) {
-                console.log('A "' + result + '"');
+            for (; j < idxLineTo; j++) {
                 if (result.trim() != this.tokenStart) {
-                    console.log('A1 "' + result + '"');
                     result += '\n';
                 }
                 result += escape(fileLines[j]);
