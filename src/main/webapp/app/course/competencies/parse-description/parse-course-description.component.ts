@@ -29,8 +29,7 @@ export type CompetencyFormControls = {
     selector: 'jhi-parse-course-description',
     templateUrl: './parse-course-description.component.html',
 })
-export class ParseCoureDescriptionComponent implements OnInit, ComponentCanDeactivate {
-    //TODO: fix: reload is still possible
+export class ParseCourseDescriptionComponent implements OnInit, ComponentCanDeactivate {
     courseId: number;
     isLoading = false;
     submitted: boolean = false;

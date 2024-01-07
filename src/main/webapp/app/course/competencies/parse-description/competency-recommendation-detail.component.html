@@ -9,9 +9,18 @@
         </div>
         <div>
             @if (!isInEditMode) {
-                <jhi-button [btnType]="ButtonType.WARNING" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.edit'" [icon]="faEdit" (onClick)="edit()" [shouldSubmit]="false" />
+                <jhi-button
+                    id="editButton-{{ index }}"
+                    [btnType]="ButtonType.WARNING"
+                    [btnSize]="ButtonSize.SMALL"
+                    [title]="'entity.action.edit'"
+                    [icon]="faEdit"
+                    (onClick)="edit()"
+                    [shouldSubmit]="false"
+                />
             } @else {
                 <jhi-button
+                    id="saveButton-{{ index }}"
                     [btnType]="ButtonType.SUCCESS"
                     [btnSize]="ButtonSize.SMALL"
                     [title]="'entity.action.save'"
@@ -21,7 +30,15 @@
                     [shouldSubmit]="false"
                 />
             }
-            <jhi-button [btnType]="ButtonType.ERROR" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.delete'" [icon]="faTrash" (click)="delete()" [shouldSubmit]="false" />
+            <jhi-button
+                id="deleteButton-{{ index }}"
+                [btnType]="ButtonType.ERROR"
+                [btnSize]="ButtonSize.SMALL"
+                [title]="'entity.action.delete'"
+                [icon]="faTrash"
+                (click)="delete()"
+                [shouldSubmit]="false"
+            />
         </div>
     </div>
     <div class="card-body border-0" [ngbCollapse]="isCollapsed" formGroupName="competency">
@@ -58,7 +75,6 @@
         </div>
         <div class="form-group">
             <label for="taxonomy-{{ index }}">{{ 'artemisApp.competency.taxonomy' | artemisTranslate }}</label>
-            <!-- TODO: extract select to own component? -->
             <select formControlName="taxonomy" class="form-select" id="taxonomy-{{ index }}">
                 <option [ngValue]="undefined" selected></option>
                 @for (taxonomy of competencyTaxonomy | keyvalue: keepOrder; track taxonomy; let i = $index) {

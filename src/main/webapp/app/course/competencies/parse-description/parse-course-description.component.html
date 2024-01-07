@@ -20,8 +20,8 @@
             }
         </div>
         <div>
-            <jhi-button [btnType]="ButtonType.SECONDARY" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="onCancel()" [shouldSubmit]="false" />
-            <jhi-button [title]="'entity.action.save'" [icon]="faSave" [disabled]="!isSubmitPossible" [isLoading]="isLoading" />
+            <jhi-button id="cancelButton" [btnType]="ButtonType.SECONDARY" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="onCancel()" [shouldSubmit]="false" />
+            <jhi-button id="saveButton" [title]="'entity.action.save'" [icon]="faSave" [disabled]="!isSubmitPossible" [isLoading]="isLoading" />
         </div>
     </form>
 </div>

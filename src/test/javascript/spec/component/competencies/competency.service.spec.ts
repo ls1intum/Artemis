@@ -203,4 +203,31 @@ describe('CompetencyService', () => {
 
         expect(result).toBeTrue();
     }));
+
+    it('should parse a list of competencies from a course description', fakeAsync(() => {
+        const description = 'Lorem ipsum dolor sit amet';
+        const returnedFromService = defaultCompetencies;
+        const expected = defaultCompetencies;
+        let response: any;
+
+        competencyService.getCompetenciesFromCourseDescription(description, 1).subscribe((resp) => (response = resp));
+        const req = httpTestingController.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+        tick();
+
+        expect(response.body).toEqual(expected);
+    }));
+
+    it('should bulk create competencies', fakeAsync(() => {
+        const returnedFromService = defaultCompetencies;
+        const expected = defaultCompetencies;
+        let response: any;
+
+        competencyService.createBulk(defaultCompetencies, 1).subscribe((resp) => (response = resp));
+        const req = httpTestingController.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+        tick();
+
+        expect(response.body).toEqual(expected);
+    }));
 });

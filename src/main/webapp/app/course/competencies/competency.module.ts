@@ -15,7 +15,7 @@ import { CompetencyRingsComponent } from 'app/course/competencies/competency-rin
 import { CompetencyImportComponent } from 'app/course/competencies/competency-management/competency-import.component';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
-import { ParseCoureDescriptionComponent } from 'app/course/competencies/parse-description/parse-course-description.component';
+import { ParseCourseDescriptionComponent } from 'app/course/competencies/parse-description/parse-course-description.component';
 import { CompetencyRecommendationDetailComponent } from 'app/course/competencies/parse-description/competency-recommendation-detail.component';
 import { CourseDescriptionComponent } from 'app/course/competencies/parse-description/course-description.component';
 
@@ -26,7 +26,7 @@ import { CourseDescriptionComponent } from 'app/course/competencies/parse-descri
         CompetencyRingsComponent,
         CreateCompetencyComponent,
         EditCompetencyComponent,
-        ParseCoureDescriptionComponent,
+        ParseCourseDescriptionComponent,
         CompetencyRecommendationDetailComponent,
         CourseDescriptionComponent,
         CompetencyManagementComponent,

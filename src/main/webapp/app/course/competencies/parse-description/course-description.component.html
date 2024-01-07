@@ -3,7 +3,7 @@
     <div class="form-group">
         <textarea
             class="form-control"
-            id="course-description"
+            id="courseDescription"
             rows="10"
             formControlName="courseDescription"
             [placeholder]="'artemisApp.competency.parseDescription.courseDescription.placeholder' | artemisTranslate"
@@ -29,6 +29,7 @@
         }
     </div>
     <jhi-button
+        id="generateButton"
         [btnType]="ButtonType.SUCCESS"
         [title]="!hasBeenSubmitted ? 'artemisApp.competency.parseDescription.courseDescription.generate' : 'artemisApp.competency.parseDescription.courseDescription.regenerate'"
         [icon]="!hasBeenSubmitted ? faCode : faRotateRight"
