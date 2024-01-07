@@ -3,8 +3,8 @@ package de.tum.in.www1.artemis.exercise.mathexercise;
 import java.time.ZonedDateTime;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.MathExercise;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.math.MathExercise;
 import de.tum.in.www1.artemis.exercise.ExerciseFactory;
 
 /**
@@ -23,7 +23,6 @@ public class MathExerciseFactory {
      */
     public static MathExercise generateMathExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
         var mathExercise = (MathExercise) ExerciseFactory.populateExercise(new MathExercise(), releaseDate, dueDate, assessmentDueDate, course);
-        mathExercise.setExampleSolution("This is my example solution");
         return mathExercise;
     }
 
@@ -35,7 +34,6 @@ public class MathExerciseFactory {
      */
     public static MathExercise generateMathExerciseForExam(ExerciseGroup exerciseGroup) {
         var mathExercise = (MathExercise) ExerciseFactory.populateExerciseForExam(new MathExercise(), exerciseGroup);
-        mathExercise.setExampleSolution("This is my example solution");
         return mathExercise;
     }
 
@@ -48,7 +46,6 @@ public class MathExerciseFactory {
      */
     public static MathExercise generateMathExerciseForExam(ExerciseGroup exerciseGroup, String title) {
         var mathExercise = (MathExercise) ExerciseFactory.populateExerciseForExam(new MathExercise(), exerciseGroup, title);
-        mathExercise.setExampleSolution("This is my example solution");
         return mathExercise;
     }
 

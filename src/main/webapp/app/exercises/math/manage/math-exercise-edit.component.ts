@@ -27,10 +27,10 @@ import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exercises/course-utils';
 
 @Component({
-    selector: 'jhi-math-exercise-update',
-    templateUrl: './math-exercise-update.component.html',
+    selector: 'jhi-math-exercise-edit',
+    templateUrl: './math-exercise-edit.component.html',
 })
-export class MathExerciseUpdateComponent implements OnInit, OnDestroy {
+export class MathExerciseEditComponent implements OnInit, OnDestroy {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly documentationType: DocumentationType = 'Math';
 

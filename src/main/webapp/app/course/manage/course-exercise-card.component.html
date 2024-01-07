@@ -10,8 +10,8 @@
                 <ng-content select="[exerciseCreateButtons]" />
             </div>
         }
-        <button class="btn question-collapse" (click)="isCollapsed = !isCollapsed" [attr.aria-expanded]="!isCollapsed" [attr.aria-controls]="'collapseQuestion'">
-            <fa-icon size="2x" [icon]="isCollapsed ? faAngleRight : faAngleDown" />
+        <button class="btn question-collapse collapse-button" (click)="isCollapsed = !isCollapsed" [attr.aria-expanded]="!isCollapsed" [attr.aria-controls]="'collapseQuestion'">
+            <fa-icon size="2x" class="collapse-icon" [icon]="isCollapsed ? faAngleRight : faAngleDown" />
         </button>
     </div>
     <div [ngbCollapse]="isCollapsed || exerciseCount === 0">

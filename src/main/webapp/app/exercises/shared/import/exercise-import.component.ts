@@ -14,6 +14,7 @@ import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pag
 import { Subject } from 'rxjs';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
 import { FileUploadExercisePagingService } from 'app/exercises/file-upload/manage/file-upload-exercise-paging.service';
+import { MathExercisePagingService } from 'app/exercises/math/manage/math-exercise-paging.service';
 
 export type TableColumn = 'ID' | 'TITLE' | 'COURSE_TITLE' | 'EXAM_TITLE' | 'PROGRAMMING_LANGUAGE';
 
@@ -97,6 +98,8 @@ export class ExerciseImportComponent implements OnInit {
                 return this.injector.get(TextExercisePagingService);
             case ExerciseType.FILE_UPLOAD:
                 return this.injector.get(FileUploadExercisePagingService);
+            case ExerciseType.MATH:
+                return this.injector.get(MathExercisePagingService);
             default:
                 throw new Error('Unsupported exercise type: ' + this.exerciseType);
         }

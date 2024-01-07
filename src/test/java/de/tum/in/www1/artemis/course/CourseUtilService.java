@@ -17,6 +17,8 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.math.MathExercise;
+import de.tum.in.www1.artemis.domain.math.MathSubmission;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -310,7 +312,6 @@ public class CourseUtilService {
 
         MathExercise mathExercise = MathExerciseFactory.generateMathExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
         mathExercise.setGradingInstructions("some grading instructions");
-        mathExercise.setExampleSolution("Example Solution");
         exerciseUtilService.addGradingInstructionsToExercise(mathExercise);
         mathExercise.getCategories().add("Math");
         course1.addExercises(mathExercise);

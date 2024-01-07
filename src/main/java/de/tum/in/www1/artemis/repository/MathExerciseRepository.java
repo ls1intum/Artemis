@@ -11,8 +11,8 @@ import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.MathExercise;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.math.MathExercise;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**

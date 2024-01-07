@@ -25,10 +25,10 @@ import { NonProgrammingExerciseDetailCommonActionsModule } from 'app/exercises/s
 
 import { mathExerciseRoute } from './math-exercise.route';
 import { MathExerciseComponent } from './math-exercise.component';
-import { MathExerciseUpdateComponent } from './math-exercise-update.component';
 import { MathExerciseDetailComponent } from './math-exercise-detail.component';
 import { MathExerciseRowButtonsComponent } from './math-exercise-row-buttons.component';
 import { ArtemisMathExerciseComposeModule } from 'app/exercises/math/compose/math-exercise-compose.module';
+import { MathExerciseEditComponent } from 'app/exercises/math/manage/math-exercise-edit.component';
 
 const ENTITY_STATES = [...mathExerciseRoute];
 
@@ -58,7 +58,7 @@ const ENTITY_STATES = [...mathExerciseRoute];
         ExerciseUpdatePlagiarismModule,
         ArtemisMathExerciseComposeModule,
     ],
-    declarations: [MathExerciseComponent, MathExerciseDetailComponent, MathExerciseUpdateComponent, MathExerciseRowButtonsComponent],
+    declarations: [MathExerciseComponent, MathExerciseDetailComponent, MathExerciseEditComponent, MathExerciseRowButtonsComponent],
     exports: [MathExerciseComponent],
 })
 export class ArtemisMathExerciseModule {}

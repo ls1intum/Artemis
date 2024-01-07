@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.math.MathExercise;
+import de.tum.in.www1.artemis.domain.math.MathSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
@@ -69,7 +71,6 @@ public class MathExerciseImportService extends ExerciseImportService {
         MathExercise newExercise = new MathExercise();
 
         super.copyExerciseBasis(newExercise, importedExercise, gradingInstructionCopyTracker);
-        newExercise.setExampleSolution(importedExercise.getExampleSolution());
         return newExercise;
     }
 
@@ -120,7 +121,7 @@ public class MathExerciseImportService extends ExerciseImportService {
             newSubmission.setSubmissionDate(originalSubmission.getSubmissionDate());
             newSubmission.setType(originalSubmission.getType());
             newSubmission.setParticipation(originalSubmission.getParticipation());
-            newSubmission.setText(((MathSubmission) originalSubmission).getText());
+            newSubmission.setContent(((MathSubmission) originalSubmission).getContent());
             newSubmission = submissionRepository.saveAndFlush(newSubmission);
             newSubmission.addResult(copyExampleResult(originalSubmission.getLatestResult(), newSubmission, gradingInstructionCopyTracker));
             newSubmission = submissionRepository.saveAndFlush(newSubmission);

@@ -11,6 +11,7 @@ import javax.validation.constraints.NotNull;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.math.MathSubmission;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -61,13 +62,13 @@ public class ParticipationFactory {
      * @return The generated MathSubmission
      */
     public static MathSubmission generateMathSubmission(String text, Language language, boolean submitted) {
-        MathSubmission textSubmission = new MathSubmission();
-        textSubmission.text(text);
-        textSubmission.setSubmitted(submitted);
+        MathSubmission mathSubmission = new MathSubmission();
+        mathSubmission.setContent(text);
+        mathSubmission.setSubmitted(submitted);
         if (submitted) {
-            textSubmission.setSubmissionDate(now().minusDays(1));
+            mathSubmission.setSubmissionDate(now().minusDays(1));
         }
-        return textSubmission;
+        return mathSubmission;
     }
 
     /**

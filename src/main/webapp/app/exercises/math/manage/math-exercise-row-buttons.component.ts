@@ -2,7 +2,7 @@ import { Subject } from 'rxjs';
 import { Component, Input } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { faBook, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 import { MathExercise } from 'app/entities/math-exercise.model';
 import { MathExerciseService } from 'app/exercises/math/manage/math-exercise.service';
@@ -11,6 +11,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 @Component({
     selector: 'jhi-math-exercise-row-buttons',
     templateUrl: './math-exercise-row-buttons.component.html',
+    styleUrls: ['./math-exercise-row-buttons.component.scss'],
 })
 export class MathExerciseRowButtonsComponent {
     @Input() courseId: number;
@@ -19,7 +20,7 @@ export class MathExerciseRowButtonsComponent {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     // Icons
-    faTimes = faTimes;
+    faTrash = faTrash;
     faBook = faBook;
     faWrench = faWrench;
     faUsers = faUsers;

@@ -12,6 +12,8 @@ import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.math.MathExercise;
+import de.tum.in.www1.artemis.domain.math.MathSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
@@ -111,7 +113,7 @@ public class MathExerciseUtilService {
             studentParticipation = participationRepository.save(studentParticipation);
 
             submission.setParticipation(studentParticipation);
-            submission.setText(text);
+            submission.setContent(text);
             submission.setSubmitted(true);
             submission.setSubmissionDate(ZonedDateTime.now());
 

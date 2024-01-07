@@ -16,6 +16,7 @@ export class DeleteButtonDirective implements OnInit {
     @Input() actionType: ActionType = ActionType.Delete;
     @Input() buttonType: ButtonType = ButtonType.ERROR;
     @Input() renderButtonStyle = true;
+    @Input() renderButtonSpacing = true;
     @Input() renderButtonText = true;
     @Input() requireConfirmationOnlyForAdditionalChecks = false;
     @Input() dialogError: Observable<string>;
@@ -27,7 +28,7 @@ export class DeleteButtonDirective implements OnInit {
     constructor(
         private deleteDialogService: DeleteDialogService,
         private renderer: Renderer2,
-        private elementRef: ElementRef,
+        private elementRef: ElementRef<HTMLElement>,
         private translateService: TranslateService,
     ) {}
 
@@ -41,8 +42,12 @@ export class DeleteButtonDirective implements OnInit {
             this.renderer.addClass(this.elementRef.nativeElement, 'btn');
             this.renderer.addClass(this.elementRef.nativeElement, this.buttonType);
             this.renderer.addClass(this.elementRef.nativeElement, this.buttonSize);
+        }
+
+        if (this.renderButtonStyle && this.renderButtonSpacing) {
             this.renderer.addClass(this.elementRef.nativeElement, 'me-1');
         }
+
         this.renderer.setProperty(this.elementRef.nativeElement, 'type', 'submit');
 
         // create a span with delete text

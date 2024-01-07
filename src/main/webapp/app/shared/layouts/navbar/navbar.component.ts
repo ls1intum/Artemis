@@ -249,6 +249,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         modeling_exercises: 'artemisApp.course.exercises',
         file_upload_exercises: 'artemisApp.course.exercises',
         quiz_exercises: 'artemisApp.course.exercises',
+        math_exercises: 'artemisApp.course.exercises',
         participations: 'artemisApp.participation.home.title',
         submissions: 'artemisApp.exercise.submissions',
         complaints: 'artemisApp.complaint.listOfComplaints.title',
@@ -441,6 +442,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'file-upload-exercises':
             case 'programming-exercises':
             case 'quiz-exercises':
+            case 'math-exercises':
             case 'assessment-dashboard':
                 this.addResolvedTitleAsCrumb(EntityType.EXERCISE, [Number(segment)], currentPath, segment);
                 break;

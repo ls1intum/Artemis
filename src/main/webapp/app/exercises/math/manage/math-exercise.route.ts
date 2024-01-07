@@ -14,8 +14,8 @@ import { Authority } from 'app/shared/constants/authority.constants';
 
 import { MathExerciseService } from './math-exercise.service';
 import { MathExerciseDetailComponent } from './math-exercise-detail.component';
-import { MathExerciseUpdateComponent } from './math-exercise-update.component';
 import { MathExerciseComposeComponent } from '../compose/math-exercise-compose.component';
+import { MathExerciseEditComponent } from 'app/exercises/math/manage/math-exercise-edit.component';
 
 @Injectable({ providedIn: 'root' })
 export class MathExerciseResolver implements Resolve<MathExercise> {
@@ -55,7 +55,7 @@ export class MathExerciseResolver implements Resolve<MathExercise> {
 export const mathExerciseRoute: Routes = [
     {
         path: ':courseId/math-exercises/new',
-        component: MathExerciseUpdateComponent,
+        component: MathExerciseEditComponent,
         resolve: {
             mathExercise: MathExerciseResolver,
         },
@@ -91,7 +91,7 @@ export const mathExerciseRoute: Routes = [
     },
     {
         path: ':courseId/math-exercises/:exerciseId/edit',
-        component: MathExerciseUpdateComponent,
+        component: MathExerciseEditComponent,
         resolve: {
             mathExercise: MathExerciseResolver,
         },
@@ -103,7 +103,7 @@ export const mathExerciseRoute: Routes = [
     },
     {
         path: ':courseId/math-exercises/:exerciseId/import',
-        component: MathExerciseUpdateComponent,
+        component: MathExerciseEditComponent,
         resolve: {
             mathExercise: MathExerciseResolver,
         },
