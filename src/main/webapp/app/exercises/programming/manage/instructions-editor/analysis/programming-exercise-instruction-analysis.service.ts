@@ -41,7 +41,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
      * Analyze the test cases for the following criteria:
      * - Are test cases in the problem statement that don't exist for the exercise?
      * - Do test cases exist for this exercise that are not part of the problem statement?
-     * - Are any test cases in the problem statement duplicated?
+     * - Are any test cases in the problem statement repeated?
      *
      * Will also set the invalidTestCases & missingTestCases & repeatedTestCases attributes of the component.
      *
