@@ -99,7 +99,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         return repository.getLocalPath().toAbsolutePath();
     }
 
-    public static void copyDirectory(File sourceDir, File targetDir) throws IOException {
+    private static void copyDirectory(File sourceDir, File targetDir) throws IOException {
         IOFileFilter gitFilter = new IOFileFilter() {
 
             @Override
@@ -267,7 +267,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
     }
 
     private void migrateStudents(List<ProgrammingExerciseStudentParticipation> participations) {
-        for (var participation : participations)
+        for (var participation : participations) {
             try {
                 var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(participation.getProgrammingExercise(), participation.getRepositoryUri());
                 participation.setRepositoryUri(url);
@@ -277,6 +277,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
                 log.error("Failed to migrate student participation with id {}", participation.getId(), e);
                 errorList.add(participation);
             }
+        }
     }
 
     /**
