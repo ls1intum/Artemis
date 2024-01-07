@@ -1,17 +1,19 @@
 package de.tum.in.www1.artemis.config.migration.entries;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +42,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
 
     private static final int BATCH_SIZE = 100;
 
-    private static final int MAX_THREAD_COUNT = 1;
+    private static final int MAX_THREAD_COUNT = 10;
 
     private static final String ERROR_MESSAGE = "Failed to migrate programming exercises within nine hours. Aborting migration.";
 
@@ -97,25 +99,21 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         return repository.getLocalPath().toAbsolutePath();
     }
 
-    public static void copyDirectory(Path sourcePath, Path targetPath) throws IOException {
-        Files.walkFileTree(sourcePath, new SimpleFileVisitor<Path>() {
+    public static void copyDirectory(File sourceDir, File targetDir) throws IOException {
+        IOFileFilter gitFilter = new IOFileFilter() {
 
             @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                if (dir.endsWith(".git")) {
-                    return FileVisitResult.SKIP_SUBTREE;
-                }
-                Path targetDir = targetPath.resolve(sourcePath.relativize(dir));
-                Files.createDirectories(targetDir);
-                return FileVisitResult.CONTINUE;
+            public boolean accept(File file) {
+                return !file.getName().endsWith(".git");
             }
 
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                Files.copy(file, targetPath.resolve(sourcePath.relativize(file)), StandardCopyOption.REPLACE_EXISTING);
-                return FileVisitResult.CONTINUE;
+            public boolean accept(File dir, String name) {
+                return !name.endsWith(".git");
             }
-        });
+        };
+
+        FileUtils.copyDirectory(sourceDir, targetDir, gitFilter);
     }
 
     @Override
@@ -344,7 +342,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         final Path toPath = getRepoAbsoluteLocalPath(to);
 
         try {
-            copyDirectory(fromPath, toPath);
+            copyDirectory(fromPath.toFile(), toPath.toFile());
         }
         catch (IOException e) {
             log.error("Failed to copy repository from {} to {}", fromPath, toPath, e);
