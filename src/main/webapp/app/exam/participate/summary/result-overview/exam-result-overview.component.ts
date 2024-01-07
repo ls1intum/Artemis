@@ -18,6 +18,8 @@ type ExerciseInfo = {
     colorClass?: string;
 };
 
+type ResultOverviewSection = 'grading-table' | 'grading-key' | 'bonus-grading-key';
+
 @Component({
     selector: 'jhi-exam-result-overview',
     styleUrls: ['./exam-result-overview.component.scss'],
@@ -61,6 +63,12 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
      */
     showResultOverview = false;
 
+    isCollapsed: Record<ResultOverviewSection, boolean> = {
+        'grading-table': false,
+        'grading-key': true,
+        'bonus-grading-key': true,
+    };
+
     constructor(
         private serverDateService: ArtemisServerDateService,
         public exerciseService: ExerciseService,
@@ -89,11 +97,55 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
         this.maxPoints = this.studentExamWithGrade?.maxPoints ?? 0;
         this.isBonusGradingKeyDisplayed = this.studentExamWithGrade.studentResult.gradeWithBonus?.bonusGrade != undefined;
 
-        this.overallAchievedPoints = this.studentExamWithGrade?.studentResult.overallPointsAchieved ?? 0;
-        this.overallAchievedPercentageRoundedByCourseSettings = roundScorePercentSpecifiedByCourseSettings(
-            (this.studentExamWithGrade.studentResult.overallScoreAchieved ?? 0) / 100,
-            this.studentExamWithGrade.studentExam?.exam?.course,
-        );
+        this.overallAchievedPoints = this.getOverallAchievedPoints();
+        this.overallAchievedPercentageRoundedByCourseSettings = this.getOverallAchievedPercentageRoundedByCourseSettings();
+    }
+
+    /**
+     * used as fallback if not pre-calculated by the server
+     */
+    private sumExerciseScores() {
+        return (this.studentExamWithGrade.studentExam?.exercises ?? []).reduce((exerciseScoreSum, exercise) => {
+            const achievedPoints = this.studentExamWithGrade?.achievedPointsPerExercise?.[exercise.id!] ?? 0;
+            return exerciseScoreSum + achievedPoints;
+        }, 0);
+    }
+
+    private getOverallAchievedPoints() {
+        const overallAchievedPoints = this.studentExamWithGrade?.studentResult.overallPointsAchieved;
+        if (overallAchievedPoints === undefined || overallAchievedPoints === 0) {
+            return this.sumExerciseScores();
+        }
+
+        return overallAchievedPoints;
+    }
+
+    private getOverallAchievedPercentageRoundedByCourseSettings() {
+        let overallScoreAchieved = this.studentExamWithGrade.studentResult.overallScoreAchieved;
+        if (overallScoreAchieved === undefined || overallScoreAchieved === 0) {
+            overallScoreAchieved = this.summedAchievedExerciseScorePercentage();
+        }
+
+        return roundScorePercentSpecifiedByCourseSettings(overallScoreAchieved / 100, this.studentExamWithGrade.studentExam?.exam?.course);
+    }
+
+    /**
+     * used as fallback if not pre-calculated by the server
+     */
+    private summedAchievedExerciseScorePercentage() {
+        let summedPercentages = 0;
+        let numberOfExercises = 0;
+
+        Object.entries(this.exerciseInfos).forEach(([, exerciseInfo]) => {
+            summedPercentages += exerciseInfo.achievedPercentage ?? 0;
+            numberOfExercises++;
+        });
+
+        if (numberOfExercises === 0) {
+            return 0;
+        }
+
+        return summedPercentages / numberOfExercises;
     }
 
     /**
@@ -174,5 +226,9 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
 
     toggleBonusGradingKey(): void {
         this.isBonusGradingKeyCollapsed = !this.isBonusGradingKeyCollapsed;
+    }
+
+    toggleCollapse(resultOverviewSection: ResultOverviewSection) {
+        return () => (this.isCollapsed[resultOverviewSection] = !this.isCollapsed[resultOverviewSection]);
     }
 }
