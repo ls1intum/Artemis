@@ -1,6 +1,6 @@
-<div class="container" (mouseenter)="toggleScrollLock(true)" (mouseleave)="toggleScrollLock(false)">
+<div class="container">
     <!-- chat box -->
-    <div class="matlog-position chat-widget">
+    <div class="chat-widget">
         <!-- client -->
         <div class="client">
             <div class="chat-header">
@@ -21,16 +21,6 @@
                         @if (isClearChatButtonEnabled()) {
                             <button id="clear-chat-button" (click)="onClearSession(clearConfirmModal)" class="header-icon">
                                 <fa-icon [icon]="faTrash"></fa-icon>
-                            </button>
-                        }
-                        @if (!fullSize) {
-                            <button (click)="maximizeScreen()" class="header-icon">
-                                <fa-icon [icon]="faExpand"></fa-icon>
-                            </button>
-                        }
-                        @if (fullSize) {
-                            <button (click)="minimizeScreen()" class="header-icon">
-                                <fa-icon [icon]="faCompress"></fa-icon>
                             </button>
                         }
                         <button (click)="closeChat()" class="header-icon">
@@ -60,9 +50,6 @@
         <div class="chat-body" #chatBody (scroll)="checkChatScroll()">
             @for (message of messages; track message; let i = $index) {
                 <div>
-                    @if (i === unreadMessageIndex) {
-                        <span class="unread-message" #unreadMessage>{{ 'artemisApp.exerciseChatbot.unreadMessages' | artemisTranslate }}</span>
-                    }
                     @for (content of message.content; track content) {
                         <div>
                             @if (isStudentSentMessage(message)) {
@@ -87,7 +74,7 @@
                                     @if (isTextContent(content)) {
                                         <div style="display: flex">
                                             <pre><span [innerHTML]="getTextContent(content)! | htmlForMarkdown"
-                        class="bubble-right"></span></pre>
+               class="bubble-right"></span></pre>
                                         </div>
                                     }
                                 </div>
@@ -116,51 +103,6 @@
                                                     size="sm"
                                                 ></fa-icon>
                                             </button>
-                                        </div>
-                                    }
-                                    @if (isExercisePlan(content)) {
-                                        <div class="bubble-left">
-                                            @for (step of content.steps; track step; let i = $index) {
-                                                <div>
-                                                    <!-- step component with show/hide button -->
-                                                    <div [ngStyle]="{ 'background-color': getStepColor(step) }" [ngClass]="isHidden(step) ? 'show-details' : 'hide-details'">
-                                                        <div class="step-component">
-                                                            <span [innerHTML]="getStepName(step) | htmlForMarkdown"></span>
-                                                            <button (click)="hideOrUnhide(step)" class="detail-btn step-title">
-                                                                {{ isHidden(step) ? 'Show Details' : 'Hide Details' }}
-                                                            </button>
-                                                        </div>
-                                                        <span class="step-status" [innerHTML]="getStepStatus(step) | htmlForMarkdown"></span>
-                                                    </div>
-                                                    <!-- step instructions (editable) in a text box -->
-                                                    @if (!isHidden(step)) {
-                                                        <div [attr.contenteditable]="isNotExecuted(step)" class="step-detail">
-                                                            <span [innerHTML]="step.instructions! | htmlForMarkdown"></span>
-                                                        </div>
-                                                    }
-                                                    <!-- loading icon -->
-                                                    @if (isInProgress(step)) {
-                                                        <div>
-                                                            <i class="fa fa-spinner fa-spin"></i>
-                                                        </div>
-                                                    }
-                                                </div>
-                                            }
-                                            <!-- execute/pause button -->
-                                            <div class="execute-button">
-                                                @if (!content.executing) {
-                                                    <div>
-                                                        <button class="btn btn-primary" (click)="setExecuting(message.id, content)" [disabled]="!canExecute(content)">
-                                                            {{ getPlanButtonTitle(content) }}
-                                                        </button>
-                                                    </div>
-                                                }
-                                                @if (content.executing) {
-                                                    <div>
-                                                        <button (click)="pausePlan(content)" class="btn btn-danger">Pause</button>
-                                                    </div>
-                                                }
-                                            </div>
                                         </div>
                                     }
                                 </div>
@@ -201,16 +143,6 @@
             <div class="scroll-to-bottom" [hidden]="isScrolledToBottom" (click)="scrollToBottom('smooth')" #scrollArrow>
                 <fa-icon [icon]="faArrowDown"></fa-icon>
             </div>
-            @if (shouldShowEmptyMessageError && error && isEmptyMessageError()) {
-                <div class="client-chat-error" [@fadeAnimation]="fadeState" (@fadeAnimation.done)="onFadeAnimationPhaseEnd($event)">
-                    {{ error.key | artemisTranslate }}
-                </div>
-            }
-            @if (error && !isEmptyMessageError()) {
-                <div class="client-chat-error">
-                    {{ error.key | artemisTranslate: getConvertedErrorMap() }}
-                </div>
-            }
         </div>
         <!-- input field section -->
         <div class="chat-input">

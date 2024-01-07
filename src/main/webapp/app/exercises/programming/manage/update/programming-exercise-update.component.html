@@ -8,9 +8,6 @@
                     }
                     <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
                 </div>
-                @if (isIrisEnabled()) {
-                    <jhi-exercise-creation-chatbot-button [paramsOnSend]="getFormDataAndProblemStatement"></jhi-exercise-creation-chatbot-button>
-                }
                 @if (!isEdit && !isExamMode && !isImportFromExistingExercise) {
                     <div class="flex-grow-1 ms-3">
                         <div class="guided-mode-button">
@@ -48,78 +45,83 @@
             [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
         ></jhi-programming-exercise-update-wizard>
     }
-    @if (!isShowingWizardMode) {
-        <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)">
-            <div class="update-programming-exercise">
-                <div class="form-group" [hidden]="isImportFromExistingExercise || !programmingExercise.id">
-                    <label for="id" jhiTranslate="global.field.id">ID</label>
-                    <input type="text" class="form-control" id="id" name="id" [(ngModel)]="programmingExercise.id" readonly />
-                </div>
-                <jhi-programming-exercise-info
-                    [programmingExercise]="programmingExercise"
-                    [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
-                    [isExamMode]="isExamMode"
-                    [isImport]="isImportFromExistingExercise || isImportFromFile"
-                />
-                <jhi-programming-exercise-difficulty
-                    [programmingExercise]="programmingExercise"
-                    [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
-                ></jhi-programming-exercise-difficulty>
-                <jhi-programming-exercise-language [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()">
-                </jhi-programming-exercise-language>
-                <jhi-programming-exercise-problem
-                    [(exercise)]="programmingExercise"
-                    [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
-                ></jhi-programming-exercise-problem>
-                <jhi-programming-exercise-grading
-                    class="form-step"
-                    [programmingExercise]="programmingExercise"
-                    [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
-                ></jhi-programming-exercise-grading>
-                <jhi-exercise-update-notification
-                    [exercise]="programmingExercise"
-                    [isImport]="isImportFromExistingExercise || isImportFromFile"
-                    [(notificationText)]="notificationText"
-                >
-                </jhi-exercise-update-notification>
-                @if (!isExamMode) {
-                    <jhi-exercise-update-plagiarism [exercise]="programmingExercise"> </jhi-exercise-update-plagiarism>
-                }
-                <div class="update-programming-exercise-footer">
-                    <div class="update-programming-exercise-footer-content">
-                        @if (isSaving) {
-                            <span jhiTranslate="artemisApp.quizExercise.edit.saving" class="badge bg-secondary"> </span>
-                        }
-                        <ng-template #tooltipTranslate>
-                            @for (reason of getInvalidReasons(); track reason) {
-                                <div>
-                                    <p jhiTranslate="{{ reason.translateKey }}"></p>
-                                </div>
+    <div style="display: flex">
+        @if (!isShowingWizardMode) {
+            <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)">
+                <div class="update-programming-exercise">
+                    <div class="form-group" [hidden]="isImportFromExistingExercise || !programmingExercise.id">
+                        <label for="id" jhiTranslate="global.field.id">ID</label>
+                        <input type="text" class="form-control" id="id" name="id" [(ngModel)]="programmingExercise.id" readonly />
+                    </div>
+                    <jhi-programming-exercise-info
+                        [programmingExercise]="programmingExercise"
+                        [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
+                        [isExamMode]="isExamMode"
+                        [isImport]="isImportFromExistingExercise || isImportFromFile"
+                    />
+                    <jhi-programming-exercise-difficulty
+                        [programmingExercise]="programmingExercise"
+                        [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
+                    ></jhi-programming-exercise-difficulty>
+                    <jhi-programming-exercise-language [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()">
+                    </jhi-programming-exercise-language>
+                    <jhi-programming-exercise-problem
+                        [(exercise)]="programmingExercise"
+                        [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
+                    ></jhi-programming-exercise-problem>
+                    <jhi-programming-exercise-grading
+                        class="form-step"
+                        [programmingExercise]="programmingExercise"
+                        [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
+                    ></jhi-programming-exercise-grading>
+                    <jhi-exercise-update-notification
+                        [exercise]="programmingExercise"
+                        [isImport]="isImportFromExistingExercise || isImportFromFile"
+                        [(notificationText)]="notificationText"
+                    >
+                    </jhi-exercise-update-notification>
+                    @if (!isExamMode) {
+                        <jhi-exercise-update-plagiarism [exercise]="programmingExercise"> </jhi-exercise-update-plagiarism>
+                    }
+                    <div class="update-programming-exercise-footer">
+                        <div class="update-programming-exercise-footer-content">
+                            @if (isSaving) {
+                                <span jhiTranslate="artemisApp.quizExercise.edit.saving" class="badge bg-secondary"> </span>
                             }
-                        </ng-template>
-                        @if (getInvalidReasons().length > 0) {
-                            <span class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right auto">
-                                <fa-icon [icon]="faExclamationCircle"></fa-icon>
-                                <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
-                                <span>({{ getInvalidReasons().length }})</span>
-                            </span>
-                        }
-                        <button type="button" id="cancel-save" class="btn btn-secondary me-1" (click)="previousState()">
-                            <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
-                        </button>
-                        <jhi-button
-                            id="save-entity"
-                            [featureToggle]="FeatureToggle.ProgrammingExercises"
-                            [disabled]="getInvalidReasons().length > 0"
-                            [isLoading]="isSaving"
-                            [icon]="faSave"
-                            [title]="submitButtonTitle"
-                            (onClick)="save()"
-                        >
-                        </jhi-button>
+                            <ng-template #tooltipTranslate>
+                                @for (reason of getInvalidReasons(); track reason) {
+                                    <div>
+                                        <p jhiTranslate="{{ reason.translateKey }}"></p>
+                                    </div>
+                                }
+                            </ng-template>
+                            @if (getInvalidReasons().length > 0) {
+                                <span class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right auto">
+                                    <fa-icon [icon]="faExclamationCircle"></fa-icon>
+                                    <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
+                                    <span>({{ getInvalidReasons().length }})</span>
+                                </span>
+                            }
+                            <button type="button" id="cancel-save" class="btn btn-secondary me-1" (click)="previousState()">
+                                <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                            </button>
+                            <jhi-button
+                                id="save-entity"
+                                [featureToggle]="FeatureToggle.ProgrammingExercises"
+                                [disabled]="getInvalidReasons().length > 0"
+                                [isLoading]="isSaving"
+                                [icon]="faSave"
+                                [title]="submitButtonTitle"
+                                (onClick)="save()"
+                            >
+                            </jhi-button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </form>
-    }
+            </form>
+        }
+        @if (isIrisEnabled()) {
+            <jhi-new-exercise-creation-chatbot-button [paramsOnSend]="getFormDataAndProblemStatement"></jhi-new-exercise-creation-chatbot-button>
+        }
+    </div>
 </div>

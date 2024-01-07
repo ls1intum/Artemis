@@ -1,0 +1,13 @@
+<div>
+    @if (!chatOpen) {
+        <jhi-iris-logo [size]="IrisLogoSize.SMALL" class="btn" (click)="handleButtonClick()"></jhi-iris-logo>
+    }
+    @if (chatOpen) {
+        <jhi-exercise-creation-widget
+            [stateStore]="stateStore"
+            [courseId]="courseId"
+            [sessionService]="sessionService"
+            [paramsOnSend]="paramsOnSend"
+        ></jhi-exercise-creation-widget>
+    }
+</div>
