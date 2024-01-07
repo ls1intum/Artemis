@@ -208,7 +208,7 @@
                 "issues": "Testfallprobleme.",
                 "ok": "Testfälle ok.",
                 "invalidTestCase": "Der Testfall '{{id}}' konnte nicht im Test-Repository gefunden werden.",
-                "repeatedTestCase": "Der Testfall '{{id}}' ist dupliziert.",
+                "repeatedTestCase": "Der Testfall '{{id}}' wiederholt sich.",
                 "repeatedTestCases": "{{number}} Testfälle wiederholen sich. Das kann unerwartetes Verhalten verursachen:"
             },
             "tasksAnalysis": {
