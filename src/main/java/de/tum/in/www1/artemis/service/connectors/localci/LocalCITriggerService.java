@@ -47,7 +47,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
-        String repositoryTypeOrUserName = participation.getVcsRepositoryUrl().repositoryNameWithoutProjectKey();
+        String repositoryTypeOrUserName = participation.getVcsRepositoryUri().repositoryNameWithoutProjectKey();
 
         if (Objects.equals(repositoryTypeOrUserName, "exercise")) {
             repositoryTypeOrUserName = "BASE";
