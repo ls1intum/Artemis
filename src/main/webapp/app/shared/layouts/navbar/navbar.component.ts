@@ -6,7 +6,7 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { VERSION } from 'app/app.constants';
+import { PROFILE_LOCALCI, VERSION } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -34,6 +34,7 @@ import {
     faCog,
     faEye,
     faFlag,
+    faGears,
     faHeart,
     faList,
     faLock,
@@ -86,6 +87,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     isExamActive = false;
     examActiveCheckFuture?: ReturnType<typeof setTimeout>;
     irisEnabled: boolean;
+    localCIActive: boolean = false;
 
     // Icons
     faBars = faBars;
@@ -110,6 +112,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     faBookOpen = faBookOpen;
     faUserPlus = faUserPlus;
     faSignOutAlt = faSignOutAlt;
+    faGears = faGears;
 
     private authStateSubscription: Subscription;
     private routerEventSubscription: Subscription;
@@ -192,6 +195,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
                 this.gitUsername = profileInfo.git.commit.user.name;
                 this.irisEnabled = profileInfo.activeProfiles.includes('iris');
+                this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
             }
         });
 
@@ -337,6 +341,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         exam_timeline: 'artemisApp.examTimeline.breadcrumb',
         iris_settings: 'artemisApp.iris.settings.title.breadcrumb',
         parse_description: 'artemisApp.competency.parseDescription.title',
+        build_queue: 'artemisApp.buildQueue.title',
     };
 
     studentPathBreadcrumbTranslations = {

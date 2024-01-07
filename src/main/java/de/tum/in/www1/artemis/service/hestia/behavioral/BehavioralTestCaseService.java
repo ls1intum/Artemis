@@ -169,7 +169,7 @@ public class BehavioralTestCaseService {
                 return Collections.emptyMap();
             }
             var solutionParticipation = solutionParticipationOptional.get();
-            var solutionRepo = gitService.getOrCheckoutRepository(solutionParticipation.getVcsRepositoryUrl(), true);
+            var solutionRepo = gitService.getOrCheckoutRepository(solutionParticipation.getVcsRepositoryUri(), true);
 
             gitService.resetToOriginHead(solutionRepo);
             gitService.pullIgnoreConflicts(solutionRepo);

@@ -25,6 +25,8 @@ import { NgModel } from '@angular/forms';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { CourseExercisesGroupedByTimeframeComponent } from 'app/overview/course-exercises/course-exercises-grouped-by-timeframe.component';
 import { CourseExercisesGroupedByWeekComponent } from 'app/overview/course-exercises/course-exercises-grouped-by-week.component';
+import { NotificationService } from 'app/shared/notification/notification.service';
+import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 
 describe('CourseOverviewExerciseListControls', () => {
     let parentFixture: ComponentFixture<CourseOverviewComponent>;
@@ -61,6 +63,7 @@ describe('CourseOverviewExerciseListControls', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: route },
+                { provide: NotificationService, useClass: MockNotificationService },
             ],
         })
             .compileComponents()
