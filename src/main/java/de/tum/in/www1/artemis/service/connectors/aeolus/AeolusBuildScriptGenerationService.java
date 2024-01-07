@@ -63,6 +63,6 @@ public class AeolusBuildScriptGenerationService extends BuildScriptGenerationSer
      * @return the Windfile
      */
     public Windfile translateBuildPlan(String buildPlanKey) {
-        return aeolusBuildPlanService.translateBuildPlan(buildPlanKey);
+        return aeolusBuildPlanService.translateBuildPlan(AeolusTarget.BAMBOO, buildPlanKey);
     }
 }

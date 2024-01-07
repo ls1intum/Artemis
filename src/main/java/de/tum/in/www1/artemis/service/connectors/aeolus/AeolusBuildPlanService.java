@@ -12,9 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -23,6 +21,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
@@ -30,7 +29,6 @@ import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.in.www1.artemis.service.connectors.aeolus.dto.AeolusGenerationResponseDTO;
-import de.tum.in.www1.artemis.service.connectors.aeolus.dto.AeolusTranslationResponseDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooInternalUrlService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 
@@ -180,17 +178,24 @@ public class AeolusBuildPlanService {
      * @param buildPlanKey the key of the build plan to generate the windfile for
      * @return the generated windfile
      */
-    public Windfile translateBuildPlan(String buildPlanKey) {
-        String requestUrl = aeolusUrl + "/translate/";
+    public Windfile translateBuildPlan(AeolusTarget target, String buildPlanKey) {
+        String requestUrl = aeolusUrl + "/translate/" + target.getName() + "/" + buildPlanKey;
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
-
+        builder.queryParam("result_format", "json");
+        builder.queryParam("exclude_repositories", true);
+        Map<String, Object> body = new HashMap<>();
+        body.put("url", ciUrl);
+        body.put("username", ciUsername);
+        body.put("token", ciToken);
+        var headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
         try {
-            ResponseEntity<AeolusTranslationResponseDTO> response = restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, AeolusTranslationResponseDTO.class);
+            ResponseEntity<String> response = restTemplate.exchange(builder.build().toUri(), HttpMethod.PUT, new HttpEntity<>(body, headers), String.class);
             if (response.getBody() != null) {
-                return response.getBody().getResult();
+                return Windfile.deserialize(response.getBody());
             }
         }
-        catch (RestClientException e) {
+        catch (RestClientException | JsonSyntaxException e) {
             LOGGER.error("Error while generating build script for build plan {}", buildPlanKey, e);
         }
         return null;

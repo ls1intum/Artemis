@@ -14,12 +14,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
 
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildScriptGenerationService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 
 @Component
 public class MigrationEntry20240104_195600 extends MigrationEntry {
@@ -51,7 +53,7 @@ public class MigrationEntry20240104_195600 extends MigrationEntry {
     // @Value("${artemis.version-control.default-branch}") somehow this is not working -> main it is
     protected String defaultBranch = "main";
 
-    public MigrationEntry20240104_195600(ProgrammingExerciseRepository programmingExerciseRepository, Optional<BambooMigrationService> ciMigrationService, Environment environment,
+    public MigrationEntry20240104_195600(ProgrammingExerciseRepository programmingExerciseRepository, Environment environment,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             Optional<AeolusBuildScriptGenerationService> aeolusBuildScriptGenerationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -126,9 +128,28 @@ public class MigrationEntry20240104_195600 extends MigrationEntry {
     }
 
     private void migrateSolutions(List<SolutionProgrammingExerciseParticipation> solutionParticipations) {
+        if (aeolusBuildScriptGenerationService.isEmpty()) {
+            log.error("Failed to migrate solutions because the AeolusBuildScriptGenerationService is not present.");
+            return;
+        }
         for (var solutionParticipation : solutionParticipations) {
             try {
-                // TODO add me
+                Windfile windfile = aeolusBuildScriptGenerationService.get().translateBuildPlan(solutionParticipation.getBuildPlanId());
+                windfile.setRepositories(null);
+                windfile.setId(null);
+                windfile.setName(null);
+                if (windfile.getMetadata().getDocker() == null) {
+                    throw new RuntimeException("Failed to migrate solution participation because the docker image is null.");
+                }
+                var programmingExercise = solutionParticipation.getProgrammingExercise();
+                programmingExercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
+                programmingExerciseRepository.save(programmingExercise);
+                var buildScript = aeolusBuildScriptGenerationService.get().getScript(programmingExercise);
+                if (buildScript == null) {
+                    throw new RuntimeException("Failed to migrate solution participation because the build script is null.");
+                }
+                programmingExercise.setBuildScript(buildScript);
+                programmingExerciseRepository.save(programmingExercise);
             }
             catch (Exception e) {
                 log.error("Failed to migrate solution participation with id {}", solutionParticipation.getId(), e);
@@ -171,6 +192,6 @@ public class MigrationEntry20240104_195600 extends MigrationEntry {
 
     @Override
     public String date() {
-        return "20240103_143700";
+        return "20240104_195600";
     }
 }
