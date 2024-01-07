@@ -63,7 +63,7 @@ public class AdminLtiConfigurationResource {
     public ResponseEntity<List<LtiPlatformConfiguration>> getAllConfiguredLtiPlatforms() {
         log.debug("REST request to get all configured lti platforms");
         List<LtiPlatformConfiguration> platforms = ltiPlatformConfigurationRepository.findAll();
-        return new ResponseEntity<>(platforms, HttpStatus.OK);
+        return ResponseEntity.ok(platforms);
     }
 
     /**
@@ -105,6 +105,11 @@ public class AdminLtiConfigurationResource {
     @EnforceAdmin
     public ResponseEntity<Void> updateLtiPlatformConfiguration(@RequestBody LtiPlatformConfiguration platform) {
         log.debug("REST request to update configured lti platform");
+
+        if (platform.getId() == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
         ltiPlatformConfigurationRepository.save(platform);
         return ResponseEntity.ok().build();
     }
