@@ -40,7 +40,7 @@ concurrency:
 # Keep in sync with codeql-analysis.yml and build.yml
 env:
   CI: true
-  node: 18
+  node: 20
   java: 17
 
 jobs:
