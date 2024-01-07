@@ -470,7 +470,7 @@ public class ProgrammingExerciseParticipationService {
             return gitService.getCommitInfos(participation.getVcsRepositoryUri());
         }
         catch (GitAPIException e) {
-            log.error("Could not get commit infos for participation " + participation.getId() + " with repository uri " + participation.getVcsRepositoryUri());
+            log.error("Could not get commit infos for participation {} with repository uri {}", participation.getId(), participation.getVcsRepositoryUri());
             return List.of();
         }
     }

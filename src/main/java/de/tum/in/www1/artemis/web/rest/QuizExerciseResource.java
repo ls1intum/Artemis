@@ -584,7 +584,7 @@ public class QuizExerciseResource {
             }
             catch (FilePathParsingException e) {
                 // if the path is invalid, we can't delete it, but we don't want to fail the whole deletion
-                log.warn("Could not find file " + path + " for deletion");
+                log.warn("Could not find file {} for deletion", path);
                 return null;
             }
         }).filter(Objects::nonNull).toList();

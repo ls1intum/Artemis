@@ -275,7 +275,7 @@ public class LocalCISharedBuildJobQueueService {
             return;
         }
 
-        log.info("Processing build job: " + buildJob);
+        log.info("Processing build job: {}", buildJob);
         String commitHash = buildJob.getCommitHash();
         boolean isRetry = buildJob.getRetryCount() >= 1;
 

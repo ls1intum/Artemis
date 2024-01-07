@@ -416,7 +416,7 @@ public class LocalVCServletService {
             // Something went wrong while retrieving the template participation.
             // At this point, programmingMessagingService.notifyUserAboutSubmissionError() does not work, because the template participation is not available.
             // The instructor will see in the UI that no build of the template repository was conducted and will receive an error message when triggering the build manually.
-            log.error("Something went wrong while triggering the template build for exercise " + exercise.getId() + " after the solution build was finished.", e);
+            log.error("Something went wrong while triggering the template build for exercise {} after the solution build was finished.", exercise.getId(), e);
         }
     }
 

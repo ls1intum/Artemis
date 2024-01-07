@@ -603,8 +603,8 @@ public class BambooBuildPlanService {
             }
         }
         catch (ContinuousIntegrationBuildPlanException e) {
-            log.error("Could not create custom build plan for exercise " + programmingExercise.getTitle() + " with id " + programmingExercise.getId()
-                    + ", will create default build plan", e);
+            log.error("Could not create custom build plan for exercise {} with id {}, will create default build plan", programmingExercise.getTitle(), programmingExercise.getId(),
+                    e);
         }
         return assignedKey;
     }
