@@ -231,9 +231,8 @@ export class TextSubmissionViewerComponent implements OnChanges {
         const fileLines = fileContent.split('\n');
         let result = '';
 
-        if (matches[0].from.line == 1 && matches[0].from.column != 0) {
-            result += escape(fileLines[0].slice(0, matches[0].from.column - 1));
-        } else {
+        // if the first match does not start at the beginning of the content append not affected symbols to the result
+        if (!(matches[0].from.line == 1 && matches[0].from.column == 0)) {
             for (let i = 0; i < matches[0].from.line - 1; i++) {
                 result += escape(fileLines[i]) + '\n';
             }
@@ -261,8 +260,8 @@ export class TextSubmissionViewerComponent implements OnChanges {
         const idxLineFrom = match.from.line - 1;
         const idxLineTo = match.to.line - 1;
 
-        const idxColumnFrom = match.from.column - 1;
-        const idxColumnTo = match.to.column + match.to.length - 1;
+        const idxColumnFrom = match.from.column > 0 ? match.from.column - 1 : 0;
+        const idxColumnTo = match.to.column + match.to.length;
 
         let result = this.tokenStart;
 
@@ -270,11 +269,14 @@ export class TextSubmissionViewerComponent implements OnChanges {
             result += escape(fileLines[idxLineFrom].slice(idxColumnFrom, idxColumnTo)) + this.tokenEnd;
         } else {
             let j = idxLineFrom;
+            // if match does not start at the first character add only contents after the match start
+            // and move the iterator to the next line
             if (idxColumnFrom > 0) {
                 result += escape(fileLines[idxLineFrom].slice(idxColumnFrom));
                 j += 1;
             }
             for (; j < idxLineTo; j++) {
+                // if not at the beginning of the match add the new line character
                 if (result.trim() != this.tokenStart) {
                     result += '\n';
                 }

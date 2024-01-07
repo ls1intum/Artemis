@@ -190,7 +190,7 @@ describe('Text Submission Viewer Component', () => {
         jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
 
         const fileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.`;
-        const expectedFileContent = `<span class="plagiarism-match">Lorem ipsum dolor</span> sit amet.\n<span class="plagiarism-match">Consetetur sadipscing elitr</span>.`;
+        const expectedFileContent = `<span class="plagiarism-match">Lorem ipsum dolor </span>sit amet.\n<span class="plagiarism-match">Consetetur sadipscing elitr.</span>`;
 
         const updatedFileContent = comp.insertMatchTokens(fileContent);
 
@@ -237,8 +237,8 @@ describe('Text Submission Viewer Component', () => {
         jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
         const fileContent = 'Lorem ipsum <fake-token>dolor sit amet.\n<test> test text for inserting tokens';
         const expectedFileContent =
-            'Lorem<span class="plagiarism-match"> ipsum &lt;fake</span>-token&gt;dolor sit amet.\n' +
-            '<span class="plagiarism-match">&lt;test&gt; test text for insert</span>ing tokens';
+            'Lorem<span class="plagiarism-match"> ipsum &lt;fake-</span>token&gt;dolor sit amet.\n' +
+            '<span class="plagiarism-match">&lt;test&gt; test text for inserti</span>ng tokens';
 
         const updatedFileContent = comp.insertMatchTokens(fileContent);
 
@@ -275,7 +275,7 @@ describe('Text Submission Viewer Component', () => {
         jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
         const fileContent = 'Lorem ipsum <fake-token>dolor sit amet.';
         // TODO double check that, this result seems wrong
-        const expectedFileContent = '<span class="plagiarism-match">Lorem ips</span>um &lt;fake-t<span class="plagiarism-match">oken&gt;dolor sit </span>amet.';
+        const expectedFileContent = '<span class="plagiarism-match">Lorem ipsu</span>m &lt;fake-t<span class="plagiarism-match">oken&gt;dolor sit a</span>met.';
 
         const updatedFileContent = comp.insertMatchTokens(fileContent);
 
