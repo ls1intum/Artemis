@@ -331,6 +331,6 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(persistedAttachmentUnit.getId()).isNotNull();
         assertThat(slideRepository.findAllByAttachmentUnitId(persistedAttachmentUnit.getId())).hasSize(0);
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + persistedAttachmentUnit.getId(), HttpStatus.OK);
-        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId(), HttpStatus.NOT_FOUND, Attachment.class);
+        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId(), HttpStatus.NOT_FOUND, AttachmentUnit.class);
     }
 }
