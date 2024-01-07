@@ -56,7 +56,13 @@ public class AeolusBuildScriptGenerationService extends BuildScriptGenerationSer
         return null;
     }
 
-    public String translateBuildPlan(String buildPlanKey) {
+    /**
+     * Translates the given Bamboo build plan (identified by {@code buildPlanKey}) into a Windfile.
+     *
+     * @param buildPlanKey the build plan key in Bamboo
+     * @return the Windfile
+     */
+    public Windfile translateBuildPlan(String buildPlanKey) {
         return aeolusBuildPlanService.translateBuildPlan(buildPlanKey);
     }
 }

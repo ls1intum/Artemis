@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.in.www1.artemis.service.connectors.aeolus.dto.AeolusGenerationResponseDTO;
+import de.tum.in.www1.artemis.service.connectors.aeolus.dto.AeolusTranslationResponseDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooInternalUrlService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 
@@ -179,12 +180,12 @@ public class AeolusBuildPlanService {
      * @param buildPlanKey the key of the build plan to generate the windfile for
      * @return the generated windfile
      */
-    public String translateBuildPlan(String buildPlanKey) {
+    public Windfile translateBuildPlan(String buildPlanKey) {
         String requestUrl = aeolusUrl + "/translate/";
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
 
         try {
-            ResponseEntity<AeolusGenerationResponseDTO> response = restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, AeolusGenerationResponseDTO.class);
+            ResponseEntity<AeolusTranslationResponseDTO> response = restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, AeolusTranslationResponseDTO.class);
             if (response.getBody() != null) {
                 return response.getBody().getResult();
             }
