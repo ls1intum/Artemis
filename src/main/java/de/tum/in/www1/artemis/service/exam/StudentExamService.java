@@ -51,7 +51,7 @@ public class StudentExamService {
 
     private static final String EXAM_EXERCISE_START_STATUS_TOPIC = "/topic/exams/%s/exercise-start-status";
 
-    private static final Logger logger = LoggerFactory.getLogger(StudentExamService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StudentExamService.class);
 
     private final ParticipationService participationService;
 
@@ -125,13 +125,13 @@ public class StudentExamService {
      * @param currentUser           the current user
      */
     public void submitStudentExam(StudentExam existingStudentExam, StudentExam studentExamFromClient, User currentUser) {
-        logger.debug("Submit student exam with id {}", studentExamFromClient.getId());
+        LOGGER.debug("Submit student exam with id {}", studentExamFromClient.getId());
 
         long start = System.nanoTime();
         // most important aspect here: set studentExam to submitted and set submission date
         // 3. DB Call: write
         submitStudentExam(studentExamFromClient);
-        logger.debug("    Set student exam to submitted in {}", formatDurationFrom(start));
+        LOGGER.debug("    Set student exam to submitted in {}", formatDurationFrom(start));
 
         start = System.nanoTime();
         try {
@@ -139,9 +139,9 @@ public class StudentExamService {
             saveSubmissions(studentExamFromClient, currentUser);
         }
         catch (Exception e) {
-            logger.error("saveSubmissions threw an exception", e);
+            LOGGER.error("saveSubmissions threw an exception", e);
         }
-        logger.debug("    Potentially save submissions in {}", formatDurationFrom(start));
+        LOGGER.debug("    Potentially save submissions in {}", formatDurationFrom(start));
 
         start = System.nanoTime();
         // NOTE: only for real exams and test exams, the student repositories need to be locked
@@ -152,11 +152,11 @@ public class StudentExamService {
                 programmingExerciseParticipationService.lockStudentRepositories(currentUser, existingStudentExam);
             }
             catch (Exception e) {
-                logger.error("lockStudentRepositories threw an exception", e);
+                LOGGER.error("lockStudentRepositories threw an exception", e);
             }
         }
 
-        logger.debug("    Lock student repositories in {}", formatDurationFrom(start));
+        LOGGER.debug("    Lock student repositories in {}", formatDurationFrom(start));
         // NOTE: from here on, we only handle test runs and test exams
 
         if (!studentExamFromClient.isTestRun() && !studentExamFromClient.isTestExam()) {
@@ -201,7 +201,7 @@ public class StudentExamService {
                 saveSubmission(currentUser, existingRelevantParticipations, exercise);
             }
             catch (Exception e) {
-                logger.error("saveSubmission threw an exception", e);
+                LOGGER.error("saveSubmission threw an exception", e);
             }
         }
     }
@@ -396,7 +396,7 @@ public class StudentExamService {
         else if (answer1 instanceof ShortAnswerSubmittedAnswer submittedAnswer1 && answer2 instanceof ShortAnswerSubmittedAnswer submittedAnswer2) {
             return isContentEqualTo(submittedAnswer1, submittedAnswer2);
         }
-        logger.error("Cannot compare {} and {} for equality, classes unknown", answer1, answer2);
+        LOGGER.error("Cannot compare {} and {} for equality, classes unknown", answer1, answer2);
         return false;
     }
 
@@ -442,7 +442,7 @@ public class StudentExamService {
             submissionVersionService.saveVersionForIndividual(submissionFromClient, currentUser);
         }
         catch (Exception ex) {
-            logger.error("Submission version could not be saved", ex);
+            LOGGER.error("Submission version could not be saved", ex);
         }
     }
 
@@ -656,11 +656,11 @@ public class StudentExamService {
                             programmingExerciseParticipationService.lockStudentParticipation(programmingParticipation);
                         }
                     }
-                    logger.info("SUCCESS: Start exercise for student exam {} and exercise {} and student {}", studentExam.getId(), exercise.getId(),
+                    LOGGER.info("SUCCESS: Start exercise for student exam {} and exercise {} and student {}", studentExam.getId(), exercise.getId(),
                             student.getParticipantIdentifier());
                 }
                 catch (Exception ex) {
-                    logger.warn("FAILED: Start exercise for student exam {} and exercise {} and student {} with exception: {}", studentExam.getId(), exercise.getId(),
+                    LOGGER.warn("FAILED: Start exercise for student exam {} and exercise {} and student {} with exception: {}", studentExam.getId(), exercise.getId(),
                             student.getParticipantIdentifier(), ex.getMessage(), ex);
                 }
             }
@@ -695,7 +695,7 @@ public class StudentExamService {
                         .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExams.size(),
                                 generatedParticipations.size(), startedAt, lock))
                         .exceptionally(throwable -> {
-                            logger.error("Exception while preparing exercises for student exam {}", studentExam.getId(), throwable);
+                            LOGGER.error("Exception while preparing exercises for student exam {}", studentExam.getId(), throwable);
                             sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExams.size(),
                                     generatedParticipations.size(), startedAt, lock);
                             return null;
@@ -731,12 +731,12 @@ public class StudentExamService {
                 cache.put(examId, status);
             }
             else {
-                logger.warn("Unable to add exam exercise start status to distributed cache because it is null");
+                LOGGER.warn("Unable to add exam exercise start status to distributed cache because it is null");
             }
             websocketMessagingService.sendMessage(EXAM_EXERCISE_START_STATUS_TOPIC.formatted(examId), status);
         }
         catch (Exception e) {
-            logger.warn("Failed to send exercise preparation status", e);
+            LOGGER.warn("Failed to send exercise preparation status", e);
         }
         finally {
             lock.unlock();
@@ -773,7 +773,7 @@ public class StudentExamService {
         studentExam.getExam().setExerciseGroups(null);
         studentExam.getExam().setStudentExams(null);
 
-        logger.info("Generated 1 student exam for {} in {} for exam {}", student.getId(), formatDurationFrom(start), exam.getId());
+        LOGGER.info("Generated 1 student exam for {} in {} for exam {}", student.getId(), formatDurationFrom(start), exam.getId());
 
         return studentExam;
     }
