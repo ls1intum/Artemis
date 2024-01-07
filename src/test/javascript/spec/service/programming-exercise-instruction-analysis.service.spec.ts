@@ -40,7 +40,7 @@ describe('ProgrammingExerciseInstructionAnalysisService', () => {
         expect(completeAnalysis).toEqual(expectedAnalysis);
     });
 
-    it('should analyse problem statement with duplicated test cases', () => {
+    it('should analyse problem statement with repeated test cases', () => {
         const testCases = ['testBubbleSort'];
         const expectedAnalysis = new Map();
         expectedAnalysis.set(0, { lineNumber: 0, repeatedTestCases: ['artemisApp.programmingExercise.testCaseAnalysis.repeatedTestCase'] });

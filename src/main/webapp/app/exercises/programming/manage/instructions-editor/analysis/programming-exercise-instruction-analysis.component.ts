@@ -66,7 +66,7 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
      * This includes three possible errors:
      * - having invalid test cases (that are not part of the test files)
      * - not using existing test cases in the markup
-     * - having duplicated test cases
+     * - having repeated test cases
      * The method makes sure to filter out duplicates in the test case list.
      */
     analyzeTasks() {
