@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
@@ -14,6 +15,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.web.rest.dto.CourseContentCount;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -159,4 +161,17 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     default Lecture findByIdWithLectureUnitsAndWithSlidesElseThrow(Long lectureId) {
         return findByIdWithLectureUnitsAndWithSlides(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
     }
+
+    @Query("""
+            select
+            new de.tum.in.www1.artemis.web.rest.dto.CourseContentCount(
+                COUNT(l.id),
+                l.course.id
+                )
+            FROM Lecture l
+            WHERE l.course.id IN :courseIds
+                AND (l.visibleDate IS NULL OR l.visibleDate <= :now)
+            GROUP BY l.course.id
+            """)
+    Set<CourseContentCount> countVisibleLectures(Set<Long> courseIds, @Param("now") ZonedDateTime now);
 }

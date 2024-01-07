@@ -197,6 +197,8 @@ public class NotificationConstants {
 
     public static final String MESSAGE_REPLY_IN_CONVERSATION_TEXT = "artemisApp.singleUserNotification.text.messageReply";
 
+    public static final String MESSAGE_REPLY_IN_CHANNEL_TEXT = "artemisApp.singleUserNotification.text.channelMessageReply";
+
     public static final String MENTIONED_IN_MESSAGE_TITLE = "artemisApp.singleUserNotification.title.mentionedInMessage";
 
     public static final String CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE = "artemisApp.singleUserNotification.title.createOneToOneChat";
