@@ -101,7 +101,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> saveModelingAssessment(@PathVariable long submissionId, @PathVariable long resultId,
             @RequestParam(value = "submit", defaultValue = "false") boolean submit, @RequestBody List<Feedback> feedbacks) {
         Submission submission = submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
-        return super.saveAssessment(submission, submit, feedbacks, resultId);
+        return super.saveAssessment(submission, submit, feedbacks, resultId, null);
     }
 
     /**

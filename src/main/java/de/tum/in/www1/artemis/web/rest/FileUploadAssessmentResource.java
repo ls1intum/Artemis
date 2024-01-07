@@ -73,7 +73,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
         Submission submission = submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
         // if a result exists, we want to override it, otherwise create a new one
         var resultId = submission.getLatestResult() != null ? submission.getLatestResult().getId() : null;
-        return super.saveAssessment(submission, submit, feedbacks, resultId);
+        return super.saveAssessment(submission, submit, feedbacks, resultId, null);
     }
 
     /**

@@ -106,7 +106,7 @@ public abstract class AssessmentResource {
      * @param resultId     resultId of the result we save the feedbackList to, null of no results exists yet
      * @return result after saving/submitting modeling assessment
      */
-    ResponseEntity<Result> saveAssessment(Submission submission, boolean submit, List<Feedback> feedbackList, Long resultId) {
+    ResponseEntity<Result> saveAssessment(Submission submission, boolean submit, List<Feedback> feedbackList, Long resultId, String assessmentNote) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
@@ -119,7 +119,7 @@ public abstract class AssessmentResource {
             throw new AccessForbiddenException("The user is not allowed to override the assessment");
         }
 
-        Result result = assessmentService.saveManualAssessment(submission, feedbackList, resultId);
+        Result result = assessmentService.saveManualAssessment(submission, feedbackList, resultId, assessmentNote);
         if (submit) {
             result = assessmentService.submitManualAssessment(result.getId(), exercise);
             Optional<User> optionalStudent = ((StudentParticipation) submission.getParticipation()).getStudent();
@@ -152,10 +152,10 @@ public abstract class AssessmentResource {
         // as parameter resultId is not set, we use the latest Result, if no latest Result exists, we use null
         Result result;
         if (submission.getLatestResult() == null) {
-            result = assessmentService.saveManualAssessment(submission, feedbacks, null);
+            result = assessmentService.saveManualAssessment(submission, feedbacks, null, "Example Tutor Note");
         }
         else {
-            result = assessmentService.saveManualAssessment(submission, feedbacks, submission.getLatestResult().getId());
+            result = assessmentService.saveManualAssessment(submission, feedbacks, submission.getLatestResult().getId(), "Example Tutor Note");
         }
         result = resultRepository.submitResult(result, exercise, Optional.empty());
         return ResponseEntity.ok(result);

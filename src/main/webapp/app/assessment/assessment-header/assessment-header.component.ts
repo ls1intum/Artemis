@@ -108,11 +108,7 @@ export class AssessmentHeaderComponent {
 
     get overrideDisabled() {
         if (this.overrideVisible) {
-            if (Result.hasNonEmptyAssessmentNote(this.result)) {
-                return this.submitBusy;
-            } else {
-                return !this.assessmentsAreValid || this.submitBusy;
-            }
+            return !this.assessmentsAreValid || this.submitBusy;
         } else {
             return true;
         }

@@ -372,7 +372,7 @@ public class ModelingExerciseUtilService {
      */
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String path, String login, boolean submit) throws Exception {
         List<Feedback> feedbackList = participationUtilService.loadAssessmentFomResources(path);
-        Result result = assessmentService.saveManualAssessment(submission, feedbackList, null);
+        Result result = assessmentService.saveManualAssessment(submission, feedbackList, null, null);
         result.setParticipation(submission.getParticipation().results(null));
         result.setAssessor(userUtilService.getUserByLogin(login));
         resultRepo.save(result);
@@ -398,7 +398,7 @@ public class ModelingExerciseUtilService {
         feedbacks.add(feedback1);
         feedbacks.add(feedback2);
 
-        Result result = assessmentService.saveManualAssessment(submission, feedbacks, null);
+        Result result = assessmentService.saveManualAssessment(submission, feedbacks, null, null);
         result.setParticipation(submission.getParticipation().results(null));
         result.setAssessor(userUtilService.getUserByLogin(login));
         resultRepo.save(result);

@@ -180,7 +180,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                                 return;
                             }
 
-                            this.handleReceivedSubmission(submission);
+                            // validate feedback here already so that overrides are possible for assessment note changes
+                            // without touching the feedbacks
+                            this.handleReceivedSubmission(submission).then(() => this.validateFeedback());
                             if (submissionId === 'new') {
                                 // Update the url with the new id, without reloading the page, to make the history consistent
                                 const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);

@@ -23,8 +23,28 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface TextSubmissionRepository extends JpaRepository<TextSubmission, Long> {
 
-    @Query("select distinct submission from TextSubmission submission left join fetch submission.participation participation left join fetch participation.exercise left join fetch submission.results result left join fetch result.assessor left join fetch result.feedbacks where submission.id = :#{#submissionId}")
+    @Query("""
+            select distinct submission
+            from TextSubmission submission
+            left join fetch submission.participation participation
+            left join fetch participation.exercise
+            left join fetch submission.results result
+            left join fetch result.assessor
+            left join fetch result.feedbacks
+            where submission.id = :#{#submissionId}""")
     Optional<TextSubmission> findByIdWithEagerParticipationExerciseResultAssessor(@Param("submissionId") long submissionId);
+
+    @Query("""
+            select distinct submission
+            from TextSubmission submission
+            left join fetch submission.participation participation
+            left join fetch participation.exercise
+            left join fetch submission.results result
+            left join fetch result.assessor
+            left join fetch result.feedbacks
+            left join fetch result.assessmentNote
+            where submission.id = :#{#submissionId}""")
+    Optional<TextSubmission> findByIdWithEagerParticipationExerciseResultAssessorAssessmentNote(@Param("submissionId") long submissionId);
 
     /**
      * Load text submission only
@@ -74,6 +94,11 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
     @NotNull
     default TextSubmission findByIdWithParticipationExerciseResultAssessorElseThrow(long submissionId) {
         return findByIdWithEagerParticipationExerciseResultAssessor(submissionId).orElseThrow(() -> new EntityNotFoundException("TextSubmission", submissionId));
+    }
+
+    @NotNull
+    default TextSubmission findByIdWithParticipationExerciseResultAssessorAssessmentNoteElseThrow(long submissionId) {
+        return findByIdWithEagerParticipationExerciseResultAssessorAssessmentNote(submissionId).orElseThrow(() -> new EntityNotFoundException("TextSubmission", submissionId));
     }
 
     default TextSubmission findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(long submissionId) {

@@ -229,15 +229,18 @@ public class AssessmentService {
      * This function is used for saving a manual assessment/result. It sets the assessment type to MANUAL and sets the assessor attribute. Furthermore, it saves the result in the
      * database. If a result with the given id exists, it will be overridden. if not, a new result will be created.
      * <p>
-     * For programming exercises we use a different approach see {@link ProgrammingAssessmentService#saveManualAssessment(Result)}
+     * For programming exercises we use a different approach see {@link ProgrammingAssessmentService#saveManualAssessment(Result, User)}
      *
      * @param submission   the file upload submission to which the feedback belongs to
      * @param feedbackList the assessment as a feedback list that should be added to the result of the corresponding submission
      * @param resultId     resultId of the submission we what to save the @feedbackList to, null if no result exists
      * @return result that was saved in the database
      */
-    public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList, Long resultId) {
-        Result result = submission.getResults().stream().filter(res -> res.getId().equals(resultId)).findAny().orElse(null);
+    public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList, Long resultId, String assessmentNoteText) {
+        Result result = null;
+        if (resultId != null) {
+            result = resultRepository.findWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteById(resultId).orElse(null);
+        }
 
         if (result == null) {
             result = submissionService.saveNewEmptyResult(submission);
@@ -255,6 +258,15 @@ public class AssessmentService {
 
         result.updateAllFeedbackItems(feedbackList, false);
         result.determineAssessmentType();
+
+        if (assessmentNoteText != null) {
+            // get assessment note for result first
+
+            AssessmentNote assessmentNote = new AssessmentNote();
+            assessmentNote.setNote(assessmentNoteText);
+            assessmentNote.setCreator(user);
+            result.setAssessmentNote(assessmentNote);
+        }
 
         if (result.getSubmission() == null) {
             result.setSubmission(submission);
