@@ -175,6 +175,7 @@ public class AeolusBuildPlanService {
     /**
      * Generates a windfile for a programming exercise using Aeolus
      *
+     * @param target       the target to generate the windfile for, either bamboo or jenkins
      * @param buildPlanKey the key of the build plan to generate the windfile for
      * @return the generated windfile
      */

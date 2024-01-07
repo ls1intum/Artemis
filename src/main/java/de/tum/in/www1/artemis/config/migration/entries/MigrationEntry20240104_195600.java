@@ -18,7 +18,8 @@ import com.google.gson.Gson;
 
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.participation.*;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildScriptGenerationService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
