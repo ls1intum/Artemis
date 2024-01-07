@@ -74,6 +74,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByLogin(String login);
 
+    @EntityGraph(type = LOAD, attributePaths = { "authorities" })
+    Optional<User> findOneWithAuthoritiesByLogin(String login);
+
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByEmail(String email);
 
@@ -569,6 +572,17 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     }
 
     /**
+     * Get user with authorities of currently logged-in user
+     *
+     * @return currently logged-in user
+     */
+    default User getUserWithAuthorities() {
+        String currentUserLogin = getCurrentUserLogin();
+        Optional<User> user = findOneWithAuthoritiesByLogin(currentUserLogin);
+        return unwrapOptionalUser(user, currentUserLogin);
+    }
+
+    /**
      * Get user with user groups, authorities and organizations of currently logged-in user
      *
      * @return currently logged-in user
@@ -615,6 +629,17 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @NotNull
     default User getUserWithGroupsAndAuthorities(@NotNull String username) {
         Optional<User> user = findOneWithGroupsAndAuthoritiesByLogin(username);
+        return unwrapOptionalUser(user, username);
+    }
+
+    /**
+     * Get user with authorities with the username (i.e. user.getLogin() or principal.getName())
+     *
+     * @param username the username of the user who should be retrieved from the database
+     * @return the user that belongs to the given principal with eagerly loaded authorities
+     */
+    default User getUserWithAuthorities(@NotNull String username) {
+        Optional<User> user = findOneWithAuthoritiesByLogin(username);
         return unwrapOptionalUser(user, username);
     }
 
@@ -805,4 +830,14 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                     OR ua.authorityName = 'ROLE_ADMIN')
             """)
     boolean isUserMemberOfGroupsOrAdmin(@Param("login") String login, @Param("groups") Set<String> groups);
+
+    @Query("""
+            SELECT count(user) > 0
+            FROM User user
+                JOIN UserAuthority ua on ua.userId = user.id
+            WHERE user.isDeleted = false
+                AND user.login = :login
+                AND ua.authorityName = 'ROLE_ADMIN'
+            """)
+    boolean isUserAdmin(@Param("login") String login);
 }

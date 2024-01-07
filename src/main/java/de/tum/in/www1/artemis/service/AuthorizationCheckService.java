@@ -710,6 +710,20 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * NOTE: this method should only be used in a REST Call context, when the SecurityContext is correctly setup.
+     * Preferably use the method isAdmin(user) below
+     * <p>
+     * Checks if the currently logged-in user is an admin user
+     *
+     * @param login the user login whose permissions should be checked
+     * @return true, if user is admin, otherwise false
+     */
+    @CheckReturnValue
+    public boolean isAdmin(@NotNull String login) {
+        return userRepository.isUserAdmin(login);
+    }
+
+    /**
      * Checks if the passed user is an admin user
      *
      * @param user the user with authorities. If the user is null, the currently logged-in user will be used.

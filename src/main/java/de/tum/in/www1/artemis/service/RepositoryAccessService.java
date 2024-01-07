@@ -57,8 +57,9 @@ public class RepositoryAccessService {
 
         // Error case 1: The user does not have permissions to push into the repository and the user is not notified for a related plagiarism case.
         boolean hasPermissions = participationAuthCheckService.canAccessParticipation(programmingParticipation, user);
-        boolean userWasNotifiedAboutPlagiarismCase = plagiarismService.wasUserNotifiedByInstructor(programmingParticipation.getId(), user.getLogin());
-        if (!hasPermissions && !userWasNotifiedAboutPlagiarismCase) {
+        var exerciseDueDate = programmingExercise.isExamExercise() ? programmingExercise.getExerciseGroup().getExam().getEndDate() : programmingExercise.getDueDate();
+        boolean hasAccessToSubmission = plagiarismService.hasAccessToSubmission(programmingParticipation.getId(), user.getLogin(), exerciseDueDate);
+        if (!hasPermissions && !hasAccessToSubmission) {
             throw new AccessUnauthorizedException();
         }
 
@@ -107,7 +108,7 @@ public class RepositoryAccessService {
         // to read the student's repository.
         // But the student should still be able to access if they are notified for a related plagiarism case.
         if ((isStudent || (isTeachingAssistant && repositoryActionType != RepositoryActionType.READ))
-                && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false) && !userWasNotifiedAboutPlagiarismCase) {
+                && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false) && !hasAccessToSubmission) {
             throw new AccessForbiddenException();
         }
     }
