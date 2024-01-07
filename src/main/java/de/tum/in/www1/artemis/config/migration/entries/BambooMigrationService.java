@@ -549,7 +549,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
         body.add("selectedRepository", "com.atlassian.bamboo.plugins.atlassian-bamboo-plugin-git:gitv2");
         body.add("respositoryPluginKey", "com.atlassian.bamboo.plugins.atlassian-bamboo-plugin-git:gitv2");
         body.add("repositoryName", name);
-        body.add("repository.git.repositoryUri", repository);
+        body.add("repository.git.repositoryUrl", repository);
         body.add("repository.git.authenticationType", "PASSWORD");
         body.add("selectFields", "repository.git.authenticationType");
         body.add("repository.git.passwordCredentialsSource", "SHARED_CREDENTIALS");
