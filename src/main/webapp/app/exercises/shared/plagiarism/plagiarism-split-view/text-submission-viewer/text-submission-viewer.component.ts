@@ -228,10 +228,16 @@ export class TextSubmissionViewerComponent implements OnChanges {
         const fileLines = fileContent.split('\n');
         let result = '';
 
-        for (let i = 0; i < matches[0].from.line - 1; i++) {
-            result += escape(fileLines[i]) + '\n';
+        if (matches[0].from.line == 1 && matches[0].from.column != 0) {
+            result += escape(fileLines[0].slice(0, matches[0].from.column - 1));
+        } else if (matches[0].from.line == 1 && matches[0].from.column == 0) {
+            result += '';
+        } else {
+            for (let i = 0; i < matches[0].from.line - 1; i++) {
+                result += escape(fileLines[i]) + '\n';
+            }
+            result += escape(fileLines[matches[0].from.line - 1].slice(0, matches[0].from.column - 1));
         }
-        result += escape(fileLines[matches[0].from.line - 1].slice(0, matches[0].from.column - 1));
 
         for (let i = 0; i < matches.length; i++) {
             result += this.buildFileContentPartForMatch(matches, i, fileLines);
@@ -262,9 +268,16 @@ export class TextSubmissionViewerComponent implements OnChanges {
         if (idxLineFrom === idxLineTo) {
             result += escape(fileLines[idxLineFrom].slice(idxColumnFrom, idxColumnTo)) + this.tokenEnd;
         } else {
-            result += escape(fileLines[idxLineFrom].slice(idxColumnFrom));
-            for (let j = idxLineFrom + 1; j < idxLineTo; j++) {
-                result += '\n' + escape(fileLines[j]);
+            if (idxColumnFrom > 0) {
+                result += escape(fileLines[idxLineFrom].slice(idxColumnFrom));
+            }
+            for (let j = idxLineFrom + (idxColumnFrom > 0 ? 1 : 0); j < idxLineTo; j++) {
+                console.log('A "' + result + '"');
+                if (result.trim() != this.tokenStart) {
+                    console.log('A1 "' + result + '"');
+                    result += '\n';
+                }
+                result += escape(fileLines[j]);
             }
             result += '\n' + escape(fileLines[idxLineTo].slice(0, idxColumnTo)) + this.tokenEnd;
         }
