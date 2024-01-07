@@ -210,8 +210,8 @@
                 "issues": "Test case issues.",
                 "ok": "Test cases ok.",
                 "invalidTestCase": "The test case '{{id}}' could not be found in the test repository.",
-                "duplicatedTestCase": "The test case '{{id}}' is duplicated.",
-                "duplicatedTestCases": "There are {{number}} duplicated test cases in the problem statement. This might cause unexpected behaviour:"
+                "repeatedTestCase": "The test case '{{id}}' is duplicated.",
+                "repeatedTestCases": "There are {{number}} repeated test cases in the problem statement. This might cause unexpected behaviour:"
             },
             "tasksAnalysis": {
                 "issues": "Task issues.",

@@ -226,12 +226,12 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     };
 
     private mapAnalysisToWarnings = (analysis: ProblemStatementAnalysis) => {
-        return Array.from(analysis.values()).flatMap(({ lineNumber, invalidTestCases, duplicatedTestCases }) =>
-            this.mapIssuesToAnnotations(lineNumber, invalidTestCases, duplicatedTestCases),
+        return Array.from(analysis.values()).flatMap(({ lineNumber, invalidTestCases, repeatedTestCases }) =>
+            this.mapIssuesToAnnotations(lineNumber, invalidTestCases, repeatedTestCases),
         );
     };
 
-    private mapIssuesToAnnotations = (lineNumber: number, invalidTestCases?: string[], duplicatedTestCases?: string[]) => {
+    private mapIssuesToAnnotations = (lineNumber: number, invalidTestCases?: string[], repeatedTestCases?: string[]) => {
         const mapIssues = (issues: string[]) => ({ row: lineNumber, column: 0, text: ' - ' + issues.join('\n - '), type: 'warning' });
 
         const annotations = [];
@@ -239,8 +239,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             annotations.push(mapIssues(invalidTestCases));
         }
 
-        if (duplicatedTestCases) {
-            annotations.push(mapIssues(duplicatedTestCases));
+        if (repeatedTestCases) {
+            annotations.push(mapIssues(repeatedTestCases));
         }
 
         return annotations;

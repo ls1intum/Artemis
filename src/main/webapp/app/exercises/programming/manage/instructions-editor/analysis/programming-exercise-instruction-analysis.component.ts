@@ -20,7 +20,7 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
 
     invalidTestCases: string[] = [];
     missingTestCases: string[] = [];
-    duplicatedTestCases: string[] = [];
+    repeatedTestCases: string[] = [];
     numOfTasks = 0;
 
     // Icons
@@ -34,14 +34,14 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
             .pipe(
                 debounceTime(500),
                 map(() => {
-                    const { completeAnalysis, missingTestCases, invalidTestCases, duplicatedTestCases, numOfTasks } = this.analysisService.analyzeProblemStatement(
+                    const { completeAnalysis, missingTestCases, invalidTestCases, repeatedTestCases, numOfTasks } = this.analysisService.analyzeProblemStatement(
                         this.problemStatement,
                         this.taskRegex,
                         this.exerciseTestCases,
                     );
                     this.missingTestCases = missingTestCases;
                     this.invalidTestCases = invalidTestCases;
-                    this.duplicatedTestCases = duplicatedTestCases;
+                    this.repeatedTestCases = repeatedTestCases;
                     this.numOfTasks = numOfTasks;
                     return completeAnalysis;
                 }),

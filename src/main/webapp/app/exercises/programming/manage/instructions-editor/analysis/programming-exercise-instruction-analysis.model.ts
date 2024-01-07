@@ -3,13 +3,13 @@ export type ProblemStatementAnalysis = Map<
     {
         lineNumber: number;
         invalidTestCases?: string[];
-        duplicatedTestCases?: string[];
+        repeatedTestCases?: string[];
     }
 >;
 
 export enum ProblemStatementIssue {
     INVALID_TEST_CASES = 'invalidTestCases',
-    DUPLICATED_TEST_CASES = 'duplicatedTestCases',
+    REPEATED_TEST_CASES = 'repeatedTestCases',
 }
 
 // [line number, issues, issue type]

@@ -1,5 +1,5 @@
 <div class="editable-instruction-container__status__container">
-    @if (invalidTestCases.length + missingTestCases.length + duplicatedTestCases.length > 0) {
+    @if (invalidTestCases.length + missingTestCases.length + repeatedTestCases.length > 0) {
         <div id="instruction_analysis_test-case-issues" class="editable-instruction-container__status__item">
             <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="testCasesTooltipContent"></fa-icon>
             <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.issues">Test case issues.</span>
@@ -35,11 +35,11 @@
                 </div>
             }
 
-            @if (duplicatedTestCases.length) {
+            @if (repeatedTestCases.length) {
                 <div class="text-start">
-                    <span>{{ 'artemisApp.programmingExercise.testCaseAnalysis.duplicatedTestCases' | artemisTranslate: { number: duplicatedTestCases.length } }}</span>
+                    <span>{{ 'artemisApp.programmingExercise.testCaseAnalysis.repeatedTestCases' | artemisTranslate: { number: repeatedTestCases.length } }}</span>
                     <ul>
-                        @for (test of duplicatedTestCases; track test) {
+                        @for (test of repeatedTestCases; track test) {
                             <li>{{ test }}</li>
                         }
                     </ul>

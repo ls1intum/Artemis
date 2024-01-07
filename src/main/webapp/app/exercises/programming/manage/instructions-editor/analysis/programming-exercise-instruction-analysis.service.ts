@@ -10,7 +10,7 @@ import {
 
 const TEST_CASE_REGEX = /\[[^[\]]+]\(((?:[^(),]+(?:\([^()]*\)[^(),]*)?(?:,[^(),]+(?:\([^()]*\)[^(),]*)?)*)?)\)/;
 const INVALID_TEST_CASE_TRANSLATION = 'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase';
-const DUPLICATED_TEST_CASE_TRANSLATION = 'artemisApp.programmingExercise.testCaseAnalysis.duplicatedTestCase';
+const REPEATED_TEST_CASE_TRANSLATION = 'artemisApp.programmingExercise.testCaseAnalysis.repeatedTestCase';
 
 /**
  * Analyzes the problem statement of a programming-exercise and provides information support concerning potential issues.
@@ -31,10 +31,10 @@ export class ProgrammingExerciseInstructionAnalysisService {
         // Look for task regex matches in the problem statement including their line numbers.
         const tasksFromProblemStatement = matchRegexWithLineNumbers(problemStatement, taskRegex);
 
-        const { invalidTestCases, missingTestCases, duplicatedTestCases, invalidTestCaseAnalysis } = this.analyzeTestCases(tasksFromProblemStatement, exerciseTestCases);
+        const { invalidTestCases, missingTestCases, repeatedTestCases, invalidTestCaseAnalysis } = this.analyzeTestCases(tasksFromProblemStatement, exerciseTestCases);
 
         const completeAnalysis: ProblemStatementAnalysis = this.mergeAnalysis(invalidTestCaseAnalysis);
-        return { invalidTestCases, missingTestCases, duplicatedTestCases, completeAnalysis, numOfTasks: tasksFromProblemStatement.length };
+        return { invalidTestCases, missingTestCases, repeatedTestCases, completeAnalysis, numOfTasks: tasksFromProblemStatement.length };
     };
 
     /**
@@ -43,7 +43,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
      * - Do test cases exist for this exercise that are not part of the problem statement?
      * - Are any test cases in the problem statement duplicated?
      *
-     * Will also set the invalidTestCases & missingTestCases & duplicatedTestCases attributes of the component.
+     * Will also set the invalidTestCases & missingTestCases & repeatedTestCases attributes of the component.
      *
      * @param tasksFromProblemStatement to analyze.
      * @param exerciseTestCases to double check the test cases found in the problem statement.
@@ -76,15 +76,15 @@ export class ProgrammingExerciseInstructionAnalysisService {
             return acc;
         }, new Map<string, number[]>());
 
-        const duplicatedTestCaseAnalysis = [...testCaseOccurrences.entries()]
+        const repeatedTestCaseAnalysis = [...testCaseOccurrences.entries()]
             .filter(([, lineNumbers]) => lineNumbers.length > 1)
-            .flatMap(([testCase, lineNumbers]) => uniq(lineNumbers).map((lineNumber) => [lineNumber, [testCase], ProblemStatementIssue.DUPLICATED_TEST_CASES] as AnalysisItem));
+            .flatMap(([testCase, lineNumbers]) => uniq(lineNumbers).map((lineNumber) => [lineNumber, [testCase], ProblemStatementIssue.REPEATED_TEST_CASES] as AnalysisItem));
 
-        const duplicatedTestCases = uniq(duplicatedTestCaseAnalysis.flatMap(([, testCases]) => testCases));
+        const repeatedTestCases = uniq(repeatedTestCaseAnalysis.flatMap(([, testCases]) => testCases));
 
-        invalidTestCaseAnalysis.push(...duplicatedTestCaseAnalysis);
+        invalidTestCaseAnalysis.push(...repeatedTestCaseAnalysis);
 
-        return { missingTestCases, invalidTestCases, duplicatedTestCases, invalidTestCaseAnalysis };
+        return { missingTestCases, invalidTestCases, repeatedTestCases, invalidTestCaseAnalysis };
     };
 
     /**
@@ -119,9 +119,8 @@ export class ProgrammingExerciseInstructionAnalysisService {
         switch (issueType) {
             case ProblemStatementIssue.INVALID_TEST_CASES:
                 return INVALID_TEST_CASE_TRANSLATION;
-
-            case ProblemStatementIssue.DUPLICATED_TEST_CASES:
-                return DUPLICATED_TEST_CASE_TRANSLATION;
+            case ProblemStatementIssue.REPEATED_TEST_CASES:
+                return REPEATED_TEST_CASE_TRANSLATION;
         }
         // no default value, please add a new translation when adding new issue types
     };
