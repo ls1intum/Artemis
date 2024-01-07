@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -100,6 +99,6 @@ public class LtiResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<List<LtiPlatformConfiguration>> getAllConfiguredLtiPlatforms() {
         List<LtiPlatformConfiguration> platforms = ltiPlatformConfigurationRepository.findAll();
-        return new ResponseEntity<>(platforms, HttpStatus.OK);
+        return ResponseEntity.ok(platforms);
     }
 }

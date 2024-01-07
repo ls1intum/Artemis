@@ -17,7 +17,7 @@ export const ltiConfigurationRoute: Routes = [
         component: EditLtiConfigurationComponent,
         data: {
             authorities: [Authority.ADMIN],
-            pageTitle: 'artemisApp.pages.checklist.title',
+            pageTitle: 'artemisApp.lti.edit.ltiPlatform',
         },
         canActivate: [UserRouteAccessService],
     },

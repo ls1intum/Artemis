@@ -12,8 +12,9 @@ import { EditLtiConfigurationComponent } from 'app/admin/lti-configuration/edit-
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-configuration.model';
-import { of } from 'rxjs';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
+import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { AlertService } from 'app/core/util/alert.service';
 
 describe('Edit LTI Configuration Component', () => {
     let comp: EditLtiConfigurationComponent;
@@ -51,6 +52,7 @@ describe('Edit LTI Configuration Component', () => {
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: HttpClient, useValue: httpClientMock },
+                MockProvider(AlertService),
             ],
         })
             .compileComponents()
@@ -62,7 +64,7 @@ describe('Edit LTI Configuration Component', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        jest.clearAllMocks();
     });
 
     it('should initialize', fakeAsync(() => {
@@ -80,9 +82,51 @@ describe('Edit LTI Configuration Component', () => {
         expect(comp.platformConfigurationForm.get('tokenUri')?.value).toEqual(platformConfiguration.tokenUri);
     }));
 
-    it('should save and navigate', () => {
+    it('should save and navigate', async () => {
         fixture.detectChanges();
 
+        const changedConfiguration = updateConfiguration();
+
+        const updateResponse: HttpResponse<void> = new HttpResponse({
+            status: 200,
+        });
+
+        const updatedStub = jest.spyOn(ltiConfigurationService, 'updateLtiPlatformConfiguration').mockReturnValue(of(updateResponse));
+        const navigateSpy = jest.spyOn(router, 'navigate');
+
+        expect(comp.isSaving).toBeFalse();
+
+        await comp.save();
+
+        expect(updatedStub).toHaveBeenCalledOnce();
+        expect(updatedStub).toHaveBeenCalledWith(changedConfiguration);
+        expect(navigateSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledWith(['admin', 'lti-configuration']);
+    });
+
+    it('should handle save failure and display error', async () => {
+        fixture.detectChanges();
+
+        const changedConfiguration = updateConfiguration();
+
+        const errorResponse = new HttpErrorResponse({
+            error: 'test error',
+            status: 400,
+            statusText: 'Bad Request',
+        });
+
+        const updateErrorStub = jest.spyOn(ltiConfigurationService, 'updateLtiPlatformConfiguration').mockReturnValue(throwError(() => errorResponse));
+        const navigateSpy = jest.spyOn(router, 'navigate');
+
+        expect(comp.isSaving).toBeFalse();
+        await comp.save();
+        expect(updateErrorStub).toHaveBeenCalledOnce();
+        expect(updateErrorStub).toHaveBeenCalledWith(changedConfiguration);
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    function updateConfiguration() {
         const changedConfiguration = {
             ...platformConfiguration,
             customName: 'custom_name_2',
@@ -98,21 +142,6 @@ describe('Edit LTI Configuration Component', () => {
             tokenUri: new FormControl(changedConfiguration.tokenUri),
             jwkSetUri: new FormControl(changedConfiguration.jwkSetUri),
         });
-
-        const updateResponse: HttpResponse<void> = new HttpResponse({
-            status: 200,
-        });
-
-        const updatedStub = jest.spyOn(ltiConfigurationService, 'updateLtiPlatformConfiguration').mockReturnValue(of(updateResponse));
-        const navigateSpy = jest.spyOn(router, 'navigate');
-
-        expect(comp.isSaving).toBeFalse();
-
-        comp.save();
-
-        expect(updatedStub).toHaveBeenCalledOnce();
-        expect(updatedStub).toHaveBeenCalledWith(changedConfiguration);
-        expect(navigateSpy).toHaveBeenCalledOnce();
-        expect(navigateSpy).toHaveBeenCalledWith(['admin', 'lti-configuration']);
-    });
+        return changedConfiguration;
+    }
 });

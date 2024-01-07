@@ -97,6 +97,7 @@
             },
             "missingConfigurationWarning": "Missing values in the LTI1.3 configuration. Launches will not work. Please contact the administrator for configuration.",
             "selectContentFromCourse": "Select content from course {{ title }}",
+            "deletePlatformError": "Could not delete LTI Platform",
             "selectContentTooltip": "Simply select your preferred exercises and then click the Link button to integrate it into the platform.",
             "externalToolSettings": "External Tool Settings",
             "externalToolSettingsTooltip": "An External Tool is required for exercise linking and participation, allowing seamless integration with external resources and activities",

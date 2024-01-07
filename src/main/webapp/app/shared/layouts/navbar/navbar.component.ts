@@ -199,7 +199,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.gitUsername = profileInfo.git.commit.user.name;
                 this.irisEnabled = profileInfo.activeProfiles.includes('iris');
                 this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
-                this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LTI);
+                this.ltiEnabled = profileInfo?.activeProfiles.includes(PROFILE_LTI);
             }
         });
 

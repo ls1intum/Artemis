@@ -71,6 +71,9 @@ export class EditLtiConfigurationComponent implements OnInit {
             )
             .subscribe({
                 next: () => this.onSaveSuccess(),
+                error: (error) => {
+                    this.alertService.error(error);
+                },
             });
     }
 

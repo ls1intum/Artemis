@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
 import { BehaviorSubject, Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { filter, map, tap } from 'rxjs/operators';
@@ -140,28 +141,27 @@ export class CourseManagementService {
             .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
     }
 
-    // TODO: separate course overview and course management REST API calls in a better way
     /**
      * finds all courses using a GET request
      */
-    findAllForDashboard(): Observable<EntityArrayResponseType> {
+    findAllForDashboard(): Observable<HttpResponse<CoursesForDashboardDTO>> {
         this.fetchingCoursesForNotifications = true;
-        return this.http.get<CourseForDashboardDTO[]>(`${this.resourceUrl}/for-dashboard`, { observe: 'response' }).pipe(
-            map((res: HttpResponse<CourseForDashboardDTO[]>) => {
+        return this.http.get<CoursesForDashboardDTO>(`${this.resourceUrl}/for-dashboard`, { observe: 'response' }).pipe(
+            map((res: HttpResponse<CoursesForDashboardDTO>) => {
                 if (res.body) {
                     const courses: Course[] = [];
-                    res.body.forEach((courseForDashboardDTO) => {
+                    res.body.courses?.forEach((courseForDashboardDTO) => {
                         courses.push(courseForDashboardDTO.course);
                         this.saveScoresInStorage(courseForDashboardDTO);
                     });
                     // Replace the CourseForDashboardDTOs in the response body with the normal courses to enable further processing.
-                    return res.clone({ body: courses });
+                    const courseResponse = res.clone({ body: courses });
+                    this.processCourseEntityArrayResponseType(courseResponse);
+                    this.setCoursesForNotifications(courseResponse);
+                    this.courseStorageService.setCourses(courseResponse.body !== null ? courseResponse.body : undefined);
                 }
                 return res;
             }),
-            map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)),
-            map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)),
-            tap((res: EntityArrayResponseType) => this.courseStorageService.setCourses(res.body !== null ? res.body : undefined)),
         );
     }
 
@@ -289,19 +289,6 @@ export class CourseManagementService {
                 }
                 return res;
             }),
-        );
-    }
-
-    /**
-     * finds all courses using a GET request
-     * @param req
-     */
-    getAll(req?: any): Observable<EntityArrayResponseType> {
-        const options = createRequestOption(req);
-        this.fetchingCoursesForNotifications = true;
-        return this.http.get<Course[]>(this.resourceUrl, { params: options, observe: 'response' }).pipe(
-            map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)),
-            map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)),
         );
     }
 

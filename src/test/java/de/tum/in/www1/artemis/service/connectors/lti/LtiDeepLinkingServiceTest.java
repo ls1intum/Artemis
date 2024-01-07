@@ -5,8 +5,10 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.*;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,7 +19,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.google.gson.JsonObject;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -41,6 +44,30 @@ class LtiDeepLinkingServiceTest {
     private AutoCloseable closeable;
 
     private OidcIdToken oidcIdToken;
+
+    private final String deepLinkingSettingsAsJsonString = """
+            {
+              "deep_link_return_url": "",
+              "accept_types": [
+                "link",
+                "file",
+                "html",
+                "ltiResourceLink",
+                "image"
+              ],
+              "accept_media_types": "image/*,text/html",
+              "accept_presentation_document_targets": [
+                "iframe",
+                "window",
+                "embed"
+              ],
+              "accept_multiple": true,
+              "auto_create": true,
+              "title": "This is the default title",
+              "text": "This is the default text",
+              "data": "csrftoken:c7fbba78-7b75-46e3-9201-11e6d5f36f53"
+            }
+            """;
 
     @BeforeEach
     void setUp() {
@@ -86,11 +113,9 @@ class LtiDeepLinkingServiceTest {
     void testEmptyReturnUrlBuildLtiDeepLinkResponse() {
         createMockOidcIdToken();
         when(tokenRetriever.createDeepLinkingJWT(anyString(), anyMap())).thenReturn("test_jwt");
-        String jsonString = "{ \"deep_link_return_url\": \"\", " + "\"accept_types\": [\"link\", \"file\", \"html\", \"ltiResourceLink\", \"image\"], "
-                + "\"accept_media_types\": \"image/*,text/html\", " + "\"accept_presentation_document_targets\": [\"iframe\", \"window\", \"embed\"], "
-                + "\"accept_multiple\": true, " + "\"auto_create\": true, " + "\"title\": \"This is the default title\", " + "\"text\": \"This is the default text\", "
-                + "\"data\": \"csrftoken:c7fbba78-7b75-46e3-9201-11e6d5f36f53\"" + "}";
-        when(oidcIdToken.getClaim(de.tum.in.www1.artemis.domain.lti.Claims.DEEP_LINKING_SETTINGS)).thenReturn(jsonString);
+        var deepLinkingSettingsAsMap = new Gson().fromJson(deepLinkingSettingsAsJsonString, new TypeToken<Map<String, Object>>() {
+        }.getType());
+        when(oidcIdToken.getClaim(de.tum.in.www1.artemis.domain.lti.Claims.DEEP_LINKING_SETTINGS)).thenReturn(deepLinkingSettingsAsMap);
 
         DeepLinkCourseExercises result = createTestExercisesForDeepLinking();
         assertThatExceptionOfType(BadRequestAlertException.class)
@@ -112,8 +137,8 @@ class LtiDeepLinkingServiceTest {
     }
 
     private void createMockOidcIdToken() {
-        JsonObject mockSettings = new JsonObject();
-        mockSettings.addProperty("deep_link_return_url", "test_return_url");
+        Map<String, Object> mockSettings = new TreeMap<>();
+        mockSettings.put("deep_link_return_url", "test_return_url");
         when(oidcIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS)).thenReturn(mockSettings);
 
         when(oidcIdToken.getClaim("iss")).thenReturn("http://artemis.com");
