@@ -29,7 +29,7 @@ public class RepositoryService {
 
     private final GitService gitService;
 
-    private final Logger log = LoggerFactory.getLogger(RepositoryService.class);
+    private static final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
     public RepositoryService(GitService gitService) {
         this.gitService = gitService;

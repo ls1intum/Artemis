@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 @Service
 public class ResultService {
 
-    private final Logger log = LoggerFactory.getLogger(ResultService.class);
+    private static final Logger log = LoggerFactory.getLogger(ResultService.class);
 
     private final UserRepository userRepository;
 

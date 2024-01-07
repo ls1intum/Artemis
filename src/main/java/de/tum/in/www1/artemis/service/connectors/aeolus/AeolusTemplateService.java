@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.service.ResourceLoaderService;
 @Profile("aeolus | localci")
 public class AeolusTemplateService {
 
-    private final Logger logger = LoggerFactory.getLogger(AeolusTemplateService.class);
+    private static final Logger logger = LoggerFactory.getLogger(AeolusTemplateService.class);
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 

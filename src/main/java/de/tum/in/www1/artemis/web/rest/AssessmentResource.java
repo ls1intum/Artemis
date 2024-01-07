@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 
 public abstract class AssessmentResource {
 
-    private final Logger log = LoggerFactory.getLogger(AssessmentResource.class);
+    private static final Logger log = LoggerFactory.getLogger(AssessmentResource.class);
 
     protected final AuthorizationCheckService authCheckService;
 

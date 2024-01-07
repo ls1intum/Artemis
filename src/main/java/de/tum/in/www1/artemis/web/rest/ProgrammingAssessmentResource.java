@@ -39,7 +39,7 @@ import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 @RequestMapping("/api")
 public class ProgrammingAssessmentResource extends AssessmentResource {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingAssessmentResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingAssessmentResource.class);
 
     private static final String ENTITY_NAME = "programmingAssessment";
 

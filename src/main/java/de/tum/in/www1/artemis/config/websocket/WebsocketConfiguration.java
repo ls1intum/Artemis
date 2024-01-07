@@ -64,7 +64,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 // See https://stackoverflow.com/a/34337731/3802758
 public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConfiguration {
 
-    private final Logger log = LoggerFactory.getLogger(WebsocketConfiguration.class);
+    private static final Logger log = LoggerFactory.getLogger(WebsocketConfiguration.class);
 
     private static final Pattern EXAM_TOPIC_PATTERN = Pattern.compile("^/topic/exams/(\\d+)/.+$");
 

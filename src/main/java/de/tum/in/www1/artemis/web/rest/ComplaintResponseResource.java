@@ -31,7 +31,7 @@ import tech.jhipster.web.util.ResponseUtil;
 @RequestMapping("/api")
 public class ComplaintResponseResource {
 
-    private final Logger log = LoggerFactory.getLogger(ComplaintResponseResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ComplaintResponseResource.class);
 
     public static final String ENTITY_NAME = "complaintResponse";
 

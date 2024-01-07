@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.service.util.RoundingUtil;
 @Service
 public class CompetencyProgressService {
 
-    private final Logger logger = LoggerFactory.getLogger(CompetencyProgressService.class);
+    private static final Logger logger = LoggerFactory.getLogger(CompetencyProgressService.class);
 
     private final CompetencyRepository competencyRepository;
 

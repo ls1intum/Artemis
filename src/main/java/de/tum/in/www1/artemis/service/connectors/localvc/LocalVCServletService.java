@@ -54,7 +54,7 @@ import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 @Profile("localvc")
 public class LocalVCServletService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalVCServletService.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalVCServletService.class);
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
 

@@ -34,7 +34,7 @@ public class LocalCIConfiguration {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIConfiguration.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalCIConfiguration.class);
 
     @Value("${artemis.continuous-integration.queue-size-limit:30}")
     int queueSizeLimit;

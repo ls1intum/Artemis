@@ -51,7 +51,7 @@ public class StudentExamService {
 
     private static final String EXAM_EXERCISE_START_STATUS_TOPIC = "/topic/exams/%s/exercise-start-status";
 
-    private final Logger log = LoggerFactory.getLogger(StudentExamService.class);
+    private static final Logger log = LoggerFactory.getLogger(StudentExamService.class);
 
     private final ParticipationService participationService;
 

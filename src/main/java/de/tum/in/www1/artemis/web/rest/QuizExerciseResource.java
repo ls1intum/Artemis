@@ -58,7 +58,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("/api")
 public class QuizExerciseResource {
 
-    private final Logger log = LoggerFactory.getLogger(QuizExerciseResource.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizExerciseResource.class);
 
     private static final String ENTITY_NAME = "quizExercise";
 

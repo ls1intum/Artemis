@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class ProgrammingExerciseParticipationService {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseParticipationService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseParticipationService.class);
 
     private final ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
 

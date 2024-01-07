@@ -38,7 +38,7 @@ import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWe
 @Profile("localci")
 public class LocalCISharedBuildJobQueueService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCISharedBuildJobQueueService.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalCISharedBuildJobQueueService.class);
 
     private final HazelcastInstance hazelcastInstance;
 

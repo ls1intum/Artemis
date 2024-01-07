@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.web.websocket.localci.LocalCIBuildQueueWebsocketSe
 @Profile("localci & scheduling")
 public class LocalCIQueueWebsocketService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIQueueWebsocketService.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalCIQueueWebsocketService.class);
 
     private final HazelcastInstance hazelcastInstance;
 

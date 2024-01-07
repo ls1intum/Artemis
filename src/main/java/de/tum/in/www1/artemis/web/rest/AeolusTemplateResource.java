@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 @RequestMapping("/api/aeolus")
 public class AeolusTemplateResource {
 
-    private final Logger logger = LoggerFactory.getLogger(AeolusTemplateResource.class);
+    private static final Logger logger = LoggerFactory.getLogger(AeolusTemplateResource.class);
 
     private final AeolusTemplateService aeolusTemplateService;
 

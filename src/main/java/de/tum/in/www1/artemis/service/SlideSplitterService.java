@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 @Service
 public class SlideSplitterService {
 
-    private final Logger log = LoggerFactory.getLogger(SlideSplitterService.class);
+    private static final Logger log = LoggerFactory.getLogger(SlideSplitterService.class);
 
     private final FileService fileService;
 

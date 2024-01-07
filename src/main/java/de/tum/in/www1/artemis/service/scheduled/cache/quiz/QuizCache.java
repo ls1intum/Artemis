@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.service.scheduled.cache.CacheHandler;
  */
 final class QuizCache extends CacheHandler<Long, QuizExerciseCache> {
 
-    private final Logger logger = LoggerFactory.getLogger(QuizCache.class);
+    private static final Logger logger = LoggerFactory.getLogger(QuizCache.class);
 
     static final String HAZELCAST_CACHED_EXERCISE_UPDATE_TOPIC = Constants.HAZELCAST_QUIZ_PREFIX + "cached-exercise-invalidation";
 

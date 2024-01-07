@@ -44,7 +44,7 @@ public class PlagiarismCaseResource {
 
     private final PlagiarismCaseRepository plagiarismCaseRepository;
 
-    private final Logger log = LoggerFactory.getLogger(PlagiarismCaseResource.class);
+    private static final Logger log = LoggerFactory.getLogger(PlagiarismCaseResource.class);
 
     public PlagiarismCaseResource(CourseRepository courseRepository, AuthorizationCheckService authenticationCheckService, UserRepository userRepository,
             PlagiarismCaseService plagiarismCaseService, PlagiarismCaseRepository plagiarismCaseRepository) {

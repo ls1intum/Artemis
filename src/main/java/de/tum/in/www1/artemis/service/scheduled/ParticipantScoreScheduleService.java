@@ -51,7 +51,7 @@ public class ParticipantScoreScheduleService {
 
     public static int DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
 
-    private final Logger logger = LoggerFactory.getLogger(ParticipantScoreScheduleService.class);
+    private static final Logger logger = LoggerFactory.getLogger(ParticipantScoreScheduleService.class);
 
     private final TaskScheduler scheduler;
 

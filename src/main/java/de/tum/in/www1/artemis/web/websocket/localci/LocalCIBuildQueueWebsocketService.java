@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueu
 @Profile("localci")
 public class LocalCIBuildQueueWebsocketService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIBuildQueueWebsocketService.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalCIBuildQueueWebsocketService.class);
 
     private final WebsocketMessagingService websocketMessagingService;
 

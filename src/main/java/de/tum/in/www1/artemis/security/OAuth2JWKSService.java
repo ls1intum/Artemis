@@ -35,7 +35,7 @@ public class OAuth2JWKSService {
 
     private final StringKeyGenerator kidGenerator = new Base64StringKeyGenerator(32);
 
-    private final Logger log = LoggerFactory.getLogger(OAuth2JWKSService.class);
+    private static final Logger log = LoggerFactory.getLogger(OAuth2JWKSService.class);
 
     private final Map<String, String> clientRegistrationIdToKeyId = new HashMap<>();
 

@@ -13,7 +13,7 @@ import com.hazelcast.map.IMap;
 
 public abstract class CacheHandler<K, C extends Cache> {
 
-    private final Logger logger = LoggerFactory.getLogger(CacheHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(CacheHandler.class);
 
     protected final HazelcastInstance hazelcastInstance;
 

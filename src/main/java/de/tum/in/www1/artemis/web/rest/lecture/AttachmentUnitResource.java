@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.web.rest.errors.*;
 @RequestMapping("api/")
 public class AttachmentUnitResource {
 
-    private final Logger log = LoggerFactory.getLogger(AttachmentUnitResource.class);
+    private static final Logger log = LoggerFactory.getLogger(AttachmentUnitResource.class);
 
     private static final String ENTITY_NAME = "attachmentUnit";
 

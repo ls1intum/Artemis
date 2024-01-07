@@ -32,7 +32,7 @@ public class QuizPoolService extends QuizService<QuizPool> {
 
     private static final String ENTITY_NAME = "quizPool";
 
-    private final Logger log = LoggerFactory.getLogger(QuizPoolService.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizPoolService.class);
 
     private final QuizPoolRepository quizPoolRepository;
 

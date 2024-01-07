@@ -51,7 +51,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 @Profile("iris")
 public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterface {
 
-    private final Logger log = LoggerFactory.getLogger(IrisCodeEditorSessionService.class);
+    private static final Logger log = LoggerFactory.getLogger(IrisCodeEditorSessionService.class);
 
     private final IrisConnectorService irisConnectorService;
 

@@ -38,7 +38,7 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 @Profile("athena")
 public class AthenaResource {
 
-    private final Logger log = LoggerFactory.getLogger(AthenaResource.class);
+    private static final Logger log = LoggerFactory.getLogger(AthenaResource.class);
 
     @Value("${artemis.athena.secret}")
     private String athenaSecret;

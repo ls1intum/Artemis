@@ -52,7 +52,7 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 @RequestMapping("api/")
 public class ModelingExerciseResource {
 
-    private final Logger log = LoggerFactory.getLogger(ModelingExerciseResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ModelingExerciseResource.class);
 
     private static final String ENTITY_NAME = "modelingExercise";
 
