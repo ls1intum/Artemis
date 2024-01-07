@@ -282,7 +282,7 @@ public class AssessmentService {
      * @param exercise     the exercise this assessment belongs to
      * @param submission   the assessed submission
      * @param feedbackList the assessment as a feedback list that should be added to the result of the corresponding submission
-     * @param resultId     if of the result we what to save the feedbackList to, null if no result exists
+     * @param resultId     if of the result we want to save the feedbackList to, null if no result exists
      * @param submit       true if the result should also be submitted
      * @return the saved result
      */
