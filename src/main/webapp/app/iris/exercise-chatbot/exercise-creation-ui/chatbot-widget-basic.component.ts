@@ -14,7 +14,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonType } from 'app/shared/components/button.component';
-import { AfterViewInit, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Inject, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
@@ -64,8 +64,9 @@ import { IrisChatSessionService } from 'app/iris/chat-session.service';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisCodeEditorSessionService } from 'app/iris/code-editor-session.service';
 import { IrisExerciseCreationSessionService } from 'app/iris/exercise-creation-session.service';
+import { DOCUMENT } from '@angular/common';
 
-@Component({ templateUrl: '' })
+@Component({ template: '' })
 export abstract class IrisChatbotWidgetBasicComponent implements OnInit, OnDestroy, AfterViewInit {
     // Icons
     faTrash = faTrash;
@@ -90,7 +91,6 @@ export abstract class IrisChatbotWidgetBasicComponent implements OnInit, OnDestr
     @ViewChild('unreadMessage', { static: false }) unreadMessage!: ElementRef;
 
     // State variables
-    stateStore: IrisStateStore;
     stateSubscription: Subscription;
     messages: IrisMessage[] = [];
     content: IrisMessageContent;
@@ -105,14 +105,17 @@ export abstract class IrisChatbotWidgetBasicComponent implements OnInit, OnDestr
     shakeErrorField = false;
     shouldLoadGreetingMessage = true;
     fadeState = '';
-    courseId: number;
-    exerciseId?: number;
-    sessionService: IrisSessionService;
     shouldShowEmptyMessageError = false;
     currentMessageCount: number;
     rateLimit: number;
     rateLimitTimeframeHours: number;
     importExerciseUrl: string;
+
+    // data
+    abstract exerciseId?: number | undefined;
+    abstract courseId: number;
+    abstract stateStore: IrisStateStore;
+    abstract sessionService: IrisSessionService;
 
     // User preferences
     userAccepted: boolean;
@@ -129,10 +132,11 @@ export abstract class IrisChatbotWidgetBasicComponent implements OnInit, OnDestr
     private readonly MAX_INT_JAVA = 2147483647;
 
     constructor(
-        private userService: UserService,
-        private sharedService: SharedService,
-        private modalService: NgbModal,
-        private translateService: TranslateService,
+        protected userService: UserService,
+        protected sharedService: SharedService,
+        protected modalService: NgbModal,
+        protected translateService: TranslateService,
+        @Inject(DOCUMENT) protected document: Document,
     ) {}
 
     ngOnInit() {
@@ -399,15 +403,6 @@ export abstract class IrisChatbotWidgetBasicComponent implements OnInit, OnDestr
                 this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.RATE_MESSAGE_FAILED));
                 this.scrollToBottom('smooth');
             });
-    }
-
-    /**
-     * Closes the chat widget.
-     */
-    closeChat() {
-        this.stateStore.dispatch(new NumNewMessagesResetAction());
-        this.sharedService.changeChatOpenStatus(false);
-        this.dialog.closeAll();
     }
 
     /**

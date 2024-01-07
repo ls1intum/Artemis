@@ -26,13 +26,11 @@ import { IrisStateStore } from 'app/iris/state-store.service';
 import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
 import { IrisEnabledComponent } from 'app/iris/settings/shared/iris-enabled.component';
 import { IrisExerciseCreationWebsocketService } from 'app/iris/exercise-creation-websocket.service';
-import { ExerciseCreationWidgetSimpleComponent } from 'app/iris/exercise-chatbot/exercise-creation-ui/exercise-creation-widget-simple.component';
 import { ExerciseCreationWidgetComponent } from 'app/iris/exercise-chatbot/exercise-creation-ui/exercise-creation-widget.component';
 
 @NgModule({
     declarations: [
         IrisChatbotWidgetComponent,
-        ExerciseCreationWidgetSimpleComponent,
         ExerciseCreationWidgetComponent,
         IrisCodeEditorChatbotButtonComponent,
         IrisTutorChatbotButtonComponent,
