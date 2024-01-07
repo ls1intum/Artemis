@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.service.util.RoundingUtil;
 @Service
 public class CompetencyProgressService {
 
-    private static final Logger logger = LoggerFactory.getLogger(CompetencyProgressService.class);
+    private static final Logger log = LoggerFactory.getLogger(CompetencyProgressService.class);
 
     private final CompetencyRepository competencyRepository;
 
@@ -113,7 +113,7 @@ public class CompetencyProgressService {
      * @param users          A list of users for which to update the progress
      */
     public void updateProgressByLearningObject(LearningObject learningObject, @NotNull Set<User> users) {
-        logger.debug("Updating competency progress for {} users.", users.size());
+        log.debug("Updating competency progress for {} users.", users.size());
         try {
             Set<Competency> competencies;
             if (learningObject instanceof Exercise exercise) {
@@ -128,7 +128,7 @@ public class CompetencyProgressService {
 
             if (competencies == null) {
                 // Competencies couldn't be loaded, the exercise/lecture unit might have already been deleted
-                logger.debug("Competencies could not be fetched, skipping.");
+                log.debug("Competencies could not be fetched, skipping.");
                 return;
             }
 
@@ -139,7 +139,7 @@ public class CompetencyProgressService {
             });
         }
         catch (Exception e) {
-            logger.error("Exception while updating progress for competency", e);
+            log.error("Exception while updating progress for competency", e);
         }
     }
 
@@ -154,7 +154,7 @@ public class CompetencyProgressService {
         var competency = competencyRepository.findByIdWithExercisesAndLectureUnitsAndCompletions(competencyId).orElse(null);
 
         if (user == null || competency == null) {
-            logger.debug("User or competency no longer exist, skipping.");
+            log.debug("User or competency no longer exist, skipping.");
             return null;
         }
 
@@ -163,7 +163,7 @@ public class CompetencyProgressService {
         if (competencyProgress.isPresent()) {
             var lastModified = competencyProgress.get().getLastModifiedDate();
             if (lastModified != null && lastModified.isAfter(Instant.now().minusSeconds(1))) {
-                logger.debug("Competency progress has been updated very recently, skipping.");
+                log.debug("Competency progress has been updated very recently, skipping.");
                 return competencyProgress.get();
             }
         }
@@ -200,8 +200,7 @@ public class CompetencyProgressService {
             // This fails the SQL unique constraint and throws an exception. We can safely ignore it.
         }
 
-        logger.debug("Updated progress for user {} in competency {} to {} / {}.", user.getLogin(), competency.getId(), studentProgress.getProgress(),
-                studentProgress.getConfidence());
+        log.debug("Updated progress for user {} in competency {} to {} / {}.", user.getLogin(), competency.getId(), studentProgress.getProgress(), studentProgress.getConfidence());
 
         learningPathService.updateLearningPathProgress(competency.getCourse().getId(), user.getId());
         return studentProgress;

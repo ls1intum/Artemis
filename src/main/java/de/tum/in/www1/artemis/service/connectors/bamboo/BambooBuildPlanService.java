@@ -62,7 +62,7 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 @Profile("bamboo")
 public class BambooBuildPlanService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BambooBuildPlanService.class);
+    private static final Logger log = LoggerFactory.getLogger(BambooBuildPlanService.class);
 
     @Value("${artemis.continuous-integration.user}")
     private String bambooUser;
@@ -603,7 +603,7 @@ public class BambooBuildPlanService {
             }
         }
         catch (ContinuousIntegrationBuildPlanException e) {
-            LOGGER.error("Could not create custom build plan for exercise " + programmingExercise.getTitle() + " with id " + programmingExercise.getId()
+            log.error("Could not create custom build plan for exercise " + programmingExercise.getTitle() + " with id " + programmingExercise.getId()
                     + ", will create default build plan", e);
         }
         return assignedKey;

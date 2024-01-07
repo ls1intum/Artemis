@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 @RequestMapping("/api/aeolus")
 public class AeolusTemplateResource {
 
-    private static final Logger logger = LoggerFactory.getLogger(AeolusTemplateResource.class);
+    private static final Logger log = LoggerFactory.getLogger(AeolusTemplateResource.class);
 
     private final AeolusTemplateService aeolusTemplateService;
 
@@ -59,7 +59,7 @@ public class AeolusTemplateResource {
             @RequestParam(value = "staticAnalysis", defaultValue = "false") boolean staticAnalysis,
             @RequestParam(value = "sequentialRuns", defaultValue = "false") boolean sequentialRuns,
             @RequestParam(value = "testCoverage", defaultValue = "false") boolean testCoverage) {
-        logger.debug("REST request to get aeolus template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}, testCoverage: {}", language,
+        log.debug("REST request to get aeolus template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}, testCoverage: {}", language,
                 projectType, staticAnalysis, sequentialRuns, testCoverage);
 
         String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
@@ -94,7 +94,7 @@ public class AeolusTemplateResource {
             return new ResponseEntity<>(json, responseHeaders, HttpStatus.OK);
         }
         catch (IOException ex) {
-            logger.warn("Error when retrieving aeolus template file", ex);
+            log.warn("Error when retrieving aeolus template file", ex);
             HttpHeaders responseHeaders = new HttpHeaders();
             return new ResponseEntity<>(null, responseHeaders, HttpStatus.NOT_FOUND);
         }

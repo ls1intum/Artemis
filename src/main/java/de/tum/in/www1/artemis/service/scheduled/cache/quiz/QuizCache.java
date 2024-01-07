@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.service.scheduled.cache.CacheHandler;
  */
 final class QuizCache extends CacheHandler<Long, QuizExerciseCache> {
 
-    private static final Logger logger = LoggerFactory.getLogger(QuizCache.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizCache.class);
 
     static final String HAZELCAST_CACHED_EXERCISE_UPDATE_TOPIC = Constants.HAZELCAST_QUIZ_PREFIX + "cached-exercise-invalidation";
 
@@ -108,7 +108,7 @@ final class QuizCache extends CacheHandler<Long, QuizExerciseCache> {
      * @param quizExercise the new quiz exercise object
      */
     private void updateQuizExerciseLocally(QuizExercise quizExercise) {
-        logger.debug("Quiz exercise {} updated in quiz exercise map: {}", quizExercise.getId(), quizExercise);
+        log.debug("Quiz exercise {} updated in quiz exercise map: {}", quizExercise.getId(), quizExercise);
         getTransientWriteCacheFor(quizExercise.getId()).setExercise(quizExercise);
     }
 }
