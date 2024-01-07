@@ -73,10 +73,6 @@ public class LtiDynamicRegistrationService {
             log.error("HTTP error during dynamic registration", ex);
             throw new IllegalStateException("Error during LTI dynamic registration: " + ex.getMessage(), ex);
         }
-        catch (Exception ex) {
-            log.error("Unexpected error during dynamic registration", ex);
-            throw ex;
-        }
     }
 
     private Lti13PlatformConfiguration getLti13PlatformConfiguration(String openIdConfigurationUrl) {
@@ -114,10 +110,6 @@ public class LtiDynamicRegistrationService {
         catch (HttpClientErrorException e) {
             String message = "Could not register new client in external LMS at " + registrationEndpoint;
             log.error(message);
-        }
-        catch (Exception ex) {
-            log.error("Unexpected error during posting client registration to platform", ex);
-            throw ex;
         }
 
         if (registrationResponse == null) {

@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.domain.lti.Lti13ClientRegistration;
 import de.tum.in.www1.artemis.domain.lti.Lti13PlatformConfiguration;
 import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
-import de.tum.in.www1.artemis.repository.OnlineCourseConfigurationRepository;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiDynamicRegistrationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -28,9 +27,6 @@ class LtiDynamicRegistrationServiceTest {
 
     @Mock
     private OAuth2JWKSService oAuth2JWKSService;
-
-    @Mock
-    private OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
 
     @Mock
     private LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
