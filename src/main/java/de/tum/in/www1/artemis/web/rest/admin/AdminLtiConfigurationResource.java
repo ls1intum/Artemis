@@ -103,9 +103,10 @@ public class AdminLtiConfigurationResource {
      */
     @PutMapping("lti-platform")
     @EnforceAdmin
-    public void updateLtiPlatformConfiguration(@RequestBody LtiPlatformConfiguration platform) {
+    public ResponseEntity<Void> updateLtiPlatformConfiguration(@RequestBody LtiPlatformConfiguration platform) {
         log.debug("REST request to update configured lti platform");
         ltiPlatformConfigurationRepository.save(platform);
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -117,11 +118,12 @@ public class AdminLtiConfigurationResource {
      */
     @PostMapping("/lti13/dynamic-registration")
     @EnforceAdmin
-    public void lti13DynamicRegistration(@RequestParam(name = "openid_configuration") String openIdConfiguration,
+    public ResponseEntity<Void> lti13DynamicRegistration(@RequestParam(name = "openid_configuration") String openIdConfiguration,
             @RequestParam(name = "registration_token", required = false) String registrationToken) {
 
         authCheckService.checkIsAdminElseThrow(null);
         ltiDynamicRegistrationService.performDynamicRegistration(openIdConfiguration, registrationToken);
+        return ResponseEntity.ok().build();
     }
 
 }
