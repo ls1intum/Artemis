@@ -28,14 +28,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/core/util/alert.service';
 import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
 
-jest.mock('export-to-csv', () => {
-    return {
-        mkConfig: jest.fn(),
-        download: jest.fn(() => jest.fn()),
-        generateCsv: jest.fn(() => jest.fn()),
-    };
-});
-
 describe('Course Group Component', () => {
     let comp: CourseGroupComponent;
     let fixture: ComponentFixture<CourseGroupComponent>;
@@ -225,7 +217,7 @@ describe('Course Group Component', () => {
         comp.allGroupUsers = [courseGroupUser, courseGroupUser2];
         comp.courseGroup = CourseGroup.STUDENTS;
         comp.course = course;
-        const exportAsCsvMock = jest.spyOn(comp, 'exportAsCsv');
+        const exportAsCsvMock = jest.spyOn(comp, 'exportAsCsv').mockImplementation();
 
         comp.exportUserInformation();
 

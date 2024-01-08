@@ -19,14 +19,6 @@ import { MockCourseManagementService } from '../../helpers/mocks/service/mock-co
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
-jest.mock('export-to-csv', () => {
-    return {
-        mkConfig: jest.fn(),
-        download: jest.fn(() => jest.fn()),
-        generateCsv: jest.fn(() => jest.fn()),
-    };
-});
-
 describe('Interval Grading System Component', () => {
     let comp: IntervalGradingSystemComponent;
     let fixture: ComponentFixture<IntervalGradingSystemComponent>;
