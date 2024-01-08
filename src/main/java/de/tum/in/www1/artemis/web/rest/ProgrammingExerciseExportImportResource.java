@@ -387,7 +387,7 @@ public class ProgrammingExerciseExportImportResource {
         List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations = new ArrayList<>();
         for (StudentParticipation studentParticipation : programmingExercise.getStudentParticipations()) {
             ProgrammingExerciseStudentParticipation programmingStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
-            if (repositoryExportOptions.isExportAllParticipants() || (programmingStudentParticipation.getRepositoryUrl() != null && studentParticipation.getParticipant() != null
+            if (repositoryExportOptions.isExportAllParticipants() || (programmingStudentParticipation.getRepositoryUri() != null && studentParticipation.getParticipant() != null
                     && participantIdentifierList.contains(studentParticipation.getParticipantIdentifier()))) {
                 exportedStudentParticipations.add(programmingStudentParticipation);
             }

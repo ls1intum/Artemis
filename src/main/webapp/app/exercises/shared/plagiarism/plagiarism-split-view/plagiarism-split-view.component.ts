@@ -9,6 +9,7 @@ import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/Plag
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { HttpResponse } from '@angular/common/http';
 import { SimpleMatch } from 'app/exercises/shared/plagiarism/types/PlagiarismMatch';
+import dayjs from 'dayjs/esm';
 
 @Directive({ selector: '[jhiPane]' })
 export class SplitPaneDirective {
@@ -25,6 +26,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     @Input() exercise: Exercise;
     @Input() splitControlSubject: Subject<string>;
     @Input() sortByStudentLogin: string;
+    @Input() forStudent: boolean;
 
     @ViewChildren(SplitPaneDirective) panes!: QueryList<SplitPaneDirective>;
 
@@ -37,6 +39,8 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
 
     public matchesA: Map<string, FromToElement[]>;
     public matchesB: Map<string, FromToElement[]>;
+
+    readonly dayjs = dayjs;
 
     constructor(private plagiarismCasesService: PlagiarismCasesService) {}
 

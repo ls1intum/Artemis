@@ -351,25 +351,25 @@ public class RepositoryService {
     /**
      * Retrieve the status of the repository. Also pulls the repository.
      *
-     * @param repositoryUrl of the repository to check the status for.
+     * @param repositoryUri of the repository to check the status for.
      * @return a dto to determine the status of the repository.
      * @throws GitAPIException if the repository status can't be retrieved.
      */
-    public boolean isClean(VcsRepositoryUrl repositoryUrl) throws GitAPIException {
-        Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true);
+    public boolean isClean(VcsRepositoryUri repositoryUri) throws GitAPIException {
+        Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true);
         return gitService.isClean(repository);
     }
 
     /**
      * Retrieve the status of the repository. Also pulls the repository.
      *
-     * @param repositoryUrl of the repository to check the status for.
+     * @param repositoryUri of the repository to check the status for.
      * @param defaultBranch the already used default branch in the remote repository
      * @return a dto to determine the status of the repository.
      * @throws GitAPIException if the repository status can't be retrieved.
      */
-    public boolean isClean(VcsRepositoryUrl repositoryUrl, String defaultBranch) throws GitAPIException {
-        Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true, defaultBranch);
+    public boolean isClean(VcsRepositoryUri repositoryUri, String defaultBranch) throws GitAPIException {
+        Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true, defaultBranch);
         return gitService.isClean(repository);
     }
 }
