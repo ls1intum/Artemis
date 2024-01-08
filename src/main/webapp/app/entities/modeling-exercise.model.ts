@@ -17,6 +17,7 @@ export enum UMLDiagramType {
     PetriNet = 'PetriNet',
     SyntaxTree = 'SyntaxTree',
     Flowchart = 'Flowchart',
+    BPMN = 'BPMN',
 }
 
 export class ModelingExercise extends Exercise {

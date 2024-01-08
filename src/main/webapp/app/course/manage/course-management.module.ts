@@ -67,6 +67,7 @@ import { ArtemisLearningPathManagementModule } from 'app/course/learning-paths/l
 import { IrisModule } from 'app/iris/iris.module';
 import { ArtemisMathExerciseManagementModule } from 'app/exercises/math/manage/math-exercise-management.module';
 import { ArtemisMathExerciseModule } from 'app/exercises/math/manage/math-exercise/math-exercise.module';
+import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
 
 @NgModule({
     imports: [
@@ -140,6 +141,7 @@ import { ArtemisMathExerciseModule } from 'app/exercises/math/manage/math-exerci
         CourseLtiConfigurationComponent,
         EditCourseLtiConfigurationComponent,
         CourseManagementTabBarComponent,
+        BuildQueueComponent,
     ],
 })
 export class ArtemisCourseManagementModule {}

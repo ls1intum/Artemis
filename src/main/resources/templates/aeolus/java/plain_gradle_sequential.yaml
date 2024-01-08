@@ -1,14 +1,22 @@
 api: v0.0.1
-metadata:
-    name: java-gradle-sequential
-    id: java-windfile
-    description: Build Plan for a java Exercise
 actions:
-    - name: gradle
+    - name: structural_tests
       script: |
-          chmod +x gradlew
-          ./gradlew clean structuralTests
-          if [ $? -eq 0 ]; then
-              ./gradlew behaviorTests
-          fi
+        chmod +x ./gradlew
+        ./gradlew clean structuralTests
       runAlways: false
+    - name: behavior_tests
+      script: ./gradlew behaviorTests
+      runAlways: false
+    - name: setup_working_directory_for_cleanup
+      script: chmod -R 777 .
+      runAlways: true
+      results:
+          - name: junit_**/test-results/structuralTests/*.xml
+            path: '**/test-results/structuralTests/*.xml'
+            type: junit
+            before: true
+          - name: junit_**/test-results/behaviorTests/*.xml
+            path: '**/test-results/behaviorTests/*.xml'
+            type: junit
+            before: true
