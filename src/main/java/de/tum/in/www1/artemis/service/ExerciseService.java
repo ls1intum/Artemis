@@ -418,7 +418,7 @@ public class ExerciseService {
         exercise.setProblemStatement(null);
 
         if (exercise instanceof ProgrammingExercise programmingExercise) {
-            programmingExercise.setTestRepositoryUrl(null);
+            programmingExercise.setTestRepositoryUri(null);
         }
 
         // get user's participation for the exercise
