@@ -1,7 +1,7 @@
 <div>
     <h3>{{ 'artemisApp.studentDashboard.enroll.title' | artemisTranslate }}</h3>
     <div class="col-12 mb-3">
-        <input type="text" class="form-control" [(ngModel)]="searchTermString" (input)="applySearch()" placeholder="Search for a course..." />
+        <input type="text" class="form-control" [(ngModel)]="searchTermString" (input)="applySearch()" [placeholder]="'artemisApp.course.searchForCourse' | artemisTranslate" />
     </div>
     @if (coursesToSelect) {
         <div class="col-12 col-sm-auto">
