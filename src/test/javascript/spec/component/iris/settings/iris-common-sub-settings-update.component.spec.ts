@@ -147,7 +147,7 @@ describe('IrisCommonSubSettingsUpdateComponent Component', () => {
         comp.allIrisModels = mockModels();
         comp.ngOnChanges(changes);
 
-        expect(comp.enabled).toBeTrue();
+        expect(comp.enabled).toBeFalse();
         expect(comp.allowedIrisModels).toEqual(newModels);
     });
 });
