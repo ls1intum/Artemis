@@ -6,7 +6,7 @@
             <ngx-datatable
                 class="bootstrap"
                 [limit]="settings.limit"
-                [sortType]="settings.sortType"
+                [sorts]="runningJobsSorts"
                 [columnMode]="settings.columnMode"
                 [headerHeight]="settings.headerHeight"
                 [footerHeight]="settings.footerHeight"
@@ -132,7 +132,7 @@
             <ngx-datatable
                 class="bootstrap"
                 [limit]="settings.limit"
-                [sortType]="settings.sortType"
+                [sorts]="queuedJobsSorts"
                 [columnMode]="settings.columnMode"
                 [headerHeight]="settings.headerHeight"
                 [footerHeight]="settings.footerHeight"

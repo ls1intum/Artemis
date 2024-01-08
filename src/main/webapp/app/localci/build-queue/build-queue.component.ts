@@ -19,6 +19,13 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     //icons
     faTimes = faTimes;
 
+    runningJobsSorts = [{ prop: 'buildStartDate', dir: 'asc' }];
+
+    queuedJobsSorts = [
+        { prop: 'priority', dir: 'asc' },
+        { prop: 'submissionDate', dir: 'asc' },
+    ];
+
     constructor(
         private route: ActivatedRoute,
         private websocketService: JhiWebsocketService,
