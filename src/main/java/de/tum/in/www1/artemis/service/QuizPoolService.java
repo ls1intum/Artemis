@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -21,6 +24,7 @@ import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.QuizGroupRepository;
 import de.tum.in.www1.artemis.repository.QuizPoolRepository;
 import de.tum.in.www1.artemis.repository.ShortAnswerMappingRepository;
+import de.tum.in.www1.artemis.service.exam.ExamQuizQuestionsGenerator;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -28,7 +32,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * This service contains the functions to manage QuizPool entity.
  */
 @Service
-public class QuizPoolService extends QuizService<QuizPool> {
+public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQuestionsGenerator {
 
     private static final String ENTITY_NAME = "quizPool";
 
@@ -97,7 +101,7 @@ public class QuizPoolService extends QuizService<QuizPool> {
      * @param examId the id of the exam to be searched
      * @return optional quiz pool that belongs to the given exam id
      */
-    public Optional<QuizPool> findWithQuizQuestionsByExamId(Long examId) {
+    public Optional<QuizPool> findWithQuizGroupsAndQuestionsByExamId(Long examId) {
         Optional<QuizPool> quizPoolOptional = quizPoolRepository.findWithEagerQuizQuestionsByExamId(examId);
         if (quizPoolOptional.isPresent()) {
             QuizPool quizPool = quizPoolOptional.get();
@@ -149,5 +153,49 @@ public class QuizPoolService extends QuizService<QuizPool> {
     @Override
     protected QuizPool saveAndFlush(QuizPool quizConfiguration) {
         return quizPoolRepository.saveAndFlush(quizConfiguration);
+    }
+
+    @Override
+    public List<QuizQuestion> generateQuizQuestionsForExam(long examId) {
+        Optional<QuizPool> quizPoolOptional = findWithQuizGroupsAndQuestionsByExamId(examId);
+        if (quizPoolOptional.isPresent()) {
+            QuizPool quizPool = quizPoolOptional.get();
+            List<QuizGroup> quizGroups = quizPool.getQuizGroups();
+            List<QuizQuestion> quizQuestions = quizPool.getQuizQuestions();
+
+            Map<Long, List<QuizQuestion>> quizGroupQuestionsMap = getQuizQuestionsGroup(quizGroups, quizQuestions);
+            return generateQuizQuestions(quizGroupQuestionsMap, quizGroups, quizQuestions);
+        }
+        else {
+            return new ArrayList<>();
+        }
+    }
+
+    private static Map<Long, List<QuizQuestion>> getQuizQuestionsGroup(List<QuizGroup> quizGroups, List<QuizQuestion> quizQuestions) {
+        Map<Long, List<QuizQuestion>> quizGroupQuestionsMap = new HashMap<>();
+        for (QuizGroup quizGroup : quizGroups) {
+            quizGroupQuestionsMap.put(quizGroup.getId(), new ArrayList<>());
+        }
+        for (QuizQuestion quizQuestion : quizQuestions) {
+            if (quizQuestion.getQuizGroup() != null) {
+                quizGroupQuestionsMap.get(quizQuestion.getQuizGroup().getId()).add(quizQuestion);
+            }
+        }
+        return quizGroupQuestionsMap;
+    }
+
+    private static List<QuizQuestion> generateQuizQuestions(Map<Long, List<QuizQuestion>> quizGroupQuestionsMap, List<QuizGroup> quizGroups, List<QuizQuestion> quizQuestions) {
+        SecureRandom random = new SecureRandom();
+        List<QuizQuestion> results = new ArrayList<>();
+        for (QuizGroup quizGroup : quizGroups) {
+            List<QuizQuestion> quizGroupQuestions = quizGroupQuestionsMap.get(quizGroup.getId());
+            results.add(quizGroupQuestions.get(random.nextInt(quizGroupQuestions.size())));
+        }
+        for (QuizQuestion quizQuestion : quizQuestions) {
+            if (quizQuestion.getQuizGroup() == null) {
+                results.add(quizQuestion);
+            }
+        }
+        return results;
     }
 }
