@@ -7,7 +7,7 @@ import { UserService } from 'app/core/user/user.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ChatbotService } from 'app/iris/exercise-chatbot/exercise-creation-ui/chatbot.service';
 import { IrisChatbotWidgetBasicComponent } from 'app/iris/exercise-chatbot/exercise-creation-ui/chatbot-widget-basic.component';
-import { NumNewMessagesResetAction } from 'app/iris/state-store.model';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
     selector: 'jhi-exercise-creation-widget',
@@ -15,8 +15,6 @@ import { NumNewMessagesResetAction } from 'app/iris/state-store.model';
     styleUrl: '../widget/chatbot-widget.component.scss',
 })
 export class ExerciseCreationWidgetComponent extends IrisChatbotWidgetBasicComponent {
-    chatOpen: boolean;
-
     @Input()
     exerciseId: number;
     @Input()
@@ -27,21 +25,14 @@ export class ExerciseCreationWidgetComponent extends IrisChatbotWidgetBasicCompo
     sessionService: IrisSessionService;
 
     constructor(
+        dialog: MatDialog,
         userService: UserService,
         sharedService: SharedService,
         modalService: NgbModal,
         translateService: TranslateService,
         private chatbotService: ChatbotService,
     ) {
-        super(userService, sharedService, modalService, translateService, document);
+        super(dialog, userService, sharedService, modalService, translateService, document);
         this.chatbotService.displayChat$.subscribe();
-    }
-
-    /**
-     * Closes the chat widget.
-     */
-    closeChat() {
-        this.stateStore.dispatch(new NumNewMessagesResetAction());
-        this.sharedService.changeChatOpenStatus(false);
     }
 }

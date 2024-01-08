@@ -14,6 +14,7 @@ import { NumNewMessagesResetAction } from 'app/iris/state-store.model';
 @Component({
     selector: 'jhi-new-exercise-creation-chatbot-button',
     templateUrl: 'exercise-creation-chatbot-button.component.html',
+    styleUrl: '../widget/chatbot-widget.component.scss',
     providers: [IrisExerciseCreationSessionService, ChatbotService],
 })
 export class IrisNewExerciseCreationChatbotButtonComponent extends IrisChatbotButtonComponent {

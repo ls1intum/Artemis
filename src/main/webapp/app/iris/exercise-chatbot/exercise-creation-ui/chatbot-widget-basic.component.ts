@@ -65,6 +65,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { IrisCodeEditorSessionService } from 'app/iris/code-editor-session.service';
 import { IrisExerciseCreationSessionService } from 'app/iris/exercise-creation-session.service';
 import { DOCUMENT } from '@angular/common';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({ template: '' })
 export abstract class IrisChatbotWidgetBasicComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -128,10 +129,10 @@ export abstract class IrisChatbotWidgetBasicComponent implements OnInit, OnDestr
     fullSize = false;
     public ButtonType = ButtonType;
     readonly IrisLogoSize = IrisLogoSize;
-    private navigationSubscription: Subscription;
     private readonly MAX_INT_JAVA = 2147483647;
 
     constructor(
+        protected dialog: MatDialog,
         protected userService: UserService,
         protected sharedService: SharedService,
         protected modalService: NgbModal,
@@ -491,6 +492,17 @@ export abstract class IrisChatbotWidgetBasicComponent implements OnInit, OnDestr
     minimizeScreen() {
         this.fullSize = false;
         this.setPositionAndScale();
+    }
+
+    /**
+     * Closes the chat widget.
+     */
+    closeChat() {
+        this.stateStore.dispatch(new NumNewMessagesResetAction());
+        this.sharedService.changeChatOpenStatus(false);
+        if (this.dialog) {
+            this.dialog.closeAll();
+        }
     }
 
     /**
