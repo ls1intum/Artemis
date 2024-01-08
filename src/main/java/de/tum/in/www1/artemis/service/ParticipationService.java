@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -439,6 +440,10 @@ public class ParticipationService {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             // do not allow the student to access the repository if this is an exam exercise that has not started yet
             boolean allowAccess = !exercise.isExamExercise() || ZonedDateTime.now().isAfter(exercise.getParticipationStartDate());
+            if (participation.getParticipant() instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
+                // eager load the team with students so their information can be used for the repository configuration
+                participation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
+            }
             versionControlService.orElseThrow().configureRepository(exercise, participation, allowAccess);
             participation.setInitializationState(InitializationState.REPO_CONFIGURED);
             return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
