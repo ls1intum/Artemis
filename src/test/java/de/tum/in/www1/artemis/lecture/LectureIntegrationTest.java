@@ -208,7 +208,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLecture_NoId_shouldReturnBadRequest() throws Exception {
-        Lecture originalLecture = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow();
+        Lecture originalLecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow();
         originalLecture.setId(null);
         originalLecture.setChannelName("test");
 
