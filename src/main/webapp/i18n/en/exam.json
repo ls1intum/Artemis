@@ -67,6 +67,7 @@
                 "backToOverview": "Back to overview",
                 "examResults": "Exam Results",
                 "generalInformation": "General Information",
+                "youAreViewingAnUnsubmittedExam": "You are viewing an unsubmitted exam",
                 "exportPDF": "Export PDF",
                 "noSubmissionFound": "You didn't submit any solution for this exercise.",
                 "submissionLinkedToCommit": "The submission is linked to commit",
@@ -103,8 +104,10 @@
                 "interval": "Interval (%)",
                 "intervalPoints": "Interval (Points)",
                 "gradeKeyButton": "View Grading Key",
+                "gradeKey": "Grading Key",
                 "gradeKeyButtonBonus": "View Bonus Rules",
-                "bonusGradeKeyButton": "View Bonus Grading Key"
+                "bonusGradeKey": "Bonus Grading Key",
+                "resultTable": "Result Table"
             },
             "title": "Exam",
             "startExam": "Start",
