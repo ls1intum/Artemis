@@ -146,7 +146,7 @@ public class AttachmentUnitResource {
             throw new BadRequestAlertException("A new attachment cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             throw new ConflictException("Specified lecture is not part of a course", "AttachmentUnit", "courseMissing");
         }
@@ -211,7 +211,7 @@ public class AttachmentUnitResource {
         try {
             byte[] fileBytes = fileService.getFileForPath(filePath);
             List<AttachmentUnit> savedAttachmentUnits = lectureUnitProcessingService.splitAndSaveUnits(lectureUnitInformationDTO, fileBytes,
-                    lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId));
+                    lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId));
             savedAttachmentUnits.forEach(attachmentUnitService::prepareAttachmentUnitForClient);
             savedAttachmentUnits.forEach(competencyProgressService::updateProgressByLearningObjectAsync);
             return ResponseEntity.ok().body(savedAttachmentUnits);
@@ -297,7 +297,7 @@ public class AttachmentUnitResource {
      * @param lectureId The id of the lecture
      */
     private void checkLecture(Long lectureId) {
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             throw new ConflictException("Specified lecture is not part of a course", "AttachmentUnit", "courseMissing");
         }

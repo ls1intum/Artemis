@@ -112,7 +112,7 @@ public class OnlineUnitResource {
 
         validateUrl(onlineUnit);
 
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             throw new ConflictException("Specified lecture is not part of a course", "onlineUnit", "courseMissing");
         }
