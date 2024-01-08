@@ -208,7 +208,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         }
         // check if any of the fields have invalid percentages
         for (const gradeStep of this.gradingScale.gradeSteps) {
-            if (gradeStep.lowerBoundPercentage < 0 || gradeStep.lowerBoundPercentage > gradeStep.upperBoundPercentage) {
+            if (gradeStep.lowerBoundPercentage! < 0 || gradeStep.lowerBoundPercentage! >= gradeStep.upperBoundPercentage!) {
                 this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidMinMaxPercentages');
                 return false;
             }
@@ -216,7 +216,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         // check if any of the fields have invalid points
         if (this.maxPointsValid()) {
             for (const gradeStep of this.gradingScale.gradeSteps) {
-                if (gradeStep.lowerBoundPoints! < 0 || gradeStep.lowerBoundPoints! > gradeStep.upperBoundPoints!) {
+                if (gradeStep.lowerBoundPoints! < 0 || gradeStep.lowerBoundPoints! >= gradeStep.upperBoundPoints!) {
                     this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidMinMaxPoints');
                     return false;
                 }
@@ -417,7 +417,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
      */
     onChangeMaxPoints(maxPoints?: number): void {
         // if max points aren't defined, the grade step point bounds should also be undefined
-        if (maxPoints == undefined || maxPoints <= 0) {
+        if (maxPoints == undefined || maxPoints < 0) {
             for (const gradeStep of this.gradingScale.gradeSteps) {
                 gradeStep.lowerBoundPoints = undefined;
                 gradeStep.upperBoundPoints = undefined;

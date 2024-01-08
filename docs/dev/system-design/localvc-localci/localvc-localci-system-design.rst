@@ -38,7 +38,7 @@ This includes extracting the command and parameters from the client request and 
 It reads objects and refs from the repository, updates the repository for push requests, and formats the results of the Git commands it executes into a response that it sends back to the client.
 This could involve sending objects and refs to the client in a packfile, or transmitting error messages.
 The ``Git Server`` delegates all logic connected to Artemis to the ``Local VC Servlet Service``.
-This service resolves the repository from the file system depending on the repository URL. It also handles user authentication (only Basic Auth for now) and authorization.
+This service resolves the repository from the file system depending on the repository URI. It also handles user authentication (only Basic Auth for now) and authorization.
 For authorization (e.g. "is the requesting user the owner of the repository?", "has the due date already passed?"), it uses the logic outsourced to the ``RepositoryAccessService`` that the existing online editor also uses.
 For push requests, the ``Local VC Servlet Service`` calls the ``processNewProgrammingSubmission()`` method of the ``Programming Submission Service`` to create a new submission and finally calls the local CI subsystem to trigger a new build.
 

@@ -7,8 +7,6 @@ import { User } from '@sentry/angular-ivy';
 import { EntityArrayResponseType } from 'app/course/manage/course-management.service';
 
 export class MockCourseManagementService {
-    mockExercises: Exercise[] = [new TextExercise(undefined, undefined)];
-
     find = (courseId: number) => of([{ id: 456 } as Course]);
 
     findWithExercises = (courseId: number) => {

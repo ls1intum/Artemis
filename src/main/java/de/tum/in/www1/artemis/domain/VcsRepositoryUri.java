@@ -4,28 +4,27 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
 
-// TODO: we might want to rename this class to VcsRepositoryUri
-public class VcsRepositoryUrl {
+public class VcsRepositoryUri {
 
     protected String username;
 
     protected URI uri;
 
-    protected VcsRepositoryUrl() {
+    protected VcsRepositoryUri() {
         // NOTE: this constructor should not be used and only exists to prevent compile errors
     }
 
     // Create the url from a uriSpecString, e.g. https://ab123cd@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab123cd
-    public VcsRepositoryUrl(String uriSpecString) throws URISyntaxException {
+    public VcsRepositoryUri(String uriSpecString) throws URISyntaxException {
         this.uri = new URI(uriSpecString);
     }
 
     // Create the url from a file reference, e.g. C:/Users/Admin/AppData/Local/Temp/studentOriginRepo1644180397872264950
-    public VcsRepositoryUrl(java.io.File file) {
+    public VcsRepositoryUri(java.io.File file) {
         this.uri = file.toURI();
     }
 
-    public VcsRepositoryUrl withUser(final String username) {
+    public VcsRepositoryUri withUser(final String username) {
         this.username = username;
         return this;
     }
@@ -41,7 +40,7 @@ public class VcsRepositoryUrl {
         }
         // we explicitly allow subclasses (i.e. obj is a subclass of this) here (to avoid issues when comparing subclasses with the same url)
         // Note that this also includes the null check
-        if (!(obj instanceof VcsRepositoryUrl that)) {
+        if (!(obj instanceof VcsRepositoryUri that)) {
             return false;
         }
         return Objects.equals(username, that.username) && Objects.equals(uri, that.uri);
@@ -58,7 +57,7 @@ public class VcsRepositoryUrl {
             return this.uri.toString();
         }
         else {
-            return "VcsRepositoryUrl: empty";
+            return "VcsRepositoryUri: empty";
         }
     }
 
@@ -75,7 +74,7 @@ public class VcsRepositoryUrl {
      *
      * @return the folderName as a string.
      */
-    public String folderNameForRepositoryUrl() {
+    public String folderNameForRepositoryUri() {
         if ("file".equals(uri.getScheme())) {
             // Take the last element of the path
             final var segments = uri.getPath().split("/");
@@ -92,5 +91,26 @@ public class VcsRepositoryUrl {
             // path = path.replaceAll("^/.*git", "");
             return path;
         }
+    }
+
+    /**
+     * Retrieves the repository name without the project key and the optional practice prefix from the URI.
+     *
+     * Examples:
+     * http://localhost:8080/git/GREAT/great-artemis_admin.git --> artemis_admin
+     * http://localhost:8080/git/GREAT/great-practice-artemis_admin.git --> artemis_admin
+     *
+     * @return the repository name without the project key and the optional practice prefix.
+     */
+    public String repositoryNameWithoutProjectKey() {
+        return repositorySlug().toLowerCase().replace(projectKey().toLowerCase() + "-", "").replace("practice-", "");
+    }
+
+    private String repositorySlug() {
+        return this.uri.getPath().substring(this.uri.getPath().lastIndexOf('/') + 1).replace(".git", "");
+    }
+
+    private String projectKey() {
+        return this.uri.getPath().substring(this.uri.getPath().lastIndexOf('/', this.uri.getPath().lastIndexOf('/') - 1) + 1, this.uri.getPath().lastIndexOf('/')).toLowerCase();
     }
 }

@@ -545,12 +545,8 @@ public class StudentExamResource {
         if (!isAtLeastInstructor && !currentUser.getId().equals(targetUser.getId())) {
             throw new AccessForbiddenException("Current user cannot access grade info for target user");
         }
-        boolean nonInstructorSetsTestRunToTrue = !isAtLeastInstructor && isTestRun;
-        if (nonInstructorSetsTestRunToTrue) {
-            throw new AccessForbiddenException("Test runs are only accessible for instructors");
-        }
 
-        StudentExamWithGradeDTO studentExamWithGradeDTO = examService.getStudentExamGradesForSummaryAsStudent(targetUser, studentExam, isTestRun);
+        StudentExamWithGradeDTO studentExamWithGradeDTO = examService.getStudentExamGradesForSummary(targetUser, studentExam, isAtLeastInstructor);
 
         log.info("getStudentExamGradesForSummary done in {}ms for {} exercises for target user {} by caller user {}", System.currentTimeMillis() - start,
                 studentExam.getExercises().size(), targetUser.getLogin(), currentUser.getLogin());
