@@ -9,6 +9,7 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programmin
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
+import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 
 export interface DetailOverviewSection {
     headline: string;

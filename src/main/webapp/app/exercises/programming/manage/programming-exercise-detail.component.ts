@@ -501,9 +501,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     this.irisChatEnabled &&
                     exercise.course &&
                     !this.isExamExercise && {
-                            type: DetailType.ProgrammingIrisEnabled,
-                            title: 'artemisApp.iris.settings.subSettings.enabled.chat',
-                            data: { exercise, disabled: !exercise.isAtLeastInstructor, subSettingsType: IrisSubSettingsType.CHAT },
+                        type: DetailType.ProgrammingIrisEnabled,
+                        title: 'artemisApp.iris.settings.subSettings.enabled.chat',
+                        data: { exercise, disabled: !exercise.isAtLeastInstructor, subSettingsType: IrisSubSettingsType.CHAT },
                     },
                 exercise.buildLogStatistics && {
                     type: DetailType.ProgrammingBuildStatistics,
