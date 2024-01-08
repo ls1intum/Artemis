@@ -297,7 +297,7 @@ describe('Exam Participation Service', () => {
             const toolTip = service.getExerciseButtonTooltip(exercise);
             expect(toolTip).toBe('submitted');
         });
-        it('should return notSubmitted if exerciseType is programming and submission.submitted is true and submission.isSynced is false', () => {
+        it('should return notSubmitted if exerciseType is programming and submission.submitted is false and submission.isSynced is false', () => {
             const exercise = new ProgrammingExercise(course, undefined);
             const submission = new ProgrammingSubmission();
             submission.submitted = false;
