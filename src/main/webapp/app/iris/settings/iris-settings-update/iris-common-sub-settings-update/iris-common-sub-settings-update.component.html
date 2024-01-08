@@ -1,8 +1,8 @@
 <div class="btn-group">
-    <div class="btn" [ngClass]="{ 'btn-success selected': subSettings!.enabled, 'btn-default': !subSettings!.enabled }" (click)="onEnable()">
+    <div class="btn" [ngClass]="{ 'btn-success selected': enabled, 'btn-default': !enabled }" (click)="onEnable()">
         {{ 'artemisApp.iris.settings.subSettings.enabled.on' | artemisTranslate }}
     </div>
-    <div class="btn" [ngClass]="{ 'btn-danger selected': !subSettings!.enabled, 'btn-default': subSettings!.enabled }" (click)="onDisable()">
+    <div class="btn" [ngClass]="{ 'btn-danger selected': !enabled, 'btn-default': enabled }" (click)="onDisable()">
         {{ 'artemisApp.iris.settings.subSettings.enabled.off' | artemisTranslate }}
     </div>
 </div>

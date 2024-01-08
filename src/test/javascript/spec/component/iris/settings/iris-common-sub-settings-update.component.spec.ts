@@ -49,6 +49,7 @@ describe('IrisCommonSubSettingsUpdateComponent Component', () => {
         comp.settingsType = IrisSettingsType.EXERCISE;
         fixture.detectChanges();
 
+        expect(comp.enabled).toBeTrue();
         expect(comp.inheritAllowedModels).toBeFalse();
         expect(comp.allowedIrisModels).toEqual([mockModels()[0]]);
     });
@@ -63,6 +64,7 @@ describe('IrisCommonSubSettingsUpdateComponent Component', () => {
         comp.settingsType = IrisSettingsType.EXERCISE;
         fixture.detectChanges();
 
+        expect(comp.enabled).toBeTrue();
         expect(comp.inheritAllowedModels).toBeTrue();
         expect(comp.allowedIrisModels).toEqual([mockModels()[0]]);
     });
@@ -100,9 +102,11 @@ describe('IrisCommonSubSettingsUpdateComponent Component', () => {
         fixture.detectChanges();
 
         comp.onDisable();
+        expect(comp.enabled).toBeFalse();
         expect(comp.subSettings!.enabled).toBeFalse();
 
         comp.onEnable();
+        expect(comp.enabled).toBeTrue();
         expect(comp.subSettings!.enabled).toBeTrue();
     });
 
@@ -143,6 +147,7 @@ describe('IrisCommonSubSettingsUpdateComponent Component', () => {
         comp.allIrisModels = mockModels();
         comp.ngOnChanges(changes);
 
+        expect(comp.enabled).toBeTrue();
         expect(comp.allowedIrisModels).toEqual(newModels);
     });
 });
