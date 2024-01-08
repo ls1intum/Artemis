@@ -239,7 +239,7 @@
             },
             "calendarWeek": "Kalenderwoche",
             "scopeButton": {
-                "period": "{{ ammount }}W",
+                "period": "{{ amount }}W",
                 "periodTooltip": "Zeigt die Aktivität der letzten {{ amount }} Wochen.",
                 "overview": "Max",
                 "overviewTooltip": "Zeigt die Aktivität ab dem Kurstart bis jetzt."

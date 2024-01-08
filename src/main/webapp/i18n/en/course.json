@@ -239,7 +239,7 @@
             },
             "calendarWeek": "Calendar Week",
             "scopeButton": {
-                "period": "{{ ammount }}W",
+                "period": "{{ amount }}W",
                 "periodTooltip": "Activity of the last {{ amount }} weeks.",
                 "overview": "Max",
                 "overviewTooltip": "Activity since the course start date till now."
