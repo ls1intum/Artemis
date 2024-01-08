@@ -30,7 +30,7 @@ on:
 # Keep in sync with build.yml and test.yml
 env:
   CI: true
-  node: 18
+  node: 20
   java: 17
 
 
@@ -50,7 +50,7 @@ jobs:
         node-version: '${{ env.node }}'
         cache: 'npm'
     - name: Setup Java
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '${{ env.java }}'
@@ -58,16 +58,16 @@ jobs:
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
+      uses: github/codeql-action/init@v3
       # Override language selection by uncommenting this and choosing your languages
       with:
          languages: javascript, java
 
     # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
     - name: Autobuild
-      uses: github/codeql-action/autobuild@v2
+      uses: github/codeql-action/autobuild@v3
 
     - run: rm -rf build/resources/main/static
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@v3

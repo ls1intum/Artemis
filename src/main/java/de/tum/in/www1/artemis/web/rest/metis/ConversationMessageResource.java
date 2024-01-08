@@ -18,12 +18,12 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
+import de.tum.in.www1.artemis.domain.metis.CreatedConversationMessage;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.ConversationMessagingService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -70,9 +70,17 @@ public class ConversationMessageResource {
     public ResponseEntity<Post> createMessage(@PathVariable Long courseId, @Valid @RequestBody Post post) throws URISyntaxException {
         log.debug("POST createMessage invoked for course {} with post {}", courseId, post.getContent());
         long start = System.nanoTime();
-        Post createdMessage = conversationMessagingService.createMessage(courseId, post);
+        if (post.getId() != null) {
+            throw new BadRequestAlertException("A new message post cannot already have an ID", conversationMessagingService.getEntityName(), "idexists");
+        }
+        if (post.getConversation() == null || post.getConversation().getId() == null) {
+            throw new BadRequestAlertException("A new message post must have a conversation", conversationMessagingService.getEntityName(), "conversationnotset");
+        }
+        CreatedConversationMessage createdMessageData = conversationMessagingService.createMessage(courseId, post);
+        conversationMessagingService.notifyAboutMessageCreation(createdMessageData);
         log.info("createMessage took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/messages/" + createdMessage.getId())).body(createdMessage);
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/messages/" + createdMessageData.messageWithHiddenDetails().getId()))
+                .body(createdMessageData.messageWithHiddenDetails());
     }
 
     /**
@@ -173,9 +181,37 @@ public class ConversationMessageResource {
      *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @PutMapping("courses/{courseId}/messages/{postId}/display-priority")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
     public ResponseEntity<Post> updateDisplayPriority(@PathVariable Long courseId, @PathVariable Long postId, @RequestParam DisplayPriority displayPriority) {
         Post postWithUpdatedDisplayPriority = conversationMessagingService.changeDisplayPriority(courseId, postId, displayPriority);
         return ResponseEntity.ok().body(postWithUpdatedDisplayPriority);
+    }
+
+    /**
+     * POST /courses/{courseId}/messages/similarity-check : trigger a similarity check for post to be created
+     *
+     * @param courseId id of the course the post should be published in
+     * @param post     post to create
+     * @return ResponseEntity with status 200 (OK)
+     */
+    @PostMapping("courses/{courseId}/messages/similarity-check")
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<Post>> computeSimilarityScoresWitCoursePosts(@PathVariable Long courseId, @RequestBody Post post) {
+        List<Post> similarPosts = conversationMessagingService.getSimilarPosts(courseId, post);
+        return ResponseEntity.ok().body(similarPosts);
+    }
+
+    /**
+     * GET /courses/{courseId}/posts/tags : Get all tags for posts in a certain course
+     *
+     * @param courseId id of the course the post belongs to
+     * @return the ResponseEntity with status 200 (OK) and with body all tags for posts in that course,
+     *         or 400 (Bad Request) if the checks on user or course validity fail
+     */
+    @GetMapping("courses/{courseId}/messages/tags")
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<String>> getAllPostTagsForCourse(@PathVariable Long courseId) {
+        List<String> tags = conversationMessagingService.getAllCourseTags(courseId);
+        return new ResponseEntity<>(tags, null, HttpStatus.OK);
     }
 }

@@ -34,7 +34,7 @@ on:
 # Keep in sync with codeql-analysis.yml and test.yml
 env:
   CI: true
-  node: 18
+  node: 20
   java: 17
   RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}
 
@@ -51,7 +51,7 @@ jobs:
         node-version: '${{ env.node }}'
         cache: 'npm'
     - name: Setup Java
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '${{ env.java }}'
@@ -59,7 +59,7 @@ jobs:
     - name: Production Build
       run: ./gradlew -Pprod -Pwar clean bootWar
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Artemis.war
         path: build/libs/Artemis-*.war

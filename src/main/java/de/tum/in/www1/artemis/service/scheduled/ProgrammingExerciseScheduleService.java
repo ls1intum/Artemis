@@ -421,7 +421,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             try {
                 ProgrammingExercise programmingExerciseWithTemplateParticipation = programmingExerciseRepository
                         .findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-                gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUrl());
+                gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUri());
                 log.debug("Combined template repository commits of programming exercise {}.", programmingExerciseWithTemplateParticipation.getId());
             }
             catch (GitAPIException e) {
@@ -625,13 +625,14 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             Predicate<ProgrammingExerciseStudentParticipation> condition) {
         Long programmingExerciseId = exercise.getId();
 
+        String notificationText;
         if (numberOfFailedLockOperations > 0) {
-            groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise,
-                    Constants.PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION + numberOfFailedLockOperations);
+            notificationText = Constants.PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION + numberOfFailedLockOperations;
         }
         else {
-            groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise, Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION);
+            notificationText = Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION;
         }
+        groupNotificationService.notifyEditorAndInstructorGroupsAboutRepositoryLocks(exercise, notificationText);
 
         // Stash the not submitted/committed changes for exercises with manual assessment and with online editor enabled
         // This is necessary for students who have used the online editor, to ensure that only submitted/committed changes are displayed during manual assessment
@@ -641,14 +642,14 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             var failedStashOperations = stashChangesInAllStudentRepositories(programmingExerciseId, condition);
             failedStashOperations.thenAccept(failures -> {
                 long numberOfFailedStashOperations = failures.size();
-                String notificationText;
+                String stashNotificationText;
                 if (numberOfFailedStashOperations > 0) {
-                    notificationText = Constants.PROGRAMMING_EXERCISE_FAILED_STASH_OPERATIONS_NOTIFICATION + numberOfFailedStashOperations;
+                    stashNotificationText = Constants.PROGRAMMING_EXERCISE_FAILED_STASH_OPERATIONS_NOTIFICATION + numberOfFailedStashOperations;
                 }
                 else {
-                    notificationText = Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_STASH_OPERATION_NOTIFICATION;
+                    stashNotificationText = Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_STASH_OPERATION_NOTIFICATION;
                 }
-                groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise, notificationText);
+                groupNotificationService.notifyEditorAndInstructorGroupsAboutRepositoryLocks(exercise, stashNotificationText);
             });
         }
     }
@@ -711,7 +712,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     else {
                         notificationText = Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION;
                     }
-                    groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise, notificationText);
+                    groupNotificationService.notifyEditorAndInstructorGroupsAboutRepositoryLocks(exercise, notificationText);
 
                     // Schedule the lock operations here, this is also done here because the working times might change often before the exam start
                     // Note: this only makes sense before the due date of a course exercise or before the end date of an exam, because for individual dates in the past

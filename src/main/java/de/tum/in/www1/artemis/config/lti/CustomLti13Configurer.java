@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis.config.lti;
 
+import java.time.Duration;
+
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
-import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.security.oauth2.client.web.HttpSessionOAuth2AuthorizationRequestRepository;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 
@@ -15,6 +16,8 @@ import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
 import uk.ac.ox.ctl.lti13.Lti13Configurer;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcLaunchFlowAuthenticationProvider;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticationFilter;
+import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OptimisticAuthorizationRequestRepository;
+import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.StateAuthorizationRequestRepository;
 
 /**
  * Configures and registers Security Filters to handle LTI 1.3 Resource Link Launches
@@ -22,28 +25,36 @@ import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticati
 @Profile("lti")
 public class CustomLti13Configurer extends Lti13Configurer {
 
+    /** Path for login. **/
     private static final String LOGIN_PATH = "/auth-login";
 
+    /** Path for initiating login process. */
     private static final String LOGIN_INITIATION_PATH = "/initiate-login";
 
+    /** Base path for LTI 1.3 API endpoints. */
     public static final String LTI13_BASE_PATH = "/api/public/lti13";
 
+    /** Full path for LTI 1.3 login. */
     public static final String LTI13_LOGIN_PATH = LTI13_BASE_PATH + LOGIN_PATH;
 
+    /** Full path for LTI 1.3 login initiation. */
     public static final String LTI13_LOGIN_INITIATION_PATH = LTI13_BASE_PATH + LOGIN_INITIATION_PATH;
 
+    /** Redirect proxy path for LTI 1.3 login. */
     public static final String LTI13_LOGIN_REDIRECT_PROXY_PATH = LTI13_BASE_PATH + "/auth-callback";
+
+    /** Path for LTI 1.3 deep linking. */
+    public static final String LTI13_DEEPLINKING_PATH = "/lti/deep-linking/";
 
     public CustomLti13Configurer() {
         super.ltiPath(LTI13_BASE_PATH);
         super.loginInitiationPath(LOGIN_INITIATION_PATH);
         super.loginPath(LOGIN_PATH);
-        super.useState(true);
     }
 
     @Override
     public void configure(HttpSecurity http) {
-        AuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository = configureRequestRepository();
+        OptimisticAuthorizationRequestRepository authorizationRequestRepository = configureRequestRepository();
         OidcLaunchFlowAuthenticationProvider oidcLaunchFlowAuthenticationProvider = configureAuthenticationProvider(http);
 
         // Step 1 of the IMS SEC
@@ -64,5 +75,13 @@ public class CustomLti13Configurer extends Lti13Configurer {
 
     protected ClientRegistrationRepository clientRegistrationRepository(HttpSecurity http) {
         return http.getSharedObject(ApplicationContext.class).getBean(OnlineCourseConfigurationService.class);
+    }
+
+    @Override
+    protected OptimisticAuthorizationRequestRepository configureRequestRepository() {
+        HttpSessionOAuth2AuthorizationRequestRepository sessionRepository = new HttpSessionOAuth2AuthorizationRequestRepository();
+        StateAuthorizationRequestRepository stateRepository = new StateAuthorizationRequestRepository(Duration.ofMinutes(1));
+        stateRepository.setLimitIpAddress(limitIpAddresses);
+        return new StateBasedOptimisticAuthorizationRequestRepository(sessionRepository, stateRepository);
     }
 }

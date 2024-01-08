@@ -54,6 +54,9 @@ public class LocalCIBuildJobManagementService {
     @Value("${artemis.continuous-integration.asynchronous:true}")
     private boolean runBuildJobsAsynchronously;
 
+    @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
+    private String buildContainerPrefix;
+
     public LocalCIBuildJobManagementService(LocalCIBuildJobExecutionService localCIBuildJobExecutionService, ExecutorService localCIBuildExecutorService,
             ProgrammingMessagingService programmingMessagingService, LocalCIBuildPlanService localCIBuildPlanService, LocalCIContainerService localCIContainerService,
             LocalCIDockerService localCIDockerService, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
@@ -69,29 +72,29 @@ public class LocalCIBuildJobManagementService {
     /**
      * Submit a build job for a given participation to the executor service.
      *
-     * @param participation The participation of the repository for which the build job should be executed.
-     * @param commitHash    The commit hash of the submission that led to this build. If it is "null", the latest commit of the repository will be used.
+     * @param participation          The participation of the repository for which the build job should be executed.
+     * @param commitHash             The commit hash of the submission that led to this build. If it is "null", the latest commit of the repository will be used.
+     * @param isRetry                Whether this build job is a retry of a previous build job.
+     * @param isPushToTestRepository Defines if the build job is triggered by a push to a test repository.
      * @return A future that will be completed with the build result.
      * @throws LocalCIException If the build job could not be submitted to the executor service.
      */
-    public CompletableFuture<LocalCIBuildResult> addBuildJobToQueue(ProgrammingExerciseParticipation participation, String commitHash) {
+    public CompletableFuture<LocalCIBuildResult> executeBuildJob(ProgrammingExerciseParticipation participation, String commitHash, boolean isRetry, boolean isPushToTestRepository)
+            throws LocalCIException {
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
         ProjectType projectType = programmingExercise.getProjectType();
         String dockerImage = programmingLanguageConfiguration.getImage(programmingLanguage, Optional.ofNullable(projectType));
 
-        // Check if the Docker image is available. It should be available, because it is pulled during the creation of the programming exercise.
+        // Check if the Docker image is available. If not, pull it.
         localCIDockerService.pullDockerImage(dockerImage);
 
         // Prepare the Docker container name before submitting the build job to the executor service, so we can remove the container if something goes wrong.
-        String containerName = "artemis-local-ci-" + participation.getId() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
+        String containerName = buildContainerPrefix + participation.getId() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
 
         // Prepare a Callable that will later be called. It contains the actual steps needed to execute the build job.
-        Callable<LocalCIBuildResult> buildJob = () -> localCIBuildJobExecutionService.runBuildJob(participation, commitHash, containerName, dockerImage);
-
-        // Wrap the buildJob Callable in a BuildJobTimeoutCallable, so that the build job is cancelled if it takes too long.
-        BuildJobTimeoutCallable<LocalCIBuildResult> timedBuildJob = new BuildJobTimeoutCallable<>(buildJob, timeoutSeconds);
+        Callable<LocalCIBuildResult> buildJob = () -> localCIBuildJobExecutionService.runBuildJob(participation, commitHash, isPushToTestRepository, containerName, dockerImage);
 
         /*
          * Submit the build job to the executor service. This runs in a separate thread, so it does not block the main thread.
@@ -101,11 +104,11 @@ public class LocalCIBuildJobManagementService {
          */
         CompletableFuture<LocalCIBuildResult> futureResult = createCompletableFuture(() -> {
             try {
-                return localCIBuildExecutorService.submit(timedBuildJob).get();
+                return localCIBuildExecutorService.submit(buildJob).get(timeoutSeconds, TimeUnit.SECONDS);
             }
-            catch (RejectedExecutionException | CancellationException | ExecutionException | InterruptedException e) {
+            catch (RejectedExecutionException | CancellationException | ExecutionException | InterruptedException | TimeoutException e) {
                 // RejectedExecutionException is thrown if the queue size limit (defined in "artemis.continuous-integration.queue-size-limit") is reached.
-                finishBuildJobExceptionally(participation, commitHash, containerName, e);
+                finishBuildJobExceptionally(participation, commitHash, containerName, isRetry, e);
                 // Wrap the exception in a CompletionException so that the future is completed exceptionally and the thenAccept block is not run.
                 // This CompletionException will not resurface anywhere else as it is thrown in this completable future's separate thread.
                 throw new CompletionException(e);
@@ -151,8 +154,8 @@ public class LocalCIBuildJobManagementService {
      * @param containerName The name of the Docker container that was used to execute the build job.
      * @param exception     The exception that occurred while building and testing the repository.
      */
-    private void finishBuildJobExceptionally(ProgrammingExerciseParticipation participation, String commitHash, String containerName, Exception exception) {
-        log.error("Error while building and testing commit {} in repository {}", commitHash, participation.getRepositoryUrl(), exception);
+    private void finishBuildJobExceptionally(ProgrammingExerciseParticipation participation, String commitHash, String containerName, boolean isRetry, Exception exception) {
+        log.error("Error while building and testing commit {} in repository {}", commitHash, participation.getRepositoryUri(), exception);
 
         // Set the build status to "INACTIVE" to indicate that the build is not running anymore.
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);
@@ -161,53 +164,12 @@ public class LocalCIBuildJobManagementService {
         BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(exception.getMessage(), participation.getId());
         // This cast to Participation is safe as the participation is either a ProgrammingExerciseStudentParticipation, a TemplateProgrammingExerciseParticipation, or a
         // SolutionProgrammingExerciseParticipation, which all extend Participation.
-        programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation, error);
+        if (!isRetry) {
+            programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation, error);
+        }
+
+        localCIContainerService.deleteScriptFile(containerName);
 
         localCIContainerService.stopContainer(containerName);
     }
-
-    /**
-     * Wrapper for the buildJob Callable that adds a timeout when the build job is called.
-     *
-     * @param buildJobCallable The build job that should be called.
-     * @param timeoutSeconds   The number of seconds after which the build job is cancelled.
-     */
-    private record BuildJobTimeoutCallable<LocalCIBuildResult>(Callable<LocalCIBuildResult> buildJobCallable, long timeoutSeconds) implements Callable<LocalCIBuildResult> {
-
-        /**
-         * Calls the buildJobCallable and waits for the result or for the timeout to pass.
-         *
-         * @return the LocalCIBuildResult
-         * @throws ExecutionException   if there was an error when calling the buildJobCallable or during the execution of the buildJobCallable, i.e. a LocalCIException.
-         * @throws InterruptedException if the thread was interrupted while waiting for the buildJobCallable to finish, e.g. if the ExecutorService was terminated from somewhere
-         *                                  else.
-         * @throws TimeoutException     if the timeout passed before the buildJobCallable finished.
-         */
-        @Override
-        public LocalCIBuildResult call() throws ExecutionException, InterruptedException, TimeoutException {
-            Future<LocalCIBuildResult> future = CompletableFuture.supplyAsync(() -> {
-                try {
-                    return buildJobCallable.call();
-                }
-                catch (Exception e) {
-                    // Something went wrong while executing the build job.
-                    // The exception is stored in the Future and will resurface as an ExecutionException when running "future.get()" below.
-                    throw new CompletionException(e);
-                }
-            });
-
-            try {
-                // When the build job is called, wait for the result or for the timeout to pass.
-                return future.get(timeoutSeconds, TimeUnit.SECONDS);
-            }
-            catch (ExecutionException | InterruptedException | TimeoutException e) {
-                // Cancel the future if it is not completed or cancelled yet.
-                future.cancel(true);
-                // This exception will resurface in the catch block of "localCIBuildExecutorService.submit(timedBuildJob).get()"
-                // where the container is stopped and the user is notified.
-                throw e;
-            }
-        }
-    }
-
 }

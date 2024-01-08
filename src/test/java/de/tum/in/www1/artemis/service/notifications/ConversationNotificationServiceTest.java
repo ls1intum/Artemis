@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.NEW_MESSAGE_TITLE;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.Comparator;
@@ -102,7 +101,7 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationIndep
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void notifyAboutNewMessageInConversation() {
+    void createNotificationForNewMessageInConversation() {
         Post post = new Post();
         post.setAuthor(user1);
         post.setCreationDate(ZonedDateTime.now());
@@ -111,8 +110,8 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationIndep
         post.setContent("hi test");
         post = conversationMessageRepository.save(post);
 
-        conversationNotificationService.notifyAboutNewMessage(post, Set.of(user2), course, Set.of());
-        verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/user/" + user2.getId() + "/notifications/conversations"), (Object) any());
+        ConversationNotification notification = conversationNotificationService.createNotification(post, oneToOneChat, course, Set.of());
+        conversationNotificationService.notifyAboutNewMessage(post, notification, Set.of(user2));
         verifyRepositoryCallWithCorrectNotification(NEW_MESSAGE_TITLE);
 
         Notification sentNotification = notificationRepository.findAll().stream().max(Comparator.comparing(DomainObject::getId)).orElseThrow();

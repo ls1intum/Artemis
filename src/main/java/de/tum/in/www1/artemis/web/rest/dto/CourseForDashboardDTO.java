@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-import java.util.*;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -23,5 +23,5 @@ import de.tum.in.www1.artemis.domain.Course;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CourseForDashboardDTO(Course course, CourseScoresDTO totalScores, CourseScoresDTO textScores, CourseScoresDTO programmingScores, CourseScoresDTO modelingScores,
-        CourseScoresDTO fileUploadScores, CourseScoresDTO quizScores, CourseScoresDTO mathScores, List<ParticipationResultDTO> participationResults) {
+        CourseScoresDTO fileUploadScores, CourseScoresDTO quizScores, Set<ParticipationResultDTO> participationResults) {
 }

@@ -10,26 +10,28 @@ import { GradeStepsDTO } from 'app/entities/grade-step.model';
     selector: 'jhi-presentation-score-checkbox',
     template: `
         <ng-container *jhiHasAnyAuthority="[Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR]">
-            <div class="form-group" *ngIf="this.showPresentationScoreCheckbox()">
-                <div class="form-check custom-control custom-checkbox">
-                    <input
-                        type="checkbox"
-                        class="form-check-input custom-control-input"
-                        id="field_presentationScoreEnabled"
-                        name="presentationScoreEnabled"
-                        [ngModel]="exercise.presentationScoreEnabled"
-                        (ngModelChange)="exercise.presentationScoreEnabled = !exercise.presentationScoreEnabled"
-                    />
-                    <label class="form-check-label custom-control-label" for="field_presentationScoreEnabled" jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title"
-                        >Presentation Score Enabled</label
-                    >
-                    <fa-icon
-                        [icon]="faQuestionCircle"
-                        class="text-secondary"
-                        ngbTooltip="{{ 'artemisApp.exercise.presentationScoreEnabled.description' | artemisTranslate }}"
-                    ></fa-icon>
+            @if (this.showPresentationScoreCheckbox()) {
+                <div class="form-group">
+                    <div class="form-check custom-control custom-checkbox">
+                        <input
+                            type="checkbox"
+                            class="form-check-input custom-control-input"
+                            id="field_presentationScoreEnabled"
+                            name="presentationScoreEnabled"
+                            [ngModel]="exercise.presentationScoreEnabled"
+                            (ngModelChange)="exercise.presentationScoreEnabled = !exercise.presentationScoreEnabled"
+                        />
+                        <label class="form-check-label custom-control-label" for="field_presentationScoreEnabled" jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title"
+                            >Presentation Score Enabled</label
+                        >
+                        <fa-icon
+                            [icon]="faQuestionCircle"
+                            class="text-secondary"
+                            ngbTooltip="{{ 'artemisApp.exercise.presentationScoreEnabled.description' | artemisTranslate }}"
+                        ></fa-icon>
+                    </div>
                 </div>
-            </div>
+            }
         </ng-container>
     `,
 })

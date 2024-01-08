@@ -2,6 +2,8 @@
     "artemisApp": {
         "studentDashboard": {
             "title": "Deine aktuellen Kurse",
+            "recentlyAccessed": "Zuletzt besuchte Kurse",
+            "otherCourses": "Andere Kurse",
             "exerciseTitle": "Aktuelle aktive Übung von \"{{ course }}\"",
             "exerciseTitleWithoutDueDate": "Aktuelle Übung von \"{{ course }}\":",
             "examTitle": "Aktuelle Prüfung von \"{{ course }}\":",

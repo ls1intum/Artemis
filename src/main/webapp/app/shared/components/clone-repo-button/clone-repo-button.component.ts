@@ -26,7 +26,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     @Input()
     smallButtons: boolean;
     @Input()
-    repositoryUrl?: string;
+    repositoryUri?: string;
     @Input()
     participations?: ProgrammingExerciseStudentParticipation[];
     @Input()
@@ -94,25 +94,25 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
             this.cloneHeadline =
                 this.isPracticeMode && !this.exercise?.exerciseGroup ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
             this.isTeamParticipation = !!this.activeParticipation?.team;
-        } else if (this.repositoryUrl) {
+        } else if (this.repositoryUri) {
             this.cloneHeadline = 'artemisApp.exerciseActions.cloneExerciseRepository';
         }
     }
 
-    private getRepositoryUrl() {
-        return this.activeParticipation?.repositoryUrl ?? this.repositoryUrl!;
+    private getRepositoryUri() {
+        return this.activeParticipation?.repositoryUri ?? this.repositoryUri!;
     }
 
-    getHttpOrSshRepositoryUrl(insertPlaceholder = true): string {
+    getHttpOrSshRepositoryUri(insertPlaceholder = true): string {
         if (this.useSsh) {
-            return this.getSshCloneUrl(this.getRepositoryUrl()) || this.getRepositoryUrl();
+            return this.getSshCloneUrl(this.getRepositoryUri()) || this.getRepositoryUri();
         }
 
         if (this.isTeamParticipation) {
-            return this.addCredentialsToHttpUrl(this.repositoryUrlForTeam(this.getRepositoryUrl()), insertPlaceholder);
+            return this.addCredentialsToHttpUrl(this.repositoryUriForTeam(this.getRepositoryUri()), insertPlaceholder);
         }
 
-        return this.addCredentialsToHttpUrl(this.getRepositoryUrl(), insertPlaceholder);
+        return this.addCredentialsToHttpUrl(this.getRepositoryUri(), insertPlaceholder);
     }
 
     /**
@@ -141,26 +141,26 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
      * Used for the Button to open the repository in a separate browser-window
      * @return HTTPS-Repository link of the student
      */
-    getHttpRepositoryUrl(): string {
+    getHttpRepositoryUri(): string {
         if (this.isTeamParticipation) {
-            return this.repositoryUrlForTeam(this.getRepositoryUrl());
+            return this.repositoryUriForTeam(this.getRepositoryUri());
         } else {
-            return this.getRepositoryUrl();
+            return this.getRepositoryUri();
         }
     }
 
     /**
-     * The user info part of the repository url of a team participation has to be added with the current user's login.
+     * The user info part of the repository uri of a team participation has to be added with the current user's login.
      *
-     * @return repository url with username of current user inserted
+     * @return repository uri with username of current user inserted
      */
-    private repositoryUrlForTeam(url: string) {
+    private repositoryUriForTeam(url: string) {
         // (https://)(bitbucket.ase.in.tum.de/...-team1.git)  =>  (https://)ga12abc@(bitbucket.ase.in.tum.de/...-team1.git)
         return url.replace(/^(\w*:\/\/)(.*)$/, `$1${this.user.login}@$2`);
     }
 
     /**
-     * Transforms the repository url to an ssh clone url
+     * Transforms the repository uri to an ssh clone url
      */
     private getSshCloneUrl(url?: string) {
         return url?.replace(/^\w*:\/\/[^/]*?\/(scm\/)?(.*)$/, this.sshTemplateUrl + '$2');
@@ -186,11 +186,11 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     }
 
     /**
-     * build the sourceTreeUrl from the repository url
+     * build the sourceTreeUrl from the repository uri
      * @return sourceTreeUrl
      */
     buildSourceTreeUrl() {
-        return this.sourceTreeService.buildSourceTreeUrl(this.versionControlUrl, this.getHttpOrSshRepositoryUrl(false));
+        return this.sourceTreeService.buildSourceTreeUrl(this.versionControlUrl, this.getHttpOrSshRepositoryUri(false));
     }
 
     switchPracticeMode() {

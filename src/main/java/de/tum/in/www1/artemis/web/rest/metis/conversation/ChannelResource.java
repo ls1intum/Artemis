@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelIdAndNameDTO;
 
 @RestController
 @RequestMapping("/api/courses")
@@ -98,8 +99,8 @@ public class ChannelResource extends ConversationManagementResource {
         var isOnlyStudent = authorizationCheckService.isOnlyStudentInCourse(course, requestingUser);
         var channels = channelRepository.findChannelsByCourseId(courseId).stream();
 
-        var filteredChannelSummaries = isOnlyStudent ? conversationService.filterVisibleChannelsForStudents(channels) : channels;
-        var channelDTOs = filteredChannelSummaries.map(summary -> conversationDTOService.convertChannelToDto(requestingUser, summary));
+        var filteredChannels = isOnlyStudent ? conversationService.filterVisibleChannelsForStudents(channels) : channels;
+        var channelDTOs = filteredChannels.map(channel -> conversationDTOService.convertChannelToDto(requestingUser, channel));
 
         // only instructors / system admins can see all channels
         if (!isAtLeastInstructor) {
@@ -107,6 +108,31 @@ public class ChannelResource extends ConversationManagementResource {
         }
 
         return ResponseEntity.ok(channelDTOs.sorted(Comparator.comparing(ChannelDTO::getName)).toList());
+    }
+
+    /**
+     * GET /api/courses/:courseId/channels/public-overview: Returns a list of channels in a course that are visible to every course member
+     *
+     * @param courseId the id of the course
+     * @return ResponseEntity with status 200 (OK) and with body containing the list of channels visible to all course members
+     */
+    @GetMapping("/{courseId}/channels/public-overview")
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<ChannelIdAndNameDTO>> getCoursePublicChannelsOverview(@PathVariable Long courseId) {
+        log.debug("REST request to get all public channels of course: {}", courseId);
+        checkMessagingOrCommunicationEnabledElseThrow(courseId);
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
+        var channels = channelRepository.findChannelsByCourseId(courseId).stream();
+
+        // Filter channels that are either course-wide or public and, if associated with a lecture/exercise/exam,
+        // ensure it's visible to students
+        var filteredChannelSummaries = conversationService.filterVisibleChannelsForStudents(channels)
+                .filter(summary -> summary.getIsCourseWide() || Boolean.TRUE.equals(summary.getIsPublic()));
+        var channelDTOs = filteredChannelSummaries.map(summary -> new ChannelIdAndNameDTO(summary.getId(), summary.getName()));
+
+        return ResponseEntity.ok(channelDTOs.sorted(Comparator.comparing(ChannelIdAndNameDTO::name)).toList());
     }
 
     /**
@@ -118,20 +144,20 @@ public class ChannelResource extends ConversationManagementResource {
      */
     @GetMapping("/{courseId}/exercises/{exerciseId}/channel")
     @EnforceAtLeastStudent
-    public ResponseEntity<Channel> getExerciseChannel(@PathVariable Long courseId, @PathVariable Long exerciseId) {
+    public ResponseEntity<ChannelDTO> getExerciseChannel(@PathVariable Long courseId, @PathVariable Long exerciseId) {
         log.debug("REST request to get channel of exercise: {}", exerciseId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
         checkMessagingOrCommunicationEnabledElseThrow(course);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
         var channel = channelRepository.findChannelByExerciseId(exerciseId);
-        if (channel != null) {
-            channel.hideDetails();
-        }
 
+        if (channel == null) {
+            return ResponseEntity.ok(null);
+        }
         checkChannelMembership(channel, requestingUser);
 
-        return ResponseEntity.ok(channel);
+        return ResponseEntity.ok(conversationDTOService.convertChannelToDto(requestingUser, channel));
     }
 
     /**
@@ -143,20 +169,21 @@ public class ChannelResource extends ConversationManagementResource {
      */
     @GetMapping("/{courseId}/lectures/{lectureId}/channel")
     @EnforceAtLeastStudent
-    public ResponseEntity<Channel> getLectureChannel(@PathVariable Long courseId, @PathVariable Long lectureId) {
+    public ResponseEntity<ChannelDTO> getLectureChannel(@PathVariable Long courseId, @PathVariable Long lectureId) {
         log.debug("REST request to get channel of lecture: {}", lectureId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
         checkMessagingOrCommunicationEnabledElseThrow(course);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
         var channel = channelRepository.findChannelByLectureId(lectureId);
-        if (channel != null) {
-            channel.hideDetails();
-        }
 
+        if (channel == null) {
+            return ResponseEntity.ok(null);
+
+        }
         checkChannelMembership(channel, requestingUser);
 
-        return ResponseEntity.ok(channel);
+        return ResponseEntity.ok(conversationDTOService.convertChannelToDto(requestingUser, channel));
     }
 
     /**

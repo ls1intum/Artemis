@@ -1,189 +1,173 @@
-<div *ngIf="showResultOverview">
-    <h3>
-        {{ 'artemisApp.exam.examSummary.points.overview' | artemisTranslate }}
-    </h3>
-    <div class="container exam-points-summary-container">
-        <table class="table table-striped table-hover" id="result-overview-table">
-            <thead>
-                <tr>
-                    <th scope="col">#</th>
-                    <th scope="col">{{ 'artemisApp.exam.examSummary.points.exercise' | artemisTranslate }}</th>
-                    <th scope="col" *ngIf="showIncludedInScoreColumn">{{ 'artemisApp.exercise.includedInOverallScore' | artemisTranslate }}</th>
-                    <th scope="col">{{ 'artemisApp.exam.examSummary.points.yourPoints' | artemisTranslate }}</th>
-                    <th scope="col">{{ 'artemisApp.exam.examSummary.points.maxPoints' | artemisTranslate }}</th>
-                    <th scope="col">{{ 'artemisApp.exam.examSummary.points.achievedPercentage' | artemisTranslate }}</th>
-                    <th scope="col" *ngIf="studentExamWithGrade?.maxBonusPoints">{{ 'artemisApp.exam.examSummary.points.maxBonus' | artemisTranslate }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr
-                    *ngFor="let exercise of studentExamWithGrade?.studentExam?.exercises; let exerciseIndex = index"
-                    [ngClass]="{
-                        'font-italic text-danger font-weight-bold': exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED,
-                        'font-italic text-warning font-weight-bold': exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS
-                    }"
-                    (click)="scrollToExercise(exercise.id)"
-                    [class.not-included-in-score]="exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED"
-                >
-                    <th scope="row">{{ exerciseIndex + 1 }}</th>
-                    <td>
-                        &nbsp;
-                        <div *ngIf="exercise?.type" class="icon-container">
-                            <fa-icon [icon]="exerciseInfos[exercise.id!].icon" class="icon"></fa-icon>
-                        </div>
-                        &nbsp;
-                        <span>{{ exercise?.exerciseGroup?.title ?? '-' }}</span>
-                    </td>
-                    <td *ngIf="showIncludedInScoreColumn">{{ exerciseService.isIncludedInScore(exercise) }}</td>
-                    <td>
-                        {{ studentExamWithGrade?.achievedPointsPerExercise?.[exercise.id!] ?? 0 }}
-                    </td>
-                    <td>
-                        <span *ngIf="exercise.maxPoints != undefined">{{
-                            exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? 0 : exercise.maxPoints
-                        }}</span>
-                    </td>
-                    <td>
-                        <span
-                            *ngIf="exerciseInfos[exercise.id!].achievedPercentage !== undefined; else noPercentageKnownPlaceholder"
-                            [class]="exerciseInfos[exercise.id!].colorClass"
-                        >
-                            {{ exerciseInfos[exercise.id!].achievedPercentage }}%
-                        </span>
-                        <ng-template #noPercentageKnownPlaceholder> - </ng-template>
-                    </td>
-                    <td *ngIf="studentExamWithGrade?.maxBonusPoints">
-                        <span *ngIf="exercise.bonusPoints != undefined">{{
-                            exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? exercise.maxPoints : exercise.bonusPoints
-                        }}</span>
-                    </td>
-                </tr>
-            </tbody>
-            <tfoot class="total-footer">
-                <tr>
-                    <th scope="row" colspan="2">{{ 'artemisApp.exam.examSummary.points.total' | artemisTranslate }}</th>
-                    <td *ngIf="showIncludedInScoreColumn">-</td>
-                    <th>
-                        {{ overallAchievedPoints }}
-                    </th>
-                    <th>
-                        {{ maxPoints }}
-                    </th>
-                    <th>
-                        <span
-                            *ngIf="studentExamWithGrade.studentResult.overallScoreAchieved !== undefined; else totalScoreNotDefinedPlaceholder"
-                            [class]="hasPassed ? 'text-success' : 'text-danger'"
-                        >
-                            {{ overallAchievedPercentageRoundedByCourseSettings }}%
-                        </span>
-                        <ng-template #totalScoreNotDefinedPlaceholder>
-                            <span>-</span>
-                        </ng-template>
-                    </th>
-                    <th *ngIf="studentExamWithGrade?.maxBonusPoints">
-                        {{ studentExamWithGrade?.maxBonusPoints }}
-                    </th>
-                </tr>
-            </tfoot>
-        </table>
-        <div class="d-flex align-items-center justify-content-evenly">
-            <div>
-                <h5 *ngIf="studentExamWithGrade?.maxBonusPoints">
-                    {{
-                        'artemisApp.exam.examSummary.points.youAchievedWithBonus'
-                            | artemisTranslate
-                                : {
-                                      achievedPoints: overallAchievedPoints,
-                                      normalPoints: maxPoints
-                                  }
-                    }}
-                </h5>
-                <h5 *ngIf="studentExamWithGrade?.maxBonusPoints">
-                    {{
-                        'artemisApp.exam.examSummary.points.youAchieved'
-                            | artemisTranslate
-                                : {
-                                      achievedPoints: overallAchievedPoints,
-                                      normalPoints: maxPoints
-                                  }
-                    }}
-                </h5>
-                <h5 *ngIf="studentExamWithGrade.studentResult.gradeWithBonus != undefined">
-                    {{
-                        'artemisApp.exam.examSummary.points.youAchievedFromBonus.' + studentExamWithGrade.studentResult.gradeWithBonus.bonusStrategy
-                            | artemisTranslate
-                                : {
-                                      achievedBonus: studentExamWithGrade.studentResult.gradeWithBonus.bonusGrade,
-                                      bonusFromTitle: studentExamWithGrade.studentResult.gradeWithBonus.bonusFromTitle
-                                  }
-                    }}
-                </h5>
+@if (showResultOverview) {
+    <div>
+        <h3>
+            {{ 'artemisApp.exam.examSummary.points.overview' | artemisTranslate }}
+        </h3>
+
+        <jhi-collapsible-card [isCardContentCollapsed]="isCollapsed['grading-table']" [toggleCollapse]="toggleCollapse('grading-table')">
+            <div class="header h5">
+                {{ 'artemisApp.exam.examSummary.resultTable' | artemisTranslate }}
             </div>
 
-            <div *ngIf="gradingScaleExists" class="d-flex justify-content-center align-items-center">
-                <table class="h5 lh-lg mb-0 me-2">
-                    <tr *ngIf="!isBonus">
-                        <td>
-                            {{
-                                'artemisApp.exam.examSummary.' + (studentExamWithGrade.studentResult.gradeWithBonus != undefined ? 'gradeBeforeBonus' : 'grade') | artemisTranslate
-                            }}:
-                        </td>
-                        <td>
-                            <span [ngClass]="hasPassed ? 'passing-grade' : 'failing-grade'" class="grade"> {{ grade }}</span>
-                        </td>
-                    </tr>
-                    <tr *ngIf="isBonus">
-                        <td>{{ 'artemisApp.exam.examSummary.bonus' | artemisTranslate }}:</td>
-                        <td>{{ grade }}</td>
-                    </tr>
-                    <tr *ngIf="studentExamWithGrade.studentResult.gradeWithBonus != undefined">
-                        <td>{{ 'artemisApp.exam.examSummary.gradeAfterBonus' | artemisTranslate }}:</td>
-                        <td>
-                            <span [ngClass]="hasPassed ? 'passing-grade' : 'failing-grade'" class="grade"> {{ studentExamWithGrade.studentResult.gradeWithBonus.finalGrade }}</span>
-                        </td>
-                    </tr>
+            <div class="container exam-points-summary-container collapsible-content">
+                <table class="table table-striped table-hover" id="result-overview-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">{{ 'artemisApp.exam.examSummary.points.exercise' | artemisTranslate }}</th>
+                            @if (showIncludedInScoreColumn) {
+                                <th scope="col">{{ 'artemisApp.exercise.includedInOverallScore' | artemisTranslate }}</th>
+                            }
+                            <th scope="col">{{ 'artemisApp.exam.examSummary.points.yourPoints' | artemisTranslate }}</th>
+                            <th scope="col">{{ 'artemisApp.exam.examSummary.points.maxPoints' | artemisTranslate }}</th>
+                            <th scope="col">{{ 'artemisApp.exam.examSummary.points.achievedPercentage' | artemisTranslate }}</th>
+                            @if (studentExamWithGrade?.maxBonusPoints) {
+                                <th scope="col">{{ 'artemisApp.exam.examSummary.points.maxBonus' | artemisTranslate }}</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (exercise of studentExamWithGrade?.studentExam?.exercises; track exercise; let exerciseIndex = $index) {
+                            <tr
+                                [ngClass]="{
+                                    'font-italic text-danger font-weight-bold': exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED,
+                                    'font-italic text-warning font-weight-bold': exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS
+                                }"
+                                (click)="scrollToExercise(exercise.id)"
+                                [class.not-included-in-score]="exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED"
+                            >
+                                <th scope="row">{{ exerciseIndex + 1 }}</th>
+                                <td>
+                                    &nbsp;
+                                    @if (exercise?.type && exerciseInfos[exercise.id!] !== undefined) {
+                                        <div class="icon-container">
+                                            <fa-icon [icon]="exerciseInfos[exercise.id!].icon" class="icon"></fa-icon>
+                                        </div>
+                                    }
+                                    &nbsp;
+                                    <span>{{ exercise?.exerciseGroup?.title ?? '-' }}</span>
+                                </td>
+                                @if (showIncludedInScoreColumn) {
+                                    <td class="text-center">{{ exerciseService.isIncludedInScore(exercise) }}</td>
+                                }
+                                <td class="text-center">
+                                    {{ studentExamWithGrade?.achievedPointsPerExercise?.[exercise.id!] ?? 0 }}
+                                </td>
+                                <td class="text-center">
+                                    @if (exercise.maxPoints != undefined) {
+                                        <span>{{ exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? 0 : exercise.maxPoints }}</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (exerciseInfos[exercise.id!] !== undefined && exerciseInfos[exercise.id!].achievedPercentage !== undefined) {
+                                        <span [class]="exerciseInfos[exercise.id!].colorClass"> {{ exerciseInfos[exercise.id!].achievedPercentage }} % </span>
+                                    } @else {
+                                        -
+                                    }
+                                </td>
+                                @if (studentExamWithGrade?.maxBonusPoints) {
+                                    <td>
+                                        @if (exercise.bonusPoints != undefined) {
+                                            <span>{{
+                                                exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? exercise.maxPoints : exercise.bonusPoints
+                                            }}</span>
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot class="total-footer">
+                        <tr>
+                            <th scope="row" colspan="2">{{ 'artemisApp.exam.examSummary.points.total' | artemisTranslate }}</th>
+                            @if (showIncludedInScoreColumn) {
+                                <td class="text-center">-</td>
+                            }
+                            <th class="text-center">
+                                {{ overallAchievedPoints }}
+                            </th>
+                            <th class="text-center">
+                                {{ maxPoints }}
+                            </th>
+                            <th class="text-center">
+                                @if (studentExamWithGrade.studentResult.overallScoreAchieved !== undefined) {
+                                    <span [class]="hasPassed ? 'text-success' : 'text-danger'"> {{ overallAchievedPercentageRoundedByCourseSettings }} % </span>
+                                } @else {
+                                    <span>-</span>
+                                }
+                            </th>
+                            @if (studentExamWithGrade?.maxBonusPoints) {
+                                <th>
+                                    {{ studentExamWithGrade?.maxBonusPoints }}
+                                </th>
+                            }
+                        </tr>
+                    </tfoot>
                 </table>
-            </div>
-        </div>
-
-        <div class="container" *ngIf="gradingScaleExists">
-            <div class="row">
-                <div class="mt-3 d-flex flex-column align-items-center" [class]="isBonusGradingKeyDisplayed ? 'col-md-6' : 'col-md-12'">
-                    <button class="btn btn-primary" (click)="toggleGradingKey()" style="max-width: fit-content">
-                        <fa-icon [icon]="faClipboard"></fa-icon>
-                        <span
-                            >&nbsp;{{
-                                isBonus
-                                    ? ('artemisApp.exam.examSummary.gradeKeyButtonBonus' | artemisTranslate)
-                                    : ('artemisApp.exam.examSummary.gradeKeyButton' | artemisTranslate)
-                            }}&nbsp;
-                        </span>
-                        <span class="rotate-icon chevron-position" [class.rotated]="!isGradingKeyCollapsed">
-                            <fa-icon [icon]="faChevronRight"></fa-icon>
-                        </span>
-                    </button>
-
-                    <div [ngbCollapse]="isGradingKeyCollapsed" class="mt-3" style="max-width: fit-content">
-                        <jhi-grade-key-table [studentGradeOrBonusPointsOrGradeBonus]="grade" />
+                <div class="mx-4 my-auto">
+                    <div class="h5">
+                        @if (studentExamWithGrade?.maxBonusPoints) {
+                            {{
+                                'artemisApp.exam.examSummary.points.youAchievedWithBonus'
+                                    | artemisTranslate
+                                        : {
+                                              achievedPoints: overallAchievedPoints,
+                                              normalPoints: maxPoints
+                                          }
+                            }}
+                        }
+                        @if (studentExamWithGrade?.maxBonusPoints) {
+                            {{
+                                'artemisApp.exam.examSummary.points.youAchieved'
+                                    | artemisTranslate
+                                        : {
+                                              achievedPoints: overallAchievedPoints,
+                                              normalPoints: maxPoints
+                                          }
+                            }}
+                        }
+                        @if (studentExamWithGrade.studentResult.gradeWithBonus != undefined) {
+                            {{
+                                'artemisApp.exam.examSummary.points.youAchievedFromBonus.' + studentExamWithGrade.studentResult.gradeWithBonus.bonusStrategy
+                                    | artemisTranslate
+                                        : {
+                                              achievedBonus: studentExamWithGrade.studentResult.gradeWithBonus.bonusGrade,
+                                              bonusFromTitle: studentExamWithGrade.studentResult.gradeWithBonus.bonusFromTitle
+                                          }
+                            }}
+                        }
                     </div>
                 </div>
+            </div>
+        </jhi-collapsible-card>
 
-                <div *ngIf="isBonusGradingKeyDisplayed" class="col-md-6 mt-3 d-flex flex-column align-items-center">
-                    <button class="btn btn-primary" (click)="toggleBonusGradingKey()">
-                        <fa-icon [icon]="faAward"></fa-icon>
-                        <span>&nbsp;{{ 'artemisApp.exam.examSummary.bonusGradeKeyButton' | artemisTranslate }}&nbsp;</span>
-                        <span class="rotate-icon chevron-position" [class.rotated]="!isBonusGradingKeyCollapsed">
-                            <fa-icon [icon]="faChevronRight"></fa-icon>
-                        </span>
-                    </button>
-                    <div [ngbCollapse]="isBonusGradingKeyCollapsed" class="mt-3 text-start" style="max-width: fit-content">
+        @if (gradingScaleExists) {
+            <jhi-collapsible-card [isCardContentCollapsed]="isCollapsed['grading-key']" [toggleCollapse]="toggleCollapse('grading-key')">
+                <div class="header h5">
+                    <fa-icon [icon]="faClipboard"></fa-icon> &nbsp;
+                    {{ 'artemisApp.exam.examSummary.gradeKey' | artemisTranslate }}
+                </div>
+
+                <div class="collapsible-content">
+                    <jhi-grade-key-table [studentGradeOrBonusPointsOrGradeBonus]="grade" />
+                </div>
+            </jhi-collapsible-card>
+
+            @if (isBonusGradingKeyDisplayed) {
+                <jhi-collapsible-card [isCardContentCollapsed]="isCollapsed['bonus-grading-key']" [toggleCollapse]="toggleCollapse('bonus-grading-key')">
+                    <div class="header h5">
+                        <fa-icon [icon]="faAward"></fa-icon>&nbsp;
+                        {{ 'artemisApp.exam.examSummary.bonusGradeKey' | artemisTranslate }}
+                    </div>
+
+                    <div class="collapsible-content">
                         <jhi-grade-key-table
                             [studentGradeOrBonusPointsOrGradeBonus]="'' + (studentExamWithGrade.studentResult.gradeWithBonus?.bonusGrade ?? 0)"
                             [forBonus]="true"
                         />
                     </div>
-                </div>
-            </div>
-        </div>
+                </jhi-collapsible-card>
+            }
+        }
     </div>
-</div>
+}

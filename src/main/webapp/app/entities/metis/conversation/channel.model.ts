@@ -22,6 +22,7 @@ export class Channel extends Conversation {
     public isPublic?: boolean;
     public isAnnouncementChannel?: boolean;
     public isArchived?: boolean;
+    public isCourseWide?: boolean;
 
     public exercise?: Exercise;
     public lecture?: Lecture;
@@ -55,6 +56,15 @@ export class ChannelDTO extends ConversationDto {
         super(ConversationType.CHANNEL);
     }
 }
+
+/**
+ * A DTO representing a channel which contains only the id and name
+ */
+export class ChannelIdAndNameDTO {
+    public id?: number;
+    public name?: string;
+}
+
 export function isChannelDto(conversation: ConversationDto): conversation is ChannelDTO {
     return conversation.type === ConversationType.CHANNEL;
 }

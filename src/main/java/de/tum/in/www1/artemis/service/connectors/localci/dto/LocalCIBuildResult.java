@@ -33,16 +33,19 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
 
     private List<BuildLogEntry> buildLogEntries = new ArrayList<>();
 
+    private final List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports;
+
     private boolean hasLogs = false;
 
     public LocalCIBuildResult(String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
-            List<LocalCIJobDTO> jobs) {
+            List<LocalCIJobDTO> jobs, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports) {
         this.assignmentRepoBranchName = assignmentRepoBranchName;
         this.assignmentRepoCommitHash = assignmentRepoCommitHash;
         this.testsRepoCommitHash = testsRepoCommitHash;
         this.isBuildSuccessful = isBuildSuccessful;
         this.buildRunDate = buildRunDate;
         this.jobs = jobs;
+        this.staticCodeAnalysisReports = staticCodeAnalysisReports;
     }
 
     @Override
@@ -52,7 +55,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
 
     @Override
     public Optional<String> getCommitHashFromAssignmentRepo() {
-        if (assignmentRepoCommitHash.length() == 0) {
+        if (assignmentRepoCommitHash.isEmpty()) {
             return Optional.empty();
         }
         return Optional.of(assignmentRepoCommitHash);
@@ -60,7 +63,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
 
     @Override
     public Optional<String> getCommitHashFromTestsRepo() {
-        if (testsRepoCommitHash.length() == 0) {
+        if (testsRepoCommitHash.isEmpty()) {
             return Optional.empty();
         }
         return Optional.of(testsRepoCommitHash);
@@ -120,8 +123,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
 
     @Override
     public List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports() {
-        // TODO LOCALVC_CI: Implement static code analysis and return the reports here.
-        return Collections.emptyList();
+        return staticCodeAnalysisReports;
     }
 
     @Override

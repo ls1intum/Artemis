@@ -138,6 +138,16 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") Long exerciseId,
             @Param("username") String username, @Param("testRun") boolean testRun);
 
+    @Query("""
+            SELECT participation
+            FROM ProgrammingExerciseStudentParticipation participation
+                LEFT JOIN FETCH participation.submissions
+            WHERE participation.exercise.id = :#{#exerciseId}
+                AND participation.student.login = :#{#username}
+            ORDER BY participation.testRun ASC
+            """)
+    List<ProgrammingExerciseStudentParticipation> findAllWithSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") Long exerciseId, @Param("username") String username);
+
     @EntityGraph(type = LOAD, attributePaths = "student")
     Optional<ProgrammingExerciseStudentParticipation> findWithStudentById(Long participationId);
 
@@ -169,7 +179,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     @Query("""
             SELECT DISTINCT p
             FROM ProgrammingExerciseStudentParticipation p
-                WHERE p.buildPlanId IS NOT NULL or p.repositoryUrl IS NOT NULL
+                WHERE p.buildPlanId IS NOT NULL or p.repositoryUri IS NOT NULL
             """)
-    Page<ProgrammingExerciseStudentParticipation> findAllWithRepositoryUrlOrBuildPlanId(Pageable pageable);
+    Page<ProgrammingExerciseStudentParticipation> findAllWithRepositoryUriOrBuildPlanId(Pageable pageable);
 }

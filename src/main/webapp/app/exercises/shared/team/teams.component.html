@@ -16,20 +16,18 @@
             </div>
         </div>
         <div class="d-flex ms-auto">
-            <jhi-teams-export-button
-                class="me-2"
-                *ngIf="exercise?.isAtLeastEditor && teams && teams.length > 0"
-                [teams]="teams"
-                [buttonSize]="ButtonSize.MEDIUM"
-            ></jhi-teams-export-button>
-            <jhi-teams-import-button
-                class="me-2"
-                *ngIf="exercise?.isAtLeastEditor"
-                [exercise]="exercise"
-                [teams]="teams"
-                [buttonSize]="ButtonSize.MEDIUM"
-                (save)="onTeamsImport($event)"
-            ></jhi-teams-import-button>
+            @if (exercise?.isAtLeastEditor && teams && teams.length > 0) {
+                <jhi-teams-export-button class="me-2" [teams]="teams" [buttonSize]="ButtonSize.MEDIUM"></jhi-teams-export-button>
+            }
+            @if (exercise?.isAtLeastEditor) {
+                <jhi-teams-import-button
+                    class="me-2"
+                    [exercise]="exercise"
+                    [teams]="teams"
+                    [buttonSize]="ButtonSize.MEDIUM"
+                    (save)="onTeamsImport($event)"
+                ></jhi-teams-import-button>
+            }
             <jhi-team-update-button [exercise]="exercise" [buttonSize]="ButtonSize.MEDIUM" (save)="onTeamUpdate($event)"></jhi-team-update-button>
         </div>
     </div>
@@ -71,7 +69,6 @@
                         </a>
                     </ng-template>
                 </ngx-datatable-column>
-
                 <ngx-datatable-column prop="name" [minWidth]="100" [width]="120" [maxWidth]="160">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
@@ -83,7 +80,6 @@
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-
                 <ngx-datatable-column [minWidth]="100" [width]="120" [maxWidth]="160">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('shortName')">
@@ -97,7 +93,6 @@
                         </a>
                     </ng-template>
                 </ngx-datatable-column>
-
                 <ngx-datatable-column prop="owner" [minWidth]="140" [width]="160">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('owner.name')">
@@ -106,12 +101,17 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a *ngIf="isAdmin" [routerLink]="['/admin', 'user-management', value?.login]"> {{ value?.name }}</a>
-                        <a *ngIf="!isAdmin && value" [href]="'mailto:' + value?.email">{{ value?.name }}</a>
-                        <span *ngIf="!isAdmin && !value" class="font-weight-bold" jhiTranslate="artemisApp.team.detail.noOwner">No tutor</span>
+                        @if (isAdmin) {
+                            <a [routerLink]="['/admin', 'user-management', value?.login]"> {{ value?.name }}</a>
+                        }
+                        @if (!isAdmin && value) {
+                            <a [href]="'mailto:' + value?.email">{{ value?.name }}</a>
+                        }
+                        @if (!isAdmin && !value) {
+                            <span class="font-weight-bold" jhiTranslate="artemisApp.team.detail.noOwner">No tutor</span>
+                        }
                     </ng-template>
                 </ngx-datatable-column>
-
                 <ngx-datatable-column prop="students" [minWidth]="200" [width]="600">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" style="cursor: text">
@@ -122,23 +122,15 @@
                         <jhi-team-students-list [students]="value" [renderLinks]="isAdmin"></jhi-team-students-list>
                     </ng-template>
                 </ngx-datatable-column>
-
                 <ngx-datatable-column prop="" [minWidth]="220" [width]="220" [maxWidth]="220">
                     <ng-template ngx-datatable-cell-template let-value="row">
                         <div class="w-100 text-end">
-                            <jhi-team-update-button
-                                *ngIf="exercise.isAtLeastInstructor || value.owner?.id === currentUser.id"
-                                [exercise]="exercise"
-                                [team]="value"
-                                (save)="onTeamUpdate($event)"
-                            ></jhi-team-update-button>
-                            <jhi-team-delete-button
-                                class="ms-1"
-                                *ngIf="exercise.isAtLeastInstructor"
-                                [exercise]="exercise"
-                                [team]="value"
-                                (delete)="onTeamDelete($event)"
-                            ></jhi-team-delete-button>
+                            @if (exercise.isAtLeastInstructor || value.owner?.id === currentUser.id) {
+                                <jhi-team-update-button [exercise]="exercise" [team]="value" (save)="onTeamUpdate($event)"></jhi-team-update-button>
+                            }
+                            @if (exercise.isAtLeastInstructor) {
+                                <jhi-team-delete-button class="ms-1" [exercise]="exercise" [team]="value" (delete)="onTeamDelete($event)"></jhi-team-delete-button>
+                            }
                         </div>
                     </ng-template>
                 </ngx-datatable-column>

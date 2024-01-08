@@ -11,64 +11,69 @@
 <div class="row align-items-center">
     <div class="col">
         <div class="mb-1">
-            <fa-icon
-                *ngIf="posting.resolved && posting.courseWideContext !== CourseWideContext.ANNOUNCEMENT"
-                [icon]="faCheckSquare"
-                iconSize="xs"
-                class="col-auto pe-0 resolved"
-                [ngbTooltip]="'artemisApp.metis.post.postMarkedAsResolvedTooltip' | artemisTranslate"
-            >
-            </fa-icon>
-            <fa-icon
-                *ngIf="getAsChannelDto(posting.conversation)?.isAnnouncementChannel && !isCourseMessagesPage"
-                [icon]="faBullhorn"
-                iconSize="xs"
-                class="col-auto pe-0 announcement-icon"
-                [ngbTooltip]="'artemisApp.metis.post.postMarkedAsAnnouncementTooltip' | artemisTranslate"
-            ></fa-icon>
+            @if (posting.resolved) {
+                <fa-icon [icon]="faCheckSquare" iconSize="xs" class="col-auto pe-0 resolved" [ngbTooltip]="'artemisApp.metis.post.postMarkedAsResolvedTooltip' | artemisTranslate">
+                </fa-icon>
+            }
+            @if (showAnnouncementIcon) {
+                <fa-icon
+                    [icon]="faBullhorn"
+                    iconSize="xs"
+                    class="col-auto pe-0 announcement-icon"
+                    [ngbTooltip]="'artemisApp.metis.post.postMarkedAsAnnouncementTooltip' | artemisTranslate"
+                ></fa-icon>
+            }
             <!-- in the course discussion overview as well as in the preview mode during similarity check, the context (lecture, exercise, course-wide topic) is shown -->
             <!-- not shown in course messages page -->
-            <span *ngIf="!isCourseMessagesPage && (pageType === PageType.OVERVIEW || previewMode)" class="col-auto">
-                <a
-                    class="linked-context-information"
-                    *ngIf="contextInformation.routerLinkComponents"
-                    [routerLink]="contextInformation.routerLinkComponents"
-                    [queryParams]="contextInformation.queryParams"
-                    (click)="onNavigateToContext($event)"
-                    routerLinkActive="active"
-                    >{{ contextInformation.displayName }}:</a
-                >
-                <span class="context-information" *ngIf="!contextInformation.routerLinkComponents">{{ contextInformation.displayName }}:</span>
-            </span>
+            @if (!isCourseMessagesPage && (pageType === PageType.OVERVIEW || previewMode)) {
+                <span class="col-auto">
+                    @if (contextInformation.routerLinkComponents) {
+                        <a
+                            class="linked-context-information"
+                            [routerLink]="contextInformation.routerLinkComponents"
+                            [queryParams]="contextInformation.queryParams"
+                            (click)="onNavigateToContext($event)"
+                            routerLinkActive="active"
+                            >{{ contextInformation.displayName }}:</a
+                        >
+                    }
+                    @if (!contextInformation.routerLinkComponents) {
+                        <span class="context-information">{{ contextInformation.displayName }}:</span>
+                    }
+                </span>
+            }
             <!-- post title not shown for plagiarism cases -->
-            <span *ngIf="pageType !== PageType.PLAGIARISM_CASE_INSTRUCTOR && pageType !== PageType.PLAGIARISM_CASE_STUDENT" class="col-auto">
-                <span *ngIf="posting.title?.length" class="post-title">{{ posting.title }}</span>
-                <!-- show id only on communication page -->
-                <a
-                    *ngIf="!isCourseMessagesPage && isCommunicationPage"
-                    class="reference-hash"
-                    [routerLink]="metisService.getLinkForPost(posting)"
-                    [queryParams]="metisService.getQueryParamsForPost(posting)"
-                    (click)="onNavigateToPostById($event)"
-                    routerLinkActive="active"
-                    >#{{ posting.id }}</a
-                >
-            </span>
+            @if (pageType !== PageType.PLAGIARISM_CASE_INSTRUCTOR && pageType !== PageType.PLAGIARISM_CASE_STUDENT) {
+                <span class="col-auto">
+                    @if (posting.title?.length) {
+                        <span class="post-title">{{ posting.title }}</span>
+                    }
+                    <!-- show id only on communication page -->
+                    @if (!isCourseMessagesPage && isCommunicationPage) {
+                        <a class="reference-hash" [routerLink]="routerLink" [queryParams]="queryParams" (click)="onNavigateToPostById($event)" routerLinkActive="active"
+                            >#{{ posting.id }}</a
+                        >
+                    }
+                </span>
+            }
         </div>
-        <jhi-posting-content
-            *ngIf="!displayInlineInput"
-            [previewMode]="previewMode"
-            [content]="posting.content"
-            [author]="posting.author"
-            [isEdited]="!!posting.updatedDate"
-            [posting]="posting"
-            [isReply]="false"
-            [isAnnouncement]="posting.courseWideContext === CourseWideContext.ANNOUNCEMENT"
-            (userReferenceClicked)="onUserReferenceClicked($event)"
-        ></jhi-posting-content>
+        @if (!displayInlineInput) {
+            <jhi-posting-content
+                [previewMode]="previewMode"
+                [content]="posting.content"
+                [author]="posting.author"
+                [isEdited]="!!posting.updatedDate"
+                [posting]="posting"
+                [isReply]="false"
+                (userReferenceClicked)="onUserReferenceClicked($event)"
+                (channelReferenceClicked)="onChannelReferenceClicked($event)"
+            ></jhi-posting-content>
+        }
     </div>
 </div>
-<jhi-message-inline-input *ngIf="displayInlineInput && !readOnlyMode" [posting]="posting" (isModalOpen)="displayInlineInput = false"> </jhi-message-inline-input>
+@if (displayInlineInput && !readOnlyMode) {
+    <jhi-message-inline-input [posting]="posting" (isModalOpen)="displayInlineInput = false"> </jhi-message-inline-input>
+}
 <jhi-post-footer
     #postFooter
     [readOnlyMode]="readOnlyMode"
@@ -81,4 +86,6 @@
     (openThread)="openThread.emit()"
     [lastReadDate]="lastReadDate"
     (userReferenceClicked)="onUserReferenceClicked($event)"
+    (channelReferenceClicked)="onChannelReferenceClicked($event)"
+    [hasChannelModerationRights]="hasChannelModerationRights"
 ></jhi-post-footer>
