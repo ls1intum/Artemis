@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -51,6 +52,9 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
 
     @Autowired
     protected ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private StaticCodeAnalysisService staticCodeAnalysisService;
 
     @Value("${artemis.version-control.user}")
     protected String localVCBaseUsername;
@@ -118,6 +122,7 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
         programmingExercise.setTestRepositoryUrl(localVCBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-tests.git");
         programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
+        staticCodeAnalysisService.createDefaultCategories(programmingExercise);
         // Set the correct repository URLs for the template and the solution participation.
         templateRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, "exercise");
         templateParticipation = programmingExercise.getTemplateParticipation();

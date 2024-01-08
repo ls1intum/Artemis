@@ -253,6 +253,23 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         verifyUserNotification(studentParticipation);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testStaticCodeAnalysis() throws IOException {
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExerciseRepository.save(programmingExercise);
+
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        localVCLocalCITestService.mockTestResults(dockerClient, SPOTBUGS_RESULTS_PATH, WORKING_DIRECTORY + "/testing-dir/target/spotbugsXml.xml");
+        localVCLocalCITestService.mockTestResults(dockerClient, CHECKSTYLE_RESULTS_PATH, WORKING_DIRECTORY + "/testing-dir/target/checkstyle-result.xml");
+        localVCLocalCITestService.mockTestResults(dockerClient, PMD_RESULTS_PATH, WORKING_DIRECTORY + "/testing-dir/target/pmd.xml");
+
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+
+        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false, true, 15);
+    }
+
     private void verifyUserNotification(Participation participation) {
         BuildTriggerWebsocketError expectedError = new BuildTriggerWebsocketError("de.tum.in.www1.artemis.exception.LocalCIException: Error while parsing test results",
                 participation.getId());

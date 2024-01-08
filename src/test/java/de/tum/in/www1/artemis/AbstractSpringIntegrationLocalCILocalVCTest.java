@@ -129,6 +129,12 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     protected static final Path FAULTY_FILES_TEST_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "test-results", "java-gradle", "faulty-files");
 
+    protected static final Path SPOTBUGS_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "static-code-analysis", "reports", "spotbugsXml.xml");
+
+    protected static final Path CHECKSTYLE_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "static-code-analysis", "reports", "checkstyle-result.xml");
+
+    protected static final Path PMD_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "static-code-analysis", "reports", "pmd.xml");
+
     @AfterEach
     protected void resetSpyBeans() {
         Mockito.reset(versionControlService, continuousIntegrationService, resourceLoaderService, programmingMessagingService);

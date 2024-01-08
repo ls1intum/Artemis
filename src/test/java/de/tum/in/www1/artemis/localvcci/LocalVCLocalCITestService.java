@@ -318,24 +318,32 @@ public class LocalVCLocalCITestService {
         Map<String, String> resultMap = new HashMap<>();
         String testResultsPathString = testResultsPath.toString();
 
-        Files.walkFileTree(testResultsPath, new SimpleFileVisitor<>() {
+        if (Files.isDirectory(testResultsPath)) {
+            Files.walkFileTree(testResultsPath, new SimpleFileVisitor<>() {
 
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                if (!attrs.isDirectory()) {
-                    String key = file.toString().replace(testResultsPathString, "test");
-                    String value;
-                    if (file.getFileName().toString().endsWith(".xml")) {
-                        value = new String(Files.readAllBytes(file));
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    if (!attrs.isDirectory()) {
+                        String key = file.toString().replace(testResultsPathString, "test");
+                        String value;
+                        if (file.getFileName().toString().endsWith(".xml")) {
+                            value = new String(Files.readAllBytes(file));
+                        }
+                        else {
+                            value = "dummy-data";
+                        }
+                        resultMap.put(key, value);
                     }
-                    else {
-                        value = "dummy-data";
-                    }
-                    resultMap.put(key, value);
+                    return FileVisitResult.CONTINUE;
                 }
-                return FileVisitResult.CONTINUE;
-            }
-        });
+            });
+        }
+        else {
+            // If it's a file, handle it directly
+            String key = testResultsPath.toString();
+            String value = Files.isRegularFile(testResultsPath) && testResultsPath.toString().endsWith(".xml") ? new String(Files.readAllBytes(testResultsPath)) : "dummy-data";
+            resultMap.put(key, value);
+        }
 
         return resultMap;
     }
@@ -482,7 +490,8 @@ public class LocalVCLocalCITestService {
      * @param expectedSuccessfulTestCaseCount the expected number or passed test cases.
      * @param buildFailed                     whether the build should have failed or not.
      */
-    public void testLatestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCaseCount, boolean buildFailed) {
+    public void testLatestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCaseCount, boolean buildFailed, boolean isStaticCodeAnalysisEnabled,
+            int expectedCodeIssueCount) {
         // wait for result to be persisted
         await().until(() -> resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId).isPresent());
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -501,6 +510,14 @@ public class LocalVCLocalCITestService {
         int expectedTestCaseCount = buildFailed ? 0 : 13;
         assertThat(result.getTestCaseCount()).isEqualTo(expectedTestCaseCount);
         assertThat(result.getPassedTestCaseCount()).isEqualTo(expectedSuccessfulTestCaseCount);
+
+        if (isStaticCodeAnalysisEnabled) {
+            assertThat(result.getCodeIssueCount()).isEqualTo(expectedCodeIssueCount);
+        }
+    }
+
+    public void testLatestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCaseCount, boolean buildFailed) {
+        testLatestSubmission(participationId, expectedCommitHash, expectedSuccessfulTestCaseCount, buildFailed, false, 0);
     }
 
     /**
