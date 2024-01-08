@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
@@ -66,9 +66,19 @@ import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiari
 import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { IrisExerciseCreationChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-creation-ui/exercise-creation-chatbot-button.component';
 import { IrisExerciseCreationWebsocketService } from 'app/iris/exercise-creation-websocket.service';
+import { IrisExerciseCreationChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-creation-chatbot-button.component';
+import {
+    ExerciseMetadata,
+    ExerciseUpdate,
+    IrisExerciseCreationWebsocketDTO,
+    IrisExerciseCreationWebsocketMessageType,
+    IrisExerciseCreationWebsocketService,
+} from 'app/iris/exercise-creation-websocket.service';
 import { IrisStateStore } from 'app/iris/state-store.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
+import { SessionReceivedAction } from 'app/iris/state-store.model';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -83,6 +93,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     let programmingExerciseFeatureService: ProgrammingLanguageFeatureService;
     let alertService: AlertService;
     let irisExerciseCreationWebsocketService: IrisExerciseCreationWebsocketService;
+    let jhiWebsocketService: JhiWebsocketService;
+    let irisStateStore: IrisStateStore;
+    const channel = '/user/topic/iris/exercise-creation-sessions/0';
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -139,6 +152,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: AlertService, useValue: { addAlert: () => {} } },
+                { provide: JhiWebsocketService, useClass: MockWebsocketService },
             ],
         })
             .compileComponents()
@@ -152,11 +166,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 programmingExerciseFeatureService = debugElement.injector.get(ProgrammingLanguageFeatureService);
                 alertService = debugElement.injector.get(AlertService);
                 irisExerciseCreationWebsocketService = debugElement.injector.get(IrisExerciseCreationWebsocketService);
+                jhiWebsocketService = debugElement.injector.get(JhiWebsocketService);
+                irisStateStore = debugElement.injector.get(IrisStateStore);
             });
-    });
-
-    afterEach(() => {
-        irisExerciseCreationWebsocketService.ngOnDestroy();
     });
 
     describe('save', () => {
@@ -1023,6 +1035,51 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         comp.updateCategories(categories);
         expect(comp.exerciseCategories).toBe(categories);
     }));
+
+    describe('generate with Iris', () => {
+        const expectedProgrammingExercise = new ProgrammingExercise(undefined, undefined);
+        expectedProgrammingExercise.course = course;
+        expectedProgrammingExercise.problemStatement = '';
+
+        beforeEach(() => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'new' } as UrlSegment]);
+            route.data = of({ programmingExercise: expectedProgrammingExercise });
+        });
+
+        afterEach(() => {
+            irisExerciseCreationWebsocketService.ngOnDestroy();
+        });
+
+        it('should update problem statement and corresponding metadata fields', fakeAsync(() => {
+            const metadata = {
+                title: 'testTitle',
+                shortName: 'testShort',
+            } as ExerciseMetadata;
+            const exerciseUpdate = {
+                problemStatement: 'problem statement',
+                metadata: metadata,
+            } as ExerciseUpdate;
+            const exerciseCreationDTO = {
+                type: IrisExerciseCreationWebsocketMessageType.MESSAGE,
+                exerciseUpdate: exerciseUpdate,
+            } as IrisExerciseCreationWebsocketDTO;
+            jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+            const websocketReceiveMock = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(exerciseCreationDTO));
+            // WHEN
+            comp.ngOnInit();
+            tick(); // simulate async
+
+            irisStateStore.dispatch(new SessionReceivedAction(0, []));
+            tick();
+
+            expect(websocketReceiveMock).toHaveBeenCalledOnce();
+            expect(websocketReceiveMock).toHaveBeenCalledWith(channel);
+            expect(comp.programmingExercise.problemStatement).toBe('problem statement');
+            flush();
+        }));
+    });
 
     function verifyImport(importedProgrammingExercise: ProgrammingExercise) {
         expect(comp.programmingExercise.projectKey).toBeUndefined();

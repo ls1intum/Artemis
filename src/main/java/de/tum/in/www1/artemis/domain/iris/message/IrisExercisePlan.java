@@ -44,6 +44,13 @@ public class IrisExercisePlan extends IrisMessageContent {
         }
     }
 
+    /**
+     * Gets the next step in the plan.
+     * The next step is the step following the last completed step.
+     * If the plan is empty or all steps have been completed, an empty optional is returned.
+     *
+     * @return the next step in the plan
+     */
     public Optional<IrisExercisePlanStep> getNextStep() {
         var nextStepIndex = getNextStepIndex();
         if (nextStepIndex < steps.size()) {

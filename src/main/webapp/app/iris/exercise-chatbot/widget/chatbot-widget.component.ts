@@ -68,12 +68,4 @@ export class IrisChatbotWidgetComponent extends IrisChatbotWidgetBasicComponent 
         this.navigationSubscription.unsubscribe();
         this.toggleScrollLock(false);
     }
-
-    /**
-     * Closes the chat widget.
-     */
-    // closeChat() {
-    //     super.closeChat();
-    //     this.dialog.closeAll();
-    // }
 }

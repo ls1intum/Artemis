@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisExerciseCreationSession;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -136,6 +137,22 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     protected void verifyWebsocketActivityWasExactly(IrisChatSession session, ArgumentMatcher<?>... matchers) {
         var userLogin = session.getUser().getLogin();
         var topicSuffix = "sessions/" + session.getId();
+        for (ArgumentMatcher<?> callDescriptor : matchers) {
+            verifyMessageWasSentOverWebsocket(userLogin, topicSuffix, callDescriptor);
+        }
+        verifyNumberOfCallsToWebsocket(userLogin, topicSuffix, matchers.length);
+    }
+
+    /**
+     * Verify that the given messages were sent through the websocket for the given exercise creation session,
+     * and that there were exactly `matchers.length` messages sent.
+     *
+     * @param session  The exercise creation session
+     * @param matchers Argument matchers which describe the messages that should have been sent
+     */
+    protected void verifyWebsocketActivityWasExactly(IrisExerciseCreationSession session, ArgumentMatcher<?>... matchers) {
+        var userLogin = session.getUser().getLogin();
+        var topicSuffix = "exercise-creation-sessions/" + session.getId();
         for (ArgumentMatcher<?> callDescriptor : matchers) {
             verifyMessageWasSentOverWebsocket(userLogin, topicSuffix, callDescriptor);
         }

@@ -331,3 +331,8 @@ pre {
     padding: 0 15px;
     margin: 0 10px 10px;
 }
+cdk-global-scrollblock {
+    position: fixed;
+    width: 100%;
+    overflow-y: auto;
+}

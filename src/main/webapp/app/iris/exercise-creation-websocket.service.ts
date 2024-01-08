@@ -59,8 +59,6 @@ export class IrisExerciseCreationWebsocketService extends IrisWebsocketService {
         if (response.rateLimitInfo) {
             super.handleRateLimitInfo(response.rateLimitInfo);
         }
-        console.log('Received websocket message:');
-        console.dir(response);
         switch (response.type) {
             case IrisExerciseCreationWebsocketMessageType.MESSAGE:
                 super.handleMessage(response.message);
