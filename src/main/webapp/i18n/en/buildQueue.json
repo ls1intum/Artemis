@@ -1,0 +1,20 @@
+{
+    "artemisApp": {
+        "buildQueue": {
+            "title": "Build Queue",
+            "pageTitle": "Build Job Information",
+            "queuedBuildJobs": "Queued Build Jobs",
+            "runningBuildJobs": "Running Build Jobs",
+            "buildJob": {
+                "name": "Name",
+                "participationId": "Participation ID",
+                "repositoryType": "Repository Type",
+                "commitHash": "Commit Hash",
+                "submissionDate": "Submission Date",
+                "buildStartDate": "Build Start Date",
+                "courseId": "Course ID",
+                "priority": "Priority"
+            }
+        }
+    }
+}

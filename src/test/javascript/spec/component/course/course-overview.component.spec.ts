@@ -49,6 +49,7 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 import { MockMetisConversationService } from '../../helpers/mocks/service/mock-metis-conversation.service';
+import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -73,7 +74,7 @@ const courseEmpty: Course = {};
 
 const exam1: Exam = { id: 3, endDate: endDate1, visibleDate: visibleDate1, course: courseEmpty };
 const exam2: Exam = { id: 4, course: courseEmpty };
-const exams = [exam1, exam2];
+const exams: Exam[] = [exam1, exam2];
 const course1: Course = {
     id: 1,
     exams,
@@ -92,6 +93,9 @@ const course2: Course = {
     competencies: [new Competency()],
     tutorialGroups: [new TutorialGroup()],
     prerequisites: [new Competency()],
+    numberOfCompetencies: 1,
+    numberOfPrerequisites: 1,
+    numberOfTutorialGroups: 1,
 };
 
 @Component({
@@ -114,10 +118,10 @@ describe('CourseOverviewComponent', () => {
     let courseService: CourseManagementService;
     let courseStorageService: CourseStorageService;
     let teamService: TeamService;
-    let competencyService: CompetencyService;
     let tutorialGroupsService: TutorialGroupsService;
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
     let jhiWebsocketService: JhiWebsocketService;
+    let courseAccessStorageService: CourseAccessStorageService;
     let router: MockRouter;
     let jhiWebsocketServiceReceiveStub: jest.SpyInstance;
     let jhiWebsocketServiceSubscribeSpy: jest.SpyInstance;
@@ -167,6 +171,7 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(TutorialGroupsService),
                 MockProvider(TutorialGroupsConfigurationService),
                 MockProvider(MetisConversationService),
+                MockProvider(CourseAccessStorageService),
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
@@ -181,10 +186,10 @@ describe('CourseOverviewComponent', () => {
                 courseService = TestBed.inject(CourseManagementService);
                 courseStorageService = TestBed.inject(CourseStorageService);
                 teamService = TestBed.inject(TeamService);
-                competencyService = TestBed.inject(CompetencyService);
                 tutorialGroupsService = TestBed.inject(TutorialGroupsService);
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
                 jhiWebsocketService = TestBed.inject(JhiWebsocketService);
+                courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
                 metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
                 jhiWebsocketServiceReceiveStub = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(quizExercise));
                 jhiWebsocketServiceSubscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
@@ -210,6 +215,7 @@ describe('CourseOverviewComponent', () => {
         const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
         const subscribeToTeamAssignmentUpdatesStub = jest.spyOn(component, 'subscribeToTeamAssignmentUpdates');
         const subscribeForQuizChangesStub = jest.spyOn(component, 'subscribeForQuizChanges');
+        const notifyAboutCourseAccessStub = jest.spyOn(courseAccessStorageService, 'onCourseAccessed');
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         getCourseStub.mockReturnValue(course1);
 
@@ -218,6 +224,7 @@ describe('CourseOverviewComponent', () => {
         expect(getCourseStub).toHaveBeenCalled();
         expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
+        expect(notifyAboutCourseAccessStub).toHaveBeenCalledExactlyOnceWith(course1.id);
     });
 
     it('loads conversations when switching to message tab once', async () => {
@@ -408,10 +415,6 @@ describe('CourseOverviewComponent', () => {
     it('should have competencies and tutorial groups', () => {
         const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
 
-        const competenciesResponse: HttpResponse<Competency[]> = new HttpResponse({
-            body: [new Competency()],
-            status: 200,
-        });
         const tutorialGroupsResponse: HttpResponse<TutorialGroup[]> = new HttpResponse({
             body: [new TutorialGroup()],
             status: 200,
@@ -421,8 +424,6 @@ describe('CourseOverviewComponent', () => {
             status: 200,
         });
 
-        jest.spyOn(competencyService, 'getAllPrerequisitesForCourse').mockReturnValue(of(competenciesResponse));
-        jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(competenciesResponse));
         jest.spyOn(tutorialGroupsService, 'getAllForCourse').mockReturnValue(of(tutorialGroupsResponse));
         jest.spyOn(tutorialGroupsConfigurationService, 'getOneOfCourse').mockReturnValue(of(configurationResponse));
 

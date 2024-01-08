@@ -485,6 +485,23 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
+    @WithMockUser(value = TEST_PREFIX + "student1", roles = "USER")
+    void getModelSubmissionWithResult_notOwner_beforeDueDate_notAllowed() throws Exception {
+        var submission = ParticipationFactory.generateModelingSubmission(validModel, true);
+        submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student2");
+
+        var plagiarismComparison = new PlagiarismComparison<ModelingSubmissionElement>();
+        var submissionA = new PlagiarismSubmission<ModelingSubmissionElement>();
+        submissionA.setStudentLogin(TEST_PREFIX + "student2");
+        submissionA.setSubmissionId(submission.getId());
+        plagiarismComparison.setSubmissionA(submissionA);
+
+        plagiarismComparisonRepository.save(plagiarismComparison);
+
+        request.get("/api/modeling-submissions/" + submission.getId(), HttpStatus.FORBIDDEN, ModelingSubmission.class);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getModelSubmission_lockLimitReached_success() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");

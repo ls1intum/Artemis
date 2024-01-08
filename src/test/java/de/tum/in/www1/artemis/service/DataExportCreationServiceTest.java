@@ -249,7 +249,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         createPlagiarismData(userLogin, programmingExercise, modelingExercises);
         // Mock student repo
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.localRepoFile.toPath(), null);
-        doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), anyString(), anyBoolean());
+        doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUri()), anyString(), anyBoolean());
         return course1;
     }
 
