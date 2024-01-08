@@ -28,7 +28,7 @@ public class PurgeExistingStrategy extends TeamImportStrategy {
     @Override
     public void importTeams(Exercise sourceExercise, Exercise destinationExercise) {
         // Get all source teams and clone them into the destination exercise
-        List<Team> sourceTeams = teamRepository.findWithEagerStudentsAllByExerciseId(sourceExercise.getId());
+        List<Team> sourceTeams = teamRepository.findAllByExerciseId(sourceExercise.getId());
 
         deleteExistingTeamsAndAddNewTeams(destinationExercise, sourceTeams);
     }
@@ -60,7 +60,7 @@ public class PurgeExistingStrategy extends TeamImportStrategy {
         participationService.deleteAllByExerciseId(exercise.getId(), false, false);
 
         // Purge existing teams in destination exercise
-        List<Team> destinationTeams = teamRepository.findWithEagerStudentsAllByExerciseId(exercise.getId());
+        List<Team> destinationTeams = teamRepository.findAllByExerciseId(exercise.getId());
         teamRepository.deleteAll(destinationTeams);
 
         cloneTeamsIntoDestinationExercise(teams, exercise);

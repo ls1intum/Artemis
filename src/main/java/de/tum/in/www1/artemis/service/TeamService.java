@@ -108,7 +108,7 @@ public class TeamService {
     public List<Team> importTeamsFromTeamListIntoExerciseUsingStrategy(Exercise exercise, List<Team> teams, TeamImportStrategyType importStrategyType) {
         TeamImportStrategy teamImportStrategy = getTeamImportStrategy(importStrategyType);
         teamImportStrategy.importTeams(exercise, teams);
-        return teamRepository.findWithEagerStudentsAllByExerciseId(exercise.getId());
+        return teamRepository.findAllByExerciseId(exercise.getId());
     }
 
     /**
@@ -123,7 +123,7 @@ public class TeamService {
             TeamImportStrategyType importStrategyType) {
         TeamImportStrategy teamImportStrategy = getTeamImportStrategy(importStrategyType);
         teamImportStrategy.importTeams(sourceExercise, destinationExercise);
-        return teamRepository.findWithEagerStudentsAllByExerciseId(destinationExercise.getId());
+        return teamRepository.findAllByExerciseId(destinationExercise.getId());
     }
 
     /**
