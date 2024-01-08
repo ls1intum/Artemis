@@ -67,6 +67,6 @@ public class ScienceSetting extends DomainObject {
 
     @Override
     public String toString() {
-        return "NotificationSetting{settingId='" + settingId + ", active=" + active + ", user=" + user + '}';
+        return "ScienceSetting{settingId='" + settingId + ", active=" + active + ", user=" + user + '}';
     }
 }
