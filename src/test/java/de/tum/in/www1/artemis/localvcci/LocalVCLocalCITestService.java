@@ -52,7 +52,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
 /**
@@ -104,7 +104,7 @@ public class LocalVCLocalCITestService {
         String projectKey = programmingExercise.getProjectKey();
         String repositorySlug = getRepositorySlug(projectKey, userLogin);
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userLogin);
-        participation.setRepositoryUrl(String.format(localVCBaseUrl + "/git/%s/%s.git", projectKey, repositorySlug));
+        participation.setRepositoryUri(String.format(localVCBaseUrl + "/git/%s/%s.git", projectKey, repositorySlug));
         participation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(participation);
 
@@ -280,7 +280,7 @@ public class LocalVCLocalCITestService {
     }
 
     /**
-     * Construct a repository URL that works with the local VC system.
+     * Construct a repository URI that works with the local VC system.
      *
      * @param username       the username of the user that tries to access the repository using this URL.
      * @param projectKey     the project key of the repository.
@@ -292,7 +292,7 @@ public class LocalVCLocalCITestService {
     }
 
     /**
-     * Construct a repository URL that works with the local VC system.
+     * Construct a repository URI that works with the local VC system.
      *
      * @param username       the username of the user that tries to access the repository using this URL.
      * @param password       the password of the user that tries to access the repository using this URL.
@@ -301,7 +301,7 @@ public class LocalVCLocalCITestService {
      * @return the URL to the repository.
      */
     public String constructLocalVCUrl(String username, String password, String projectKey, String repositorySlug) {
-        return "http://" + username + (password.length() > 0 ? ":" : "") + password + (username.length() > 0 ? "@" : "") + "localhost:" + port + "/git/" + projectKey.toUpperCase()
+        return "http://" + username + (!password.isEmpty() ? ":" : "") + password + (!username.isEmpty() ? "@" : "") + "localhost:" + port + "/git/" + projectKey.toUpperCase()
                 + "/" + repositorySlug + ".git";
     }
 
@@ -446,10 +446,10 @@ public class LocalVCLocalCITestService {
     }
 
     private void performFetch(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) throws GitAPIException {
-        String repositoryUrl = constructLocalVCUrl(username, password, projectKey, repositorySlug);
+        String repositoryUri = constructLocalVCUrl(username, password, projectKey, repositorySlug);
         FetchCommand fetchCommand = repositoryHandle.fetch();
         // Set the remote URL.
-        fetchCommand.setRemote(repositoryUrl);
+        fetchCommand.setRemote(repositoryUri);
         // Set the refspec to fetch all branches.
         fetchCommand.setRefSpecs(new RefSpec("+refs/heads/*:refs/remotes/origin/*"));
         // Execute the fetch.
@@ -532,10 +532,10 @@ public class LocalVCLocalCITestService {
     }
 
     private void performPush(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) throws GitAPIException {
-        String repositoryUrl = constructLocalVCUrl(username, password, projectKey, repositorySlug);
+        String repositoryUri = constructLocalVCUrl(username, password, projectKey, repositorySlug);
         PushCommand pushCommand = repositoryHandle.push();
         // Set the remote URL.
-        pushCommand.setRemote(repositoryUrl);
+        pushCommand.setRemote(repositoryUri);
         // Execute the push.
         pushCommand.call();
     }
@@ -547,11 +547,11 @@ public class LocalVCLocalCITestService {
      * @param localVCBasePath     the base path for the local repositories taken from the artemis.version-control.local-vcs-repo-path environment variable.
      */
     public void verifyRepositoryFoldersExist(ProgrammingExercise programmingExercise, String localVCBasePath) {
-        LocalVCRepositoryUrl templateRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getTemplateRepositoryUrl(), localVCBaseUrl);
-        assertThat(templateRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).exists();
-        LocalVCRepositoryUrl solutionRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getSolutionRepositoryUrl(), localVCBaseUrl);
-        assertThat(solutionRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).exists();
-        LocalVCRepositoryUrl testsRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getTestRepositoryUrl(), localVCBaseUrl);
-        assertThat(testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).exists();
+        LocalVCRepositoryUri templateRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTemplateRepositoryUri(), localVCBaseUrl);
+        assertThat(templateRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
+        LocalVCRepositoryUri solutionRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getSolutionRepositoryUri(), localVCBaseUrl);
+        assertThat(solutionRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
+        LocalVCRepositoryUri testsRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTestRepositoryUri(), localVCBaseUrl);
+        assertThat(testsRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
     }
 }

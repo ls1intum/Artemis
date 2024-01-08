@@ -27,15 +27,15 @@ public class Authority implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public static Authority ADMIN_AUTHORITY = new Authority(Role.ADMIN.getAuthority());
+    public static final Authority ADMIN_AUTHORITY = new Authority(Role.ADMIN.getAuthority());
 
-    public static Authority INSTRUCTOR_AUTHORITY = new Authority(Role.INSTRUCTOR.getAuthority());
+    public static final Authority INSTRUCTOR_AUTHORITY = new Authority(Role.INSTRUCTOR.getAuthority());
 
-    public static Authority EDITOR_AUTHORITY = new Authority(Role.EDITOR.getAuthority());
+    public static final Authority EDITOR_AUTHORITY = new Authority(Role.EDITOR.getAuthority());
 
-    public static Authority TA_AUTHORITY = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
+    public static final Authority TA_AUTHORITY = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
 
-    public static Authority USER_AUTHORITY = new Authority(Role.STUDENT.getAuthority());
+    public static final Authority USER_AUTHORITY = new Authority(Role.STUDENT.getAuthority());
 
     @NotNull
     @Size(max = 50)

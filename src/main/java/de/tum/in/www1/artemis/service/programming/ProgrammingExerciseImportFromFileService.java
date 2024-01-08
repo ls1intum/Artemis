@@ -157,9 +157,9 @@ public class ProgrammingExerciseImportFromFileService {
 
     private void importRepositoriesFromFile(ProgrammingExercise newExercise, Path basePath, String oldExerciseShortName, User user)
             throws IOException, GitAPIException, URISyntaxException {
-        Repository templateRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUrl(newExercise.getTemplateRepositoryUrl()), false);
-        Repository solutionRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUrl(newExercise.getSolutionRepositoryUrl()), false);
-        Repository testRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUrl(newExercise.getTestRepositoryUrl()), false);
+        Repository templateRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUri(newExercise.getTemplateRepositoryUri()), false);
+        Repository solutionRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUri(newExercise.getSolutionRepositoryUri()), false);
+        Repository testRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUri(newExercise.getTestRepositoryUri()), false);
 
         copyImportedExerciseContentToRepositories(templateRepo, solutionRepo, testRepo, basePath);
         replaceImportedExerciseShortName(Map.of(oldExerciseShortName, newExercise.getShortName()), templateRepo, solutionRepo, testRepo);

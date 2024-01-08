@@ -6,9 +6,10 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
+import javax.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -62,7 +63,7 @@ public class LocalCISharedBuildJobQueueService {
 
     private final IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
 
-    private AtomicInteger localProcessingJobs = new AtomicInteger(0);
+    private final AtomicInteger localProcessingJobs = new AtomicInteger(0);
 
     /**
      * Lock to prevent multiple nodes from processing the same build job.
@@ -74,7 +75,6 @@ public class LocalCISharedBuildJobQueueService {
      */
     private final ReentrantLock instanceLock = new ReentrantLock();
 
-    @Autowired
     public LocalCISharedBuildJobQueueService(HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
             LocalCIBuildJobManagementService localCIBuildJobManagementService, ParticipationRepository participationRepository,
             ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService,
@@ -90,7 +90,14 @@ public class LocalCISharedBuildJobQueueService {
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
         this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
-        this.queue.addItemListener(new BuildJobItemListener(), true);
+    }
+
+    /**
+     * Add listener to the shared build job queue.
+     */
+    @PostConstruct
+    public void addListener() {
+        this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
     }
 
     /**
@@ -185,7 +192,7 @@ public class LocalCISharedBuildJobQueueService {
                 updateLocalBuildAgentInformation();
             }
 
-            log.info("Node has no available threads currently");
+            log.debug("Node has no available threads currently");
             return;
         }
 
@@ -348,6 +355,7 @@ public class LocalCISharedBuildJobQueueService {
                 log.warn("Requeueing failed build job: {}", buildJob);
                 buildJob.setRetryCount(buildJob.getRetryCount() + 1);
                 queue.add(buildJob);
+                checkAvailabilityAndProcessNextBuild();
             }
             else {
                 log.warn("Participation with id {} has been deleted. Cancelling the requeueing of the build job.", participation.getId());
@@ -398,17 +406,17 @@ public class LocalCISharedBuildJobQueueService {
         throw new IllegalStateException("Could not retrieve participation with id " + participationId + " from database after " + maxRetries + " retries.");
     }
 
-    private class BuildJobItemListener implements ItemListener<LocalCIBuildJobQueueItem> {
+    private class QueuedBuildJobItemListener implements ItemListener<LocalCIBuildJobQueueItem> {
 
         @Override
-        public void itemAdded(ItemEvent<LocalCIBuildJobQueueItem> item) {
-            log.debug("CIBuildJobQueueItem added to queue: {}", item.getItem());
+        public void itemAdded(ItemEvent<LocalCIBuildJobQueueItem> event) {
+            log.debug("CIBuildJobQueueItem added to queue: {}", event.getItem());
             checkAvailabilityAndProcessNextBuild();
         }
 
         @Override
-        public void itemRemoved(ItemEvent<LocalCIBuildJobQueueItem> item) {
-            log.debug("CIBuildJobQueueItem removed from queue: {}", item.getItem());
+        public void itemRemoved(ItemEvent<LocalCIBuildJobQueueItem> event) {
+            log.debug("CIBuildJobQueueItem removed from queue: {}", event.getItem());
         }
     }
 }

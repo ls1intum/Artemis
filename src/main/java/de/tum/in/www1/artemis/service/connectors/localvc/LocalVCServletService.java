@@ -112,6 +112,8 @@ public class LocalVCServletService {
     }
 
     /**
+     * Resolves the repository for the given path by first trying to use a cached one.
+     * If the cache does not hit, it creates a JGit repository and opens the local repository.
      *
      * @param repositoryPath the path of the repository, as parsed out of the URL (everything after /git).
      * @return the opened repository instance.
@@ -153,33 +155,32 @@ public class LocalVCServletService {
     /**
      * Determines whether a given request to access a local VC repository (either via fetch of push) is authenticated and authorized.
      *
-     * @param servletRequest       The object containing all information about the incoming request.
-     * @param repositoryActionType Indicates whether the method should authenticate a fetch or a push request. For a push request, additional checks are conducted.
+     * @param request          The object containing all information about the incoming request.
+     * @param repositoryAction Indicates whether the method should authenticate a fetch or a push request. For a push request, additional checks are conducted.
      * @throws LocalVCAuthException      If the user authentication fails or the user is not authorized to access a certain repository.
      * @throws LocalVCForbiddenException If the user is not allowed to access the repository, e.g. because offline IDE usage is not allowed or the due date has passed.
-     * @throws LocalVCInternalException  If an internal error occurs, e.g. because the LocalVCRepositoryUrl could not be created.
+     * @throws LocalVCInternalException  If an internal error occurs, e.g. because the LocalVCRepositoryUri could not be created.
      */
-    public void authenticateAndAuthorizeGitRequest(HttpServletRequest servletRequest, RepositoryActionType repositoryActionType)
-            throws LocalVCAuthException, LocalVCForbiddenException {
+    public void authenticateAndAuthorizeGitRequest(HttpServletRequest request, RepositoryActionType repositoryAction) throws LocalVCAuthException, LocalVCForbiddenException {
 
         long timeNanoStart = System.nanoTime();
 
-        User user = authenticateUser(servletRequest.getHeader(LocalVCServletService.AUTHORIZATION_HEADER));
+        User user = authenticateUser(request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER));
 
         // Optimization.
         // For each git command (i.e. 'git fetch' or 'git push'), the git client sends three requests.
-        // The URLs of the first two requests end on '[repository URL]/info/refs'. The third one ends on '[repository URL]/git-receive-pack' (for push) and '[repository
+        // The URLs of the first two requests end on '[repository URI]/info/refs'. The third one ends on '[repository URI]/git-receive-pack' (for push) and '[repository
         // URL]/git-upload-pack' (for fetch).
         // The following checks will only be conducted for the second request, so we do not have to access the database too often.
         // The first request does not contain credentials and will thus already be blocked by the 'authenticateUser' method above.
-        if (!servletRequest.getRequestURI().endsWith("/info/refs")) {
+        if (!request.getRequestURI().endsWith("/info/refs")) {
             return;
         }
 
-        LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(servletRequest.getRequestURL().toString().replace("/info/refs", ""), localVCBaseUrl);
+        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(request.getRequestURL().toString().replace("/info/refs", ""), localVCBaseUrl);
 
-        String projectKey = localVCRepositoryUrl.getProjectKey();
-        String repositoryTypeOrUserName = localVCRepositoryUrl.getRepositoryTypeOrUserName();
+        String projectKey = localVCRepositoryUri.getProjectKey();
+        String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
 
         ProgrammingExercise exercise;
 
@@ -195,9 +196,9 @@ public class LocalVCServletService {
             throw new LocalVCForbiddenException();
         }
 
-        authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryActionType, localVCRepositoryUrl.isPracticeRepository());
+        authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri.isPracticeRepository());
 
-        log.info("Authorizing user {} for repository {} took {}", user.getLogin(), localVCRepositoryUrl, TimeLogUtil.formatDurationFrom(timeNanoStart));
+        log.info("Authorizing user {} for repository {} took {}", user.getLogin(), localVCRepositoryUri, TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
 
     private User authenticateUser(String authorizationHeader) throws LocalVCAuthException {
@@ -214,7 +215,7 @@ public class LocalVCServletService {
         try {
             SecurityUtils.checkUsernameAndPasswordValidity(username, password);
 
-            // Try to authenticate the user.
+            // Try to authenticate the user based on the configured options, this can include sending the data to an external system (e.g. LDAP) or using internal authentication.
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
             authenticationManagerBuilder.getObject().authenticate(authenticationToken);
         }
@@ -279,10 +280,10 @@ public class LocalVCServletService {
      * Returns the HTTP status code for the given exception thrown by the above method "authenticateAndAuthorizeGitRequest".
      *
      * @param exception     The exception thrown.
-     * @param repositoryUrl The URL of the repository that was accessed.
+     * @param repositoryUri The URL of the repository that was accessed.
      * @return The HTTP status code.
      */
-    public int getHttpStatusForException(Exception exception, String repositoryUrl) {
+    public int getHttpStatusForException(Exception exception, String repositoryUri) {
         if (exception instanceof LocalVCAuthException) {
             return HttpStatus.UNAUTHORIZED.value();
         }
@@ -290,7 +291,7 @@ public class LocalVCServletService {
             return HttpStatus.FORBIDDEN.value();
         }
         else {
-            log.error("Internal server error while trying to access repository {}: {}", repositoryUrl, exception.getMessage());
+            log.error("Internal server error while trying to access repository {}: {}", repositoryUri, exception.getMessage());
             return HttpStatus.INTERNAL_SERVER_ERROR.value();
         }
     }
@@ -308,14 +309,14 @@ public class LocalVCServletService {
 
         Path repositoryFolderPath = repository.getDirectory().toPath();
 
-        LocalVCRepositoryUrl localVCRepositoryUrl = getLocalVCRepositoryUrl(repositoryFolderPath);
+        LocalVCRepositoryUri localVCRepositoryUri = getLocalVCRepositoryUri(repositoryFolderPath);
 
-        String repositoryTypeOrUserName = localVCRepositoryUrl.getRepositoryTypeOrUserName();
-        String projectKey = localVCRepositoryUrl.getProjectKey();
+        String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
+        String projectKey = localVCRepositoryUri.getProjectKey();
 
         ProgrammingExercise exercise = getProgrammingExercise(projectKey);
 
-        ProgrammingExerciseParticipation participation = getProgrammingExerciseParticipation(localVCRepositoryUrl, repositoryTypeOrUserName, exercise);
+        ProgrammingExerciseParticipation participation = getProgrammingExerciseParticipation(localVCRepositoryUri, repositoryTypeOrUserName, exercise);
 
         try {
             if (commitHash == null) {
@@ -336,18 +337,18 @@ public class LocalVCServletService {
             // This catch clause does not catch exceptions that happen during runBuildJob() as that method is called asynchronously.
             // For exceptions happening inside runBuildJob(), the user is notified. See the addBuildJobToQueue() method in the LocalCIBuildJobManagementService for that.
             throw new VersionControlException(
-                    "Could not process new push to repository " + localVCRepositoryUrl.getURI() + " and commit " + commitHash + ". No build job was queued.", e);
+                    "Could not process new push to repository " + localVCRepositoryUri.getURI() + " and commit " + commitHash + ". No build job was queued.", e);
         }
 
-        log.info("New push processed to repository {} for commit {} in {}. A build job was queued.", localVCRepositoryUrl.getURI(), commitHash,
+        log.info("New push processed to repository {} for commit {} in {}. A build job was queued.", localVCRepositoryUri.getURI(), commitHash,
                 TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
 
-    private ProgrammingExerciseParticipation getProgrammingExerciseParticipation(LocalVCRepositoryUrl localVCRepositoryUrl, String repositoryTypeOrUserName,
+    private ProgrammingExerciseParticipation getProgrammingExerciseParticipation(LocalVCRepositoryUri localVCRepositoryUri, String repositoryTypeOrUserName,
             ProgrammingExercise exercise) {
         ProgrammingExerciseParticipation participation;
         try {
-            participation = programmingExerciseParticipationService.getParticipationForRepository(exercise, repositoryTypeOrUserName, localVCRepositoryUrl.isPracticeRepository(),
+            participation = programmingExerciseParticipationService.getParticipationForRepository(exercise, repositoryTypeOrUserName, localVCRepositoryUri.isPracticeRepository(),
                     true);
         }
         catch (EntityNotFoundException e) {
@@ -367,13 +368,13 @@ public class LocalVCServletService {
         return exercise;
     }
 
-    private LocalVCRepositoryUrl getLocalVCRepositoryUrl(Path repositoryFolderPath) {
+    private LocalVCRepositoryUri getLocalVCRepositoryUri(Path repositoryFolderPath) {
         try {
-            return new LocalVCRepositoryUrl(repositoryFolderPath, localVCBaseUrl);
+            return new LocalVCRepositoryUri(repositoryFolderPath, localVCBaseUrl);
         }
         catch (LocalVCInternalException e) {
             // This means something is misconfigured.
-            throw new VersionControlException("Could not create valid repository URL from path " + repositoryFolderPath, e);
+            throw new VersionControlException("Could not create valid repository URI from path " + repositoryFolderPath, e);
         }
     }
 
@@ -431,6 +432,7 @@ public class LocalVCServletService {
     }
 
     /**
+     * TODO: this could be done asynchronously to shorten the duration of the push operation
      * Process a new push to a student's repository or to the template or solution repository of the exercise.
      *
      * @param participation the participation for which the push was made
@@ -480,13 +482,7 @@ public class LocalVCServletService {
             throw new VersionControlException("Something went wrong retrieving the revCommit or the branch.");
         }
 
-        Commit commit = new Commit();
-        commit.setCommitHash(commitHash);
-        commit.setAuthorName(revCommit.getAuthorIdent().getName());
-        commit.setAuthorEmail(revCommit.getAuthorIdent().getEmailAddress());
-        commit.setBranch(branch);
-        commit.setMessage(revCommit.getFullMessage());
-
-        return commit;
+        var author = revCommit.getAuthorIdent();
+        return new Commit(commitHash, author.getName(), revCommit.getFullMessage(), author.getEmailAddress(), branch);
     }
 }
