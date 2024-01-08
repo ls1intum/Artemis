@@ -25,7 +25,7 @@ import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { StickyPopoverDirective } from 'app/shared/sticky-popover/sticky-popover.directive';
 import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
-import { ScienceDirective } from 'app/shared/science/science.direcrive';
+import { ScienceDirective } from 'app/shared/science/science.direcive';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
