@@ -182,34 +182,39 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.setLatestCoveredLineRatio();
                 this.loadingTemplateParticipationResults = false;
                 this.loadingSolutionParticipationResults = false;
-                const profileInfo = await firstValueFrom(this.profileService.getProfileInfo());
-                if (profileInfo) {
-                    if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation && this.programmingExercise.templateParticipation.buildPlanId) {
-                        this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
-                            profileInfo.buildPlanURLTemplate,
-                            this.programmingExercise.projectKey,
-                            this.programmingExercise.templateParticipation.buildPlanId,
-                        );
+                this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
+                    if (profileInfo) {
+                        if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation && this.programmingExercise.templateParticipation.buildPlanId) {
+                            this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
+                                profileInfo.buildPlanURLTemplate,
+                                this.programmingExercise.projectKey,
+                                this.programmingExercise.templateParticipation.buildPlanId,
+                            );
+                        }
+                        if (this.programmingExercise.projectKey && this.programmingExercise.solutionParticipation && this.programmingExercise.solutionParticipation.buildPlanId) {
+                            this.programmingExercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(
+                                profileInfo.buildPlanURLTemplate,
+                                this.programmingExercise.projectKey,
+                                this.programmingExercise.solutionParticipation.buildPlanId,
+                            );
+                        }
+                        this.supportsAuxiliaryRepositories =
+                            this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ?? false;
+                        this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+                        this.irisEnabled = profileInfo.activeProfiles.includes('iris');
+                        if (this.irisEnabled) {
+                            this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
+                                this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
+                                this.exerciseDetailSections = this.getExerciseDetails();
+                            });
+                        }
                     }
-                    if (this.programmingExercise.projectKey && this.programmingExercise.solutionParticipation && this.programmingExercise.solutionParticipation.buildPlanId) {
-                        this.programmingExercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(
-                            profileInfo.buildPlanURLTemplate,
-                            this.programmingExercise.projectKey,
-                            this.programmingExercise.solutionParticipation.buildPlanId,
-                        );
-                    }
-                    this.supportsAuxiliaryRepositories =
-                        this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ?? false;
-                    this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-                    this.irisEnabled = profileInfo.activeProfiles.includes('iris');
-                    if (this.irisEnabled) {
-                        const settings = await firstValueFrom(this.irisSettingsService.getCombinedCourseSettings(this.courseId));
-                        this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
-                    }
-                }
+                    this.exerciseDetailSections = this.getExerciseDetails();
+                });
 
                 this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId!).subscribe((submissionPolicy) => {
                     this.programmingExercise.submissionPolicy = submissionPolicy;
+                    this.exerciseDetailSections = this.getExerciseDetails();
                 });
 
                 await this.loadGitDiffReport();
@@ -239,7 +244,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.dialogErrorSource.unsubscribe();
     }
 
-    getExerciseDetails() {
+    getExerciseDetails(): DetailOverviewSection[] {
         const exercise = this.programmingExercise;
         return [
             this.getExerciseDetailsGeneralSection(exercise),
@@ -250,7 +255,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         ] as DetailOverviewSection[];
     }
 
-    getExerciseDetailsGeneralSection(exercise: ProgrammingExercise) {
+    getExerciseDetailsGeneralSection(exercise: ProgrammingExercise): DetailOverviewSection {
         return {
             headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle',
             details: [
@@ -280,10 +285,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     data: { text: exercise.categories?.map((category) => category.category?.toUpperCase()).join(', ') },
                 },
             ].filter(Boolean),
-        };
+        } as DetailOverviewSection;
     }
 
-    getExerciseDetailsModeSection(exercise: ProgrammingExercise) {
+    getExerciseDetailsModeSection(exercise: ProgrammingExercise): DetailOverviewSection {
         return {
             headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle',
             details: [
@@ -317,12 +322,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     title: 'artemisApp.programmingExercise.publishBuildPlanUrl',
                     data: { boolean: exercise.publishBuildPlanUrl },
                 },
-                {},
             ].filter(Boolean),
-        };
+        } as DetailOverviewSection;
     }
 
-    getExerciseDetailsLanguageSection(exercise: ProgrammingExercise) {
+    getExerciseDetailsLanguageSection(exercise: ProgrammingExercise): DetailOverviewSection {
         return {
             headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
             details: [
@@ -338,18 +342,18 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 },
                 {
                     type: DetailType.ProgrammingRepositoryButtons,
-                    title: 'artemisApp.programmingExercise.templateRepositoryUrl',
+                    title: 'artemisApp.programmingExercise.templateRepositoryUri',
                     data: { participation: exercise.templateParticipation, exerciseId: exercise.id, type: ProgrammingExerciseParticipationType.TEMPLATE },
                 },
                 {
                     type: DetailType.ProgrammingRepositoryButtons,
-                    title: 'artemisApp.programmingExercise.solutionRepositoryUrl',
+                    title: 'artemisApp.programmingExercise.solutionRepositoryUri',
                     data: { participation: exercise.solutionParticipation, exerciseId: exercise.id, type: ProgrammingExerciseParticipationType.SOLUTION },
                 },
                 {
                     type: DetailType.ProgrammingRepositoryButtons,
-                    title: 'artemisApp.programmingExercise.testRepositoryUrl',
-                    data: { participation: { repositoryUrl: exercise.testRepositoryUrl }, exerciseId: exercise.id },
+                    title: 'artemisApp.programmingExercise.testRepositoryUri',
+                    data: { participation: { repositoryUri: exercise.testRepositoryUri }, exerciseId: exercise.id },
                 },
                 this.supportsAuxiliaryRepositories &&
                     !!exercise.auxiliaryRepositories?.length && {
@@ -360,12 +364,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 {
                     type: DetailType.Link,
                     title: 'artemisApp.programmingExercise.templateBuildPlanId',
-                    data: { href: exercise.templateParticipation?.buildPlanUrl, text: exercise.templateParticipation?.buildPlanId },
+                    data: { href: !this.localVCEnabled && exercise.templateParticipation?.buildPlanUrl, text: exercise.templateParticipation?.buildPlanId },
                 },
                 {
                     type: DetailType.Link,
                     title: 'artemisApp.programmingExercise.solutionBuildPlanId',
-                    data: { href: exercise.solutionParticipation?.buildPlanUrl, text: exercise.solutionParticipation?.buildPlanId },
+                    data: { href: !this.localVCEnabled && exercise.solutionParticipation?.buildPlanUrl, text: exercise.solutionParticipation?.buildPlanId },
                 },
                 {
                     type: DetailType.ProgrammingTestStatus,
@@ -417,10 +421,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     data: { text: exercise.packageName },
                 },
             ].filter(Boolean),
-        };
+        } as DetailOverviewSection;
     }
 
-    getExerciseDetailsProblemSection(exercise: ProgrammingExercise) {
+    getExerciseDetailsProblemSection(exercise: ProgrammingExercise): DetailOverviewSection {
         return {
             headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle',
             details: [
@@ -432,7 +436,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         };
     }
 
-    getExerciseDetailsGradingSection(exercise: ProgrammingExercise) {
+    getExerciseDetailsGradingSection(exercise: ProgrammingExercise): DetailOverviewSection {
         const includedInScoreIsBoolean = exercise.includedInOverallScore != IncludedInOverallScore.INCLUDED_AS_BONUS;
         const includedInScore = {
             type: includedInScoreIsBoolean ? DetailType.Boolean : DetailType.Text,
@@ -501,14 +505,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                             title: 'artemisApp.iris.settings.subSettings.enabled.chat',
                             data: { exercise, disabled: !exercise.isAtLeastInstructor, subSettingsType: IrisSubSettingsType.CHAT },
                     },
-                {
+                exercise.buildLogStatistics && {
                     type: DetailType.ProgrammingBuildStatistics,
                     title: 'artemisApp.programmingExercise.buildLogStatistics.title',
                     titleHelpText: 'artemisApp.programmingExercise.buildLogStatistics.tooltip',
                     data: { buildLogStatistics: exercise.buildLogStatistics },
                 },
             ].filter(Boolean),
-        };
+        } as DetailOverviewSection;
     }
 
     private checkBuildPlanEditable() {

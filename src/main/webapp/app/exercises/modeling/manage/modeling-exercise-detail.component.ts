@@ -36,7 +36,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly dayjs = dayjs;
 
     modelingExercise: ModelingExercise;
-    course: Course | undefined;
+    course?: Course;
     private subscription: Subscription;
     private eventSubscriber: Subscription;
     problemStatement: SafeHtml;
@@ -98,7 +98,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         }
     }
 
-    getExerciseDetailSections() {
+    getExerciseDetailSections(): DetailOverviewSection[] {
         const exercise = this.modelingExercise;
         const generalSection = getExerciseGeneralDetailsSection(exercise);
         const modeSection = getExerciseModeDetailSection(exercise);

@@ -1,65 +1,70 @@
 @if (headlines?.length && headlines.length > 1) {
-    <jhi-detail-overview-navigation-bar [sectionHeadlines]="headlines"></jhi-detail-overview-navigation-bar>
+    <jhi-detail-overview-navigation-bar [sectionHeadlines]="headlines" />
 }
 @for (section of sections; track section) {
-    <h3 [id]="headlinesRecord[section.headline]">{{ section.headline | artemisTranslate }}</h3>
+    <h3 class="section-headline" [id]="headlinesRecord[section.headline]">{{ section.headline | artemisTranslate }}</h3>
     <dl>
         @for (detail of section.details; track detail) {
             @if (detail.title) {
                 <dt id="detail-title-{{ detail.title }}">
                     <span>{{ detail.title | artemisTranslate: detail.titleTranslationProps }}</span>
                     @if (detail.titleHelpText) {
-                        <jhi-help-icon text="{{ detail.titleHelpText }}"></jhi-help-icon>
+                        <jhi-help-icon text="{{ detail.titleHelpText }}" />
                     }
                 </dt>
             }
             @switch (detail.type) {
                 @case (DetailType.Text) {
                     <dd id="detail-value-{{ detail.title }}">
-                        {{ detail.data.text || '-' }}
+                        @if (detail.data.text) {
+                            {{ detail.data.text }}
+                        } @else {
+                            <ng-container *ngTemplateOutlet="noData"></ng-container>
+                        }
                     </dd>
                 }
                 @case (DetailType.Date) {
                     <dd id="detail-value-{{ detail.title }}">
-                        {{ detail.data.date ? (detail.data.date | artemisDate) : '-' }}
+                        @if (detail.data.date) {
+                            {{ detail.data.date | artemisDate }}
+                        } @else {
+                            <ng-container *ngTemplateOutlet="noData" />
+                        }
                     </dd>
                 }
                 @case (DetailType.Link) {
                     <dd id="detail-value-{{ detail.title }}">
                         @if (detail.data.text) {
-                            @if (!!detail.data.routerLink?.length || detail.data.href) {
-                                <a [routerLink]="detail.data.routerLink" [queryParams]="detail.data.queryParams" href="{{ detail.data.href }}">
+                            @if (detail.data.routerLink?.length) {
+                                <a [routerLink]="detail.data.routerLink" [queryParams]="detail.data.queryParams">
+                                    {{ detail.data.text }}
+                                </a>
+                            } @else if (detail.data.href) {
+                                <a href="{{ detail.data.href }}">
                                     {{ detail.data.text }}
                                 </a>
                             } @else {
                                 <span>{{ detail.data.text }}</span>
                             }
                         } @else {
-                            <span #noText>-</span>
+                            <ng-container *ngTemplateOutlet="noData" />
                         }
-                        <ng-template #noText><span #noText>-</span></ng-template>
                     </dd>
                 }
                 @case (DetailType.Boolean) {
                     <dd id="detail-value-{{ detail.title }}">
-                        <jhi-checklist-check [checkAttribute]="detail.data.boolean"></jhi-checklist-check>
+                        <jhi-checklist-check [checkAttribute]="detail.data.boolean" />
                     </dd>
                 }
                 @case (DetailType.ProgrammingRepositoryButtons) {
                     <dd id="detail-value-{{ detail.title }}">
-                        @if (detail.data.participation?.repositoryUrl) {
+                        @if (detail.data.participation?.repositoryUri && detail.data.exerciseId) {
                             <div class="clone-buttons">
-                                <jhi-clone-repo-button [smallButtons]="true" [repositoryUrl]="detail.data.participation.repositoryUrl"></jhi-clone-repo-button>
-                                <jhi-programming-exercise-instructor-repo-download
-                                    class="ms-2"
-                                    [exerciseId]="detail.data.exerciseId!"
-                                    [repositoryType]="detail.data.type"
-                                ></jhi-programming-exercise-instructor-repo-download>
-                                <span></span>
+                                <jhi-clone-repo-button [smallButtons]="true" [repositoryUri]="detail.data.participation.repositoryUri" />
+                                <jhi-programming-exercise-instructor-repo-download class="ms-2" [exerciseId]="detail.data.exerciseId" [repositoryType]="detail.data.type" />
                             </div>
-                        }
-                        @if (!detail.data.participation?.repositoryUrl) {
-                            <span>-</span>
+                        } @else {
+                            <ng-container *ngTemplateOutlet="noData" />
                         }
                     </dd>
                 }
@@ -67,31 +72,29 @@
                     <dd id="detail-value-{{ detail.title }}">
                         <ul>
                             @for (auxiliaryRepository of detail.data.auxiliaryRepositories; track auxiliaryRepository) {
-                                <li>
-                                    <span>Repository: {{ auxiliaryRepository.name }}</span>
-                                    <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUrl]="auxiliaryRepository.repositoryUrl!"></jhi-clone-repo-button>
-                                    <jhi-programming-exercise-instructor-repo-download
-                                        class="ms-2"
-                                        [exerciseId]="detail.data.exerciseId!"
-                                        [repositoryType]="'AUXILIARY'"
-                                        [auxiliaryRepositoryId]="auxiliaryRepository.id!"
-                                    ></jhi-programming-exercise-instructor-repo-download>
-                                    <div class="auxiliaryRepositoryDescription">
-                                        @if (auxiliaryRepository.checkoutDirectory) {
-                                            <span>Checkout Directory: {{ auxiliaryRepository.checkoutDirectory }} </span>
-                                        } @else {
-                                            <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="noCheckoutDirectorySetTooltip"></fa-icon>
-                                            <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySet">Checkout Directory was not set</span>
-                                        }
-                                        <ng-template #noCheckoutDirectorySet>
-                                            <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="noCheckoutDirectorySetTooltip"></fa-icon>
-                                            <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySet">Checkout Directory was not set</span>
-                                        </ng-template>
-                                        <ng-template #noCheckoutDirectorySetTooltip>
-                                            <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySetTooltip"></span>
-                                        </ng-template>
-                                    </div>
-                                </li>
+                                @if (auxiliaryRepository.id && auxiliaryRepository.repositoryUri && detail.data.exerciseId) {
+                                    <li>
+                                        <span>Repository: {{ auxiliaryRepository.name }}</span>
+                                        <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUri]="auxiliaryRepository.repositoryUri" />
+                                        <jhi-programming-exercise-instructor-repo-download
+                                            class="ms-2"
+                                            [exerciseId]="detail.data.exerciseId"
+                                            [repositoryType]="'AUXILIARY'"
+                                            [auxiliaryRepositoryId]="auxiliaryRepository.id"
+                                        />
+                                        <div class="auxiliaryRepositoryDescription">
+                                            @if (auxiliaryRepository.checkoutDirectory) {
+                                                <span>Checkout Directory: {{ auxiliaryRepository.checkoutDirectory }} </span>
+                                            } @else {
+                                                <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="noCheckoutDirectorySetTooltip" />
+                                                <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySet">Checkout Directory was not set</span>
+                                            }
+                                            <ng-template #noCheckoutDirectorySetTooltip>
+                                                <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySetTooltip"></span>
+                                            </ng-template>
+                                        </div>
+                                    </li>
+                                }
                             }
                         </ul>
                     </dd>
@@ -103,35 +106,32 @@
                                 @if (!detail.data.loading) {
                                     <jhi-updating-result
                                         [exercise]="detail.data.exercise"
-                                        [participation]="detail.data.participation!"
+                                        [participation]="detail.data.participation"
                                         [showUngradedResults]="true"
                                         [personalParticipation]="false"
                                         [short]="false"
                                         (onParticipationChange)="detail.data.onParticipationChange()"
                                         class="me-2"
-                                    ></jhi-updating-result>
+                                    />
                                 }
-                                @if (detail.data.participation?.results?.length) {
+                                @if (detail.data.participation.results?.length) {
                                     <jhi-programming-exercise-instructor-status
                                         class="repository-status-icon me-2"
                                         [participationType]="detail.data.type"
-                                        [participation]="detail.data.participation!"
+                                        [participation]="detail.data.participation"
                                         [exercise]="detail.data.exercise"
-                                    ></jhi-programming-exercise-instructor-status>
+                                    />
+                                    @if (detail.data.exercise.isAtLeastEditor) {
+                                        <jhi-programming-exercise-instructor-trigger-build-button [exercise]="detail.data.exercise" [participation]="detail.data.participation" />
+                                    }
                                 }
-                                @if (detail.data.participation?.results && detail.data.exercise.isAtLeastEditor) {
-                                    <jhi-programming-exercise-instructor-trigger-build-button
-                                        [exercise]="detail.data.exercise"
-                                        [participation]="detail.data.participation!"
-                                    ></jhi-programming-exercise-instructor-trigger-build-button>
-                                }
-                                @if (detail.data.exercise.isAtLeastEditor && detail.data.participation?.id) {
+                                @if (detail.data.exercise.isAtLeastEditor && detail.data.participation.id) {
                                     <a [routerLink]="detail.data.submissionRouterLink" [queryParams]="{ isTmpOrSolutionProgrParticipation: true }" class="ms-2">
                                         @switch (detail.data.type) {
-                                            @case (ParticipationType.TEMPLATE) {
+                                            @case (ProgrammingExerciseParticipationType.TEMPLATE) {
                                                 <span jhiTranslate="artemisApp.programmingExercise.detail.showTemplateSubmissions">Show Template Submissions</span>
                                             }
-                                            @case (ParticipationType.SOLUTION) {
+                                            @case (ProgrammingExerciseParticipationType.SOLUTION) {
                                                 <span jhiTranslate="artemisApp.programmingExercise.detail.showSolutionSubmissions">Show Solution Submissions</span>
                                             }
                                         }
@@ -148,7 +148,7 @@
                                 [addedLineCount]="detail.data.addedLineCount"
                                 [removedLineCount]="detail.data.removedLineCount"
                                 ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipDetailPage' | artemisTranslate }}"
-                            ></jhi-git-diff-line-stat>
+                            />
                             @if (detail.data.addedLineCount > 0 || detail.data.removedLineCount > 0) {
                                 <jhi-button
                                     [featureToggle]="FeatureToggle.ProgrammingExercises"
@@ -159,45 +159,39 @@
                                     [tooltip]="'artemisApp.programmingExercise.diffReport.tooltip'"
                                     (onClick)="showGitDiff(detail.data.gitDiffReport)"
                                     class="ms-2"
-                                ></jhi-button>
+                                />
                             }
                         </div>
                     </dd>
                 }
                 @case (DetailType.ProgrammingProblemStatement) {
-                    <dd class="p-3 border" id="detail-value-{{ detail.title }}">
-                        <jhi-programming-exercise-instructions
-                            [exercise]="detail.data.exercise"
-                            [participation]="detail.data.exercise?.templateParticipation!"
-                            [personalParticipation]="true"
-                        ></jhi-programming-exercise-instructions>
-                    </dd>
+                    @if (detail.data.exercise?.templateParticipation) {
+                        <dd class="p-3 border" id="detail-value-{{ detail.title }}">
+                            <jhi-programming-exercise-instructions
+                                [exercise]="detail.data.exercise"
+                                [participation]="detail.data.exercise.templateParticipation"
+                                [personalParticipation]="true"
+                            />
+                        </dd>
+                    }
                 }
                 @case (DetailType.ProgrammingTimeline) {
                     <dd id="detail-value-{{ detail.title }}">
-                        <jhi-programming-exercise-lifecycle
-                            [isExamMode]="detail.data.isExamMode"
-                            [exercise]="detail.data.exercise"
-                            [readOnly]="true"
-                        ></jhi-programming-exercise-lifecycle>
+                        <jhi-programming-exercise-lifecycle [isExamMode]="detail.data.isExamMode" [exercise]="detail.data.exercise" [readOnly]="true" />
                     </dd>
                 }
                 @case (DetailType.Markdown) {
                     <dd id="detail-value-{{ detail.title }}">
                         @if (detail.data.innerHtml) {
                             <div class="p-3 border" [innerHTML]="detail.data.innerHtml"></div>
-                        }
-                        @if (!detail.data.innerHtml) {
-                            <span>-</span>
+                        } @else {
+                            <ng-container *ngTemplateOutlet="noData" />
                         }
                     </dd>
                 }
                 @case (DetailType.GradingCriteria) {
                     <dd class="col-md-6 mt-4" id="detail-value-{{ detail.title }}">
-                        <jhi-structured-grading-instructions-assessment-layout
-                            [readonly]="true"
-                            [criteria]="detail.data.gradingCriteria || []"
-                        ></jhi-structured-grading-instructions-assessment-layout>
+                        <jhi-structured-grading-instructions-assessment-layout [readonly]="true" [criteria]="detail.data.gradingCriteria || []" />
                     </dd>
                 }
                 @case (DetailType.ProgrammingBuildStatistics) {
@@ -236,12 +230,7 @@
                 }
                 @case (DetailType.ProgrammingIrisEnabled) {
                     <dd id="detail-value-{{ detail.title }}">
-                        <jhi-iris-enabled
-                            [exercise]="detail.data.exercise"
-                            [course]="detail.data.course"
-                            [irisSubSettingsType]="detail.data.subSettingsType"
-                            [disabled]="detail.data.disabled"
-                        ></jhi-iris-enabled>
+                        <jhi-iris-enabled [exercise]="detail.data.exercise" [irisSubSettingsType]="detail.data.subSettingsType" [disabled]="detail.data.disabled" />
                     </dd>
                 }
                 @case (DetailType.ModelingEditor) {
@@ -251,15 +240,15 @@
                                 Export
                             </button>
                         }
-                        @if (!isEmpty(detail.data.umlModel?.elements)) {
-                            <jhi-modeling-editor class="editor-outline-background" [readOnly]="true" [diagramType]="detail.data.diagramType!" [umlModel]="detail.data.umlModel!" />
-                        }
-                        @if (!isEmpty(detail.data.umlModel?.elements)) {
-                            <span>-</span>
+                        @if (!isEmpty(detail.data.umlModel?.elements) && detail.data.diagramType && detail.data.umlModel) {
+                            <jhi-modeling-editor class="editor-outline-background" [readOnly]="true" [diagramType]="detail.data.diagramType" [umlModel]="detail.data.umlModel" />
+                        } @else {
+                            <ng-container *ngTemplateOutlet="noData" />
                         }
                     </dd>
                 }
             }
         }
     </dl>
+    <ng-template #noData><span>-</span></ng-template>
 }

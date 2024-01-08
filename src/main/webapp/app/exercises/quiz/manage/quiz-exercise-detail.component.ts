@@ -26,6 +26,7 @@ export class QuizExerciseDetailComponent implements OnInit {
     examId: number;
     quizId: number;
     isExamMode: boolean;
+    showStatistics: boolean;
 
     quizExercise: QuizExercise;
     statistics: ExerciseManagementStatisticsDto;
@@ -60,12 +61,15 @@ export class QuizExerciseDetailComponent implements OnInit {
             this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
             this.quizExercise.status = this.quizExerciseService.getStatus(this.quizExercise);
             this.quizExercise.startDate = this.quizExercise.dueDate && dayjs(this.quizExercise.dueDate).subtract(this.quizExercise.duration ?? 0, 'second');
-            this.statistics = await firstValueFrom(this.statisticsService.getExerciseStatistics(this.quizId));
+            this.showStatistics = !this.quizExercise.releaseDate || dayjs(this.quizExercise.releaseDate).isBefore(dayjs());
+            if (this.showStatistics) {
+                this.statistics = await firstValueFrom(this.statisticsService.getExerciseStatistics(this.quizId));
+            }
             this.detailOverviewSections = this.getExerciseDetailSections();
         });
     }
 
-    getExerciseDetailSections() {
+    getExerciseDetailSections(): DetailOverviewSection[] {
         const exercise = this.quizExercise;
         const mcCount = this.quizExercise.quizQuestions?.filter((question) => question.type === QuizQuestionType.MULTIPLE_CHOICE)?.length ?? 0;
         const dndCount = this.quizExercise.quizQuestions?.filter((question) => question.type === QuizQuestionType.DRAG_AND_DROP)?.length ?? 0;

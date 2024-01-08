@@ -36,7 +36,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     readonly dayjs = dayjs;
 
     textExercise: TextExercise;
-    course: Course | undefined;
+    course?: Course;
     isExamExercise: boolean;
     formattedProblemStatement: SafeHtml | null;
     formattedExampleSolution: SafeHtml | null;
@@ -88,7 +88,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    getExerciseDetailSections() {
+    getExerciseDetailSections(): DetailOverviewSection[] {
         const exercise = this.textExercise;
         const generalSection = getExerciseGeneralDetailsSection(exercise);
         const modeSection = getExerciseModeDetailSection(exercise);

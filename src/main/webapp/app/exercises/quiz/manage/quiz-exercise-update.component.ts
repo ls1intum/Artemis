@@ -344,7 +344,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     }
 
     /**
-     * displays the alert for confirming refreshing or closing the page if there are unsaved changes
+     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
      */
     @HostListener('window:beforeunload', ['$event'])
     unloadNotification(event: any) {

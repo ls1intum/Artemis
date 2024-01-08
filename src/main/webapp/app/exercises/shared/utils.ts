@@ -1,5 +1,5 @@
 import { SafeHtml } from '@angular/platform-browser';
-import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
+import { Detail, DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 
 export function getExerciseGeneralDetailsSection(exercise: Exercise): DetailOverviewSection {
@@ -73,7 +73,7 @@ export function getExerciseProblemDetailSection(formattedProblemStatement: SafeH
     } as DetailOverviewSection;
 }
 
-export function getExerciseGradingDefaultDetails(exercise: Exercise) {
+export function getExerciseGradingDefaultDetails(exercise: Exercise): Detail[] {
     const includedInScoreIsBoolean = exercise.includedInOverallScore != IncludedInOverallScore.INCLUDED_AS_BONUS;
     const includedInScore = {
         type: includedInScoreIsBoolean ? DetailType.Boolean : DetailType.Text,
@@ -93,10 +93,10 @@ export function getExerciseGradingDefaultDetails(exercise: Exercise) {
             title: 'artemisApp.exercise.presentationScoreEnabled.title',
             data: { boolean: exercise.presentationScoreEnabled },
         },
-    ];
+    ] as Detail[];
 }
 
-export function getExerciseGradingInstructionsCriteriaDetails(exercise: Exercise, formattedGradingInstructions: SafeHtml | null) {
+export function getExerciseGradingInstructionsCriteriaDetails(exercise: Exercise, formattedGradingInstructions: SafeHtml | null): Detail[] {
     return [
         exercise.gradingInstructions && {
             type: DetailType.Markdown,
@@ -108,10 +108,10 @@ export function getExerciseGradingInstructionsCriteriaDetails(exercise: Exercise
             title: 'artemisApp.exercise.structuredAssessmentInstructions',
             data: { gradingCriteria: exercise.gradingCriteria },
         },
-    ];
+    ] as Detail[];
 }
 
-export function getExerciseMarkdownSolution(exercise: Exercise, formattedExampleSolution: SafeHtml | null) {
+export function getExerciseMarkdownSolution(exercise: Exercise, formattedExampleSolution: SafeHtml | null): DetailOverviewSection {
     return {
         headline: 'artemisApp.exercise.sections.solution',
         details: [

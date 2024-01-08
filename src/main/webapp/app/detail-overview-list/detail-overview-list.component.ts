@@ -8,16 +8,16 @@ import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/gi
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { ParticipationType } from 'app/entities/participation/participation.model';
+import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 
 export interface DetailOverviewSection {
     headline: string;
     details: Detail[];
 }
 
-interface Detail {
+export interface Detail {
     type: DetailType;
-    title: string;
+    title?: string;
     titleTranslationProps?: Record<string, string>;
     titleHelpText?: string;
     data: any;
@@ -51,7 +51,8 @@ export class DetailOverviewListComponent implements OnInit {
     protected readonly DetailType = DetailType;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ButtonSize = ButtonSize;
-    protected readonly ParticipationType = ParticipationType;
+    protected readonly ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
+    readonly CHAT = IrisSubSettingsType.CHAT;
 
     @Input()
     sections: DetailOverviewSection[];
