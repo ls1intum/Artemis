@@ -21,6 +21,6 @@ export abstract class AbstractScienceComponent {
             } else {
                 this.scienceService.logEvent(this.type).subscribe();
             }
-       }
+        }
     }
 }
