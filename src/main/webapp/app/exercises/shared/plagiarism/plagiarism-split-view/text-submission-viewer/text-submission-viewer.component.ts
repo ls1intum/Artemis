@@ -24,6 +24,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
     @Input() exercise: ProgrammingExercise | TextExercise;
     @Input() matches: Map<string, FromToElement[]>;
     @Input() plagiarismSubmission: PlagiarismSubmission<TextSubmissionElement>;
+    @Input() hideContent: boolean;
 
     /**
      * Name of the currently selected file.
@@ -75,12 +76,14 @@ export class TextSubmissionViewerComponent implements OnChanges {
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.plagiarismSubmission) {
             const currentPlagiarismSubmission: PlagiarismSubmission<TextSubmissionElement> = changes.plagiarismSubmission.currentValue;
-            this.loading = true;
+            if (!this.hideContent) {
+                this.loading = true;
 
-            if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                this.loadProgrammingExercise(currentPlagiarismSubmission);
-            } else {
-                this.loadTextExercise(currentPlagiarismSubmission);
+                if (this.exercise.type === ExerciseType.PROGRAMMING) {
+                    this.loadProgrammingExercise(currentPlagiarismSubmission);
+                } else {
+                    this.loadTextExercise(currentPlagiarismSubmission);
+                }
             }
         }
     }

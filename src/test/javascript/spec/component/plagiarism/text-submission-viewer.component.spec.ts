@@ -75,6 +75,17 @@ describe('Text Submission Viewer Component', () => {
         expect(comp.isProgrammingExercise).toBeTrue();
     });
 
+    it('does not fetch a programming submission', () => {
+        jest.spyOn(repositoryService, 'getRepositoryContent').mockReturnValue(of({}));
+        comp.hideContent = true;
+
+        comp.ngOnChanges({
+            plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
+        });
+
+        expect(repositoryService.getRepositoryContent).not.toHaveBeenCalled();
+    });
+
     it('handles a programming submission fetch error', () => {
         comp.exercise = { type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
         jest.spyOn(repositoryService, 'getRepositoryContent').mockReturnValue(throwError({}));
