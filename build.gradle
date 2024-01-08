@@ -28,7 +28,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "6.7.4"
+version = "6.7.5"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -520,6 +520,8 @@ tasks.named("dependencyUpdates").configure {
 // 2) Execute tests with coverage report:           ./gradlew test jacocoTestReport -x webapp
 // 2a) Execute tests without coverage report:       ./gradlew test -x webapp
 // 2b) Run a single test:                           ./gradlew test --tests ExamIntegrationTest -x webapp or ./gradlew test --tests ExamIntegrationTest.testGetExamScore -x webapp
+// 2c) Execute tests with Postgres container:       SPRING_PROFILES_INCLUDE=postgres ./gradlew test -x webapp
+// 2d) Execute tests with MySQL container:          SPRING_PROFILES_INCLUDE=mysql ./gradlew test -x webapp
 // 3) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification
 // 4) Check Java code format:                       ./gradlew spotlessCheck -x webapp
 // 5) Apply Java code formatter:                    ./gradlew spotlessApply -x webapp
