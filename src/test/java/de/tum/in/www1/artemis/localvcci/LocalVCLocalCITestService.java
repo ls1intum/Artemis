@@ -301,7 +301,7 @@ public class LocalVCLocalCITestService {
      * @return the URL to the repository.
      */
     public String constructLocalVCUrl(String username, String password, String projectKey, String repositorySlug) {
-        return "http://" + username + (password.length() > 0 ? ":" : "") + password + (username.length() > 0 ? "@" : "") + "localhost:" + port + "/git/" + projectKey.toUpperCase()
+        return "http://" + username + (!password.isEmpty() ? ":" : "") + password + (!username.isEmpty() ? "@" : "") + "localhost:" + port + "/git/" + projectKey.toUpperCase()
                 + "/" + repositorySlug + ".git";
     }
 
