@@ -56,7 +56,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     gradeStepsDTO?: GradeStepsDTO;
     gradeStepsDTOSub: Subscription;
 
-    // Used to show the "Clone Repository URL" button instead of a link to Bitbucket/GitLab when the "localvc" profile is active.
+    // Used to show the "Clone Repository URI" button instead of a link to Bitbucket/GitLab when the "localvc" profile is active.
     localVCEnabled = false;
 
     private dialogErrorSource = new Subject<string>();
@@ -402,16 +402,16 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     };
 
     /**
-     * Removes the login from the repositoryURL
+     * Removes the login from the repositoryUri
      *
      * @param participation Student participation
-     * @param repoUrl original repository url
+     * @param repoUri original repository uri
      */
-    getRepositoryLink = (participation: StudentParticipation, repoUrl: string) => {
-        if ((participation as ProgrammingExerciseStudentParticipation).repositoryUrl === repoUrl) {
-            return (participation as ProgrammingExerciseStudentParticipation).userIndependentRepositoryUrl;
+    getRepositoryLink = (participation: StudentParticipation, repoUri: string) => {
+        if ((participation as ProgrammingExerciseStudentParticipation).repositoryUri === repoUri) {
+            return (participation as ProgrammingExerciseStudentParticipation).userIndependentRepositoryUri;
         }
-        return repoUrl;
+        return repoUri;
     };
 
     /**

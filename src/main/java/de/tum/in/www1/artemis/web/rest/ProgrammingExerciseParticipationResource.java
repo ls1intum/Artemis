@@ -14,7 +14,7 @@ import org.springframework.web.servlet.ModelAndView;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -201,18 +201,18 @@ public class ProgrammingExerciseParticipationResource {
             throw new BadRequestAlertException("Cannot reset repository in an exam", ENTITY_NAME, "noRepoResetInExam");
         }
 
-        VcsRepositoryUrl sourceURL;
+        VcsRepositoryUri sourceURL;
         if (gradedParticipationId != null) {
             ProgrammingExerciseStudentParticipation gradedParticipation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(gradedParticipationId);
             participationAuthCheckService.checkCanAccessParticipationElseThrow(gradedParticipation);
 
-            sourceURL = gradedParticipation.getVcsRepositoryUrl();
+            sourceURL = gradedParticipation.getVcsRepositoryUri();
         }
         else {
-            sourceURL = exercise.getVcsTemplateRepositoryUrl();
+            sourceURL = exercise.getVcsTemplateRepositoryUri();
         }
 
-        programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUrl(), sourceURL);
+        programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUri(), sourceURL);
 
         return ResponseEntity.ok().build();
     }

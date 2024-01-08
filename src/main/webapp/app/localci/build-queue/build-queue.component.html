@@ -1,0 +1,207 @@
+<div style="padding-bottom: 60px">
+    <h3 id="build-queue-running-heading" jhiTranslate="artemisApp.buildQueue.runningBuildJobs">Running build jobs</h3>
+    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3"></div>
+    <jhi-data-table [showPageSizeDropdown]="false" [showSearchField]="false" entityType="buildJob" [allEntities]="runningBuildJobs!">
+        <ng-template let-settings="settings" let-controls="controls">
+            <ngx-datatable
+                class="bootstrap"
+                [limit]="settings.limit"
+                [sortType]="settings.sortType"
+                [columnMode]="settings.columnMode"
+                [headerHeight]="settings.headerHeight"
+                [footerHeight]="settings.footerHeight"
+                [rowHeight]="settings.rowHeight"
+                [rows]="settings.rows"
+                [rowClass]="settings.rowClass"
+                [scrollbarH]="settings.scrollbarH"
+            >
+                <ngx-datatable-column prop="name" [minWidth]="150" [width]="200" [maxWidth]="200">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.name"> Name </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('name')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span>{{ value }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+                <ngx-datatable-column prop="participationId" [minWidth]="150" [width]="150" [maxWidth]="200">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('participationId')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.participationId"> Participation ID </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('participationId')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span>{{ value }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+                <ngx-datatable-column prop="repositoryTypeOrUserName" [minWidth]="150" [width]="200" [maxWidth]="200">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('repositoryTypeOrUserName')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.repositoryType"> Repository Type </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('repositoryTypeOrUserName')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span>{{ value }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+                <ngx-datatable-column prop="commitHash" [minWidth]="150" [width]="200" [maxWidth]="200">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('commitHash')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.commitHash"> Commit Hash </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('commitHash')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span class="wrap-long-text">{{ value }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+                <ngx-datatable-column prop="submissionDate" [minWidth]="150" [width]="200" [maxWidth]="200">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submissionDate')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.submissionDate"> Submission Date </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('submissionDate')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span>{{ value | artemisDate: 'long' : true }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+                <ngx-datatable-column prop="buildStartDate" [minWidth]="150" [width]="200" [maxWidth]="200">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildStartDate')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.buildStartDate"> Build Start Date </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('buildStartDate')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span>{{ value | artemisDate: 'long' : true }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+                <ngx-datatable-column prop="courseId" [minWidth]="150" [width]="200" [maxWidth]="200">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('courseId')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.courseId"> Course ID </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('courseId')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span>{{ value }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+                <ngx-datatable-column prop="priority" [minWidth]="150" [width]="200">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('priority')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.priority"> Priority </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('priority')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span>{{ value }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+            </ngx-datatable>
+        </ng-template>
+    </jhi-data-table>
+</div>
+<div>
+    <h3 id="build-queue-queued-heading" jhiTranslate="artemisApp.buildQueue.queuedBuildJobs">Queued build jobs</h3>
+    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3"></div>
+    <jhi-data-table [showPageSizeDropdown]="false" [showSearchField]="false" entityType="buildJob" [allEntities]="queuedBuildJobs!">
+        <ng-template let-settings="settings" let-controls="controls">
+            <ngx-datatable
+                class="bootstrap"
+                [limit]="settings.limit"
+                [sortType]="settings.sortType"
+                [columnMode]="settings.columnMode"
+                [headerHeight]="settings.headerHeight"
+                [footerHeight]="settings.footerHeight"
+                [rowHeight]="settings.rowHeight"
+                [rows]="settings.rows"
+                [rowClass]="settings.rowClass"
+                [scrollbarH]="settings.scrollbarH"
+            >
+                <ngx-datatable-column prop="name" [minWidth]="150" [width]="200" [maxWidth]="200">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.name"> Name </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('name')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span>{{ value }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+                <ngx-datatable-column prop="participationId" [minWidth]="150" [width]="150" [maxWidth]="200">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('participationId')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.participationId"> Participation ID </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('participationId')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span>{{ value }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+                <ngx-datatable-column prop="repositoryTypeOrUserName" [minWidth]="150" [width]="200" [maxWidth]="200">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('repositoryTypeOrUserName')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.repositoryType"> Repository Type </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('repositoryTypeOrUserName')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span>{{ value }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+                <ngx-datatable-column prop="commitHash" [minWidth]="150" [width]="200" [maxWidth]="200">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('commitHash')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.commitHash"> Commit Hash </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('commitHash')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span class="wrap-long-text">{{ value }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+                <ngx-datatable-column prop="submissionDate" [minWidth]="150" [width]="200" [maxWidth]="200">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submissionDate')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.submissionDate"> Submission Date </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('submissionDate')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span>{{ value | artemisDate: 'long' : true }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+                <ngx-datatable-column prop="courseId" [minWidth]="150" [width]="200" [maxWidth]="200">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('courseId')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.courseId"> Course ID </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('courseId')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span>{{ value }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+                <ngx-datatable-column prop="priority" [minWidth]="150" [width]="200">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('priority')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.priority"> Priority </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('priority')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span>{{ value }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+            </ngx-datatable>
+        </ng-template>
+    </jhi-data-table>
+</div>
