@@ -52,9 +52,6 @@ describe('MessageInlineInputComponent', () => {
             ...component.posting,
             content: newContent,
             title: undefined,
-            courseWideContext: undefined,
-            exercise: undefined,
-            lecture: undefined,
         });
         tick();
         expect(component.isLoading).toBeFalse();
@@ -97,9 +94,6 @@ describe('MessageInlineInputComponent', () => {
             ...component.posting,
             content: editedContent,
             title: undefined,
-            courseWideContext: undefined,
-            exercise: undefined,
-            lecture: undefined,
         });
         tick();
         expect(component.isLoading).toBeFalse();

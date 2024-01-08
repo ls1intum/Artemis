@@ -30,7 +30,7 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
 
     private Exercise exercise;
 
-    private List<StudentParticipation> studentParticipations;
+    private Set<StudentParticipation> studentParticipations;
 
     private StudentParticipation studentParticipationInitialized;
 
@@ -63,7 +63,7 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
         studentParticipationFinished = ParticipationFactory.generateStudentParticipationWithoutUser(InitializationState.FINISHED, exercise);
         studentParticipationUninitialized = ParticipationFactory.generateStudentParticipationWithoutUser(InitializationState.UNINITIALIZED, exercise);
 
-        studentParticipations = Arrays.asList(studentParticipationInactive, studentParticipationFinished, studentParticipationUninitialized, studentParticipationInitialized);
+        studentParticipations = Set.of(studentParticipationInactive, studentParticipationFinished, studentParticipationUninitialized, studentParticipationInitialized);
 
         ratedResult = new Result();
         ratedResult.setRated(true);
@@ -91,13 +91,13 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void findRelevantParticipation() {
-        List<StudentParticipation> relevantParticipations = exercise.findRelevantParticipation(studentParticipations);
-        assertThat(relevantParticipations).containsExactly(studentParticipationFinished);
+        var relevantParticipations = exercise.findRelevantParticipation(studentParticipations);
+        assertThat(relevantParticipations).containsExactly(studentParticipationInitialized);
     }
 
     @Test
     void findRelevantParticipation_empty() {
-        List<StudentParticipation> relevantParticipations = exercise.findRelevantParticipation(new ArrayList<>());
+        var relevantParticipations = exercise.findRelevantParticipation(Set.of());
         assertThat(relevantParticipations).isEmpty();
     }
 
@@ -110,8 +110,8 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
         studentParticipationFinished.setExercise(modelingExercise);
         studentParticipationUninitialized.setExercise(modelingExercise);
 
-        List<StudentParticipation> relevantParticipations = modelingExercise.findRelevantParticipation(studentParticipations);
-        assertThat(relevantParticipations).containsExactly(studentParticipationFinished);
+        var relevantParticipations = modelingExercise.findRelevantParticipation(studentParticipations);
+        assertThat(relevantParticipations).containsExactly(studentParticipationInitialized);
     }
 
     @Test
@@ -123,8 +123,8 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
         studentParticipationFinished.setExercise(textExercise);
         studentParticipationUninitialized.setExercise(textExercise);
 
-        List<StudentParticipation> relevantParticipations = textExercise.findRelevantParticipation(studentParticipations);
-        assertThat(relevantParticipations).containsExactly(studentParticipationFinished);
+        var relevantParticipations = textExercise.findRelevantParticipation(studentParticipations);
+        assertThat(relevantParticipations).containsExactly(studentParticipationInitialized);
     }
 
     /* Primarily the functionality of findAppropriateSubmissionByResults() is tested with the following tests */
@@ -136,11 +136,13 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
         ratedResult.setAssessmentType(AssessmentType.MANUAL);
         ratedResult.setCompletionDate(ZonedDateTime.now().minusHours(2));
 
-        exerciseService.filterForCourseDashboard(exercise, studentParticipations, "student", true);
+        // only use the relevant participation
+        exerciseService.filterForCourseDashboard(exercise, Set.of(studentParticipationFinished), "student", true);
         var submissions = exercise.getStudentParticipations().iterator().next().getSubmissions();
         // We should only get the one relevant submission to send to the client
         assertThat(submissions).hasSize(1);
         Result result = submissions.iterator().next().getLatestResult();
+        assertThat(result).isNotNull();
         assertThat(result.getAssessor()).isNull();
     }
 
@@ -163,7 +165,7 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void filterForCourseDashboard_emptyParticipations() {
-        exerciseService.filterForCourseDashboard(exercise, new ArrayList<>(), "student", true);
+        exerciseService.filterForCourseDashboard(exercise, Set.of(), "student", true);
         assertThat(exercise.getStudentParticipations()).isEmpty();
     }
 
@@ -246,13 +248,13 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(result).isNull();
     }
 
-    private List<StudentParticipation> filterForCourseDashboard_prepareParticipations() {
+    private Set<StudentParticipation> filterForCourseDashboard_prepareParticipations() {
         StudentParticipation participation = new StudentParticipation();
         participation.setInitializationState(InitializationState.INITIALIZED);
         participation.setExercise(exercise);
         participation.setSubmissions(Set.of(submission1, submission2, submission3));
 
-        List<StudentParticipation> participations = new ArrayList<>();
+        Set<StudentParticipation> participations = new HashSet<>();
         participations.add(participation);
 
         return participations;

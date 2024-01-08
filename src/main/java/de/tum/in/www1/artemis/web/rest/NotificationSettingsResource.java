@@ -90,7 +90,20 @@ public class NotificationSettingsResource {
         if (resultAsList.isEmpty()) {
             throw new BadRequestAlertException("Error occurred during saving of Notification Settings", "NotificationSettings", "notificationSettingsEmptyAfterSave");
         }
-        NotificationSetting[] resultAsArray = resultAsList.toArray(new NotificationSetting[0]);
+        NotificationSetting[] resultAsArray = resultAsList.toArray(NotificationSetting[]::new);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "notificationSetting", "test")).body(resultAsArray);
+    }
+
+    /**
+     * GET muted-conversations : Loads the list of all muted conversations of a user
+     *
+     * @return ResponseEntity with status 200 and the list of muted conversations
+     */
+    @GetMapping("muted-conversations")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Set<Long>> getMutedConversations() {
+        User user = userRepository.getUser();
+        Set<Long> mutedConversations = notificationSettingRepository.findMutedConversations(user.getId());
+        return ResponseEntity.ok(mutedConversations);
     }
 }
