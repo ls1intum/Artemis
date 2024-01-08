@@ -271,16 +271,7 @@ public class ParticipationResource {
     public ResponseEntity<ProgrammingExerciseStudentParticipation> resumeParticipation(@PathVariable Long exerciseId, @PathVariable Long participationId, Principal principal) {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-        var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
-        if (participation.getParticipant() instanceof Team team) {
-            // eager load the team with students so their information can be access check below
-            participation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
-        }
-        // TODO: this check is done below as well with "checkAccessPermissionOwner"
-        if (!participation.isOwnedBy(principal.getName())) {
-            throw new AccessForbiddenException("You are not the user of this participation");
-        }
-
+        var participation = programmingExerciseStudentParticipationRepository.findWithTeamStudentsByIdElseThrow(participationId);
         // explicitly set the exercise here to make sure that the templateParticipation and solutionParticipation are initialized in case they should be used again
         participation.setProgrammingExercise(programmingExercise);
 

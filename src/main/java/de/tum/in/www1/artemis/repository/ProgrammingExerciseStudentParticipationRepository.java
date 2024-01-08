@@ -152,6 +152,15 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     @EntityGraph(type = LOAD, attributePaths = "student")
     Optional<ProgrammingExerciseStudentParticipation> findWithStudentById(Long participationId);
 
+    @Query("""
+            SELECT participation
+            FROM ProgrammingExerciseStudentParticipation participation
+                LEFT JOIN FETCH participation.team team
+                LEFT JOIN FETCH team.students
+            WHERE participation.id = :participationId
+            """)
+    Optional<ProgrammingExerciseStudentParticipation> findWithTeamStudentsById(Long participationId);
+
     @NotNull
     default ProgrammingExerciseStudentParticipation findByIdElseThrow(Long participationId) {
         return findById(participationId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", participationId));
@@ -159,6 +168,10 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
 
     default Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(Long participationId) {
         return findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId, ZonedDateTime.now());
+    }
+
+    default ProgrammingExerciseStudentParticipation findWithTeamStudentsByIdElseThrow(Long participationId) {
+        return findWithTeamStudentsById(participationId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", participationId));
     }
 
     @Transactional // ok because of modifying query

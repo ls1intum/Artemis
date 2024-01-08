@@ -45,8 +45,8 @@ public class CreateOnlyStrategy extends TeamImportStrategy {
      */
     private List<Team> getExerciseTeamsAndFindConflictFreeSourceTeams(Exercise sourceExercise, Exercise destinationExercise) {
         // Get all teams from the source exercise and from the destination exercise
-        List<Team> sourceTeams = teamRepository.findAllByExerciseId(sourceExercise.getId());
-        List<Team> destinationTeams = teamRepository.findAllByExerciseId(destinationExercise.getId());
+        List<Team> sourceTeams = teamRepository.findWithEagerStudentsAllByExerciseId(sourceExercise.getId());
+        List<Team> destinationTeams = teamRepository.findWithEagerStudentsAllByExerciseId(destinationExercise.getId());
 
         return getConflictFreeTeams(destinationTeams, sourceTeams);
     }
@@ -64,7 +64,7 @@ public class CreateOnlyStrategy extends TeamImportStrategy {
      */
     private List<Team> getExerciseTeamsAndFindConflictFreeSourceTeams(Exercise exercise, List<Team> teams) {
         // Get all teams from the given exercise
-        List<Team> existingTeams = teamRepository.findAllByExerciseId(exercise.getId());
+        List<Team> existingTeams = teamRepository.findWithEagerStudentsAllByExerciseId(exercise.getId());
 
         return getConflictFreeTeams(existingTeams, teams);
     }

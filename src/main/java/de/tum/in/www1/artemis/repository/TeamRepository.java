@@ -1,13 +1,10 @@
 package de.tum.in.www1.artemis.repository;
 
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,8 +23,13 @@ import de.tum.in.www1.artemis.web.rest.errors.StudentsAlreadyAssignedException;
 @Repository
 public interface TeamRepository extends JpaRepository<Team, Long> {
 
-    @EntityGraph(type = LOAD, attributePaths = "students")
-    List<Team> findAllByExerciseId(@Param("exerciseId") Long exerciseId);
+    @Query("""
+            SELECT team
+            FROM Team team
+                LEFT JOIN FETCH team.students
+            WHERE team.exercise.id = :exerciseId
+            """)
+    List<Team> findWithEagerStudentsAllByExerciseId(@Param("exerciseId") Long exerciseId);
 
     List<Team> findAllByExerciseCourseIdAndShortName(@Param("courseId") Long courseId, @Param("shortName") String shortName);
 
@@ -107,8 +109,10 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
             team.setLastModifiedDate(Instant.now());
         }
         team.setExercise(exercise);
-        team = save(team);
-        return findWithStudentsByIdElseThrow(team.getId());
+        Team savedTeam = save(team);
+        // eagerly load the students but prevent additional database call
+        savedTeam.setStudents(team.getStudents());
+        return savedTeam;
     }
 
     /**

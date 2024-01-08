@@ -559,12 +559,12 @@ public class AuthorizationCheckService {
         if (participation.getParticipant() == null) {
             return false;
         }
-        else {
-            if (participation.getParticipant() instanceof Team team) {
-                participation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
-            }
-            return participation.isOwnedBy(user);
+
+        if (participation.getParticipant() instanceof Team team) {
+            participation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
         }
+
+        return participation.isOwnedBy(user);
     }
 
     /**
