@@ -1,10 +1,4 @@
 <div style="padding-bottom: 60px">
-    <h2 style="padding-bottom: 20px">
-        <span id="build-queue-page-heading" jhiTranslate="artemisApp.buildQueue.pageTitle"> Build job queue information </span>
-        <button class="btn btn-primary float-end jh-create-entity" (click)="load()">
-            <fa-icon [icon]="faRefresh"></fa-icon> <span jhiTranslate="artemisApp.buildQueue.refreshLabel"> Refresh </span>
-        </button>
-    </h2>
     <h3 id="build-queue-running-heading" jhiTranslate="artemisApp.buildQueue.runningBuildJobs">Running build jobs</h3>
     <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3"></div>
     <jhi-data-table [showPageSizeDropdown]="false" [showSearchField]="false" entityType="buildJob" [allEntities]="runningBuildJobs!">
