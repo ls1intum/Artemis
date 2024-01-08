@@ -52,7 +52,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * This method is used to initialize the websocket subscription for the build jobs. It subscribes to the channels for the queued and running build jobs.
      */
     initWebsocketSubscription() {
-        this.route.paramMap.subscribe((params) => {
+        this.route.paramMap.pipe(take(1)).subscribe((params) => {
             const courseId = Number(params.get('courseId'));
             if (courseId) {
                 this.websocketService.subscribe(`/topic/courses/${courseId}/queued-jobs`);
@@ -84,7 +84,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * wait until the websocket subscription receives the data.
      */
     load() {
-        this.route.paramMap.subscribe((params) => {
+        this.route.paramMap.pipe(take(1)).subscribe((params) => {
             const courseId = Number(params.get('courseId'));
             if (courseId) {
                 this.buildQueueService.getQueuedBuildJobsByCourseId(courseId).subscribe((queuedBuildJobs) => {
@@ -109,7 +109,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * @param buildJobId    the id of the build job to cancel
      */
     cancelBuildJob(buildJobId: number) {
-        this.route.paramMap.subscribe((params) => {
+        this.route.paramMap.pipe(take(1)).subscribe((params) => {
             const courseId = Number(params.get('courseId'));
             if (courseId) {
                 this.buildQueueService.cancelBuildJobInCourse(courseId, buildJobId).subscribe();
@@ -123,7 +123,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * Cancel all queued build jobs
      */
     cancelAllQueuedBuildJobs() {
-        this.route.paramMap.subscribe((params) => {
+        this.route.paramMap.pipe(take(1)).subscribe((params) => {
             const courseId = Number(params.get('courseId'));
             if (courseId) {
                 this.buildQueueService.cancelAllQueuedBuildJobsInCourse(courseId).subscribe();
