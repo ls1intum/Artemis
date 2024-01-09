@@ -196,7 +196,7 @@ export class ParticipationService {
     private mergeProgrammingParticipations(participations: ProgrammingExerciseStudentParticipation[]): ProgrammingExerciseStudentParticipation {
         const combinedParticipation = new ProgrammingExerciseStudentParticipation();
         if (participations?.length) {
-            combinedParticipation.repositoryUrl = participations[0].repositoryUrl;
+            combinedParticipation.repositoryUri = participations[0].repositoryUri;
             combinedParticipation.buildPlanId = participations[0].buildPlanId;
             combinedParticipation.buildPlanUrl = participations[0].buildPlanUrl;
             this.mergeResultsAndSubmissions(combinedParticipation, participations);

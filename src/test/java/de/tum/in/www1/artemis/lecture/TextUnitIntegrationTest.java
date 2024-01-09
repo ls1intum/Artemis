@@ -115,7 +115,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // Updating the lecture unit should not change order attribute
         request.putWithResponseBody("/api/lectures/" + lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.OK);
 
-        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnits(lecture.getId()).orElseThrow().getLectureUnits();
+        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow().getLectureUnits();
         assertThat(updatedOrderedUnits).containsExactlyElementsOf(orderedUnits);
     }
 
@@ -149,9 +149,9 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private void persistTextUnitWithLecture() {
         this.textUnit = textUnitRepository.save(this.textUnit);
-        lecture = lectureRepository.findByIdWithLectureUnits(lecture.getId()).orElseThrow();
+        lecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
         lecture.addLectureUnit(this.textUnit);
         lecture = lectureRepository.save(lecture);
-        this.textUnit = (TextUnit) lectureRepository.findByIdWithLectureUnits(lecture.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
+        this.textUnit = (TextUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
     }
 }
