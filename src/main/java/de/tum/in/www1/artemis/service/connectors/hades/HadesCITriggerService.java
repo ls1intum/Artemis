@@ -93,11 +93,11 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
         cloneMetadata.put("REPOSITORY_DIR", "/shared");
         cloneMetadata.put("HADES_TEST_USERNAME", gitUsername);
         cloneMetadata.put("HADES_TEST_PASSWORD", gitPassword);
-        cloneMetadata.put("HADES_TEST_URL", participation.getProgrammingExercise().getTestRepositoryUrl());
+        cloneMetadata.put("HADES_TEST_URL", participation.getProgrammingExercise().getTestRepositoryUri());
         cloneMetadata.put("HADES_TEST_PATH", "./example");
         cloneMetadata.put("HADES_ASSIGNMENT_USERNAME", gitUsername);
         cloneMetadata.put("HADES_ASSIGNMENT_PASSWORD", gitPassword);
-        cloneMetadata.put("HADES_ASSIGNMENT_URL", participation.getRepositoryUrl());
+        cloneMetadata.put("HADES_ASSIGNMENT_URL", participation.getVcsRepositoryUri().toString());
         cloneMetadata.put("HADES_ASSIGNMENT_PATH", "./example/assignment");
 
         steps.add(new HadesBuildStepDTO(1, "Clone", cloneDockerIamge, cloneMetadata));

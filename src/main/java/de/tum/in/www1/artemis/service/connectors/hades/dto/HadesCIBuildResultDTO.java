@@ -6,7 +6,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cloud.cloudfoundry.com.fasterxml.jackson.annotation.JsonSetter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -144,7 +143,6 @@ public class HadesCIBuildResultDTO extends AbstractBuildResultNotificationDTO {
         this.buildRunDate = buildRunDate;
     }
 
-    @JsonSetter("buildJobs")
     public void setBuildJobs(List<HadesResultJobDTO> buildJobs) {
         this.buildJobs = buildJobs;
     }

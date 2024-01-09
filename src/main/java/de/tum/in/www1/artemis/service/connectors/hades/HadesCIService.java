@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
@@ -35,8 +35,9 @@ public class HadesCIService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL,
-            VcsRepositoryUrl solutionRepositoryURL) {
+    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri,
+            VcsRepositoryUri solutionRepositoryUri) {
+
     }
 
     @Override
