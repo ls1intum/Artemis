@@ -56,7 +56,7 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
     private UserRepository userRepository;
 
     @Autowired
-    private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+    protected AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     @Value("${artemis.version-control.user}")
     protected String localVCBaseUsername;
@@ -148,19 +148,6 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
         solutionParticipation = programmingExercise.getSolutionParticipation();
         solutionParticipation.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git");
         solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
-
-        auxiliaryRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, "auxiliary");
-        List<AuxiliaryRepository> auxiliaryRepositories = auxiliaryRepositoryRepository.findAll();
-        AuxiliaryRepository auxiliaryRepository = new AuxiliaryRepository();
-        auxiliaryRepository.setName("auxiliary");
-        auxiliaryRepository.setCheckoutDirectory("aux");
-        auxiliaryRepository.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey1 + "/" + auxiliaryRepositorySlug + ".git");
-        auxiliaryRepositoryRepository.save(auxiliaryRepository);
-        auxiliaryRepository.setExercise(programmingExercise);
-        auxiliaryRepositories.add(auxiliaryRepository);
-
-        programmingExercise.setAuxiliaryRepositories(auxiliaryRepositories);
-        programmingExerciseRepository.save(programmingExercise);
 
         assignmentRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, student1Login);
 

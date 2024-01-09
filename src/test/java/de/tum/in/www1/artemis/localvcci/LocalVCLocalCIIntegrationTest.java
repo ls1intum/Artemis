@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
@@ -68,8 +69,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         testsRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, testsRepositorySlug);
 
         solutionRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, solutionRepositorySlug);
-
-        auxiliaryRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, auxiliaryRepositorySlug);
 
         assignmentRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, assignmentRepositorySlug);
 
@@ -202,6 +201,23 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_auxiliaryRepository() throws Exception {
+
+        // setup auxiliary repository
+        auxiliaryRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, "auxiliary");
+        List<AuxiliaryRepository> auxiliaryRepositories = auxiliaryRepositoryRepository.findAll();
+        AuxiliaryRepository auxRepo = new AuxiliaryRepository();
+        auxRepo.setName("auxiliary");
+        auxRepo.setCheckoutDirectory("aux");
+        auxRepo.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey1 + "/" + auxiliaryRepositorySlug + ".git");
+        auxiliaryRepositoryRepository.save(auxRepo);
+        auxRepo.setExercise(programmingExercise);
+        auxiliaryRepositories.add(auxRepo);
+
+        programmingExercise.setAuxiliaryRepositories(auxiliaryRepositories);
+        programmingExerciseRepository.save(programmingExercise);
+
+        auxiliaryRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, auxiliaryRepositorySlug);
+
         // Students should not be able to fetch and push.
         localVCLocalCITestService.testFetchReturnsError(auxiliaryRepository.localGit, student1Login, projectKey1, auxiliaryRepositorySlug, NOT_AUTHORIZED);
         localVCLocalCITestService.testPushReturnsError(auxiliaryRepository.localGit, student1Login, projectKey1, auxiliaryRepositorySlug, NOT_AUTHORIZED);
