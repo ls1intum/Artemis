@@ -10,7 +10,7 @@ import { DomainChange, DomainType, FileType } from 'app/exercises/programming/sh
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { FileWithHasMatch } from 'app/exercises/shared/plagiarism/plagiarism-split-view/split-pane-header/split-pane-header.component';
 import { escape } from 'lodash-es';
-import { TranslateService } from '@ngx-translate/core';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 type FilesWithType = { [p: string]: FileType };
 
@@ -67,10 +67,16 @@ export class TextSubmissionViewerComponent implements OnChanges {
      */
     binaryFile?: boolean;
 
+    /**
+     * True if fetching submission files resulted in an error.
+     */
+    cannotLoadFiles: boolean = false;
+
+    faExclamationTriangle = faExclamationTriangle;
+
     constructor(
         private repositoryService: CodeEditorRepositoryFileService,
         private textSubmissionService: TextSubmissionService,
-        private translateService: TranslateService,
     ) {}
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -102,9 +108,8 @@ export class TextSubmissionViewerComponent implements OnChanges {
                 this.files = this.programmingExerciseFilesWithMatches(files);
             },
             error: () => {
-                this.isProgrammingExercise = false;
+                this.cannotLoadFiles = true;
                 this.loading = false;
-                this.fileContent = this.translateService.instant('artemisApp.plagiarism.cannotLoadFiles');
             },
         });
     }

@@ -73,6 +73,7 @@ describe('Text Submission Viewer Component', () => {
 
         expect(repositoryService.getRepositoryContent).toHaveBeenCalledOnce();
         expect(comp.isProgrammingExercise).toBeTrue();
+        expect(comp.cannotLoadFiles).toBeFalse();
     });
 
     it('does not fetch a programming submission', () => {
@@ -95,8 +96,7 @@ describe('Text Submission Viewer Component', () => {
         });
 
         expect(repositoryService.getRepositoryContent).toHaveBeenCalledOnce();
-        expect(comp.isProgrammingExercise).toBeFalse();
-        expect(comp.fileContent).toBe('artemisApp.plagiarism.cannotLoadFiles');
+        expect(comp.cannotLoadFiles).toBeTrue();
     });
 
     it('sorts and filters the files when fetching a programming submission', () => {
