@@ -101,7 +101,7 @@ public class NotificationSettingsResource {
      */
     @GetMapping("muted-conversations")
     @EnforceAtLeastStudent
-    public ResponseEntity<Set<Long>> searchMembersOfConversation() {
+    public ResponseEntity<Set<Long>> getMutedConversations() {
         User user = userRepository.getUser();
         Set<Long> mutedConversations = notificationSettingRepository.findMutedConversations(user.getId());
         return ResponseEntity.ok(mutedConversations);
