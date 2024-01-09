@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.service;
 import java.util.Collections;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -22,8 +20,6 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 @Service
 public class ModelingExerciseService {
-
-    private final Logger log = LoggerFactory.getLogger(ModelingExerciseService.class);
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 

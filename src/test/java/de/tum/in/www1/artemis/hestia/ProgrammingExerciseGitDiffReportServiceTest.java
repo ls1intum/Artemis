@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -58,9 +57,6 @@ class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringIntegrat
 
     @Autowired
     private ProgrammingExerciseGitDiffReportRepository reportRepository;
-
-    @Autowired
-    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @BeforeEach
     void initTestCase() {
