@@ -5,3 +5,4 @@ artemis:
 
         images:
             clone-image: ghcr.io/mtze/hades/hades-clone-container:latest
+            result-image: ghcr.io/mtze/hades/hades-repo-container:latest

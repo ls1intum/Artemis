@@ -33,6 +33,9 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
     @Value("${artemis.hades.images.clone-image}")
     private String cloneDockerIamge;
 
+    @Value("${artemis.hades.images.result-image}")
+    private String resultDockerIamge;
+
     private final Logger log = LoggerFactory.getLogger(HadesCIService.class);
 
     private final RestTemplate restTemplate;
@@ -78,6 +81,10 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
 
     private HadesBuildJobDTO createJob(ProgrammingExerciseParticipation participation) {
 
+        // Build Job Metadata
+        var metadata = new HashMap<String, String>();
+        metadata.put("PLAN_KEY", participation.getBuildPlanId());
+
         var steps = new ArrayList<HadesBuildStepDTO>();
 
         // Create Clone Step
@@ -103,10 +110,11 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
         steps.add(new HadesBuildStepDTO(2, "Execute", image, script));
 
         // TODO: Create Results Step
+        steps.add(new HadesBuildStepDTO(3, "Result", resultDockerIamge, script));
 
         // Create Hades Job
         var timestamp = java.time.Instant.now().toString();
-        return new HadesBuildJobDTO("Test", null, timestamp, 1, steps);
+        return new HadesBuildJobDTO("Test", metadata, timestamp, 1, steps);
     }
 
 }

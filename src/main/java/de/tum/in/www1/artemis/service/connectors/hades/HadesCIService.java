@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
+import de.tum.in.www1.artemis.service.connectors.hades.dto.HadesCIBuildResultDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 @Service
@@ -45,7 +46,7 @@ public class HadesCIService extends AbstractContinuousIntegrationService {
     @Override
     public String copyBuildPlan(ProgrammingExercise sourceExercise, String sourcePlanName, ProgrammingExercise targetExercise, String targetProjectName, String targetPlanName,
             boolean targetProjectExists) {
-        return null;
+        return targetExercise.getProjectKey() + "-" + targetPlanName.toUpperCase().replaceAll("[^A-Z0-9]", "");
     }
 
     @Override
@@ -62,8 +63,11 @@ public class HadesCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public String getPlanKey(Object requestBody) throws ContinuousIntegrationException {
-        log.warn("Hades does not support plan key retrieval");
-        return null;
+        var dto = HadesCIBuildResultDTO.convert(requestBody);
+
+        log.debug("Received build result for job {} in Hades", dto.getJobName());
+
+        return dto.getJobName();
     }
 
     @Override
