@@ -9,7 +9,6 @@ import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,12 +26,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 @RequestMapping("/api")
 public class VideoUnitResource {
 
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
-
     private final Logger log = LoggerFactory.getLogger(VideoUnitResource.class);
-
-    private static final String ENTITY_NAME = "videoUnit";
 
     private final VideoUnitRepository videoUnitRepository;
 

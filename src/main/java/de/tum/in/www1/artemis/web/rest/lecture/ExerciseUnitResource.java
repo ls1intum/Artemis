@@ -8,7 +8,6 @@ import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,16 +26,11 @@ public class ExerciseUnitResource {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseUnitResource.class);
 
-    private static final String ENTITY_NAME = "exerciseUnit";
-
     private final AuthorizationCheckService authorizationCheckService;
 
     private final ExerciseUnitRepository exerciseUnitRepository;
 
     private final LectureRepository lectureRepository;
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     public ExerciseUnitResource(LectureRepository lectureRepository, ExerciseUnitRepository exerciseUnitRepository, AuthorizationCheckService authorizationCheckService) {
         this.exerciseUnitRepository = exerciseUnitRepository;
