@@ -123,7 +123,7 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
         programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
         staticCodeAnalysisService.createDefaultCategories(programmingExercise);
-      
+
         // Set the correct repository URIs for the template and the solution participation.
         templateRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, "exercise");
         templateParticipation = programmingExercise.getTemplateParticipation();

@@ -65,10 +65,9 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     void testGetQueuedBuildJobs_returnsJobs() throws Exception {
         var retrievedJobs = request.get("/api/admin/build-job-queue/queued", HttpStatus.OK, List.class);
         assertThat(retrievedJobs).isEmpty();
-        queuedJobs.addAll(List.of(job1, job2));
+        // Adding a lot of jobs as they get processed very quickly due to mocking
+        queuedJobs.addAll(List.of(job1, job2, job1, job2, job1, job2));
         var retrievedJobs1 = request.get("/api/admin/build-job-queue/queued", HttpStatus.OK, List.class);
-        // Job1 will almost immediately be taken from the queue and added to the processing jobs
-        // Size of retrieved jobs will be 1 in most cases, rarely 2
         assertThat(retrievedJobs1).isNotEmpty();
     }
 
@@ -90,10 +89,9 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     void testGetQueuedBuildJobsForCourse_returnsJobs() throws Exception {
         var retrievedJobs = request.get("/api/build-job-queue/queued/" + course.getId(), HttpStatus.OK, List.class);
         assertThat(retrievedJobs).isEmpty();
-        queuedJobs.addAll(List.of(job1, job2));
+        // Adding a lot of jobs as they get processed very quickly due to mocking
+        queuedJobs.addAll(List.of(job1, job2, job1, job2, job1, job2));
         var retrievedJobs1 = request.get("/api/build-job-queue/queued/" + course.getId(), HttpStatus.OK, List.class);
-        // Job1 will almost immediately be taken from the queue and added to the processing jobs
-        // Size of retrieved jobs will be 1 in most cases, rarely 2
         assertThat(retrievedJobs1).isNotEmpty();
     }
 
