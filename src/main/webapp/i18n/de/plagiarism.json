@@ -43,7 +43,7 @@
             "minimumSizeTooltipProgrammingExercise": "Es werden nur diejenigen Abgaben berücksichtigt, die mindestens so viele unterschiedliche Zeilen (im Vergleich zur Vorlage) beinhalten wie der angegebene Wert.",
             "minimumSizeTooltipModelingExercise": "Es werden nur diejenigen Abgaben berücksichtigt, die mindestens so viele Modellelemente beinhalten wie der angegebene Wert.",
             "plagiarismCaseResponsePeriod": "Antwortfrist bezüglich signifikanten Ähnlichkeit Plagiatsfälle in Tagen",
-            "plagiarismCaseResponsePeriodTooltip": "Wenn eines signifikanten Ähnlichkeit Plagiatsfall nach dem Abgabetermin der Übung weiterhin besteht, Studierenden werden über die Möglichkeit informiert, spätestens innerhalb der angegebenen Anzahl von Tagen nach dem Abgabetermin der Übung eine Antwort darauf zu formulieren.",
+            "plagiarismCaseResponsePeriodTooltip": "Falls die Signifikante Ähnlichkeit nach dem Fälligkeitsdatum der Übung weiter besteht, zeigt das System die Anzahl der verbleibenden Tage an, in denen die Studierenden eine Antwort formulieren müssen (ohne diese jedoch durchzusetzen).",
             "noInfoAvailable": "Keine Information verfügbar",
             "caution": "Die Plagiatskontrolle kann für große Kurse sehr lange dauern.",
             "detect": "Plagiate finden",
