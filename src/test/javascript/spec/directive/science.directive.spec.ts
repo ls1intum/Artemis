@@ -3,7 +3,7 @@ import { Component } from '@angular/core';
 import { ArtemisTestModule } from '../test.module';
 import { By } from '@angular/platform-browser';
 import { ScienceEventType } from 'app/shared/science/science.model';
-import { ScienceDirective } from 'app/shared/science/science.direcrive';
+import { ScienceDirective } from 'app/shared/science/science.directive';
 import { ScienceService } from 'app/shared/science/science.service';
 
 @Component({

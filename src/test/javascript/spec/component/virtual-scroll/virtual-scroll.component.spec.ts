@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { SimpleChange, SimpleChanges } from '@angular/core';
 import { ArtemisTestModule } from '../../test.module';
 import { VirtualScrollComponent } from 'app/shared/virtual-scroll/virtual-scroll.component';
-import { metisCoursePosts, metisCoursePostsWithCourseWideContext } from '../../helpers/sample/metis-sample-data';
+import { metisCoursePosts, metisGeneralCourseWidePosts } from '../../helpers/sample/metis-sample-data';
 import { ReplaySubject } from 'rxjs';
 import { NavigationStart, Router, RouterEvent } from '@angular/router';
 import { Post } from 'app/entities/metis/post.model';
@@ -131,10 +131,10 @@ describe('VirtualScrollComponent', () => {
     }));
 
     it('should not unintentionally scroll on clicking the text area of posting markdown editor component', fakeAsync(() => {
-        comp.originalItems = metisCoursePostsWithCourseWideContext;
+        comp.originalItems = metisGeneralCourseWidePosts;
 
         const changes = {} as SimpleChanges;
-        changes.originalItems = new SimpleChange([], metisCoursePostsWithCourseWideContext, true);
+        changes.originalItems = new SimpleChange([], metisGeneralCourseWidePosts, true);
         comp.ngOnChanges(changes);
 
         originalWindow.scrollY = 1500;

@@ -152,7 +152,7 @@ public class ProgrammingExerciseUtilService {
         TemplateProgrammingExerciseParticipation participation = new TemplateProgrammingExerciseParticipation();
         participation.setProgrammingExercise(exercise);
         participation.setBuildPlanId(exercise.generateBuildPlanId(BuildPlanType.TEMPLATE));
-        participation.setRepositoryUrl(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
+        participation.setRepositoryUri(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
         participation.setInitializationState(InitializationState.INITIALIZED);
         templateProgrammingExerciseParticipationRepo.save(participation);
         exercise.setTemplateParticipation(participation);
@@ -170,7 +170,7 @@ public class ProgrammingExerciseUtilService {
         SolutionProgrammingExerciseParticipation participation = new SolutionProgrammingExerciseParticipation();
         participation.setProgrammingExercise(exercise);
         participation.setBuildPlanId(exercise.generateBuildPlanId(BuildPlanType.SOLUTION));
-        participation.setRepositoryUrl(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
+        participation.setRepositoryUri(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
         participation.setInitializationState(InitializationState.INITIALIZED);
         solutionProgrammingExerciseParticipationRepo.save(participation);
         exercise.setSolutionParticipation(participation);

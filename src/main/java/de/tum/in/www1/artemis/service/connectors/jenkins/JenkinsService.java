@@ -19,7 +19,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.offbytwo.jenkins.JenkinsServer;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -72,9 +72,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL,
-            VcsRepositoryUrl solutionRepositoryURL) {
-        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, planKey, repositoryURL);
+    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri,
+            VcsRepositoryUri solutionRepositoryUri) {
+        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, planKey, repositoryUri);
     }
 
     @Override
@@ -109,9 +109,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
+    public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUri, String existingRepoUri,
             String newDefaultBranch) {
-        jenkinsBuildPlanService.updateBuildPlanRepositories(buildProjectKey, buildPlanKey, newRepoUrl, existingRepoUrl);
+        jenkinsBuildPlanService.updateBuildPlanRepositories(buildProjectKey, buildPlanKey, newRepoUri, existingRepoUri);
     }
 
     @Override

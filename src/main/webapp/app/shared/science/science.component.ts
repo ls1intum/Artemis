@@ -15,11 +15,12 @@ export abstract class AbstractScienceComponent {
     }
 
     protected logEvent() {
-        if (this.scienceService.eventLoggingActive())
+        if (this.scienceService.eventLoggingActive()) {
             if (this.resourceId) {
                 this.scienceService.logEvent(this.type, this.resourceId).subscribe();
             } else {
                 this.scienceService.logEvent(this.type).subscribe();
             }
+        }
     }
 }
