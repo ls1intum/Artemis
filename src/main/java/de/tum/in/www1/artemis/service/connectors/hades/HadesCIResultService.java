@@ -39,7 +39,9 @@ public class HadesCIResultService extends AbstractContinuousIntegrationResultSer
 
     @Override
     public AbstractBuildResultNotificationDTO convertBuildResult(Object requestBody) {
+        log.debug("Convert requestbody to BuildResultNotificationDTO");
         log.debug("Received build result from Hades CI: {}", requestBody);
+
         return mapper.convertValue(requestBody, HadesCIBuildResultDTO.class);
     }
 

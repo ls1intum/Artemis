@@ -7,6 +7,8 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
@@ -30,6 +32,7 @@ public class HadesCIBuildResultDTO extends AbstractBuildResultNotificationDTO {
     // TODO: custom deserializer for ZonedDateTime
     private ZonedDateTime buildRunDate;
 
+    @JsonProperty("buildJobs") // For some reason this annotation is necessary for jackson to work
     private List<HadesResultJobDTO> buildJobs;
 
     // empty constructor needed for Jackson
@@ -49,6 +52,7 @@ public class HadesCIBuildResultDTO extends AbstractBuildResultNotificationDTO {
 
     public static HadesCIBuildResultDTO convert(Object someResult) {
         var mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         // This is not working at the moment :(
         var dto = mapper.convertValue(someResult, HadesCIBuildResultDTO.class);
         log.debug("Converted {} to {}", someResult, dto);
