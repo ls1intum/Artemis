@@ -327,7 +327,7 @@ public class LocalCISharedBuildJobQueueService {
                 }
                 else {
                     BuildTriggerWebsocketError error = new BuildTriggerWebsocketError("Result could not be created", buildJob.getId());
-                    notifyUserAboutSubmissionError(participation, error);
+                    programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation, error);
                 }
             }
             else {
@@ -373,18 +373,6 @@ public class LocalCISharedBuildJobQueueService {
             }
             return null;
         });
-    }
-
-    private void notifyUserAboutSubmissionError(ProgrammingExerciseParticipation participation, BuildTriggerWebsocketError error) {
-        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
-            programmingMessagingService.notifyUserAboutSubmissionError(studentParticipation, error);
-        }
-        else if (participation instanceof TemplateProgrammingExerciseParticipation templateParticipation) {
-            programmingMessagingService.notifyUserAboutSubmissionError(templateParticipation, error);
-        }
-        else if (participation instanceof SolutionProgrammingExerciseParticipation solutionParticipation) {
-            programmingMessagingService.notifyUserAboutSubmissionError(solutionParticipation, error);
-        }
     }
 
     /**

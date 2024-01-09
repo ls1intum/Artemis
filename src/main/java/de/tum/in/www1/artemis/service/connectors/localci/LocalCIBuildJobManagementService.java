@@ -176,7 +176,7 @@ public class LocalCIBuildJobManagementService {
         // Notify the user, that the build job produced an exception.
         BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(exception.getMessage(), participation.getId());
         if (!isRetry) {
-            notifyUserAboutSubmissionError(participation, error);
+            programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation, error);
         }
 
         localCIContainerService.deleteScriptFile(containerName);
@@ -222,22 +222,10 @@ public class LocalCIBuildJobManagementService {
         BuildTriggerWebsocketError error = new BuildTriggerWebsocketError("Build job was cancelled", participation.getId());
         // This cast to Participation is safe as the participation is either a ProgrammingExerciseStudentParticipation, a TemplateProgrammingExerciseParticipation, or a
         // SolutionProgrammingExerciseParticipation, which all extend Participation.
-        notifyUserAboutSubmissionError(participation, error);
+        programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation, error);
 
         localCIContainerService.deleteScriptFile(containerName);
 
         localCIContainerService.stopContainer(containerName);
-    }
-
-    private void notifyUserAboutSubmissionError(ProgrammingExerciseParticipation participation, BuildTriggerWebsocketError error) {
-        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
-            programmingMessagingService.notifyUserAboutSubmissionError(studentParticipation, error);
-        }
-        else if (participation instanceof TemplateProgrammingExerciseParticipation templateParticipation) {
-            programmingMessagingService.notifyUserAboutSubmissionError(templateParticipation, error);
-        }
-        else if (participation instanceof SolutionProgrammingExerciseParticipation solutionParticipation) {
-            programmingMessagingService.notifyUserAboutSubmissionError(solutionParticipation, error);
-        }
     }
 }
