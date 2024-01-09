@@ -96,10 +96,22 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    void testGetQueuedBuildJobsForCourse_wrongInstructorAccessForbidden() throws Exception {
+        request.get("/api/build-job-queue/queued/" + course.getId(), HttpStatus.FORBIDDEN, List.class);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetRunningBuildJobsForCourse_returnsJobs() throws Exception {
         var retrievedJobs = request.get("/api/build-job-queue/running/" + course.getId(), HttpStatus.OK, List.class);
         assertThat(retrievedJobs).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    void testGetRunningBuildJobsForCourse_wrongInstructorAccessForbidden() throws Exception {
+        request.get("/api/build-job-queue/running/" + course.getId(), HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test

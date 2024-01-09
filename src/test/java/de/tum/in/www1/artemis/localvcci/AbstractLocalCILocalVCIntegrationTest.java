@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.localvcci;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,10 +19,7 @@ import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExercisePa
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
-import de.tum.in.www1.artemis.repository.StudentExamRepository;
-import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
@@ -55,6 +53,9 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
 
     @Autowired
     private StaticCodeAnalysisService staticCodeAnalysisService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Value("${artemis.version-control.user}")
     protected String localVCBaseUsername;
@@ -91,6 +92,10 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
 
     protected User instructor1;
 
+    protected String instructor2Login;
+
+    protected User instructor2;
+
     protected String projectKey1;
 
     protected String assignmentRepositorySlug;
@@ -105,13 +110,18 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
         // Thus, "inject" the port from here.
         localVCLocalCITestService.setPort(port);
 
-        List<User> users = userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
+        List<User> users = userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 2);
         student1Login = TEST_PREFIX + "student1";
         student1 = users.stream().filter(user -> student1Login.equals(user.getLogin())).findFirst().orElseThrow();
         student2Login = TEST_PREFIX + "student2";
         tutor1Login = TEST_PREFIX + "tutor1";
         instructor1Login = TEST_PREFIX + "instructor1";
         instructor1 = users.stream().filter(user -> instructor1Login.equals(user.getLogin())).findFirst().orElseThrow();
+        instructor2Login = TEST_PREFIX + "instructor2";
+        instructor2 = users.stream().filter(user -> instructor2Login.equals(user.getLogin())).findFirst().orElseThrow();
+        // Remove instructor2 from the instructor group of the course.
+        instructor2.setGroups(Set.of());
+        userRepository.save(instructor2);
 
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
