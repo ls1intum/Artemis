@@ -33,10 +33,10 @@ public class LocalCIBuildJobQueueItem implements Serializable {
 
     private final long courseId;
 
-    private final boolean isPushToTestRepository;
+    private final boolean isPushToTestOrAuxRepository;
 
     public LocalCIBuildJobQueueItem(String name, long participationId, String repositoryTypeOrUserName, String commitHash, ZonedDateTime submissionDate, int priority,
-            long courseId, boolean isPushToTestRepository) {
+            long courseId, boolean isPushToTestOrAuxRepository) {
         this.id = Long.parseLong(String.valueOf(participationId) + submissionDate.toInstant().toEpochMilli());
         this.name = name;
         this.participationId = participationId;
@@ -45,7 +45,7 @@ public class LocalCIBuildJobQueueItem implements Serializable {
         this.submissionDate = submissionDate;
         this.priority = priority;
         this.courseId = courseId;
-        this.isPushToTestRepository = isPushToTestRepository;
+        this.isPushToTestOrAuxRepository = isPushToTestOrAuxRepository;
     }
 
     public long getId() {
@@ -112,13 +112,13 @@ public class LocalCIBuildJobQueueItem implements Serializable {
      * @return true if the build job was triggered by a push to the test repository
      */
     public boolean isPushToTestRepository() {
-        return isPushToTestRepository;
+        return isPushToTestOrAuxRepository;
     }
 
     @Override
     public String toString() {
         return "LocalCIBuildJobQueueItem{" + "id='" + id + '\'' + ", name='" + name + '\'' + ", participationId=" + participationId + ", repositoryTypeOrUserName='"
                 + repositoryTypeOrUserName + '\'' + ", commitHash='" + commitHash + '\'' + ", submissionDate=" + submissionDate + ", retryCount=" + retryCount + ", buildStartDate="
-                + buildStartDate + ", priority=" + priority + ", courseId=" + courseId + ", isPushToTestRepository=" + isPushToTestRepository + '}';
+                + buildStartDate + ", priority=" + priority + ", courseId=" + courseId + ", isPushToTestRepository=" + isPushToTestOrAuxRepository + '}';
     }
 }

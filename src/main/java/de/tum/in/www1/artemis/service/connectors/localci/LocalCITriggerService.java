@@ -38,12 +38,13 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     /**
      * Add a new build job for a specific commit to the queue managed by the ExecutorService and process the returned result.
      *
-     * @param participation the participation of the repository which should be built and tested
-     * @param commitHash    the commit hash of the commit that triggers the build. If it is null, the latest commit of the default branch will be built.
+     * @param participation               the participation of the repository which should be built and tested
+     * @param commitHash                  the commit hash of the commit that triggers the build. If it is null, the latest commit of the default branch will be built.
+     * @param isPushToTestOrAuxRepository defines if the build is triggered by a push to the test or an auxiliary repository
      * @throws LocalCIException if the build job could not be added to the queue.
      */
     @Override
-    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash, boolean isPushToTestRepository) throws LocalCIException {
+    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash, boolean isPushToTestOrAuxRepository) throws LocalCIException {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
@@ -60,6 +61,6 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         int priority = programmingExercise.isExamExercise() ? 1 : 2;
 
         localCISharedBuildJobQueueService.addBuildJob(participation.getBuildPlanId(), participation.getId(), repositoryTypeOrUserName, commitHash, ZonedDateTime.now(), priority,
-                courseId, isPushToTestRepository);
+                courseId, isPushToTestOrAuxRepository);
     }
 }

@@ -103,19 +103,19 @@ public class LocalCISharedBuildJobQueueService {
     /**
      * Create build job item object and add it to the queue.
      *
-     * @param name                     name of the build job
-     * @param participationId          participation id of the build job
-     * @param repositoryTypeOrUsername repository type (if template or solution) or username (if student repository)
-     * @param commitHash               commit hash of the build job
-     * @param submissionDate           submission date of the build job
-     * @param priority                 priority of the build job
-     * @param courseId                 course id of the build job
-     * @param isPushToTestRepository   defines if the build job is triggered by a push to a test repository
+     * @param name                        name of the build job
+     * @param participationId             participation id of the build job
+     * @param repositoryTypeOrUsername    repository type (if template or solution) or username (if student repository)
+     * @param commitHash                  commit hash of the build job
+     * @param submissionDate              submission date of the build job
+     * @param priority                    priority of the build job
+     * @param courseId                    course id of the build job
+     * @param isPushToTestOrAuxRepository defines if the build job is triggered by a push to a test or aux repository
      */
     public void addBuildJob(String name, long participationId, String repositoryTypeOrUsername, String commitHash, ZonedDateTime submissionDate, int priority, long courseId,
-            boolean isPushToTestRepository) {
+            boolean isPushToTestOrAuxRepository) {
         LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(name, participationId, repositoryTypeOrUsername, commitHash, submissionDate, priority, courseId,
-                isPushToTestRepository);
+                isPushToTestOrAuxRepository);
         queue.add(buildJobQueueItem);
     }
 

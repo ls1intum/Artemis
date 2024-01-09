@@ -10,9 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
@@ -56,6 +54,9 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     @Value("${artemis.version-control.user}")
     protected String localVCBaseUsername;
@@ -104,6 +105,10 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
 
     protected String solutionRepositorySlug;
 
+    protected String testsRepositorySlug;
+
+    protected String auxiliaryRepositorySlug;
+
     @BeforeEach
     void initUsersAndExercise() {
         // The port cannot be injected into the LocalVCLocalCITestService because {local.server.port} is not available when the class is instantiated.
@@ -144,7 +149,22 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
         solutionParticipation.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git");
         solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
 
+        auxiliaryRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, "auxiliary");
+        List<AuxiliaryRepository> auxiliaryRepositories = auxiliaryRepositoryRepository.findAll();
+        AuxiliaryRepository auxiliaryRepository = new AuxiliaryRepository();
+        auxiliaryRepository.setName("auxiliary");
+        auxiliaryRepository.setCheckoutDirectory("aux");
+        auxiliaryRepository.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey1 + "/" + auxiliaryRepositorySlug + ".git");
+        auxiliaryRepositoryRepository.save(auxiliaryRepository);
+        auxiliaryRepository.setExercise(programmingExercise);
+        auxiliaryRepositories.add(auxiliaryRepository);
+
+        programmingExercise.setAuxiliaryRepositories(auxiliaryRepositories);
+        programmingExerciseRepository.save(programmingExercise);
+
         assignmentRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, student1Login);
+
+        testsRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, "tests");
 
         localVCLocalCITestService.addTestCases(programmingExercise);
     }

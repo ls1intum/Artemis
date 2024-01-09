@@ -324,7 +324,12 @@ public class LocalVCServletService {
             }
 
             if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.getName())) {
-                processNewPushToTestRepository(exercise, commitHash, (SolutionProgrammingExerciseParticipation) participation);
+                processNewPushToTestOrAuxiliaryRepository(exercise, commitHash, (SolutionProgrammingExerciseParticipation) participation, true);
+                return;
+            }
+
+            if (auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise)) {
+                processNewPushToTestOrAuxiliaryRepository(exercise, commitHash, (SolutionProgrammingExerciseParticipation) participation, false);
                 return;
             }
 
@@ -389,22 +394,27 @@ public class LocalVCServletService {
      * Process a new push to the test repository.
      * Build and test the solution repository to make sure all tests are still passing.
      *
-     * @param exercise   the exercise for which the push was made.
-     * @param commitHash the hash of the last commit to the test repository.
+     * @param exercise              the exercise for which the push was made.
+     * @param commitHash            the hash of the last commit to the test repository.
+     * @param solutionParticipation the participation of the solution repository.
+     * @param isTestPush            defines if the push was made to the test repository.
      * @throws VersionControlException if something unexpected goes wrong when creating the submission or triggering the build.
      */
-    private void processNewPushToTestRepository(ProgrammingExercise exercise, String commitHash, SolutionProgrammingExerciseParticipation solutionParticipation) {
+    private void processNewPushToTestOrAuxiliaryRepository(ProgrammingExercise exercise, String commitHash, SolutionProgrammingExerciseParticipation solutionParticipation,
+            boolean isTestPush) {
         // Create a new submission for the solution repository.
         ProgrammingSubmission submission = getProgrammingSubmission(exercise, commitHash);
 
         programmingMessagingService.notifyUserAboutSubmission(submission, exercise.getId());
 
-        try {
-            // Set a flag to inform the instructor that the student results are now outdated.
-            programmingTriggerService.setTestCasesChanged(exercise.getId(), true);
-        }
-        catch (EntityNotFoundException e) {
-            throw new VersionControlException("Could not set test cases changed flag", e);
+        if (isTestPush) {
+            try {
+                // Set a flag to inform the instructor that the student results are now outdated.
+                programmingTriggerService.setTestCasesChanged(exercise.getId(), true);
+            }
+            catch (EntityNotFoundException e) {
+                throw new VersionControlException("Could not set test cases changed flag", e);
+            }
         }
 
         ciTriggerService.triggerBuild(solutionParticipation, commitHash, true);

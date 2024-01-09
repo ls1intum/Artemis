@@ -47,19 +47,15 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     private ResultRepository resultRepository;
 
     // ---- Repository handles ----
-    private String templateRepositorySlug;
-
     private LocalRepository templateRepository;
 
-    private String testsRepositorySlug;
-
     private LocalRepository testsRepository;
-
-    private String solutionRepositorySlug;
 
     private LocalRepository solutionRepository;
 
     private LocalRepository assignmentRepository;
+
+    private LocalRepository auxiliaryRepository;
 
     private String teamShortName;
 
@@ -67,14 +63,13 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
     @BeforeEach
     void initRepositories() throws GitAPIException, IOException, URISyntaxException, InvalidNameException {
-        templateRepositorySlug = projectKey1.toLowerCase() + "-exercise";
         templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, templateRepositorySlug);
 
-        testsRepositorySlug = projectKey1.toLowerCase() + "-tests";
         testsRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, testsRepositorySlug);
 
-        solutionRepositorySlug = projectKey1.toLowerCase() + "-solution";
         solutionRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, solutionRepositorySlug);
+
+        auxiliaryRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, auxiliaryRepositorySlug);
 
         assignmentRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, assignmentRepositorySlug);
 
@@ -201,6 +196,42 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         localVCLocalCITestService.testPushSuccessful(templateRepository.localGit, instructor1Login, projectKey1, templateRepositorySlug);
 
+        localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), commitHash, 0, false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testFetchPush_auxiliaryRepository() throws Exception {
+        // Students should not be able to fetch and push.
+        localVCLocalCITestService.testFetchReturnsError(auxiliaryRepository.localGit, student1Login, projectKey1, auxiliaryRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(auxiliaryRepository.localGit, student1Login, projectKey1, auxiliaryRepositorySlug, NOT_AUTHORIZED);
+
+        // Teaching assistants should be able to fetch but not push.
+        localVCLocalCITestService.testFetchSuccessful(auxiliaryRepository.localGit, tutor1Login, projectKey1, auxiliaryRepositorySlug);
+        localVCLocalCITestService.testPushReturnsError(auxiliaryRepository.localGit, tutor1Login, projectKey1, auxiliaryRepositorySlug, NOT_AUTHORIZED);
+
+        // Instructors should be able to fetch and push.
+        localVCLocalCITestService.testFetchSuccessful(auxiliaryRepository.localGit, instructor1Login, projectKey1, auxiliaryRepositorySlug);
+
+        String commitHash = localVCLocalCITestService.commitFile(auxiliaryRepository.localRepoFile.toPath(), auxiliaryRepository.localGit);
+
+        // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the commitHash of the tests repository for both the solution and the template repository.
+        // Note: The stub needs to receive the same object twice. Usually, specifying one doReturn() is enough to make the stub return the same object on every subsequent call.
+        // However, in this case we have it return an InputStream, which will be consumed after returning it the first time, so we need to create two separate ones.
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+", Map.of("testCommitHash", commitHash),
+                Map.of("testCommitHash", commitHash));
+
+        // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
+        // Mock the results for the solution repository build and for the template repository build that will both be triggered as a result of updating the tests.
+        Map<String, String> solutionBuildTestResults = localVCLocalCITestService.createMapFromTestResultsFolder(ALL_SUCCEED_TEST_RESULTS_PATH);
+        Map<String, String> templateBuildTestResults = localVCLocalCITestService.createMapFromTestResultsFolder(ALL_FAIL_TEST_RESULTS_PATH);
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, WORKING_DIRECTORY + "/testing-dir/build/test-results/test", solutionBuildTestResults,
+                templateBuildTestResults);
+
+        localVCLocalCITestService.testPushSuccessful(auxiliaryRepository.localGit, instructor1Login, projectKey1, auxiliaryRepositorySlug);
+
+        // Solution submissions created as a result from a push to the auxiliary repository should contain the last commit of the tests repository.
+        localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), commitHash, 13, false);
         localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), commitHash, 0, false);
     }
 
