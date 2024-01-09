@@ -1,22 +1,19 @@
 package de.tum.in.www1.artemis.config.migration.entries;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.IOFileFilter;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,6 +31,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCService;
 
@@ -66,6 +64,8 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
+    private final Optional<BitbucketService> bitbucketService;
+
     private final UriService uriService = new UriService();
 
     private final Environment environment;
@@ -74,16 +74,16 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
 
     private final CopyOnWriteArrayList<ProgrammingExerciseParticipation> errorList = new CopyOnWriteArrayList<>();
 
-    // @Value("${artemis.version-control.default-branch}") somehow this is not working -> main it is
-    protected String defaultBranch = "main";
+    @Value("${artemis.version-control.default-branch:main}")
+    private String defaultBranch;
 
-    private URL localVCBaseUrl = new URL("http://localhost:8080");
+    private final URL localVCBaseUrl = new URL("http://localhost:8080");
 
     public MigrationEntry20240103_143700(ProgrammingExerciseRepository programmingExerciseRepository, Optional<BambooMigrationService> ciMigrationService, Environment environment,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<LocalVCService> localVCService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, GitService gitService) throws MalformedURLException {
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, GitService gitService, Optional<BitbucketService> bitbucketService) throws MalformedURLException {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.environment = environment;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
@@ -93,27 +93,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         this.ciMigrationService = ciMigrationService;
         this.gitService = gitService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
-    }
-
-    private static Path getRepoAbsoluteLocalPath(final Repository repository) {
-        return repository.getLocalPath().toAbsolutePath();
-    }
-
-    public static void copyDirectory(File sourceDir, File targetDir) throws IOException {
-        IOFileFilter gitFilter = new IOFileFilter() {
-
-            @Override
-            public boolean accept(File file) {
-                return !file.getName().endsWith(".git");
-            }
-
-            @Override
-            public boolean accept(File dir, String name) {
-                return !name.endsWith(".git");
-            }
-        };
-
-        FileUtils.copyDirectory(sourceDir, targetDir, gitFilter);
+        this.bitbucketService = bitbucketService;
     }
 
     @Override
@@ -307,7 +287,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
     }
 
     private String moveRepo(ProgrammingExercise exercise, String repositoryUrl) throws URISyntaxException, GitAPIException {
-        if (localVCService.isEmpty()) {
+        if (localVCService.isEmpty() || bitbucketService.isEmpty()) {
             log.error("Failed to clone repository from Bitbucket: {}", repositoryUrl);
             return null;
         }
@@ -322,10 +302,10 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         localVCService.get().createRepository(projectKey, repositoryName, null);
         var url = new LocalVCRepositoryUri(projectKey, repositoryName, localVCBaseUrl);
         SecurityUtils.setAuthorizationObject();
-        var targetRepo = gitService.getOrCheckoutRepositoryIntoTargetDirectory(new VcsRepositoryUri(repositoryUrl), url, false);
-        copyRepo(oldRepository, targetRepo);
-        gitService.stageAllChanges(targetRepo);
-        gitService.commitAndPush(targetRepo, "Migrate repository from Bitbucket to local VCS", true, null);
+        var newRepositoryUrl = url.toString().replace(bitbucketService.get().getBasePath(), localVCBaseUrl.toString());
+        gitService.changeRemoteUrl(oldRepository, new VcsRepositoryUri(newRepositoryUrl));
+        gitService.stageAllChanges(oldRepository);
+        gitService.commitAndPush(oldRepository, "Migrate repository from Bitbucket to local VCS", true, null);
         return url.toString();
     }
 
@@ -335,19 +315,6 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             return null;
         }
         return moveRepo(exercise, repositoryUrl);
-    }
-
-    private void copyRepo(Repository from, Repository to) {
-        final Path fromPath = getRepoAbsoluteLocalPath(from);
-        final Path toPath = getRepoAbsoluteLocalPath(to);
-
-        try {
-            copyDirectory(fromPath.toFile(), toPath.toFile());
-        }
-        catch (IOException e) {
-            log.error("Failed to copy repository from {} to {}", fromPath, toPath, e);
-        }
-
     }
 
     @Override
