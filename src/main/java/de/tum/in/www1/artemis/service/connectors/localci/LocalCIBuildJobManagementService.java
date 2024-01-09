@@ -176,6 +176,8 @@ public class LocalCIBuildJobManagementService {
         // Notify the user, that the build job produced an exception.
         BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(exception.getMessage(), participation.getId());
         if (!isRetry) {
+            // This cast to Participation is safe as the participation is either a ProgrammingExerciseStudentParticipation, a TemplateProgrammingExerciseParticipation, or a
+            // SolutionProgrammingExerciseParticipation, which all extend Participation.
             programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation, error);
         }
 
