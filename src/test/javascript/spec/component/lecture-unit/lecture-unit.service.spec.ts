@@ -1,6 +1,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed, fakeAsync } from '@angular/core/testing';
+import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import dayjs from 'dayjs/esm';
@@ -53,6 +54,7 @@ describe('LectureUnitService', () => {
         exerciseUnit = new ExerciseUnit();
         exerciseUnit.id = 42;
         exerciseUnit.exercise = exercise;
+        exerciseUnit.visibleToStudents = true;
 
         textUnit = new TextUnit();
         textUnit.id = 23;
@@ -97,5 +99,37 @@ describe('LectureUnitService', () => {
     it('should send a request to the server to get ngx representation of learning path', fakeAsync(() => {
         service.getLectureUnitForLearningPathNodeDetails(1).subscribe();
         httpMock.expectOne({ method: 'GET', url: 'api/lecture-units/1/for-learning-path-node-details' });
+    }));
+
+    it('should set lecture unit as completed', fakeAsync(() => {
+        const lecture: Lecture = {
+            id: 5,
+            lectureUnits: [exerciseUnit],
+        };
+        exerciseUnit.completed = false;
+        service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: true });
+        httpMock.expectOne({ method: 'POST', url: 'api/lectures/5/lecture-units/42/completion?completed=true' }).flush(null);
+        expect(exerciseUnit.completed).toBeTrue();
+    }));
+
+    it('should set lecture unit as uncompleted', fakeAsync(() => {
+        const lecture: Lecture = {
+            id: 5,
+            lectureUnits: [exerciseUnit],
+        };
+        exerciseUnit.completed = true;
+        service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: false });
+        httpMock.expectOne({ method: 'POST', url: 'api/lectures/5/lecture-units/42/completion?completed=false' }).flush(null);
+        expect(exerciseUnit.completed).toBeFalse();
+    }));
+
+    it('should not set completion status if already completed', fakeAsync(() => {
+        const lecture: Lecture = {
+            id: 5,
+            lectureUnits: [exerciseUnit],
+        };
+        exerciseUnit.completed = false;
+        service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: false });
+        httpMock.expectNone({ method: 'POST', url: 'api/lectures/5/lecture-units/42/completion?completed=false' });
     }));
 });

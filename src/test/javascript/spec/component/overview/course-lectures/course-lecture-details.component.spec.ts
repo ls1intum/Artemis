@@ -256,8 +256,7 @@ describe('CourseLectureDetails', () => {
 
     it('should set lecture unit as completed', fakeAsync(() => {
         const lectureUnitService = TestBed.inject(LectureUnitService);
-        const completeSpy = jest.spyOn(lectureUnitService, 'setCompletion');
-        completeSpy.mockReturnValue(of(new HttpResponse<any>()));
+        const completeSpy = jest.spyOn(lectureUnitService, 'completeLectureUnit');
 
         courseLecturesDetailsComponent.lecture = lecture;
         courseLecturesDetailsComponent.ngOnInit();
@@ -265,54 +264,7 @@ describe('CourseLectureDetails', () => {
 
         expect(lectureUnit3.completed).toBeFalsy();
         courseLecturesDetailsComponent.completeLectureUnit({ lectureUnit: lectureUnit3, completed: true });
-        expect(completeSpy).toHaveBeenCalledOnce();
-        expect(completeSpy).toHaveBeenCalledWith(lectureUnit3.id, lecture.id, true);
-        expect(lectureUnit3.completed).toBeTrue();
-    }));
-
-    it('should set lecture unit as uncompleted', fakeAsync(() => {
-        const lectureUnitService = TestBed.inject(LectureUnitService);
-        const completeSpy = jest.spyOn(lectureUnitService, 'setCompletion');
-        completeSpy.mockReturnValue(of(new HttpResponse<any>()));
-
-        lectureUnit3.completed = true;
-        courseLecturesDetailsComponent.lecture = lecture;
-        courseLecturesDetailsComponent.ngOnInit();
-        fixture.detectChanges();
-
-        expect(lectureUnit3.completed).toBeTrue();
-        courseLecturesDetailsComponent.completeLectureUnit({ lectureUnit: lectureUnit3, completed: false });
-        expect(completeSpy).toHaveBeenCalledOnce();
-        expect(completeSpy).toHaveBeenCalledWith(lectureUnit3.id, lecture.id, false);
-        expect(lectureUnit3.completed).toBeFalse();
-    }));
-
-    it('should not set completion status if already completed', fakeAsync(() => {
-        const lectureUnitService = TestBed.inject(LectureUnitService);
-        const completeSpy = jest.spyOn(lectureUnitService, 'setCompletion');
-        completeSpy.mockReturnValue(of(new HttpResponse<any>()));
-
-        courseLecturesDetailsComponent.lecture = lecture;
-        courseLecturesDetailsComponent.ngOnInit();
-        fixture.detectChanges();
-
-        lectureUnit3.completed = true;
-        courseLecturesDetailsComponent.completeLectureUnit({ lectureUnit: lectureUnit3, completed: true });
-        expect(completeSpy).not.toHaveBeenCalled();
-    }));
-
-    it('should not set completion status if not visible', fakeAsync(() => {
-        const lectureUnitService = TestBed.inject(LectureUnitService);
-        const completeSpy = jest.spyOn(lectureUnitService, 'setCompletion');
-        completeSpy.mockReturnValue(of(new HttpResponse<any>()));
-
-        courseLecturesDetailsComponent.lecture = lecture;
-        courseLecturesDetailsComponent.ngOnInit();
-        fixture.detectChanges();
-
-        lectureUnit3.visibleToStudents = false;
-        courseLecturesDetailsComponent.completeLectureUnit({ lectureUnit: lectureUnit3, completed: true });
-        expect(completeSpy).not.toHaveBeenCalled();
+        expect(completeSpy).toHaveBeenCalledExactlyOnceWith(lecture, { lectureUnit: lectureUnit3, completed: true });
     }));
 });
 
