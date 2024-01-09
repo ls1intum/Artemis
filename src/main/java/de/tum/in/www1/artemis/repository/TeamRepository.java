@@ -64,13 +64,8 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     @Query(value = "select distinct team from Team team left join fetch team.students where team.exercise.id = :#{#exerciseId} and team.owner.id = :#{#teamOwnerId}")
     List<Team> findAllByExerciseIdAndTeamOwnerIdWithEagerStudents(@Param("exerciseId") long exerciseId, @Param("teamOwnerId") long teamOwnerId);
 
-    @Query("""
-            SELECT team
-            FROM Team team
-                LEFT JOIN FETCH team.students
-            WHERE team.id = :teamId
-            """)
-    Optional<Team> findWithStudentsById(@Param("teamId") Long teamId);
+    @EntityGraph(type = LOAD, attributePaths = "students")
+    Optional<Team> findAllById(@Param("teamId") Long teamId);
 
     /**
      * Returns all teams for an exercise (optionally filtered for a specific tutor who owns the teams)
@@ -134,6 +129,6 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     }
 
     default Team findWithStudentsByIdElseThrow(long teamId) throws EntityNotFoundException {
-        return findWithStudentsById(teamId).orElseThrow(() -> new EntityNotFoundException("Team", teamId));
+        return findAllById(teamId).orElseThrow(() -> new EntityNotFoundException("Team", teamId));
     }
 }

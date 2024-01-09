@@ -152,13 +152,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     @EntityGraph(type = LOAD, attributePaths = "student")
     Optional<ProgrammingExerciseStudentParticipation> findWithStudentById(Long participationId);
 
-    @Query("""
-            SELECT participation
-            FROM ProgrammingExerciseStudentParticipation participation
-                LEFT JOIN FETCH participation.team team
-                LEFT JOIN FETCH team.students
-            WHERE participation.id = :participationId
-            """)
+    @EntityGraph(type = LOAD, attributePaths = "team.students")
     Optional<ProgrammingExerciseStudentParticipation> findWithTeamStudentsById(Long participationId);
 
     @NotNull

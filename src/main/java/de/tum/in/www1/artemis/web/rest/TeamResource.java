@@ -156,7 +156,7 @@ public class TeamResource {
         if (!team.getId().equals(teamId)) {
             throw new BadRequestAlertException("The team has an incorrect id.", ENTITY_NAME, "wrongId");
         }
-        Optional<Team> existingTeam = teamRepository.findWithStudentsById(teamId);
+        Optional<Team> existingTeam = teamRepository.findAllById(teamId);
         if (existingTeam.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
