@@ -22,8 +22,7 @@ import com.hazelcast.cp.lock.FencedLock;
 import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -327,8 +326,8 @@ public class LocalCISharedBuildJobQueueService {
                     programmingMessagingService.notifyUserAboutNewResult(result, participation);
                 }
                 else {
-                    programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
-                            new BuildTriggerWebsocketError("Result could not be processed", participation.getId()));
+                    BuildTriggerWebsocketError error = new BuildTriggerWebsocketError("Result could not be created", buildJob.getId());
+                    notifyUserAboutSubmissionError(participation, error);
                 }
             }
             else {
@@ -374,6 +373,18 @@ public class LocalCISharedBuildJobQueueService {
             }
             return null;
         });
+    }
+
+    private void notifyUserAboutSubmissionError(ProgrammingExerciseParticipation participation, BuildTriggerWebsocketError error) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
+            programmingMessagingService.notifyUserAboutSubmissionError(studentParticipation, error);
+        }
+        else if (participation instanceof TemplateProgrammingExerciseParticipation templateParticipation) {
+            programmingMessagingService.notifyUserAboutSubmissionError(templateParticipation, error);
+        }
+        else if (participation instanceof SolutionProgrammingExerciseParticipation solutionParticipation) {
+            programmingMessagingService.notifyUserAboutSubmissionError(solutionParticipation, error);
+        }
     }
 
     /**

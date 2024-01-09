@@ -16,8 +16,7 @@ import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
@@ -176,10 +175,8 @@ public class LocalCIBuildJobManagementService {
 
         // Notify the user, that the build job produced an exception.
         BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(exception.getMessage(), participation.getId());
-        // This cast to Participation is safe as the participation is either a ProgrammingExerciseStudentParticipation, a TemplateProgrammingExerciseParticipation, or a
-        // SolutionProgrammingExerciseParticipation, which all extend Participation.
         if (!isRetry) {
-            programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation, error);
+            notifyUserAboutSubmissionError(participation, error);
         }
 
         localCIContainerService.deleteScriptFile(containerName);
@@ -225,10 +222,22 @@ public class LocalCIBuildJobManagementService {
         BuildTriggerWebsocketError error = new BuildTriggerWebsocketError("Build job was cancelled", participation.getId());
         // This cast to Participation is safe as the participation is either a ProgrammingExerciseStudentParticipation, a TemplateProgrammingExerciseParticipation, or a
         // SolutionProgrammingExerciseParticipation, which all extend Participation.
-        programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation, error);
+        notifyUserAboutSubmissionError(participation, error);
 
         localCIContainerService.deleteScriptFile(containerName);
 
         localCIContainerService.stopContainer(containerName);
+    }
+
+    private void notifyUserAboutSubmissionError(ProgrammingExerciseParticipation participation, BuildTriggerWebsocketError error) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
+            programmingMessagingService.notifyUserAboutSubmissionError(studentParticipation, error);
+        }
+        else if (participation instanceof TemplateProgrammingExerciseParticipation templateParticipation) {
+            programmingMessagingService.notifyUserAboutSubmissionError(templateParticipation, error);
+        }
+        else if (participation instanceof SolutionProgrammingExerciseParticipation solutionParticipation) {
+            programmingMessagingService.notifyUserAboutSubmissionError(solutionParticipation, error);
+        }
     }
 }
