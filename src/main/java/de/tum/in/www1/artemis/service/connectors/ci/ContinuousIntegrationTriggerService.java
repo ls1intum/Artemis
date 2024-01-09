@@ -16,7 +16,9 @@ public interface ContinuousIntegrationTriggerService {
      */
     void triggerBuild(ProgrammingExerciseParticipation participation) throws ContinuousIntegrationException;
 
-    void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash) throws ContinuousIntegrationException;
+    default void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash) throws ContinuousIntegrationException {
+        triggerBuild(participation);
+    };
 
     /**
      * Triggers a build for the build plan in the given participation with an optional commit hash.
