@@ -14,7 +14,6 @@ import org.springframework.test.context.ActiveProfiles;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
@@ -49,14 +48,14 @@ class IrisChatWebsocketTest extends AbstractIrisIntegrationTest {
     void sendMessage() {
         var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var message = irisSession.newMessage();
-        message.addContent(createMockContent(message), createMockContent(message));
+        message.addContent(createMockContent(), createMockContent());
         message.setMessageDifferentiator(101010);
         irisChatWebsocketService.sendMessage(message);
         verify(websocketMessagingService, times(1)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/sessions/" + irisSession.getId()),
                 eq(new IrisChatWebsocketService.IrisWebsocketDTO(message, null)));
     }
 
-    private IrisTextMessageContent createMockContent(IrisMessage message) {
+    private IrisTextMessageContent createMockContent() {
         String[] adjectives = { "happy", "sad", "angry", "funny", "silly", "crazy", "beautiful", "smart" };
         String[] nouns = { "dog", "cat", "house", "car", "book", "computer", "phone", "shoe" };
 

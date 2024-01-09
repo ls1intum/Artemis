@@ -584,7 +584,6 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExport.setDataExportState(DataExportState.REQUESTED);
         dataExport.setFilePath("path");
-        dataExport = dataExportRepository.save(dataExport);
-        return dataExport;
+        return dataExportRepository.save(dataExport);
     }
 }

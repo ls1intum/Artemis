@@ -72,15 +72,13 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationInde
 
     private TutorialGroup tutorialGroup;
 
-    private User student1;
-
     private User tutor1;
 
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, StudentCount, TutorCount, 0, 1);
         Course course = courseUtilService.createCourse();
-        student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
         tutorialGroup = createAndSaveTutorialGroup(course.getId(), "title" + course.getId(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH,
                 userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow(), IntStream.range(1, StudentCount + 1)

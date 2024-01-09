@@ -164,7 +164,7 @@ class GroupNotificationFactoryTest {
      * @param expectedPriority        is the expected priority that the notification should have.
      */
     private void checkCreatedNotification(GroupNotification createdNotification, String expectedTitle, String expectedText, NotificationTarget expectedTransientTarget,
-            NotificationPriority expectedPriority, boolean expectedTextIsPlaceholder, String expectedPlaceholderValues) {
+            NotificationPriority expectedPriority, boolean expectedTextIsPlaceholder) {
         assertThat(createdNotification.getTitle()).as("Created notification title should match expected one").isEqualTo(expectedTitle);
         assertThat(createdNotification.getText()).as("Created notification text should match expected one").isEqualTo(expectedText);
         assertThat(createdNotification.getTextIsPlaceholder()).as("Created notification placeholder flag should match expected one").isEqualTo(expectedTextIsPlaceholder);
@@ -177,14 +177,14 @@ class GroupNotificationFactoryTest {
      * Shortcut method to call the checks for the created notification that has a manually set notification text.
      */
     private void checkCreatedNotificationWithNotificationText() {
-        checkCreatedNotification(createdNotification, expectedTitle, notificationText, expectedTransientTarget, expectedPriority, false, null);
+        checkCreatedNotification(createdNotification, expectedTitle, notificationText, expectedTransientTarget, expectedPriority, false);
     }
 
     /**
      * Shortcut method to call the checks for the created notification that has no manually set notification text but instead a different expected text.
      */
     private void checkCreatedNotificationWithoutNotificationText() {
-        checkCreatedNotification(createdNotification, expectedTitle, expectedText, expectedTransientTarget, expectedPriority, true, expectedPlaceholderValues);
+        checkCreatedNotification(createdNotification, expectedTitle, expectedText, expectedTransientTarget, expectedPriority, true);
     }
 
     /**
@@ -335,7 +335,7 @@ class GroupNotificationFactoryTest {
 
         // without notification text -> silent exam update (expectedText = null)
         createdNotification = createNotification(examExercise, user, groupNotificationType, notificationType, null);
-        checkCreatedNotification(createdNotification, expectedTitle, null, expectedTransientTarget, HIGH, false, null);
+        checkCreatedNotification(createdNotification, expectedTitle, null, expectedTransientTarget, HIGH, false);
     }
 
     /**

@@ -108,7 +108,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
                 setUpMultipleChoiceQuestionForImport(mcQuestion);
             }
             else if (quizQuestion instanceof DragAndDropQuestion dndQuestion) {
-                setUpDragAndDropQuestionForImport(dndQuestion, fileMap);
+                setUpDragAndDropQuestionForImport(dndQuestion);
             }
             else if (quizQuestion instanceof ShortAnswerQuestion saQuestion) {
                 setUpShortAnswerQuestionForImport(saQuestion);
@@ -125,7 +125,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
         }
     }
 
-    private void setUpDragAndDropQuestionForImport(DragAndDropQuestion dndQuestion, Map<String, MultipartFile> fileMap) throws IOException {
+    private void setUpDragAndDropQuestionForImport(DragAndDropQuestion dndQuestion) {
         if (dndQuestion.getBackgroundFilePath() != null) {
             URI backgroundFilePublicPath = URI.create(dndQuestion.getBackgroundFilePath());
             URI backgroundFileIntendedPath = URI.create(FileService.BACKGROUND_FILE_SUBPATH);

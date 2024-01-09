@@ -229,7 +229,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentTest {
 
             StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, ownerOfStudentExam);
             studentExam.setWorkingTime(exam.getWorkingTime() + 20 * 60);
-            studentExam = studentExamRepository.save(studentExam);
+            studentExamRepository.save(studentExam);
             Participation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
 
             boolean result = exerciseDateService.isAfterDueDate(participation);
@@ -304,7 +304,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentTest {
         void testTestExamExerciseDueDate_afterSubmittingOwnExam() {
             StudentExam studentExam = examUtilService.addStudentExamWithUser(testExam, TEST_PREFIX + "student1");
             studentExam.setSubmitted(true);
-            studentExam = studentExamRepository.save(studentExam);
+            studentExamRepository.save(studentExam);
             Participation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
 
             boolean result = exerciseDateService.isAfterDueDate(participation);

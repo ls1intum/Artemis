@@ -36,7 +36,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.user.PasswordService;
@@ -54,9 +53,6 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     private PasswordService passwordService;
 
     @Autowired
-    private ArtemisInternalAuthenticationProvider artemisInternalAuthenticationProvider;
-
-    @Autowired
     private CourseRepository courseRepository;
 
     @Autowired
@@ -64,9 +60,6 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
 
     @Autowired
     private AuthorityRepository authorityRepository;

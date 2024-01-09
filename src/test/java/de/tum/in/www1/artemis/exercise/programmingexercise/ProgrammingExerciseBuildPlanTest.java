@@ -15,8 +15,6 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 
 class ProgrammingExerciseBuildPlanTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
 
-    private static final String TEST_PREFIX = "programmingexercisebuildplantest";
-
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 

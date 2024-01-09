@@ -167,7 +167,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
             }
         }
         parameters.put("session", chatSession);
-        addDiffAndTemplatesForStudentAndExerciseIfPossible(chatSession.getUser(), exercise, participations, parameters);
+        addDiffAndTemplatesForStudentAndExerciseIfPossible(exercise, participations, parameters);
 
         var irisSettings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false);
         irisConnectorService.sendRequest(irisSettings.irisChatSettings().getTemplate(), irisSettings.irisChatSettings().getPreferredModel(), parameters)
@@ -188,7 +188,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
                 });
     }
 
-    private void addDiffAndTemplatesForStudentAndExerciseIfPossible(User student, ProgrammingExercise exercise, List<ProgrammingExerciseStudentParticipation> studentParticipations,
+    private void addDiffAndTemplatesForStudentAndExerciseIfPossible(ProgrammingExercise exercise, List<ProgrammingExerciseStudentParticipation> studentParticipations,
             Map<String, Object> parameters) {
         parameters.put("gitDiff", "");
         parameters.put("studentRepository", Map.of());
