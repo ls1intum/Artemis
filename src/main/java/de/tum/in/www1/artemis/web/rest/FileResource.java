@@ -80,11 +80,13 @@ public class FileResource {
 
     private final FilePathService filePathService;
 
+    private final LectureUnitService lectureUnitService;
+
     public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
             LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
             AttachmentRepository attachmentRepository, AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
             ExamUserRepository examUserRepository, QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository,
-            FilePathService filePathService) {
+            FilePathService filePathService, LectureUnitService lectureUnitService) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -101,6 +103,7 @@ public class FileResource {
         this.dragItemRepository = dragItemRepository;
         this.courseRepository = courseRepository;
         this.filePathService = filePathService;
+        this.lectureUnitService = lectureUnitService;
     }
 
     /**
@@ -357,7 +360,7 @@ public class FileResource {
 
         List<String> attachmentLinks = lectureAttachments.stream()
                 .filter(unit -> authCheckService.isAllowedToSeeLectureUnit(unit, user) && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
-                .map(unit -> FilePathService.getAttachmentUnitFilePath()
+                .peek(unit -> lectureUnitService.setLectureUnitCompletion(unit, user, true)).map(unit -> FilePathService.getAttachmentUnitFilePath()
                         .resolve(Path.of(String.valueOf(unit.getId()), StringUtils.substringAfterLast(unit.getAttachment().getLink(), "/"))).toString())
                 .toList();
 
