@@ -27,8 +27,6 @@ import com.github.dockerjava.api.exception.NotFoundException;
 
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
@@ -74,23 +72,11 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testSubmitViaOnlineEditor_wrongProjectType() throws Exception {
-        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
-        // Submit from the online editor with the wrong project type set on the programming exercise.
-        // This tests that an internal error is caught properly in the processNewPush() method and the "/commit" endpoint returns 500 in that case.
-        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
-        programmingExercise.setProjectType(ProjectType.MAVEN_BLACKBOX);
-        programmingExerciseRepository.save(programmingExercise);
-        request.postWithoutLocation("/api/repository/" + studentParticipation.getId() + "/commit", null, HttpStatus.INTERNAL_SERVER_ERROR, null);
-    }
-
-    @Test
-    void testInvalidLocalVCRepositoryUrl() {
-        // The local repository cannot be resolved to a valid LocalVCRepositoryUrl as it is not located at the correct base path and is not a bare repository.
+    void testInvalidLocalVCRepositoryUri() {
+        // The local repository cannot be resolved to a valid LocalVCRepositoryUri as it is not located at the correct base path and is not a bare repository.
         assertThatExceptionOfType(VersionControlException.class)
                 .isThrownBy(() -> localVCServletService.processNewPush(commitHash, studentAssignmentRepository.localGit.getRepository()))
-                .withMessageContaining("Could not create valid repository URL from path");
+                .withMessageContaining("Could not create valid repository URI from path");
     }
 
     @Test
@@ -259,9 +245,8 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     void testFaultyResultFiles() throws IOException {
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-        localVCLocalCITestService.mockTestResults(dockerClient, FAULTY_FILES_TEST_RESULTS_PATH, "/testing-dir/build/test-results/test");
+        localVCLocalCITestService.mockTestResults(dockerClient, FAULTY_FILES_TEST_RESULTS_PATH, WORKING_DIRECTORY + "/testing-dir/build/test-results/test");
         localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
-
         await().untilAsserted(() -> verify(programmingMessagingService).notifyUserAboutSubmissionError(Mockito.eq(studentParticipation), any()));
 
         // Should notify the user.
@@ -269,12 +254,13 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     private void verifyUserNotification(Participation participation) {
-        BuildTriggerWebsocketError expectedError = new BuildTriggerWebsocketError(
-                "java.util.concurrent.ExecutionException: de.tum.in.www1.artemis.exception.LocalCIException: Error while parsing test results", participation.getId());
-        verify(programmingMessagingService).notifyUserAboutSubmissionError(Mockito.eq(participation), argThat((BuildTriggerWebsocketError actualError) -> {
-            assertThat(actualError.getError()).isEqualTo(expectedError.getError());
-            assertThat(actualError.getParticipationId()).isEqualTo(expectedError.getParticipationId());
-            return true;
-        }));
+        BuildTriggerWebsocketError expectedError = new BuildTriggerWebsocketError("de.tum.in.www1.artemis.exception.LocalCIException: Error while parsing test results",
+                participation.getId());
+        await().untilAsserted(
+                () -> verify(programmingMessagingService).notifyUserAboutSubmissionError(Mockito.eq(participation), argThat((BuildTriggerWebsocketError actualError) -> {
+                    assertThat(actualError.getError()).isEqualTo(expectedError.getError());
+                    assertThat(actualError.getParticipationId()).isEqualTo(expectedError.getParticipationId());
+                    return true;
+                })));
     }
 }

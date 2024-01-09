@@ -14,9 +14,7 @@ import java.util.stream.Stream;
 
 import org.gitlab4j.api.*;
 import org.gitlab4j.api.models.*;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,11 +35,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserDoesNotExistException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
@@ -105,7 +103,7 @@ public class GitlabRequestMockProvider {
     private UserRepository userRepository;
 
     @Autowired
-    private UrlService urlService;
+    private UriService uriService;
 
     private AutoCloseable closeable;
 
@@ -195,13 +193,30 @@ public class GitlabRequestMockProvider {
     }
 
     public void mockCheckIfProjectExists(final ProgrammingExercise exercise, final boolean exists) throws GitLabApiException {
-        Project foundProject = new Project();
-        foundProject.setName(exercise.getProjectName() + (exists ? "" : "abc"));
-        List<Project> result = new ArrayList<>();
-        if (exists) {
-            result.add(foundProject);
-        }
-        doReturn(result).when(projectApi).getProjects(exercise.getProjectKey());
+        final Group group = new Group();
+        group.setName(exercise.getProjectKey());
+
+        doReturn(Optional.of(group)).when(groupApi).getOptionalGroup(exercise.getProjectKey());
+        // doAnswer to create a new Stream instance for each call, otherwise it might have been consumed already when
+        // using the mocked method multiple times in a test
+        doAnswer(invocationOnMock -> {
+            if (exists) {
+                final Project foundProject = new Project();
+                foundProject.setName(exercise.getProjectName());
+
+                return Stream.of(foundProject);
+            }
+            else {
+                return Stream.empty();
+            }
+        }).when(groupApi).getProjectsStream(argThat(argument -> {
+            if (argument instanceof Group groupArgument) {
+                return exercise.getProjectKey().equals(groupArgument.getName());
+            }
+            else {
+                return false;
+            }
+        }));
     }
 
     /**
@@ -229,7 +244,7 @@ public class GitlabRequestMockProvider {
             event.setPushData(pushData);
             events.add(0, event); // The latest event has to be at the front
         }
-        var path = urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl());
+        var path = uriService.getRepositoryPathFromRepositoryUri(participation.getVcsRepositoryUri());
         doAnswer((invocation) -> events.stream()).when(eventsApi).getProjectEventsStream(eq(path), eq(Constants.ActionType.PUSHED), eq(null), eq(null), eq(null),
                 eq(Constants.SortOrder.DESC));
     }
@@ -280,16 +295,16 @@ public class GitlabRequestMockProvider {
     }
 
     public void mockConfigureRepository(ProgrammingExercise exercise, Set<de.tum.in.www1.artemis.domain.User> users, boolean userExists) throws GitLabApiException {
-        var repositoryUrl = exercise.getVcsTemplateRepositoryUrl();
+        var repositoryUri = exercise.getVcsTemplateRepositoryUri();
         for (var user : users) {
             String loginName = user.getLogin();
             mockUserExists(loginName, userExists);
             if (userExists) {
-                mockAddMemberToRepository(repositoryUrl, user.getLogin());
+                mockAddMemberToRepository(repositoryUri, user.getLogin());
             }
         }
         mockGetDefaultBranch(defaultBranch);
-        mockProtectBranch(defaultBranch, repositoryUrl);
+        mockProtectBranch(defaultBranch, repositoryUri);
     }
 
     public void mockUserExists(String username, boolean exists) throws GitLabApiException {
@@ -308,8 +323,8 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    private void mockAddMemberToRepository(VcsRepositoryUrl repositoryUrl, String login) throws GitLabApiException {
-        final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+    private void mockAddMemberToRepository(VcsRepositoryUri repositoryUri, String login) throws GitLabApiException {
+        final var repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
         mockAddMemberToRepository(repositoryPath, login, false);
     }
 
@@ -331,14 +346,23 @@ public class GitlabRequestMockProvider {
         doReturn(mockProject).when(projectApi).getProject(notNull());
     }
 
-    private void mockProtectBranch(String branch, VcsRepositoryUrl repositoryUrl) throws GitLabApiException {
-        final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+    private void mockProtectBranch(String branch, VcsRepositoryUri repositoryUri) throws GitLabApiException {
+        final var repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
         doReturn(new Branch()).when(repositoryApi).unprotectBranch(repositoryPath, branch);
         doReturn(new ProtectedBranch()).when(protectedBranchesApi).protectBranch(repositoryPath, branch);
     }
 
     public void mockFailToCheckIfProjectExists(String projectKey) throws GitLabApiException {
-        doThrow(GitLabApiException.class).when(projectApi).getProjects(projectKey);
+        doReturn(Optional.of(new Group())).when(groupApi).getOptionalGroup(projectKey);
+        doThrow(GitLabApiException.class).when(groupApi).getProjectsStream(any(Group.class));
+    }
+
+    public void mockGetOptionalGroup(final String projectKey, final Optional<Group> returnValue) {
+        doReturn(returnValue).when(groupApi).getOptionalGroup(projectKey);
+    }
+
+    public void mockGetProjectsStream(final Group group, final Stream<Project> returnValue) throws GitLabApiException {
+        doReturn(returnValue).when(groupApi).getProjectsStream(group);
     }
 
     public void mockHealth(String healthStatus, HttpStatus httpStatus) throws URISyntaxException, JsonProcessingException {
@@ -622,12 +646,12 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    public void mockRepositoryUrlIsValid(VcsRepositoryUrl repositoryUrl, boolean isUrlValid) throws GitLabApiException {
-        if (repositoryUrl == null || repositoryUrl.getURI() == null) {
+    public void mockRepositoryUriIsValid(VcsRepositoryUri repositoryUri, boolean isUrlValid) throws GitLabApiException {
+        if (repositoryUri == null || repositoryUri.getURI() == null) {
             return;
         }
 
-        final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+        final var repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
         if (isUrlValid) {
             doReturn(new Project()).when(projectApi).getProject(repositoryPath);
         }
@@ -638,10 +662,10 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    public void setRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, Set<de.tum.in.www1.artemis.domain.User> users) throws GitLabApiException {
+    public void setRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUri, Set<de.tum.in.www1.artemis.domain.User> users) throws GitLabApiException {
         for (var user : users) {
             mockGetUserId(user.getLogin(), true, false);
-            final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+            final var repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
             doReturn(new Member()).when(projectApi).updateMember(repositoryPath, 1L, GUEST);
         }
     }

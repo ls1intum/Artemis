@@ -180,7 +180,7 @@ public class ProgrammingExerciseGitDiffReportService {
         var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElseThrow();
         Repository templateRepo = prepareTemplateRepository(templateParticipation);
 
-        var repo1 = gitService.checkoutRepositoryAtCommit(((ProgrammingExerciseParticipation) submission.getParticipation()).getVcsRepositoryUrl(), submission.getCommitHash(),
+        var repo1 = gitService.checkoutRepositoryAtCommit(((ProgrammingExerciseParticipation) submission.getParticipation()).getVcsRepositoryUri(), submission.getCommitHash(),
                 false);
         var oldTreeParser = new FileTreeIterator(templateRepo);
         var newTreeParser = new FileTreeIterator(repo1);
@@ -198,7 +198,7 @@ public class ProgrammingExerciseGitDiffReportService {
      * @param localPathRepoB local path to the checked out instance of the second repo to compare
      * @return cumulative number of lines in the git diff of given repositories
      */
-    public int calculateNumberOfDiffLinesBetweenRepos(VcsRepositoryUrl urlRepoA, Path localPathRepoA, VcsRepositoryUrl urlRepoB, Path localPathRepoB) {
+    public int calculateNumberOfDiffLinesBetweenRepos(VcsRepositoryUri urlRepoA, Path localPathRepoA, VcsRepositoryUri urlRepoB, Path localPathRepoB) {
         var repoA = gitService.getExistingCheckedOutRepositoryByLocalPath(localPathRepoA, urlRepoA);
         var repoB = gitService.getExistingCheckedOutRepositoryByLocalPath(localPathRepoB, urlRepoB);
 
@@ -228,7 +228,7 @@ public class ProgrammingExerciseGitDiffReportService {
     private ProgrammingExerciseGitDiffReport generateReport(TemplateProgrammingExerciseParticipation templateParticipation,
             SolutionProgrammingExerciseParticipation solutionParticipation) throws GitAPIException, IOException {
         Repository templateRepo = prepareTemplateRepository(templateParticipation);
-        var solutionRepo = gitService.getOrCheckoutRepository(solutionParticipation.getVcsRepositoryUrl(), true);
+        var solutionRepo = gitService.getOrCheckoutRepository(solutionParticipation.getVcsRepositoryUri(), true);
         gitService.resetToOriginHead(solutionRepo);
         gitService.pullIgnoreConflicts(solutionRepo);
 
@@ -246,7 +246,7 @@ public class ProgrammingExerciseGitDiffReportService {
      * @throws GitAPIException If an error occurs while accessing the git repository
      */
     private Repository prepareTemplateRepository(TemplateProgrammingExerciseParticipation templateParticipation) throws GitAPIException {
-        var templateRepo = gitService.getOrCheckoutRepository(templateParticipation.getVcsRepositoryUrl(), true);
+        var templateRepo = gitService.getOrCheckoutRepository(templateParticipation.getVcsRepositoryUri(), true);
         gitService.resetToOriginHead(templateRepo);
         gitService.pullIgnoreConflicts(templateRepo);
         return templateRepo;
@@ -262,13 +262,13 @@ public class ProgrammingExerciseGitDiffReportService {
      * @throws IOException     If an error occurs while accessing the file system
      */
     public ProgrammingExerciseGitDiffReport generateReportForSubmissions(ProgrammingSubmission submission1, ProgrammingSubmission submission2) throws GitAPIException, IOException {
-        var repositoryUrl = ((ProgrammingExerciseParticipation) submission1.getParticipation()).getVcsRepositoryUrl();
-        var repo1 = gitService.getOrCheckoutRepository(repositoryUrl, true);
+        var repositoryUri = ((ProgrammingExerciseParticipation) submission1.getParticipation()).getVcsRepositoryUri();
+        var repo1 = gitService.getOrCheckoutRepository(repositoryUri, true);
         var repo1Path = repo1.getLocalPath();
         var repo2Path = fileService.getTemporaryUniqueSubfolderPath(repo1Path.getParent(), 5);
         FileSystemUtils.copyRecursively(repo1Path, repo2Path);
         repo1 = gitService.checkoutRepositoryAtCommit(repo1, submission1.getCommitHash());
-        var repo2 = gitService.getExistingCheckedOutRepositoryByLocalPath(repo2Path, repositoryUrl);
+        var repo2 = gitService.getExistingCheckedOutRepositoryByLocalPath(repo2Path, repositoryUri);
         repo2 = gitService.checkoutRepositoryAtCommit(repo2, submission2.getCommitHash());
         return parseFilesAndCreateReport(repo1, repo2);
     }

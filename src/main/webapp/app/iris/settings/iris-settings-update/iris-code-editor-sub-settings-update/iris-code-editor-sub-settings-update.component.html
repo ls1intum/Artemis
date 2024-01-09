@@ -1,10 +1,11 @@
 <div class="mb-3 mt-3">
     <h4 jhiTranslate="artemisApp.iris.settings.subSettings.codeEditor.templates">Templates</h4>
-    <div *ngIf="parentSubSettings" class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" id="inheritTemplate" [checked]="!subSettings?.chatTemplate" (change)="onInheritTemplateChanged()" />
-        <label class="form-check-label" for="inheritTemplate" jhiTranslate="artemisApp.iris.settings.subSettings.codeEditor.templatesInheritSwitch">Inherit</label>
-    </div>
-
+    @if (parentSubSettings) {
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="inheritTemplate" [checked]="!subSettings?.chatTemplate" (change)="onInheritTemplateChanged()" />
+            <label class="form-check-label" for="inheritTemplate" jhiTranslate="artemisApp.iris.settings.subSettings.codeEditor.templatesInheritSwitch">Inherit</label>
+        </div>
+    }
     <div>
         <h3 jhiTranslate="artemisApp.iris.settings.subSettings.codeEditor.chatTemplate">Chat Template</h3>
         <textarea

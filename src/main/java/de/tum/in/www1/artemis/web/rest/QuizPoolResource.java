@@ -82,8 +82,7 @@ public class QuizPoolResource {
         log.info("REST request to get QuizPool given examId : {}", examId);
 
         validateCourseRole(courseId);
-        QuizPool quizPool = quizPoolService.findByExamId(examId);
-
+        QuizPool quizPool = quizPoolService.findWithQuizGroupsAndQuestionsByExamId(examId).orElse(null);
         return ResponseEntity.ok().body(quizPool);
     }
 
