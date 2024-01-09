@@ -1,5 +1,9 @@
+import { AlertService } from 'app/core/util/alert.service';
 import { LectureUnit, LectureUnitForLearningPathNodeDetailsDTO, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
+import { Lecture } from 'app/entities/lecture.model';
+import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
+import { onError } from 'app/shared/util/global.utils';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
@@ -20,6 +24,7 @@ export class LectureUnitService {
     constructor(
         private httpClient: HttpClient,
         private attachmentService: AttachmentService,
+        private alertService: AlertService,
     ) {}
 
     updateOrder(lectureId: number, lectureUnits: LectureUnit[]): Observable<HttpResponse<LectureUnit[]>> {
@@ -35,9 +40,20 @@ export class LectureUnitService {
         return this.httpClient.delete(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}`, { observe: 'response' });
     }
 
-    setCompletion(lectureUnitId: number, lectureId: number, completed: boolean) {
+    completeLectureUnit(lecture: Lecture, event: LectureUnitCompletionEvent): void {
+        if (event.lectureUnit.visibleToStudents && event.lectureUnit.completed !== event.completed) {
+            this.setCompletion(event.lectureUnit.id!, lecture.id!, event.completed).subscribe({
+                next: () => {
+                    event.lectureUnit.completed = event.completed;
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
+        }
+    }
+
+    setCompletion(lectureUnitId: number, lectureId: number, completed: boolean): Observable<HttpResponse<void>> {
         const params = new HttpParams().set('completed', completed.toString());
-        return this.httpClient.post(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}/completion`, null, { params, observe: 'response' });
+        return this.httpClient.post<void>(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}/completion`, null, { params, observe: 'response' });
     }
 
     convertLectureUnitDatesFromClient<T extends LectureUnit>(lectureUnit: T): T {

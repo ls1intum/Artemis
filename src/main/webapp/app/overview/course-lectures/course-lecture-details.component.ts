@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
@@ -14,7 +14,6 @@ import { finalize } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { Router } from '@angular/router';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 
 export interface LectureUnitCompletionEvent {
@@ -124,14 +123,7 @@ export class CourseLectureDetailsComponent implements OnInit {
     }
 
     completeLectureUnit(event: LectureUnitCompletionEvent): void {
-        if (this.lecture && event.lectureUnit.visibleToStudents && event.lectureUnit.completed !== event.completed) {
-            this.lectureUnitService.setCompletion(event.lectureUnit.id!, this.lecture.id!, event.completed).subscribe({
-                next: () => {
-                    event.lectureUnit.completed = event.completed;
-                },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
-        }
+        this.lectureUnitService.completeLectureUnit(this.lecture!, event);
     }
 
     /**
