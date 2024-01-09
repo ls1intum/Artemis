@@ -121,4 +121,23 @@ describe('Course Management Detail Component', () => {
         component.ngOnDestroy();
         expect(destroySpy).toHaveBeenCalledOnce();
     });
+
+    it.each([false, true])(`should return correct course-details with different settings enabled`, (allSettingsEnabled) => {
+        component.course = course;
+        if (allSettingsEnabled) {
+            component.ltiEnabled = true;
+            component.course.complaintsEnabled = true;
+            component.course.requestMoreFeedbackEnabled = true;
+            component.course.enrollmentEnabled = true;
+            component.course.unenrollmentEnabled = true;
+            component.course.organizations = [{ id: 32, name: 'TUM' }];
+        }
+        component.getCourseDetailSections();
+        for (const section of component.courseDetailSections) {
+            expect(section.headline).toBeTruthy();
+            for (const detail of section.details) {
+                expect(detail).toBeTruthy();
+            }
+        }
+    });
 });

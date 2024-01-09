@@ -15,6 +15,18 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 
+const mockLecture = {
+    title: 'Test Lecture',
+    description: 'Test Description',
+    visibleDate: dayjs(),
+    startDate: dayjs(),
+    endDate: dayjs(),
+    course: {
+        id: 32,
+        title: 'Test Course',
+    },
+} as Lecture;
+
 describe('LectureDetailComponent', () => {
     let component: LectureDetailComponent;
     let fixture: ComponentFixture<LectureDetailComponent>;
@@ -45,13 +57,6 @@ describe('LectureDetailComponent', () => {
     });
 
     it('should initialize lecture when ngOnInit is called', () => {
-        const mockLecture = new Lecture();
-        mockLecture.title = 'Test Lecture';
-        mockLecture.description = 'Test Description';
-        mockLecture.visibleDate = dayjs();
-        mockLecture.startDate = dayjs();
-        mockLecture.endDate = dayjs();
-
         mockActivatedRoute.data = of({ lecture: mockLecture }); // Update the ActivatedRoute mock data
 
         component.ngOnInit();
@@ -67,5 +72,16 @@ describe('LectureDetailComponent', () => {
         expect(component.faPencilAlt).toEqual(faPencilAlt);
         expect(component.faFile).toEqual(faFile);
         expect(component.faPuzzlePiece).toEqual(faPuzzlePiece);
+    });
+
+    it('should have correct lecture-details', () => {
+        component.lecture = mockLecture;
+        component.getLectureDetailSections();
+        for (const section of component.detailSections) {
+            expect(section.headline).toBeTruthy();
+            for (const detail of section.details) {
+                expect(detail).toBeTruthy();
+            }
+        }
     });
 });
