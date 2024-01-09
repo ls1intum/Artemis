@@ -116,8 +116,10 @@ export class CourseLectureDetailsComponent implements OnInit {
     }
 
     downloadMergedFiles(): void {
-        if (this.lecture?.course?.id && this.lectureId) {
-            this.fileService.downloadMergedFile(this.lecture.course.id, this.lectureId);
+        if (this.lectureId) {
+            this.fileService.downloadMergedFile(this.lectureId);
+            // Refresh data to show updated completion status
+            this.loadData();
         }
     }
 

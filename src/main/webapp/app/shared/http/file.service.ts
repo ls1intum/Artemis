@@ -85,10 +85,9 @@ export class FileService {
     /**
      * Downloads the merged PDF file.
      *
-     * @param courseId the id of the course
      * @param lectureId the id of the lecture
      */
-    downloadMergedFile(courseId: number, lectureId: number) {
+    downloadMergedFile(lectureId: number) {
         const newWindow = window.open('about:blank');
         newWindow!.location.href = `api/files/attachments/lecture/${lectureId}/merge-pdf`;
         return newWindow;
