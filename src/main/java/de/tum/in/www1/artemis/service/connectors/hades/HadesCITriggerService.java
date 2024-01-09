@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.hades;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
@@ -35,6 +36,12 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
 
     @Value("${artemis.hades.images.result-image}")
     private String resultDockerIamge;
+
+    @Value("${artemis.continuous-integration.token}")
+    private String resultToken;
+
+    @Value("${server.url}")
+    private URL artemisServerUrl;
 
     private final Logger log = LoggerFactory.getLogger(HadesCIService.class);
 
@@ -94,11 +101,11 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
         cloneMetadata.put("HADES_TEST_USERNAME", gitUsername);
         cloneMetadata.put("HADES_TEST_PASSWORD", gitPassword);
         cloneMetadata.put("HADES_TEST_URL", participation.getProgrammingExercise().getTestRepositoryUri());
-        cloneMetadata.put("HADES_TEST_PATH", "./example");
+        cloneMetadata.put("HADES_TEST_PATH", "./");
         cloneMetadata.put("HADES_ASSIGNMENT_USERNAME", gitUsername);
         cloneMetadata.put("HADES_ASSIGNMENT_PASSWORD", gitPassword);
         cloneMetadata.put("HADES_ASSIGNMENT_URL", participation.getVcsRepositoryUri().toString());
-        cloneMetadata.put("HADES_ASSIGNMENT_PATH", "./example/assignment");
+        cloneMetadata.put("HADES_ASSIGNMENT_PATH", "./assignment");
 
         steps.add(new HadesBuildStepDTO(1, "Clone", cloneDockerIamge, cloneMetadata));
 
@@ -106,11 +113,15 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
         var image = programmingLanguageConfiguration.getImage(participation.getProgrammingExercise().getProgrammingLanguage(),
                 Optional.ofNullable(participation.getProgrammingExercise().getProjectType()));
         // TODO: Get script from template
-        var script = "cd ./example && ls -lah && ./gradlew clean test";
+        var script = " ls -lah && ./gradlew clean test && ls -lah";
         steps.add(new HadesBuildStepDTO(2, "Execute", image, script));
 
-        // TODO: Create Results Step
-        steps.add(new HadesBuildStepDTO(3, "Result", resultDockerIamge, script));
+        var resultMetadata = new HashMap<String, String>();
+        resultMetadata.put("API_TOKEN", resultToken);
+        resultMetadata.put("INGEST_DIR", "/shared/build/test-results/test");
+        resultMetadata.put("API_ENDPOINT", artemisServerUrl.toString() + "/api/public/programming-exercises/new-result");
+        resultMetadata.put("JOB_NAME", participation.getBuildPlanId());
+        steps.add(new HadesBuildStepDTO(3, "Result", resultDockerIamge, resultMetadata, "sleep 1000"));
 
         // Create Hades Job
         var timestamp = java.time.Instant.now().toString();
