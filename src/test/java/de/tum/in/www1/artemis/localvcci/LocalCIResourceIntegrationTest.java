@@ -50,7 +50,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         processingJobs.put(1L, job1);
         processingJobs.put(2L, job2);
 
-        buildAgentInformation.put("agent1", agent1);
+        buildAgentInformation.put(memberAddress, agent1);
     }
 
     @AfterEach
@@ -65,8 +65,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     void testGetQueuedBuildJobs_returnsJobs() throws Exception {
         var retrievedJobs = request.get("/api/admin/build-job-queue/queued", HttpStatus.OK, List.class);
         assertThat(retrievedJobs).isEmpty();
-        queuedJobs.add(job1);
-        queuedJobs.add(job2);
+        queuedJobs.addAll(List.of(job1, job2));
         var retrievedJobs1 = request.get("/api/admin/build-job-queue/queued", HttpStatus.OK, List.class);
         // Job1 will almost immediately be taken from the queue and added to the processing jobs
         // Size of retrieved jobs will be 1 in most cases, rarely 2
@@ -91,8 +90,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     void testGetQueuedBuildJobsForCourse_returnsJobs() throws Exception {
         var retrievedJobs = request.get("/api/build-job-queue/queued/" + course.getId(), HttpStatus.OK, List.class);
         assertThat(retrievedJobs).isEmpty();
-        queuedJobs.add(job1);
-        queuedJobs.add(job2);
+        queuedJobs.addAll(List.of(job1, job2));
         var retrievedJobs1 = request.get("/api/build-job-queue/queued/" + course.getId(), HttpStatus.OK, List.class);
         // Job1 will almost immediately be taken from the queue and added to the processing jobs
         // Size of retrieved jobs will be 1 in most cases, rarely 2

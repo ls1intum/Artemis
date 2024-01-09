@@ -489,6 +489,8 @@ public class LocalVCLocalCITestService {
      *                                            if the commit hash should not be checked.
      * @param expectedSuccessfulTestCaseCount the expected number or passed test cases.
      * @param buildFailed                     whether the build should have failed or not.
+     * @param isStaticCodeAnalysisEnabled     whether static code analysis is enabled for the exercise.
+     * @param expectedCodeIssueCount          the expected number of code issues (only relevant if static code analysis is enabled).
      */
     public void testLatestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCaseCount, boolean buildFailed, boolean isStaticCodeAnalysisEnabled,
             int expectedCodeIssueCount) {
