@@ -614,64 +614,76 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
     }
 
-    /*
-     * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-     * void testFetchPush_instructorExamTestRun() throws Exception {
-     * Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
-     * ExerciseGroup exerciseGroup = exam.getExerciseGroups().iterator().next();
-     * programmingExercise.setExerciseGroup(exerciseGroup);
-     * programmingExerciseRepository.save(programmingExercise);
-     * // Start date is in the future.
-     * exam.setStartDate(ZonedDateTime.now().plusHours(1));
-     * exam.setEndDate(ZonedDateTime.now().plusHours(2));
-     * examRepository.save(exam);
-     * // Create an exam test run.
-     * StudentExam instructorExam = examUtilService.addStudentExam(exam);
-     * instructorExam.setUser(instructor1);
-     * instructorExam.setExercises(List.of(programmingExercise));
-     * instructorExam.setTestRun(true);
-     * studentExamRepository.save(instructorExam);
-     * // Add repository
-     * String repositorySlug = projectKey1.toLowerCase() + "-" + instructor1Login;
-     * LocalRepository instructorExamTestRunRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, repositorySlug);
-     * // First try without participation present.
-     * localVCLocalCITestService.testFetchReturnsError(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug, INTERNAL_SERVER_ERROR);
-     * // Add participation.
-     * ProgrammingExerciseStudentParticipation instructorTestRunParticipation = localVCLocalCITestService.createParticipation(programmingExercise, instructor1Login);
-     * instructorTestRunParticipation.setTestRun(true);
-     * programmingExerciseStudentParticipationRepository.save(instructorTestRunParticipation);
-     * await().until(() -> programmingExerciseStudentParticipationRepository.findById(instructorTestRunParticipation.getId()).isPresent());
-     * // Instructor should be able to fetch and push.
-     * localVCLocalCITestService.testFetchSuccessful(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug);
-     * String commitHash = localVCLocalCITestService.commitFile(instructorExamTestRunRepository.localRepoFile.toPath(), instructorExamTestRunRepository.localGit);
-     * localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
-     * Map.of("commitHash", commitHash), Map.of("commitHash", commitHash));
-     * localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, WORKING_DIRECTORY + "/testing-dir/build/test-results/test");
-     * localVCLocalCITestService.testPushSuccessful(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug);
-     * localVCLocalCITestService.testLatestSubmission(instructorTestRunParticipation.getId(), commitHash, 1, false);
-     * // Student should not able to fetch or push.
-     * localVCLocalCITestService.testFetchReturnsError(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
-     * localVCLocalCITestService.testPushReturnsError(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
-     * // Tutor should be able to fetch but not push.
-     * localVCLocalCITestService.testFetchSuccessful(instructorExamTestRunRepository.localGit, tutor1Login, projectKey1, repositorySlug);
-     * localVCLocalCITestService.testPushReturnsError(instructorExamTestRunRepository.localGit, tutor1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
-     * // Start test run
-     * instructorExam.setStartedAndStartDate(ZonedDateTime.now());
-     * studentExamRepository.save(instructorExam);
-     * // Student should not able to fetch or push.
-     * localVCLocalCITestService.testFetchReturnsError(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
-     * localVCLocalCITestService.testPushReturnsError(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
-     * // Tutor should be able to fetch but not push.
-     * localVCLocalCITestService.testFetchSuccessful(instructorExamTestRunRepository.localGit, tutor1Login, projectKey1, repositorySlug);
-     * localVCLocalCITestService.testPushReturnsError(instructorExamTestRunRepository.localGit, tutor1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
-     * // Instructor should be able to fetch and push.
-     * localVCLocalCITestService.testFetchSuccessful(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug);
-     * localVCLocalCITestService.testPushSuccessful(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug);
-     * // Cleanup
-     * instructorExamTestRunRepository.resetLocalRepo();
-     * }
-     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testFetchPush_instructorExamTestRun() throws Exception {
+        Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().iterator().next();
+
+        programmingExercise.setExerciseGroup(exerciseGroup);
+        programmingExerciseRepository.save(programmingExercise);
+
+        // Start date is in the future.
+        exam.setStartDate(ZonedDateTime.now().plusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(2));
+        examRepository.save(exam);
+
+        // Create an exam test run.
+        StudentExam instructorExam = examUtilService.addStudentExam(exam);
+        instructorExam.setUser(instructor1);
+        instructorExam.setExercises(List.of(programmingExercise));
+        instructorExam.setTestRun(true);
+        studentExamRepository.save(instructorExam);
+
+        // Add repository
+        String repositorySlug = projectKey1.toLowerCase() + "-" + instructor1Login;
+        LocalRepository instructorExamTestRunRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, repositorySlug);
+
+        // First try without participation present.
+        localVCLocalCITestService.testFetchReturnsError(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testPushReturnsError(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug, INTERNAL_SERVER_ERROR);
+
+        // Add participation.
+        ProgrammingExerciseStudentParticipation instructorTestRunParticipation = localVCLocalCITestService.createParticipation(programmingExercise, instructor1Login);
+        instructorTestRunParticipation.setTestRun(true);
+        programmingExerciseStudentParticipationRepository.save(instructorTestRunParticipation);
+
+        // Instructor should be able to fetch and push.
+        localVCLocalCITestService.testFetchSuccessful(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug);
+        String commitHash = localVCLocalCITestService.commitFile(instructorExamTestRunRepository.localRepoFile.toPath(), instructorExamTestRunRepository.localGit);
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
+                Map.of("commitHash", commitHash), Map.of("commitHash", commitHash));
+        localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, WORKING_DIRECTORY + "/testing-dir/build/test-results/test");
+        localVCLocalCITestService.testPushSuccessful(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug);
+        localVCLocalCITestService.testLatestSubmission(instructorTestRunParticipation.getId(), commitHash, 1, false);
+
+        // Student should not able to fetch or push.
+        localVCLocalCITestService.testFetchReturnsError(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
+
+        // Tutor should be able to fetch but not push.
+        localVCLocalCITestService.testFetchSuccessful(instructorExamTestRunRepository.localGit, tutor1Login, projectKey1, repositorySlug);
+        localVCLocalCITestService.testPushReturnsError(instructorExamTestRunRepository.localGit, tutor1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
+
+        // Start test run
+        instructorExam.setStartedAndStartDate(ZonedDateTime.now());
+        studentExamRepository.save(instructorExam);
+
+        // Student should not able to fetch or push.
+        localVCLocalCITestService.testFetchReturnsError(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
+
+        // Tutor should be able to fetch but not push.
+        localVCLocalCITestService.testFetchSuccessful(instructorExamTestRunRepository.localGit, tutor1Login, projectKey1, repositorySlug);
+        localVCLocalCITestService.testPushReturnsError(instructorExamTestRunRepository.localGit, tutor1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
+
+        // Instructor should be able to fetch and push.
+        localVCLocalCITestService.testFetchSuccessful(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug);
+        localVCLocalCITestService.testPushSuccessful(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug);
+
+        // Cleanup
+        instructorExamTestRunRepository.resetLocalRepo();
+    }
 
     // ---- Tests for practice repositories ----
 
