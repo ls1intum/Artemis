@@ -5,20 +5,11 @@ import javax.ws.rs.BadRequestException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
-import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
-import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
-import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
-import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
+import de.tum.in.www1.artemis.domain.iris.session.*;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.iris.IrisChatSessionRepository;
-import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
-import de.tum.in.www1.artemis.service.iris.session.IrisCodeEditorSessionService;
-import de.tum.in.www1.artemis.service.iris.session.IrisHestiaSessionService;
-import de.tum.in.www1.artemis.service.iris.session.IrisSessionSubServiceInterface;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.service.iris.session.*;
 
 /**
  * Service for managing Iris sessions.
@@ -35,29 +26,12 @@ public class IrisSessionService {
 
     private final IrisCodeEditorSessionService irisCodeEditorSessionService;
 
-    private final IrisChatSessionRepository irisChatSessionRepository;
-
     public IrisSessionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisHestiaSessionService irisHestiaSessionService,
-            IrisCodeEditorSessionService irisCodeEditorSessionService, IrisChatSessionRepository irisChatSessionRepository) {
+            IrisCodeEditorSessionService irisCodeEditorSessionService) {
         this.userRepository = userRepository;
         this.irisChatSessionService = irisChatSessionService;
         this.irisHestiaSessionService = irisHestiaSessionService;
         this.irisCodeEditorSessionService = irisCodeEditorSessionService;
-        this.irisChatSessionRepository = irisChatSessionRepository;
-    }
-
-    /**
-     * Creates a new Iris session for the given exercise and user.
-     *
-     * @param exercise The exercise the session belongs to
-     * @param user     The user the session belongs to
-     * @return The created session
-     */
-    public IrisChatSession createChatSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
-        if (exercise.isExamExercise()) {
-            throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
-        }
-        return irisChatSessionRepository.save(new IrisChatSession(exercise, user));
     }
 
     /**
@@ -66,7 +40,8 @@ public class IrisSessionService {
      * @param session the session to check for
      */
     public void checkIsIrisActivated(IrisSession session) {
-        getIrisSessionSubService(session).checkIsIrisActivated(session);
+        var wrapper = getIrisSessionSubService(session);
+        wrapper.irisSubFeatureInterface.checkIsFeatureActivatedFor(wrapper.irisSession);
     }
 
     /**
@@ -80,7 +55,8 @@ public class IrisSessionService {
         if (user == null) {
             user = userRepository.getUserWithGroupsAndAuthorities();
         }
-        getIrisSessionSubService(session).checkHasAccessToIrisSession(session, user);
+        var wrapper = getIrisSessionSubService(session);
+        wrapper.irisSubFeatureInterface.checkHasAccessTo(user, wrapper.irisSession);
     }
 
     /**
@@ -91,27 +67,62 @@ public class IrisSessionService {
      * @param session The session to get a message for
      */
     public void requestMessageFromIris(IrisSession session) {
-        getIrisSessionSubService(session).requestAndHandleResponse(session);
-    }
-
-    public void checkRateLimit(IrisSession session, User user) {
-        getIrisSessionSubService(session).checkRateLimit(user);
+        var wrapper = getIrisSessionSubService(session);
+        if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface) {
+            ((IrisChatBasedFeatureInterface<?>) wrapper.irisSubFeatureInterface).requestAndHandleResponse(wrapper.irisSession);
+        }
+        else {
+            throw new BadRequestException("Invalid Iris session type " + session.getClass().getSimpleName());
+        }
     }
 
     public void sendOverWebsocket(IrisMessage message) {
-        getIrisSessionSubService(message.getSession()).sendOverWebsocket(message);
+        var wrapper = getIrisSessionSubService(message.getSession());
+        if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface) {
+            ((IrisChatBasedFeatureInterface<?>) wrapper.irisSubFeatureInterface).sendOverWebsocket(message);
+        }
+        else {
+            throw new BadRequestException("Invalid Iris session type " + message.getSession().getClass().getSimpleName());
+        }
     }
 
-    private IrisSessionSubServiceInterface getIrisSessionSubService(IrisSession session) {
+    public void checkRateLimit(IrisSession session, User user) {
+        var wrapper = getIrisSessionSubService(session);
+        if (wrapper.irisSubFeatureInterface instanceof IrisRateLimitedFeatureInterface) {
+            ((IrisRateLimitedFeatureInterface) wrapper.irisSubFeatureInterface).checkRateLimit(user);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private <S extends IrisSession> IrisSubFeatureWrapper<S> getIrisSessionSubService(S session) {
         if (session instanceof IrisChatSession) {
-            return irisChatSessionService;
+            return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisChatSessionService, castToSessionType(session, IrisChatSession.class));
         }
         if (session instanceof IrisHestiaSession) {
-            return irisHestiaSessionService;
+            return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisHestiaSessionService, castToSessionType(session, IrisHestiaSession.class));
         }
         if (session instanceof IrisCodeEditorSession) {
-            return irisCodeEditorSessionService;
+            return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisCodeEditorSessionService, castToSessionType(session, IrisCodeEditorSession.class));
         }
         throw new BadRequestException("Unknown Iris session type " + session.getClass().getSimpleName());
+    }
+
+    /**
+     * Helper method to cast an IrisSession to a specific type.
+     * Throws an IllegalStateException if the session is not of the given type.
+     *
+     * @param irisSession  The session to cast
+     * @param sessionClass The class to cast to
+     * @param <S>          The type of the session
+     * @return The casted session
+     */
+    private <S extends IrisSession> S castToSessionType(IrisSession irisSession, Class<S> sessionClass) {
+        if (!sessionClass.isInstance(irisSession)) {
+            throw new IllegalStateException("IrisSession is not of type " + sessionClass.getSimpleName());
+        }
+        return sessionClass.cast(irisSession);
+    }
+
+    private record IrisSubFeatureWrapper<S extends IrisSession>(IrisSubFeatureInterface<S> irisSubFeatureInterface, S irisSession) {
     }
 }

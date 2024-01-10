@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisStatusDTO;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
  * REST controller for managing {@link IrisChatSession}.
@@ -111,11 +112,14 @@ public class IrisChatSessionResource {
     @EnforceAtLeastStudent
     public ResponseEntity<IrisChatSession> createSessionForProgrammingExercise(@PathVariable Long exerciseId) throws URISyntaxException {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        if (exercise.isExamExercise()) {
+            throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
+        }
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
-        var session = irisSessionService.createChatSessionForProgrammingExercise(exercise, user);
+        var session = irisChatSessionRepository.save(new IrisChatSession(exercise, user));
 
         var uriString = "/api/iris/sessions/" + session.getId();
         return ResponseEntity.created(new URI(uriString)).body(session);

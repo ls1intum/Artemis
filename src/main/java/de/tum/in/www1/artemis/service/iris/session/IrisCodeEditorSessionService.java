@@ -49,7 +49,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
  */
 @Service
 @Profile("iris")
-public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterface {
+public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterface<IrisCodeEditorSession> {
 
     private final Logger log = LoggerFactory.getLogger(IrisCodeEditorSessionService.class);
 
@@ -118,15 +118,11 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * Checks if the user has access to the Iris session. A user has access if they have access to the exercise and the
      * session belongs to them. If the user is null, the user is fetched from the database.
      *
-     * @param session The session to check
      * @param user    The user to check
+     * @param session The session to check
      */
     @Override
-    public void checkHasAccessToIrisSession(IrisSession session, User user) {
-        checkHasAccessToIrisSession(castToSessionType(session, IrisCodeEditorSession.class), user);
-    }
-
-    private void checkHasAccessToIrisSession(IrisCodeEditorSession session, User user) {
+    public void checkHasAccessTo(User user, IrisCodeEditorSession session) {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, session.getExercise(), user);
         if (!Objects.equals(session.getUser(), user)) {
             throw new AccessForbiddenException("Iris Code Editor Session", session.getId());
@@ -134,16 +130,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     }
 
     @Override
-    public void checkRateLimit(User user) {
-        // Currently no rate limit for code editor sessions
-    }
-
-    @Override
-    public void checkIsIrisActivated(IrisSession session) {
-        checkIsIrisActivated(castToSessionType(session, IrisCodeEditorSession.class));
-    }
-
-    private void checkIsIrisActivated(IrisCodeEditorSession session) {
+    public void checkIsFeatureActivatedFor(IrisCodeEditorSession session) {
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CODE_EDITOR, session.getExercise());
     }
 

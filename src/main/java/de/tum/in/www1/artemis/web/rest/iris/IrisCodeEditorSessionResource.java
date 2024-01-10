@@ -76,7 +76,7 @@ public class IrisCodeEditorSessionResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
 
         var session = irisCodeEditorSessionRepository.findNewestByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
-        irisCodeEditorSessionService.checkHasAccessToIrisSession(session, user);
+        irisCodeEditorSessionService.checkHasAccessTo(user, session);
         return ResponseEntity.ok(session);
     }
 
@@ -97,7 +97,7 @@ public class IrisCodeEditorSessionResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
 
         var sessions = irisCodeEditorSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
-        sessions.forEach(s -> irisCodeEditorSessionService.checkHasAccessToIrisSession(s, user));
+        sessions.forEach(s -> irisCodeEditorSessionService.checkHasAccessTo(user, s));
         return ResponseEntity.ok(sessions);
     }
 
@@ -136,8 +136,8 @@ public class IrisCodeEditorSessionResource {
     public ResponseEntity<Boolean> isIrisActive(@PathVariable Long sessionId) {
         var session = irisCodeEditorSessionRepository.findByIdElseThrow(sessionId);
         var user = userRepository.getUser();
-        irisCodeEditorSessionService.checkHasAccessToIrisSession(session, user);
-        irisCodeEditorSessionService.checkIsIrisActivated(session);
+        irisCodeEditorSessionService.checkHasAccessTo(user, session);
+        irisCodeEditorSessionService.checkIsFeatureActivatedFor(session);
         var settings = irisSettingsService.getCombinedIrisSettingsFor(session.getExercise(), false);
         var health = irisHealthIndicator.health();
         IrisStatusDTO[] modelStatuses = (IrisStatusDTO[]) health.getDetails().get("modelStatuses");

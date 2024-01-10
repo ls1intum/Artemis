@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessageContent;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
-import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -32,7 +31,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
  */
 @Service
 @Profile("iris")
-public class IrisHestiaSessionService implements IrisSessionSubServiceInterface {
+public class IrisHestiaSessionService implements IrisButtonBasedFeatureInterface<IrisHestiaSession, CodeHint, CodeHint> {
 
     // TODO: Make configurable in future
     private static final String SYSTEM_PROMPT = """
@@ -65,16 +64,6 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
         this.irisSessionRepository = irisSessionRepository;
     }
 
-    @Override
-    public void sendOverWebsocket(IrisMessage message) {
-        throw new UnsupportedOperationException("Sending messages over websocket is not supported for Iris Hestia sessions");
-    }
-
-    @Override
-    public void requestAndHandleResponse(IrisSession irisSession) {
-        throw new UnsupportedOperationException("Requesting and handling responses is not supported for Iris Hestia sessions");
-    }
-
     /**
      * Generates the description and content for a code hint.
      * It does not directly save the code hint, but instead returns it with the generated description and content.
@@ -83,10 +72,11 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
      * @param codeHint The code hint to generate the description and content for
      * @return The code hint with the generated description and content
      */
-    public CodeHint generateDescription(CodeHint codeHint) {
+    @Override
+    public CodeHint executeRequest(CodeHint codeHint) {
         var irisSession = new IrisHestiaSession();
         irisSession.setCodeHint(codeHint);
-        checkHasAccessToIrisSession(irisSession, null);
+        checkHasAccessTo(null, irisSession);
         irisSession = irisSessionRepository.save(irisSession);
 
         var systemMessage = generateSystemMessage();
@@ -149,21 +139,15 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
         return irisMessage;
     }
 
-    @Override
-    public void checkRateLimit(User user) {
-        // Currently no rate limit for Hestia sessions
-    }
-
     /**
      * Checks if the user has at least the given role for the exercise of the code hint.
      *
-     * @param irisSession The Iris session to check the access for
-     * @param user        The user to check the access for
+     * @param user    The user to check the access for
+     * @param session The Iris session to check the access for
      */
     @Override
-    public void checkHasAccessToIrisSession(IrisSession irisSession, User user) {
-        var hestiaSession = castToSessionType(irisSession, IrisHestiaSession.class);
-        var exercise = hestiaSession.getCodeHint().getExercise();
+    public void checkHasAccessTo(User user, IrisHestiaSession session) {
+        var exercise = session.getCodeHint().getExercise();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
     }
 
@@ -173,8 +157,7 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
      * @param session The session to get a message for
      */
     @Override
-    public void checkIsIrisActivated(IrisSession session) {
-        var irisHestiaSession = castToSessionType(session, IrisHestiaSession.class);
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.HESTIA, irisHestiaSession.getCodeHint().getExercise());
+    public void checkIsFeatureActivatedFor(IrisHestiaSession session) {
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.HESTIA, session.getCodeHint().getExercise());
     }
 }
