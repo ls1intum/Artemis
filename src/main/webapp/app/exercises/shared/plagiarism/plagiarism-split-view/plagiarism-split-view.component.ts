@@ -123,6 +123,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
      * @param submission the submission to map the elements of
      */
     mapMatchesToElements(matches: SimpleMatch[], submission: PlagiarismSubmission<TextSubmissionElement>) {
+        const elements = submission.elements?.sort((a, b) => a.id - b.id);
         const filesToMatchedElements = new Map<string, FromToElement[]>();
 
         matches.forEach((match) => {
@@ -130,7 +131,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
             if (match.length === 0) {
                 return;
             }
-            const file = submission.elements![match.start]?.file || 'none';
+            const file = elements![match.start]?.file || 'none';
 
             if (!filesToMatchedElements.has(file)) {
                 filesToMatchedElements.set(file, []);
@@ -138,7 +139,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
 
             const fileMatches = filesToMatchedElements.get(file)!;
 
-            fileMatches.push(new FromToElement(submission.elements![match.start], submission.elements![match.start + match.length - 1]));
+            fileMatches.push(new FromToElement(elements![match.start], elements![match.start + match.length - 1]));
         });
 
         return filesToMatchedElements;

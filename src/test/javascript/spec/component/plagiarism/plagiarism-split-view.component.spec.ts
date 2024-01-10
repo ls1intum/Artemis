@@ -204,21 +204,21 @@ describe('Plagiarism Split View Component', () => {
             { start: 3, length: 3 },
         ] as SimpleMatch[];
         submissionA.elements = [
-            { file: '', column: 1, line: 1 },
-            { file: '', column: 2, line: 2 },
-            { file: '', column: 3, line: 3 },
-            { file: '', column: 4, line: 4 },
-            { file: '', column: 5, line: 5 },
-            { file: '', column: 6, line: 6 },
-            { file: '', column: 7, line: 7 },
-            { file: '', column: 8, line: 8 },
-            { file: '', column: 9, line: 9 },
-            { file: '', column: 10, line: 10 },
+            { id: 8, file: '', column: 8, line: 8 },
+            { id: 2, file: '', column: 2, line: 2 },
+            { id: 4, file: '', column: 4, line: 4 },
+            { id: 1, file: '', column: 1, line: 1 },
+            { id: 5, file: '', column: 5, line: 5 },
+            { id: 6, file: '', column: 6, line: 6 },
+            { id: 7, file: '', column: 7, line: 7 },
+            { id: 9, file: '', column: 9, line: 9 },
+            { id: 3, file: '', column: 3, line: 3 },
+            { id: 10, file: '', column: 10, line: 10 },
         ] as TextSubmissionElement[];
         const mappedElements = new Map();
         mappedElements.set('none', [
-            new FromToElement({ file: '', column: 1, line: 1 } as TextSubmissionElement, { file: '', column: 2, line: 2 } as TextSubmissionElement),
-            new FromToElement({ file: '', column: 4, line: 4 } as TextSubmissionElement, { file: '', column: 6, line: 6 } as TextSubmissionElement),
+            new FromToElement({ id: 1, file: '', column: 1, line: 1 } as TextSubmissionElement, { id: 2, file: '', column: 2, line: 2 } as TextSubmissionElement),
+            new FromToElement({ id: 4, file: '', column: 4, line: 4 } as TextSubmissionElement, { id: 6, file: '', column: 6, line: 6 } as TextSubmissionElement),
         ]);
 
         const result = comp.mapMatchesToElements(matches, submissionA);
