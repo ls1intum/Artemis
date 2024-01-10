@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { downloadStream } from 'app/shared/util/download.util';
 import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
 import { FileService } from 'app/shared/http/file.service';
@@ -10,7 +11,7 @@ import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureU
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
 import { onError } from 'app/shared/util/global.utils';
-import { finalize } from 'rxjs/operators';
+import { finalize, tap } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
@@ -116,9 +117,15 @@ export class CourseLectureDetailsComponent implements OnInit {
 
     downloadMergedFiles(): void {
         if (this.lectureId) {
-            this.fileService.downloadMergedFile(this.lectureId);
-            // Refresh data to show updated completion status
-            this.loadData();
+            this.fileService
+                .downloadMergedFile(this.lectureId)
+                .pipe(
+                    tap((blob) => {
+                        downloadStream(blob.body, 'application/pdf', this.lecture?.title ?? 'Lecture');
+                        this.loadData();
+                    }),
+                )
+                .subscribe();
         }
     }
 
