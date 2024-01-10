@@ -29,6 +29,10 @@ public class ProfileService {
         return isProfileActive("bamboo");
     }
 
+    public boolean isGitlabCiOrJenkins() {
+        return isProfileActive("gitlabci") || isProfileActive("jenkins");
+    }
+
     /**
      * Checks if the local CI profile is active
      *
