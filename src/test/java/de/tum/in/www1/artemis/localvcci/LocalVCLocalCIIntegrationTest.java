@@ -647,6 +647,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         instructorTestRunParticipation.setTestRun(true);
         programmingExerciseStudentParticipationRepository.save(instructorTestRunParticipation);
 
+        await().until(() -> programmingExerciseStudentParticipationRepository.findById(instructorTestRunParticipation.getId()).isPresent());
+
         // Instructor should be able to fetch and push.
         localVCLocalCITestService.testFetchSuccessful(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug);
         String commitHash = localVCLocalCITestService.commitFile(instructorExamTestRunRepository.localRepoFile.toPath(), instructorExamTestRunRepository.localGit);
