@@ -4,9 +4,9 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="20240105165712" author="laurenzfb">
+    <changeSet id="20240110185513" author="laurenzfb">
         <createTable tableName="build_job">
-            <column name="build_job_id" type="bigint" autoIncrement="true">
+            <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="name" type="varchar(255)"/>
@@ -20,10 +20,8 @@
             <column name="commit_hash" type="varchar(40)"/>
             <column name="retry_count" type="int"/>
             <column name="priority" type="int"/>
-            <column name="is_push_to_test_repository" type="boolean"/>
-            <column name="result" type="varchar(10)">
-                <constraints nullable="true"/>
-            </column>
+            <column name="is_push_to_test_or_aux_repository" type="boolean"/>
+            <column name="build_job_result" type="varchar(10)"/>
             <column name="docker_image" type="varchar(255)"/>
         </createTable>
     </changeSet>

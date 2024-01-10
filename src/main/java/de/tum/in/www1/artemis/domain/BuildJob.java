@@ -13,12 +13,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class BuildJob extends DomainObject {
 
-    public enum Result {
+    public enum BuildJobResult {
         SUCCESSFUL, FAILED, ERROR, CANCELED
     }
-
-    @Column(name = "build_job_id")
-    private Long buildJobId;
 
     @Column(name = "name")
     private String name;
@@ -53,11 +50,11 @@ public class BuildJob extends DomainObject {
     @Column(name = "priority")
     private int priority;
 
-    @Column(name = "is_push_to_test_repository")
-    private boolean isPushToTestRepository;
+    @Column(name = "is_push_to_test_or_aux_repository")
+    private boolean isPushToTestOrAuxRepository;
 
-    @Column(name = "result")
-    private Result result;
+    @Column(name = "build_job_result")
+    private BuildJobResult buildJobResult;
 
     @Column(name = "docker_image")
     private String dockerImage;
