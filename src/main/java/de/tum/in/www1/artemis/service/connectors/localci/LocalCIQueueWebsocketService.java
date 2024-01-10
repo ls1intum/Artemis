@@ -92,12 +92,12 @@ public class LocalCIQueueWebsocketService {
 
         @Override
         public void itemAdded(ItemEvent<LocalCIBuildJobQueueItem> event) {
-            sendQueuedJobsOverWebsocket(event.getItem().getCourseId());
+            sendQueuedJobsOverWebsocket(event.getItem().courseId());
         }
 
         @Override
         public void itemRemoved(ItemEvent<LocalCIBuildJobQueueItem> event) {
-            sendQueuedJobsOverWebsocket(event.getItem().getCourseId());
+            sendQueuedJobsOverWebsocket(event.getItem().courseId());
         }
     }
 
@@ -106,13 +106,13 @@ public class LocalCIQueueWebsocketService {
         @Override
         public void entryAdded(com.hazelcast.core.EntryEvent<Long, LocalCIBuildJobQueueItem> event) {
             log.debug("CIBuildJobQueueItem added to processing jobs: {}", event.getValue());
-            sendProcessingJobsOverWebsocket(event.getValue().getCourseId());
+            sendProcessingJobsOverWebsocket(event.getValue().courseId());
         }
 
         @Override
         public void entryRemoved(com.hazelcast.core.EntryEvent<Long, LocalCIBuildJobQueueItem> event) {
             log.debug("CIBuildJobQueueItem removed from processing jobs: {}", event.getOldValue());
-            sendProcessingJobsOverWebsocket(event.getOldValue().getCourseId());
+            sendProcessingJobsOverWebsocket(event.getOldValue().courseId());
         }
     }
 

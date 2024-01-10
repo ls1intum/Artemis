@@ -8,8 +8,8 @@ import { BuildJob } from 'app/entities/build-job.model';
 
 @Injectable({ providedIn: 'root' })
 export class BuildQueueService {
-    public resourceUrl = 'api/build-job-queue';
-    public adminResourceUrl = 'api/admin/build-job-queue';
+    public resourceUrl = 'api/courses';
+    public adminResourceUrl = 'api/admin';
 
     constructor(private http: HttpClient) {}
     /**
@@ -17,7 +17,7 @@ export class BuildQueueService {
      * @param courseId
      */
     getQueuedBuildJobsByCourseId(courseId: number): Observable<BuildJob[]> {
-        return this.http.get<BuildJob[]>(`${this.resourceUrl}/queued/${courseId}`);
+        return this.http.get<BuildJob[]>(`${this.resourceUrl}/${courseId}/queued-jobs`);
     }
 
     /**
@@ -25,21 +25,21 @@ export class BuildQueueService {
      * @param courseId
      */
     getRunningBuildJobsByCourseId(courseId: number): Observable<BuildJob[]> {
-        return this.http.get<BuildJob[]>(`${this.resourceUrl}/running/${courseId}`);
+        return this.http.get<BuildJob[]>(`${this.resourceUrl}/${courseId}/running-jobs`);
     }
 
     /**
      * Get all build jobs in the queue
      */
     getQueuedBuildJobs(): Observable<BuildJob[]> {
-        return this.http.get<BuildJob[]>(`${this.adminResourceUrl}/queued`);
+        return this.http.get<BuildJob[]>(`${this.adminResourceUrl}/queued-jobs`);
     }
 
     /**
      * Get all running build jobs
      */
     getRunningBuildJobs(): Observable<BuildJob[]> {
-        return this.http.get<BuildJob[]>(`${this.adminResourceUrl}/running`);
+        return this.http.get<BuildJob[]>(`${this.adminResourceUrl}/running-jobs`);
     }
 
     /**
