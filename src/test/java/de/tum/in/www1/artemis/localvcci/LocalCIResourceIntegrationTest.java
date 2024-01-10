@@ -14,6 +14,7 @@ import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
+import de.tum.in.www1.artemis.service.connectors.localci.LocalCISharedBuildJobQueueService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 
@@ -28,6 +29,9 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @Autowired
     private HazelcastInstance hazelcastInstance;
 
+    @Autowired
+    private LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService;
+
     protected IQueue<LocalCIBuildJobQueueItem> queuedJobs;
 
     protected IMap<Long, LocalCIBuildJobQueueItem> processingJobs;
@@ -36,6 +40,8 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
 
     @BeforeEach
     void createJobs() {
+        // temporarily remove listener to avoid triggering build job processing
+        localCISharedBuildJobQueueService.removeListener();
 
         job1 = new LocalCIBuildJobQueueItem(1, "job1", "address1", 1, "test", "commit1", ZonedDateTime.now(), 1, ZonedDateTime.now(), 1, course.getId(), false);
         job2 = new LocalCIBuildJobQueueItem(2, "job2", "address2", 1, "test", "commit2", ZonedDateTime.now(), 1, ZonedDateTime.now(), 1, course.getId(), false);
@@ -55,6 +61,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
 
     @AfterEach
     void clearDataStructures() {
+        localCISharedBuildJobQueueService.addListener();
         queuedJobs.clear();
         processingJobs.clear();
         buildAgentInformation.clear();
@@ -66,9 +73,9 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         var retrievedJobs = request.get("/api/admin/queued-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs).isEmpty();
         // Adding a lot of jobs as they get processed very quickly due to mocking
-        queuedJobs.addAll(List.of(job1, job2, job1, job2));
+        queuedJobs.addAll(List.of(job1, job2));
         var retrievedJobs1 = request.get("/api/admin/queued-jobs", HttpStatus.OK, List.class);
-        assertThat(retrievedJobs1).isNotEmpty();
+        assertThat(retrievedJobs1).hasSize(2);
     }
 
     @Test
@@ -90,9 +97,9 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         var retrievedJobs = request.get("/api/courses/" + course.getId() + "/queued-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs).isEmpty();
         // Adding a lot of jobs as they get processed very quickly due to mocking
-        queuedJobs.addAll(List.of(job1, job2, job1, job2));
+        queuedJobs.addAll(List.of(job1, job2));
         var retrievedJobs1 = request.get("/api/courses/" + course.getId() + "/queued-jobs", HttpStatus.OK, List.class);
-        assertThat(retrievedJobs1).isNotEmpty();
+        assertThat(retrievedJobs1).hasSize(2);
     }
 
     @Test

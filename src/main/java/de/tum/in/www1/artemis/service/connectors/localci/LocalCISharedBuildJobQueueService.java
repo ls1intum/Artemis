@@ -75,6 +75,8 @@ public class LocalCISharedBuildJobQueueService {
      */
     private final ReentrantLock instanceLock = new ReentrantLock();
 
+    private UUID listenerId;
+
     public LocalCISharedBuildJobQueueService(HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
             LocalCIBuildJobManagementService localCIBuildJobManagementService, ParticipationRepository participationRepository,
             ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService,
@@ -97,7 +99,11 @@ public class LocalCISharedBuildJobQueueService {
      */
     @PostConstruct
     public void addListener() {
-        this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
+        this.listenerId = this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
+    }
+
+    public void removeListener() {
+        this.queue.removeItemListener(this.listenerId);
     }
 
     /**
@@ -410,7 +416,7 @@ public class LocalCISharedBuildJobQueueService {
         throw new IllegalStateException("Could not retrieve participation with id " + participationId + " from database after " + maxRetries + " retries.");
     }
 
-    private class QueuedBuildJobItemListener implements ItemListener<LocalCIBuildJobQueueItem> {
+    public class QueuedBuildJobItemListener implements ItemListener<LocalCIBuildJobQueueItem> {
 
         @Override
         public void itemAdded(ItemEvent<LocalCIBuildJobQueueItem> event) {
