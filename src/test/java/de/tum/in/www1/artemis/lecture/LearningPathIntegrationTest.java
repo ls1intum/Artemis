@@ -446,6 +446,38 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(LearningPathResource.NgxRequestType.class)
+    @WithMockUser(username = TUTOR_OF_COURSE, roles = "TA")
+    void testGetLearningPathNgxAsTutor(LearningPathResource.NgxRequestType type) throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var tutor = userRepository.findOneByLogin(TUTOR_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathUtilService.createLearningPathInCourseForUser(course, tutor);
+        request.get("/api/learning-path/" + learningPath.getId() + "/" + type, HttpStatus.OK, NgxLearningPathDTO.class);
+    }
+
+    /**
+     * This only tests if the end point successfully retrieves the graph representation. The correctness of the response is tested in LearningPathServiceTest.
+     *
+     * @throws Exception the request failed
+     * @see de.tum.in.www1.artemis.service.LearningPathServiceTest
+     */
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(LearningPathResource.NgxRequestType.class)
+    @WithMockUser(username = EDITOR_OF_COURSE, roles = "EDITOR")
+    void testGetLearningPathNgxAsEditor(LearningPathResource.NgxRequestType type) throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var editor = userRepository.findOneByLogin(EDITOR_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathUtilService.createLearningPathInCourseForUser(course, editor);
+        request.get("/api/learning-path/" + learningPath.getId() + "/" + type, HttpStatus.OK, NgxLearningPathDTO.class);
+    }
+
+    /**
+     * This only tests if the end point successfully retrieves the graph representation. The correctness of the response is tested in LearningPathServiceTest.
+     *
+     * @throws Exception the request failed
+     * @see de.tum.in.www1.artemis.service.LearningPathServiceTest
+     */
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(LearningPathResource.NgxRequestType.class)
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testGetLearningPathNgxAsInstructor(LearningPathResource.NgxRequestType type) throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
