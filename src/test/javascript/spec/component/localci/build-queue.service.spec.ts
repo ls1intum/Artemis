@@ -50,7 +50,7 @@ describe('BuildQueueService', () => {
             expect(data).toEqual(expectedResponse); // Check if the response matches expected
         });
 
-        const req = httpMock.expectOne(`${service.resourceUrl}/queued/${courseId}`);
+        const req = httpMock.expectOne(`${service.resourceUrl}/${courseId}/queued-jobs`);
         expect(req.request.method).toBe('GET');
         req.flush(expectedResponse); // Flush an array of elements
     });
@@ -63,7 +63,7 @@ describe('BuildQueueService', () => {
             expect(data).toEqual(expectedResponse);
         });
 
-        const req = httpMock.expectOne(`${service.resourceUrl}/running/${courseId}`);
+        const req = httpMock.expectOne(`${service.resourceUrl}/${courseId}/running-jobs`);
         expect(req.request.method).toBe('GET');
         req.flush(expectedResponse);
     });
@@ -75,7 +75,7 @@ describe('BuildQueueService', () => {
             expect(data).toEqual(expectedResponse);
         });
 
-        const req = httpMock.expectOne(`${service.adminResourceUrl}/queued`);
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/queued-jobs`);
         expect(req.request.method).toBe('GET');
         req.flush(expectedResponse);
     });
@@ -87,7 +87,7 @@ describe('BuildQueueService', () => {
             expect(data).toEqual(expectedResponse);
         });
 
-        const req = httpMock.expectOne(`${service.adminResourceUrl}/running`);
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/running-jobs`);
         expect(req.request.method).toBe('GET');
         req.flush(expectedResponse);
     });
