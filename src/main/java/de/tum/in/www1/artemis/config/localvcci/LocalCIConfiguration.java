@@ -43,10 +43,10 @@ public class LocalCIConfiguration {
     String dockerConnectionUri;
 
     @Value("${artemis.continuous-integration.concurrent-build-size:1}")
-    int fixedThreadPoolSize;
+    int concurrentBuildSize;
 
     @Value("${artemis.continuous-integration.specify-concurrent-builds:false}")
-    boolean specifyThreadPoolSize;
+    boolean specifyConcurrentBuilds;
 
     @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
     private String buildContainerPrefix;
@@ -100,8 +100,8 @@ public class LocalCIConfiguration {
 
         int threadPoolSize;
 
-        if (specifyThreadPoolSize) {
-            threadPoolSize = fixedThreadPoolSize;
+        if (specifyConcurrentBuilds) {
+            threadPoolSize = concurrentBuildSize;
         }
         else {
             int availableProcessors = Runtime.getRuntime().availableProcessors();

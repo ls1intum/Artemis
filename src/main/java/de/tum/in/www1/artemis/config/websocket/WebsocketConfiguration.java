@@ -2,12 +2,13 @@ package de.tum.in.www1.artemis.config.websocket;
 
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.getExerciseIdFromNonPersonalExerciseResultDestination;
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.isNonPersonalExerciseResultDestination;
+import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIBuildQueueWebsocketService.isBuildQueueAdminDestination;
+import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIBuildQueueWebsocketService.isBuildQueueCourseDestination;
 import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.*;
 
 import java.net.InetSocketAddress;
 import java.security.Principal;
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.Cookie;
@@ -264,36 +265,32 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
         /**
          * Returns whether the subscription of the given principal to the given destination is permitted
+         * Database calls should be avoided as much as possible in this method.
+         * Only for very specific topics, database calls are allowed.
          *
          * @param principal   User principal of the user who wants to subscribe
          * @param destination Destination topic to which the user wants to subscribe
          * @return flag whether subscription is allowed
          */
         private boolean allowSubscription(Principal principal, String destination) {
-            User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
-            if (destination.equals("/topic/admin/queued-jobs") || destination.equals("/topic/admin/running-jobs")) {
-                if (!authorizationCheckService.isAdmin(user)) {
-                    log.warn("User {} is not an admin and is not allowed to subscribe to the protected topic: {}", principal.getName(), destination);
-                    return false;
-                }
+            /*
+             * IMPORTANT: Avoid database calls in this method as much as possible (e.g. checking if the user
+             * is an instructor in a course)
+             * This method is called for every subscription request, so it should be as fast as possible.
+             * If you need to do a database call, make sure to first check if the destination is valid for your specific
+             * use case.
+             */
+
+            if (isBuildQueueAdminDestination(destination)) {
+                var user = userRepository.getUserWithAuthorities(principal.getName());
+                return authorizationCheckService.isAdmin(user);
             }
-            // Define a pattern to match the expected course-related topic format
-            Pattern pattern = Pattern.compile("^/topic/courses/(\\d+)/(queued-jobs|running-jobs)$");
-            Matcher matcher = pattern.matcher(destination);
 
-            // Check if the destination matches the pattern
-            if (matcher.matches()) {
-                // Extract the courseId from the matched groups
-                String courseIdString = matcher.group(1);
-                long courseId = Long.parseLong(courseIdString);
-
-                // Check if the principal is an instructor of the course
-                Course course = courseRepository.findByIdElseThrow(courseId);
-                if (!authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
-                    log.warn("User {} is not an admin or instructor of course {} and is not allowed to subscribe to the protected topic: {}", principal.getName(), courseId,
-                            destination);
-                    return false;
-                }
+            Optional<Long> courseId = isBuildQueueCourseDestination(destination);
+            if (courseId.isPresent()) {
+                Course course = courseRepository.findByIdElseThrow(courseId.get());
+                var user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
+                return authorizationCheckService.isAtLeastInstructorInCourse(course, user);
             }
 
             if (isParticipationTeamDestination(destination)) {
@@ -316,6 +313,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             var examId = getExamIdFromExamRootDestination(destination);
             if (examId.isPresent()) {
                 var exam = examRepository.findByIdElseThrow(examId.get());
+                var user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
                 return authorizationCheckService.isAtLeastInstructorInCourse(exam.getCourse(), user);
             }
             return true;
