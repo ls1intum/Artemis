@@ -66,7 +66,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         var retrievedJobs = request.get("/api/admin/queued-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs).isEmpty();
         // Adding a lot of jobs as they get processed very quickly due to mocking
-        queuedJobs.addAll(List.of(job1, job2, job1, job2, job1, job2));
+        queuedJobs.addAll(List.of(job1, job2, job1, job2));
         var retrievedJobs1 = request.get("/api/admin/queued-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs1).isNotEmpty();
     }
@@ -90,7 +90,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         var retrievedJobs = request.get("/api/courses/" + course.getId() + "/queued-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs).isEmpty();
         // Adding a lot of jobs as they get processed very quickly due to mocking
-        queuedJobs.addAll(List.of(job1, job2, job1, job2, job1, job2));
+        queuedJobs.addAll(List.of(job1, job2, job1, job2));
         var retrievedJobs1 = request.get("/api/courses/" + course.getId() + "/queued-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs1).isNotEmpty();
     }
