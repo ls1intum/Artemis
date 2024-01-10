@@ -358,7 +358,7 @@ public class LocalCISharedBuildJobQueueService {
                 log.warn("Requeueing failed build job: {}", buildJob);
                 LocalCIBuildJobQueueItem requeuedBuildJob = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(), buildJob.participationId(),
                         buildJob.repositoryTypeOrUserName(), buildJob.commitHash(), buildJob.submissionDate(), buildJob.retryCount() + 1, null, buildJob.priority(),
-                        buildJob.courseId(), buildJob.isPushToTestRepository());
+                        buildJob.courseId(), buildJob.isPushToTestOrAuxRepository());
                 queue.add(requeuedBuildJob);
             }
             else {
