@@ -37,8 +37,8 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @BeforeEach
     void createJobs() {
 
-        job1 = new LocalCIBuildJobQueueItem("job1", 1, "test", "test", ZonedDateTime.now(), 1, course.getId(), false);
-        job2 = new LocalCIBuildJobQueueItem("job2", 2, "test", "test", ZonedDateTime.now(), 1, course.getId(), false);
+        job1 = new LocalCIBuildJobQueueItem(1, "job1", "address1", 1, "test", "commit1", ZonedDateTime.now(), 1, ZonedDateTime.now(), 1, course.getId(), false);
+        job2 = new LocalCIBuildJobQueueItem(2, "job2", "address2", 1, "test", "commit2", ZonedDateTime.now(), 1, ZonedDateTime.now(), 1, course.getId(), false);
 
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
         agent1 = new LocalCIBuildAgentInformation(memberAddress, 1, 0, null);
