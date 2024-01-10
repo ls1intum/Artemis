@@ -62,7 +62,6 @@ public class IrisSessionService {
     /**
      * Sends a request to Iris to get a message for the given session.
      * It decides which Iris subsystem should handle it based on the session type.
-     * Currently, only the chat subsystem exists.
      *
      * @param session The session to get a message for
      */
@@ -76,6 +75,12 @@ public class IrisSessionService {
         }
     }
 
+    /**
+     * Sends a message over the websocket to a specific user.
+     * It decides which Iris subsystem should handle it based on the session type.
+     *
+     * @param message The message to send
+     */
     public void sendOverWebsocket(IrisMessage message) {
         var wrapper = getIrisSessionSubService(message.getSession());
         if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface) {
@@ -86,6 +91,13 @@ public class IrisSessionService {
         }
     }
 
+    /**
+     * Checks the rate limit for the given user.
+     * It decides which Iris subsystem should handle it based on the session type.
+     *
+     * @param session The session to check the rate limit for
+     * @param user    The user to check the rate limit for
+     */
     public void checkRateLimit(IrisSession session, User user) {
         var wrapper = getIrisSessionSubService(session);
         if (wrapper.irisSubFeatureInterface instanceof IrisRateLimitedFeatureInterface) {
