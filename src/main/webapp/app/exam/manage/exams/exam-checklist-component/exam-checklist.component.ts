@@ -22,7 +22,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     hasOptionalExercises = false;
     countMandatoryExercises = 0;
     isTestExam: boolean;
-    hasQuizExam: boolean;
+    hasQuizExam?: boolean;
 
     numberOfSubmitted = 0;
     numberOfStarted = 0;
