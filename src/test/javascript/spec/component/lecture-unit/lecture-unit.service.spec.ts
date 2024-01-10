@@ -21,6 +21,7 @@ describe('LectureUnitService', () => {
     let attachmentUnit: AttachmentUnit;
     let textUnit: TextUnit;
     let videoUnit: VideoUnit;
+    let lecture: Lecture;
     let expectedResultArray: any;
     let convertDateFromServerEntitySpy: jest.SpyInstance;
 
@@ -55,6 +56,11 @@ describe('LectureUnitService', () => {
         exerciseUnit.id = 42;
         exerciseUnit.exercise = exercise;
         exerciseUnit.visibleToStudents = true;
+
+        lecture = {
+            id: 5,
+            lectureUnits: [exerciseUnit],
+        };
 
         textUnit = new TextUnit();
         textUnit.id = 23;
@@ -102,10 +108,6 @@ describe('LectureUnitService', () => {
     }));
 
     it('should set lecture unit as completed', fakeAsync(() => {
-        const lecture: Lecture = {
-            id: 5,
-            lectureUnits: [exerciseUnit],
-        };
         exerciseUnit.completed = false;
         service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: true });
         httpMock.expectOne({ method: 'POST', url: 'api/lectures/5/lecture-units/42/completion?completed=true' }).flush(null);
@@ -113,10 +115,6 @@ describe('LectureUnitService', () => {
     }));
 
     it('should set lecture unit as uncompleted', fakeAsync(() => {
-        const lecture: Lecture = {
-            id: 5,
-            lectureUnits: [exerciseUnit],
-        };
         exerciseUnit.completed = true;
         service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: false });
         httpMock.expectOne({ method: 'POST', url: 'api/lectures/5/lecture-units/42/completion?completed=false' }).flush(null);
@@ -124,11 +122,13 @@ describe('LectureUnitService', () => {
     }));
 
     it('should not set completion status if already completed', fakeAsync(() => {
-        const lecture: Lecture = {
-            id: 5,
-            lectureUnits: [exerciseUnit],
-        };
         exerciseUnit.completed = false;
+        service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: false });
+        httpMock.expectNone({ method: 'POST', url: 'api/lectures/5/lecture-units/42/completion?completed=false' });
+    }));
+
+    it('should not set completion status if not visible', fakeAsync(() => {
+        exerciseUnit.visibleToStudents = false;
         service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: false });
         httpMock.expectNone({ method: 'POST', url: 'api/lectures/5/lecture-units/42/completion?completed=false' });
     }));
