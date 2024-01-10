@@ -6,16 +6,12 @@ import static de.tum.in.www1.artemis.service.util.XmlFileUtils.getDocumentBuilde
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.function.Predicate;
@@ -31,10 +27,7 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathException;
-import javax.xml.xpath.XPathFactory;
+import javax.xml.xpath.*;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -54,9 +47,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.GitException;
-import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ZipFileService;
@@ -91,13 +82,17 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
     private final ZipFileService zipFileService;
 
+    private final BuildPlanRepository buildPlanRepository;
+
     public static final String EXPORTED_EXERCISE_DETAILS_FILE_PREFIX = "Exercise-Details";
 
     public static final String EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX = "Problem-Statement";
 
+    public static final String BUILD_PLAN_FILE_NAME = "buildPlan.txt";
+
     public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             StudentParticipationRepository studentParticipationRepository, FileService fileService, GitService gitService, ZipFileService zipFileService,
-            MappingJackson2HttpMessageConverter springMvcJacksonConverter, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
+            MappingJackson2HttpMessageConverter springMvcJacksonConverter, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, BuildPlanRepository buildPlanRepository) {
         // Programming exercises do not have a submission export service
         super(fileService, springMvcJacksonConverter, null);
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -107,6 +102,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         this.gitService = gitService;
         this.zipFileService = zipFileService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
+        this.buildPlanRepository = buildPlanRepository;
     }
 
     /**
@@ -132,8 +128,8 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             exportDir = Optional.of(fileService.getTemporaryUniquePathWithoutPathCreation(repoDownloadClonePath, 5));
         }
 
-        // Add the exported zip folder containing template, solution, and tests repositories
-        // wrap this in a try catch block to prevent the problem statement and exercise details not being exported if the repositories fail to export
+        // Add the exported zip folder containing template, solution, and tests repositories. Also export the build plan if one exists.
+        // Wrap this in a try catch block to prevent the problem statement and exercise details not being exported if the repositories fail to export
         try {
             var repoExportsPaths = exportProgrammingExerciseRepositories(exercise, includeStudentRepos, shouldZipZipFiles, repoDownloadClonePath, exportDir.orElseThrow(),
                     exportErrors, archivalReportEntries);
@@ -142,6 +138,15 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                     pathsToBeZipped.add(path);
                 }
             });
+
+            // Export the build plan of a programming exercise, if one exists. Only relevant for Gitlab/Jenkins or Gitlab/GitlabCI setups.
+            var buildPlan = buildPlanRepository.findByProgrammingExercises_Id(exercise.getId());
+            if (buildPlan.isPresent()) {
+                Path buildPlanPath = exportDir.orElseThrow().resolve(BUILD_PLAN_FILE_NAME);
+                FileUtils.writeStringToFile(buildPlanPath.toFile(), buildPlan.orElseThrow().getBuildPlan(), StandardCharsets.UTF_8);
+                pathsToBeZipped.add(buildPlanPath);
+            }
+
         }
         catch (Exception e) {
             exportErrors.add("Failed to export programming exercise repositories: " + e.getMessage());
