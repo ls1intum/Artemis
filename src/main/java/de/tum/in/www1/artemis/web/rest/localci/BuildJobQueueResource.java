@@ -79,7 +79,7 @@ public class BuildJobQueueResource {
      * @param buildJobId the id of the build job to cancel
      * @return the ResponseEntity with the result of the cancellation
      */
-    @DeleteMapping("/build-job-queue/cancel/{courseId}/{buildJobId}")
+    @DeleteMapping("/courses/{courseId}/cancel/{buildJobId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> cancelBuildJob(@PathVariable long courseId, @PathVariable long buildJobId) {
         log.debug("REST request to cancel the build job for course {} and with id {}", courseId, buildJobId);
@@ -100,7 +100,7 @@ public class BuildJobQueueResource {
      * @param courseId the id of the course
      * @return the ResponseEntity with the result of the cancellation
      */
-    @DeleteMapping("/build-job-queue/cancel-all-queued/{courseId}")
+    @DeleteMapping("/courses/{courseId}/cancel-all-queued-jobs")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> cancelAllQueuedBuildJobs(@PathVariable long courseId) {
         log.debug("REST request to cancel all queued build jobs for course {}", courseId);
@@ -120,7 +120,7 @@ public class BuildJobQueueResource {
      * @param courseId the id of the course
      * @return the ResponseEntity with the result of the cancellation
      */
-    @DeleteMapping("/build-job-queue/cancel-all-running/{courseId}")
+    @DeleteMapping("/courses/{courseId}/cancel-all-running-jobs")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> cancelAllRunningBuildJobs(@PathVariable long courseId) {
         log.debug("REST request to cancel all running build jobs for course {}", courseId);

@@ -8,7 +8,7 @@ import { BuildJob } from 'app/entities/build-job.model';
 
 @Injectable({ providedIn: 'root' })
 export class BuildQueueService {
-    public resourceUrl = 'api/courses';
+    public resourceUrl = 'api';
     public adminResourceUrl = 'api/admin';
 
     constructor(private http: HttpClient) {}
@@ -17,7 +17,7 @@ export class BuildQueueService {
      * @param courseId
      */
     getQueuedBuildJobsByCourseId(courseId: number): Observable<BuildJob[]> {
-        return this.http.get<BuildJob[]>(`${this.resourceUrl}/${courseId}/queued-jobs`);
+        return this.http.get<BuildJob[]>(`${this.resourceUrl}/courses/${courseId}/queued-jobs`);
     }
 
     /**
@@ -25,7 +25,7 @@ export class BuildQueueService {
      * @param courseId
      */
     getRunningBuildJobsByCourseId(courseId: number): Observable<BuildJob[]> {
-        return this.http.get<BuildJob[]>(`${this.resourceUrl}/${courseId}/running-jobs`);
+        return this.http.get<BuildJob[]>(`${this.resourceUrl}/courses/${courseId}/running-jobs`);
     }
 
     /**
@@ -48,7 +48,7 @@ export class BuildQueueService {
      * @param buildJobId the id of the build job to cancel
      */
     cancelBuildJobInCourse(courseId: number, buildJobId: number): Observable<void> {
-        return this.http.delete<void>(`${this.resourceUrl}/cancel/${courseId}/${buildJobId}`).pipe(
+        return this.http.delete<void>(`${this.resourceUrl}/courses/${courseId}/cancel/${buildJobId}`).pipe(
             catchError((err) => {
                 return throwError(() => new Error(`Failed to cancel build job ${buildJobId} in course ${courseId}\n${err.message}`));
             }),
@@ -71,7 +71,7 @@ export class BuildQueueService {
      * Cancel all running build jobs
      */
     cancelAllRunningBuildJobs(): Observable<void> {
-        return this.http.delete<void>(`${this.adminResourceUrl}/cancel-all-running`).pipe(
+        return this.http.delete<void>(`${this.adminResourceUrl}/cancel-all-running-jobs`).pipe(
             catchError((err) => {
                 return throwError(() => new Error(`Failed to cancel all running build jobs\n${err.message}`));
             }),
@@ -82,7 +82,7 @@ export class BuildQueueService {
      * Cancel all running build jobs associated with a course
      */
     cancelAllRunningBuildJobsInCourse(courseId: number): Observable<void> {
-        return this.http.delete<void>(`${this.resourceUrl}/cancel-all-running/${courseId}`).pipe(
+        return this.http.delete<void>(`${this.resourceUrl}/courses/${courseId}/cancel-all-running-jobs`).pipe(
             catchError((err) => {
                 return throwError(() => new Error(`Failed to cancel all running build jobs in course ${courseId}\n${err.message}`));
             }),
@@ -93,7 +93,7 @@ export class BuildQueueService {
      * Cancel all queued build jobs
      */
     cancelAllQueuedBuildJobs(): Observable<void> {
-        return this.http.delete<void>(`${this.adminResourceUrl}/cancel-all-queued`).pipe(
+        return this.http.delete<void>(`${this.adminResourceUrl}/cancel-all-queued-jobs`).pipe(
             catchError((err) => {
                 return throwError(() => new Error(`Failed to cancel all queued build jobs\n${err.message}`));
             }),
@@ -104,7 +104,7 @@ export class BuildQueueService {
      * Cancel all queued build jobs associated with a course
      */
     cancelAllQueuedBuildJobsInCourse(courseId: number): Observable<void> {
-        return this.http.delete<void>(`${this.resourceUrl}/cancel-all-queued/${courseId}`).pipe(
+        return this.http.delete<void>(`${this.resourceUrl}/courses/${courseId}/cancel-all-queued-jobs`).pipe(
             catchError((err) => {
                 return throwError(() => new Error(`Failed to cancel all queued build jobs in course ${courseId}\n${err.message}`));
             }),

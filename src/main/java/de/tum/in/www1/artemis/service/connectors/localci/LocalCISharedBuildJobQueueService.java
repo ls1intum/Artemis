@@ -318,7 +318,7 @@ public class LocalCISharedBuildJobQueueService {
         }
 
         CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.executeBuildJob(participation, commitHash, isRetry, buildJob.isPushToTestRepository(),
-                buildJob.getId());
+                buildJob.id());
         futureResult.thenAccept(buildResult -> {
 
             // Do not process the result if the participation has been deleted in the meantime
@@ -346,7 +346,7 @@ public class LocalCISharedBuildJobQueueService {
             // process next build job if node is available
             checkAvailabilityAndProcessNextBuild();
         }).exceptionally(ex -> {
-            if (ex.getCause() instanceof CancellationException && ex.getMessage().equals("Build job with id " + buildJob.getId() + " was cancelled.")) {
+            if (ex.getCause() instanceof CancellationException && ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
                 localProcessingJobs.decrementAndGet();
                 updateLocalBuildAgentInformation();
             }
@@ -399,10 +399,10 @@ public class LocalCISharedBuildJobQueueService {
         sharedLock.lock();
         try {
             // Remove build job if it is queued
-            if (queue.stream().anyMatch(job -> Objects.equals(job.getId(), buildJobId))) {
+            if (queue.stream().anyMatch(job -> Objects.equals(job.id(), buildJobId))) {
                 List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
                 for (LocalCIBuildJobQueueItem job : queue) {
-                    if (Objects.equals(job.getId(), buildJobId)) {
+                    if (Objects.equals(job.id(), buildJobId)) {
                         toRemove.add(job);
                     }
                 }
@@ -459,7 +459,13 @@ public class LocalCISharedBuildJobQueueService {
      */
     public void cancelAllQueuedBuildJobs() {
         log.debug("Cancelling all queued build jobs");
-        queue.clear();
+        sharedLock.lock();
+        try {
+            queue.clear();
+        }
+        finally {
+            sharedLock.unlock();
+        }
     }
 
     /**
@@ -467,7 +473,7 @@ public class LocalCISharedBuildJobQueueService {
      */
     public void cancelAllRunningBuildJobs() {
         for (LocalCIBuildJobQueueItem buildJob : processingJobs.values()) {
-            cancelBuildJob(buildJob.getId());
+            cancelBuildJob(buildJob.id());
         }
     }
 
@@ -481,7 +487,7 @@ public class LocalCISharedBuildJobQueueService {
         try {
             List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
             for (LocalCIBuildJobQueueItem job : queue) {
-                if (job.getCourseId() == courseId) {
+                if (job.courseId() == courseId) {
                     toRemove.add(job);
                 }
             }
@@ -499,8 +505,8 @@ public class LocalCISharedBuildJobQueueService {
      */
     public void cancelAllRunningBuildJobsForCourse(long courseId) {
         for (LocalCIBuildJobQueueItem buildJob : processingJobs.values()) {
-            if (buildJob.getCourseId() == courseId) {
-                cancelBuildJob(buildJob.getId());
+            if (buildJob.courseId() == courseId) {
+                cancelBuildJob(buildJob.id());
             }
         }
     }

@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import java.util.Objects;
-
 import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
@@ -70,8 +68,6 @@ public class LocalCIQueueWebsocketService {
         this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
         this.processingJobs.addLocalEntryListener(new ProcessingBuildJobItemListener());
         this.buildAgentInformation.addLocalEntryListener(new BuildAgentListener());
-        // localCIWebsocketMessagingService will be autowired only if scheduling is active
-        Objects.requireNonNull(localCIWebsocketMessagingService, "localCIWebsocketMessagingService must be non-null when scheduling is active.");
     }
 
     private void sendQueuedJobsOverWebsocket(long courseId) {

@@ -71,7 +71,7 @@ public class AdminBuildJobQueueResource {
      * @param buildJobId the id of the build job to cancel
      * @return the ResponseEntity with the result of the cancellation
      */
-    @DeleteMapping("/build-job-queue/cancel/{buildJobId}")
+    @DeleteMapping("/cancel/{buildJobId}")
     @EnforceAdmin
     public ResponseEntity<Void> cancelBuildJob(@PathVariable long buildJobId) {
         log.debug("REST request to cancel the build job with id {}", buildJobId);
@@ -86,7 +86,7 @@ public class AdminBuildJobQueueResource {
      *
      * @return the ResponseEntity with the result of the cancellation
      */
-    @DeleteMapping("/build-job-queue/cancel-all-queued")
+    @DeleteMapping("/cancel-all-queued-jobs")
     @EnforceAdmin
     public ResponseEntity<Void> cancelAllQueuedBuildJobs() {
         log.debug("REST request to cancel all queued build jobs");
@@ -101,7 +101,7 @@ public class AdminBuildJobQueueResource {
      *
      * @return the ResponseEntity with the result of the cancellation
      */
-    @DeleteMapping("/build-job-queue/cancel-all-running")
+    @DeleteMapping("/cancel-all-running-jobs")
     @EnforceAdmin
     public ResponseEntity<Void> cancelAllRunningBuildJobs() {
         log.debug("REST request to cancel all running build jobs");
