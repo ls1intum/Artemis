@@ -63,67 +63,67 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetQueuedBuildJobs_returnsJobs() throws Exception {
-        var retrievedJobs = request.get("/api/admin/build-job-queue/queued", HttpStatus.OK, List.class);
+        var retrievedJobs = request.get("/api/admin/queued-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs).isEmpty();
         // Adding a lot of jobs as they get processed very quickly due to mocking
         queuedJobs.addAll(List.of(job1, job2, job1, job2, job1, job2));
-        var retrievedJobs1 = request.get("/api/admin/build-job-queue/queued", HttpStatus.OK, List.class);
+        var retrievedJobs1 = request.get("/api/admin/queued-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs1).isNotEmpty();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetQueuedBuildJobs_instructorAccessForbidden() throws Exception {
-        request.get("/api/admin/build-job-queue/queued", HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/admin/queued-jobs", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetRunningBuildJobs_returnsJobs() throws Exception {
-        var retrievedJobs = request.get("/api/admin/build-job-queue/running", HttpStatus.OK, List.class);
+        var retrievedJobs = request.get("/api/admin/running-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs).hasSize(2);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetQueuedBuildJobsForCourse_returnsJobs() throws Exception {
-        var retrievedJobs = request.get("/api/build-job-queue/queued/" + course.getId(), HttpStatus.OK, List.class);
+        var retrievedJobs = request.get("/api/courses/" + course.getId() + "/queued-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs).isEmpty();
         // Adding a lot of jobs as they get processed very quickly due to mocking
         queuedJobs.addAll(List.of(job1, job2, job1, job2, job1, job2));
-        var retrievedJobs1 = request.get("/api/build-job-queue/queued/" + course.getId(), HttpStatus.OK, List.class);
+        var retrievedJobs1 = request.get("/api/courses/" + course.getId() + "/queued-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs1).isNotEmpty();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testGetQueuedBuildJobsForCourse_wrongInstructorAccessForbidden() throws Exception {
-        request.get("/api/build-job-queue/queued/" + course.getId(), HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/courses/" + course.getId() + "/queued-jobs", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetRunningBuildJobsForCourse_returnsJobs() throws Exception {
-        var retrievedJobs = request.get("/api/build-job-queue/running/" + course.getId(), HttpStatus.OK, List.class);
+        var retrievedJobs = request.get("/api/courses/" + course.getId() + "/running-jobs", HttpStatus.OK, List.class);
         assertThat(retrievedJobs).hasSize(2);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testGetRunningBuildJobsForCourse_wrongInstructorAccessForbidden() throws Exception {
-        request.get("/api/build-job-queue/running/" + course.getId(), HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/courses/" + course.getId() + "/running-jobs", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetBuildAgents_returnsAgents() throws Exception {
-        var retrievedAgents = request.get("/api/admin/build-job-queue/build-agents", HttpStatus.OK, List.class);
+        var retrievedAgents = request.get("/api/admin/build-agents", HttpStatus.OK, List.class);
         assertThat(retrievedAgents).hasSize(1);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBuildAgents_instructorAccessForbidden() throws Exception {
-        request.get("/api/admin/build-job-queue/build-agents", HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/admin/build-agents", HttpStatus.FORBIDDEN, List.class);
     }
 }
