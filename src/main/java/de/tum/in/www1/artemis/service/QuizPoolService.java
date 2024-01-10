@@ -228,12 +228,22 @@ public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQu
         return quizPool.getExam().getCourse();
     }
 
+    /**
+     * Fetch the max points of the quiz exam that belongs to the given exam
+     *
+     * @param exam the exam to be checked
+     */
     public void fetchQuizExamMaxPoints(Exam exam) {
         fetchQuizExamMaxPoints(List.of(exam));
     }
 
+    /**
+     * Fetch the max points of the quiz exam that belongs to the given exams
+     *
+     * @param exams the list of exams to be checked
+     */
     public void fetchQuizExamMaxPoints(List<Exam> exams) {
-        List<Long> examIds = exams.stream().map(Exam::getId).collect(Collectors.toList());
+        List<Long> examIds = exams.stream().map(Exam::getId).collect(Collectors.toCollection(ArrayList::new));
         List<QuizPool> quizPools = quizPoolRepository.findByExamIds(examIds);
         Map<Long, QuizPool> examIdQuizPoolMap = quizPools.stream().collect(Collectors.toMap(quizPool -> quizPool.getExam().getId(), Function.identity()));
         for (Exam exam : exams) {

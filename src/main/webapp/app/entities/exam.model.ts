@@ -36,9 +36,9 @@ export class Exam implements BaseEntity {
     public exerciseGroups?: ExerciseGroup[];
     public studentExams?: StudentExam[];
     public examUsers?: ExamUser[];
+    public hasQuizExam?: boolean;
     public quizExamMaxPoints?: number;
     public randomizeQuizExamQuestionsOrder?: boolean;
-    public hasQuizExam: boolean;
     public numberOfExamUsers?: number; // transient
     public channelName?: string; // transient
 
