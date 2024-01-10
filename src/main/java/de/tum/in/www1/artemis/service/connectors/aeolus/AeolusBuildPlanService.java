@@ -40,7 +40,7 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService
 @Profile("aeolus")
 public class AeolusBuildPlanService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AeolusBuildPlanService.class);
+    private static final Logger log = LoggerFactory.getLogger(AeolusBuildPlanService.class);
 
     private final Optional<BambooInternalUrlService> bambooInternalUrlService;
 
@@ -89,7 +89,7 @@ public class AeolusBuildPlanService {
         String url = getCiUrl();
         String buildPlan = new Gson().toJson(windfile);
         if (url == null) {
-            LOGGER.error("Could not publish build plan {} to Aeolus target {}, no CI URL configured", buildPlan, target);
+            log.error("Could not publish build plan {} to Aeolus target {}, no CI URL configured", buildPlan, target);
             return null;
         }
         String requestUrl = aeolusUrl + "/publish/" + target.getName();
@@ -108,7 +108,7 @@ public class AeolusBuildPlanService {
             }
         }
         catch (RestClientException e) {
-            LOGGER.error("Error while publishing build plan {} to Aeolus target {}", buildPlan, target, e);
+            log.error("Error while publishing build plan {} to Aeolus target {}", buildPlan, target, e);
         }
         return null;
     }
@@ -135,7 +135,7 @@ public class AeolusBuildPlanService {
             }
         }
         catch (RestClientException e) {
-            LOGGER.error("Error while generating build script for build plan {}", buildPlan, e);
+            log.error("Error while generating build script for build plan {}", buildPlan, e);
         }
         return null;
     }
