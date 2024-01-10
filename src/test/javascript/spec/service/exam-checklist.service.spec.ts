@@ -115,6 +115,17 @@ describe('ExamChecklistService', () => {
             expect(result).toBeTrue();
         });
 
+        it('should return true if exam points can be reached by quiz exam points', () => {
+            exam.exerciseGroups = undefined;
+            exam.hasQuizExam = true;
+            exam.quizExamMaxPoints = 10;
+            exam.examMaxPoints = 10;
+
+            result = service.checkTotalPointsMandatory(true, exam);
+
+            expect(result).toBeTrue();
+        });
+
         it('should set totalPointsMandatoryOptional to false if exam points cannot be reached by mandatory points + optional points', () => {
             exam.exerciseGroups = getExerciseGroups(true);
             exam.examMaxPoints = 300;
@@ -239,6 +250,16 @@ describe('ExamChecklistService', () => {
             result = service.checkNumberOfExerciseGroups(exam);
 
             expect(result).toBeFalse();
+        });
+
+        it('should return true if quiz exam exists and no exercise group', () => {
+            exam.hasQuizExam = true;
+            exam.exerciseGroups = undefined;
+            exam.numberOfExercisesInExam = 1;
+
+            result = service.checkNumberOfExerciseGroups(exam);
+
+            expect(result).toBeTrue();
         });
     });
 

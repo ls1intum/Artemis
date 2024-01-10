@@ -52,7 +52,7 @@
                             <ul class="list-unstyled">
                                 <li class="list-group-item border-1">
                                     <span>
-                                        <jhi-checklist-check [checkAttribute]="exam.exerciseGroups && exam.exerciseGroups.length > 0"></jhi-checklist-check>
+                                        <jhi-checklist-check [checkAttribute]="(exam.exerciseGroups && exam.exerciseGroups.length > 0) || hasQuizExam"></jhi-checklist-check>
                                         <span>{{ 'artemisApp.examManagement.checklist.textitems.leastoneexercisegroup' | artemisTranslate }}</span>
                                     </span>
                                 </li>
@@ -61,9 +61,12 @@
                                         <!-- assert amount mandatory exercises <= number in settings <= amount total exercises -->
                                         <jhi-checklist-check
                                             [checkAttribute]="
-                                                exam.exerciseGroups &&
-                                                countMandatoryExercises <= (exam.numberOfExercisesInExam ?? 0) &&
-                                                (exam.numberOfExercisesInExam ?? 0) <= exam.exerciseGroups.length
+                                                (exam.exerciseGroups &&
+                                                    countMandatoryExercises <= (exam.numberOfExercisesInExam ?? 0) &&
+                                                    (exam.numberOfExercisesInExam ?? 0) <= exam.exerciseGroups.length) ||
+                                                (hasQuizExam &&
+                                                    countMandatoryExercises <= (exam.numberOfExercisesInExam ?? 0) &&
+                                                    (exam.numberOfExercisesInExam ?? 0) <= (exam.exerciseGroups?.length ?? 0) + 1)
                                             "
                                         ></jhi-checklist-check>
                                         <span>{{
@@ -76,19 +79,19 @@
                                 </li>
                                 <li class="list-group-item border-1">
                                     <span>
-                                        <jhi-checklist-check [checkAttribute]="allGroupsContainExercise"></jhi-checklist-check>
+                                        <jhi-checklist-check [checkAttribute]="allGroupsContainExercise || hasQuizExam"></jhi-checklist-check>
                                         <span>{{ 'artemisApp.examManagement.checklist.textitems.eachexercisegroup' | artemisTranslate }}</span>
                                     </span>
                                 </li>
                                 <li class="list-group-item border-1">
                                     <span>
-                                        <jhi-checklist-check [checkAttribute]="pointsExercisesEqual"></jhi-checklist-check>
+                                        <jhi-checklist-check [checkAttribute]="pointsExercisesEqual || hasQuizExam"></jhi-checklist-check>
                                         <span>{{ 'artemisApp.examManagement.checklist.textitems.pointsexercisegroupequal' | artemisTranslate }}</span>
                                     </span>
                                 </li>
                                 <li class="list-group-item border-1">
                                     <span>
-                                        <jhi-checklist-check [checkAttribute]="totalPoints"></jhi-checklist-check>
+                                        <jhi-checklist-check [checkAttribute]="totalPoints || hasQuizExam"></jhi-checklist-check>
                                         <span>{{ 'artemisApp.examManagement.checklist.textitems.totalpointspossible' | artemisTranslate }}</span>
                                     </span>
                                 </li>

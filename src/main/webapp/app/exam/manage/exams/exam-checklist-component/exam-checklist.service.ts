@@ -44,7 +44,7 @@ export class ExamChecklistService {
 
         // calculate mandatory points and optional points
         if (pointsExercisesEqual) {
-            exam.exerciseGroups!.forEach((exerciseGroup) => {
+            exam.exerciseGroups?.forEach((exerciseGroup) => {
                 if (exerciseGroup!.exercises && exerciseGroup.exercises.length !== 0) {
                     if (exerciseGroup.isMandatory) {
                         sumPointsExerciseGroupsMandatory += exerciseGroup!.exercises![0]!.maxPoints!;
@@ -53,6 +53,9 @@ export class ExamChecklistService {
                     }
                 }
             });
+            if (exam.hasQuizExam) {
+                sumPointsExerciseGroupsMandatory += exam.quizExamMaxPoints ?? 0;
+            }
 
             if (sumPointsExerciseGroupsMandatory <= exam.examMaxPoints!) {
                 totalPointsMandatory = true;
@@ -141,8 +144,12 @@ export class ExamChecklistService {
     checkNumberOfExerciseGroups(exam: Exam): boolean {
         const numberOfMandatoryExerciseGroups = exam.exerciseGroups?.filter((group) => group.isMandatory).length ?? 0;
         return (
-            (exam.exerciseGroups && numberOfMandatoryExerciseGroups <= (exam.numberOfExercisesInExam ?? 0) && (exam.numberOfExercisesInExam ?? 0) <= exam.exerciseGroups.length) ??
-            false
+            ((exam.exerciseGroups && numberOfMandatoryExerciseGroups <= (exam.numberOfExercisesInExam ?? 0) && (exam.numberOfExercisesInExam ?? 0) <= exam.exerciseGroups.length) ??
+                false) ||
+            ((exam.hasQuizExam &&
+                numberOfMandatoryExerciseGroups <= (exam.numberOfExercisesInExam ?? 0) &&
+                (exam.numberOfExercisesInExam ?? 0) <= (exam.exerciseGroups?.length ?? 1)) ??
+                false)
         );
     }
 

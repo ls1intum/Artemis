@@ -509,6 +509,11 @@ public class Exam extends DomainObject {
         this.randomizeQuizExamQuestionsOrder = randomizeQuizExamQuestionOrder;
     }
 
+    @JsonProperty(value = "hasQuizExam", access = JsonProperty.Access.READ_ONLY)
+    public boolean hasQuizExam() {
+        return getQuizExamMaxPoints() != null && getQuizExamMaxPoints() > 0;
+    }
+
     @JsonIgnore
     public String getSanitizedExamTitle() {
         // exam titles are non-nullable
