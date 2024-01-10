@@ -74,8 +74,6 @@ class GroupNotificationFactoryTest {
 
     private String expectedText;
 
-    private String expectedPlaceholderValues;
-
     private NotificationTarget expectedTransientTarget;
 
     private NotificationPriority expectedPriority;
@@ -241,7 +239,6 @@ class GroupNotificationFactoryTest {
         notificationType = ATTACHMENT_CHANGE;
         expectedTitle = ATTACHMENT_CHANGE_TITLE;
         expectedText = ATTACHMENT_CHANGE_TEXT;
-        expectedPlaceholderValues = "[" + attachment.getName() + "]";
         expectedTransientTarget = createLectureTarget(lecture, ATTACHMENT_UPDATED_TEXT);
         expectedPriority = MEDIUM;
         createAndCheckNotification(Base.ATTACHMENT);
@@ -258,7 +255,6 @@ class GroupNotificationFactoryTest {
         notificationType = EXERCISE_RELEASED;
         expectedTitle = EXERCISE_RELEASED_TITLE;
         expectedText = NotificationConstants.EXERCISE_RELEASED_TEXT;
-        expectedPlaceholderValues = "[\"" + exercise.getTitle() + "\"]";
         expectedTransientTarget = createExerciseTarget(exercise, EXERCISE_RELEASED_TEXT);
         expectedPriority = MEDIUM;
         createAndCheckNotification(Base.EXERCISE);
@@ -273,7 +269,6 @@ class GroupNotificationFactoryTest {
         notificationType = EXERCISE_PRACTICE;
         expectedTitle = EXERCISE_PRACTICE_TITLE;
         expectedText = EXERCISE_PRACTICE_TEXT;
-        expectedPlaceholderValues = "[\"" + exercise.getTitle() + "\"]";
         expectedTransientTarget = createExerciseTarget(exercise, EXERCISE_UPDATED_TEXT);
         expectedPriority = MEDIUM;
         createAndCheckNotification(Base.EXERCISE);
@@ -288,7 +283,6 @@ class GroupNotificationFactoryTest {
         notificationType = QUIZ_EXERCISE_STARTED;
         expectedTitle = QUIZ_EXERCISE_STARTED_TITLE;
         expectedText = QUIZ_EXERCISE_STARTED_TEXT;
-        expectedPlaceholderValues = "[\"" + exercise.getTitle() + "\"]";
         expectedTransientTarget = createExerciseTarget(exercise, EXERCISE_UPDATED_TEXT);
         expectedPriority = MEDIUM;
         createAndCheckNotification(Base.EXERCISE);
@@ -303,7 +297,6 @@ class GroupNotificationFactoryTest {
         notificationType = PROGRAMMING_TEST_CASES_CHANGED;
         expectedTitle = PROGRAMMING_TEST_CASES_CHANGED_TITLE;
         expectedText = PROGRAMMING_TEST_CASES_CHANGED_TEXT;
-        expectedPlaceholderValues = "[\"" + exercise.getTitle() + "\"," + exercise.getCourseViaExerciseGroupOrCourseMember().getTitle() + "]";
         expectedTransientTarget = createExerciseTarget(exercise, EXERCISE_UPDATED_TEXT);
         expectedPriority = MEDIUM;
         createAndCheckNotification(Base.EXERCISE);
@@ -320,7 +313,6 @@ class GroupNotificationFactoryTest {
         expectedTitle = LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
         expectedPriority = HIGH;
         expectedText = LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TEXT;
-        expectedPlaceholderValues = "[\"" + exercise.getTitle() + "\"]";
 
         expectedTransientTarget = new NotificationTarget(EXAMS_TEXT, COURSE_ID, COURSES_TEXT);
         expectedTransientTarget.setProblemStatement(examExercise.getProblemStatement());
@@ -347,7 +339,6 @@ class GroupNotificationFactoryTest {
         notificationType = EXERCISE_UPDATED;
         expectedTitle = EXERCISE_UPDATED_TITLE;
         expectedText = NotificationConstants.EXERCISE_UPDATED_TEXT;
-        expectedPlaceholderValues = "[\"" + exercise.getTitle() + "\"]";
         expectedPriority = MEDIUM;
         expectedTransientTarget = createExerciseTarget(exercise, EXERCISE_UPDATED_TEXT);
         createAndCheckNotification(Base.EXERCISE);
@@ -362,7 +353,6 @@ class GroupNotificationFactoryTest {
         notificationType = NEW_ANNOUNCEMENT_POST;
         expectedTitle = NEW_ANNOUNCEMENT_POST_TITLE;
         expectedText = NEW_ANNOUNCEMENT_POST_TEXT;
-        expectedPlaceholderValues = "[" + course.getTitle() + "]";
         expectedPriority = MEDIUM;
         expectedTransientTarget = createCoursePostTarget(post, course);
         createAndCheckNotification(Base.POST);
@@ -379,7 +369,6 @@ class GroupNotificationFactoryTest {
         notificationType = COURSE_ARCHIVE_STARTED;
         expectedTitle = COURSE_ARCHIVE_STARTED_TITLE;
         expectedText = COURSE_ARCHIVE_STARTED_TEXT;
-        expectedPlaceholderValues = "[" + course.getTitle() + "]";
         expectedPriority = MEDIUM;
         expectedTransientTarget = createCourseTarget(course, COURSE_ARCHIVE_UPDATED_TEXT);
         createAndCheckNotification(Base.COURSE);
@@ -394,7 +383,6 @@ class GroupNotificationFactoryTest {
         notificationType = COURSE_ARCHIVE_FINISHED;
         expectedTitle = COURSE_ARCHIVE_FINISHED_TITLE;
         expectedText = COURSE_ARCHIVE_FINISHED_WITH_ERRORS_TEXT;
-        expectedPlaceholderValues = "[" + course.getTitle() + ",\"" + String.join("<br/><br/>", archiveErrors) + "\"]";
         expectedPriority = MEDIUM;
         expectedTransientTarget = createCourseTarget(course, COURSE_ARCHIVE_UPDATED_TEXT);
         createAndCheckNotification(Base.COURSE);
@@ -409,7 +397,6 @@ class GroupNotificationFactoryTest {
         notificationType = COURSE_ARCHIVE_FAILED;
         expectedTitle = COURSE_ARCHIVE_FAILED_TITLE;
         expectedText = COURSE_ARCHIVE_FAILED_TEXT;
-        expectedPlaceholderValues = "[" + course.getTitle() + ",\"" + String.join("<br/><br/>", archiveErrors) + "\"]";
         expectedPriority = MEDIUM;
         expectedTransientTarget = createCourseTarget(course, COURSE_ARCHIVE_UPDATED_TEXT);
         createAndCheckNotification(Base.COURSE);
@@ -426,7 +413,6 @@ class GroupNotificationFactoryTest {
         notificationType = EXAM_ARCHIVE_STARTED;
         expectedTitle = EXAM_ARCHIVE_STARTED_TITLE;
         expectedText = EXAM_ARCHIVE_STARTED_TEXT;
-        expectedPlaceholderValues = "[" + exam.getTitle() + "]";
         expectedPriority = MEDIUM;
         expectedTransientTarget = createCourseTarget(course, EXAM_ARCHIVE_UPDATED_TEXT);
         createAndCheckNotification(Base.EXAM);
@@ -441,7 +427,6 @@ class GroupNotificationFactoryTest {
         notificationType = EXAM_ARCHIVE_FINISHED;
         expectedTitle = EXAM_ARCHIVE_FINISHED_TITLE;
         expectedText = EXAM_ARCHIVE_FINISHED_WITH_ERRORS_TEXT;
-        expectedPlaceholderValues = "[" + exam.getTitle() + ",\"" + String.join("<br/><br/>", archiveErrors) + "\"]";
         expectedPriority = MEDIUM;
         expectedTransientTarget = createCourseTarget(course, EXAM_ARCHIVE_UPDATED_TEXT);
         createAndCheckNotification(Base.EXAM);
@@ -455,9 +440,7 @@ class GroupNotificationFactoryTest {
     void createNotificationBasedOnExam_withNotificationType_ExamArchiveFailed() {
         notificationType = EXAM_ARCHIVE_FAILED;
         expectedTitle = EXAM_ARCHIVE_FAILED_TITLE;
-        expectedText = "The was a problem archiving exam \"" + exam.getTitle() + "\": <br/><br/>" + String.join("<br/><br/>", archiveErrors);
         expectedText = EXAM_ARCHIVE_FAILED_TEXT;
-        expectedPlaceholderValues = "[" + course.getTitle() + ",\"" + String.join("<br/><br/>", archiveErrors) + "\"]";
         expectedPriority = MEDIUM;
         expectedTransientTarget = createCourseTarget(course, EXAM_ARCHIVE_UPDATED_TEXT);
         createAndCheckNotification(Base.EXAM);

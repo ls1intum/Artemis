@@ -1,17 +1,14 @@
 package de.tum.in.www1.artemis.service;
 
-import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
@@ -46,18 +43,17 @@ public class QuizExerciseImportService extends ExerciseImportService {
      * Imports a quiz exercise creating a new entity, copying all basic values and saving it in the database.
      * All basic include everything except Student-, Tutor participations, and student questions. <br>
      * This method calls {@link #copyQuizExerciseBasis(QuizExercise)} to set up the basis of the exercise and
-     * {@link #copyQuizQuestions(QuizExercise, QuizExercise, List)} for a hard copy of the questions.
+     * {@link #copyQuizQuestions(QuizExercise, QuizExercise)} for a hard copy of the questions.
      *
      * @param templateExercise The template exercise which should get imported
      * @param importedExercise The new exercise already containing values which should not get copied, i.e. overwritten
-     * @param providedFiles    The files that were provided by the user
      * @return The newly created exercise
      */
     @NotNull
-    public QuizExercise importQuizExercise(final QuizExercise templateExercise, QuizExercise importedExercise, @NotNull List<MultipartFile> providedFiles) throws IOException {
+    public QuizExercise importQuizExercise(final QuizExercise templateExercise, QuizExercise importedExercise) {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         QuizExercise newExercise = copyQuizExerciseBasis(importedExercise);
-        copyQuizQuestions(importedExercise, newExercise, providedFiles);
+        copyQuizQuestions(importedExercise, newExercise);
         copyQuizBatches(importedExercise, newExercise);
 
         QuizExercise newQuizExercise = quizExerciseService.save(newExercise);
@@ -93,13 +89,9 @@ public class QuizExerciseImportService extends ExerciseImportService {
      *
      * @param importedExercise The exercise from which to copy the questions
      * @param newExercise      The exercise to which the questions are copied
-     * @param providedFiles    The files that were provided by the user
      */
-    private void copyQuizQuestions(QuizExercise importedExercise, QuizExercise newExercise, @NotNull List<MultipartFile> providedFiles) throws IOException {
+    private void copyQuizQuestions(QuizExercise importedExercise, QuizExercise newExercise) {
         log.debug("Copying the QuizQuestions to new QuizExercise: {}", newExercise);
-
-        // Setup file map
-        Map<String, MultipartFile> fileMap = providedFiles.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, file -> file));
 
         for (QuizQuestion quizQuestion : importedExercise.getQuizQuestions()) {
             quizQuestion.setId(null);

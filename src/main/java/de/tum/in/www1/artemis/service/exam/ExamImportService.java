@@ -311,7 +311,7 @@ public class ExamImportService {
                         yield Optional.empty();
                     }
                     // We don't allow a modification of the exercise at this point, so we can just pass an empty list of files.
-                    yield Optional.of(quizExerciseImportService.importQuizExercise(optionalOriginalQuizExercise.get(), (QuizExercise) exerciseToCopy, new ArrayList<>()));
+                    yield Optional.of(quizExerciseImportService.importQuizExercise(optionalOriginalQuizExercise.get(), (QuizExercise) exerciseToCopy));
                 }
             };
             // Attach the newly created Exercise to the new Exercise Group only if the importing was successful
