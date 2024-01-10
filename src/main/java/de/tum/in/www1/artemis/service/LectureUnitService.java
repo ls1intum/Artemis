@@ -88,7 +88,7 @@ public class LectureUnitService {
             }).toList());
         }
 
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureUnitToDelete.getLecture().getId());
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureUnitToDelete.getLecture().getId());
         // Creating a new list of lecture units without the one we want to remove
         List<LectureUnit> lectureUnitsUpdated = new ArrayList<>();
         for (LectureUnit unit : lecture.getLectureUnits()) {

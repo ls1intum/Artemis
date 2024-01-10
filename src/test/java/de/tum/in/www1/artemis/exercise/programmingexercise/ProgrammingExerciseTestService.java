@@ -3,8 +3,7 @@ package de.tum.in.www1.artemis.exercise.programmingexercise;
 import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.INDIVIDUAL;
 import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.TEAM;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.*;
-import static de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService.EXPORTED_EXERCISE_DETAILS_FILE_PREFIX;
-import static de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService.EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX;
+import static de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService.*;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -208,6 +207,9 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private BuildPlanRepository buildPlanRepository;
 
     public Course course;
 
@@ -518,6 +520,19 @@ public class ProgrammingExerciseTestService {
                 ProgrammingExercise.class, HttpStatus.OK);
         assertThat(FilePathService.getMarkdownFilePath()).isDirectoryContaining(path -> embeddedFileName1.equals(path.getFileName().toString()))
                 .isDirectoryContaining(path -> embeddedFileName2.equals(path.getFileName().toString()));
+
+    }
+
+    void importFromFile_buildPlanPresent_buildPlanUsed() throws Exception {
+        mockDelegate.mockConnectorRequestForImportFromFile(exercise);
+        var resource = new ClassPathResource("test-data/import-from-file/import-with-build-plan.zip");
+        var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+        exercise.setChannelName("testchannel-pe");
+        var importedExercise = request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.OK);
+        var buildPlan = buildPlanRepository.findByProgrammingExercises_Id(importedExercise.getId());
+        assertThat(buildPlan).isPresent();
+        assertThat(buildPlan.orElseThrow().getBuildPlan()).isEqualTo("my super cool build plan");
 
     }
 
@@ -1379,7 +1394,7 @@ public class ProgrammingExerciseTestService {
     }
 
     void exportInstructorAuxiliaryRepository_shouldReturnFile() throws Exception {
-        generateProgrammingExerciseForExport(false);
+        generateProgrammingExerciseForExport();
         var auxRepo = addAuxiliaryRepositoryToProgrammingExercise(exercise);
         setupAuxRepoMock(auxRepo);
         setupRepositoryMocks(exercise);
@@ -1395,7 +1410,7 @@ public class ProgrammingExerciseTestService {
     }
 
     void exportInstructorAuxiliaryRepository_forbidden() throws Exception {
-        generateProgrammingExerciseForExport(false);
+        generateProgrammingExerciseForExport();
         var auxRepo = addAuxiliaryRepositoryToProgrammingExercise(exercise);
         var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-auxiliary-repository/" + auxRepo.getId();
         request.get(url, HttpStatus.FORBIDDEN, String.class);
@@ -1412,7 +1427,7 @@ public class ProgrammingExerciseTestService {
     }
 
     private String exportInstructorRepository(RepositoryType repositoryType, LocalRepository localRepository, HttpStatus expectedStatus) throws Exception {
-        generateProgrammingExerciseForExport(false);
+        generateProgrammingExerciseForExport();
 
         setupMockRepo(localRepository, repositoryType, "some-file.java");
 
@@ -1421,7 +1436,7 @@ public class ProgrammingExerciseTestService {
     }
 
     private String exportStudentRequestedRepository(HttpStatus expectedStatus, boolean includeTests) throws Exception {
-        generateProgrammingExerciseForExport(false);
+        generateProgrammingExerciseForExport();
 
         setupMockRepo(exerciseRepo, RepositoryType.SOLUTION, "some-file.java");
         if (includeTests) {
@@ -1435,13 +1450,33 @@ public class ProgrammingExerciseTestService {
     // Test
 
     /**
+     * Test that the export of the instructor material works as expected when no build plan exists (e.g. for bamboo setups at the moment)
+     * <p>
+     *
+     * @param saveEmbeddedFiles whether embedded files should be saved or not, not saving them simulates that embedded files are no longer stored on the file system
+     * @throws Exception if the export fails
+     */
+    void exportProgrammingExerciseInstructorMaterial_shouldReturnFileWithoutBuildplan(boolean saveEmbeddedFiles) throws Exception {
+        exportProgrammingExerciseInstructorMaterial_shouldReturnFile(saveEmbeddedFiles, false);
+    }
+
+    /**
+     * Test that the export of the instructor material works as expected with a build plan included (relevant for Gitlab/Jenkins setups).
+     *
+     * @throws Exception if the export fails
+     */
+    void exportProgrammingExerciseInstructorMaterial_shouldReturnFileWithBuildplan() throws Exception {
+        exportProgrammingExerciseInstructorMaterial_shouldReturnFile(false, true);
+    }
+
+    /**
      * Test that the export of the instructor material works as expected.
      *
      * @param saveEmbeddedFiles whether embedded files should be saved or not, not saving them simulates that embedded files are no longer stored on the file system
      * @throws Exception if the export fails
      */
-    void exportProgrammingExerciseInstructorMaterial_shouldReturnFile(boolean saveEmbeddedFiles) throws Exception {
-        var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, false, true, saveEmbeddedFiles);
+    void exportProgrammingExerciseInstructorMaterial_shouldReturnFile(boolean saveEmbeddedFiles, boolean shouldIncludeBuildplan) throws Exception {
+        var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, false, true, saveEmbeddedFiles, shouldIncludeBuildplan);
         // Assure, that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
         await().until(zipFile::exists);
         assertThat(zipFile).isNotNull();
@@ -1470,6 +1505,15 @@ public class ProgrammingExerciseTestService {
                 assertThat(listOfIncludedFiles).anyMatch((filename) -> filename.toString().equals(embeddedFileName1))
                         .anyMatch((filename) -> filename.toString().equals(embeddedFileName2));
             }
+            if (shouldIncludeBuildplan) {
+                assertThat(listOfIncludedFiles).anyMatch((filename) -> BUILD_PLAN_FILE_NAME.equals(filename.toString()));
+                Path buildPlanPath = listOfIncludedFiles.stream().filter(file -> BUILD_PLAN_FILE_NAME.equals(file.getFileName().toString())).findFirst().orElseThrow();
+                String buildPlanContent = Files.readString(extractedZipDir.resolve(buildPlanPath), StandardCharsets.UTF_8);
+                assertThat(buildPlanContent).isEqualTo("my build plan");
+            }
+            else {
+                assertThat(listOfIncludedFiles).noneMatch((filename) -> BUILD_PLAN_FILE_NAME.equals(filename.toString()));
+            }
         }
 
         FileUtils.deleteDirectory(extractedZipDir.toFile());
@@ -1477,7 +1521,7 @@ public class ProgrammingExerciseTestService {
     }
 
     void exportProgrammingExerciseInstructorMaterial_problemStatementNull_success() throws Exception {
-        var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, true, true, false);
+        var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, true, true, false, false);
         await().until(zipFile::exists);
         assertThat(zipFile).isNotNull();
         Path extractedZipDir = zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
@@ -1526,25 +1570,27 @@ public class ProgrammingExerciseTestService {
         // change the group name to enforce a HttpStatus forbidden after having accessed the endpoint
         course.setInstructorGroupName("test");
         courseRepository.save(course);
-        exportProgrammingExerciseInstructorMaterial(HttpStatus.FORBIDDEN, false, false, false);
+        exportProgrammingExerciseInstructorMaterial(HttpStatus.FORBIDDEN, false, false, false, false);
     }
 
     /**
      * export programming exercise instructor material
      *
-     * @param expectedStatus       the expected http status, e.g. 200 OK
-     * @param problemStatementNull whether the problem statement should be null or not
-     * @param mockRepos            whether the repos should be mocked or not, if we mock the files API we cannot mock them but also cannot use them
-     * @param saveEmbeddedFiles    whether embedded files should be saved or not, not saving them simulates that embedded files are no longer stored on the file system
+     * @param expectedStatus         the expected http status, e.g. 200 OK
+     * @param problemStatementNull   whether the problem statement should be null or not
+     * @param mockRepos              whether the repos should be mocked or not, if we mock the files API we cannot mock them but also cannot use them
+     * @param saveEmbeddedFiles      whether embedded files should be saved or not, not saving them simulates that embedded files are no longer stored on the file system
+     * @param shouldIncludeBuildplan whether the build plan should be included in the export or not
      * @return the zip file
      * @throws Exception if the export fails
      */
-    File exportProgrammingExerciseInstructorMaterial(HttpStatus expectedStatus, boolean problemStatementNull, boolean mockRepos, boolean saveEmbeddedFiles) throws Exception {
+    File exportProgrammingExerciseInstructorMaterial(HttpStatus expectedStatus, boolean problemStatementNull, boolean mockRepos, boolean saveEmbeddedFiles,
+            boolean shouldIncludeBuildplan) throws Exception {
         if (problemStatementNull) {
             generateProgrammingExerciseWithProblemStatementNullForExport();
         }
         else {
-            generateProgrammingExerciseForExport(saveEmbeddedFiles);
+            generateProgrammingExerciseForExport(saveEmbeddedFiles, shouldIncludeBuildplan);
         }
         return exportProgrammingExerciseInstructorMaterial(expectedStatus, mockRepos);
     }
@@ -1579,7 +1625,11 @@ public class ProgrammingExerciseTestService {
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
     }
 
-    private void generateProgrammingExerciseForExport(boolean saveEmbeddedFiles) throws IOException {
+    private void generateProgrammingExerciseForExport() throws IOException {
+        generateProgrammingExerciseForExport(false, false);
+    }
+
+    private void generateProgrammingExerciseForExport(boolean saveEmbeddedFiles, boolean shouldIncludeBuildPlan) throws IOException {
         String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
         String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
         exercise.setProblemStatement(String.format("""
@@ -1594,6 +1644,9 @@ public class ProgrammingExerciseTestService {
                     FilePathService.getMarkdownFilePath().resolve(embeddedFileName2).toFile());
         }
         exercise = programmingExerciseRepository.save(exercise);
+        if (shouldIncludeBuildPlan) {
+            buildPlanRepository.setBuildPlanForExercise("my build plan", exercise);
+        }
         exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
