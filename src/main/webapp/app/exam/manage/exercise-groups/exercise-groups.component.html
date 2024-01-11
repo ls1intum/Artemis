@@ -236,7 +236,7 @@
                             @for (exercise of exerciseGroup.exercises; track exercise) {
                                 <tr>
                                     <td class="align-middle">
-                                        @if (course.isAtLeastEditor && exercise.type !== exerciseType.QUIZ) {
+                                        @if (course.isAtLeastEditor) {
                                             <a
                                                 [routerLink]="[
                                                     '/course-management',
@@ -252,7 +252,7 @@
                                                 <span>{{ exercise.id }}</span>
                                             </a>
                                         }
-                                        @if (!course.isAtLeastEditor || exercise.type === exerciseType.QUIZ) {
+                                        @if (!course.isAtLeastEditor) {
                                             <span>{{ exercise.id }}</span>
                                         }
                                     </td>
@@ -260,7 +260,7 @@
                                         <fa-icon [icon]="exerciseIcon(exercise)"></fa-icon>
                                     </td>
                                     <td class="align-middle">
-                                        @if (course.isAtLeastEditor && exercise.type !== exerciseType.QUIZ) {
+                                        @if (course.isAtLeastEditor) {
                                             <a
                                                 [routerLink]="[
                                                     '/course-management',
@@ -276,7 +276,7 @@
                                                 <span>{{ exercise.title }}</span>
                                             </a>
                                         }
-                                        @if (!course.isAtLeastEditor || exercise.type === exerciseType.QUIZ) {
+                                        @if (!course.isAtLeastEditor) {
                                             <span>{{ exercise.title }}</span>
                                         }
                                     </td>
