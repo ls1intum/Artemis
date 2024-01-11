@@ -119,9 +119,10 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
      * @returns boolean indicating whether configuration is finished
      */
     private areAllExercisesConfigured(): boolean {
-        const atLeastOneGroup = this.examChecklistService.checkAtLeastOneExerciseGroup(this.exam);
+        const hasQuizExam = this.exam.hasQuizExam ?? false;
+        const atLeastOneGroup = this.examChecklistService.checkAtLeastOneExerciseGroup(this.exam) || hasQuizExam;
         const numberOfExercisesEqual = this.examChecklistService.checkNumberOfExerciseGroups(this.exam);
-        const noEmptyExerciseGroup = this.examChecklistService.checkEachGroupContainsExercise(this.exam);
+        const noEmptyExerciseGroup = this.examChecklistService.checkEachGroupContainsExercise(this.exam) || hasQuizExam;
         const maximumPointsEqual = this.examChecklistService.checkPointsExercisesEqual(this.exam);
         let examPointsReachable;
         if (this.isTestExam) {

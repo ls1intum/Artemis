@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.quiz.QuizPool;
@@ -38,4 +40,17 @@ public interface QuizPoolRepository extends JpaRepository<QuizPool, Long> {
      * @return quiz pool for the given exam id
      */
     Optional<QuizPool> findByExamId(long examId);
+
+    /**
+     * Find the quiz pool for the given exam id
+     *
+     * @param examIds exam ids to which the quiz pool belongs to
+     * @return quiz pool for the given exam id
+     */
+    @Query("""
+                    SELECT qp
+                    FROM QuizPool qp
+                    WHERE qp.exam.id IN (:examIds)
+            """)
+    List<QuizPool> findByExamIds(@Param("examIds") List<Long> examIds);
 }

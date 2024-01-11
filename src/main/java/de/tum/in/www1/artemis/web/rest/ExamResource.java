@@ -117,13 +117,15 @@ public class ExamResource {
 
     private final StudentExamService studentExamService;
 
+    private final QuizPoolService quizPoolService;
+
     public ExamResource(ProfileService profileService, UserRepository userRepository, CourseRepository courseRepository, ExamService examService,
             ExamDeletionService examDeletionService, ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository,
             SubmissionService submissionService, AuthorizationCheckService authCheckService, ExamDateService examDateService,
             TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService,
             StudentExamRepository studentExamRepository, ExamImportService examImportService, CustomAuditEventRepository auditEventRepository, ChannelService channelService,
             ChannelRepository channelRepository, ExerciseRepository exerciseRepository, ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService,
-            StudentExamService studentExamService) {
+            StudentExamService studentExamService, QuizPoolService quizPoolService) {
         this.profileService = profileService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
@@ -147,6 +149,7 @@ public class ExamResource {
         this.examSessionService = examSessionRepository;
         this.examLiveEventsService = examLiveEventsService;
         this.studentExamService = studentExamService;
+        this.quizPoolService = quizPoolService;
     }
 
     /**
@@ -556,7 +559,7 @@ public class ExamResource {
             if (channel != null) {
                 exam.setChannelName(channel.getName());
             }
-            examService.setQuizExamProperties(exam);
+            quizPoolService.fetchQuizExamMaxPoints(exam);
             return ResponseEntity.ok(exam);
         }
 
@@ -569,14 +572,14 @@ public class ExamResource {
                 exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, true);
             }
             examService.setExamProperties(exam);
-            examService.setQuizExamProperties(exam);
+            quizPoolService.fetchQuizExamMaxPoints(exam);
             return ResponseEntity.ok(exam);
         }
 
         Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
         exam.getExamUsers().forEach(examUser -> examUser.getUser().setVisibleRegistrationNumber(examUser.getUser().getRegistrationNumber()));
 
-        examService.setQuizExamProperties(exam);
+        quizPoolService.fetchQuizExamMaxPoints(exam);
         return ResponseEntity.ok(exam);
     }
 
@@ -729,6 +732,7 @@ public class ExamResource {
         examAccessService.checkCourseAccessForTeachingAssistantElseThrow(courseId);
         // We need the exercise groups and exercises for the exam status now
         List<Exam> exams = examRepository.findByCourseIdWithExerciseGroupsAndExercises(courseId);
+        quizPoolService.fetchQuizExamMaxPoints(exams);
         examRepository.setNumberOfExamUsersForExams(exams);
         return ResponseEntity.ok(exams);
     }
@@ -815,6 +819,7 @@ public class ExamResource {
         examDeletionService.reset(exam.getId());
         Exam returnExam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
         examService.setExamProperties(returnExam);
+        quizPoolService.fetchQuizExamMaxPoints(returnExam);
 
         return ResponseEntity.ok(returnExam);
     }
@@ -883,6 +888,7 @@ public class ExamResource {
     @NotNull
     private Exam checkAccessForStudentExamGenerationAndLogAuditEvent(Long courseId, Long examId, String auditEventAction) {
         final Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
+        quizPoolService.fetchQuizExamMaxPoints(exam);
 
         if (exam.isTestExam()) {
             throw new BadRequestAlertException("Generate student exams is only allowed for real exams", ENTITY_NAME, "generateStudentExamsOnlyForRealExams");

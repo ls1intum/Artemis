@@ -66,7 +66,6 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.domain.quiz.QuizExamSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmittedAnswerCount;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
@@ -90,7 +89,6 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.BonusService;
 import de.tum.in.www1.artemis.service.CourseScoreCalculationService;
 import de.tum.in.www1.artemis.service.ExerciseDeletionService;
-import de.tum.in.www1.artemis.service.QuizPoolService;
 import de.tum.in.www1.artemis.service.TutorLeaderboardService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.export.CourseExamExportService;
@@ -177,8 +175,6 @@ public class ExamService {
 
     private final CourseRepository courseRepository;
 
-    private final QuizPoolService quizPoolService;
-
     private final QuizExamSubmissionRepository quizExamSubmissionRepository;
 
     private final ObjectMapper defaultObjectMapper;
@@ -195,7 +191,7 @@ public class ExamService {
             GradingScaleRepository gradingScaleRepository, PlagiarismCaseRepository plagiarismCaseRepository, AuthorizationCheckService authorizationCheckService,
             BonusService bonusService, ExerciseDeletionService exerciseDeletionService, SubmittedAnswerRepository submittedAnswerRepository,
             AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService, CourseRepository courseRepository,
-            QuizPoolService quizPoolService, QuizExamSubmissionRepository quizExamSubmissionRepository) {
+            QuizExamSubmissionRepository quizExamSubmissionRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -221,7 +217,6 @@ public class ExamService {
         this.auditEventRepository = auditEventRepository;
         this.courseScoreCalculationService = courseScoreCalculationService;
         this.courseRepository = courseRepository;
-        this.quizPoolService = quizPoolService;
         this.quizExamSubmissionRepository = quizExamSubmissionRepository;
         this.defaultObjectMapper = new ObjectMapper();
     }
@@ -934,7 +929,7 @@ public class ExamService {
         }
 
         // Check that there are enough exercise groups
-        if (exam.getExerciseGroups().size() < exam.getNumberOfExercisesInExam()) {
+        if (exam.getExerciseGroups().size() + (exam.hasQuizExam() ? 1 : 0) < exam.getNumberOfExercisesInExam()) {
             throw new BadRequestAlertException("The number of exercise groups is too small", "Exam", "artemisApp.exam.validation.tooFewExerciseGroups");
         }
 
@@ -991,6 +986,9 @@ public class ExamService {
             if (groupRepresentativeExercise.getIncludedInOverallScore().equals(IncludedInOverallScore.INCLUDED_COMPLETELY)) {
                 pointsReachable += groupRepresentativeExercise.getMaxPoints();
             }
+        }
+        if (exam.hasQuizExam()) {
+            pointsReachable += exam.getQuizExamMaxPoints();
         }
         if (pointsReachable < exam.getExamMaxPoints()) {
             throw new BadRequestAlertException("Check that you set the exam max points correctly! The max points a student can earn in the exercise groups is too low", "Exam",
@@ -1220,19 +1218,6 @@ public class ExamService {
         });
         // set transient number of registered users
         examRepository.setNumberOfExamUsersForExams(Collections.singletonList(exam));
-    }
-
-    /**
-     * Set properties for quiz exercises in exam
-     *
-     * @param exam The exam for which to set the properties
-     */
-    public void setQuizExamProperties(Exam exam) {
-        Optional<QuizPool> optionalQuizPool = quizPoolService.findByExamId(exam.getId());
-        if (optionalQuizPool.isPresent()) {
-            QuizPool quizPool = optionalQuizPool.get();
-            exam.setQuizExamMaxPoints(quizPool.getMaxPoints());
-        }
     }
 
     /**

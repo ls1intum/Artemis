@@ -22,6 +22,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     hasOptionalExercises = false;
     countMandatoryExercises = 0;
     isTestExam: boolean;
+    hasQuizExam?: boolean;
 
     numberOfSubmitted = 0;
     numberOfStarted = 0;
@@ -64,6 +65,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
             this.numberOfStarted = this.examChecklist.numberOfExamsStarted;
             this.numberOfSubmitted = this.examChecklist.numberOfExamsSubmitted;
         });
+        this.hasQuizExam = this.exam.hasQuizExam;
     }
 
     ngOnDestroy(): void {
