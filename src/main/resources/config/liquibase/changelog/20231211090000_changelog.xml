@@ -33,7 +33,7 @@
             <column name="timestamp" type="datetime">
                 <constraints nullable="false"/>
             </column>
-            <column name="event_type" type="varchar(255)">
+            <column name="event_type" type="tinyint">
                 <constraints nullable="false"/>
             </column>
             <column name="resource_id" type="bigint" />
