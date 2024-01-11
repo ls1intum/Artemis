@@ -14,6 +14,8 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
+import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 
 @Service
 public class TextAssessmentService extends AssessmentService {
@@ -23,9 +25,10 @@ public class TextAssessmentService extends AssessmentService {
     public TextAssessmentService(UserRepository userRepository, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
             FeedbackRepository feedbackRepository, ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
             SubmissionRepository submissionRepository, TextBlockService textBlockService, ExamDateService examDateService, GradingCriterionRepository gradingCriterionRepository,
-            SubmissionService submissionService, Optional<LtiNewResultService> ltiNewResultService) {
+            SubmissionService submissionService, Optional<LtiNewResultService> ltiNewResultService, SingleUserNotificationService singleUserNotificationService,
+            ResultWebsocketService resultWebsocketService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
-                submissionRepository, examDateService, gradingCriterionRepository, userRepository, ltiNewResultService);
+                submissionRepository, examDateService, gradingCriterionRepository, userRepository, ltiNewResultService, singleUserNotificationService, resultWebsocketService);
         this.textBlockService = textBlockService;
     }
 
