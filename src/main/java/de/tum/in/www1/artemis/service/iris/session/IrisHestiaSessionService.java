@@ -54,6 +54,13 @@ public class IrisHestiaSessionService implements IrisButtonBasedFeatureInterface
         this.irisHestiaSessionRepository = irisHestiaSessionRepository;
     }
 
+    /**
+     * Creates a new Iris session for the given code hint.
+     * If there is already an existing session for the code hint from the last hour, it will be returned instead.
+     *
+     * @param codeHint The code hint to create the session for
+     * @return The Iris session for the code hint
+     */
     public IrisHestiaSession getOrCreateSession(CodeHint codeHint) {
         var existingSessions = irisHestiaSessionRepository.findByCodeHintId(codeHint.getId());
         // Return the newest session if there is one and it is not older than 1 hour

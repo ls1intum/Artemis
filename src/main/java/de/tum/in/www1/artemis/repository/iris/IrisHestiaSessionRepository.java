@@ -9,8 +9,7 @@ import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
 
 /**
  * Repository interface for managing {@link IrisHestiaSession} entities.
- * Extends Spring Data JPA's {@link JpaRepository}.
- * Provides custom queries for finding chat sessions based on different criteria.
+ * Provides custom queries for finding hestia sessions based on different criteria.
  */
 public interface IrisHestiaSessionRepository extends JpaRepository<IrisHestiaSession, Long> {
 
@@ -21,10 +20,10 @@ public interface IrisHestiaSessionRepository extends JpaRepository<IrisHestiaSes
      * @return A list of hestia sessions sorted by creation date in descending order.
      */
     @Query("""
-                SELECT s
-                FROM IrisHestiaSession s
-                WHERE s.codeHint.id = :codeHintId
-                ORDER BY s.creationDate DESC
+            SELECT s
+            FROM IrisHestiaSession s
+            WHERE s.codeHint.id = :codeHintId
+            ORDER BY s.creationDate DESC
             """)
     List<IrisHestiaSession> findByCodeHintId(Long codeHintId);
 
