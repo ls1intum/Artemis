@@ -129,11 +129,21 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
         }
     }
 
+    /**
+     * Checks if the feature is active for the context (e.g. an exercise) of the session.
+     *
+     * @param session The session to check
+     */
     @Override
     public void checkIsFeatureActivatedFor(IrisCodeEditorSession session) {
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CODE_EDITOR, session.getExercise());
     }
 
+    /**
+     * Sends a message over the websocket to a specific user
+     *
+     * @param message that should be sent over the websocket
+     */
     @Override
     public void sendOverWebsocket(IrisMessage message) {
         irisCodeEditorWebsocketService.sendMessage(message);

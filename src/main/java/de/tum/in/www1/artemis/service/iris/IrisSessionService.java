@@ -64,11 +64,13 @@ public class IrisSessionService {
      * It decides which Iris subsystem should handle it based on the session type.
      *
      * @param session The session to get a message for
+     * @param <S>     The type of the session
+     * @throws BadRequestException If the session type is invalid
      */
-    public void requestMessageFromIris(IrisSession session) {
+    public <S extends IrisSession> void requestMessageFromIris(S session) {
         var wrapper = getIrisSessionSubService(session);
-        if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface) {
-            ((IrisChatBasedFeatureInterface<?>) wrapper.irisSubFeatureInterface).requestAndHandleResponse(wrapper.irisSession);
+        if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface<S> chatWrapper) {
+            chatWrapper.requestAndHandleResponse(wrapper.irisSession);
         }
         else {
             throw new BadRequestException("Invalid Iris session type " + session.getClass().getSimpleName());
@@ -80,11 +82,14 @@ public class IrisSessionService {
      * It decides which Iris subsystem should handle it based on the session type.
      *
      * @param message The message to send
+     * @param session The session to send the message for
+     * @param <S>     The type of the session
+     * @throws BadRequestException If the session type is invalid
      */
-    public void sendOverWebsocket(IrisMessage message) {
-        var wrapper = getIrisSessionSubService(message.getSession());
-        if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface) {
-            ((IrisChatBasedFeatureInterface<?>) wrapper.irisSubFeatureInterface).sendOverWebsocket(message);
+    public <S extends IrisSession> void sendOverWebsocket(IrisMessage message, S session) {
+        var wrapper = getIrisSessionSubService(session);
+        if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface<S> chatWrapper) {
+            chatWrapper.sendOverWebsocket(message);
         }
         else {
             throw new BadRequestException("Invalid Iris session type " + message.getSession().getClass().getSimpleName());
@@ -100,39 +105,32 @@ public class IrisSessionService {
      */
     public void checkRateLimit(IrisSession session, User user) {
         var wrapper = getIrisSessionSubService(session);
-        if (wrapper.irisSubFeatureInterface instanceof IrisRateLimitedFeatureInterface) {
-            ((IrisRateLimitedFeatureInterface) wrapper.irisSubFeatureInterface).checkRateLimit(user);
+        if (wrapper.irisSubFeatureInterface instanceof IrisRateLimitedFeatureInterface rateLimitedWrapper) {
+            rateLimitedWrapper.checkRateLimit(user);
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private <S extends IrisSession> IrisSubFeatureWrapper<S> getIrisSessionSubService(S session) {
-        if (session instanceof IrisChatSession) {
-            return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisChatSessionService, castToSessionType(session, IrisChatSession.class));
-        }
-        if (session instanceof IrisHestiaSession) {
-            return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisHestiaSessionService, castToSessionType(session, IrisHestiaSession.class));
-        }
-        if (session instanceof IrisCodeEditorSession) {
-            return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisCodeEditorSessionService, castToSessionType(session, IrisCodeEditorSession.class));
-        }
-        throw new BadRequestException("Unknown Iris session type " + session.getClass().getSimpleName());
     }
 
     /**
-     * Helper method to cast an IrisSession to a specific type.
-     * Throws an IllegalStateException if the session is not of the given type.
+     * Gets the Iris subsystem for the given session.
+     * Uses generic casts that are safe because the Iris subsystems are only used for the correct session type.
      *
-     * @param irisSession  The session to cast
-     * @param sessionClass The class to cast to
-     * @param <S>          The type of the session
-     * @return The casted session
+     * @param session The session to get the subsystem for
+     * @param <S>     The type of the session
+     * @throws BadRequestException If the session type is unknown
+     * @return The Iris subsystem for the session
      */
-    private <S extends IrisSession> S castToSessionType(IrisSession irisSession, Class<S> sessionClass) {
-        if (!sessionClass.isInstance(irisSession)) {
-            throw new IllegalStateException("IrisSession is not of type " + sessionClass.getSimpleName());
+    @SuppressWarnings("unchecked")
+    private <S extends IrisSession> IrisSubFeatureWrapper<S> getIrisSessionSubService(S session) {
+        if (session instanceof IrisChatSession chatSession) {
+            return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisChatSessionService, chatSession);
         }
-        return sessionClass.cast(irisSession);
+        if (session instanceof IrisHestiaSession hestiaSession) {
+            return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisHestiaSessionService, hestiaSession);
+        }
+        if (session instanceof IrisCodeEditorSession codeEditorSession) {
+            return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisCodeEditorSessionService, codeEditorSession);
+        }
+        throw new BadRequestException("Unknown Iris session type " + session.getClass().getSimpleName());
     }
 
     private record IrisSubFeatureWrapper<S extends IrisSession>(IrisSubFeatureInterface<S> irisSubFeatureInterface, S irisSession) {

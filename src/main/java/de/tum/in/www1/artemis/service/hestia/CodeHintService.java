@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
+import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
@@ -187,12 +188,14 @@ public class CodeHintService {
 
     /**
      * Generates a description and content for a code hint using the Iris subsystem.
-     * See {@link IrisHestiaSessionService#executeRequest(CodeHint)} for more information.
+     * See {@link IrisHestiaSessionService#executeRequest(IrisHestiaSession)} for more information.
      *
      * @param codeHint The code hint to be generated
      * @return The code hint with description and content
      */
     public CodeHint generateDescriptionWithIris(CodeHint codeHint) {
-        return irisHestiaSessionService.orElseThrow().executeRequest(codeHint);
+        var irisService = irisHestiaSessionService.orElseThrow();
+        var session = irisService.getOrCreateSession(codeHint);
+        return irisService.executeRequest(session);
     }
 }
