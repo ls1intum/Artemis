@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.web.rest.localci;
 
 import java.util.List;
 
@@ -42,7 +42,7 @@ public class BuildJobQueueResource {
      * @param courseId the id of the course for which to get the queued build jobs
      * @return the queued build jobs
      */
-    @GetMapping("/build-job-queue/queued/{courseId}")
+    @GetMapping("/courses/{courseId}/queued-jobs")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<LocalCIBuildJobQueueItem>> getQueuedBuildJobsForCourse(@PathVariable long courseId) {
         log.debug("REST request to get the queued build jobs for course {}", courseId);
@@ -60,7 +60,7 @@ public class BuildJobQueueResource {
      * @param courseId the id of the course for which to get the running build jobs
      * @return the running build jobs
      */
-    @GetMapping("/build-job-queue/running/{courseId}")
+    @GetMapping("/courses/{courseId}/running-jobs")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<LocalCIBuildJobQueueItem>> getRunningBuildJobsForCourse(@PathVariable long courseId) {
         log.debug("REST request to get the running build jobs for course {}", courseId);
