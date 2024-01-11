@@ -8,64 +8,55 @@
                 </div>
                 <hr />
                 <div class="button-header">
-                    <div>
+                    <div class="d-flex flex-wrap gap-2">
                         @if (programmingExercise.isAtLeastEditor) {
-                            <a [routerLink]="baseResource + 'edit'" class="btn btn-warning btn-sm me-1" style="margin-bottom: 10px">
+                            <a [routerLink]="[baseResource, 'edit']" class="btn btn-warning btn-sm">
                                 <fa-icon [icon]="faWrench"></fa-icon>&nbsp;
                                 <span jhiTranslate="entity.action.edit"> Edit</span>
                             </a>
-                        }
-                        <!-- Edit in editor button -->
-                        @if (programmingExercise.isAtLeastEditor && programmingExercise.templateParticipation) {
-                            <a
-                                [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
-                                jhiOrionFilter
-                                [showInOrionWindow]="false"
-                                [routerLink]="baseResource + 'code-editor/' + programmingExercise.templateParticipation.id"
-                                class="btn btn-warning btn-sm me-1"
-                                style="margin-bottom: 10px"
-                            >
-                                <fa-icon [icon]="faPencilAlt"></fa-icon>
-                                <span jhiTranslate="entity.action.editInEditor">Edit in Editor</span>
-                            </a>
-                        }
-
-                        <!-- Edit build plan button -->
-                        @if (programmingExercise.isAtLeastEditor && isBuildPlanEditable) {
-                            <a
-                                [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
-                                jhiOrionFilter
-                                [showInOrionWindow]="false"
-                                [routerLink]="baseResource + 'edit-build-plan'"
-                                class="btn btn-warning btn-sm me-1"
-                                style="margin-bottom: 10px"
-                            >
-                                <fa-icon [icon]="faPencilAlt"></fa-icon>
-                                <span jhiTranslate="entity.action.editBuildPlan">Edit build plan</span>
-                            </a>
-                        }
-
-                        @if (programmingExercise.isAtLeastEditor && programmingExercise.course && !isExamExercise) {
-                            <a
-                                [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'exercise-hints']"
-                                class="btn btn-warning btn-sm me-1 position-relative"
-                                style="margin-bottom: 10px"
-                            >
-                                <fa-icon [icon]="faLightbulb"></fa-icon>
-                                <span jhiTranslate="entity.action.hints">Hints</span>
-                            </a>
-                        }
-
-                        @if (programmingExercise.isAtLeastEditor) {
-                            <a [routerLink]="baseResource + 'grading/test-cases'" class="btn btn-warning btn-sm me-1" style="margin-bottom: 10px">
+                            <!-- Edit in editor button -->
+                            @if (programmingExercise.templateParticipation) {
+                                <a
+                                    [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
+                                    jhiOrionFilter
+                                    [showInOrionWindow]="false"
+                                    [routerLink]="[baseResource, 'code-editor', programmingExercise.templateParticipation.id!]"
+                                    class="btn btn-warning btn-sm"
+                                >
+                                    <fa-icon [icon]="faPencilAlt"></fa-icon>
+                                    <span jhiTranslate="entity.action.editInEditor">Edit in Editor</span>
+                                </a>
+                            }
+                            <!-- Edit build plan button -->
+                            @if (isBuildPlanEditable) {
+                                <a
+                                    [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
+                                    jhiOrionFilter
+                                    [showInOrionWindow]="false"
+                                    [routerLink]="[baseResource, 'edit-build-plan']"
+                                    class="btn btn-warning btn-sm"
+                                >
+                                    <fa-icon [icon]="faPencilAlt"></fa-icon>
+                                    <span jhiTranslate="entity.action.editBuildPlan">Edit build plan</span>
+                                </a>
+                            }
+                            @if (programmingExercise.course && !isExamExercise) {
+                                <a
+                                    [routerLink]="['/course-management', programmingExercise.course.id!, 'programming-exercises', programmingExercise.id, 'exercise-hints']"
+                                    class="btn btn-warning btn-sm position-relative"
+                                >
+                                    <fa-icon [icon]="faLightbulb"></fa-icon>
+                                    <span jhiTranslate="entity.action.hints">Hints</span>
+                                </a>
+                            }
+                            <a [routerLink]="[baseResource, 'grading', 'test-cases']" class="btn btn-warning btn-sm">
                                 <fa-icon [icon]="faFileSignature"></fa-icon>
                                 <span jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
                             </a>
                         }
-
                         @if (irisEnabled && programmingExercise.isAtLeastInstructor && programmingExercise.course && !isExamExercise) {
                             <a
-                                [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'iris-settings']"
+                                [routerLink]="['/course-management', programmingExercise.course.id!, 'programming-exercises', programmingExercise.id, 'iris-settings']"
                                 ngbTooltip="{{ 'artemisApp.iris.settings.button.programmingExercise.tooltip' | artemisTranslate }}"
                                 class="btn btn-warning btn-sm me-1"
                                 style="margin-bottom: 10px"
@@ -74,78 +65,52 @@
                                 <span jhiTranslate="artemisApp.iris.settings.button.programmingExercise.title">Iris</span>
                             </a>
                         }
-                    </div>
-                    <div>
                         @if (programmingExercise.isAtLeastTutor) {
-                            <a [routerLink]="baseResource + 'participations'" class="btn btn-primary btn-sm me-1" style="margin-bottom: 10px">
+                            <a [routerLink]="[baseResource, 'participations']" class="btn btn-primary btn-sm">
                                 <fa-icon [icon]="faListAlt"></fa-icon>
                                 <span jhiTranslate="artemisApp.exercise.participations">Participations</span>
                             </a>
                         }
                         <!-- Teams -->
                         @if (programmingExercise.teamMode && programmingExercise.isAtLeastTutor) {
-                            <a [routerLink]="teamBaseResource + 'teams'" class="btn btn-primary btn-sm me-1" style="margin-bottom: 10px">
+                            <a [routerLink]="[teamBaseResource, 'teams']" class="btn btn-primary btn-sm">
                                 <fa-icon [icon]="faUsers"></fa-icon>
                                 <span jhiTranslate="artemisApp.exercise.teams">Teams</span>
                             </a>
                         }
                         @if (programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || programmingExercise.allowComplaintsForAutomaticAssessments) {
-                            <a [routerLink]="shortBaseResource + 'assessment-dashboard/' + programmingExercise.id" class="btn btn-info btn-sm me-1" style="margin-bottom: 10px">
+                            <a [routerLink]="[shortBaseResource, 'assessment-dashboard', programmingExercise.id]" class="btn btn-info btn-sm">
                                 <fa-icon [icon]="faUserCheck"></fa-icon>
                                 <span class="d-none d-md-inline">{{ 'artemisApp.exercise.exerciseAssessmentDashboard' | artemisTranslate }}</span>
                             </a>
                         }
                         @if (programmingExercise.isAtLeastEditor && plagiarismCheckSupported) {
-                            <a
-                                [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
-                                class="btn btn-outline-primary btn-sm me-1"
-                                routerLink="plagiarism"
-                                style="margin-bottom: 10px"
-                            >
-                                <span jhiTranslate="artemisApp.programmingExercise.checkPlagiarism">Check Plagiarism</span>
+                            <a [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises" class="btn btn-info btn-sm" routerLink="plagiarism">
+                                <span jhiTranslate="artemisApp.programmingExercise.checkPlagiarism">Plagiarism</span>
                             </a>
                         }
-                        @if (programmingExercise.isAtLeastEditor) {
-                            <button
-                                [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                                (click)="checkConsistencies(programmingExercise)"
-                                class="btn btn-outline-primary btn-sm me-1"
-                                style="margin-bottom: 10px"
-                            >
-                                <fa-icon [icon]="faCheckDouble"></fa-icon> <span jhiTranslate="artemisApp.consistencyCheck.button">Check consistency</span>
-                            </button>
-                        }
-                    </div>
-                    <div>
                         @if (programmingExercise.isAtLeastTutor) {
-                            <a [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm me-1" style="margin-bottom: 10px">
+                            <a [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm">
                                 <fa-icon [icon]="faTable"></fa-icon>
                                 <span jhiTranslate="entity.action.scores">Scores</span>
                             </a>
+                            @if (programmingExercise.course && !isExamExercise) {
+                                <a
+                                    [routerLink]="['/course-management', programmingExercise.course!.id!, 'programming-exercises', programmingExercise.id!, 'exercise-statistics']"
+                                    class="btn btn-info btn-sm"
+                                >
+                                    <fa-icon [icon]="faChartBar"></fa-icon>&nbsp;<span jhiTranslate="statistics.statistics-title">Statistics</span>
+                                </a>
+                            }
                         }
+                    </div>
+                    <hr />
+                    <div>
                         @if (programmingExercise.isAtLeastInstructor) {
                             <jhi-programming-exercise-instructor-exercise-download
                                 [exerciseId]="programmingExercise.id!"
                                 class="me-1"
                             ></jhi-programming-exercise-instructor-exercise-download>
-                        }
-                        @if (programmingExercise.isAtLeastTutor && programmingExercise.course && !isExamExercise) {
-                            <a
-                                [routerLink]="['/course-management', programmingExercise.course!.id!, 'programming-exercises', programmingExercise.id!, 'exercise-statistics']"
-                                class="btn btn-info btn-sm me-1"
-                                style="margin-bottom: 10px"
-                            >
-                                <fa-icon [icon]="faChartBar"></fa-icon>&nbsp;<span jhiTranslate="statistics.statistics-title">Statistics</span>
-                            </a>
-                        }
-                    </div>
-                    <div>
-                        @if (
-                            programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA ||
-                            programmingExercise.programmingLanguage === ProgrammingLanguage.C ||
-                            programmingExercise.programmingLanguage === ProgrammingLanguage.PYTHON
-                        ) {
-                            <span> </span>
                         }
                         @if (programmingExercise.isAtLeastEditor) {
                             <span class="me-1">
@@ -173,28 +138,27 @@
                                 </button>
                             </span>
                         }
-                    </div>
-                    @if (programmingExercise.isAtLeastEditor) {
-                        <div>
-                            @if (
-                                (programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA || programmingExercise.programmingLanguage === ProgrammingLanguage.KOTLIN) &&
-                                programmingExercise.testwiseCoverageEnabled
-                            ) {
-                                <span class="me-1">
-                                    <button
-                                        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                                        type="button"
-                                        (click)="getAndShowTestwiseCoverage()"
-                                        class="btn btn-secondary btn-sm me-1"
-                                        ngbTooltip="{{ 'artemisApp.programmingExercise.testwiseCoverageReport.tooltip' | artemisTranslate }}"
-                                    >
-                                        <span jhiTranslate="artemisApp.programmingExercise.testwiseCoverageReport.button">Show Testwise Coverage</span>
-                                    </button>
-                                </span>
-                            }
-                        </div>
-                    }
-                    <div>
+                        @if (programmingExercise.isAtLeastEditor) {
+                            <span>
+                                @if (
+                                    (programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA ||
+                                        programmingExercise.programmingLanguage === ProgrammingLanguage.KOTLIN) &&
+                                    programmingExercise.testwiseCoverageEnabled
+                                ) {
+                                    <span class="me-1">
+                                        <button
+                                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                                            type="button"
+                                            (click)="getAndShowTestwiseCoverage()"
+                                            class="btn btn-secondary btn-sm"
+                                            ngbTooltip="{{ 'artemisApp.programmingExercise.testwiseCoverageReport.tooltip' | artemisTranslate }}"
+                                        >
+                                            <span jhiTranslate="artemisApp.programmingExercise.testwiseCoverageReport.button">Show Testwise Coverage</span>
+                                        </button>
+                                    </span>
+                                }
+                            </span>
+                        }
                         @if (programmingExercise.isAtLeastInstructor && !localVCEnabled) {
                             <button
                                 id="unlockAllRepositoriesButton"
@@ -208,8 +172,6 @@
                                 <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
                                 <span jhiTranslate="artemisApp.programmingExercise.unlockAllRepositories">Unlock all repositories</span>
                             </button>
-                        }
-                        @if (programmingExercise.isAtLeastInstructor && !localVCEnabled) {
                             <button
                                 id="lockAllRepositoriesButton"
                                 class="btn btn-danger btn-sm me-1"
@@ -224,6 +186,14 @@
                             </button>
                         }
                         @if (programmingExercise.isAtLeastEditor) {
+                            <button
+                                [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                                (click)="checkConsistencies(programmingExercise)"
+                                class="btn btn-outline-primary btn-sm me-1"
+                                style="margin-bottom: 10px"
+                            >
+                                <fa-icon [icon]="faCheckDouble"></fa-icon> <span jhiTranslate="artemisApp.consistencyCheck.button">Check consistency</span>
+                            </button>
                             <button
                                 [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                                 jhiProgrammingExerciseResetButton
@@ -261,430 +231,11 @@
                             [exerciseType]="PROGRAMMING"
                             class="d-flex justify-content-around"
                         ></jhi-exercise-detail-statistics>
-                        <hr />
-                        <div>
-                            <h2><span jhiTranslate="artemisApp.exercise.details">Exercise Details</span></h2>
-                        </div>
-                        <hr />
                     </div>
                 }
-                <dl class="row-md jh-entity-details">
-                    <jhi-exercise-details [exercise]="programmingExercise"></jhi-exercise-details>
-                    <dt><span jhiTranslate="artemisApp.exercise.feedbackSuggestionsEnabled">Enable feedback suggestions from Athena</span></dt>
-                    <dd>
-                        <span>{{ (programmingExercise.feedbackSuggestionsEnabled ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
-                    </dd>
-                    @if (programmingExercise.dueDate) {
-                        <dt><span jhiTranslate="artemisApp.programmingExercise.timeline.afterDueDate">Automatic Submission Run After Due Date</span></dt>
-                        <dd>
-                            <span>{{ programmingExercise.buildAndTestStudentSubmissionsAfterDueDate | artemisDate: 'long' : true }}</span>
-                        </dd>
-                    }
-                    <dt><span jhiTranslate="artemisApp.programmingExercise.enableStaticCodeAnalysis.title">Enable Static Code Analysis</span></dt>
-                    <dd>
-                        <span>{{ programmingExercise.staticCodeAnalysisEnabled }}</span>
-                    </dd>
-                    @if (programmingExercise.staticCodeAnalysisEnabled) {
-                        <dt><span jhiTranslate="artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.title">Max Static Code Analysis Penalty</span></dt>
-                        <dd>
-                            <span>{{ programmingExercise.maxStaticCodeAnalysisPenalty ?? '-' }}</span>
-                        </dd>
-                    }
-                    <dt><span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.title">Submission Policy Type</span></dt>
-                    <dd>
-                        <span
-                            jhiTranslate="{{
-                                'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' +
-                                    (!programmingExercise.submissionPolicy ? 'none' : programmingExercise.submissionPolicy.type!) +
-                                    '.title'
-                            }}"
-                        ></span>
-                    </dd>
-                    @if (programmingExercise.submissionPolicy) {
-                        <dt><span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle">Submission limit</span></dt>
-                        <dd>
-                            <span>{{ programmingExercise.submissionPolicy.submissionLimit }}</span>
-                        </dd>
-                    }
-                    @if (programmingExercise.submissionPolicy && programmingExercise.submissionPolicy.exceedingPenalty) {
-                        <dt>
-                            <span>{{
-                                'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel'
-                                    | artemisTranslate: { points: programmingExercise.submissionPolicy.exceedingPenalty }
-                            }}</span>
-                        </dt>
-                        <dd></dd>
-                    }
-                    <dt><span jhiTranslate="artemisApp.programmingExercise.preview.label">Preview</span></dt>
-                    <dd>
-                        <jhi-programming-exercise-plans-and-repositories-preview
-                            [programmingExercise]="programmingExercise"
-                        ></jhi-programming-exercise-plans-and-repositories-preview>
-                    </dd>
-                    <dt>
-                        <span jhiTranslate="artemisApp.programmingExercise.templateRepositoryUri">Template Repository Uri</span>
-                        @if (programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUri) {
-                            <div class="clone-buttons">
-                                <jhi-clone-repo-button
-                                    class="ms-2"
-                                    [smallButtons]="true"
-                                    [repositoryUri]="programmingExercise?.templateParticipation?.repositoryUri || ''"
-                                ></jhi-clone-repo-button>
-                                <jhi-programming-exercise-instructor-repo-download
-                                    class="ms-2"
-                                    [exerciseId]="programmingExercise.id!"
-                                    [repositoryType]="'TEMPLATE'"
-                                ></jhi-programming-exercise-instructor-repo-download>
-                            </div>
-                        }
-                    </dt>
-                    <dd>
-                        @if (programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUri && !localVCEnabled) {
-                            <div class="d-flex align-items-center">
-                                <a href="{{ programmingExercise.templateParticipation.repositoryUri }}" target="_blank" rel="noopener noreferrer">{{
-                                    programmingExercise.templateParticipation.repositoryUri
-                                }}</a>
-                            </div>
-                        }
-                    </dd>
-                    <dt>
-                        <span jhiTranslate="artemisApp.programmingExercise.solutionRepositoryUri">Solution Repository Uri</span>
-                        @if (programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.repositoryUri) {
-                            <div class="clone-buttons">
-                                <jhi-clone-repo-button
-                                    class="ms-2"
-                                    [smallButtons]="true"
-                                    [repositoryUri]="programmingExercise.solutionParticipation.repositoryUri"
-                                ></jhi-clone-repo-button>
-                                <jhi-programming-exercise-instructor-repo-download
-                                    class="ms-2"
-                                    [exerciseId]="programmingExercise.id!"
-                                    [repositoryType]="'SOLUTION'"
-                                ></jhi-programming-exercise-instructor-repo-download>
-                            </div>
-                        }
-                    </dt>
-                    <dd>
-                        @if (programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.repositoryUri && !localVCEnabled) {
-                            <div class="d-flex align-items-center">
-                                <a href="{{ programmingExercise.solutionParticipation.repositoryUri }}" target="_blank" rel="noopener noreferrer">{{
-                                    programmingExercise.solutionParticipation.repositoryUri
-                                }}</a>
-                            </div>
-                        }
-                    </dd>
-                    <dt>
-                        <span jhiTranslate="artemisApp.programmingExercise.testRepositoryUri">Test Repository Uri</span>
-                        @if (programmingExercise.testRepositoryUri) {
-                            <div class="clone-buttons">
-                                <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUri]="programmingExercise.testRepositoryUri"></jhi-clone-repo-button>
-                                <jhi-programming-exercise-instructor-repo-download
-                                    class="ms-2"
-                                    [exerciseId]="programmingExercise.id!"
-                                    [repositoryType]="'TESTS'"
-                                ></jhi-programming-exercise-instructor-repo-download>
-                            </div>
-                        }
-                    </dt>
-                    <dd>
-                        @if (programmingExercise.testRepositoryUri && !localVCEnabled) {
-                            <div class="d-flex align-items-center">
-                                <a href="{{ programmingExercise.testRepositoryUri }}" target="_blank" rel="noopener noreferrer">{{ programmingExercise.testRepositoryUri }}</a>
-                            </div>
-                        }
-                    </dd>
-                    <dt>
-                        @if (programmingExercise.auxiliaryRepositories && programmingExercise.auxiliaryRepositories.length > 0 && supportsAuxiliaryRepositories) {
-                            <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepositories">Auxiliary Repositories</span>
-                        }
-                    </dt>
-                    <dd></dd>
-                    @if (programmingExercise.auxiliaryRepositories && programmingExercise.auxiliaryRepositories.length > 0 && supportsAuxiliaryRepositories) {
-                        <div>
-                            <ul>
-                                @for (auxiliaryRepository of programmingExercise.auxiliaryRepositories; track auxiliaryRepository) {
-                                    <li>
-                                        <dt>
-                                            <span>{{ auxiliaryRepository.name }} Repository</span>
-                                            <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUri]="auxiliaryRepository.repositoryUri!"></jhi-clone-repo-button>
-                                            <jhi-programming-exercise-instructor-repo-download
-                                                class="ms-2"
-                                                [exerciseId]="programmingExercise.id!"
-                                                [repositoryType]="'AUXILIARY'"
-                                                [auxiliaryRepositoryId]="auxiliaryRepository.id!"
-                                            ></jhi-programming-exercise-instructor-repo-download>
-                                            <div class="auxiliaryRepositoryDescription">
-                                                @if (auxiliaryRepository.checkoutDirectory) {
-                                                    <span>Checkout Directory: {{ auxiliaryRepository.checkoutDirectory }} </span>
-                                                } @else {
-                                                    <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="noCheckoutDirectorySetTooltip"></fa-icon>
-                                                    <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySet">Checkout Directory was not set</span>
-                                                }
-                                                <ng-template #noCheckoutDirectorySetTooltip>
-                                                    <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySetTooltip"></span>
-                                                </ng-template>
-                                            </div>
-                                        </dt>
-                                        <dd>
-                                            <ng-container *ngif="!localVCEnabled">
-                                                <a href="{{ auxiliaryRepository.repositoryUri }}" target="_blank" rel="noopener noreferrer" class="repository-url">{{
-                                                    auxiliaryRepository.repositoryUri
-                                                }}</a>
-                                            </ng-container>
-                                        </dd>
-                                    </li>
-                                }
-                            </ul>
-                        </div>
-                    }
-                    <dt><span jhiTranslate="artemisApp.programmingExercise.templateBuildPlanId">Template Build Plan Id</span></dt>
-                    <dd>
-                        @if (programmingExercise.templateParticipation && programmingExercise.templateParticipation.buildPlanId) {
-                            <span>
-                                @if (!localVCEnabled) {
-                                    <a target="_blank" rel="noreferrer" href="{{ programmingExercise.templateParticipation.buildPlanUrl }}">
-                                        {{ programmingExercise.templateParticipation.buildPlanId }}
-                                    </a>
-                                } @else {
-                                    {{ programmingExercise.templateParticipation.buildPlanId }}
-                                }
-                            </span>
-                        }
-                    </dd>
-                    <dt><span jhiTranslate="artemisApp.programmingExercise.solutionBuildPlanId">Solution Build Plan Id</span></dt>
-                    <dd>
-                        @if (programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.buildPlanId) {
-                            <span>
-                                @if (!localVCEnabled) {
-                                    <a target="_blank" rel="noreferrer" href="{{ programmingExercise.solutionParticipation.buildPlanUrl }}">
-                                        {{ programmingExercise.solutionParticipation.buildPlanId }}
-                                    </a>
-                                } @else {
-                                    {{ programmingExercise.solutionParticipation.buildPlanId }}
-                                }
-                            </span>
-                        }
-                    </dd>
-                    <dt><span jhiTranslate="artemisApp.programmingExercise.sequentialTestRuns.title">Sequential Test Runs</span></dt>
-                    <dd>
-                        <span>{{ programmingExercise.sequentialTestRuns }}</span>
-                    </dd>
-                    <dt><span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span></dt>
-                    <dd>
-                        <span>{{ programmingExercise.publishBuildPlanUrl }}</span>
-                    </dd>
-                    <dt><span jhiTranslate="artemisApp.programmingExercise.allowOfflineIde.title">Allow Offline IDE</span></dt>
-                    <dd>
-                        <span>{{ programmingExercise.allowOfflineIde }}</span>
-                    </dd>
-                    <dt><span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor.title">Allow Online Editor</span></dt>
-                    <dd>
-                        <span>{{ programmingExercise.allowOnlineEditor }}</span>
-                    </dd>
-                    <dt><span jhiTranslate="artemisApp.programmingExercise.showTestNamesToStudents">Show Test Names to Students</span></dt>
-                    <dd>
-                        <span>{{ programmingExercise.showTestNamesToStudents }}</span>
-                    </dd>
-                    <dt><span jhiTranslate="artemisApp.programmingExercise.recordTestwiseCoverage">Record testwise coverage</span></dt>
-                    <dd>
-                        <span>{{ programmingExercise.testwiseCoverageEnabled }}</span>
-                    </dd>
-                    <dt><span jhiTranslate="artemisApp.programmingExercise.programmingLanguage">Programming Language</span></dt>
-                    <dd>
-                        <span jhiTranslate="{{ 'artemisApp.ProgrammingLanguage.' + programmingExercise.programmingLanguage }}">{{ programmingExercise.programmingLanguage }}</span>
-                    </dd>
-                    <dt><span jhiTranslate="artemisApp.programmingExercise.packageName">Package Name</span></dt>
-                    <dd>
-                        <span>{{ programmingExercise.packageName }}</span>
-                    </dd>
-                    <dt><span jhiTranslate="artemisApp.programmingExercise.templateResult">Template Result</span></dt>
-                    <dd>
-                        @if (programmingExercise?.templateParticipation) {
-                            <div class="d-flex align-items-center">
-                                @if (!loadingTemplateParticipationResults) {
-                                    <jhi-updating-result
-                                        [exercise]="programmingExercise"
-                                        [participation]="programmingExercise.templateParticipation!"
-                                        [showUngradedResults]="true"
-                                        [personalParticipation]="false"
-                                        [short]="false"
-                                        (onParticipationChange)="onParticipationChange()"
-                                        class="me-2"
-                                    ></jhi-updating-result>
-                                }
-                                @if (programmingExercise.templateParticipation?.results?.length) {
-                                    <jhi-programming-exercise-instructor-status
-                                        class="repository-status-icon me-2"
-                                        [participationType]="ProgrammingExerciseParticipationType.TEMPLATE"
-                                        [participation]="programmingExercise.templateParticipation!"
-                                        [exercise]="programmingExercise"
-                                    ></jhi-programming-exercise-instructor-status>
-                                }
-                                @if (programmingExercise.templateParticipation?.results && programmingExercise.isAtLeastEditor) {
-                                    <jhi-programming-exercise-instructor-trigger-build-button
-                                        [exercise]="programmingExercise"
-                                        [participation]="programmingExercise.templateParticipation!"
-                                    ></jhi-programming-exercise-instructor-trigger-build-button>
-                                }
-                            </div>
-                        }
-                    </dd>
-                    @if (programmingExercise.isAtLeastEditor && programmingExercise?.templateParticipation?.id) {
-                        <dd>
-                            <a
-                                [routerLink]="getParticipationSubmissionLink(programmingExercise!.templateParticipation!.id!)"
-                                [queryParams]="{ isTmpOrSolutionProgrParticipation: true }"
-                            >
-                                <span jhiTranslate="artemisApp.programmingExercise.detail.showTemplateSubmissions">Show Submissions</span>
-                            </a>
-                        </dd>
-                    }
-                    <dt><span jhiTranslate="artemisApp.programmingExercise.solutionResult">Solution Result</span></dt>
-                    <dd>
-                        @if (programmingExercise?.solutionParticipation) {
-                            <div class="d-flex align-items-center">
-                                @if (!loadingSolutionParticipationResults && programmingExercise.solutionParticipation) {
-                                    <jhi-updating-result
-                                        [exercise]="programmingExercise"
-                                        [participation]="programmingExercise.solutionParticipation!"
-                                        [showUngradedResults]="true"
-                                        [personalParticipation]="false"
-                                        [short]="false"
-                                        class="me-2"
-                                    ></jhi-updating-result>
-                                }
-                                @if (programmingExercise.solutionParticipation?.results?.length) {
-                                    <jhi-programming-exercise-instructor-status
-                                        class="repository-status-icon me-2"
-                                        [participationType]="ProgrammingExerciseParticipationType.SOLUTION"
-                                        [participation]="programmingExercise.solutionParticipation!"
-                                        [exercise]="programmingExercise"
-                                    ></jhi-programming-exercise-instructor-status>
-                                }
-                                @if (programmingExercise.solutionParticipation?.results && programmingExercise.isAtLeastEditor) {
-                                    <jhi-programming-exercise-instructor-trigger-build-button
-                                        [exercise]="programmingExercise"
-                                        [participation]="programmingExercise.solutionParticipation!"
-                                    ></jhi-programming-exercise-instructor-trigger-build-button>
-                                }
-                            </div>
-                        }
-                    </dd>
-                    @if (programmingExercise.isAtLeastEditor && programmingExercise?.solutionParticipation?.id) {
-                        <dd>
-                            <a
-                                [routerLink]="getParticipationSubmissionLink(programmingExercise!.solutionParticipation!.id!)"
-                                [queryParams]="{ isTmpOrSolutionProgrParticipation: true }"
-                            >
-                                <span jhiTranslate="artemisApp.programmingExercise.detail.showSolutionSubmissions">Show Submissions</span>
-                            </a>
-                        </dd>
-                    }
-
-                    @if (irisEnabled && irisChatEnabled && programmingExercise.course && !isExamExercise) {
-                        <div>
-                            <dt><span jhiTranslate="artemisApp.iris.settings.subSettings.enabled.chat">Iris Chat</span></dt>
-                            <dd>
-                                <jhi-iris-enabled
-                                    [exercise]="programmingExercise"
-                                    [irisSubSettingsType]="CHAT"
-                                    [disabled]="!programmingExercise.isAtLeastInstructor"
-                                ></jhi-iris-enabled>
-                            </dd>
-                        </div>
-                    }
-
-                    @if (programmingExercise?.gitDiffReport) {
-                        <div>
-                            <dt><span jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatLabel">Lines added/removed between template and solution</span></dt>
-                            <dd>
-                                <div class="fw-bold">
-                                    <jhi-git-diff-line-stat
-                                        [addedLineCount]="addedLineCount"
-                                        [removedLineCount]="removedLineCount"
-                                        ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipDetailPage' | artemisTranslate }}"
-                                    ></jhi-git-diff-line-stat>
-                                    @if (addedLineCount > 0 || removedLineCount > 0) {
-                                        <jhi-button
-                                            [featureToggle]="FeatureToggle.ProgrammingExercises"
-                                            [isLoading]="isLoadingDiffReport"
-                                            [btnSize]="ButtonSize.SMALL"
-                                            [icon]="faEye"
-                                            [title]="'artemisApp.programmingExercise.diffReport.button'"
-                                            [tooltip]="'artemisApp.programmingExercise.diffReport.tooltip'"
-                                            (onClick)="showGitDiff()"
-                                            class="ms-2"
-                                        ></jhi-button>
-                                    }
-                                </div>
-                            </dd>
-                        </div>
-                    }
-                    @if (programmingExercise.isAtLeastTutor && programmingExercise?.testwiseCoverageEnabled) {
-                        <div>
-                            <dt><span jhiTranslate="artemisApp.programmingExercise.coveredLineRatio">Covered Line Ratio</span></dt>
-                            <dd>
-                                <span>{{ programmingExercise?.coveredLinesRatio ? (programmingExercise?.coveredLinesRatio! * 100).toFixed(1) + ' %' : 'n.a.' }}</span>
-                            </dd>
-                        </div>
-                    }
-                    @if (programmingExercise.isAtLeastEditor && programmingExercise.buildLogStatistics) {
-                        <div>
-                            <dt>
-                                <span jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.title">Build Log Statistics</span>
-                                <jhi-help-icon text="artemisApp.programmingExercise.buildLogStatistics.tooltip"></jhi-help-icon>
-                            </dt>
-                            <dd>
-                                <table class="table table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.numberOfBuilds"># Builds</th>
-                                            <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.agentSetupDuration">Docker Setup</th>
-                                            <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.testDuration">Test Execution</th>
-                                            <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.scaDuration">Static Code Analysis</th>
-                                            <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.totalJobDuration">Total Job Duration</th>
-                                            <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.dependenciesDownloadedCount">Number of downloaded dependencies</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>{{ programmingExercise.buildLogStatistics.buildCount ?? 0 }}</td>
-                                            <td>
-                                                {{
-                                                    programmingExercise.buildLogStatistics.agentSetupDuration
-                                                        ? (programmingExercise.buildLogStatistics.agentSetupDuration | number: '1.2-2') + 's'
-                                                        : '-'
-                                                }}
-                                            </td>
-                                            <td>
-                                                {{
-                                                    programmingExercise.buildLogStatistics.testDuration
-                                                        ? (programmingExercise.buildLogStatistics.testDuration | number: '1.2-2') + 's'
-                                                        : '-'
-                                                }}
-                                            </td>
-                                            <td>
-                                                {{
-                                                    programmingExercise.buildLogStatistics.scaDuration
-                                                        ? (programmingExercise.buildLogStatistics.scaDuration | number: '1.2-2') + 's'
-                                                        : '-'
-                                                }}
-                                            </td>
-                                            <td>
-                                                {{
-                                                    programmingExercise.buildLogStatistics.totalJobDuration
-                                                        ? (programmingExercise.buildLogStatistics.totalJobDuration | number: '1.2-2') + 's'
-                                                        : '-'
-                                                }}
-                                            </td>
-                                            <td>{{ programmingExercise.buildLogStatistics.dependenciesDownloadedCount ?? '-' }}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </dd>
-                        </div>
-                    }
-                </dl>
+                @if (exerciseDetailSections) {
+                    <jhi-detail-overview-list [sections]="exerciseDetailSections"></jhi-detail-overview-list>
+                }
             </div>
         }
     </div>
