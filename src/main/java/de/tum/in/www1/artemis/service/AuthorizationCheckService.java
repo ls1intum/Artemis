@@ -560,7 +560,7 @@ public class AuthorizationCheckService {
             return false;
         }
 
-        if (participation.getParticipant() instanceof Team team) {
+        if (participation.getParticipant() instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
             participation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
         }
 
