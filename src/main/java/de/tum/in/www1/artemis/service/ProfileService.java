@@ -29,6 +29,10 @@ public class ProfileService {
         return isProfileActive("bamboo");
     }
 
+    public boolean isGitlabCiOrJenkins() {
+        return isProfileActive("gitlabci") || isProfileActive("jenkins");
+    }
+
     private boolean isProfileActive(String profile) {
         return Set.of(this.environment.getActiveProfiles()).contains(profile);
     }

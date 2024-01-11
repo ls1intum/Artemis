@@ -615,7 +615,6 @@ describe('IrisChatbotWidgetComponent', () => {
     it('should notify step failed with indicated errorMessageKey', () => {
         stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage, mockServerPlanMessage]));
         const notifyMock = jest.spyOn(component, 'notifyStepFailed');
-        const dispatchMock = jest.spyOn(stateStore, 'dispatch');
         component.notifyStepFailed(2, 2, 2, IrisErrorMessageKey.INTERNAL_PYRIS_ERROR);
         fixture.detectChanges();
 
@@ -623,7 +622,6 @@ describe('IrisChatbotWidgetComponent', () => {
         const plan = message!.content.find((p) => p.id === 2) as IrisExercisePlan;
         const step = plan!.steps.find((s) => s.id === 2);
         expect(notifyMock).toHaveBeenCalledWith(2, 2, 2, IrisErrorMessageKey.INTERNAL_PYRIS_ERROR);
-        expect(dispatchMock).toHaveBeenCalledWith(new ConversationErrorOccurredAction(IrisErrorMessageKey.INTERNAL_PYRIS_ERROR));
         expect(step!.executionStage).toEqual(ExecutionStage.FAILED);
         expect(plan.executing).toBeFalse();
     });
@@ -631,7 +629,6 @@ describe('IrisChatbotWidgetComponent', () => {
     it('should notify step failed without indicated errorMessageKey', () => {
         stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage, mockServerPlanMessage]));
         const notifyMock = jest.spyOn(component, 'notifyStepFailed');
-        const dispatchMock = jest.spyOn(stateStore, 'dispatch');
         component.notifyStepFailed(2, 2, 2);
         fixture.detectChanges();
 
@@ -639,7 +636,6 @@ describe('IrisChatbotWidgetComponent', () => {
         const plan = message!.content.find((p) => p.id === 2) as IrisExercisePlan;
         const step = plan!.steps.find((s) => s.id === 2);
         expect(notifyMock).toHaveBeenCalledWith(2, 2, 2);
-        expect(dispatchMock).toHaveBeenCalledWith(new ConversationErrorOccurredAction(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE));
         expect(step!.executionStage).toEqual(ExecutionStage.FAILED);
         expect(plan.executing).toBeFalse();
     });
