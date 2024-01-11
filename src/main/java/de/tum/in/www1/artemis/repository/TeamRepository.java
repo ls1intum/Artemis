@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import javax.annotation.Nonnull;
-
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -67,8 +65,7 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     List<Team> findAllByExerciseIdAndTeamOwnerIdWithEagerStudents(@Param("exerciseId") long exerciseId, @Param("teamOwnerId") long teamOwnerId);
 
     @EntityGraph(type = LOAD, attributePaths = "students")
-    @Nonnull
-    Optional<Team> findById(@Nonnull @Param("teamId") Long teamId);
+    Optional<Team> findWithStudentsById(@Param("teamId") Long teamId);
 
     /**
      * Returns all teams for an exercise (optionally filtered for a specific tutor who owns the teams)
@@ -132,6 +129,6 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     }
 
     default Team findWithStudentsByIdElseThrow(long teamId) throws EntityNotFoundException {
-        return findById(teamId).orElseThrow(() -> new EntityNotFoundException("Team", teamId));
+        return findWithStudentsById(teamId).orElseThrow(() -> new EntityNotFoundException("Team", teamId));
     }
 }
