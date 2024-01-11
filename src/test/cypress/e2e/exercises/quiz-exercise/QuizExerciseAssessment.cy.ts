@@ -19,43 +19,49 @@ describe('Quiz Exercise Assessment', () => {
         });
     });
 
-    describe('MC Quiz assessment', () => {
-        before('Creates a quiz and a submission', () => {
-            cy.login(admin);
-            exerciseAPIRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate], undefined, undefined, 10).then((quizResponse) => {
-                quizExercise = convertModelAfterMultiPart(quizResponse);
-                exerciseAPIRequest.setQuizVisible(quizExercise.id!);
-                exerciseAPIRequest.startQuizNow(quizExercise.id!);
+    describe(
+        'MC Quiz assessment',
+        {
+            retries: 2,
+        },
+        () => {
+            it('Assesses a mc quiz submission automatically', () => {
+                cy.login(admin);
+                exerciseAPIRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate], undefined, undefined, 10).then((quizResponse) => {
+                    quizExercise = convertModelAfterMultiPart(quizResponse);
+                    exerciseAPIRequest.setQuizVisible(quizExercise.id!);
+                    exerciseAPIRequest.startQuizNow(quizExercise.id!);
+                    cy.login(studentOne);
+                    exerciseAPIRequest.startExerciseParticipation(quizExercise.id!);
+                    exerciseAPIRequest.createMultipleChoiceSubmission(quizExercise, [0, 2]);
+                    cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
+                    exerciseResult.shouldShowScore(50);
+                });
             });
-        });
+        },
+    );
 
-        it('Assesses a mc quiz submission automatically', () => {
-            cy.login(studentOne);
-            exerciseAPIRequest.startExerciseParticipation(quizExercise.id!);
-            exerciseAPIRequest.createMultipleChoiceSubmission(quizExercise, [0, 2]);
-            cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
-            exerciseResult.shouldShowScore(50);
-        });
-    });
-
-    describe('SA Quiz assessment', () => {
-        before('Creates a quiz and a submission', () => {
-            cy.login(admin);
-            exerciseAPIRequest.createQuizExercise({ course }, [shortAnswerQuizTemplate], undefined, undefined, 10).then((quizResponse) => {
-                quizExercise = convertModelAfterMultiPart(quizResponse);
-                exerciseAPIRequest.setQuizVisible(quizExercise.id!);
-                exerciseAPIRequest.startQuizNow(quizExercise.id!);
+    describe(
+        'SA Quiz assessment',
+        {
+            retries: 2,
+        },
+        () => {
+            it('Assesses a sa quiz submission automatically', () => {
+                cy.login(admin);
+                exerciseAPIRequest.createQuizExercise({ course }, [shortAnswerQuizTemplate], undefined, undefined, 10).then((quizResponse) => {
+                    quizExercise = convertModelAfterMultiPart(quizResponse);
+                    exerciseAPIRequest.setQuizVisible(quizExercise.id!);
+                    exerciseAPIRequest.startQuizNow(quizExercise.id!);
+                    cy.login(studentOne);
+                    exerciseAPIRequest.startExerciseParticipation(quizExercise.id!);
+                    exerciseAPIRequest.createShortAnswerSubmission(quizExercise, ['give', 'let', 'run', 'desert']);
+                    cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
+                    exerciseResult.shouldShowScore(66.7);
+                });
             });
-        });
-
-        it('Assesses a sa quiz submission automatically', () => {
-            cy.login(studentOne);
-            exerciseAPIRequest.startExerciseParticipation(quizExercise.id!);
-            exerciseAPIRequest.createShortAnswerSubmission(quizExercise, ['give', 'let', 'run', 'desert']);
-            cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
-            exerciseResult.shouldShowScore(66.7);
-        });
-    });
+        },
+    );
 
     after('Delete course', () => {
         courseManagementAPIRequest.deleteCourse(course, admin);

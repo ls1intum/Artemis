@@ -385,7 +385,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * @return The test repository
      */
     private Repository testRepository(ProgrammingExercise exercise) {
-        return Optional.ofNullable(exercise.getVcsTestRepositoryUrl()).map(this::repositoryAt).orElseThrow();
+        return Optional.ofNullable(exercise.getVcsTestRepositoryUri()).map(this::repositoryAt).orElseThrow();
     }
 
     private Repository repositoryFor(ProgrammingExercise exercise, ExerciseComponent component) {
@@ -405,7 +405,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * @return The repository
      */
     private Repository repositoryAt(ProgrammingExerciseParticipation participation) {
-        var url = participation.getVcsRepositoryUrl();
+        var url = participation.getVcsRepositoryUri();
         try {
             // This check reduces the amount of REST-calls that retrieve the default branch of a repository.
             // Retrieving the default branch is not necessary if the repository is already cached.
@@ -429,7 +429,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * @param url The URL to fetch the repository for
      * @return The repository
      */
-    private Repository repositoryAt(VcsRepositoryUrl url) {
+    private Repository repositoryAt(VcsRepositoryUri url) {
         try {
             return gitService.getOrCheckoutRepository(url, true);
         }

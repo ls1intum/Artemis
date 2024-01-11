@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
+import java.util.Objects;
+
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
@@ -64,6 +66,43 @@ public class PlagiarismMatch {
 
     public void setLength(int length) {
         this.length = length;
+    }
+
+    /**
+     * Overrides the equals method to ensure proper equality checks to not rely on the default object instance equality.
+     *
+     * <p>
+     * This is important to ensure uniqueness, e.g. when loading objects from the database into a
+     * {@link java.util.Set}.
+     *
+     * <p>
+     * Note:
+     * This is required here since unlike other domain classes this one does not extend
+     * {@link de.tum.in.www1.artemis.domain.DomainObject} since it only represents an {@link Embeddable} part of another
+     * entity.
+     * Therefore, it does inherit neither the database ID attribute nor the matching
+     * {@link de.tum.in.www1.artemis.domain.DomainObject#equals(Object)} implementation.
+     * Instead, we have to compare all relevant attributes here.
+     *
+     * @param other Some other object.
+     * @return True, if this and the other object are equal.
+     */
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+
+        if (other instanceof PlagiarismMatch that) {
+            return startA == that.startA && startB == that.startB && length == that.length;
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(startA, startB, length);
     }
 
     @Override

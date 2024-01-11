@@ -2,7 +2,6 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingHeaderDirective } from 'app/shared/metis/posting-header/posting-header.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { CourseWideContext } from '../../metis.util';
 import { faCheck, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
@@ -22,7 +21,6 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
     isAuthorOfOriginalPost: boolean;
     isAnswerOfAnnouncement: boolean;
     mayEditOrDelete = false;
-    readonly CourseWideContext = CourseWideContext;
 
     // Icons
     faCheck = faCheck;
@@ -39,7 +37,8 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
         this.isAnswerOfAnnouncement = getAsChannelDto(this.posting.post?.conversation)?.isAnnouncementChannel ?? false;
         const isCourseWideChannel = getAsChannelDto(this.posting.post?.conversation)?.isCourseWide ?? false;
         const isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
-        const mayEditOrDeleteOtherUsersAnswer = (isCourseWideChannel && isAtLeastInstructorInCourse) || this.hasChannelModerationRights;
+        const mayEditOrDeleteOtherUsersAnswer =
+            (isCourseWideChannel && isAtLeastInstructorInCourse) || (getAsChannelDto(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
         this.mayEditOrDelete = !this.isReadOnlyMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
     }
 

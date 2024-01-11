@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.web.rest.localci;
 
 import java.util.List;
 
@@ -6,9 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -44,9 +42,9 @@ public class BuildJobQueueResource {
      * @param courseId the id of the course for which to get the queued build jobs
      * @return the queued build jobs
      */
-    @GetMapping("/build-job-queue/queued/{courseId}")
+    @GetMapping("/courses/{courseId}/queued-jobs")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<LocalCIBuildJobQueueItem>> getQueuedBuildJobsForCourse(Long courseId) {
+    public ResponseEntity<List<LocalCIBuildJobQueueItem>> getQueuedBuildJobsForCourse(@PathVariable long courseId) {
         log.debug("REST request to get the queued build jobs for course {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
@@ -62,9 +60,9 @@ public class BuildJobQueueResource {
      * @param courseId the id of the course for which to get the running build jobs
      * @return the running build jobs
      */
-    @GetMapping("/build-job-queue/running/{courseId}")
+    @GetMapping("/courses/{courseId}/running-jobs")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<LocalCIBuildJobQueueItem>> getRunningBuildJobsForCourse(Long courseId) {
+    public ResponseEntity<List<LocalCIBuildJobQueueItem>> getRunningBuildJobsForCourse(@PathVariable long courseId) {
         log.debug("REST request to get the running build jobs for course {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {

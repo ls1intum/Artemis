@@ -40,7 +40,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPushNotificationDTO;
@@ -70,11 +70,11 @@ public class GitLabService extends AbstractVersionControlService {
 
     private final ScheduledExecutorService scheduler;
 
-    public GitLabService(UserRepository userRepository, @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, UrlService urlService,
+    public GitLabService(UserRepository userRepository, @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, UriService uriService,
             GitLabUserManagementService gitLabUserManagementService, GitService gitService, ApplicationContext applicationContext,
             ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository) {
-        super(applicationContext, gitService, urlService, studentParticipationRepository, programmingExerciseRepository, templateProgrammingExerciseParticipationRepository);
+        super(gitService, uriService, studentParticipationRepository, programmingExerciseRepository, templateProgrammingExerciseParticipationRepository);
         this.userRepository = userRepository;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.gitlab = gitlab;
@@ -94,7 +94,7 @@ public class GitLabService extends AbstractVersionControlService {
 
             if (allowAccess) {
                 final VersionControlRepositoryPermission permissions = determineRepositoryPermissions(exercise);
-                addMemberToRepository(participation.getVcsRepositoryUrl(), user, permissions);
+                addMemberToRepository(participation.getVcsRepositoryUri(), user, permissions);
             }
 
             // Validate that the access token exist, if it is required
@@ -103,12 +103,12 @@ public class GitLabService extends AbstractVersionControlService {
 
         // TODO: we should separate access (above) from protecting branches
         String branch = getOrRetrieveBranchOfStudentParticipation(participation);
-        protectBranch(participation.getVcsRepositoryUrl(), branch);
+        protectBranch(participation.getVcsRepositoryUri(), branch);
     }
 
     @Override
-    public void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user, VersionControlRepositoryPermission permissions) {
-        final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+    public void addMemberToRepository(VcsRepositoryUri repositoryUri, User user, VersionControlRepositoryPermission permissions) {
+        final String repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
         final Long userId = gitLabUserManagementService.getUserId(user.getLogin());
         final AccessLevel repositoryPermissions = permissionsToAccessLevel(permissions);
 
@@ -120,14 +120,14 @@ public class GitLabService extends AbstractVersionControlService {
             // A resource conflict status code is returned if the member
             // already exists in the repository
             if (e.getHttpStatus() == 409) {
-                updateMemberPermissionInRepository(repositoryUrl, user, permissions);
+                updateMemberPermissionInRepository(repositoryUri, user, permissions);
             }
             else if (e.getValidationErrors() != null && e.getValidationErrors().containsKey("access_level")
                     && e.getValidationErrors().get("access_level").stream().anyMatch(s -> s.contains("should be greater than or equal to"))) {
                 log.warn("Member already has the requested permissions! Permission stays the same");
             }
             else {
-                throw new GitLabException("Error while trying to add user to repository: " + user.getLogin() + " to repo " + repositoryUrl, e);
+                throw new GitLabException("Error while trying to add user to repository: " + user.getLogin() + " to repo " + repositoryUri, e);
             }
         }
     }
@@ -140,27 +140,27 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void removeMemberFromRepository(VcsRepositoryUrl repositoryUrl, User user) {
-        final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+    public void removeMemberFromRepository(VcsRepositoryUri repositoryUri, User user) {
+        final var repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
         final var userId = gitLabUserManagementService.getUserId(user.getLogin());
 
         try {
             gitlab.getProjectApi().removeMember(repositoryPath, userId);
         }
         catch (GitLabApiException e) {
-            throw new GitLabException("Error while trying to remove user from repository: " + user.getLogin() + " from repo " + repositoryUrl, e);
+            throw new GitLabException("Error while trying to remove user from repository: " + user.getLogin() + " from repo " + repositoryUri, e);
         }
     }
 
     /**
      * Get the default branch of the repository
      *
-     * @param repositoryUrl The repository url to get the default branch for.
+     * @param repositoryUri The repository uri to get the default branch for.
      * @return the name of the default branch, e.g. 'main'
      */
     @Override
-    public String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) throws GitLabException {
-        var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
+    public String getDefaultBranchOfRepository(VcsRepositoryUri repositoryUri) throws GitLabException {
+        var repositoryId = getPathIDFromRepositoryURL(repositoryUri);
 
         try {
             return gitlab.getProjectApi().getProject(repositoryId).getDefaultBranch();
@@ -170,8 +170,8 @@ public class GitLabService extends AbstractVersionControlService {
         }
     }
 
-    private String getPathIDFromRepositoryURL(VcsRepositoryUrl repositoryUrl) {
-        final var namespaces = repositoryUrl.getURI().toString().split("/");
+    private String getPathIDFromRepositoryURL(VcsRepositoryUri repositoryUri) {
+        final var namespaces = repositoryUri.getURI().toString().split("/");
         final var last = namespaces.length - 1;
         return namespaces[last - 1] + "/" + namespaces[last].replace(".git", "");
     }
@@ -179,12 +179,12 @@ public class GitLabService extends AbstractVersionControlService {
     /**
      * Protects a branch from the repository, so that developers cannot change the history
      *
-     * @param repositoryUrl The repository url of the repository to update. It contains the project key & the repository name.
+     * @param repositoryUri The repository uri of the repository to update. It contains the project key & the repository name.
      * @param branch        The name of the branch to protect (e.g "main")
      * @throws VersionControlException If the communication with the VCS fails.
      */
-    private void protectBranch(VcsRepositoryUrl repositoryUrl, String branch) {
-        final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+    private void protectBranch(VcsRepositoryUri repositoryUri, String branch) {
+        final var repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
         // we have to first unprotect the branch in order to set the correct access level, this is the case, because the main branch is protected for maintainers by default
         // Unprotect the branch in 8 seconds first and then protect the branch in 12 seconds.
         // We do this to wait on any async calls to Gitlab and make sure that the branch really exists before protecting it.
@@ -213,8 +213,8 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void unprotectBranch(VcsRepositoryUrl repositoryUrl, String branch) throws VersionControlException {
-        final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+    public void unprotectBranch(VcsRepositoryUri repositoryUri, String branch) throws VersionControlException {
+        final var repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
         // Unprotect the branch in 10 seconds. We do this to wait on any async calls to Gitlab and make sure that the branch really exists before unprotecting it.
         unprotectBranch(repositoryPath, branch, 10L, TimeUnit.SECONDS);
     }
@@ -240,13 +240,13 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    protected void addWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName) {
-        addAuthenticatedWebHook(repositoryUrl, notificationUrl, webHookName, "noSecretNeeded");
+    protected void addWebHook(VcsRepositoryUri repositoryUri, String notificationUrl, String webHookName) {
+        addAuthenticatedWebHook(repositoryUri, notificationUrl, webHookName, "noSecretNeeded");
     }
 
     @Override
-    protected void addAuthenticatedWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
-        final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+    protected void addAuthenticatedWebHook(VcsRepositoryUri repositoryUri, String notificationUrl, String webHookName, String secretToken) {
+        final var repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
         final var hook = new ProjectHook().withPushEvents(true).withIssuesEvents(false).withMergeRequestsEvents(false).withWikiPageEvents(false)
                 // Note: Trigger hook on push events for matching branches only (this avoids unnecessary Jenkins builds for pushes to other branches)
                 .withPushEventsBranchFilter(defaultBranch);
@@ -255,7 +255,7 @@ public class GitLabService extends AbstractVersionControlService {
             gitlab.getProjectApi().addHook(repositoryPath, notificationUrl, hook, false, secretToken);
         }
         catch (GitLabApiException e) {
-            throw new GitLabException("Unable to add webhook for " + repositoryUrl, e);
+            throw new GitLabException("Unable to add webhook for " + repositoryUri, e);
         }
     }
 
@@ -273,9 +273,9 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void deleteRepository(VcsRepositoryUrl repositoryUrl) {
-        final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
-        final var repositoryName = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
+    public void deleteRepository(VcsRepositoryUri repositoryUri) {
+        final var repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
+        final var repositoryName = uriService.getRepositorySlugFromRepositoryUri(repositoryUri);
         try {
             gitlab.getProjectApi().deleteProject(repositoryPath);
         }
@@ -288,21 +288,21 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug) {
-        return new GitLabRepositoryUrl(projectKey, repositorySlug);
+    public VcsRepositoryUri getCloneRepositoryUri(String projectKey, String repositorySlug) {
+        return new GitLabRepositoryUri(projectKey, repositorySlug);
     }
 
     @Override
-    public Boolean repositoryUrlIsValid(@Nullable VcsRepositoryUrl repositoryUrl) {
-        if (repositoryUrl == null || repositoryUrl.getURI() == null) {
+    public Boolean repositoryUriIsValid(@Nullable VcsRepositoryUri repositoryUri) {
+        if (repositoryUri == null || repositoryUri.getURI() == null) {
             return false;
         }
-        final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+        final var repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
         try {
             gitlab.getProjectApi().getProject(repositoryPath);
         }
         catch (Exception emAll) {
-            log.warn("Invalid repository VcsRepositoryUrl {}", repositoryUrl);
+            log.warn("Invalid repository VcsRepositoryUri {}", repositoryUri);
             return false;
         }
 
@@ -312,33 +312,29 @@ public class GitLabService extends AbstractVersionControlService {
     @Override
     public Commit getLastCommitDetails(Object requestBody) throws VersionControlException {
         final var details = GitLabPushNotificationDTO.convert(requestBody);
-        final var commit = new Commit();
         // Gitlab specifically provide the previous latest commit and the new latest commit after the given push event
         // Here we retrieve the hash of the new latest commit
         final var gitLabCommitHash = details.getNewHash();
-        commit.setCommitHash(gitLabCommitHash);
         // Here we search for the commit details for the given commit hash
         // Technically these details should always be present but as this could change, we handle the edge case
         final var firstMatchingCommit = details.getCommits().stream().filter(com -> gitLabCommitHash.equals(com.getHash())).findFirst();
         if (firstMatchingCommit.isPresent()) {
             // Fill commit with commit details
             final var gitLabCommit = firstMatchingCommit.get();
-            commit.setMessage(gitLabCommit.getMessage());
-            commit.setAuthorEmail(gitLabCommit.getAuthor().getEmail());
-            commit.setAuthorName(gitLabCommit.getAuthor().getName());
             final var ref = details.getRef().split("/");
-            commit.setBranch(ref[ref.length - 1]);
+            var branch = ref[ref.length - 1];
+            var author = gitLabCommit.getAuthor();
+            return new Commit(gitLabCommitHash, author.getName(), gitLabCommit.getMessage(), author.getEmail(), branch);
         }
-
-        return commit;
+        return new Commit(gitLabCommitHash, null, null, null, null);
     }
 
     @Override
     public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash, Object eventObject) {
         // Gitlab never provides the push date initially so we can ignore the eventObject
         try {
-            String repositoryUrl = urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl());
-            Stream<Event> eventStream = gitlab.getEventsApi().getProjectEventsStream(repositoryUrl, Constants.ActionType.PUSHED, null, null, null, Constants.SortOrder.DESC);
+            String repositoryUri = uriService.getRepositoryPathFromRepositoryUri(participation.getVcsRepositoryUri());
+            Stream<Event> eventStream = gitlab.getEventsApi().getProjectEventsStream(repositoryUri, Constants.ActionType.PUSHED, null, null, null, Constants.SortOrder.DESC);
             var eventOptional = eventStream.filter(event -> commitHash.equals(event.getPushData().getCommitTo())).findFirst();
 
             if (eventOptional.isPresent()) {
@@ -437,7 +433,13 @@ public class GitLabService extends AbstractVersionControlService {
     @Override
     public boolean checkIfProjectExists(String projectKey, String projectName) {
         try {
-            return !gitlab.getProjectApi().getProjects(projectKey).isEmpty();
+            // Groups in GitLab are named identically to the exercise `projectKey`.
+            final Optional<Group> group = gitlab.getGroupApi().getOptionalGroup(projectKey);
+            if (group.isEmpty()) {
+                return false;
+            }
+
+            return gitlab.getGroupApi().getProjectsStream(group.get()).findAny().isPresent();
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Error trying to search for project " + projectName, e);
@@ -445,20 +447,20 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void setRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) {
-        users.forEach(user -> updateMemberPermissionInRepository(repositoryUrl, user, VersionControlRepositoryPermission.REPO_READ));
+    public void setRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUri, String projectKey, Set<User> users) {
+        users.forEach(user -> updateMemberPermissionInRepository(repositoryUri, user, VersionControlRepositoryPermission.REPO_READ));
     }
 
     /**
      * Updates the access level of the user if it's a member of the repository.
      *
-     * @param repositoryUrl The url of the repository
+     * @param repositoryUri The url of the repository
      * @param user          The GitLab user
      * @param permissions   The new access level for the user
      */
-    private void updateMemberPermissionInRepository(VcsRepositoryUrl repositoryUrl, User user, VersionControlRepositoryPermission permissions) {
+    private void updateMemberPermissionInRepository(VcsRepositoryUri repositoryUri, User user, VersionControlRepositoryPermission permissions) {
         final var userId = gitLabUserManagementService.getUserId(user.getLogin());
-        final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+        final var repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
         try {
             final Optional<Member> member = gitlab.getProjectApi().getOptionalMember(repositoryPath, userId);
             if (member.isPresent()) {
@@ -466,7 +468,7 @@ public class GitLabService extends AbstractVersionControlService {
                 gitlab.getProjectApi().updateMember(repositoryPath, userId, accessLevel);
             }
             else {
-                addMemberToRepository(repositoryUrl, user, permissions);
+                addMemberToRepository(repositoryUri, user, permissions);
             }
         }
         catch (GitLabApiException e) {
@@ -521,16 +523,16 @@ public class GitLabService extends AbstractVersionControlService {
         }
     }
 
-    public final class GitLabRepositoryUrl extends VcsRepositoryUrl {
+    public final class GitLabRepositoryUri extends VcsRepositoryUri {
 
-        public GitLabRepositoryUrl(String projectKey, String repositorySlug) {
+        public GitLabRepositoryUri(String projectKey, String repositorySlug) {
             final var path = projectKey + "/" + repositorySlug;
             final var urlString = gitlabServerUrl + "/" + path + ".git";
 
             stringToURL(urlString);
         }
 
-        private GitLabRepositoryUrl(String urlString) {
+        private GitLabRepositoryUri(String urlString) {
             stringToURL(urlString);
         }
 
@@ -544,9 +546,9 @@ public class GitLabService extends AbstractVersionControlService {
         }
 
         @Override
-        public VcsRepositoryUrl withUser(String username) {
+        public VcsRepositoryUri withUser(String username) {
             this.username = username;
-            return new GitLabRepositoryUrl(uri.toString().replaceAll("(https?://)(.*)", "$1" + username + "@$2"));
+            return new GitLabRepositoryUri(uri.toString().replaceAll("(https?://)(.*)", "$1" + username + "@$2"));
         }
     }
 }

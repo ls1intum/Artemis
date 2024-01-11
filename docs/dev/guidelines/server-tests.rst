@@ -4,6 +4,17 @@ Server Tests
 
 This section covers recommended practices for writing Artemis server tests. If you want to write tests for Artemis programming exercises to test students' submissions, check out :ref:`this <best_practices_for_test_cases>`.
 
+You can execute server tests with the following commands:
+
+* Execute tests with coverage report:          ``./gradlew test jacocoTestReport -x webapp``
+* Execute tests without coverage report:       ``./gradlew test -x webapp``
+* Run a single test:                           ``./gradlew test --tests ExamIntegrationTest -x webapp`` or ``./gradlew test --tests ExamIntegrationTest.testGetExamScore -x webapp``
+
+To run the server tests against a real database in a Docker test container, use:
+
+* Execute tests with Postgres container:       ``SPRING_PROFILES_INCLUDE=postgres ./gradlew test -x webapp``
+* Execute tests with MySQL container:          ``SPRING_PROFILES_INCLUDE=mysql ./gradlew test -x webapp``
+
 0. General testing tips
 ========================
 Use appropriate and descriptive names for test cases so developers can easily understand what you test without looking deeper into it.
@@ -178,5 +189,43 @@ We no longer mock the uppermost method but only throw the exception at the place
 For a real example where we replaced a SpyBean with a static mock, look at the ``SubmissionExportIntegrationTest.java`` `here <https://github.com/ls1intum/Artemis/commit/4843137aa01cfdf27ea019400c48df00df36ed45>`__.
 
 
+7. Parallel test execution
+===========================
+We use the `JUnit 5 <https://junit.org/junit5/docs/snapshot/user-guide/#writing-tests-parallel-execution>`__ feature to execute tests in parallel.
 
+The following line in the ``junit-platform.properties`` file enables parallel test execution with JUnit 5. Setting the property to ``false`` disables parallel test execution.
 
+.. code-block:: properties
+
+    junit.jupiter.execution.parallel.enabled = true
+
+To execute a test class and its inheriting classes in parallel, we annotate it with ``@Execution(ExecutionMode.CONCURRENT)``.
+Since we need to isolate resources such as
+databases and application contexts, we use the ``@ResourceLock`` annotation. By annotating ``abstract`` base classes with it, we group tests into parallel running groups while preserving the sequential execution of tests within each group. For our use case, the ``@ResourceLock`` annotation takes
+the name of the test group (matching the ``abstract`` base class name) as a parameter. A unique set of spring profiles, a separate application context, and a separate database characterizes each test group.
+
+.. code-block:: java
+
+    @SpringBootTest
+    @AutoConfigureMockMvc
+    @ExtendWith(SpringExtension.class)
+    @Execution(ExecutionMode.CONCURRENT)
+    @ResourceLock("AbstractSpringIntegrationIndependentTest")
+    @AutoConfigureEmbeddedDatabase
+    @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "scheduling", "lti" })
+    @TestPropertySource(properties = { "artemis.user-management.use-external=false" })
+    public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest { ... }
+
+Note that parallel test execution is only safe if the tests are independent and will lead to flaky tests otherwise. Specific resources, such as the Hazelcast cache, are shared among tests belonging to different groups.
+To prevent these tests from running in parallel, we could use the ``@ResourceLock`` annotation. This approach benefits the performance by allowing other tests
+that do not share the locked resource to run in parallel.
+
+However, the ``@Isolated`` annotation, which prevents other tests from running parallel to the annotated test, is preferred. The annotation is more explicit and easier to understand. It benefits extensibility and maintainability when it is uncertain what other tests might need the resource now or in the future.
+
+.. code-block:: java
+
+    @Isolated
+    class QuizCacheTest extends AbstractSpringIntegrationIndependentTest { ... }
+
+.. note::
+    Avoid using ``@Isolated`` whenever possible, as it worsens the test runtime. Try to refactor tests so that the shared resources become exclusive and only use @Isolated if refactoring is not possible.

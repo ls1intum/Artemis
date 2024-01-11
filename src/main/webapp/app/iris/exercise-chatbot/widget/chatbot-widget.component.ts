@@ -110,6 +110,7 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
     rateLimit: number;
     rateLimitTimeframeHours: number;
     importExerciseUrl: string;
+    stepError: string;
 
     // data
     abstract exerciseId?: number | undefined;
@@ -242,7 +243,7 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
                 // will be cleared by the store automatically
                 this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT));
                 this.scrollToBottom('smooth');
-            }, 20000);
+            }, 60000);
             const params = this.paramsOnSend();
             console.log('Sending params: ' + JSON.stringify(params));
             this.stateStore
@@ -264,7 +265,7 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
             // will be cleared by the store automatically
             this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT));
             this.scrollToBottom('smooth');
-        }, 2000000);
+        }, 60000);
         this.stateStore
             .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
             .then(() => {
@@ -640,9 +641,9 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
         plan.executing = false;
         step.executionStage = ExecutionStage.FAILED;
         if (!errorTranslationKey) {
-            this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE));
+            this.stepError = this.translateService.instant(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE);
         } else {
-            this.stateStore.dispatch(new ConversationErrorOccurredAction(errorTranslationKey, translationParams));
+            this.stepError = this.translateService.instant(errorTranslationKey, translationParams);
         }
     }
 
@@ -700,7 +701,7 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
             case ExecutionStage.COMPLETE:
                 return 'Changes applied.';
             case ExecutionStage.FAILED:
-                return 'Encountered an error.';
+                return this.stepError ?? 'Encountered an error.';
         }
     }
 
