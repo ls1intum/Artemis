@@ -371,12 +371,12 @@ public class LocalCISharedBuildJobQueueService {
                             buildJob.participationId(), buildJob.repositoryTypeOrUserName(), buildJob.commitHash(), buildJob.submissionDate(), buildJob.retryCount() + 1, null,
                             buildJob.priority(), buildJob.courseId(), buildJob.isPushToTestRepository());
                     queue.add(requeuedBuildJob);
-                    checkAvailabilityAndProcessNextBuild();
                 }
                 else {
                     log.warn("Participation with id {} has been deleted. Cancelling the requeueing of the build job.", participation.getId());
                 }
             }
+            checkAvailabilityAndProcessNextBuild();
             return null;
         });
     }
