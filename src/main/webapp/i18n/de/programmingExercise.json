@@ -65,7 +65,7 @@
                     "languageStepMessage": "Wähle die gewünschte Programmiersprache aus und konfiguriere zusätzliche Funktionen bezüglich der Programmiersprache",
                     "problemStepTitle": "Aufgabenstellung",
                     "problemStepMessage": "Erstelle eine detaillierte Aufgabenstellung für die Übung mit klaren Schritten und Erwartungen an die Studierenden",
-                    "gradingStepTitle": "Benotung",
+                    "gradingStepTitle": "Bewertung",
                     "gradingStepMessage": "Definiere die Bewertungskriterien für diese Aufgabe und wie sich das Ergebnis auf die Gesamtnote des Kurses auswirkt"
                 },
                 "gradingLabels": {
@@ -169,7 +169,7 @@
             "structureTestOracle": "Oracle Strukturtest aktualisieren",
             "structureTestOracleWarning": "Diese Aktion extrahiert die Struktur-Tests des Test-Repositories and speichert sie in der Datei test.json. ACHTUNG: Hierdurch gehen alle nicht committeten Änderungen aus dem Online-Editor verloren!",
             "combineTemplateCommits": "Template-Commits zusammenführen",
-            "checkPlagiarism": "Auf Plagiate prüfen",
+            "checkPlagiarism": "Plagiatsprüfung",
             "checkPlagiarismSuccess": "Plagiatsprüfung abgeschlossen. Ergebnisse sind in der zip-Datei enthalten.",
             "combineTemplateCommitsWarning": "Diese Aktion führt alle Commits im Template-Repository in einen Commit zusammen. ACHTUNG: Hierdurch gehen alle nicht committeten Änderungen aus dem Online-Editor verloren!",
             "combineTemplateCommitsError": "Template-Repository-Commits konnten nicht zusammengeführt werden.",
@@ -492,6 +492,7 @@
                 },
                 "submissionPenalty": {
                     "optionLabel": "Punktabzug je Überschreitung",
+                    "detailLabel": "Punktabzug je Überschreitung",
                     "penaltyInputFieldTitle": "Punktabzug je Überschreitung des Abgabelimits",
                     "exceedingLimitDescription": "Der Punktabzug von dem Gesamtergebnis für jede Abgabe, die das Abgabelimit überschreitet. Jede Punktzahl größer 0 kann eingetragen werden.",
                     "penaltyInputFieldValidationWarning": {
@@ -504,7 +505,7 @@
                 "submissionPolicyType": {
                     "title": "Typ der Abgaberichtlinie",
                     "none": {
-                        "title": "Keine"
+                        "title": "-"
                     },
                     "lock_repository": {
                         "title": "Repository Sperre",

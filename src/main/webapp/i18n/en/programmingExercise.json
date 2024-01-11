@@ -171,7 +171,7 @@
             "structureTestOracle": "Update Structure Test Oracle",
             "structureTestOracleWarning": "This action extracts all structural tests from the test repository and saves them in the test.json file. ATTENTION: All uncommitted changes from the online editor will be lost!",
             "combineTemplateCommits": "Combine Template Commits",
-            "checkPlagiarism": "Check Plagiarism",
+            "checkPlagiarism": "Plagiarism",
             "checkPlagiarismSuccess": "Plagiarism check finished. Results are included in the zip file.",
             "combineTemplateCommitsWarning": "This action combines all commits in the template repository into one commit. ATTENTION: All uncommitted changes from the online editor will be lost!",
             "combineTemplateCommitsError": "Template repository commits could not be combined.",
@@ -493,6 +493,7 @@
                 },
                 "submissionPenalty": {
                     "optionLabel": "Submission Penalty",
+                    "detailLabel": "Submission Penalty Points",
                     "penaltyInputFieldTitle": "Exceeding Submission Limit Penalty",
                     "exceedingLimitDescription": "The number of points that is deducted from the result score for each submission exceeding the submission limit. Enter any number of points greater than 0.",
                     "penaltyInputFieldValidationWarning": {
@@ -505,7 +506,7 @@
                 "submissionPolicyType": {
                     "title": "Submission Policy Type",
                     "none": {
-                        "title": "None"
+                        "title": "-"
                     },
                     "lock_repository": {
                         "title": "Lock Repository",
