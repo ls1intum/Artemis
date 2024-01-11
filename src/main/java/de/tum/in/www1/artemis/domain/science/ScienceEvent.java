@@ -27,7 +27,7 @@ public class ScienceEvent extends DomainObject {
     @Column(name = "timestamp", nullable = false)
     private ZonedDateTime timestamp;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.ORDINAL)
     @Column(name = "event_type", nullable = false)
     private ScienceEventType type;
 
