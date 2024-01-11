@@ -103,6 +103,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
         const domain: DomainChange = [DomainType.PARTICIPATION, { id: currentPlagiarismSubmission.submissionId }];
         this.repositoryService.getRepositoryContent(domain).subscribe({
             next: (files) => {
+                this.cannotLoadFiles = false;
                 this.isProgrammingExercise = true;
                 this.loading = false;
                 this.files = this.programmingExerciseFilesWithMatches(files);
