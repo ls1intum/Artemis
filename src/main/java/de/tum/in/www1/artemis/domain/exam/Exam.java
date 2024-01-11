@@ -509,6 +509,11 @@ public class Exam extends DomainObject {
         this.randomizeQuizExamQuestionsOrder = randomizeQuizExamQuestionOrder;
     }
 
+    /**
+     * Checks if the exam has quiz exam questions
+     *
+     * @return true if the exam has quiz exam questions, false otherwise
+     */
     @JsonProperty(value = "hasQuizExam", access = JsonProperty.Access.READ_ONLY)
     public boolean hasQuizExam() {
         return getQuizExamMaxPoints() != null && getQuizExamMaxPoints() > 0;
