@@ -229,5 +229,7 @@ public class LocalCIBuildJobManagementService {
         localCIContainerService.deleteScriptFile(containerName);
 
         localCIContainerService.stopContainer(containerName);
+
+        cancelledBuildJobs.remove(buildJobId);
     }
 }

@@ -48,7 +48,7 @@ export class BuildQueueService {
      * @param buildJobId the id of the build job to cancel
      */
     cancelBuildJobInCourse(courseId: number, buildJobId: number): Observable<void> {
-        return this.http.delete<void>(`${this.resourceUrl}/courses/${courseId}/cancel/${buildJobId}`).pipe(
+        return this.http.delete<void>(`${this.resourceUrl}/courses/${courseId}/cancel-job/${buildJobId}`).pipe(
             catchError((err) => {
                 return throwError(() => new Error(`Failed to cancel build job ${buildJobId} in course ${courseId}\n${err.message}`));
             }),
@@ -60,7 +60,7 @@ export class BuildQueueService {
      * @param buildJobId the id of the build job to cancel
      */
     cancelBuildJob(buildJobId: number): Observable<void> {
-        return this.http.delete<void>(`${this.adminResourceUrl}/cancel/${buildJobId}`).pipe(
+        return this.http.delete<void>(`${this.adminResourceUrl}/cancel-job/${buildJobId}`).pipe(
             catchError((err) => {
                 return throwError(() => new Error(`Failed to cancel build job ${buildJobId}\n${err.message}`));
             }),
