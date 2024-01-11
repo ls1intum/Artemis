@@ -7,6 +7,7 @@ import { IrisSession } from 'app/entities/iris/iris-session.model';
 import { IrisChatWebsocketDTO, IrisChatWebsocketMessageType } from 'app/iris/chat-websocket.service';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { IrisCodeEditorWebsocketDTO, IrisCodeEditorWebsocketMessageType, StepExecutionException, StepExecutionSuccess } from 'app/iris/code-editor-websocket.service';
+import { ExerciseMetadata, ExerciseUpdate, IrisExerciseCreationWebsocketDTO, IrisExerciseCreationWebsocketMessageType } from 'app/iris/exercise-creation-websocket.service';
 
 const map = new Map<string, any>();
 map.set('model', 'gpt-4');
@@ -114,6 +115,27 @@ export const mockClientMessage = {
     content: [mockMessageContent],
     sentAt: dayjs(),
 } as IrisUserMessage;
+
+export const mockMetadata = {
+    title: 'title',
+    shortName: 'short',
+} as ExerciseMetadata;
+
+export const mockExerciseUpdate = {
+    problemStatement: 'ps',
+    metadata: mockMetadata,
+} as ExerciseUpdate;
+
+export const mockExerciseCreationWebsocketServerMessage = {
+    type: IrisExerciseCreationWebsocketMessageType.MESSAGE,
+    message: mockServerMessage,
+    exerciseUpdate: mockExerciseUpdate,
+} as IrisExerciseCreationWebsocketDTO;
+
+export const mockExerciseCreationWebsocketClientMessage = {
+    type: IrisExerciseCreationWebsocketMessageType.MESSAGE,
+    message: mockClientMessage,
+} as IrisExerciseCreationWebsocketDTO;
 
 export const mockWebsocketServerMessage = {
     type: IrisChatWebsocketMessageType.MESSAGE,
