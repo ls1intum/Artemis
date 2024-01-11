@@ -81,8 +81,8 @@ public class StructuralTestCaseService {
             if (solutionParticipation.isEmpty()) {
                 return Collections.emptyList();
             }
-            solutionRepository = gitService.getOrCheckoutRepository(solutionParticipation.get().getVcsRepositoryUrl(), true);
-            testRepository = gitService.getOrCheckoutRepository(programmingExercise.getVcsTestRepositoryUrl(), true);
+            solutionRepository = gitService.getOrCheckoutRepository(solutionParticipation.get().getVcsRepositoryUri(), true);
+            testRepository = gitService.getOrCheckoutRepository(programmingExercise.getVcsTestRepositoryUri(), true);
 
             gitService.resetToOriginHead(solutionRepository);
             gitService.pullIgnoreConflicts(solutionRepository);
