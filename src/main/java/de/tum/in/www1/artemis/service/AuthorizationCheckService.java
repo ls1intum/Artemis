@@ -344,11 +344,11 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * checks if the passed user is at least a teaching assistant in the given course
+     * checks if the passed user is at least a student in the given course
      *
      * @param course the course that needs to be checked
      * @param user   the user whose permissions should be checked
-     * @return true if the passed user is at least a teaching assistant in the course (also if the user is instructor or admin), false otherwise
+     * @return true if the passed user is at least a student in the course (also if the user is teaching assistant, instructor or admin), false otherwise
      */
     @CheckReturnValue
     public boolean isAtLeastStudentInCourse(@NotNull Course course, @Nullable User user) {
