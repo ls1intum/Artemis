@@ -1,0 +1,20 @@
+<div class="container" (mouseenter)="toggleScrollLock(true)" (mouseleave)="toggleScrollLock(false)">
+    <!-- chat box -->
+    <div class="matlog-position chat-widget">
+        <!-- client -->
+        <jhi-exercise-creation-widget [stateStore]="stateStore" [courseId]="courseId" [sessionService]="sessionService" [paramsOnSend]="paramsOnSend">
+            <ng-container fullSizeButton>
+                @if (!fullSize) {
+                    <button (click)="maximizeScreen()" class="header-icon">
+                        <fa-icon [icon]="faExpand"></fa-icon>
+                    </button>
+                }
+                @if (fullSize) {
+                    <button (click)="minimizeScreen()" class="header-icon">
+                        <fa-icon [icon]="faCompress"></fa-icon>
+                    </button>
+                }
+            </ng-container>
+        </jhi-exercise-creation-widget>
+    </div>
+</div>

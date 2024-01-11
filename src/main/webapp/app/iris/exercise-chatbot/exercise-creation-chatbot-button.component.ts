@@ -5,19 +5,19 @@ import { IrisStateStore } from 'app/iris/state-store.service';
 import { ActivatedRoute } from '@angular/router';
 import { SharedService } from 'app/iris/shared.service';
 import { IrisChatbotButtonComponent } from 'app/iris/exercise-chatbot/chatbot-button.component';
-import { IrisLogoSize } from '../../iris-logo/iris-logo.component';
+import { IrisLogoSize } from '../iris-logo/iris-logo.component';
 import { IrisExerciseCreationWebsocketService } from 'app/iris/exercise-creation-websocket.service';
 import { IrisExerciseCreationSessionService } from 'app/iris/exercise-creation-session.service';
-import { ChatbotService } from 'app/iris/exercise-chatbot/exercise-creation-ui/chatbot.service';
+import { ChatbotService } from 'app/iris/exercise-chatbot/widget/chatbot.service';
 import { NumNewMessagesResetAction } from 'app/iris/state-store.model';
 
 @Component({
-    selector: 'jhi-new-exercise-creation-chatbot-button',
+    selector: 'jhi-exercise-creation-chatbot-button',
     templateUrl: 'exercise-creation-chatbot-button.component.html',
-    styleUrl: '../widget/chatbot-widget.component.scss',
+    styleUrl: 'widget/chatbot-widget.component.scss',
     providers: [IrisExerciseCreationSessionService, ChatbotService],
 })
-export class IrisNewExerciseCreationChatbotButtonComponent extends IrisChatbotButtonComponent {
+export class IrisExerciseCreationChatbotButtonComponent extends IrisChatbotButtonComponent {
     protected readonly IrisLogoSize = IrisLogoSize;
 
     constructor(

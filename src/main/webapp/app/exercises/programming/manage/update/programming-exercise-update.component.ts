@@ -33,7 +33,7 @@ import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exerci
 import { PROFILE_AEOLUS, PROFILE_LOCALCI } from 'app/app.constants';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
-import { IrisNewExerciseCreationChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-creation-ui/exercise-creation-chatbot-button.component';
+import { IrisExerciseCreationChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-creation-chatbot-button.component';
 import { ExerciseUpdate, IrisExerciseCreationWebsocketService } from 'app/iris/exercise-creation-websocket.service';
 import { IrisCodeEditorSessionService } from 'app/iris/code-editor-session.service';
 
@@ -44,7 +44,7 @@ import { IrisCodeEditorSessionService } from 'app/iris/code-editor-session.servi
     providers: [IrisCodeEditorSessionService],
 })
 export class ProgrammingExerciseUpdateComponent implements OnInit {
-    @ViewChild(IrisNewExerciseCreationChatbotButtonComponent, { static: false }) chatbotButton: IrisNewExerciseCreationChatbotButtonComponent;
+    @ViewChild(IrisExerciseCreationChatbotButtonComponent, { static: false }) chatbotButton: IrisExerciseCreationChatbotButtonComponent;
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly FeatureToggle = FeatureToggle;
     readonly ProgrammingLanguage = ProgrammingLanguage;

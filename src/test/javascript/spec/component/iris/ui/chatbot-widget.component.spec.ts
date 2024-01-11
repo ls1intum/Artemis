@@ -6,7 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockPipe } from 'ng-mocks';
-import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
+import { IrisChatbotDialogWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-dialog-widget.component';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -47,8 +47,8 @@ import { IrisHttpCodeEditorMessageService } from 'app/iris/http-code-editor-mess
 import { IrisCodeEditorSessionService } from 'app/iris/code-editor-session.service';
 
 describe('IrisChatbotWidgetComponent', () => {
-    let component: IrisChatbotWidgetComponent;
-    let fixture: ComponentFixture<IrisChatbotWidgetComponent>;
+    let component: IrisChatbotDialogWidgetComponent;
+    let fixture: ComponentFixture<IrisChatbotDialogWidgetComponent>;
     let stateStore: IrisStateStore;
     let mockHttpCodeEditorMessageService: IrisHttpCodeEditorMessageService;
     let mockCodeEditorSessionService: IrisCodeEditorSessionService;
@@ -104,7 +104,7 @@ describe('IrisChatbotWidgetComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [FormsModule, FontAwesomeModule, MatDialogModule],
-            declarations: [IrisChatbotWidgetComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe)],
+            declarations: [IrisChatbotDialogWidgetComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe)],
             providers: [
                 { provide: MAT_DIALOG_DATA, useValue: { stateStore: stateStore, courseId: 1, exerciseId: 1, sessionService: mockCodeEditorSessionService } },
                 { provide: IrisHttpMessageService, useValue: mockHttpCodeEditorMessageService },
@@ -125,7 +125,7 @@ describe('IrisChatbotWidgetComponent', () => {
                 global.window ??= window;
                 window.scroll = jest.fn();
                 window.HTMLElement.prototype.scrollTo = jest.fn();
-                fixture = TestBed.createComponent(IrisChatbotWidgetComponent);
+                fixture = TestBed.createComponent(IrisChatbotDialogWidgetComponent);
                 component = fixture.componentInstance;
                 component.shouldLoadGreetingMessage = false;
                 fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();

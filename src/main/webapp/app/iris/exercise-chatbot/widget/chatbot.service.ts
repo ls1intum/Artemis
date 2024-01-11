@@ -7,7 +7,7 @@ import { Subject } from 'rxjs';
 export class ChatbotService {
     private displayChatSubject = new Subject<void>();
 
-    displayChat$ = this.displayChatSubject.asObservable();
+    displayChatObservable = this.displayChatSubject.asObservable();
 
     displayChat() {
         this.displayChatSubject.next();

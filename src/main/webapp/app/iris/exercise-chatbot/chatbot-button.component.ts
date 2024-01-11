@@ -1,7 +1,7 @@
 import { faChevronDown, faCircle, faCommentDots } from '@fortawesome/free-solid-svg-icons';
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
+import { IrisChatbotDialogWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-dialog-widget.component';
 import { Overlay } from '@angular/cdk/overlay';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { NumNewMessagesResetAction } from 'app/iris/state-store.model';
@@ -12,7 +12,7 @@ import { IrisSessionService } from 'app/iris/session.service';
 
 @Component({ template: '' })
 export abstract class IrisChatbotButtonComponent implements OnInit, OnDestroy {
-    dialogRef: MatDialogRef<IrisChatbotWidgetComponent> | null = null;
+    dialogRef: MatDialogRef<IrisChatbotDialogWidgetComponent> | null = null;
     chatOpen = false;
     hasNewMessages = false;
     protected courseId: number;
@@ -92,7 +92,7 @@ export abstract class IrisChatbotButtonComponent implements OnInit, OnDestroy {
      */
     openChat() {
         this.chatOpen = true;
-        this.dialogRef = this.dialog.open(IrisChatbotWidgetComponent, {
+        this.dialogRef = this.dialog.open(IrisChatbotDialogWidgetComponent, {
             hasBackdrop: false,
             scrollStrategy: this.overlay.scrollStrategies.noop(),
             position: { bottom: '0px', right: '0px' },

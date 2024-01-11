@@ -20,21 +20,21 @@ import { IrisGlobalAutoupdateSettingsUpdateComponent } from './settings/iris-set
 import { IrisCodeEditorSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-code-editor-sub-settings-update/iris-code-editor-sub-settings-update.component';
 import { IrisCodeEditorChatbotButtonComponent } from 'app/iris/exercise-chatbot/code-editor-chatbot-button.component';
 import { IrisTutorChatbotButtonComponent } from 'app/iris/exercise-chatbot/tutor-chatbot-button.component';
-import { IrisNewExerciseCreationChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-creation-ui/exercise-creation-chatbot-button.component';
+import { IrisExerciseCreationChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-creation-chatbot-button.component';
 import { IrisCodeEditorWebsocketService } from 'app/iris/code-editor-websocket.service';
 import { IrisStateStore } from 'app/iris/state-store.service';
-import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
+import { IrisChatbotDialogWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-dialog-widget.component';
 import { IrisEnabledComponent } from 'app/iris/settings/shared/iris-enabled.component';
 import { IrisExerciseCreationWebsocketService } from 'app/iris/exercise-creation-websocket.service';
-import { ExerciseCreationWidgetComponent } from 'app/iris/exercise-chatbot/exercise-creation-ui/exercise-creation-widget.component';
+import { ExerciseCreationWidgetComponent } from 'app/iris/exercise-chatbot/widget/exercise-creation-widget.component';
 
 @NgModule({
     declarations: [
-        IrisChatbotWidgetComponent,
+        IrisChatbotDialogWidgetComponent,
         ExerciseCreationWidgetComponent,
         IrisCodeEditorChatbotButtonComponent,
         IrisTutorChatbotButtonComponent,
-        IrisNewExerciseCreationChatbotButtonComponent,
+        IrisExerciseCreationChatbotButtonComponent,
         AboutIrisComponent,
         IrisSettingsUpdateComponent,
         IrisGlobalSettingsUpdateComponent,
@@ -50,6 +50,6 @@ import { ExerciseCreationWidgetComponent } from 'app/iris/exercise-chatbot/exerc
     ],
     imports: [CommonModule, MatDialogModule, FormsModule, FontAwesomeModule, ArtemisSharedModule, ArtemisMarkdownModule, ArtemisSharedComponentModule, RouterModule],
     providers: [IrisExerciseCreationWebsocketService, IrisCodeEditorWebsocketService, IrisStateStore],
-    exports: [IrisCodeEditorChatbotButtonComponent, IrisTutorChatbotButtonComponent, IrisEnabledComponent, IrisNewExerciseCreationChatbotButtonComponent],
+    exports: [IrisCodeEditorChatbotButtonComponent, IrisTutorChatbotButtonComponent, IrisEnabledComponent, IrisExerciseCreationChatbotButtonComponent],
 })
 export class IrisModule {}

@@ -19,16 +19,7 @@
                         <fa-icon [icon]="faTrash"></fa-icon>
                     </button>
                 }
-                @if (!fullSize) {
-                    <button (click)="maximizeScreen()" class="header-icon">
-                        <fa-icon [icon]="faExpand"></fa-icon>
-                    </button>
-                }
-                @if (fullSize) {
-                    <button (click)="minimizeScreen()" class="header-icon">
-                        <fa-icon [icon]="faCompress"></fa-icon>
-                    </button>
-                }
+                <ng-content select="[fullSizeButton]"></ng-content>
                 <button (click)="closeChat()" class="header-icon">
                     <fa-icon [icon]="faXmark"></fa-icon>
                 </button>
