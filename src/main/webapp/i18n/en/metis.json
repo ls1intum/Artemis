@@ -29,12 +29,9 @@
             "unmarkAsResolvingAnswerTooltip": "Revoke that this reply resolves the original message",
             "resolvingAnswerTooltip": "This reply resolves the original message",
             "today": "Today",
-            "pinnedPostTooltip": "This post was pinned by a tutor",
-            "archivedPostTooltip": "This post was archived by a tutor",
-            "pinPostTutorTooltip": "Click to pin this post at the top of the list",
-            "archivePostTutorTooltip": "Click to archive this post",
-            "removePinPostTutorTooltip": "Click to unpin this post",
-            "removeArchivePostTutorTooltip": "Click to de-archive this post",
+            "pinnedPostTooltip": "This message was pinned",
+            "pinPostTooltip": "Click to pin this message",
+            "removePinPostTooltip": "Click to unpin this message",
             "chooseReaction": "Choose a reaction...",
             "you": "You",
             "and": " and ",
@@ -48,9 +45,8 @@
                 "lecture": "Lecture"
             },
             "channel": {
-                "notAMember": "You are not a member of the channel.",
                 "noChannel": "There is no channel available.",
-                "invalidReference": "The referenced channel doesn't exist."
+                "notAMember": "You are not a member of this conversation."
             },
             "communication": {
                 "label": "Communication",

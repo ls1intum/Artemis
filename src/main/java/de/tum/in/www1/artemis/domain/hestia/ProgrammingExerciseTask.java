@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.domain.hestia;
 
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -78,20 +77,5 @@ public class ProgrammingExerciseTask extends DomainObject {
     @Override
     public String toString() {
         return "ProgrammingExerciseTask{" + "taskName='" + taskName + '\'' + ", testCases=" + testCases + '}';
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        if (!super.equals(obj)) {
-            return false;
-        }
-        ProgrammingExerciseTask that = (ProgrammingExerciseTask) obj;
-        return Objects.equals(taskName, that.taskName) && Objects.equals(testCases, that.testCases);
     }
 }

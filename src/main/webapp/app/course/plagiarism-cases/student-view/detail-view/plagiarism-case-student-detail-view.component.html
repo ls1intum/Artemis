@@ -1,4 +1,4 @@
-<ng-container *ngIf="plagiarismCase">
+@if (plagiarismCase) {
     <div class="plagiarism-case">
         <div class="case-header">
             <div class="row">
@@ -13,10 +13,14 @@
                         <fa-icon [icon]="faUser"></fa-icon>
                         {{ plagiarismCase.student!.name }} ({{ plagiarismCase.student!.login }})
                     </p>
-                    <p class="mb-0 text-truncate" *ngIf="plagiarismCase?.exercise">
-                        <fa-icon *ngIf="plagiarismCase.exercise!.type!" [icon]="getIcon(plagiarismCase.exercise!.type!)"></fa-icon>
-                        {{ plagiarismCase.exercise!.title! }}
-                    </p>
+                    @if (plagiarismCase?.exercise) {
+                        <p class="mb-0 text-truncate">
+                            @if (plagiarismCase.exercise!.type!) {
+                                <fa-icon [icon]="getIcon(plagiarismCase.exercise!.type!)"></fa-icon>
+                            }
+                            {{ plagiarismCase.exercise!.title! }}
+                        </p>
+                    }
                 </div>
                 <div class="col-12 col-lg-6 col-xl-3 d-flex align-items-center justify-content-xl-end">
                     <a class="btn btn-secondary" [routerLink]="affectedExerciseRouterLink">
@@ -25,64 +29,77 @@
                 </div>
             </div>
         </div>
-
         <div class="case-body">
-            <section *ngIf="plagiarismCase.verdict">
-                <div *ngIf="plagiarismCase.verdict === plagiarismVerdict.POINT_DEDUCTION" class="alert alert-danger">
-                    <h5>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction' | artemisTranslate }}</h5>
-                    <p class="mb-0">{{ plagiarismCase.verdictPointDeduction }}&nbsp;&percnt;</p>
-                </div>
-                <div *ngIf="plagiarismCase.verdict === plagiarismVerdict.WARNING" class="alert alert-danger">
-                    <h5>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.warning' | artemisTranslate }}</h5>
-                    <p class="mb-0">{{ plagiarismCase.verdictMessage }}</p>
-                </div>
-            </section>
-
+            @if (plagiarismCase.verdict) {
+                <section>
+                    @if (plagiarismCase.verdict === plagiarismVerdict.POINT_DEDUCTION) {
+                        <div class="alert alert-danger">
+                            <h5>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction' | artemisTranslate }}</h5>
+                            <p class="mb-0">{{ plagiarismCase.verdictPointDeduction }}&nbsp;&percnt;</p>
+                        </div>
+                    }
+                    @if (plagiarismCase.verdict === plagiarismVerdict.WARNING) {
+                        <div class="alert alert-danger">
+                            <h5>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.warning' | artemisTranslate }}</h5>
+                            <p class="mb-0">{{ plagiarismCase.verdictMessage }}</p>
+                        </div>
+                    }
+                </section>
+            }
             <section>
                 <h3>{{ 'artemisApp.plagiarism.plagiarismCases.conversation' | artemisTranslate }}</h3>
                 <div class="row">
-                    <div *ngIf="posts && posts.length > 0" class="row mb-2 col-12">
-                        <div class="col-12">
-                            <jhi-post #post [readOnlyMode]="false" [posting]="posts[0]" [showAnswers]="true" [isCourseMessagesPage]="false" [hasChannelModerationRights]="false">
-                            </jhi-post>
-                        </div>
-                        <div
-                            class="alert alert-warning my-2"
-                            *ngIf="
+                    @if (posts && posts.length > 0) {
+                        <div class="row mb-2 col-12">
+                            <div class="col-12">
+                                <jhi-post
+                                    #post
+                                    [readOnlyMode]="false"
+                                    [posting]="posts[0]"
+                                    [showAnswers]="true"
+                                    [isCourseMessagesPage]="false"
+                                    [hasChannelModerationRights]="false"
+                                >
+                                </jhi-post>
+                            </div>
+                            @if (
                                 !this.posts[0].answers?.length &&
                                 (!this.plagiarismCase.createdByContinuousPlagiarismControl || (this.plagiarismCase.createdByContinuousPlagiarismControl && this.isAfterDueDate))
-                            "
-                        >
-                            <h5
-                                *ngIf="posts[0].creationDate"
-                                [innerHTML]="
-                                    'artemisApp.plagiarism.replyToAccusationDueDateNotification'
-                                        | artemisTranslate
-                                            : {
-                                                  dueDate: (plagiarismCase.createdByContinuousPlagiarismControl
-                                                      ? dayjs(plagiarismCase.exercise!.dueDate!).add(
-                                                            plagiarismCase.exercise!.plagiarismDetectionConfig!.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod!,
-                                                            'day'
-                                                        )
-                                                      : posts[0].creationDate.add(7, 'day')
-                                                  ).format('DD.MM.YYYY')
-                                              }
-                                "
-                            ></h5>
-                            <jhi-button [btnType]="ButtonType.WARNING" (click)="postComponent.openCreateAnswerPostModal()" title="artemisApp.plagiarism.replyToAccusation">
-                            </jhi-button>
+                            ) {
+                                <div class="alert alert-warning my-2">
+                                    @if (posts[0].creationDate) {
+                                        <h5
+                                            [innerHTML]="
+                                                'artemisApp.plagiarism.replyToAccusationDueDateNotification'
+                                                    | artemisTranslate
+                                                        : {
+                                                              dueDate: (plagiarismCase.createdByContinuousPlagiarismControl
+                                                                  ? dayjs(plagiarismCase.exercise!.dueDate!).add(
+                                                                        plagiarismCase.exercise!.plagiarismDetectionConfig!
+                                                                            .continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod!,
+                                                                        'day'
+                                                                    )
+                                                                  : posts[0].creationDate.add(7, 'day')
+                                                              ).format('DD.MM.YYYY')
+                                                          }
+                                            "
+                                        ></h5>
+                                    }
+                                    <jhi-button [btnType]="ButtonType.WARNING" (click)="postComponent.openCreateAnswerPostModal()" title="artemisApp.plagiarism.replyToAccusation">
+                                    </jhi-button>
+                                </div>
+                            }
+                            <div class="mt-3"></div>
                         </div>
-                        <div class="mt-3"></div>
-                    </div>
+                    }
                 </div>
             </section>
-
             <section>
                 <h3 class="mt-5">{{ 'artemisApp.plagiarism.plagiarismCases.comparisons' | artemisTranslate }}</h3>
                 <div class="container-fluid">
-                    <jhi-plagiarism-case-review [plagiarismCase]="plagiarismCase" [forStudent]="false"></jhi-plagiarism-case-review>
+                    <jhi-plagiarism-case-review [plagiarismCase]="plagiarismCase" [forStudent]="true"></jhi-plagiarism-case-review>
                 </div>
             </section>
         </div>
     </div>
-</ng-container>
+}

@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { EMPTY, Observable, ReplaySubject, Subject, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
+import { EMPTY, Observable, ReplaySubject, Subject, Subscription, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -18,6 +18,8 @@ import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import dayjs from 'dayjs/esm';
 import { NavigationEnd, Params, Router } from '@angular/router';
+import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
+import { NotificationService } from 'app/shared/notification/notification.service';
 
 /**
  * NOTE: NOT INJECTED IN THE ROOT MODULE
@@ -36,13 +38,15 @@ export class MetisConversationService implements OnDestroy {
     _isCodeOfConductPresented$: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
     private hasUnreadMessages = false;
     _hasUnreadMessages$: Subject<boolean> = new ReplaySubject<boolean>(1);
-    // Stores the course for which the service is setup -> should not change during the lifetime of the service
+    // Stores the course for which the service is set up -> should not change during the lifetime of the service
     private _course: Course | undefined = undefined;
     // Stores if the service is currently loading data
     private isLoading = false;
     _isLoading$: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
 
     private subscribedConversationMembershipTopic?: string;
+    private activeConversationSubscription?: Subscription;
+
     private userId: number;
     private _courseId: number;
 
@@ -57,9 +61,16 @@ export class MetisConversationService implements OnDestroy {
         private accountService: AccountService,
         private alertService: AlertService,
         private router: Router,
+        private notificationService: NotificationService,
     ) {
         this.accountService.identity().then((user: User) => {
             this.userId = user.id!;
+        });
+
+        this.activeConversationSubscription = this.notificationService.newOrUpdatedMessage.subscribe((postDTO: MetisPostDTO) => {
+            if (postDTO.action === MetisPostAction.CREATE && postDTO.post.author?.id !== this.userId) {
+                this.handleNewMessage(postDTO.post.conversation?.id, postDTO.post.conversation?.lastMessageDate);
+            }
         });
     }
 
@@ -67,6 +78,11 @@ export class MetisConversationService implements OnDestroy {
         if (this.subscribedConversationMembershipTopic) {
             this.jhiWebsocketService.unsubscribe(this.subscribedConversationMembershipTopic);
             this.subscribedConversationMembershipTopic = undefined;
+        }
+
+        if (this.activeConversationSubscription) {
+            this.activeConversationSubscription.unsubscribe();
+            this.activeConversationSubscription = undefined;
         }
     }
 
@@ -110,7 +126,7 @@ export class MetisConversationService implements OnDestroy {
         if (!cachedConversation) {
             this.alertService.addAlert({
                 type: AlertType.WARNING,
-                message: 'artemisApp.metis.channel.invalidReference',
+                message: 'artemisApp.metis.channel.notAMember',
             });
         }
         this.activeConversation = cachedConversation;
@@ -129,6 +145,15 @@ export class MetisConversationService implements OnDestroy {
         this._isCodeOfConductPresented$.next(this.isCodeOfConductPresented);
     }
 
+    public markAsRead(conversationId: number) {
+        const indexOfCachedConversation = this.conversationsOfUser.findIndex((cachedConversation) => cachedConversation.id === conversationId);
+        if (indexOfCachedConversation !== -1) {
+            this.conversationsOfUser[indexOfCachedConversation].lastMessageDate = dayjs();
+            this.conversationsOfUser[indexOfCachedConversation].unreadMessagesCount = 0;
+        }
+        this.hasUnreadMessagesCheck();
+    }
+
     private updateLastReadDateAndNumberOfUnreadMessages() {
         // update last read date and number of unread messages of the conversation that is currently active before switching to another conversation
         if (this.activeConversation) {
@@ -137,7 +162,7 @@ export class MetisConversationService implements OnDestroy {
         }
     }
 
-    public forceRefresh = (notifyActiveConversationSubscribers = true, notifyConversationsSubscribers = true): Observable<never> => {
+    public forceRefresh(notifyActiveConversationSubscribers = true, notifyConversationsSubscribers = true): Observable<never> {
         if (!this._course) {
             throw new Error('Course is not set. The service does not seem to be initialized.');
         }
@@ -180,7 +205,7 @@ export class MetisConversationService implements OnDestroy {
             // refresh complete
             switchMap(() => EMPTY),
         );
-    };
+    }
 
     public createOneToOneChat = (loginOfChatPartner: string): Observable<HttpResponse<OneToOneChatDTO>> =>
         this.onConversationCreation(this.oneToOneChatService.create(this._courseId, loginOfChatPartner));
@@ -352,7 +377,7 @@ export class MetisConversationService implements OnDestroy {
 
     private onConversationMembershipMessageReceived(websocketDTO: ConversationWebsocketDTO) {
         const conversationDTO = this.conversationService.convertServerDates(websocketDTO.conversation);
-        const action = websocketDTO.metisCrudAction;
+        const action = websocketDTO.action;
 
         switch (action) {
             case MetisPostAction.CREATE:
@@ -365,7 +390,7 @@ export class MetisConversationService implements OnDestroy {
                 this.handleDeleteConversation(conversationDTO);
                 break;
             case MetisPostAction.NEW_MESSAGE:
-                this.handleNewMessage(conversationDTO);
+                this.handleNewMessage(conversationDTO.id, conversationDTO.lastMessageDate);
                 break;
         }
         this._conversationsOfUser$.next(this.conversationsOfUser);
@@ -413,11 +438,11 @@ export class MetisConversationService implements OnDestroy {
         }
     }
 
-    private handleNewMessage(conversationWithNewMessage: ConversationDto) {
+    private handleNewMessage(conversationId: number | undefined, lastMessageDate: dayjs.Dayjs | undefined) {
         const conversationsCopy = [...this.conversationsOfUser];
-        const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === conversationWithNewMessage.id);
+        const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === conversationId);
         if (indexOfCachedConversation !== -1) {
-            conversationsCopy[indexOfCachedConversation].lastMessageDate = conversationWithNewMessage.lastMessageDate;
+            conversationsCopy[indexOfCachedConversation].lastMessageDate = lastMessageDate;
             conversationsCopy[indexOfCachedConversation].unreadMessagesCount = (conversationsCopy[indexOfCachedConversation].unreadMessagesCount ?? 0) + 1;
             if (!this.hasUnreadMessages) {
                 this.hasUnreadMessages = true;

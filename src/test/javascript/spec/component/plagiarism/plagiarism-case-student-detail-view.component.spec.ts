@@ -15,6 +15,8 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import dayjs from 'dayjs/esm';
+import { NotificationService } from 'app/shared/notification/notification.service';
+import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 
 describe('Plagiarism Cases Student View Component', () => {
     let component: PlagiarismCaseStudentDetailViewComponent;
@@ -53,6 +55,7 @@ describe('Plagiarism Cases Student View Component', () => {
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: NotificationService, useClass: MockNotificationService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: MetisService, useClass: MetisService },

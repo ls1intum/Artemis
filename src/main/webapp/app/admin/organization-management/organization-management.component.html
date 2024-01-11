@@ -20,43 +20,45 @@
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let organization of organizations; trackBy: trackIdentity">
-                    <td>
-                        <span>{{ organization.id }}</span>
-                    </td>
-                    <td>
-                        <span>{{ organization.name }}</span>
-                    </td>
-                    <td>
-                        <span>{{ organization.shortName }}</span>
-                    </td>
-                    <td>{{ organization.url }}</td>
-                    <td>{{ organization.description }}</td>
-                    <td>{{ organization.numberOfUsers }}</td>
-                    <td>{{ organization.numberOfCourses }}</td>
-                    <td>{{ organization.emailPattern }}</td>
-                    <td class="text-end">
-                        <div class="btn-group flex-btn-group-container">
-                            <button type="submit" [routerLink]="['./', organization.id]" class="btn btn-info btn-sm">
-                                <fa-icon [icon]="faEye"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
-                            </button>
-                            <button type="submit" [routerLink]="['./', organization.id, 'edit']" queryParamsHandling="merge" class="btn btn-warning btn-sm">
-                                <fa-icon [icon]="faWrench"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
-                            </button>
-                            <button
-                                jhiDeleteButton
-                                [entityTitle]="organization.name!"
-                                deleteQuestion="artemisApp.organizationManagement.delete.question"
-                                (delete)="deleteOrganization(organization.id!)"
-                                [dialogError]="dialogError$"
-                            >
-                                <fa-icon [icon]="faTimes"></fa-icon>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
+                @for (organization of organizations; track trackIdentity($index, organization)) {
+                    <tr>
+                        <td>
+                            <span>{{ organization.id }}</span>
+                        </td>
+                        <td>
+                            <span>{{ organization.name }}</span>
+                        </td>
+                        <td>
+                            <span>{{ organization.shortName }}</span>
+                        </td>
+                        <td>{{ organization.url }}</td>
+                        <td>{{ organization.description }}</td>
+                        <td>{{ organization.numberOfUsers }}</td>
+                        <td>{{ organization.numberOfCourses }}</td>
+                        <td>{{ organization.emailPattern }}</td>
+                        <td class="text-end">
+                            <div class="btn-group flex-btn-group-container">
+                                <button type="submit" [routerLink]="['./', organization.id]" class="btn btn-info btn-sm">
+                                    <fa-icon [icon]="faEye"></fa-icon>
+                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                                </button>
+                                <button type="submit" [routerLink]="['./', organization.id, 'edit']" queryParamsHandling="merge" class="btn btn-warning btn-sm">
+                                    <fa-icon [icon]="faWrench"></fa-icon>
+                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                                </button>
+                                <button
+                                    jhiDeleteButton
+                                    [entityTitle]="organization.name!"
+                                    deleteQuestion="artemisApp.organizationManagement.delete.question"
+                                    (delete)="deleteOrganization(organization.id!)"
+                                    [dialogError]="dialogError$"
+                                >
+                                    <fa-icon [icon]="faTimes"></fa-icon>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
             </tbody>
         </table>
     </div>

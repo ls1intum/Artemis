@@ -34,9 +34,7 @@ import com.atlassian.bamboo.specs.api.exceptions.BambooSpecsPublishingException;
 import com.atlassian.bamboo.specs.util.BambooServer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import de.tum.in.www1.artemis.connector.BambooRequestMockProvider;
-import de.tum.in.www1.artemis.connector.BitbucketRequestMockProvider;
-import de.tum.in.www1.artemis.connector.JiraRequestMockProvider;
+import de.tum.in.www1.artemis.connector.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -66,7 +64,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @ResourceLock("AbstractSpringIntegrationBambooBitbucketJiraTest")
 @AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "bamboo", "bitbucket", "jira", "ldap", "scheduling", "athena", "apollon", "iris", "lti" })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "bamboo", "bitbucket", "jira", "ldap", "scheduling", "athena", "apollon", "iris", "lti", "aeolus" })
 public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends AbstractArtemisIntegrationTest {
 
     @SpyBean
@@ -109,6 +107,9 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @Autowired
     protected JiraRequestMockProvider jiraRequestMockProvider;
+
+    @Autowired
+    protected AeolusRequestMockProvider aeolusRequestMockProvider;
 
     @Autowired
     protected PasswordService passwordService;
@@ -191,18 +192,18 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         final var bambooRepositoryAssignment = new BambooRepositoryDTO(296200357L, ASSIGNMENT_REPO_NAME);
         final var bambooRepositoryTests = new BambooRepositoryDTO(296200356L, TEST_REPO_NAME);
         final var bambooRepositoryAuxRepo = new BambooRepositoryDTO(296200358L, "auxrepo");
-        final var newRepoUrl = versionControlService.getCloneRepositoryUrl(exercise.getProjectKey(), repoNameInVcs).toString();
+        final var newRepoUri = versionControlService.getCloneRepositoryUri(exercise.getProjectKey(), repoNameInVcs).toString();
 
         bambooRequestMockProvider.mockGetBuildPlanRepositoryList(buildPlanKey);
 
         if (ASSIGNMENT_REPO_NAME.equals(repoNameInCI)) {
-            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryAssignment, newRepoUrl, defaultBranch);
+            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryAssignment, newRepoUri, defaultBranch);
         }
         else if (TEST_REPO_NAME.equals(repoNameInCI)) {
-            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryTests, newRepoUrl, defaultBranch);
+            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryTests, newRepoUri, defaultBranch);
         }
         else if ("auxrepo".equals(repoNameInCI)) {
-            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryAuxRepo, newRepoUrl, defaultBranch);
+            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryAuxRepo, newRepoUri, defaultBranch);
         }
     }
 
@@ -379,9 +380,9 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     @Override
     public void mockConfigureBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception {
         final var buildPlanId = participation.getBuildPlanId();
-        final var repositoryUrl = participation.getVcsRepositoryUrl();
+        final var repositoryUri = participation.getVcsRepositoryUri();
         final var planKey = participation.getBuildPlanId();
-        bambooRequestMockProvider.mockUpdatePlanRepository(planKey, ASSIGNMENT_REPO_NAME, repositoryUrl.toString(), defaultBranch);
+        bambooRequestMockProvider.mockUpdatePlanRepository(planKey, ASSIGNMENT_REPO_NAME, repositoryUri.toString(), defaultBranch);
 
         // Isn't mockEnablePlan() written incorrectly since projectKey isn't even used by the bamboo service?
         var splitted = buildPlanId.split("-");
@@ -544,9 +545,9 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     public void mockConfigureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) throws Exception {
         // Make sure that all REST calls are necessary
         String buildPlanId = participation.getBuildPlanId();
-        VcsRepositoryUrl repositoryUrl = participation.getVcsRepositoryUrl();
+        VcsRepositoryUri repositoryUri = participation.getVcsRepositoryUri();
         String projectKey = buildPlanId.split("-")[0];
-        bambooRequestMockProvider.mockUpdatePlanRepository(buildPlanId, "assignment", repositoryUrl.toString(), defaultBranch);
+        bambooRequestMockProvider.mockUpdatePlanRepository(buildPlanId, "assignment", repositoryUri.toString(), defaultBranch);
         bambooRequestMockProvider.mockEnablePlan(projectKey, buildPlanId.split("-")[1], true, false);
         if (Boolean.TRUE.equals(participation.getProgrammingExercise().isPublishBuildPlanUrl())) {
             for (User user : ((StudentParticipation) participation).getParticipant().getParticipants()) {
@@ -566,8 +567,8 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockRepositoryUrlIsValid(VcsRepositoryUrl vcsTemplateRepositoryUrl, String projectKey, boolean b) throws Exception {
-        bitbucketRequestMockProvider.mockRepositoryUrlIsValid(vcsTemplateRepositoryUrl, projectKey, b);
+    public void mockRepositoryUriIsValid(VcsRepositoryUri vcsTemplateRepositoryUri, String projectKey, boolean b) throws Exception {
+        bitbucketRequestMockProvider.mockRepositoryUriIsValid(vcsTemplateRepositoryUri, projectKey, b);
     }
 
     @Override
@@ -587,8 +588,8 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) throws Exception {
-        var repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
+    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUri, String projectKey, Set<User> users) throws Exception {
+        var repositorySlug = uriService.getRepositorySlugFromRepositoryUri(repositoryUri);
         bitbucketRequestMockProvider.mockSetRepositoryPermissionsToReadOnly(repositorySlug, projectKey, users);
     }
 

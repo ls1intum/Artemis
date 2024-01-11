@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.localci.LocalCISharedBuildJobQueueService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -49,7 +50,7 @@ public class ParticipationService {
 
     private final TeamRepository teamRepository;
 
-    private final UrlService urlService;
+    private final UriService uriService;
 
     private final ResultService resultService;
 
@@ -63,12 +64,15 @@ public class ParticipationService {
 
     private final TeamScoreRepository teamScoreRepository;
 
+    private final Optional<LocalCISharedBuildJobQueueService> localCISharedBuildJobQueueService;
+
     public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            SubmissionRepository submissionRepository, TeamRepository teamRepository, UrlService urlService, ResultService resultService,
+            SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ResultService resultService,
             CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
-            ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository) {
+            ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
+            Optional<LocalCISharedBuildJobQueueService> localCISharedBuildJobQueueService) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
@@ -79,13 +83,14 @@ public class ParticipationService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionRepository = submissionRepository;
         this.teamRepository = teamRepository;
-        this.urlService = urlService;
+        this.uriService = uriService;
         this.resultService = resultService;
         this.coverageReportRepository = coverageReportRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
+        this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
     }
 
     /**
@@ -203,7 +208,7 @@ public class ParticipationService {
      */
     private StudentParticipation startProgrammingExercise(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean setInitializationDate) {
         // Step 1a) create the student repository (based on the template repository)
-        participation = copyRepository(exercise, exercise.getVcsTemplateRepositoryUrl(), participation);
+        participation = copyRepository(exercise, exercise.getVcsTemplateRepositoryUri(), participation);
 
         return startProgrammingParticipation(exercise, participation, setInitializationDate);
     }
@@ -224,10 +229,10 @@ public class ParticipationService {
         // Step 1a) create the student repository (based on the template repository or graded participation)
         if (useGradedParticipation && optionalGradedStudentParticipation.isPresent()
                 && optionalGradedStudentParticipation.get() instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation) {
-            participation = copyRepository(exercise, programmingExerciseStudentParticipation.getVcsRepositoryUrl(), participation);
+            participation = copyRepository(exercise, programmingExerciseStudentParticipation.getVcsRepositoryUri(), participation);
         }
         else {
-            participation = copyRepository(exercise, exercise.getVcsTemplateRepositoryUrl(), participation);
+            participation = copyRepository(exercise, exercise.getVcsTemplateRepositoryUri(), participation);
         }
 
         return startProgrammingParticipation(exercise, participation, setInitializationDate);
@@ -337,7 +342,7 @@ public class ParticipationService {
             // Note: we make sure to use the correct programming exercises here to avoid org.hibernate.LazyInitializationException later
             programmingParticipation.setProgrammingExercise(programmingExercise);
             // Note: we need a repository, otherwise the student would not be possible to click resume (in case he wants to further participate after the due date)
-            programmingParticipation = copyRepository(programmingExercise, programmingExercise.getVcsTemplateRepositoryUrl(), programmingParticipation);
+            programmingParticipation = copyRepository(programmingExercise, programmingExercise.getVcsTemplateRepositoryUri(), programmingParticipation);
             programmingParticipation = configureRepository(programmingExercise, programmingParticipation);
             configureRepositoryWebHook(programmingParticipation);
             participation = programmingParticipation;
@@ -345,7 +350,7 @@ public class ParticipationService {
                     || programmingExercise.getAllowComplaintsForAutomaticAssessments()) {
                 // restrict access for the student
                 try {
-                    versionControlService.orElseThrow().setRepositoryPermissionsToReadOnly(programmingParticipation.getVcsRepositoryUrl(), programmingExercise.getProjectKey(),
+                    versionControlService.orElseThrow().setRepositoryPermissionsToReadOnly(programmingParticipation.getVcsRepositoryUri(), programmingExercise.getProjectKey(),
                             programmingParticipation.getStudents());
                 }
                 catch (VersionControlException e) {
@@ -404,23 +409,23 @@ public class ParticipationService {
         return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
     }
 
-    private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExercise programmingExercise, VcsRepositoryUrl sourceURL,
+    private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExercise programmingExercise, VcsRepositoryUri sourceURL,
             ProgrammingExerciseStudentParticipation participation) {
-        // only execute this step if it has not yet been completed yet or if the repository url is missing for some reason
-        if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getVcsRepositoryUrl() == null) {
+        // only execute this step if it has not yet been completed yet or if the repository uri is missing for some reason
+        if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getVcsRepositoryUri() == null) {
             final var projectKey = programmingExercise.getProjectKey();
             final var repoName = participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
-            final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(sourceURL);
+            final var templateRepoName = uriService.getRepositorySlugFromRepositoryUri(sourceURL);
             VersionControlService vcs = versionControlService.orElseThrow();
             String templateBranch = vcs.getOrRetrieveBranchOfExercise(programmingExercise);
-            // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository url and do not copy it again
-            var newRepoUrl = vcs.copyRepository(projectKey, templateRepoName, templateBranch, projectKey, repoName);
-            // add the userInfo part to the repoURL only if the participation belongs to a single student (and not a team of students)
+            // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository uri and do not copy it again
+            var newRepoUri = vcs.copyRepository(projectKey, templateRepoName, templateBranch, projectKey, repoName);
+            // add the userInfo part to the repoUri only if the participation belongs to a single student (and not a team of students)
             if (participation.getStudent().isPresent()) {
-                newRepoUrl = newRepoUrl.withUser(participation.getParticipantIdentifier());
+                newRepoUri = newRepoUri.withUser(participation.getParticipantIdentifier());
             }
-            participation.setRepositoryUrl(newRepoUrl.toString());
+            participation.setRepositoryUri(newRepoUri.toString());
             participation.setInitializationState(InitializationState.REPO_COPIED);
 
             return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
@@ -659,11 +664,11 @@ public class ParticipationService {
      * @param participation to be stopped
      */
     public void cleanupRepository(ProgrammingExerciseStudentParticipation participation) {
-        // ignore participations without repository URL
-        if (participation.getRepositoryUrl() != null) {
-            versionControlService.orElseThrow().deleteRepository(participation.getVcsRepositoryUrl());
-            gitService.deleteLocalRepository(participation.getVcsRepositoryUrl());
-            participation.setRepositoryUrl(null);
+        // ignore participations without repository URI
+        if (participation.getRepositoryUri() != null) {
+            versionControlService.orElseThrow().deleteRepository(participation.getVcsRepositoryUri());
+            gitService.deleteLocalRepository(participation.getVcsRepositoryUri());
+            participation.setRepositoryUri(null);
             participation.setInitializationState(InitializationState.FINISHED);
             programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
         }
@@ -721,24 +726,27 @@ public class ParticipationService {
         log.info("Request to delete Participation : {}", participation);
 
         if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseParticipation) {
-            var repositoryUrl = programmingExerciseParticipation.getVcsRepositoryUrl();
+            var repositoryUri = programmingExerciseParticipation.getVcsRepositoryUri();
             String buildPlanId = programmingExerciseParticipation.getBuildPlanId();
 
             if (deleteBuildPlan && buildPlanId != null) {
                 final var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
                 continuousIntegrationService.orElseThrow().deleteBuildPlan(projectKey, buildPlanId);
             }
-            if (deleteRepository && programmingExerciseParticipation.getRepositoryUrl() != null) {
+            if (deleteRepository && programmingExerciseParticipation.getRepositoryUri() != null) {
                 try {
-                    versionControlService.orElseThrow().deleteRepository(repositoryUrl);
+                    versionControlService.orElseThrow().deleteRepository(repositoryUri);
                 }
                 catch (Exception ex) {
                     log.error("Could not delete repository: {}", ex.getMessage());
                 }
             }
             // delete local repository cache
-            gitService.deleteLocalRepository(repositoryUrl);
+            gitService.deleteLocalRepository(repositoryUri);
         }
+
+        // If local CI is active, remove all queued jobs for participation
+        localCISharedBuildJobQueueService.ifPresent(service -> service.removeQueuedJobsForParticipation(participationId));
 
         deleteResultsAndSubmissionsOfParticipation(participationId, deleteParticipantScores);
         studentParticipationRepository.delete(participation);

@@ -40,6 +40,17 @@ public class PlagiarismDetectionConfig extends DomainObject {
     @Column(name = "minimum_size")
     private int minimumSize;
 
+    /**
+     * Set all sensitive information to placeholders, so no info about plagiarism checks gets leaked to students through json.
+     */
+    public void filterSensitiveInformation() {
+        continuousPlagiarismControlEnabled = false;
+        continuousPlagiarismControlPostDueDateChecksEnabled = false;
+        similarityThreshold = -1;
+        minimumScore = -1;
+        minimumSize = -1;
+    }
+
     public boolean isContinuousPlagiarismControlEnabled() {
         return continuousPlagiarismControlEnabled;
     }

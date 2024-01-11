@@ -1,40 +1,48 @@
 <div class="me-0 mt-2 row justify-content-between" [ngClass]="previewMode ? 'mb-2' : ''">
     <!-- Post reactions -->
-    <div *ngIf="!previewMode" class="col-auto ps-3 pe-0">
-        <jhi-post-reactions-bar
-            [lastReadDate]="lastReadDate"
-            [readOnlyMode]="readOnlyMode"
-            [posting]="posting"
-            [(showAnswers)]="showAnswers"
-            [sortedAnswerPosts]="sortedAnswerPosts"
-            [isCourseMessagesPage]="isCourseMessagesPage"
-            [isThreadSidebar]="isThreadSidebar"
-            (openPostingCreateEditModal)="createAnswerPostModal.open()"
-            (openThread)="openThread.emit()"
-        ></jhi-post-reactions-bar>
-    </div>
+    @if (!previewMode) {
+        <div class="col-auto ps-3 pe-0">
+            <jhi-post-reactions-bar
+                [lastReadDate]="lastReadDate"
+                [readOnlyMode]="readOnlyMode"
+                [posting]="posting"
+                [(showAnswers)]="showAnswers"
+                [sortedAnswerPosts]="sortedAnswerPosts"
+                [isCourseMessagesPage]="isCourseMessagesPage"
+                [isThreadSidebar]="isThreadSidebar"
+                (openPostingCreateEditModal)="createAnswerPostModal.open()"
+                (openThread)="openThread.emit()"
+            ></jhi-post-reactions-bar>
+        </div>
+    }
     <!-- Post tags -->
     <div class="col-auto ps-3 pe-0">
-        <span *ngFor="let tag of tags" class="post-tag px-1 me-1">
-            {{ tag }}
-        </span>
+        @for (tag of tags; track tag) {
+            <span class="post-tag px-1 me-1">
+                {{ tag }}
+            </span>
+        }
     </div>
 </div>
-<ng-container *ngIf="showAnswers" class="list-answer-post">
-    <jhi-answer-post
-        *ngFor="let answerPost of sortedAnswerPosts; let isLastAnswer = last; trackBy: answerPostTrackByFn"
-        [lastReadDate]="lastReadDate"
-        [isReadOnlyMode]="readOnlyMode"
-        [posting]="answerPost"
-        [isLastAnswer]="isLastAnswer"
-        [isCourseMessagesPage]="isCourseMessagesPage"
-        [isThreadSidebar]="isThreadSidebar"
-        (openPostingCreateEditModal)="createAnswerPostModal.open()"
-        (userReferenceClicked)="userReferenceClicked.emit($event)"
-        (channelReferenceClicked)="channelReferenceClicked.emit($event)"
-    >
-    </jhi-answer-post>
-</ng-container>
+@if (showAnswers) {
+    <ng-container class="list-answer-post">
+        @for (answerPost of sortedAnswerPosts; track answerPostTrackByFn($index, answerPost); let isLastAnswer = $last) {
+            <jhi-answer-post
+                [lastReadDate]="lastReadDate"
+                [isReadOnlyMode]="readOnlyMode"
+                [posting]="answerPost"
+                [isLastAnswer]="isLastAnswer"
+                [isCourseMessagesPage]="isCourseMessagesPage"
+                [isThreadSidebar]="isThreadSidebar"
+                (openPostingCreateEditModal)="createAnswerPostModal.open()"
+                (userReferenceClicked)="userReferenceClicked.emit($event)"
+                (channelReferenceClicked)="channelReferenceClicked.emit($event)"
+                [hasChannelModerationRights]="hasChannelModerationRights"
+            >
+            </jhi-answer-post>
+        }
+    </ng-container>
+}
 <div class="new-reply-inline-input">
     <!-- rendered during the first reply to a post -->
     <ng-container #createEditAnswerPostContainer></ng-container>

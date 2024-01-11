@@ -159,16 +159,16 @@ public class ProgrammingExerciseResource {
         if (!continuousIntegration.checkIfBuildPlanExists(exercise.getProjectKey(), exercise.getTemplateBuildPlanId())) {
             throw new BadRequestAlertException("The Template Build Plan ID seems to be invalid.", "Exercise", ProgrammingExerciseResourceErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID);
         }
-        if (exercise.getVcsTemplateRepositoryUrl() == null || !versionControl.repositoryUrlIsValid(exercise.getVcsTemplateRepositoryUrl())) {
-            throw new BadRequestAlertException("The Template Repository URL seems to be invalid.", "Exercise",
+        if (exercise.getVcsTemplateRepositoryUri() == null || !versionControl.repositoryUriIsValid(exercise.getVcsTemplateRepositoryUri())) {
+            throw new BadRequestAlertException("The Template Repository URI seems to be invalid.", "Exercise",
                     ProgrammingExerciseResourceErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL);
         }
         if (exercise.getSolutionBuildPlanId() != null && !continuousIntegration.checkIfBuildPlanExists(exercise.getProjectKey(), exercise.getSolutionBuildPlanId())) {
             throw new BadRequestAlertException("The Solution Build Plan ID seems to be invalid.", "Exercise", ProgrammingExerciseResourceErrorKeys.INVALID_SOLUTION_BUILD_PLAN_ID);
         }
-        var solutionRepositoryUrl = exercise.getVcsSolutionRepositoryUrl();
-        if (solutionRepositoryUrl != null && !versionControl.repositoryUrlIsValid(solutionRepositoryUrl)) {
-            throw new BadRequestAlertException("The Solution Repository URL seems to be invalid.", "Exercise",
+        var solutionRepositoryUri = exercise.getVcsSolutionRepositoryUri();
+        if (solutionRepositoryUri != null && !versionControl.repositoryUriIsValid(solutionRepositoryUri)) {
+            throw new BadRequestAlertException("The Solution Repository URI seems to be invalid.", "Exercise",
                     ProgrammingExerciseResourceErrorKeys.INVALID_SOLUTION_REPOSITORY_URL);
         }
 
@@ -425,7 +425,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithSetupParticipations(@PathVariable long exerciseId) {
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationLatestResultElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationLatestResultFeedbackTestCasesElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
         var assignmentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithLatestResult(programmingExercise.getId(), user.getId(), false);
         Set<StudentParticipation> participations = new HashSet<>();
@@ -501,8 +501,8 @@ public class ProgrammingExerciseResource {
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
         try {
-            var exerciseRepoURL = programmingExercise.getVcsTemplateRepositoryUrl();
-            gitService.combineAllCommitsOfRepositoryIntoOne(exerciseRepoURL);
+            var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
+            gitService.combineAllCommitsOfRepositoryIntoOne(exerciseRepoUri);
             return new ResponseEntity<>(HttpStatus.OK);
         }
         catch (IllegalStateException | GitAPIException ex) {
@@ -529,15 +529,15 @@ public class ProgrammingExerciseResource {
                     "This is a linked exercise and generating the structure oracle for this exercise is not possible.", "couldNotGenerateStructureOracle")).body(null);
         }
 
-        var solutionRepoURL = programmingExercise.getVcsSolutionRepositoryUrl();
-        var exerciseRepoURL = programmingExercise.getVcsTemplateRepositoryUrl();
-        var testRepoURL = programmingExercise.getVcsTestRepositoryUrl();
+        var solutionRepoUri = programmingExercise.getVcsSolutionRepositoryUri();
+        var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
+        var testRepoUri = programmingExercise.getVcsTestRepositoryUri();
 
         try {
             String testsPath = Path.of("test", programmingExercise.getPackageFolderName()).toString();
             // Atm we only have one folder that can have structural tests, but this could change.
             testsPath = programmingExercise.hasSequentialTestRuns() ? Path.of("structural", testsPath).toString() : testsPath;
-            boolean didGenerateOracle = programmingExerciseService.generateStructureOracleFile(solutionRepoURL, exerciseRepoURL, testRepoURL, testsPath, user);
+            boolean didGenerateOracle = programmingExerciseService.generateStructureOracleFile(solutionRepoUri, exerciseRepoUri, testRepoUri, testsPath, user);
 
             if (didGenerateOracle) {
                 HttpHeaders responseHeaders = new HttpHeaders();

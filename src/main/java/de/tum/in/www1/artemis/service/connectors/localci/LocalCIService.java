@@ -10,9 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.LocalCIException;
@@ -36,24 +35,16 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(LocalCIService.class);
 
-    private final LocalCIDockerService localCIDockerService;
-
-    private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
-
     public LocalCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService, LocalCIDockerService localCIDockerService,
-            ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
-        this.localCIDockerService = localCIDockerService;
-        this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl sourceCodeRepositoryURL, VcsRepositoryUrl testRepositoryURL,
-            VcsRepositoryUrl solutionRepositoryURL) {
-        // Only check whether the docker image needed for the build plan exists.
-        localCIDockerService.pullDockerImage(
-                programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType())));
+    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri,
+            VcsRepositoryUri solutionRepositoryUri) {
+        // Not implemented for local CI. no build plans must be created, because all the information for building
+        // a submission and running tests is contained in the participation.
     }
 
     @Override
@@ -128,7 +119,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
+    public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUri, String existingRepoUri,
             String newBranch) throws LocalCIException {
         // Not implemented for local CI. No build plans exist.
         // When a student pushes to a repository, a build is triggered using the information contained in the participation which includes the relevant repository.
