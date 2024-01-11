@@ -14,6 +14,7 @@ import { Result } from 'app/entities/result.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizConfiguration } from 'app/entities/quiz/quiz-configuration.model';
+import { QuizExam } from 'app/entities/quiz-exam.model';
 
 @Component({
     selector: 'jhi-quiz-exam-summary',
@@ -46,7 +47,7 @@ export class QuizExamSummaryComponent implements OnChanges {
 
     ngOnChanges(): void {
         this.updateViewFromSubmission();
-        if (this.isQuizExercise(this.quizConfiguration) && this.quizConfiguration.studentParticipations) {
+        if (this.quizConfiguration instanceof QuizExercise && this.quizConfiguration.studentParticipations) {
             this.result =
                 this.quizConfiguration.studentParticipations.length > 0 && this.quizConfiguration.studentParticipations[0].results?.length
                     ? this.quizConfiguration.studentParticipations[0].results[0]
@@ -54,10 +55,6 @@ export class QuizExamSummaryComponent implements OnChanges {
         } else {
             this.result = this.submission.results?.length ? this.submission.results[0] : undefined;
         }
-    }
-
-    private isQuizExercise(quizConfiguration: QuizConfiguration): quizConfiguration is QuizExercise {
-        return quizConfiguration instanceof QuizExercise;
     }
 
     /**
@@ -134,11 +131,12 @@ export class QuizExamSummaryComponent implements OnChanges {
      */
     get showMissingResultsNotice(): boolean {
         if (
-            this.exam &&
-            this.exam.publishResultsDate &&
-            this.isQuizExercise(this.quizConfiguration) &&
-            this.quizConfiguration.studentParticipations &&
-            this.quizConfiguration.studentParticipations.length > 0
+            (this.exam &&
+                this.exam.publishResultsDate &&
+                this.quizConfiguration instanceof QuizExercise &&
+                this.quizConfiguration.studentParticipations &&
+                this.quizConfiguration.studentParticipations.length > 0) ||
+            (this.quizConfiguration instanceof QuizExam && this.quizConfiguration.submission)
         ) {
             return dayjs(this.exam.publishResultsDate).isBefore(this.serverDateService.now()) && !this.result;
         }

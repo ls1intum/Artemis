@@ -4,7 +4,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { User } from 'app/core/user/user.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
@@ -46,7 +46,11 @@ describe('ExamResultSummaryExerciseCardHeaderComponent', () => {
                 fixture = TestBed.createComponent(ExamResultSummaryExerciseCardHeaderComponent);
                 component = fixture.componentInstance;
                 component.index = 3;
-                component.exercise = programmingExercise;
+                component.title = programmingExercise.exerciseGroup?.title;
+                component.exerciseType = programmingExercise.type;
+                component.id = programmingExercise.id;
+                component.maxPoints = programmingExercise.maxPoints;
+                component.submissionType = programmingExercise.studentParticipations?.[0]?.submissions?.[0]?.type;
                 component.exerciseInfo = { isCollapsed: false } as ResultSummaryExerciseInfo;
             });
     });
@@ -65,8 +69,12 @@ describe('ExamResultSummaryExerciseCardHeaderComponent', () => {
         [{ studentParticipations: [{ submissions: undefined }] }, false],
         [{ studentParticipations: [{ submissions: [{ type: SubmissionType.MANUAL }] }] }, false],
         [{ studentParticipations: [{ submissions: [{ type: SubmissionType.ILLEGAL }] }] }, true],
-    ])('should handle missing/empty fields correctly for %o when displaying illegal submission badge', (exercise, shouldBeNonNull) => {
-        component.exercise = exercise as Exercise;
+    ])('should handle missing/empty fields correctly for %o when displaying illegal submission badge', (exercise: { studentParticipations: any }, shouldBeNonNull) => {
+        component.title = programmingExercise.title;
+        component.exerciseType = programmingExercise.type;
+        component.id = programmingExercise.id;
+        component.maxPoints = programmingExercise.maxPoints;
+        component.submissionType = exercise.studentParticipations?.[0]?.submissions?.[0]?.type;
 
         fixture.detectChanges();
         const span = fixture.debugElement.query(By.css('.badge.bg-danger'));
