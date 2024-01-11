@@ -424,7 +424,8 @@ public class ExamService {
             StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(targetUser.getId(), examId, IS_TEST_RUN)
                     .orElseThrow(() -> new EntityNotFoundException("No student exam found for examId " + examId + " and userId " + studentId));
 
-            StudentExamWithGradeDTO studentExamWithGradeDTO = getStudentExamGradesForSummaryAsStudent(targetUser, studentExam, IS_TEST_RUN);
+            StudentExamWithGradeDTO studentExamWithGradeDTO = getStudentExamGradesForSummary(targetUser, studentExam,
+                    authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), targetUser));
             var studentResult = studentExamWithGradeDTO.studentResult();
             return Map.of(studentId, new BonusSourceResultDTO(studentResult.overallPointsAchieved(), studentResult.mostSeverePlagiarismVerdict(), null, null,
                     Boolean.TRUE.equals(studentResult.submitted())));
@@ -443,20 +444,22 @@ public class ExamService {
      * <p>
      * See {@link StudentExamWithGradeDTO} for more explanation.
      *
-     * @param targetUser  the user who submitted the studentExam
-     * @param studentExam the student exam to be evaluated
-     * @param isTestRun   set if an instructor executes a test run
+     * @param targetUser                       the user who submitted the studentExam
+     * @param studentExam                      the student exam to be evaluated
+     * @param accessingUserIsAtLeastInstructor is passed to decide the access (e.g. for test runs access will be needed regardless of submission or published dates)
      * @return the student exam result with points and grade
      */
-    public StudentExamWithGradeDTO getStudentExamGradesForSummaryAsStudent(User targetUser, StudentExam studentExam, boolean isTestRun) {
+    public StudentExamWithGradeDTO getStudentExamGradesForSummary(User targetUser, StudentExam studentExam, boolean accessingUserIsAtLeastInstructor) {
 
         loadQuizExercisesForStudentExam(studentExam);
 
+        boolean accessToSummaryAlwaysAllowed = studentExam.isTestRun() || accessingUserIsAtLeastInstructor;
+
         // check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
-        if (!Boolean.TRUE.equals(studentExam.isSubmitted()) && !isTestRun) {
+        if (!Boolean.TRUE.equals(studentExam.isSubmitted()) && !accessToSummaryAlwaysAllowed) {
             throw new AccessForbiddenException(NOT_ALLOWED_TO_ACCESS_THE_GRADE_SUMMARY + "which was NOT submitted!");
         }
-        if (!studentExam.areResultsPublishedYet() && !isTestRun) {
+        if (!studentExam.areResultsPublishedYet() && !accessToSummaryAlwaysAllowed) {
             throw new AccessForbiddenException(NOT_ALLOWED_TO_ACCESS_THE_GRADE_SUMMARY + "before the release date of results");
         }
 
@@ -562,7 +565,7 @@ public class ExamService {
         }
 
         if (exercise instanceof ProgrammingExercise programmingExercise) {
-            programmingExercise.setTestRepositoryUrl(null);
+            programmingExercise.setTestRepositoryUri(null);
         }
 
         // get user's participation for the exercise
@@ -1321,7 +1324,7 @@ public class ExamService {
             try {
                 ProgrammingExercise programmingExerciseWithTemplateParticipation = programmingExerciseRepository
                         .findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-                gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUrl());
+                gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUri());
                 log.debug("Finished combination of template commits for programming exercise {}", programmingExerciseWithTemplateParticipation);
             }
             catch (GitAPIException e) {

@@ -51,7 +51,7 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
      * Imports the current exercise in the user's IDE and triggers the opening of the new project in the IDE
      */
     importIntoIDE() {
-        const repo = (this.exercise.studentParticipations![0] as ProgrammingExerciseStudentParticipation).repositoryUrl!;
+        const repo = (this.exercise.studentParticipations![0] as ProgrammingExerciseStudentParticipation).repositoryUri!;
         this.orionConnectorService.importParticipation(repo, this.exercise as ProgrammingExercise);
     }
 
