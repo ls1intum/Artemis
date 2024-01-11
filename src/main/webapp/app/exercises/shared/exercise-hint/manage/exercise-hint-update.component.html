@@ -51,15 +51,16 @@
                 </div>
                 @if (exerciseHint.type === HintType.CODE && irisSettings?.irisHestiaSettings?.enabled) {
                     <div class="d-flex justify-content-end">
-                        <jhi-button
+                        <jhi-iris-logo-button
                             id="generateDescriptionButton"
                             (click)="generateDescriptionForCodeHint()"
+                            [btnType]="ButtonType.PRIMARY_OUTLINE"
                             [shouldSubmit]="false"
                             [isLoading]="isGeneratingDescription"
                             [title]="'artemisApp.codeHint.management.step4.iris.generateDescription.label'"
                             [tooltip]="'artemisApp.codeHint.management.step4.iris.generateDescription.tooltip'"
                             >Generate description
-                        </jhi-button>
+                        </jhi-iris-logo-button>
                     </div>
                 }
                 <div class="form-group hint-form__editor-wrapper">

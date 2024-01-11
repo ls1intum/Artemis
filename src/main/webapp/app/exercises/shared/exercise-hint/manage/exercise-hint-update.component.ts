@@ -21,6 +21,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ButtonType } from 'app/shared/components/button.component';
 
 const DEFAULT_DISPLAY_THRESHOLD = 3;
 
@@ -35,6 +36,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     courseId: number;
     exercise: ProgrammingExercise;
     readonly HintType = HintType;
+    readonly ButtonType = ButtonType;
     exerciseHint = new ExerciseHint();
     solutionEntries: ProgrammingExerciseSolutionEntry[];
 

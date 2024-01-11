@@ -10,6 +10,7 @@ import { ArtemisExerciseHintSharedModule } from 'app/exercises/shared/exercise-h
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { IrisModule } from 'app/iris/iris.module';
 
 const ENTITY_STATES = [...exerciseHintRoute];
 
@@ -24,6 +25,7 @@ const ENTITY_STATES = [...exerciseHintRoute];
         ArtemisExerciseHintSharedModule,
         ArtemisSharedComponentModule,
         ArtemisExerciseHintSharedModule,
+        IrisModule,
     ],
     declarations: [ExerciseHintComponent, ExerciseHintDetailComponent, ExerciseHintUpdateComponent],
 })
