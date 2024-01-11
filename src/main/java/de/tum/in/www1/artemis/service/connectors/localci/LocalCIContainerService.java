@@ -135,6 +135,22 @@ public class LocalCIContainerService {
     }
 
     /**
+     * Moves the generated result files to a specified directory so it can easily be retrieved
+     *
+     * @param containerId     the id of the container which generated the files
+     * @param sourcePaths     the list of paths in the container where the generated files can be found
+     * @param destinationPath the path of the directory where the files shall be moved
+     */
+    public void moveResultsToSpecifiedDirectory(String containerId, List<String> sourcePaths, String destinationPath) {
+        StringBuilder command = new StringBuilder("shopt -s globstar && mkdir -p " + destinationPath);
+        for (String sourcePath : sourcePaths) {
+            command.append(" && mv ").append(sourcePath).append(" ").append(destinationPath);
+        }
+        log.info("Moving results to specified directory with command: {}", command);
+        executeDockerCommand(containerId, false, false, true, "bash", "-c", command.toString());
+    }
+
+    /**
      * Retrieve an archive from a running Docker container.
      *
      * @param containerId the id of the container.

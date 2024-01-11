@@ -33,7 +33,6 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
@@ -275,6 +274,8 @@ public class LocalCIBuildJobExecutionService {
 
         ProgrammingLanguage programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
 
+        List<String> resultPaths = getTestResultPaths(participation.getProgrammingExercise());
+
         long timeNanoStart = System.nanoTime();
 
         localCIContainerService.startContainer(containerId);
@@ -287,6 +288,8 @@ public class LocalCIBuildJobExecutionService {
         List<BuildLogEntry> buildLogEntries = localCIContainerService.runScriptInContainer(containerId);
 
         log.info("Finished running the build script in container {}", containerName);
+
+        localCIContainerService.moveResultsToSpecifiedDirectory(containerId, resultPaths, LocalCIContainerService.WORKING_DIRECTORY + "/results");
 
         ZonedDateTime buildCompletedDate = ZonedDateTime.now();
 
@@ -310,14 +313,12 @@ public class LocalCIBuildJobExecutionService {
             return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
 
-        List<String> testResultsPaths = getTestResultPaths(participation.getProgrammingExercise());
-
         // Get an input stream of the test result files.
-        List<TarArchiveInputStream> testResultsTarInputStreams = new ArrayList<>();
+
+        TarArchiveInputStream testResultsTarInputStream;
+
         try {
-            for (String testResultsPath : testResultsPaths) {
-                testResultsTarInputStreams.add(localCIContainerService.getArchiveFromContainer(containerId, testResultsPath));
-            }
+            testResultsTarInputStream = localCIContainerService.getArchiveFromContainer(containerId, LocalCIContainerService.WORKING_DIRECTORY + "/results");
         }
         catch (NotFoundException e) {
             // If the test results are not found, this means that something went wrong during the build and testing of the submission.
@@ -337,7 +338,7 @@ public class LocalCIBuildJobExecutionService {
 
         LocalCIBuildResult buildResult;
         try {
-            buildResult = parseTestResults(testResultsTarInputStreams, branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
+            buildResult = parseTestResults(testResultsTarInputStream, branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
             buildResult.setBuildLogEntries(buildLogEntries);
         }
         catch (IOException | XMLStreamException | IllegalStateException e) {
@@ -356,55 +357,6 @@ public class LocalCIBuildJobExecutionService {
     // --- Helper methods ----
 
     private List<String> getTestResultPaths(ProgrammingExercise programmingExercise) {
-        switch (programmingExercise.getProgrammingLanguage()) {
-            case JAVA, KOTLIN -> {
-                return getJavaKotlinTestResultPaths(programmingExercise);
-            }
-            case PYTHON -> {
-                return getPythonTestResultPaths();
-            }
-            case ASSEMBLER, C, VHDL, HASKELL, OCAML, SWIFT -> {
-                return getCustomTestResultPaths(programmingExercise);
-            }
-            default -> throw new IllegalArgumentException("Programming language " + programmingExercise.getProgrammingLanguage() + " is not supported");
-        }
-    }
-
-    private List<String> getJavaKotlinTestResultPaths(ProgrammingExercise programmingExercise) {
-        List<String> testResultPaths = new ArrayList<>();
-        if (ProjectType.isMavenProject(programmingExercise.getProjectType())) {
-            if (programmingExercise.hasSequentialTestRuns()) {
-                testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/structural/target/surefire-reports");
-                testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/behavior/target/surefire-reports");
-            }
-            else {
-                testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/target/surefire-reports");
-            }
-        }
-        else {
-            if (programmingExercise.hasSequentialTestRuns()) {
-                testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/build/test-results/behaviorTests");
-                testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/build/test-results/structuralTests");
-            }
-            else {
-                testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/build/test-results/test");
-            }
-        }
-        if (programmingExercise.isStaticCodeAnalysisEnabled()) {
-            testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/target/spotbugsXml.xml");
-            testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/target/checkstyle-result.xml");
-            testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/target/pmd.xml");
-        }
-        return testResultPaths;
-    }
-
-    private List<String> getPythonTestResultPaths() {
-        List<String> testResultPaths = new ArrayList<>();
-        testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/test-reports");
-        return testResultPaths;
-    }
-
-    private List<String> getCustomTestResultPaths(ProgrammingExercise programmingExercise) {
         List<String> testResultPaths = new ArrayList<>();
         Windfile windfile = programmingExercise.getWindfile();
         if (windfile == null) {
@@ -419,7 +371,7 @@ public class LocalCIBuildJobExecutionService {
         return testResultPaths;
     }
 
-    private LocalCIBuildResult parseTestResults(List<TarArchiveInputStream> testResultsTarInputStreams, String assignmentRepoBranchName, String assignmentRepoCommitHash,
+    private LocalCIBuildResult parseTestResults(TarArchiveInputStream testResultsTarInputStream, String assignmentRepoBranchName, String assignmentRepoCommitHash,
             String testsRepoCommitHash, ZonedDateTime buildCompletedDate) throws IOException, XMLStreamException {
 
         List<LocalCIBuildResult.LocalCITestJobDTO> failedTests = new ArrayList<>();
@@ -427,29 +379,24 @@ public class LocalCIBuildJobExecutionService {
         List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports = new ArrayList<>();
 
         TarArchiveEntry tarEntry;
-        for (TarArchiveInputStream testResultsTarInputStream : testResultsTarInputStreams) {
-            if (testResultsTarInputStream == null) {
+        while ((tarEntry = testResultsTarInputStream.getNextTarEntry()) != null) {
+            // Go through all tar entries that are test result files.
+            if (!isValidTestResultFile(tarEntry)) {
                 continue;
             }
-            while ((tarEntry = testResultsTarInputStream.getNextTarEntry()) != null) {
-                // Go through all tar entries that are test result files.
-                if (!isValidTestResultFile(tarEntry)) {
-                    continue;
-                }
 
-                // Read the contents of the tar entry as a string.
-                String xmlString = readTarEntryContent(testResultsTarInputStream);
-                // Get the file name of the tar entry.
-                String fileName = getFileName(tarEntry);
+            // Read the contents of the tar entry as a string.
+            String xmlString = readTarEntryContent(testResultsTarInputStream);
+            // Get the file name of the tar entry.
+            String fileName = getFileName(tarEntry);
 
-                // Check if the file is a static code analysis report file
-                if (StaticCodeAnalysisTool.getToolByFilePattern(fileName).isPresent()) {
-                    processStaticCodeAnalysisReportFile(fileName, xmlString, staticCodeAnalysisReports);
-                }
-                else {
-                    // ugly workaround because in swift result files \n\t breaks the parsing
-                    processTestResultFile(xmlString.replace("\n\t", ""), failedTests, successfulTests);
-                }
+            // Check if the file is a static code analysis report file
+            if (StaticCodeAnalysisTool.getToolByFilePattern(fileName).isPresent()) {
+                processStaticCodeAnalysisReportFile(fileName, xmlString, staticCodeAnalysisReports);
+            }
+            else {
+                // ugly workaround because in swift result files \n\t breaks the parsing
+                processTestResultFile(xmlString.replace("\n\t", ""), failedTests, successfulTests);
             }
         }
 
