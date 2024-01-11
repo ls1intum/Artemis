@@ -43,7 +43,7 @@
                             @for (quoteString of CsvQuoteStrings | keyvalue; track quoteString) {
                                 <div
                                     class="btn"
-                                    [ngClass]="{ 'btn-primary': options.quoteStrings === quoteString.value, 'btn-default': options.quoteStrings !== quoteString.value }"
+                                    [ngClass]="{ 'btn-primary': options.quoteCharacter === quoteString.value, 'btn-default': options.quoteCharacter !== quoteString.value }"
                                     (click)="setCsvQuoteString(quoteString.value)"
                                 >
                                     {{ 'export.csvFile.quoteStrings.' + quoteString.key.toLowerCase() | artemisTranslate }}
