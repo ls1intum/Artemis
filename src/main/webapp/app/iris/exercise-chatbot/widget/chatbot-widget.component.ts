@@ -237,7 +237,6 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
             return;
         }
         if (this.newMessageTextContent) {
-            console.log('Sending message: ' + this.newMessageTextContent);
             const message = this.newUserMessage(this.newMessageTextContent);
             const timeoutId = setTimeout(() => {
                 // will be cleared by the store automatically
@@ -245,7 +244,6 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
                 this.scrollToBottom('smooth');
             }, 60000);
             const params = this.paramsOnSend();
-            console.log('Sending params: ' + JSON.stringify(params));
             this.stateStore
                 .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
                 .then(() => this.sessionService.sendMessage(this.sessionId, message, params))
@@ -749,11 +747,11 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
 
     getConvertedErrorMap() {
         if (this.error?.paramsMap) {
-            if (typeof this.error.paramsMap === 'object') {
-                return this.error.paramsMap;
-            } else {
+            // Check if paramsMap is iterable.
+            if (typeof this.error?.paramsMap[Symbol.iterator] === 'function') {
                 return Object.fromEntries(this.error.paramsMap);
             }
+            return this.error.paramsMap;
         }
         return null;
     }
@@ -763,7 +761,6 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
     }
 
     createNewSession() {
-        console.log('ExerciseId: ' + this.exerciseId + ' CourseId: ' + this.courseId);
         this.sessionService.createNewSession(this.exerciseId ?? this.courseId);
     }
 
