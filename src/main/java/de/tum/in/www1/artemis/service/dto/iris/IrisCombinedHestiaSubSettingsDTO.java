@@ -4,7 +4,7 @@ import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 
-public class IrisCombinedHestiaSubSettingsDTO {
+public class IrisCombinedHestiaSubSettingsDTO implements IrisCombinedSubSettingsInterface {
 
     private boolean enabled;
 
