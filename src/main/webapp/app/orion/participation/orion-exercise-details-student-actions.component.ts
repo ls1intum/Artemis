@@ -74,9 +74,10 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
      * Returns if the dude date has passed
      */
     isDueDatePassed() {
+        // Returns if the due date has passed
         if (this.exercise.dueDate === undefined) {
             return false;
         }
-        return this.exercise.dueDate.date() < Date.now();
+        return this.exercise.dueDate.getTime() < Date.now();
     }
 }
