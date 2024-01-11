@@ -79,6 +79,10 @@ public class IrisSettingsService {
         return irisDefaultTemplateService.load("code-editor-test-repository-generation.hbs");
     }
 
+    private IrisTemplate loadDefaultCompetencyGenerationTemplate() {
+        return irisDefaultTemplateService.load("competency-generation.hbs");
+    }
+
     /**
      * Hooks into the {@link ApplicationReadyEvent} and creates or updates the global IrisSettings object on startup.
      *
@@ -121,6 +125,11 @@ public class IrisSettingsService {
 
         updateIrisCodeEditorSettings(settings);
 
+        var competencyGenerationSettings = new IrisCompetencyGenerationSubSettings();
+        competencyGenerationSettings.setEnabled(false);
+        competencyGenerationSettings.setTemplate(loadDefaultCompetencyGenerationTemplate());
+        settings.setIrisCompetencyGenerationSettings(competencyGenerationSettings);
+
         irisSettingsRepository.save(settings);
     }
 
@@ -141,6 +150,10 @@ public class IrisSettingsService {
             if (settings.isEnableAutoUpdateCodeEditor() || settings.getIrisCodeEditorSettings() == null) {
                 updateIrisCodeEditorSettings(settings);
             }
+            if (settings.isEnableAutoUpdateCompetencyGeneration() || settings.getIrisCompetencyGenerationSettings() == null) {
+                settings.getIrisCompetencyGenerationSettings().setTemplate(loadDefaultCompetencyGenerationTemplate());
+            }
+
             globalVersion.ifPresent(settings::setCurrentVersion);
             saveIrisSettings(settings);
         }
@@ -249,13 +262,19 @@ public class IrisSettingsService {
      */
     private IrisGlobalSettings updateGlobalSettings(IrisGlobalSettings existingSettings, IrisGlobalSettings settingsUpdate) {
         existingSettings.setCurrentVersion(settingsUpdate.getCurrentVersion());
+
         existingSettings.setEnableAutoUpdateChat(settingsUpdate.isEnableAutoUpdateChat());
         existingSettings.setEnableAutoUpdateHestia(settingsUpdate.isEnableAutoUpdateHestia());
         existingSettings.setEnableAutoUpdateCodeEditor(settingsUpdate.isEnableAutoUpdateCodeEditor());
+        existingSettings.setEnableAutoUpdateCompetencyGeneration(settingsUpdate.isEnableAutoUpdateCompetencyGeneration());
+
         existingSettings.setIrisChatSettings(irisSubSettingsService.update(existingSettings.getIrisChatSettings(), settingsUpdate.getIrisChatSettings(), null, GLOBAL));
         existingSettings.setIrisHestiaSettings(irisSubSettingsService.update(existingSettings.getIrisHestiaSettings(), settingsUpdate.getIrisHestiaSettings(), null, GLOBAL));
         existingSettings
                 .setIrisCodeEditorSettings(irisSubSettingsService.update(existingSettings.getIrisCodeEditorSettings(), settingsUpdate.getIrisCodeEditorSettings(), null, GLOBAL));
+        existingSettings.setIrisCompetencyGenerationSettings(
+                irisSubSettingsService.update(existingSettings.getIrisCompetencyGenerationSettings(), settingsUpdate.getIrisCompetencyGenerationSettings(), null, GLOBAL));
+
         return irisSettingsRepository.save(existingSettings);
     }
 
@@ -274,6 +293,9 @@ public class IrisSettingsService {
                 irisSubSettingsService.update(existingSettings.getIrisHestiaSettings(), settingsUpdate.getIrisHestiaSettings(), parentSettings.irisHestiaSettings(), COURSE));
         existingSettings.setIrisCodeEditorSettings(irisSubSettingsService.update(existingSettings.getIrisCodeEditorSettings(), settingsUpdate.getIrisCodeEditorSettings(),
                 parentSettings.irisCodeEditorSettings(), COURSE));
+        existingSettings.setIrisCompetencyGenerationSettings(irisSubSettingsService.update(existingSettings.getIrisCompetencyGenerationSettings(),
+                settingsUpdate.getIrisCompetencyGenerationSettings(), parentSettings.irisCompetencyGenerationSettings(), COURSE));
+
         return irisSettingsRepository.save(existingSettings);
     }
 
@@ -304,6 +326,7 @@ public class IrisSettingsService {
             case CHAT -> settings.irisChatSettings().isEnabled();
             case HESTIA -> settings.irisHestiaSettings().isEnabled();
             case CODE_EDITOR -> settings.irisCodeEditorSettings().isEnabled();
+            case COMPETENCY_GENERATION -> settings.irisCompetencyGenerationSettings().isEnabled();
         };
     }
 
@@ -331,7 +354,7 @@ public class IrisSettingsService {
         settingsList.add(getGlobalSettings());
 
         return new IrisCombinedSettingsDTO(irisSubSettingsService.combineChatSettings(settingsList, false), irisSubSettingsService.combineHestiaSettings(settingsList, false),
-                irisSubSettingsService.combineCodeEditorSettings(settingsList, false));
+                irisSubSettingsService.combineCodeEditorSettings(settingsList, false), irisSubSettingsService.combineCompetenyGenerationSettings(settingsList, false));
     }
 
     /**
@@ -350,7 +373,7 @@ public class IrisSettingsService {
         settingsList.add(irisSettingsRepository.findCourseSettings(course.getId()).orElse(null));
 
         return new IrisCombinedSettingsDTO(irisSubSettingsService.combineChatSettings(settingsList, minimal), irisSubSettingsService.combineHestiaSettings(settingsList, minimal),
-                irisSubSettingsService.combineCodeEditorSettings(settingsList, minimal));
+                irisSubSettingsService.combineCodeEditorSettings(settingsList, minimal), irisSubSettingsService.combineCompetenyGenerationSettings(settingsList, minimal));
     }
 
     /**
@@ -370,7 +393,7 @@ public class IrisSettingsService {
         settingsList.add(getRawIrisSettingsFor(exercise));
 
         return new IrisCombinedSettingsDTO(irisSubSettingsService.combineChatSettings(settingsList, minimal), irisSubSettingsService.combineHestiaSettings(settingsList, minimal),
-                irisSubSettingsService.combineCodeEditorSettings(settingsList, minimal));
+                irisSubSettingsService.combineCodeEditorSettings(settingsList, minimal), irisSubSettingsService.combineCompetenyGenerationSettings(settingsList, minimal));
     }
 
     /**
@@ -386,6 +409,7 @@ public class IrisSettingsService {
         settings.setIrisChatSettings(new IrisChatSubSettings());
         settings.setIrisHestiaSettings(new IrisHestiaSubSettings());
         settings.setIrisCodeEditorSettings(new IrisCodeEditorSubSettings());
+        settings.setIrisCompetencyGenerationSettings(new IrisCompetencyGenerationSubSettings());
         return settings;
     }
 

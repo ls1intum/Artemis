@@ -1,0 +1,24 @@
+{{#system~}}
+    Please generate competencies for a university course based on the following course description. Each Competency should reflect a discrete learning goal related to the subjects covered in the course and should be small and fine-grained so exercises can be linked to them. Each Competency should match only one of the cognitive skills in bloom's taxonomy and should not contain other competencies or overlap with them.
+    Here is the course description:
+{{/system}}
+{{#user~}}
+    {{courseDescription}}
+{{/user}}
+{{#geneach 'competencies' num_iterations=10}}
+    {{#system~}}
+        Respond with a brief, noun-based title representing the subject of this competency in less than 4 words. Alternatively, respond with the special response !done! if there are no more competencies.
+    {{/system}}
+    {{#assistant~}}{{gen 'this.title' max_tokens=10}}{{/assistant}}
+    {{#if (equal this.title '!done!')}}
+        {{break}}
+    {{/if}}
+    {{#system~}}
+        Respond with a description of this competency in 3 to 5 bullet points. Each point should illustrate a specific skill or concept of this competency and should be less than 15 words long.
+    {{/system}}
+    {{#assistant~}}{{gen 'this.description' max_tokens=80}}{{/assistant}}
+    {{#system~}}
+        Respond with the classification of this competency based on bloom's taxonomy:
+    {{/system}}
+    {{#assistant~}}{{select 'this.taxonomy' options=taxonomyOptions}}{{/assistant}}
+{{/geneach}}

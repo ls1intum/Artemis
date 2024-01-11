@@ -28,6 +28,9 @@ public class IrisGlobalSettings extends IrisSettings {
     @Column(name = "enable_auto_update_code_editor")
     private boolean enableAutoUpdateCodeEditor;
 
+    @Column(name = "enable_auto_update_competency_generation")
+    private boolean enableAutoUpdateCompetencyGeneration;
+
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "iris_chat_settings_id")
     private IrisChatSubSettings irisChatSettings;
@@ -40,8 +43,13 @@ public class IrisGlobalSettings extends IrisSettings {
     @JoinColumn(name = "iris_code_editor_settings_id")
     private IrisCodeEditorSubSettings irisCodeEditorSettings;
 
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "iris_competency_generation_settings_id")
+    private IrisCompetencyGenerationSubSettings irisCompetencyGenerationSettings;
+
     @Override
     public boolean isValid() {
+        // TODO: look at this. Need to add code editor and comp gen? Also extract sub method.
         var chatSettingsValid = !Hibernate.isInitialized(irisChatSettings) || irisChatSettings == null
                 || (irisChatSettings.getTemplate() != null && irisChatSettings.getTemplate().getContent() != null && !irisChatSettings.getTemplate().getContent().isEmpty());
         var hestiaSettingsValid = !Hibernate.isInitialized(irisHestiaSettings) || irisHestiaSettings == null
@@ -81,18 +89,30 @@ public class IrisGlobalSettings extends IrisSettings {
         this.enableAutoUpdateCodeEditor = enableAutoUpdateCodeEditor;
     }
 
+    public boolean isEnableAutoUpdateCompetencyGeneration() {
+        return enableAutoUpdateCompetencyGeneration;
+    }
+
+    public void setEnableAutoUpdateCompetencyGeneration(boolean enableAutoUpdateCompetencyGeneration) {
+        this.enableAutoUpdateCompetencyGeneration = enableAutoUpdateCompetencyGeneration;
+    }
+
+    @Override
     public IrisChatSubSettings getIrisChatSettings() {
         return irisChatSettings;
     }
 
+    @Override
     public void setIrisChatSettings(IrisChatSubSettings irisChatSettings) {
         this.irisChatSettings = irisChatSettings;
     }
 
+    @Override
     public IrisHestiaSubSettings getIrisHestiaSettings() {
         return irisHestiaSettings;
     }
 
+    @Override
     public void setIrisHestiaSettings(IrisHestiaSubSettings irisHestiaSettings) {
         this.irisHestiaSettings = irisHestiaSettings;
     }
@@ -105,5 +125,15 @@ public class IrisGlobalSettings extends IrisSettings {
     @Override
     public void setIrisCodeEditorSettings(IrisCodeEditorSubSettings irisCodeEditorSettings) {
         this.irisCodeEditorSettings = irisCodeEditorSettings;
+    }
+
+    @Override
+    public IrisCompetencyGenerationSubSettings getIrisCompetencyGenerationSettings() {
+        return irisCompetencyGenerationSettings;
+    }
+
+    @Override
+    public void setIrisCompetencyGenerationSettings(IrisCompetencyGenerationSubSettings irisCompetencyGenerationSettings) {
+        this.irisCompetencyGenerationSettings = irisCompetencyGenerationSettings;
     }
 }

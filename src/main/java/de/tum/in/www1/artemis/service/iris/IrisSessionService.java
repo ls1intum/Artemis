@@ -8,16 +8,10 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
-import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
-import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
-import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
-import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
+import de.tum.in.www1.artemis.domain.iris.session.*;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisChatSessionRepository;
-import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
-import de.tum.in.www1.artemis.service.iris.session.IrisCodeEditorSessionService;
-import de.tum.in.www1.artemis.service.iris.session.IrisHestiaSessionService;
-import de.tum.in.www1.artemis.service.iris.session.IrisSessionSubServiceInterface;
+import de.tum.in.www1.artemis.service.iris.session.*;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
@@ -35,14 +29,18 @@ public class IrisSessionService {
 
     private final IrisCodeEditorSessionService irisCodeEditorSessionService;
 
+    private final IrisCompetencyGenerationSessionService irisCompetencyGenerationSessionService;
+
     private final IrisChatSessionRepository irisChatSessionRepository;
 
     public IrisSessionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisHestiaSessionService irisHestiaSessionService,
-            IrisCodeEditorSessionService irisCodeEditorSessionService, IrisChatSessionRepository irisChatSessionRepository) {
+            IrisCodeEditorSessionService irisCodeEditorSessionService, IrisCompetencyGenerationSessionService irisCompetencyGenerationSessionService,
+            IrisChatSessionRepository irisChatSessionRepository) {
         this.userRepository = userRepository;
         this.irisChatSessionService = irisChatSessionService;
         this.irisHestiaSessionService = irisHestiaSessionService;
         this.irisCodeEditorSessionService = irisCodeEditorSessionService;
+        this.irisCompetencyGenerationSessionService = irisCompetencyGenerationSessionService;
         this.irisChatSessionRepository = irisChatSessionRepository;
     }
 
@@ -111,6 +109,12 @@ public class IrisSessionService {
         }
         if (session instanceof IrisCodeEditorSession) {
             return irisCodeEditorSessionService;
+        }
+        if (session instanceof IrisCompetencyGenerationSession) {
+            return irisCodeEditorSessionService;
+        }
+        if (session instanceof IrisCompetencyGenerationSession) {
+            return irisCompetencyGenerationSessionService;
         }
         throw new BadRequestException("Unknown Iris session type " + session.getClass().getSimpleName());
     }

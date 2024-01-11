@@ -62,6 +62,9 @@ export class IrisEnabledComponent implements OnInit {
             case IrisSubSettingsType.CODE_EDITOR:
                 this.irisSubSettings = this.irisSettings?.irisCodeEditorSettings;
                 break;
+            case IrisSubSettingsType.COMPETENCY_GENERATION:
+                this.irisSubSettings = this.irisSettings?.irisCompetencyGenerationSettings;
+                break;
         }
     }
 }

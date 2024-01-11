@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.iris.session.IrisCompetencyGenerationSessionService;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -68,10 +69,13 @@ public class CompetencyResource {
 
     private final ExerciseService exerciseService;
 
+    private final IrisCompetencyGenerationSessionService irisCompetencyGenerationSessionService;
+
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository, LectureUnitRepository lectureUnitRepository,
             CompetencyService competencyService, CompetencyProgressRepository competencyProgressRepository, ExerciseRepository exerciseRepository,
-            CompetencyProgressService competencyProgressService, LearningPathService learningPathService, ExerciseService exerciseService) {
+            CompetencyProgressService competencyProgressService, LearningPathService learningPathService, ExerciseService exerciseService,
+            IrisCompetencyGenerationSessionService irisCompetencyGenerationSessionService) {
         this.courseRepository = courseRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.lectureUnitRepository = lectureUnitRepository;
@@ -84,6 +88,7 @@ public class CompetencyResource {
         this.competencyProgressService = competencyProgressService;
         this.learningPathService = learningPathService;
         this.exerciseService = exerciseService;
+        this.irisCompetencyGenerationSessionService = irisCompetencyGenerationSessionService;
     }
 
     /**
@@ -565,26 +570,16 @@ public class CompetencyResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, competency.getTitle())).build();
     }
 
+    // TODO: rename endpoint
     @PostMapping("/courses/{courseId}/competencies/recommendations")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<Competency>> getCompetenciesFromCourseDescription(@PathVariable Long courseId, @RequestBody String courseDescription) {
-        // TODO: call competencyGenerationService and remove dummy code.
-        List<Competency> competencies = new ArrayList<>();
-        Competency comp1 = new Competency();
-        comp1.setTitle("comp1");
-        comp1.setDescription("Lorem Ipsum Dolor Sit Amet");
-        comp1.setTaxonomy(CompetencyTaxonomy.ANALYZE);
-        competencies.add(comp1);
-        Competency comp2 = new Competency();
-        comp2.setTitle("comp2");
-        comp2.setDescription("sed diam nonumy eirmod tempor");
-        comp2.setTaxonomy(CompetencyTaxonomy.APPLY);
-        competencies.add(comp2);
-        Competency comp3 = new Competency();
-        comp3.setTitle("comp3");
-        comp3.setDescription("invidunt ut labore et dolore magna aliquyam");
-        comp3.setTaxonomy(CompetencyTaxonomy.REMEMBER);
-        competencies.add(comp3);
+        Course course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+
+        // TODO: call another service maybe (e.g. pre & post-processing)
+        var competencies = irisCompetencyGenerationSessionService.generateCompetencyRecommendations(courseDescription, course);
+
         return ResponseEntity.ok().body(competencies);
     }
 

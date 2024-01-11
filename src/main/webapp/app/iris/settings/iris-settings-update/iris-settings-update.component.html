@@ -70,5 +70,23 @@
                 ></jhi-iris-code-editor-sub-settings-update>
             </div>
         }
+        @if (settingsType !== EXERCISE) {
+            <div>
+                <hr class="hr" />
+                <h3 jhiTranslate="artemisApp.iris.settings.subSettings.competencyGenerationSettings">Competency Generation Settings</h3>
+                <jhi-iris-common-sub-settings-update
+                    [subSettings]="irisSettings?.irisCompetencyGenerationSettings!"
+                    [parentSubSettings]="parentIrisSettings?.irisCompetencyGenerationSettings"
+                    [allIrisModels]="allIrisModels ?? []"
+                    [settingsType]="settingsType"
+                    (onChanges)="isDirty = true"
+                ></jhi-iris-common-sub-settings-update>
+                <jhi-iris-competency-generation-sub-settings-update
+                    [subSettings]="irisSettings?.irisCompetencyGenerationSettings!"
+                    [parentSubSettings]="parentIrisSettings?.irisCompetencyGenerationSettings"
+                    (onChanges)="isDirty = true"
+                ></jhi-iris-competency-generation-sub-settings-update>
+            </div>
+        }
     </div>
 }

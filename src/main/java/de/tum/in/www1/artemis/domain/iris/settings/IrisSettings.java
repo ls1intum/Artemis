@@ -43,5 +43,9 @@ public abstract class IrisSettings extends DomainObject {
 
     public abstract void setIrisCodeEditorSettings(IrisCodeEditorSubSettings irisCodeEditorSettings);
 
+    public abstract IrisCompetencyGenerationSubSettings getIrisCompetencyGenerationSettings();
+
+    public abstract void setIrisCompetencyGenerationSettings(IrisCompetencyGenerationSubSettings irisCompetencyGenerationSubSettings);
+
     public abstract boolean isValid();
 }

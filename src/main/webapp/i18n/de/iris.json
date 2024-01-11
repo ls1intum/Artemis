@@ -23,6 +23,7 @@
                     "chatSettings": "Chat Einstellungen",
                     "hestiaSettings": "Hestia Einstellungen",
                     "codeEditorSettings": "Code Editor Einstellungen",
+                    "competencyGenerationSettings": "Kompetenzgenerierung Einstellungen",
                     "enabled-disabled": "Aktiviert/Deaktiviert",
                     "models": {
                         "title": "Modelle",
@@ -71,6 +72,7 @@
                     "tooltip": "Wenn aktiviert, werden die spezifischen globalen Iris Einstellungen automatisch aktualisiert, wenn eine neue Version von Artemis neue Iris Einstellungen bereitstellt.",
                     "chatLabel": "Auto Update der Chat Einstellungen",
                     "hestiaLabel": "Auto Update der Hestia Einstellungen",
+                    "competencyGenerationLabel": "Auto Update der Kompetenzgenerierung Einstellungen",
                     "codeEditorLabel": "Auto Update der Code Editor Einstellungen"
                 }
             },

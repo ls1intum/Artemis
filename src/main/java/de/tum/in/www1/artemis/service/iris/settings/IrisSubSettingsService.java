@@ -9,9 +9,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 import de.tum.in.www1.artemis.domain.iris.settings.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedChatSubSettingsDTO;
-import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedCodeEditorSubSettingsDTO;
-import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedHestiaSubSettingsDTO;
+import de.tum.in.www1.artemis.service.dto.iris.*;
 
 /**
  * Service for handling {@link IrisSubSettings} objects.
@@ -140,6 +138,40 @@ public class IrisSubSettingsService {
     }
 
     /**
+     * Updates a Competency Generation sub settings object.
+     * If the new settings are null, the current settings will be deleted (except if the parent settings are null == if the settings are global).
+     * Special notes:
+     * - If the user is not an admin the allowed models will not be updated.
+     * - If the user is not an admin the preferred model will only be updated if it is included in the allowed models.
+     *
+     * @param currentSettings Current Competency Generation sub settings.
+     * @param newSettings     Updated Competency Generation sub settings.
+     * @param parentSettings  Parent Competency Generation sub settings.
+     * @param settingsType    Type of the settings the sub settings belong to.
+     * @return Updated Competency Generation sub settings.
+     */
+    public IrisCompetencyGenerationSubSettings update(IrisCompetencyGenerationSubSettings currentSettings, IrisCompetencyGenerationSubSettings newSettings,
+            IrisCombinedCompetencyGenerationSubSettingsDTO parentSettings, IrisSettingsType settingsType) {
+        if (newSettings == null) {
+            if (parentSettings == null) {
+                throw new IllegalArgumentException("Cannot delete the Competency Generation settings");
+            }
+            return null;
+        }
+        if (currentSettings == null) {
+            currentSettings = new IrisCompetencyGenerationSubSettings();
+        }
+        if (authCheckService.isAdmin()) {
+            currentSettings.setEnabled(newSettings.isEnabled());
+            currentSettings.setAllowedModels(selectAllowedModels(currentSettings.getAllowedModels(), newSettings.getAllowedModels()));
+        }
+        currentSettings.setPreferredModel(validatePreferredModel(currentSettings.getPreferredModel(), newSettings.getPreferredModel(), currentSettings.getAllowedModels(),
+                parentSettings != null ? parentSettings.getAllowedModels() : null));
+        currentSettings.setTemplate(newSettings.getTemplate());
+        return currentSettings;
+    }
+
+    /**
      * Filters the allowed models of a sub settings object.
      * If the user is an admin, all models are allowed.
      * Otherwise, only models that are allowed by the parent settings or the current settings are allowed.
@@ -252,6 +284,28 @@ public class IrisSubSettingsService {
                     getCombinedTemplate(actualSettingsList, IrisSettings::getIrisCodeEditorSettings, IrisCodeEditorSubSettings::getTestRepoGenerationTemplate));
         }
         return combinedCodeEditorSettings;
+    }
+
+    /**
+     * Combines the Competency Generation settings of multiple {@link IrisSettings} objects.
+     * If minimal is true, the returned object will only contain the enabled field.
+     * The minimal version can safely be sent to students.
+     *
+     * @param settingsList List of {@link IrisSettings} objects to combine.
+     * @param minimal      Whether to return a minimal version of the combined settings.
+     * @return Combined Competency Generation settings.
+     */
+    public IrisCombinedCompetencyGenerationSubSettingsDTO combineCompetenyGenerationSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
+        var actualSettingsList = settingsList.stream().filter(settings -> !(settings instanceof IrisExerciseSettings)).toList();
+        var combinedCompetencyGenerationSettings = new IrisCombinedCompetencyGenerationSubSettingsDTO();
+        combinedCompetencyGenerationSettings.setEnabled(getCombinedEnabled(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings));
+        if (!minimal) {
+            combinedCompetencyGenerationSettings.setAllowedModels(getCombinedAllowedModels(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings));
+            combinedCompetencyGenerationSettings.setPreferredModel(getCombinedPreferredModel(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings));
+            combinedCompetencyGenerationSettings
+                    .setTemplate(getCombinedTemplate(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings, IrisCompetencyGenerationSubSettings::getTemplate));
+        }
+        return combinedCompetencyGenerationSettings;
     }
 
     /**

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20240109123423" author="rstief">
+        <addColumn tableName="iris_settings">
+            <column name="iris_competency_generation_settings_id"
+                    type="BIGINT"/>
+            <column name="enable_auto_update_competency_generation"
+                    type="BOOLEAN">
+            </column>
+        </addColumn>
+        <addForeignKeyConstraint baseColumnNames="iris_competency_generation_settings_id" baseTableName="iris_settings"
+                                 constraintName="FK_IRIS_SETTINGS_ON_IRIS_COMPETENCY_GENERATION_SETTINGS" referencedColumnNames="id"
+                                 referencedTableName="iris_sub_settings"/>
+        <sql>
+            UPDATE iris_settings SET enable_auto_update_competency_generation = FALSE WHERE discriminator = 'GLOBAL';
+        </sql>
+    </changeSet>
+</databaseChangeLog>

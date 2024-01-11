@@ -21,6 +21,7 @@ public interface IrisSettingsRepository extends JpaRepository<IrisSettings, Long
                 LEFT JOIN FETCH irisSettings.irisChatSettings ics
                 LEFT JOIN FETCH irisSettings.irisHestiaSettings ihs
                 LEFT JOIN FETCH irisSettings.irisCodeEditorSettings ices
+                LEFT JOIN FETCH irisSettings.irisCompetencyGenerationSettings icgs
             """)
     Set<IrisGlobalSettings> findAllGlobalSettings();
 
@@ -34,6 +35,7 @@ public interface IrisSettingsRepository extends JpaRepository<IrisSettings, Long
                 LEFT JOIN FETCH irisSettings.irisChatSettings ics
                 LEFT JOIN FETCH irisSettings.irisHestiaSettings ihs
                 LEFT JOIN FETCH irisSettings.irisCodeEditorSettings ices
+                LEFT JOIN FETCH irisSettings.irisCompetencyGenerationSettings icgs
             WHERE irisSettings.course.id = :courseId
             """)
     Optional<IrisCourseSettings> findCourseSettings(Long courseId);
