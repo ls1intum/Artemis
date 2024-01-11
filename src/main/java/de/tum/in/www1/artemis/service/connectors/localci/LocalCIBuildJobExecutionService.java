@@ -274,7 +274,15 @@ public class LocalCIBuildJobExecutionService {
 
         ProgrammingLanguage programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
 
-        List<String> resultPaths = getTestResultPaths(participation.getProgrammingExercise());
+        List<String> resultPaths;
+
+        try {
+            resultPaths = getTestResultPaths(participation.getProgrammingExercise());
+        }
+        catch (IllegalArgumentException e) {
+            localCIContainerService.deleteScriptFile(containerName);
+            throw new LocalCIException("Error while getting test result paths", e);
+        }
 
         long timeNanoStart = System.nanoTime();
 
@@ -289,7 +297,7 @@ public class LocalCIBuildJobExecutionService {
 
         log.info("Finished running the build script in container {}", containerName);
 
-        localCIContainerService.moveResultsToSpecifiedDirectory(containerId, resultPaths, LocalCIContainerService.WORKING_DIRECTORY + "/results");
+        localCIContainerService.moveResultsToSpecifiedDirectory(containerId, resultPaths, LocalCIContainerService.WORKING_DIRECTORY + LocalCIContainerService.RESULTS_DIRECTORY);
 
         ZonedDateTime buildCompletedDate = ZonedDateTime.now();
 
@@ -318,7 +326,8 @@ public class LocalCIBuildJobExecutionService {
         TarArchiveInputStream testResultsTarInputStream;
 
         try {
-            testResultsTarInputStream = localCIContainerService.getArchiveFromContainer(containerId, LocalCIContainerService.WORKING_DIRECTORY + "/results");
+            testResultsTarInputStream = localCIContainerService.getArchiveFromContainer(containerId,
+                    LocalCIContainerService.WORKING_DIRECTORY + LocalCIContainerService.RESULTS_DIRECTORY);
         }
         catch (NotFoundException e) {
             // If the test results are not found, this means that something went wrong during the build and testing of the submission.
@@ -356,7 +365,7 @@ public class LocalCIBuildJobExecutionService {
 
     // --- Helper methods ----
 
-    private List<String> getTestResultPaths(ProgrammingExercise programmingExercise) {
+    private List<String> getTestResultPaths(ProgrammingExercise programmingExercise) throws IllegalArgumentException {
         List<String> testResultPaths = new ArrayList<>();
         Windfile windfile = programmingExercise.getWindfile();
         if (windfile == null) {
