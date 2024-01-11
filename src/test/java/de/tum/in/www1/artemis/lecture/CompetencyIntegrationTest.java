@@ -251,6 +251,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         request.post("/api/courses/" + course.getId() + "/competencies", new Competency(), HttpStatus.FORBIDDEN);
         request.get("/api/courses/" + course.getId() + "/competencies/" + competency.getId() + "/course-progress", HttpStatus.FORBIDDEN, CourseCompetencyProgressDTO.class);
         request.delete("/api/courses/" + course.getId() + "/competencies/" + competency.getId(), HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + course.getId() + "/competencies/bulk", List.of(), HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -757,4 +758,38 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         // Test that a competency of a course can not be a prerequisite to the same course
         request.postWithResponseBody("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), competency, Competency.class, HttpStatus.CONFLICT);
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createCompetencies_asInstructor_shouldCreateCompetencies() throws Exception {
+        Competency competency = new Competency();
+        competency.setTitle("FreshlyCreatedCompetency");
+        competency.setDescription("This is an example of a freshly created competency");
+        competency.setCourse(course);
+        List<LectureUnit> allLectureUnits = lectureUnitRepository.findAll();
+        Set<LectureUnit> connectedLectureUnits = new HashSet<>(allLectureUnits);
+        competency.setLectureUnits(connectedLectureUnits);
+
+        var persistedCompetency = request.postWithResponseBody("/api/courses/" + course.getId() + "/competencies", competency, Competency.class, HttpStatus.CREATED);
+        assertThat(persistedCompetency.getId()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createCompetencies_asInstructor_badRequest() throws Exception {
+        Competency competency = new Competency(); // no title
+        request.post("/api/courses/" + course.getId() + "/competencies/bulk", List.of(competency), HttpStatus.BAD_REQUEST);
+        competency.setTitle(" "); // empty title
+        request.post("/api/courses/" + course.getId() + "/competencies/bulk", List.of(competency), HttpStatus.BAD_REQUEST);
+        competency.setTitle("Title");
+        competency.setId(1L); // id is set
+        request.post("/api/courses/" + course.getId() + "/competencies/bulk", List.of(competency), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    void createCompetencies_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
+        request.post("/api/courses/" + course.getId() + "/competencies/bulk", List.of(), HttpStatus.FORBIDDEN);
+    }
+
 }
