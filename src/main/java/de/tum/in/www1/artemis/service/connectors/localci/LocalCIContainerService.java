@@ -61,6 +61,8 @@ public class LocalCIContainerService {
 
     public static final String WORKING_DIRECTORY = "/var/tmp";
 
+    public static final String RESULTS_DIRECTORY = "/results";
+
     @Value("${artemis.continuous-integration.local-cis-build-scripts-path}")
     private String localCIBuildScriptBasePath;
 
@@ -144,9 +146,8 @@ public class LocalCIContainerService {
     public void moveResultsToSpecifiedDirectory(String containerId, List<String> sourcePaths, String destinationPath) {
         StringBuilder command = new StringBuilder("shopt -s globstar && mkdir -p " + destinationPath);
         for (String sourcePath : sourcePaths) {
-            command.append(" && mv ").append(sourcePath).append(" ").append(destinationPath);
+            command.append("; cp ").append(sourcePath).append(" ").append(destinationPath);
         }
-        log.info("Moving results to specified directory with command: {}", command);
         executeDockerCommand(containerId, false, false, true, "bash", "-c", command.toString());
     }
 
@@ -157,14 +158,8 @@ public class LocalCIContainerService {
      * @param path        the path to the file or directory to be retrieved.
      * @return a {@link TarArchiveInputStream} that can be used to read the archive.
      */
-    public TarArchiveInputStream getArchiveFromContainer(String containerId, String path) {
-        try {
-            return new TarArchiveInputStream(dockerClient.copyArchiveFromContainerCmd(containerId, path).exec());
-        }
-        catch (NotFoundException e) {
-            return null;
-        }
-
+    public TarArchiveInputStream getArchiveFromContainer(String containerId, String path) throws NotFoundException {
+        return new TarArchiveInputStream(dockerClient.copyArchiveFromContainerCmd(containerId, path).exec());
     }
 
     /**
@@ -179,7 +174,7 @@ public class LocalCIContainerService {
      * @throws IOException if no commit hash could be retrieved
      */
     public String getCommitHashOfBranch(String containerId, LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType repositoryType, String branchName,
-            ProgrammingLanguage programmingLanguage) throws IOException {
+            ProgrammingLanguage programmingLanguage) throws IOException, NotFoundException {
         // Get an input stream of the file in .git folder of the repository that contains the current commit hash of the branch.
 
         String repositoryCheckoutPath = RepositoryCheckoutPath.valueOf(repositoryType.toString().toUpperCase()).forProgrammingLanguage(programmingLanguage);
