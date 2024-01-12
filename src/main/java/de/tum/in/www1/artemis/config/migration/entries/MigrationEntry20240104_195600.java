@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildScriptGenerationService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 
@@ -45,14 +44,9 @@ public class MigrationEntry20240104_195600 extends MigrationEntry {
 
     private final Optional<AeolusBuildScriptGenerationService> aeolusBuildScriptGenerationService;
 
-    private final UriService uriService = new UriService();
-
     private final Environment environment;
 
-    private final CopyOnWriteArrayList<ProgrammingExerciseParticipation> errorList = new CopyOnWriteArrayList<>();
-
-    // @Value("${artemis.version-control.default-branch}") somehow this is not working -> main it is
-    protected String defaultBranch = "main";
+    private final List<ProgrammingExerciseParticipation> errorList = new CopyOnWriteArrayList<>();
 
     public MigrationEntry20240104_195600(ProgrammingExerciseRepository programmingExerciseRepository, Environment environment,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
@@ -136,12 +130,15 @@ public class MigrationEntry20240104_195600 extends MigrationEntry {
         for (var solutionParticipation : solutionParticipations) {
             try {
                 Windfile windfile = aeolusBuildScriptGenerationService.get().translateBuildPlan(solutionParticipation.getBuildPlanId());
-                windfile.setRepositories(null);
-                windfile.setId(null);
-                windfile.setName(null);
                 if (windfile.getMetadata().getDocker() == null) {
                     throw new RuntimeException("Failed to migrate solution participation because the docker image is null.");
                 }
+                windfile.setRepositories(null);
+                windfile.setId(null);
+                windfile.setName(null);
+                windfile.setAuthor(null);
+                windfile.setGitCredentials(null);
+                // TODO: should we modify the docker parameters here? e.g. remove stuff like --net=host
                 var programmingExercise = solutionParticipation.getProgrammingExercise();
                 programmingExercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
                 programmingExerciseRepository.save(programmingExercise);
