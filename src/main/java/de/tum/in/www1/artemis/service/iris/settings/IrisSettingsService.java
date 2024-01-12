@@ -113,22 +113,10 @@ public class IrisSettingsService {
         var settings = new IrisGlobalSettings();
         settings.setCurrentVersion(loadGlobalTemplateVersion().orElse(0));
 
-        var chatSettings = new IrisChatSubSettings();
-        chatSettings.setEnabled(false);
-        chatSettings.setTemplate(loadDefaultChatTemplate());
-        settings.setIrisChatSettings(chatSettings);
-
-        var hestiaSettings = new IrisHestiaSubSettings();
-        hestiaSettings.setEnabled(false);
-        hestiaSettings.setTemplate(loadDefaultHestiaTemplate());
-        settings.setIrisHestiaSettings(hestiaSettings);
-
-        updateIrisCodeEditorSettings(settings);
-
-        var competencyGenerationSettings = new IrisCompetencyGenerationSubSettings();
-        competencyGenerationSettings.setEnabled(false);
-        competencyGenerationSettings.setTemplate(loadDefaultCompetencyGenerationTemplate());
-        settings.setIrisCompetencyGenerationSettings(competencyGenerationSettings);
+        initializeIrisChatSettings(settings);
+        initializeIrisHestiaSettings(settings);
+        initializeIrisCodeEditorSettings(settings);
+        initializeIrisCompetencyGenerationSettings(settings);
 
         irisSettingsRepository.save(settings);
     }
@@ -142,16 +130,16 @@ public class IrisSettingsService {
         Optional<Integer> globalVersion = loadGlobalTemplateVersion();
         if (globalVersion.isEmpty() || settings.getCurrentVersion() < globalVersion.get()) {
             if (settings.isEnableAutoUpdateChat() || settings.getIrisChatSettings() == null) {
-                settings.getIrisChatSettings().setTemplate(loadDefaultChatTemplate());
+                initializeIrisChatSettings(settings);
             }
             if (settings.isEnableAutoUpdateHestia() || settings.getIrisHestiaSettings() == null) {
-                settings.getIrisHestiaSettings().setTemplate(loadDefaultHestiaTemplate());
+                initializeIrisHestiaSettings(settings);
             }
             if (settings.isEnableAutoUpdateCodeEditor() || settings.getIrisCodeEditorSettings() == null) {
-                updateIrisCodeEditorSettings(settings);
+                initializeIrisCodeEditorSettings(settings);
             }
             if (settings.isEnableAutoUpdateCompetencyGeneration() || settings.getIrisCompetencyGenerationSettings() == null) {
-                settings.getIrisCompetencyGenerationSettings().setTemplate(loadDefaultCompetencyGenerationTemplate());
+                initializeIrisCompetencyGenerationSettings(settings);
             }
 
             globalVersion.ifPresent(settings::setCurrentVersion);
@@ -159,7 +147,37 @@ public class IrisSettingsService {
         }
     }
 
-    private void updateIrisCodeEditorSettings(IrisGlobalSettings settings) {
+    private void initializeIrisChatSettings(IrisGlobalSettings settings) {
+        var irisChatSettings = settings.getIrisChatSettings();
+        if (irisChatSettings == null) {
+            irisChatSettings = new IrisChatSubSettings();
+            irisChatSettings.setEnabled(false);
+        }
+        irisChatSettings.setTemplate(loadDefaultChatTemplate());
+        settings.setIrisChatSettings(irisChatSettings);
+    }
+
+    private void initializeIrisHestiaSettings(IrisGlobalSettings settings) {
+        var irisHestiaSettings = settings.getIrisHestiaSettings();
+        if (irisHestiaSettings == null) {
+            irisHestiaSettings = new IrisHestiaSubSettings();
+            irisHestiaSettings.setEnabled(false);
+        }
+        irisHestiaSettings.setTemplate(loadDefaultHestiaTemplate());
+        settings.setIrisHestiaSettings(irisHestiaSettings);
+    }
+
+    private void initializeIrisCompetencyGenerationSettings(IrisGlobalSettings settings) {
+        var irisCompetencyGenerationSettings = settings.getIrisCompetencyGenerationSettings();
+        if (irisCompetencyGenerationSettings == null) {
+            irisCompetencyGenerationSettings = new IrisCompetencyGenerationSubSettings();
+            irisCompetencyGenerationSettings.setEnabled(false);
+        }
+        irisCompetencyGenerationSettings.setTemplate(loadDefaultCompetencyGenerationTemplate());
+        settings.setIrisCompetencyGenerationSettings(irisCompetencyGenerationSettings);
+    }
+
+    private void initializeIrisCodeEditorSettings(IrisGlobalSettings settings) {
         var irisCodeEditorSettings = settings.getIrisCodeEditorSettings();
         if (irisCodeEditorSettings == null) {
             irisCodeEditorSettings = new IrisCodeEditorSubSettings();
