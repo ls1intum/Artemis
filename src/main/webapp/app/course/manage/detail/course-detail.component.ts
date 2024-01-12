@@ -16,7 +16,7 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
+import { Detail, DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 
@@ -117,158 +117,199 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
+    getGeneralDetailSection(): DetailOverviewSection {
+        return {
+            headline: 'artemisApp.course.detail.sections.general',
+            details: [
+                { type: DetailType.Text, title: 'artemisApp.course.title', data: { text: this.course.title } },
+                { type: DetailType.Text, title: 'artemisApp.course.shortName', data: { text: this.course.shortName } },
+                this.course.organizations?.length && {
+                    type: DetailType.Text,
+                    title: 'artemisApp.course.organizations',
+                    data: { text: this.course.organizations.map((orga) => orga.name).join(', ') },
+                },
+                {
+                    type: DetailType.Link,
+                    title: 'artemisApp.course.studentGroupName',
+                    data: {
+                        text: `${this.course.studentGroupName} (${this.course.numberOfStudents ?? 0})`,
+                        routerLink: this.course.isAtLeastInstructor && ['/course-management', this.course.id, 'groups', 'students'],
+                    },
+                },
+                {
+                    type: DetailType.Link,
+                    title: 'artemisApp.course.teachingAssistantGroupName',
+                    data: {
+                        text: `${this.course.teachingAssistantGroupName} (${this.course.numberOfTeachingAssistants ?? 0})`,
+                        routerLink: this.course.isAtLeastInstructor && ['/course-management', this.course.id, 'groups', 'tutors'],
+                    },
+                },
+                {
+                    type: DetailType.Link,
+                    title: 'artemisApp.course.editorGroupName',
+                    data: {
+                        text: `${this.course.editorGroupName} (${this.course.numberOfEditors ?? 0})`,
+                        routerLink: this.course.isAtLeastInstructor && ['/course-management', this.course.id, 'groups', 'editors'],
+                    },
+                },
+                {
+                    type: DetailType.Link,
+                    title: 'artemisApp.course.instructorGroupName',
+                    data: {
+                        text: `${this.course.instructorGroupName} (${this.course.numberOfInstructors ?? 0})`,
+                        routerLink: this.course.isAtLeastInstructor && ['/course-management', this.course.id, 'groups', 'instructors'],
+                    },
+                },
+                { type: DetailType.Date, title: 'artemisApp.course.startDate', data: { date: this.course.startDate } },
+                { type: DetailType.Date, title: 'artemisApp.course.endDate', data: { date: this.course.endDate } },
+                { type: DetailType.Text, title: 'artemisApp.course.semester', data: { text: this.course.semester } },
+            ].filter(Boolean),
+        } as DetailOverviewSection;
+    }
+
+    getComplaitsDetails(): Detail[] {
+        if (this.course.complaintsEnabled) {
+            return [
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.course.maxComplaints.title',
+                    data: { text: this.course.maxComplaints },
+                },
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.course.maxTeamComplaints.title',
+                    data: { text: this.course.maxTeamComplaints },
+                },
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.course.maxComplaintTimeDays.title',
+                    data: { text: this.course.maxComplaintTimeDays },
+                },
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.course.maxComplaintTextLimit.title',
+                    data: { text: this.course.maxComplaintTextLimit },
+                },
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.course.maxComplaintResponseTextLimit.title',
+                    data: { text: this.course.maxComplaintResponseTextLimit },
+                },
+            ];
+        }
+        return [];
+    }
+
+    getLtiDetails(): Detail[] {
+        if (this.ltiEnabled) {
+            return [
+                !this.course.onlineCourse && { type: DetailType.Boolean, title: 'artemisApp.course.onlineCourse.title', data: { boolean: this.course.onlineCourse } },
+                this.course.onlineCourse &&
+                    this.course.isAtLeastInstructor && {
+                        type: DetailType.Link,
+                        title: 'artemisApp.course.onlineCourse.title',
+                        data: {
+                            text: this.translateService.instant('artemisApp.course.ltiConfiguration'),
+                            routerLink: ['/course-management', this.course?.id, 'lti-configuration'],
+                        },
+                    },
+            ].filter(Boolean) as Detail[];
+        }
+        return [];
+    }
+
+    getIrisDetails(): Detail[] {
+        // TODO: Enable in future PR
+        // if (this.irisEnabled) {
+        //   return [
+        //         this.irisHestiaEnabled && {
+        //             type: DetailType.ProgrammingIrisEnabled,
+        //             title: 'artemisApp.iris.settings.subSettings.enabled.hesita',
+        //             data: { course: this.course, disabled: !this.isAdmin, subSettingsType: this.HESTIA },
+        //         },
+        //         this.irisCodeEditorEnabled && {
+        //             type: DetailType.ProgrammingIrisEnabled,
+        //             title: 'artemisApp.iris.settings.subSettings.enabled.codeEditor',
+        //             data: { course: this.course, disabled: !this.isAdmin, subSettingsType: this.CODE_EDITOR },
+        //         },
+        //     ].filter(Boolean) as Detail[];
+        // }
+        return [];
+    }
+
+    getModeDetailSection(): DetailOverviewSection {
+        const complaintsDetails = this.getComplaitsDetails();
+        const ltiDetails = this.getLtiDetails();
+        const irisDetails = this.getIrisDetails();
+        return {
+            headline: 'artemisApp.course.detail.sections.mode',
+            details: [
+                { type: DetailType.Text, title: 'artemisApp.course.maxPoints.title', data: { text: this.course.maxPoints } },
+                { type: DetailType.Text, title: 'artemisApp.course.accuracyOfScores', data: { text: this.course.accuracyOfScores } },
+                { type: DetailType.Text, title: 'artemisApp.course.defaultProgrammingLanguage', data: { text: this.course.defaultProgrammingLanguage } },
+                { type: DetailType.Boolean, title: 'artemisApp.course.testCourse.title', data: { boolean: this.course.testCourse } },
+                ...ltiDetails,
+                this.tutorialEnabled && {
+                    type: DetailType.Text,
+                    title: 'artemisApp.forms.configurationForm.timeZoneInput.label',
+                    titleHelpText: 'artemisApp.forms.configurationForm.timeZoneInput.beta',
+                    data: { text: this.course.timeZone },
+                },
+                ...complaintsDetails,
+                this.course.requestMoreFeedbackEnabled && {
+                    type: DetailType.Text,
+                    title: 'artemisApp.course.maxRequestMoreFeedbackTimeDays.title',
+                    data: { text: this.course.maxRequestMoreFeedbackTimeDays },
+                },
+                ...irisDetails,
+            ].filter(Boolean),
+        } as DetailOverviewSection;
+    }
+
+    getEnrollmentDetailSection(): DetailOverviewSection {
+        const enrollmentEnabledDetails = this.course.enrollmentEnabled
+            ? [
+                  { type: DetailType.Date, title: 'artemisApp.course.enrollmentStartDate', data: { date: this.course.enrollmentStartDate } },
+                  { type: DetailType.Date, title: 'artemisApp.course.enrollmentEndDate', data: { date: this.course.enrollmentEndDate } },
+                  {
+                      type: DetailType.Markdown,
+                      title: 'artemisApp.course.registrationConfirmationMessage',
+                      data: { innerHtm: this.markdownService.safeHtmlForMarkdown(this.course.enrollmentConfirmationMessage) },
+                  },
+              ]
+            : [];
+        return {
+            headline: 'artemisApp.course.detail.sections.enrollment',
+            details: [
+                { type: DetailType.Boolean, title: 'artemisApp.course.registrationEnabled.title', data: { boolean: this.course.enrollmentEnabled } },
+                ...enrollmentEnabledDetails,
+                { type: DetailType.Boolean, title: 'artemisApp.course.unenrollmentEnabled.title', data: { boolean: this.course.unenrollmentEnabled } },
+                this.course.unenrollmentEnabled && { type: DetailType.Date, title: 'artemisApp.course.unenrollmentEndDate', data: { date: this.course.unenrollmentEndDate } },
+            ].filter(Boolean),
+        } as DetailOverviewSection;
+    }
+
+    getMessagingDetailSection(): DetailOverviewSection {
+        return {
+            headline: 'artemisApp.course.detail.sections.messaging',
+            details: [
+                { type: DetailType.Boolean, title: 'artemisApp.course.courseCommunicationSetting.communicationEnabled.label', data: { boolean: this.communicationEnabled } },
+                { type: DetailType.Boolean, title: 'artemisApp.course.courseCommunicationSetting.messagingEnabled.label', data: { boolean: this.messagingEnabled } },
+                {
+                    type: DetailType.Markdown,
+                    title: 'artemisApp.course.courseCommunicationSetting.messagingEnabled.codeOfConduct',
+                    data: { innerHtml: this.markdownService.safeHtmlForMarkdown(this.course.courseInformationSharingMessagingCodeOfConduct) },
+                },
+            ],
+        };
+    }
+
     getCourseDetailSections() {
-        const course = this.course;
-        this.courseDetailSections = [
-            {
-                headline: 'artemisApp.course.detail.sections.general',
-                details: [
-                    { type: DetailType.Text, title: 'artemisApp.course.title', data: { text: course.title } },
-                    { type: DetailType.Text, title: 'artemisApp.course.shortName', data: { text: course.shortName } },
-                    !!course.organizations?.length && {
-                        type: DetailType.Text,
-                        title: 'artemisApp.course.organizations',
-                        data: { text: course.organizations.map((orga) => orga.name).join(', ') },
-                    },
-                    {
-                        type: DetailType.Link,
-                        title: 'artemisApp.course.studentGroupName',
-                        data: {
-                            text: `${course.studentGroupName} (${course.numberOfStudents ?? 0})`,
-                            routerLink: course.isAtLeastInstructor && ['/course-management', course.id, 'groups', 'students'],
-                        },
-                    },
-                    {
-                        type: DetailType.Link,
-                        title: 'artemisApp.course.teachingAssistantGroupName',
-                        data: {
-                            text: `${course.teachingAssistantGroupName} (${course.numberOfTeachingAssistants ?? 0})`,
-                            routerLink: course.isAtLeastInstructor && ['/course-management', course.id, 'groups', 'tutors'],
-                        },
-                    },
-                    {
-                        type: DetailType.Link,
-                        title: 'artemisApp.course.editorGroupName',
-                        data: {
-                            text: `${course.editorGroupName} (${course.numberOfEditors ?? 0})`,
-                            routerLink: course.isAtLeastInstructor && ['/course-management', course.id, 'groups', 'editors'],
-                        },
-                    },
-                    {
-                        type: DetailType.Link,
-                        title: 'artemisApp.course.instructorGroupName',
-                        data: {
-                            text: `${course.instructorGroupName} (${course.numberOfInstructors ?? 0})`,
-                            routerLink: course.isAtLeastInstructor && ['/course-management', course.id, 'groups', 'instructors'],
-                        },
-                    },
-                    { type: DetailType.Date, title: 'artemisApp.course.startDate', data: { date: course.startDate } },
-                    { type: DetailType.Date, title: 'artemisApp.course.endDate', data: { date: course.endDate } },
-                    { type: DetailType.Text, title: 'artemisApp.course.semester', data: { text: course.semester } },
-                ].filter(Boolean),
-            } as DetailOverviewSection,
-            {
-                headline: 'artemisApp.course.detail.sections.mode',
-                details: [
-                    { type: DetailType.Text, title: 'artemisApp.course.maxPoints.title', data: { text: course.maxPoints } },
-                    { type: DetailType.Text, title: 'artemisApp.course.accuracyOfScores', data: { text: course.accuracyOfScores } },
-                    { type: DetailType.Text, title: 'artemisApp.course.defaultProgrammingLanguage', data: { text: course.defaultProgrammingLanguage } },
-                    { type: DetailType.Boolean, title: 'artemisApp.course.testCourse.title', data: { boolean: course.testCourse } },
-                    this.ltiEnabled &&
-                        !course.onlineCourse &&
-                        !course.isAtLeastInstructor && { type: DetailType.Boolean, title: 'artemisApp.course.onlineCourse.title', data: { boolean: course.onlineCourse } },
-                    this.ltiEnabled &&
-                        course.onlineCourse &&
-                        course.isAtLeastInstructor && {
-                            type: DetailType.Link,
-                            title: 'artemisApp.course.onlineCourse.title',
-                            data: {
-                                text: this.translateService.instant('artemisApp.course.ltiConfiguration'),
-                                routerLink: ['/course-management', course?.id, 'lti-configuration'],
-                            },
-                        },
-                    this.tutorialEnabled && {
-                        type: DetailType.Text,
-                        title: 'artemisApp.forms.configurationForm.timeZoneInput.label',
-                        titleHelpText: 'artemisApp.forms.configurationForm.timeZoneInput.beta',
-                        data: { text: course.timeZone },
-                    },
-                    course.complaintsEnabled && {
-                        type: DetailType.Text,
-                        title: 'artemisApp.course.maxComplaints.title',
-                        data: { text: course.maxComplaints },
-                    },
-                    course.complaintsEnabled && {
-                        type: DetailType.Text,
-                        title: 'artemisApp.course.maxTeamComplaints.title',
-                        data: { text: course.maxTeamComplaints },
-                    },
-                    course.complaintsEnabled && {
-                        type: DetailType.Text,
-                        title: 'artemisApp.course.maxComplaintTimeDays.title',
-                        data: { text: course.maxComplaintTimeDays },
-                    },
-                    course.complaintsEnabled && {
-                        type: DetailType.Text,
-                        title: 'artemisApp.course.maxComplaintTextLimit.title',
-                        data: { text: course.maxComplaintTextLimit },
-                    },
-                    course.complaintsEnabled && {
-                        type: DetailType.Text,
-                        title: 'artemisApp.course.maxComplaintResponseTextLimit.title',
-                        data: { text: course.maxComplaintResponseTextLimit },
-                    },
-                    course.requestMoreFeedbackEnabled && {
-                        type: DetailType.Text,
-                        title: 'artemisApp.course.maxRequestMoreFeedbackTimeDays.title',
-                        data: { text: course.maxRequestMoreFeedbackTimeDays },
-                    },
-                    // TODO: Enable in future PR
-                    false &&
-                        this.irisEnabled &&
-                        this.irisHestiaEnabled && {
-                            type: DetailType.ProgrammingIrisEnabled,
-                            title: 'artemisApp.iris.settings.subSettings.enabled.hesita',
-                            data: { course, disabled: !this.isAdmin, subSettingsType: this.HESTIA },
-                        },
-                    // TODO: Enable in future PR
-                    false &&
-                        this.irisEnabled &&
-                        this.irisCodeEditorEnabled && {
-                            type: DetailType.ProgrammingIrisEnabled,
-                            title: 'artemisApp.iris.settings.subSettings.enabled.codeEditor',
-                            data: { course, disabled: !this.isAdmin, subSettingsType: this.CODE_EDITOR },
-                        },
-                ].filter(Boolean),
-            } as DetailOverviewSection,
-            {
-                headline: 'artemisApp.course.detail.sections.enrollment',
-                details: [
-                    { type: DetailType.Boolean, title: 'artemisApp.course.registrationEnabled.title', data: { boolean: course.enrollmentEnabled } },
-                    course.enrollmentEnabled && { type: DetailType.Date, title: 'artemisApp.course.enrollmentStartDate', data: { date: course.enrollmentStartDate } },
-                    course.enrollmentEnabled && { type: DetailType.Date, title: 'artemisApp.course.enrollmentEndDate', data: { date: course.enrollmentEndDate } },
-                    course.enrollmentEnabled && {
-                        type: DetailType.Markdown,
-                        title: 'artemisApp.course.registrationConfirmationMessage',
-                        data: { innerHtm: this.markdownService.safeHtmlForMarkdown(course.enrollmentConfirmationMessage) },
-                    },
-                    { type: DetailType.Boolean, title: 'artemisApp.course.unenrollmentEnabled.title', data: { boolean: course.unenrollmentEnabled } },
-                    course.unenrollmentEnabled && { type: DetailType.Date, title: 'artemisApp.course.unenrollmentEndDate', data: { date: course.unenrollmentEndDate } },
-                ].filter(Boolean),
-            } as DetailOverviewSection,
-            {
-                headline: 'artemisApp.course.detail.sections.messaging',
-                details: [
-                    { type: DetailType.Boolean, title: 'artemisApp.course.courseCommunicationSetting.communicationEnabled.label', data: { boolean: this.communicationEnabled } },
-                    { type: DetailType.Boolean, title: 'artemisApp.course.courseCommunicationSetting.messagingEnabled.label', data: { boolean: this.messagingEnabled } },
-                    {
-                        type: DetailType.Markdown,
-                        title: 'artemisApp.course.courseCommunicationSetting.messagingEnabled.codeOfConduct',
-                        data: { innerHtml: this.markdownService.safeHtmlForMarkdown(course.courseInformationSharingMessagingCodeOfConduct) },
-                    },
-                ],
-            },
-        ];
+        const generalSection = this.getGeneralDetailSection();
+        const modeSection = this.getModeDetailSection();
+        const enrollmentSection = this.getEnrollmentDetailSection();
+        const messagingSection = this.getMessagingDetailSection();
+        this.courseDetailSections = [generalSection, modeSection, enrollmentSection, messagingSection];
     }
 
     /**
