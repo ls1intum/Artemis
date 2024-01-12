@@ -583,7 +583,8 @@ describe('ExamScoresComponent', () => {
         // create csv
         const testOptions: CsvExportOptions = {
             fieldSeparator: CsvFieldSeparator.SEMICOLON,
-            quoteStrings: CsvQuoteStrings.QUOTES_DOUBLE,
+            quoteCharacter: CsvQuoteStrings.QUOTES_DOUBLE,
+            quoteStrings: true,
             decimalSeparator: CsvDecimalSeparator.PERIOD,
         };
         comp.exportExamResults(testOptions);
@@ -672,7 +673,8 @@ describe('ExamScoresComponent', () => {
         // create csv
         const testOptions: CsvExportOptions = {
             fieldSeparator: CsvFieldSeparator.SEMICOLON,
-            quoteStrings: CsvQuoteStrings.QUOTES_DOUBLE,
+            quoteCharacter: CsvQuoteStrings.QUOTES_DOUBLE,
+            quoteStrings: true,
             decimalSeparator: CsvDecimalSeparator.PERIOD,
         };
         comp.exportExamResults(testOptions);
@@ -741,7 +743,8 @@ describe('ExamScoresComponent', () => {
 
         const testOptions: CsvExportOptions = {
             fieldSeparator: CsvFieldSeparator.SEMICOLON,
-            quoteStrings: CsvQuoteStrings.QUOTES_DOUBLE,
+            quoteCharacter: CsvQuoteStrings.QUOTES_DOUBLE,
+            quoteStrings: true,
             decimalSeparator: CsvDecimalSeparator.PERIOD,
         };
         comp.exportExamResults(testOptions);

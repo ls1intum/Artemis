@@ -13,7 +13,6 @@ import { ArtemisTeamConfigFormGroupModule } from 'app/exercises/shared/team-conf
 import { ArtemisFileUploadExerciseManagementRoutingModule } from 'app/exercises/file-upload/manage/file-upload-exercise-management.route';
 import { StructuredGradingCriterionModule } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
-import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-details/exercise-details.module';
 import { ArtemisIncludedInOverallScorePickerModule } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { NonProgrammingExerciseDetailCommonActionsModule } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.module';
@@ -21,6 +20,8 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
 import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.module';
 import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.module';
+import { DetailModule } from 'app/detail-overview-list/detail.module';
+import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
 
 @NgModule({
     imports: [
@@ -36,13 +37,14 @@ import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-
         FormDateTimePickerModule,
         StructuredGradingCriterionModule,
         AssessmentInstructionsModule,
-        ExerciseDetailsModule,
         ArtemisMarkdownModule,
         NonProgrammingExerciseDetailCommonActionsModule,
         ArtemisSharedComponentModule,
+        ArtemisExerciseModule,
         ExerciseCategoriesModule,
         ExerciseTitleChannelNameModule,
         ExerciseUpdateNotificationModule,
+        DetailModule,
     ],
     declarations: [FileUploadExerciseComponent, FileUploadExerciseDetailComponent, FileUploadExerciseUpdateComponent],
     exports: [FileUploadExerciseComponent],
