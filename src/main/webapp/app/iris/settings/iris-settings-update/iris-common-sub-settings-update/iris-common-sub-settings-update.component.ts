@@ -91,17 +91,13 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     }
 
     onEnable() {
-        if (this.isAdmin || this.settingsType === this.EXERCISE) {
-            this.enabled = true;
-            this.onEnabledChange();
-        }
+        this.enabled = true;
+        this.onEnabledChange();
     }
 
     onDisable() {
-        if (this.isAdmin || this.settingsType === this.EXERCISE) {
-            this.enabled = false;
-            this.onEnabledChange();
-        }
+        this.enabled = false;
+        this.onEnabledChange();
     }
 
     onInheritAllowedModelsChange() {
