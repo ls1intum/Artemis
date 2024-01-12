@@ -12,6 +12,7 @@ import { faUser } from '@fortawesome/free-solid-svg-icons';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { PostComponent } from 'app/shared/metis/post/post.component';
 import { ButtonType } from 'app/shared/components/button.component';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-plagiarism-case-student-detail-view',
@@ -38,6 +39,10 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
     posts: Post[];
 
     affectedExerciseRouterLink: (string | number)[];
+
+    isAfterDueDate: boolean;
+
+    readonly dayjs = dayjs;
 
     constructor(
         protected metisService: MetisService,
@@ -73,6 +78,9 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
                     this.metisService.getFilteredPosts({
                         plagiarismCaseId: this.plagiarismCase!.id,
                     });
+
+                    const now = dayjs();
+                    this.isAfterDueDate = now.isAfter(this.plagiarismCase.exercise?.dueDate);
                 },
             });
         });

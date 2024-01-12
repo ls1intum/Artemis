@@ -29,9 +29,9 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @RequestMapping("/api")
 public class ProgrammingAssessmentResource extends AssessmentResource {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingAssessmentResource.class);
-
     private static final String ENTITY_NAME = "programmingAssessment";
+
+    private final Logger log = LoggerFactory.getLogger(ProgrammingAssessmentResource.class);
 
     private final ProgrammingAssessmentService programmingAssessmentService;
 

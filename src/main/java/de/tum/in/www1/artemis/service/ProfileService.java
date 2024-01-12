@@ -22,7 +22,7 @@ public class ProfileService {
     }
 
     public boolean isLocalVcsCi() {
-        return isProfileActive(Constants.PROFILE_LOCALVC) || isProfileActive(Constants.PROFILE_LOCALCI);
+        return isLocalVcs() || isLocalCi();
     }
 
     public boolean isBamboo() {
@@ -31,6 +31,24 @@ public class ProfileService {
 
     public boolean isGitlabCiOrJenkins() {
         return isProfileActive("gitlabci") || isProfileActive("jenkins");
+    }
+
+    /**
+     * Checks if the local CI profile is active
+     *
+     * @return true if the local CI profile is active, false otherwise
+     */
+    public boolean isLocalCi() {
+        return isProfileActive(Constants.PROFILE_LOCALCI);
+    }
+
+    /**
+     * Checks if the local VC profile is active
+     *
+     * @return true if the local VC profile is active, false otherwise
+     */
+    public boolean isLocalVcs() {
+        return isProfileActive(Constants.PROFILE_LOCALVC);
     }
 
     private boolean isProfileActive(String profile) {
