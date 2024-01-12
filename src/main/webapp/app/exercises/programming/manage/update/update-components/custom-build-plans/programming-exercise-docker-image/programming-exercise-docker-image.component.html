@@ -1,0 +1,14 @@
+<div class="mb-2">
+    <label>
+        <span jhiTranslate="artemisApp.programmingExercise.dockerImage">Docker Image</span>
+    </label>
+    <input
+        required
+        type="text"
+        class="form-control"
+        name="dockerImage"
+        id="field_dockerImage"
+        [(ngModel)]="dockerImage"
+        (ngModelChange)="dockerImageChange.emit($event.currentTarget.value)"
+    />
+</div>
