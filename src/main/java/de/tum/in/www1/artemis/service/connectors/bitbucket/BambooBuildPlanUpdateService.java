@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
@@ -37,8 +36,6 @@ public class BambooBuildPlanUpdateService implements ContinuousIntegrationUpdate
 
     private final BambooInternalUrlService bambooInternalUrlService;
 
-    private static final String OLD_ASSIGNMENT_REPO_NAME = "Assignment";
-
     private final Logger log = LoggerFactory.getLogger(BambooBuildPlanUpdateService.class);
 
     private final RestTemplate bambooRestTemplate;
@@ -52,7 +49,7 @@ public class BambooBuildPlanUpdateService implements ContinuousIntegrationUpdate
     public void updatePlanRepository(String buildPlanKey, String bambooRepositoryName, String newRepoUri, String branchName) {
         try {
             log.debug("Update plan repository for build plan {}", buildPlanKey);
-            BambooRepositoryDTO bambooRepository = findBambooRepository(bambooRepositoryName, OLD_ASSIGNMENT_REPO_NAME, buildPlanKey);
+            BambooRepositoryDTO bambooRepository = findBambooRepository(bambooRepositoryName, buildPlanKey);
             if (bambooRepository == null) {
                 throw new BambooException("Something went wrong while updating the template repository of the build plan " + buildPlanKey
                         + " to the student repository : Could not find assignment nor Assignment repository");
@@ -86,7 +83,7 @@ public class BambooBuildPlanUpdateService implements ContinuousIntegrationUpdate
         parameters.add("save", "Save repository");
         parameters.add("bamboo.successReturnMode", "json");
         parameters.add("repository.git.branch", branchName);
-        parameters.add("repository.git.repositoryUri", newRepoUri);
+        parameters.add("repository.git.repositoryUrl", newRepoUri);
         parameters.add("repository.git.authenticationType", "PASSWORD");
         parameters.add("repository.git.passwordCredentialsSource", "SHARED_CREDENTIALS");
         parameters.add("___advancedOptionsPresent___", "true");
@@ -110,21 +107,15 @@ public class BambooBuildPlanUpdateService implements ContinuousIntegrationUpdate
     }
 
     /**
-     * Fetches the list of repositories in the given build plan, then tries to find the repository in the bamboo build plan, first using the firstRepositoryName,
-     * second using the secondRepositoryName
+     * Fetches the list of repositories in the given build plan, then tries to find the repository in the bamboo build plan using the repository name
      *
-     * @param firstRepositoryName  the repository name that should be found first
-     * @param secondRepositoryName in case firstRepositoryName is not found, the repository name that should be found second
-     * @param buildPlanKey         the bamboo build plan key in which the repository with the specified name should be found
+     * @param repositoryName the repository name that should be found first
+     * @param buildPlanKey   the bamboo build plan key in which the repository with the specified name should be found
      * @return the found bamboo repository in the build plan or null in case the repository with the specified name could not be found
      */
-    private BambooRepositoryDTO findBambooRepository(String firstRepositoryName, @Nullable String secondRepositoryName, String buildPlanKey) {
+    private BambooRepositoryDTO findBambooRepository(String repositoryName, String buildPlanKey) {
         List<BambooRepositoryDTO> list = this.getBuildPlanRepositoryList(buildPlanKey);
-        var bambooRepository = this.lookupRepository(firstRepositoryName, list);
-        if (bambooRepository == null && secondRepositoryName != null) {
-            bambooRepository = this.lookupRepository(secondRepositoryName, list);
-        }
-        return bambooRepository;
+        return lookupRepository(repositoryName, list);
     }
 
     private BambooRepositoryDTO lookupRepository(String name, List<BambooRepositoryDTO> list) {

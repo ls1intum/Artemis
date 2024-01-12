@@ -2,12 +2,10 @@ import { Component, Input, OnChanges, OnInit, Optional, SimpleChanges } from '@a
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { MissingResultInformation, ResultTemplateStatus, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { HttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import dayjs from 'dayjs/esm';
 import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Participation, ParticipationType, getExercise } from 'app/entities/participation/participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
@@ -73,10 +71,8 @@ export class ResultComponent implements OnInit, OnChanges {
     readonly faExclamationTriangle = faExclamationTriangle;
 
     constructor(
-        private jhiWebsocketService: JhiWebsocketService,
         private participationService: ParticipationService,
         private translateService: TranslateService,
-        private http: HttpClient,
         private modalService: NgbModal,
         private exerciseService: ExerciseService,
         @Optional() private exerciseCacheService: ExerciseCacheService,
