@@ -83,7 +83,7 @@ FROM ${WAR_FILE_STAGE} as war_file
 #-----------------------------------------------------------------------------------------------------------------------
 # runtime stage
 #-----------------------------------------------------------------------------------------------------------------------
-FROM docker.io/library/eclipse-temurin:17-jdk as runtime
+FROM docker.io/library/eclipse-temurin:17-jre as runtime
 
 #default path of the built .war files
 ARG WAR_FILE_PATH="/opt/artemis/build/libs"
