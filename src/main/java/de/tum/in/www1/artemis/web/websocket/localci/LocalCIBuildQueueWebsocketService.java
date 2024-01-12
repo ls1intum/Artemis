@@ -126,4 +126,15 @@ public class LocalCIBuildQueueWebsocketService {
         }
         return Optional.empty();
     }
+
+    /**
+     * Checks if the given destination is a build agent destination.
+     * This is the case if the destination is /topic/admin/build-agents.
+     *
+     * @param destination the destination to check
+     * @return true if the destination is a build agent destination, false otherwise
+     */
+    public static boolean isBuildAgentDestination(String destination) {
+        return "/topic/admin/build-agents".equals(destination);
+    }
 }

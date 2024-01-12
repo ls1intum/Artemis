@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.config.websocket;
 
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.getExerciseIdFromNonPersonalExerciseResultDestination;
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.isNonPersonalExerciseResultDestination;
-import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIBuildQueueWebsocketService.isBuildQueueAdminDestination;
-import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIBuildQueueWebsocketService.isBuildQueueCourseDestination;
+import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIBuildQueueWebsocketService.*;
 import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.*;
 
 import java.net.InetSocketAddress;
@@ -282,6 +281,12 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
              */
 
             if (isBuildQueueAdminDestination(destination)) {
+                var user = userRepository.getUserWithAuthorities(principal.getName());
+                return authorizationCheckService.isAdmin(user);
+            }
+
+            if (isBuildAgentDestination(destination)) {
+                log.debug("Allowing subscription to build agent destination: {}", destination);
                 var user = userRepository.getUserWithAuthorities(principal.getName());
                 return authorizationCheckService.isAdmin(user);
             }

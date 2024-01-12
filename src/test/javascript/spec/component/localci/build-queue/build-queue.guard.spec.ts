@@ -1,12 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
-import { BuildQueueGuard } from 'app/localci/build-queue/build-queue.guard';
+import { LocalCIGuard } from 'app/localci/build-queue/localci-guard.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 
 describe('BuildQueueGuard', () => {
-    let guard: BuildQueueGuard;
+    let guard: LocalCIGuard;
     let router: Router;
     let profileServiceMock: { getProfileInfo: jest.Mock };
 
@@ -21,10 +21,10 @@ describe('BuildQueueGuard', () => {
         };
 
         TestBed.configureTestingModule({
-            providers: [BuildQueueGuard, { provide: ProfileService, useValue: profileServiceMock }, { provide: Router, useValue: routerMock }],
+            providers: [LocalCIGuard, { provide: ProfileService, useValue: profileServiceMock }, { provide: Router, useValue: routerMock }],
         });
 
-        guard = TestBed.inject(BuildQueueGuard);
+        guard = TestBed.inject(LocalCIGuard);
         router = TestBed.inject(Router);
     });
 

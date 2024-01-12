@@ -14,7 +14,8 @@ import { DocsComponent } from 'app/admin/docs/docs.component';
 import { organizationMgmtRoute } from 'app/admin/organization-management/organization-management.route';
 import { MetricsComponent } from 'app/admin/metrics/metrics.component';
 import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
-import { BuildQueueGuard } from 'app/localci/build-queue/build-queue.guard';
+import { LocalCIGuard } from 'app/localci/build-queue/localci-guard.service';
+import { BuildAgentsComponent } from 'app/localci/build-agents/build-agents.component';
 
 export const adminState: Routes = [
     {
@@ -87,7 +88,15 @@ export const adminState: Routes = [
                 data: {
                     pageTitle: 'artemisApp.buildQueue.title',
                 },
-                canActivate: [BuildQueueGuard],
+                canActivate: [LocalCIGuard],
+            },
+            {
+                path: 'build-agents',
+                component: BuildAgentsComponent,
+                data: {
+                    pageTitle: 'artemisApp.buildAgents.title',
+                },
+                canActivate: [LocalCIGuard],
             },
             {
                 path: 'privacy-statement',

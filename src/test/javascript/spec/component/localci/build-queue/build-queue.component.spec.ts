@@ -9,7 +9,7 @@ import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
-import { ArtemisTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 
 describe('BuildQueueComponent', () => {
     let component: BuildQueueComponent;

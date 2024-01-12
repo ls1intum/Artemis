@@ -7,7 +7,7 @@ import { PROFILE_LOCALCI } from 'app/app.constants';
 @Injectable({
     providedIn: 'root',
 })
-export class BuildQueueGuard implements CanActivate {
+export class LocalCIGuard implements CanActivate {
     localCIActive: boolean = false;
     constructor(
         private profileService: ProfileService,

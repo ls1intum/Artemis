@@ -136,8 +136,6 @@ public class LocalCISharedBuildJobQueueService {
     }
 
     public List<LocalCIBuildAgentInformation> getBuildAgentInformation() {
-        // Remove build agent information of offline nodes
-        removeOfflineNodes();
         return buildAgentInformation.values().stream().toList();
     }
 
@@ -162,13 +160,7 @@ public class LocalCISharedBuildJobQueueService {
      */
     @Scheduled(initialDelay = 60000, fixedRate = 60000) // 1 minute initial delay, 1 minute fixed rate
     public void updateBuildAgentInformation() {
-        // Remove build agent information of offline nodes
-        removeOfflineNodes();
-
-        // Add build agent information of local hazelcast member to map if not already present
-        if (!buildAgentInformation.containsKey(hazelcastInstance.getCluster().getLocalMember().getAddress().toString())) {
-            updateLocalBuildAgentInformation();
-        }
+        updateLocalBuildAgentInformation();
     }
 
     /**
@@ -248,21 +240,13 @@ public class LocalCISharedBuildJobQueueService {
         List<LocalCIBuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(memberAddress);
         int numberOfCurrentBuildJobs = processingJobsOfMember.size();
         int maxNumberOfConcurrentBuilds = localCIBuildExecutorService.getMaximumPoolSize();
-        LocalCIBuildAgentInformation info = new LocalCIBuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember);
+        boolean active = numberOfCurrentBuildJobs > 0;
+        LocalCIBuildAgentInformation info = new LocalCIBuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, active);
         buildAgentInformation.put(memberAddress, info);
     }
 
     private List<LocalCIBuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
         return processingJobs.values().stream().filter(job -> Objects.equals(job.buildAgentAddress(), memberAddress)).toList();
-    }
-
-    private void removeOfflineNodes() {
-        List<String> memberAddresses = hazelcastInstance.getCluster().getMembers().stream().map(member -> member.getAddress().toString()).toList();
-        for (String key : buildAgentInformation.keySet()) {
-            if (!memberAddresses.contains(key)) {
-                buildAgentInformation.remove(key);
-            }
-        }
     }
 
     /**

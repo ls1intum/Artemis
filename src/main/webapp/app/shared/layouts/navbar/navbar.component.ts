@@ -341,6 +341,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         exam_timeline: 'artemisApp.examTimeline.breadcrumb',
         iris_settings: 'artemisApp.iris.settings.title.breadcrumb',
         build_queue: 'artemisApp.buildQueue.title',
+        build_agents: 'artemisApp.buildAgents.title',
     };
 
     studentPathBreadcrumbTranslations = {
