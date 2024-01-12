@@ -136,6 +136,8 @@ public class LocalCISharedBuildJobQueueService {
     }
 
     public List<LocalCIBuildAgentInformation> getBuildAgentInformation() {
+        // Remove build agent information of offline nodes
+        removeOfflineNodes();
         return buildAgentInformation.values().stream().toList();
     }
 
@@ -166,7 +168,13 @@ public class LocalCISharedBuildJobQueueService {
      */
     @Scheduled(initialDelay = 60000, fixedRate = 60000) // 1 minute initial delay, 1 minute fixed rate
     public void updateBuildAgentInformation() {
-        updateLocalBuildAgentInformation();
+        // Remove build agent information of offline nodes
+        removeOfflineNodes();
+
+        // Add build agent information of local hazelcast member to map if not already present
+        if (!buildAgentInformation.containsKey(hazelcastInstance.getCluster().getLocalMember().getAddress().toString())) {
+            updateLocalBuildAgentInformation();
+        }
     }
 
     /**
@@ -253,6 +261,15 @@ public class LocalCISharedBuildJobQueueService {
 
     private List<LocalCIBuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
         return processingJobs.values().stream().filter(job -> Objects.equals(job.buildAgentAddress(), memberAddress)).toList();
+    }
+
+    private void removeOfflineNodes() {
+        List<String> memberAddresses = hazelcastInstance.getCluster().getMembers().stream().map(member -> member.getAddress().toString()).toList();
+        for (String key : buildAgentInformation.keySet()) {
+            if (!memberAddresses.contains(key)) {
+                buildAgentInformation.remove(key);
+            }
+        }
     }
 
     /**
