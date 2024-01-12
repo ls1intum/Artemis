@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -27,16 +27,18 @@ import { AthenaService } from 'app/assessment/athena.service';
 import { Observable } from 'rxjs';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exercises/course-utils';
+import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
 
 @Component({
     selector: 'jhi-text-exercise-update',
     templateUrl: './text-exercise-update.component.html',
 })
-export class TextExerciseUpdateComponent implements OnInit {
+export class TextExerciseUpdateComponent implements OnInit, AfterViewInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly documentationType: DocumentationType = 'Text';
 
     @ViewChild('editForm') editForm: NgForm;
+    @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelNameComponent: ExerciseTitleChannelNameComponent;
 
     examCourseId?: number;
     isExamMode: boolean;
@@ -80,6 +82,10 @@ export class TextExerciseUpdateComponent implements OnInit {
         }
 
         return this.textExercise.id == undefined ? EditType.CREATE : EditType.UPDATE;
+    }
+
+    ngAfterViewInit() {
+        console.log(this.exerciseTitleChannelNameComponent.titleChannelNameComponent.field_title.valid);
     }
 
     /**
@@ -220,4 +226,6 @@ export class TextExerciseUpdateComponent implements OnInit {
         }
         this.isSaving = false;
     }
+
+    protected readonly Boolean = Boolean;
 }

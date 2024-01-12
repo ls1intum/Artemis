@@ -1,5 +1,5 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { ControlContainer, NgForm } from '@angular/forms';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { ControlContainer, NgForm, NgModel } from '@angular/forms';
 
 @Component({
     selector: 'jhi-title-channel-name',
@@ -16,6 +16,9 @@ export class TitleChannelNameComponent implements OnInit {
     @Input() hideChannelName?: boolean;
     @Input() minTitleLength: number;
     @Input() initChannelName = true;
+
+    @ViewChild('field_title') field_title: NgModel;
+    @ViewChild('field_channel_name') field_channel_name: NgModel;
 
     @Output() titleChange = new EventEmitter<string>();
     @Output() channelNameChange = new EventEmitter<string>();

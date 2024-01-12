@@ -123,6 +123,7 @@ export class ExerciseService {
     hasExampleSolutionPublicationDateError(exercise: Exercise) {
         if (exercise.exampleSolutionPublicationDate) {
             return (
+                !dayjs(exercise.exampleSolutionPublicationDate).isValid() ||
                 dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.startDate ?? exercise.releaseDate) ||
                 (dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.dueDate) && exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED)
             );

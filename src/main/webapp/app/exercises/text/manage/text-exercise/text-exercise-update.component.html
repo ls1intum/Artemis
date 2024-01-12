@@ -12,6 +12,27 @@
         <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
     </div>
     <hr />
+    <jhi-form-status-bar
+        [formStatusSections]="[
+            {
+                title: 'artemisApp.exercise.sections.general',
+                valid: Boolean(
+                    exerciseTitleChannelNameComponent?.titleChannelNameComponent?.field_title?.valid &&
+                        (exerciseTitleChannelNameComponent?.titleChannelNameComponent?.hideChannelName ||
+                            exerciseTitleChannelNameComponent?.titleChannelNameComponent?.field_channel_name?.valid)
+                )
+            },
+            { title: 'artemisApp.exercise.sections.mode', valid: true },
+            { title: 'artemisApp.exercise.sections.problem', valid: Boolean(textExercise.problemStatement) },
+            { title: 'artemisApp.exercise.sections.solution', valid: Boolean(textExercise.exampleSolution && (isExamMode || !textExercise.exampleSolutionPublicationDateError)) },
+            {
+                title: 'artemisApp.exercise.sections.grading',
+                valid: Boolean(
+                    points.valid && bonusPoints.valid && (isExamMode || (!textExercise.startDateError && !textExercise.dueDateError && !textExercise.assessmentDueDateError))
+                )
+            }
+        ]"
+    />
     <div>
         <h3 jhiTranslate="artemisApp.exercise.sections.general">General Information</h3>
         <div class="form-group" [hidden]="isImport || !textExercise.id">
@@ -106,8 +127,6 @@
                     }
                 </div>
             </div>
-        }
-        @if (!isExamMode) {
             <div class="d-flex">
                 <div class="form-group flex-grow-1">
                     <jhi-date-time-picker

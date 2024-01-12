@@ -1,0 +1,13 @@
+<div class="form-status-bar-container py-2">
+    <hr class="form-status-line" />
+    <div class="d-flex justify-content-between">
+        @for (formStatusSection of formStatusSections; track formStatusSection.title) {
+            <div class="d-flex flex-column align-items-center gap-2">
+                <div class="d-flex align-items-center justify-content-center border rounded-circle border-secondary form-status-circle">
+                    <jhi-checklist-check [checkAttribute]="formStatusSection.valid" />
+                </div>
+                <div>{{ formStatusSection.title | artemisTranslate }}</div>
+            </div>
+        }
+    </div>
+</div>
