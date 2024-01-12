@@ -138,7 +138,7 @@ public class ParticipantScoreService {
         // team exercises
         // [0] -> Team
         // [1] -> sum of achieved points in exercises
-        List<Object[]> teamAndAchievedPoints = teamScoreRepository.getAchievedPointsOfTeamsWithStudents(teamExercises);
+        List<Object[]> teamAndAchievedPoints = teamScoreRepository.findAllWithStudentsAchievedPointsOfTeams(teamExercises);
         for (Object[] rawData : teamAndAchievedPoints) {
             Team team = (Team) rawData[0];
             double achievedPoints = rawData[1] != null ? ((Number) rawData[1]).doubleValue() : 0.0;

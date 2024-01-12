@@ -469,10 +469,13 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     Optional<StudentParticipation> findWithEagerLegalSubmissionsById(@Param("participationId") Long participationId);
 
     @Query("""
-            select p from Participation p
-            left join fetch p.results r
-            left join fetch r.submission
-            where p.id = :#{#participationId}
+            SELECT p
+            FROM StudentParticipation p
+            LEFT JOIN FETCH p.results r
+            LEFT JOIN FETCH r.submission
+            LEFT JOIN FETCH p.team t
+            LEFT JOIN FETCH t.students
+            WHERE p.id = :participationId
             """)
     Optional<StudentParticipation> findWithEagerResultsById(@Param("participationId") Long participationId);
 
@@ -707,7 +710,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH s.results r
             WHERE p.exercise.id = :#{#exerciseId}
                 AND p.testRun = FALSE
-                AND s.id = (SELECT max(id) FROM p.submissions)
+                AND s.id = (SELECT max(s1.id) FROM p.submissions s1)
                 AND EXISTS (SELECT s1 FROM p.submissions s1
                     WHERE s1.participation.id = p.id
                     AND s1.submitted = TRUE

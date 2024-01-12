@@ -27,19 +27,21 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
     @Modifying
     void deleteAllByTeamId(long teamId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "team", "exercise" })
+    @EntityGraph(type = LOAD, attributePaths = { "team.students", "exercise" })
     Optional<TeamScore> findByExercise_IdAndTeam_Id(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "team", "exercise", "lastResult", "lastRatedResult" })
+    @EntityGraph(type = LOAD, attributePaths = { "team.students", "exercise", "lastResult", "lastRatedResult" })
     List<TeamScore> findAllByExerciseIn(Set<Exercise> exercises, Pageable pageable);
 
     @Query("""
             SELECT DISTINCT s
             FROM TeamScore s
+                LEFT JOIN s.team t
+                LEFT JOIN FETCH t.students
             WHERE s.exercise = :exercise
                 AND :user MEMBER OF s.team.students
             """)
-    Optional<TeamScore> findTeamScoreByExerciseAndUserLazy(@Param("exercise") Exercise exercise, @Param("user") User user);
+    Optional<TeamScore> findWithStudentsTeamScoreByExerciseAndUserLazy(@Param("exercise") Exercise exercise, @Param("user") User user);
 
     @Query("""
             SELECT t, SUM(s.lastRatedPoints)
@@ -49,12 +51,14 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
             WHERE s.exercise IN :exercises
             GROUP BY t.id
             """)
-    List<Object[]> getAchievedPointsOfTeamsWithStudents(@Param("exercises") Set<Exercise> exercises);
+    List<Object[]> findAllWithStudentsAchievedPointsOfTeams(@Param("exercises") Set<Exercise> exercises);
 
     @Query("""
             SELECT s
             FROM TeamScore s
                 LEFT JOIN FETCH s.exercise
+                LEFT JOIN s.team t
+                LEFT JOIN FETCH t.students
             WHERE s.exercise IN :exercises
                 AND :user MEMBER OF s.team.students
             """)
@@ -63,6 +67,8 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
     @Query("""
             SELECT s
             FROM TeamScore s
+                LEFT JOIN s.team t
+                LEFT JOIN FETCH t.students
             WHERE s.exercise IN :exercises
                 AND :user MEMBER OF s.team.students
             """)
