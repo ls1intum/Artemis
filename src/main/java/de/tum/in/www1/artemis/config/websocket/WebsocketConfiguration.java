@@ -2,8 +2,8 @@ package de.tum.in.www1.artemis.config.websocket;
 
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.getExerciseIdFromNonPersonalExerciseResultDestination;
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.isNonPersonalExerciseResultDestination;
-import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIBuildQueueWebsocketService.isBuildQueueAdminDestination;
-import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIBuildQueueWebsocketService.isBuildQueueCourseDestination;
+import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIWebsocketMessagingService.isBuildQueueAdminDestination;
+import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIWebsocketMessagingService.isBuildQueueCourseDestination;
 import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.*;
 
 import java.net.InetSocketAddress;
