@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "course": {
+            "searchForCourse": "Search for a course...",
             "home": {
                 "title": "Courses",
                 "createLabel": "Create new course",
