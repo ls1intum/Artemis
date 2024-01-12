@@ -1,8 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { BuildJob } from 'app/entities/build-job.model';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
+import { take } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-build-queue',
@@ -13,6 +15,16 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     queuedBuildJobs: BuildJob[];
     runningBuildJobs: BuildJob[];
     courseChannels: string[] = [];
+
+    //icons
+    faTimes = faTimes;
+
+    runningJobsSorts = [{ prop: 'buildStartDate', dir: 'asc' }];
+
+    queuedJobsSorts = [
+        { prop: 'priority', dir: 'asc' },
+        { prop: 'submissionDate', dir: 'asc' },
+    ];
 
     constructor(
         private route: ActivatedRoute,
@@ -40,7 +52,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * This method is used to initialize the websocket subscription for the build jobs. It subscribes to the channels for the queued and running build jobs.
      */
     initWebsocketSubscription() {
-        this.route.paramMap.subscribe((params) => {
+        this.route.paramMap.pipe(take(1)).subscribe((params) => {
             const courseId = Number(params.get('courseId'));
             if (courseId) {
                 this.websocketService.subscribe(`/topic/courses/${courseId}/queued-jobs`);
@@ -72,7 +84,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * wait until the websocket subscription receives the data.
      */
     load() {
-        this.route.paramMap.subscribe((params) => {
+        this.route.paramMap.pipe(take(1)).subscribe((params) => {
             const courseId = Number(params.get('courseId'));
             if (courseId) {
                 this.buildQueueService.getQueuedBuildJobsByCourseId(courseId).subscribe((queuedBuildJobs) => {
@@ -88,6 +100,49 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
                 this.buildQueueService.getRunningBuildJobs().subscribe((runningBuildJobs) => {
                     this.runningBuildJobs = runningBuildJobs;
                 });
+            }
+        });
+    }
+
+    /**
+     * Cancel a specific build job associated with the build job id
+     * @param buildJobId    the id of the build job to cancel
+     */
+    cancelBuildJob(buildJobId: number) {
+        this.route.paramMap.pipe(take(1)).subscribe((params) => {
+            const courseId = Number(params.get('courseId'));
+            if (courseId) {
+                this.buildQueueService.cancelBuildJobInCourse(courseId, buildJobId).subscribe();
+            } else {
+                this.buildQueueService.cancelBuildJob(buildJobId).subscribe();
+            }
+        });
+    }
+
+    /**
+     * Cancel all queued build jobs
+     */
+    cancelAllQueuedBuildJobs() {
+        this.route.paramMap.pipe(take(1)).subscribe((params) => {
+            const courseId = Number(params.get('courseId'));
+            if (courseId) {
+                this.buildQueueService.cancelAllQueuedBuildJobsInCourse(courseId).subscribe();
+            } else {
+                this.buildQueueService.cancelAllQueuedBuildJobs().subscribe();
+            }
+        });
+    }
+
+    /**
+     * Cancel all running build jobs
+     */
+    cancelAllRunningBuildJobs() {
+        this.route.paramMap.pipe(take(1)).subscribe((params) => {
+            const courseId = Number(params.get('courseId'));
+            if (courseId) {
+                this.buildQueueService.cancelAllRunningBuildJobsInCourse(courseId).subscribe();
+            } else {
+                this.buildQueueService.cancelAllRunningBuildJobs().subscribe();
             }
         });
     }
