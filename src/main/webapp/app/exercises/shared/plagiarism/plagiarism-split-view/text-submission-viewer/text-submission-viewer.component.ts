@@ -217,7 +217,42 @@ export class TextSubmissionViewerComponent implements OnChanges {
             return escape(fileContent);
         }
 
+        if (this.exercise?.type === ExerciseType.PROGRAMMING) {
+            return this.buildFileContentWithHighlightedMatchesAsWholeLines(fileContent, matches);
+        }
         return this.buildFileContentWithHighlightedMatches(fileContent, matches);
+    }
+
+    /**
+     * Builds the required HTML to highlight the lines with matches in the file content.
+     *
+     * @param fileContent The text inside a file.
+     * @param matches The found matching plagiarism fragments.
+     * @return The file content as HTML with highlighted lines with plagiarism matches.
+     */
+    private buildFileContentWithHighlightedMatchesAsWholeLines(fileContent: string, matches: FromToElement[]): string {
+        const fileLines = fileContent.split('\n');
+        let result = '';
+
+        const linesWithMatches = new Set<number>();
+        for (const match of matches) {
+            for (let i = match.from.line - 1; i < match.to.line; i++) {
+                linesWithMatches.add(i);
+            }
+        }
+
+        for (let i = 0; i < fileLines.length; i++) {
+            if (linesWithMatches.has(i)) {
+                result += this.tokenStart + escape(fileLines[i]) + this.tokenEnd;
+            } else {
+                result += escape(fileLines[i]);
+            }
+            if (i != fileLines.length - 1) {
+                result += '\n';
+            }
+        }
+
+        return result;
     }
 
     /**
