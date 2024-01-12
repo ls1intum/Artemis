@@ -147,6 +147,9 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "build_plan_configuration", table = "programming_exercise_details", columnDefinition = "longtext")
     private String buildPlanConfiguration;
 
+    @Column(name = "build_script", table = "programming_exercise_details", columnDefinition = "longtext")
+    private String buildScript;
+
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
      * This is currently only supported for HASKELL and OCAML on BAMBOO, thus the default value is false.
@@ -898,5 +901,23 @@ public class ProgrammingExercise extends Exercise {
             log.error("Could not parse build plan configuration for programming exercise {}", this.getId(), e);
         }
         return null;
+    }
+
+    /**
+     * We store the bash script in the database
+     *
+     * @return the build script or null if the build script does not exist
+     */
+    public String getBuildScript() {
+        return buildScript;
+    }
+
+    /**
+     * Update the build script
+     *
+     * @param buildScript the new build script for the programming exercise
+     */
+    public void setBuildScript(String buildScript) {
+        this.buildScript = buildScript;
     }
 }
