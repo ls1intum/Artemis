@@ -13,7 +13,6 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { faChartBar, faClipboard, faEye, faFlag, faListAlt, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { Detail, DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
@@ -38,9 +37,6 @@ export enum DoughnutChartType {
 export class CourseDetailComponent implements OnInit, OnDestroy {
     readonly DoughnutChartType = DoughnutChartType;
     readonly FeatureToggle = FeatureToggle;
-    readonly CHAT = IrisSubSettingsType.CHAT;
-    readonly HESTIA = IrisSubSettingsType.HESTIA;
-    readonly CODE_EDITOR = IrisSubSettingsType.CODE_EDITOR;
 
     courseDTO: CourseManagementDetailViewDto;
     activeStudents?: number[];
