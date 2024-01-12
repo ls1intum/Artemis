@@ -47,8 +47,8 @@ public class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegra
 
         irisRequestMockProvider.mockMessageV2Response(responseMap);
 
-        List<Competency> competencies = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/recommendations/", courseDescription, Competency.class,
-                HttpStatus.OK);
+        List<Competency> competencies = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/generate-from-description", courseDescription,
+                Competency.class, HttpStatus.OK);
         Competency actualCompetency = competencies.get(0);
 
         assertThat(competencies.size()).isEqualTo(1);
@@ -74,6 +74,6 @@ public class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegra
     }
 
     void testAllPreAuthorize() throws Exception {
-        request.post("/api/courses/" + course.getId() + "/competencies/recommendations/", "a", HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + course.getId() + "/competencies/generate-from-description/", "a", HttpStatus.FORBIDDEN);
     }
 }

@@ -227,15 +227,7 @@ public class CompetencyResource {
         var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
-        Competency competencyToCreate = new Competency();
-        competencyToCreate.setTitle(competency.getTitle().trim());
-        competencyToCreate.setDescription(competency.getDescription());
-        competencyToCreate.setSoftDueDate(competency.getSoftDueDate());
-        competencyToCreate.setTaxonomy(competency.getTaxonomy());
-        competencyToCreate.setMasteryThreshold(competency.getMasteryThreshold());
-        competencyToCreate.setOptional(competency.isOptional());
-        competencyToCreate.setCourse(course);
-
+        Competency competencyToCreate = buildCompetencyToCreate(competency, course);
         var persistedCompetency = competencyRepository.save(competencyToCreate);
 
         linkLectureUnitsToCompetency(persistedCompetency, competency.getLectureUnits(), Set.of());
@@ -250,7 +242,7 @@ public class CompetencyResource {
     /**
      * POST /courses/:courseId/competencies/bulk : creates a number of new competencies
      *
-     * @param courseId     the id of the course to which the competency should be added
+     * @param courseId     the id of the course to which the competencies should be added
      * @param competencies the competencies that should be created
      * @return the ResponseEntity with status 201 (Created)
      * @throws URISyntaxException if the Location URI syntax is incorrect
@@ -267,16 +259,8 @@ public class CompetencyResource {
         var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
-        for (Competency competency : competencies) {
-            // TODO: move code to create competency (so no duplicates)
-            Competency competencyToCreate = new Competency();
-            competencyToCreate.setTitle(competency.getTitle().trim());
-            competencyToCreate.setDescription(competency.getDescription());
-            competencyToCreate.setSoftDueDate(competency.getSoftDueDate());
-            competencyToCreate.setTaxonomy(competency.getTaxonomy());
-            competencyToCreate.setMasteryThreshold(competency.getMasteryThreshold());
-            competencyToCreate.setOptional(competency.isOptional());
-            competencyToCreate.setCourse(course);
+        for (var competency : competencies) {
+            var competencyToCreate = buildCompetencyToCreate(competency, course);
             var persistedCompetency = competencyRepository.save(competencyToCreate);
             linkLectureUnitsToCompetency(persistedCompetency, competency.getLectureUnits(), Set.of());
             if (course.getLearningPathsEnabled()) {
@@ -284,6 +268,18 @@ public class CompetencyResource {
             }
         }
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).build();
+    }
+
+    private Competency buildCompetencyToCreate(Competency competency, Course course) {
+        Competency competencyToCreate = new Competency();
+        competencyToCreate.setTitle(competency.getTitle().trim());
+        competencyToCreate.setDescription(competency.getDescription());
+        competencyToCreate.setSoftDueDate(competency.getSoftDueDate());
+        competencyToCreate.setTaxonomy(competency.getTaxonomy());
+        competencyToCreate.setMasteryThreshold(competency.getMasteryThreshold());
+        competencyToCreate.setOptional(competency.isOptional());
+        competencyToCreate.setCourse(course);
+        return competencyToCreate;
     }
 
     /**
@@ -570,14 +566,12 @@ public class CompetencyResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, competency.getTitle())).build();
     }
 
-    // TODO: rename endpoint
-    @PostMapping("/courses/{courseId}/competencies/recommendations")
+    // TODO: maybe move endpoint to IRIS
+    @PostMapping("/courses/{courseId}/competencies/generate-from-description")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<Competency>> getCompetenciesFromCourseDescription(@PathVariable Long courseId, @RequestBody String courseDescription) {
         Course course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-
-        // TODO: call another service maybe (e.g. pre & post-processing)
         var competencies = irisCompetencyGenerationSessionService.generateCompetencyRecommendations(courseDescription, course);
 
         return ResponseEntity.ok().body(competencies);

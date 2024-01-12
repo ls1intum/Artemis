@@ -79,7 +79,7 @@ export class CompetencyService {
     }
 
     getCompetenciesFromCourseDescription(courseDescription: string, courseId: number): Observable<EntityArrayResponseType> {
-        return this.httpClient.post<Competency[]>(`${this.resourceURL}/courses/${courseId}/competencies/recommendations`, courseDescription, { observe: 'response' });
+        return this.httpClient.post<Competency[]>(`${this.resourceURL}/courses/${courseId}/competencies/generate-from-description`, courseDescription, { observe: 'response' });
     }
 
     addPrerequisite(competencyId: number, courseId: number): Observable<EntityResponseType> {
