@@ -147,7 +147,8 @@ public class LocalCISharedBuildJobQueueService {
         return buildAgentInformation.values().stream().toList();
     }
 
-    public BuildJob saveFinishedBuildJob(LocalCIBuildJobQueueItem queueItem, BuildJobResult result, ProgrammingExerciseParticipation participation) {
+    public BuildJob saveFinishedBuildJob(LocalCIBuildJobQueueItem queueItem, BuildJobResult result, ZonedDateTime buildCompletionDate,
+            ProgrammingExerciseParticipation participation) {
         String dockerImage = participation.getProgrammingExercise().getWindfile().getMetadata().getDocker().getImage();
         BuildJob buildJob = new BuildJob();
         buildJob.setName(queueItem.name());
@@ -156,7 +157,7 @@ public class LocalCISharedBuildJobQueueService {
         buildJob.setParticipationId(queueItem.participationId());
         buildJob.setBuildAgentAddress(queueItem.buildAgentAddress());
         buildJob.setBuildStartDate(queueItem.buildStartDate());
-        buildJob.setBuildCompletionDate(queueItem.buildCompletionDate());
+        buildJob.setBuildCompletionDate(buildCompletionDate);
         buildJob.setRepositoryType(queueItem.repositoryType());
         buildJob.setRepositoryName(queueItem.repositoryName());
         buildJob.setCommitHash(queueItem.commitHash());
@@ -165,7 +166,13 @@ public class LocalCISharedBuildJobQueueService {
         buildJob.setTriggeredByPushTo(queueItem.triggeredByPushTo());
         buildJob.setBuildJobResult(result);
         buildJob.setDockerImage(dockerImage);
-        return buildJobRepository.save(buildJob);
+        try {
+            return buildJobRepository.save(buildJob);
+        }
+        catch (Exception e) {
+            log.error("Could not save build job to database", e);
+            return null;
+        }
     }
 
     /**
@@ -370,6 +377,7 @@ public class LocalCISharedBuildJobQueueService {
             }
 
             // after processing a build job, remove it from the processing jobs
+            LocalCIBuildJobQueueItem processedJob = processingJobs.get(buildJob.id());
             processingJobs.remove(buildJob.id());
             localProcessingJobs.decrementAndGet();
             updateLocalBuildAgentInformation();
@@ -378,31 +386,26 @@ public class LocalCISharedBuildJobQueueService {
             checkAvailabilityAndProcessNextBuild();
 
             // save build job to database
-            LocalCIBuildJobQueueItem finishedJob = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(), buildJob.participationId(),
-                    buildJob.repositoryName(), buildJob.repositoryType(), buildJob.commitHash(), buildJob.submissionDate(), buildJob.retryCount(), buildJob.buildStartDate(),
-                    buildCompletionDate, buildJob.priority(), buildJob.courseId(), buildJob.triggeredByPushTo());
+            saveFinishedBuildJob(processedJob, BuildJobResult.SUCCESSFUL, buildCompletionDate, participation);
 
-            try {
-                saveFinishedBuildJob(finishedJob, BuildJobResult.SUCCESSFUL, participation);
-            }
-            catch (Exception e) {
-                log.error("Error while saving finished build job to database: {}", finishedJob, e);
-            }
         }).exceptionally(ex -> {
+            ZonedDateTime buildCompletionDate = ZonedDateTime.now();
             if (ex.getCause() instanceof CancellationException && ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
                 localProcessingJobs.decrementAndGet();
                 updateLocalBuildAgentInformation();
+                saveFinishedBuildJob(buildJob, BuildJobResult.CANCELLED, buildCompletionDate, participation);
             }
             else {
                 log.error("Error while processing build job: {}", buildJob, ex);
 
+                LocalCIBuildJobQueueItem processedJob = processingJobs.get(buildJob.id());
                 processingJobs.remove(buildJob.id());
                 localProcessingJobs.decrementAndGet();
                 updateLocalBuildAgentInformation();
 
                 if (isRetry) {
                     log.error("Build job failed for the second time: {}", buildJob);
-                    BuildJob savedBuildJob = saveFinishedBuildJob(buildJob, BuildJobResult.FAILED, participation);
+                    saveFinishedBuildJob(processedJob, BuildJobResult.FAILED, buildCompletionDate, participation);
                     return null;
                 }
 
@@ -419,6 +422,7 @@ public class LocalCISharedBuildJobQueueService {
                 else {
                     log.warn("Participation with id {} has been deleted. Cancelling the requeueing of the build job.", participation.getId());
                 }
+                saveFinishedBuildJob(processedJob, BuildJobResult.FAILED, buildCompletionDate, participation);
             }
             checkAvailabilityAndProcessNextBuild();
             return null;

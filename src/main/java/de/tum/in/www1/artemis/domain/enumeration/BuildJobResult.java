@@ -8,5 +8,5 @@ package de.tum.in.www1.artemis.domain.enumeration;
  */
 
 public enum BuildJobResult {
-    SUCCESSFUL, FAILED, ERROR, CANCELED
+    SUCCESSFUL, FAILED, ERROR, CANCELLED
 }

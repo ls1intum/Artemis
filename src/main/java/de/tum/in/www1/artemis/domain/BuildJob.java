@@ -2,9 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import java.time.ZonedDateTime;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -37,6 +35,7 @@ public class BuildJob extends DomainObject {
     @Column(name = "build_completion_date")
     private ZonedDateTime buildCompletionDate;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "repository_type")
     private RepositoryType repositoryType;
 
@@ -52,9 +51,11 @@ public class BuildJob extends DomainObject {
     @Column(name = "priority")
     private int priority;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "triggered_by_push_to")
     private RepositoryType triggeredByPushTo;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "build_job_result")
     private BuildJobResult buildJobResult;
 
