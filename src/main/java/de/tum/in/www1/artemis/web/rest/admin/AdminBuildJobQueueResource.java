@@ -6,9 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCISharedBuildJobQueueService;
@@ -65,5 +63,51 @@ public class AdminBuildJobQueueResource {
         log.debug("REST request to get information on available build agents");
         List<LocalCIBuildAgentInformation> buildAgentInfo = localCIBuildJobQueueService.getBuildAgentInformation();
         return ResponseEntity.ok(buildAgentInfo);
+    }
+
+    /**
+     * Cancels the build job for the given participation.
+     *
+     * @param buildJobId the id of the build job to cancel
+     * @return the ResponseEntity with the result of the cancellation
+     */
+    @DeleteMapping("/cancel-job/{buildJobId}")
+    @EnforceAdmin
+    public ResponseEntity<Void> cancelBuildJob(@PathVariable long buildJobId) {
+        log.debug("REST request to cancel the build job with id {}", buildJobId);
+        // Call the cancelBuildJob method in LocalCIBuildJobManagementService
+        localCIBuildJobQueueService.cancelBuildJob(buildJobId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Cancels all queued build jobs.
+     *
+     * @return the ResponseEntity with the result of the cancellation
+     */
+    @DeleteMapping("/cancel-all-queued-jobs")
+    @EnforceAdmin
+    public ResponseEntity<Void> cancelAllQueuedBuildJobs() {
+        log.debug("REST request to cancel all queued build jobs");
+        // Call the cancelAllQueuedBuildJobs method in LocalCIBuildJobManagementService
+        localCIBuildJobQueueService.cancelAllQueuedBuildJobs();
+
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Cancels all running build jobs.
+     *
+     * @return the ResponseEntity with the result of the cancellation
+     */
+    @DeleteMapping("/cancel-all-running-jobs")
+    @EnforceAdmin
+    public ResponseEntity<Void> cancelAllRunningBuildJobs() {
+        log.debug("REST request to cancel all running build jobs");
+        // Call the cancelAllRunningBuildJobs method in LocalCIBuildJobManagementService
+        localCIBuildJobQueueService.cancelAllRunningBuildJobs();
+
+        return ResponseEntity.noContent().build();
     }
 }

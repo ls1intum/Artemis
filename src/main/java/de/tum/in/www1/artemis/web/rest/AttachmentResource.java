@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.service.FilePathService.actualPathForPublicPath;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -23,7 +25,6 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -53,16 +54,13 @@ public class AttachmentResource {
 
     private final FileService fileService;
 
-    private final FilePathService filePathService;
-
     public AttachmentResource(AttachmentRepository attachmentRepository, GroupNotificationService groupNotificationService, AuthorizationCheckService authorizationCheckService,
-            UserRepository userRepository, FileService fileService, FilePathService filePathService) {
+            UserRepository userRepository, FileService fileService) {
         this.attachmentRepository = attachmentRepository;
         this.groupNotificationService = groupNotificationService;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.fileService = fileService;
-        this.filePathService = filePathService;
     }
 
     /**
@@ -83,7 +81,7 @@ public class AttachmentResource {
         attachment.setLink(pathString);
 
         Attachment result = attachmentRepository.save(attachment);
-        this.fileService.evictCacheForPath(filePathService.actualPathForPublicPath(URI.create(result.getLink())));
+        this.fileService.evictCacheForPath(actualPathForPublicPath(URI.create(result.getLink())));
         return ResponseEntity.created(new URI("/api/attachments/" + result.getId())).body(result);
     }
 
@@ -114,7 +112,7 @@ public class AttachmentResource {
         }
 
         Attachment result = attachmentRepository.save(attachment);
-        this.fileService.evictCacheForPath(filePathService.actualPathForPublicPath(URI.create(result.getLink())));
+        this.fileService.evictCacheForPath(actualPathForPublicPath(URI.create(result.getLink())));
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(result, notificationText);
         }
@@ -169,7 +167,7 @@ public class AttachmentResource {
             course = attachment.getLecture().getCourse();
             relatedEntity = "lecture " + attachment.getLecture().getTitle();
             try {
-                this.fileService.evictCacheForPath(filePathService.actualPathForPublicPath(URI.create(attachment.getLink())));
+                this.fileService.evictCacheForPath(actualPathForPublicPath(URI.create(attachment.getLink())));
             }
             catch (RuntimeException exception) {
                 // this catch is required for deleting wrongly formatted attachment database entries

@@ -21,9 +21,9 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueu
  */
 @Service
 @Profile("localci")
-public class LocalCIBuildQueueWebsocketService {
+public class LocalCIWebsocketMessagingService {
 
-    private static final Logger log = LoggerFactory.getLogger(LocalCIBuildQueueWebsocketService.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalCIWebsocketMessagingService.class);
 
     private final WebsocketMessagingService websocketMessagingService;
 
@@ -34,7 +34,7 @@ public class LocalCIBuildQueueWebsocketService {
      *
      * @param websocketMessagingService the websocket messaging service
      */
-    public LocalCIBuildQueueWebsocketService(WebsocketMessagingService websocketMessagingService) {
+    public LocalCIWebsocketMessagingService(WebsocketMessagingService websocketMessagingService) {
         this.websocketMessagingService = websocketMessagingService;
     }
 
