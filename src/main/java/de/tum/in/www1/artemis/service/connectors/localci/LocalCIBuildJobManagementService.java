@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWe
 @Profile("localci")
 public class LocalCIBuildJobManagementService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIBuildJobManagementService.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalCIBuildJobManagementService.class);
 
     private final LocalCIBuildJobExecutionService localCIBuildJobExecutionService;
 

@@ -58,7 +58,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     private static final String TEST_PREFIX = "examparticipationtest";
 
-    private final Logger log = LoggerFactory.getLogger(getClass());
+    private static final Logger log = LoggerFactory.getLogger(ExamParticipationIntegrationTest.class);
 
     @Autowired
     private QuizExerciseRepository quizExerciseRepository;

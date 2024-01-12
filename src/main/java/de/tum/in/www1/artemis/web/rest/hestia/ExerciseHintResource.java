@@ -40,7 +40,7 @@ public class ExerciseHintResource {
 
     private static final String CODE_HINT_ENTITY_NAME = "codeHint";
 
-    private final Logger log = LoggerFactory.getLogger(ExerciseHintResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ExerciseHintResource.class);
 
     private final ExerciseHintService exerciseHintService;
 

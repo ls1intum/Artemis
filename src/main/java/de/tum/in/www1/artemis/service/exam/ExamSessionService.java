@@ -24,7 +24,7 @@ import inet.ipaddr.IPAddressString;
 @Service
 public class ExamSessionService {
 
-    private final Logger log = LoggerFactory.getLogger(ExamSessionService.class);
+    private static final Logger log = LoggerFactory.getLogger(ExamSessionService.class);
 
     private final ExamSessionRepository examSessionRepository;
 

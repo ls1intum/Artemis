@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 @Service
 public class LegalDocumentService {
 
-    private final Logger log = LoggerFactory.getLogger(LegalDocumentService.class);
+    private static final Logger log = LoggerFactory.getLogger(LegalDocumentService.class);
 
     @Value("${artemis.legal-path}")
     private Path legalDocumentsBasePath;

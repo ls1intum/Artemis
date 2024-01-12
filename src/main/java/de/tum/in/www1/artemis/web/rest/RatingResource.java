@@ -34,7 +34,7 @@ public class RatingResource {
 
     private static final String ENTITY_NAME = "rating";
 
-    private final Logger log = LoggerFactory.getLogger(RatingResource.class);
+    private static final Logger log = LoggerFactory.getLogger(RatingResource.class);
 
     private final RatingService ratingService;
 

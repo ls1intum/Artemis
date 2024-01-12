@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 @Profile("aeolus | localci")
 public class BuildScriptProvider {
 
-    private final Logger logger = LoggerFactory.getLogger(BuildScriptProvider.class);
+    private static final Logger log = LoggerFactory.getLogger(BuildScriptProvider.class);
 
     private final ResourceLoaderService resourceLoaderService;
 
@@ -66,7 +66,7 @@ public class BuildScriptProvider {
                 scriptCache.put(uniqueKey, script);
             }
             catch (IOException e) {
-                logger.error("Failed to load script {}", resource.getFilename(), e);
+                log.error("Failed to load script {}", resource.getFilename(), e);
             }
         }
     }
@@ -97,7 +97,7 @@ public class BuildScriptProvider {
         String templateFileName = buildTemplateName(projectType, staticAnalysis, sequentialRuns, testCoverage, "sh");
         String uniqueKey = programmingLanguage.name().toLowerCase() + "_" + templateFileName;
         if (scriptCache.containsKey(uniqueKey)) {
-            logger.debug("Returning cached script for {}", uniqueKey);
+            log.debug("Returning cached script for {}", uniqueKey);
             return scriptCache.get(uniqueKey);
         }
         Resource fileResource = resourceLoaderService.getResource(Path.of("templates", "aeolus", programmingLanguage.name().toLowerCase(), templateFileName));
@@ -107,7 +107,7 @@ public class BuildScriptProvider {
         byte[] fileContent = IOUtils.toByteArray(fileResource.getInputStream());
         String script = new String(fileContent, StandardCharsets.UTF_8);
         scriptCache.put(uniqueKey, script);
-        logger.debug("Caching script for {}", uniqueKey);
+        log.debug("Caching script for {}", uniqueKey);
         return script;
     }
 

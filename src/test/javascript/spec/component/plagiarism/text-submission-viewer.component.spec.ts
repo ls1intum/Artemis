@@ -1,7 +1,7 @@
 import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { TextSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
@@ -73,6 +73,7 @@ describe('Text Submission Viewer Component', () => {
 
         expect(repositoryService.getRepositoryContent).toHaveBeenCalledOnce();
         expect(comp.isProgrammingExercise).toBeTrue();
+        expect(comp.cannotLoadFiles).toBeFalse();
     });
 
     it('does not fetch a programming submission', () => {
@@ -84,6 +85,18 @@ describe('Text Submission Viewer Component', () => {
         });
 
         expect(repositoryService.getRepositoryContent).not.toHaveBeenCalled();
+    });
+
+    it('handles a programming submission fetch error', () => {
+        comp.exercise = { type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
+        jest.spyOn(repositoryService, 'getRepositoryContent').mockReturnValue(throwError({}));
+
+        comp.ngOnChanges({
+            plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
+        });
+
+        expect(repositoryService.getRepositoryContent).toHaveBeenCalledOnce();
+        expect(comp.cannotLoadFiles).toBeTrue();
     });
 
     it('sorts and filters the files when fetching a programming submission', () => {
