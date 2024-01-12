@@ -12,6 +12,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import com.hazelcast.collection.ISet;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
+
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -56,13 +60,13 @@ public class LocalCIBuildJobManagementService {
     @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
     private String buildContainerPrefix;
 
-    private final Map<Long, Future<LocalCIBuildResult>> runningBuildJobs = new ConcurrentHashMap<>();
+    private final IMap<Long, Future<LocalCIBuildResult>> runningFutures;
 
-    private final Set<Long> cancelledBuildJobs = new HashSet<>();
+    private final ISet<Long> cancelledBuildJobs;
 
-    public LocalCIBuildJobManagementService(LocalCIBuildJobExecutionService localCIBuildJobExecutionService, ExecutorService localCIBuildExecutorService,
-            ProgrammingMessagingService programmingMessagingService, LocalCIBuildPlanService localCIBuildPlanService, LocalCIContainerService localCIContainerService,
-            LocalCIDockerService localCIDockerService, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
+    public LocalCIBuildJobManagementService(HazelcastInstance hazelcastInstance, LocalCIBuildJobExecutionService localCIBuildJobExecutionService,
+            ExecutorService localCIBuildExecutorService, ProgrammingMessagingService programmingMessagingService, LocalCIBuildPlanService localCIBuildPlanService,
+            LocalCIContainerService localCIContainerService, LocalCIDockerService localCIDockerService, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.localCIBuildJobExecutionService = localCIBuildJobExecutionService;
         this.localCIBuildExecutorService = localCIBuildExecutorService;
         this.programmingMessagingService = programmingMessagingService;
@@ -70,6 +74,8 @@ public class LocalCIBuildJobManagementService {
         this.localCIContainerService = localCIContainerService;
         this.localCIDockerService = localCIDockerService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
+        this.runningFutures = hazelcastInstance.getMap("runningFutures");
+        this.cancelledBuildJobs = hazelcastInstance.getSet("cancelledBuildJobs");
     }
 
     /**
@@ -107,7 +113,7 @@ public class LocalCIBuildJobManagementService {
          * Usually, when using asynchronous build jobs, it will just resolve to "CompletableFuture.supplyAsync".
          */
         Future<LocalCIBuildResult> future = localCIBuildExecutorService.submit(buildJob);
-        runningBuildJobs.put(buildJobId, future);
+        runningFutures.put(buildJobId, future);
 
         CompletableFuture<LocalCIBuildResult> futureResult = createCompletableFuture(() -> {
             try {
@@ -129,7 +135,7 @@ public class LocalCIBuildJobManagementService {
         });
         // Update the build plan status to "QUEUED".
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.QUEUED);
-        futureResult.whenComplete(((result, throwable) -> runningBuildJobs.remove(buildJobId)));
+        futureResult.whenComplete(((result, throwable) -> runningFutures.remove(buildJobId)));
 
         return futureResult;
     }
@@ -192,7 +198,7 @@ public class LocalCIBuildJobManagementService {
      * @param buildJobId The id of the build job that should be cancelled.
      */
     public void cancelBuildJob(long buildJobId) {
-        Future<LocalCIBuildResult> future = runningBuildJobs.get(buildJobId);
+        Future<LocalCIBuildResult> future = runningFutures.get(buildJobId);
         if (future != null) {
             try {
                 cancelledBuildJobs.add(buildJobId);
