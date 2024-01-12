@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @Service
 public class ProgrammingExerciseImportFromFileService {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseImportFromFileService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseImportFromFileService.class);
 
     private final ProgrammingExerciseService programmingExerciseService;
 

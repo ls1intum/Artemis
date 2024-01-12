@@ -31,7 +31,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private static final String ENTITY_NAME = "programmingAssessment";
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingAssessmentResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingAssessmentResource.class);
 
     private final ProgrammingAssessmentService programmingAssessmentService;
 

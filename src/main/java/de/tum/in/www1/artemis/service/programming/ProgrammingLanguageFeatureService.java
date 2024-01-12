@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
  */
 public abstract class ProgrammingLanguageFeatureService {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingLanguageFeatureService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingLanguageFeatureService.class);
 
     protected final Map<ProgrammingLanguage, ProgrammingLanguageFeature> programmingLanguageFeatures = new HashMap<>();
 

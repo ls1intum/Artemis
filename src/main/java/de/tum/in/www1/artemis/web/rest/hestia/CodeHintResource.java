@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 @RequestMapping("api/")
 public class CodeHintResource {
 
-    private final Logger log = LoggerFactory.getLogger(CodeHintResource.class);
+    private static final Logger log = LoggerFactory.getLogger(CodeHintResource.class);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 

@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 @Service
 public class ExamDeletionService {
 
-    private final Logger log = LoggerFactory.getLogger(ExamDeletionService.class);
+    private static final Logger log = LoggerFactory.getLogger(ExamDeletionService.class);
 
     private final ExerciseDeletionService exerciseDeletionService;
 

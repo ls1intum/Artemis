@@ -17,7 +17,7 @@ public abstract class AbstractQuizSubmissionService<T extends AbstractQuizSubmis
 
     private final SubmissionVersionService submissionVersionService;
 
-    private final Logger log = LoggerFactory.getLogger(AbstractQuizSubmissionService.class);
+    private static final Logger log = LoggerFactory.getLogger(AbstractQuizSubmissionService.class);
 
     protected AbstractQuizSubmissionService(SubmissionVersionService submissionVersionService) {
         this.submissionVersionService = submissionVersionService;
