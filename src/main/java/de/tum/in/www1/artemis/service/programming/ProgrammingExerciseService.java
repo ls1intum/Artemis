@@ -256,18 +256,11 @@ public class ProgrammingExerciseService {
             }
         }
 
-        // Save programming exercise to prevent transient exception
-        savedProgrammingExercise = programmingExerciseRepository.save(savedProgrammingExercise);
-        savedProgrammingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(savedProgrammingExercise.getId());
-
         // Step 9: Create exercise channel
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
         // Step 10: Setup build plans for template and solution participation
         setupBuildPlansForNewExercise(savedProgrammingExercise);
-
-        savedProgrammingExercise = programmingExerciseRepository.save(savedProgrammingExercise);
-        savedProgrammingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(savedProgrammingExercise.getId());
 
         // Step 11: Update task from problem statement
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
@@ -285,7 +278,7 @@ public class ProgrammingExerciseService {
             triggerBuildForTemplateAndSolutionParticipation(savedProgrammingExercise);
         }
 
-        savedProgrammingExercise = programmingExerciseRepository.saveAndFlush(savedProgrammingExercise);
+        programmingExerciseRepository.saveAndFlush(savedProgrammingExercise);
         return programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(savedProgrammingExercise.getId());
     }
 
@@ -447,8 +440,8 @@ public class ProgrammingExerciseService {
         var solutionParticipation = programmingExercise.getSolutionParticipation();
         templateParticipation.setProgrammingExercise(programmingExercise);
         solutionParticipation.setProgrammingExercise(programmingExercise);
-        templateParticipation = templateProgrammingExerciseParticipationRepository.saveAndFlush(templateParticipation);
-        solutionParticipation = solutionProgrammingExerciseParticipationRepository.saveAndFlush(solutionParticipation);
+        templateParticipation = templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        solutionParticipation = solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
         programmingExercise.setTemplateParticipation(templateParticipation);
         programmingExercise.setSolutionParticipation(solutionParticipation);
     }
