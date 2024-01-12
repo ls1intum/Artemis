@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -40,6 +41,7 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReport
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.connectors.BuildScriptGenerationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
@@ -139,6 +141,8 @@ public class ProgrammingExerciseService {
 
     private final Optional<AeolusTemplateService> aeolusTemplateService;
 
+    private final Optional<BuildScriptGenerationService> buildScriptGenerationService;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -150,7 +154,8 @@ public class ProgrammingExerciseService {
             ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository, ExerciseSpecificationService exerciseSpecificationService,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, ChannelService channelService,
-            ProgrammingSubmissionService programmingSubmissionService, Optional<IrisSettingsService> irisSettingsService, Optional<AeolusTemplateService> aeolusTemplateService) {
+            ProgrammingSubmissionService programmingSubmissionService, Optional<IrisSettingsService> irisSettingsService, Optional<AeolusTemplateService> aeolusTemplateService,
+            Optional<BuildScriptGenerationService> buildScriptGenerationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -179,6 +184,7 @@ public class ProgrammingExerciseService {
         this.programmingSubmissionService = programmingSubmissionService;
         this.irisSettingsService = irisSettingsService;
         this.aeolusTemplateService = aeolusTemplateService;
+        this.buildScriptGenerationService = buildScriptGenerationService;
     }
 
     /**
@@ -229,7 +235,7 @@ public class ProgrammingExerciseService {
         Optional.ofNullable(programmingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
 
         // for LocalCI and Aeolus, we store the build plan definition in the database as a windfile
-        if (aeolusTemplateService.isPresent()) {
+        if (aeolusTemplateService.isPresent() && programmingExercise.getBuildPlanConfiguration() == null) {
             Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(programmingExercise);
             if (windfile != null) {
                 programmingExercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
@@ -388,6 +394,14 @@ public class ProgrammingExerciseService {
         continuousIntegration.removeAllDefaultProjectPermissions(projectKey);
 
         giveCIProjectPermissions(programmingExercise);
+
+        Windfile windfile = programmingExercise.getWindfile();
+        if (windfile != null && buildScriptGenerationService.isPresent()) {
+            String script = buildScriptGenerationService.get().getScript(programmingExercise);
+            programmingExercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
+            programmingExercise.setBuildScript(script);
+            programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        }
 
         // if the exercise is imported from a file, the changes fixing the project name will trigger a first build anyway, so
         // we do not trigger them here
