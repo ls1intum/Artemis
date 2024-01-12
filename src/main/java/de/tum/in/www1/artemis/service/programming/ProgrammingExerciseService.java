@@ -258,6 +258,7 @@ public class ProgrammingExerciseService {
 
         // Save programming exercise to prevent transient exception
         savedProgrammingExercise = programmingExerciseRepository.save(savedProgrammingExercise);
+        savedProgrammingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(savedProgrammingExercise.getId());
 
         // Step 9: Create exercise channel
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
@@ -266,6 +267,7 @@ public class ProgrammingExerciseService {
         setupBuildPlansForNewExercise(savedProgrammingExercise);
 
         savedProgrammingExercise = programmingExerciseRepository.save(savedProgrammingExercise);
+        savedProgrammingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(savedProgrammingExercise.getId());
 
         // Step 11: Update task from problem statement
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
@@ -284,7 +286,7 @@ public class ProgrammingExerciseService {
         }
 
         savedProgrammingExercise = programmingExerciseRepository.saveAndFlush(savedProgrammingExercise);
-        return savedProgrammingExercise;
+        return programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(savedProgrammingExercise.getId());
     }
 
     /**
@@ -432,14 +434,6 @@ public class ProgrammingExerciseService {
             programmingExercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
             programmingExercise.setBuildScript(script);
             programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        }
-
-        // if the exercise is imported from a file, the changes fixing the project name will trigger a first build anyway, so
-        // we do not trigger them here
-        if (!isImportedFromFile) {
-            // trigger BASE and SOLUTION build plans once here
-            continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getTemplateParticipation());
-            continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getSolutionParticipation());
         }
     }
 
