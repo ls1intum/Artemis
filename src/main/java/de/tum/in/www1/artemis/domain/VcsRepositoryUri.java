@@ -106,7 +106,7 @@ public class VcsRepositoryUri {
         return repositorySlug().toLowerCase().replace(projectKey().toLowerCase() + "-", "").replace("practice-", "");
     }
 
-    private String repositorySlug() {
+    public String repositorySlug() {
         return this.uri.getPath().substring(this.uri.getPath().lastIndexOf('/') + 1).replace(".git", "");
     }
 

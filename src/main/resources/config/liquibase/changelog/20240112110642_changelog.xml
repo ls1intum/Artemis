@@ -4,7 +4,7 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="20240110185513" author="laurenzfb">
+    <changeSet id="20240112110642" author="laurenzfb">
         <createTable tableName="build_job">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
@@ -16,11 +16,12 @@
             <column name="build_agent_address" type="varchar(255)"/>
             <column name="build_start_date" type="timestamp"/>
             <column name="build_completion_date" type="timestamp"/>
-            <column name="repository_type_or_user_name" type="varchar(255)"/>
+            <column name="repository_type" type="varchar(10)"/>
+            <column name="repository_name" type="varchar(255)"/>
             <column name="commit_hash" type="varchar(40)"/>
             <column name="retry_count" type="int"/>
             <column name="priority" type="int"/>
-            <column name="is_push_to_test_or_aux_repository" type="boolean"/>
+            <column name="triggered_by_push_to" type="varchar(10)"/>
             <column name="build_job_result" type="varchar(10)"/>
             <column name="docker_image" type="varchar(255)"/>
         </createTable>

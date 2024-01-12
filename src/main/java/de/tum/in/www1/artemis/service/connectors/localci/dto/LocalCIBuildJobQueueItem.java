@@ -4,8 +4,11 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 
-public record LocalCIBuildJobQueueItem(long id, String name, String buildAgentAddress, long participationId, String repositoryTypeOrUserName, String commitHash,
-        ZonedDateTime submissionDate, int retryCount, ZonedDateTime buildStartDate, int priority, long courseId, boolean isPushToTestRepository) implements Serializable {
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+
+public record LocalCIBuildJobQueueItem(long id, String name, String buildAgentAddress, long participationId, String repositoryName, RepositoryType repositoryType,
+        String commitHash, ZonedDateTime submissionDate, int retryCount, ZonedDateTime buildStartDate, ZonedDateTime buildCompletionDate, int priority, long courseId,
+        RepositoryType triggeredByPushTo) implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

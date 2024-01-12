@@ -72,15 +72,15 @@ public class LocalCIBuildJobManagementService {
     /**
      * Submit a build job for a given participation to the executor service.
      *
-     * @param participation          The participation of the repository for which the build job should be executed.
-     * @param commitHash             The commit hash of the submission that led to this build. If it is "null", the latest commit of the repository will be used.
-     * @param isRetry                Whether this build job is a retry of a previous build job.
-     * @param isPushToTestRepository Defines if the build job is triggered by a push to a test repository.
+     * @param participation               The participation of the repository for which the build job should be executed.
+     * @param commitHash                  The commit hash of the submission that led to this build. If it is "null", the latest commit of the repository will be used.
+     * @param isRetry                     Whether this build job is a retry of a previous build job.
+     * @param isPushToTestOrAuxRepository Defines if the build job is triggered by a push to a test or auxiliary repository.
      * @return A future that will be completed with the build result.
      * @throws LocalCIException If the build job could not be submitted to the executor service.
      */
-    public CompletableFuture<LocalCIBuildResult> executeBuildJob(ProgrammingExerciseParticipation participation, String commitHash, boolean isRetry, boolean isPushToTestRepository)
-            throws LocalCIException {
+    public CompletableFuture<LocalCIBuildResult> executeBuildJob(ProgrammingExerciseParticipation participation, String commitHash, boolean isRetry,
+            boolean isPushToTestOrAuxRepository) throws LocalCIException {
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
@@ -94,7 +94,8 @@ public class LocalCIBuildJobManagementService {
         String containerName = buildContainerPrefix + participation.getId() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
 
         // Prepare a Callable that will later be called. It contains the actual steps needed to execute the build job.
-        Callable<LocalCIBuildResult> buildJob = () -> localCIBuildJobExecutionService.runBuildJob(participation, commitHash, isPushToTestRepository, containerName, dockerImage);
+        Callable<LocalCIBuildResult> buildJob = () -> localCIBuildJobExecutionService.runBuildJob(participation, commitHash, isPushToTestOrAuxRepository, containerName,
+                dockerImage);
 
         /*
          * Submit the build job to the executor service. This runs in a separate thread, so it does not block the main thread.

@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.domain.enumeration;
 
 public enum RepositoryType {
 
-    TEMPLATE("exercise"), SOLUTION("solution"), TESTS("tests"), AUXILIARY("auxiliary");
+    TEMPLATE("exercise"), SOLUTION("solution"), TESTS("tests"), AUXILIARY("auxiliary"), USER("user");
 
     private final String name;
 

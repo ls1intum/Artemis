@@ -21,11 +21,13 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.cp.lock.FencedLock;
 import com.hazelcast.map.IMap;
 
+import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.enumeration.BuildJobResult;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
@@ -56,6 +58,8 @@ public class LocalCISharedBuildJobQueueService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final BuildJobRepository buildJobRepository;
+
     /**
      * Map of build jobs currently being processed across all nodes
      */
@@ -78,7 +82,7 @@ public class LocalCISharedBuildJobQueueService {
     public LocalCISharedBuildJobQueueService(HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
             LocalCIBuildJobManagementService localCIBuildJobManagementService, ParticipationRepository participationRepository,
             ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, BuildJobRepository buildJobRepository) {
         this.hazelcastInstance = hazelcastInstance;
         this.localCIBuildExecutorService = (ThreadPoolExecutor) localCIBuildExecutorService;
         this.localCIBuildJobManagementService = localCIBuildJobManagementService;
@@ -86,6 +90,7 @@ public class LocalCISharedBuildJobQueueService {
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.programmingMessagingService = programmingMessagingService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.buildJobRepository = buildJobRepository;
         this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
         this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
@@ -103,19 +108,20 @@ public class LocalCISharedBuildJobQueueService {
     /**
      * Create build job item object and add it to the queue.
      *
-     * @param name                     name of the build job
-     * @param participationId          participation id of the build job
-     * @param repositoryTypeOrUsername repository type (if template or solution) or username (if student repository)
-     * @param commitHash               commit hash of the build job
-     * @param submissionDate           submission date of the build job
-     * @param priority                 priority of the build job
-     * @param courseId                 course id of the build job
-     * @param isPushToTestRepository   defines if the build job is triggered by a push to a test repository
+     * @param name              name of the build job
+     * @param participationId   participation id of the build job
+     * @param repositoryName    name of the repository to be build
+     * @param repositoryType    type of the repository to be build
+     * @param commitHash        commit hash of the build job
+     * @param submissionDate    submission date of the build job
+     * @param priority          priority of the build job
+     * @param courseId          course id of the build job
+     * @param triggeredByPushTo type of the repository that was pushed to and triggered the build job
      */
-    public void addBuildJob(String name, long participationId, String repositoryTypeOrUsername, String commitHash, ZonedDateTime submissionDate, int priority, long courseId,
-            boolean isPushToTestRepository) {
+    public void addBuildJob(String name, long participationId, String repositoryName, RepositoryType repositoryType, String commitHash, ZonedDateTime submissionDate, int priority,
+            long courseId, RepositoryType triggeredByPushTo) {
         LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(Long.parseLong(String.valueOf(participationId) + submissionDate.toInstant().toEpochMilli()), name,
-                null, participationId, repositoryTypeOrUsername, commitHash, submissionDate, 0, null, priority, courseId, isPushToTestRepository);
+                null, participationId, repositoryName, repositoryType, commitHash, submissionDate, 0, null, null, priority, courseId, triggeredByPushTo);
         queue.add(buildJobQueueItem);
     }
 
@@ -139,6 +145,27 @@ public class LocalCISharedBuildJobQueueService {
         // Remove build agent information of offline nodes
         removeOfflineNodes();
         return buildAgentInformation.values().stream().toList();
+    }
+
+    public BuildJob saveFinishedBuildJob(LocalCIBuildJobQueueItem queueItem, BuildJobResult result, ProgrammingExerciseParticipation participation) {
+        String dockerImage = participation.getProgrammingExercise().getWindfile().getMetadata().getDocker().getImage();
+        BuildJob buildJob = new BuildJob();
+        buildJob.setName(queueItem.name());
+        buildJob.setExerciseId(participation.getProgrammingExercise().getId());
+        buildJob.setCourseId(queueItem.courseId());
+        buildJob.setParticipationId(queueItem.participationId());
+        buildJob.setBuildAgentAddress(queueItem.buildAgentAddress());
+        buildJob.setBuildStartDate(queueItem.buildStartDate());
+        buildJob.setBuildCompletionDate(queueItem.buildCompletionDate());
+        buildJob.setRepositoryType(queueItem.repositoryType());
+        buildJob.setRepositoryName(queueItem.repositoryName());
+        buildJob.setCommitHash(queueItem.commitHash());
+        buildJob.setRetryCount(queueItem.retryCount());
+        buildJob.setPriority(queueItem.priority());
+        buildJob.setTriggeredByPushTo(queueItem.triggeredByPushTo());
+        buildJob.setBuildJobResult(result);
+        buildJob.setDockerImage(dockerImage);
+        return buildJobRepository.save(buildJob);
     }
 
     /**
@@ -232,8 +259,8 @@ public class LocalCISharedBuildJobQueueService {
         if (buildJob != null) {
             String hazelcastMemberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
             LocalCIBuildJobQueueItem processingJob = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), hazelcastMemberAddress, buildJob.participationId(),
-                    buildJob.repositoryTypeOrUserName(), buildJob.commitHash(), buildJob.submissionDate(), buildJob.retryCount(), ZonedDateTime.now(), buildJob.priority(),
-                    buildJob.courseId(), buildJob.isPushToTestRepository());
+                    buildJob.repositoryName(), buildJob.repositoryType(), buildJob.commitHash(), buildJob.submissionDate(), buildJob.retryCount(), ZonedDateTime.now(), null,
+                    buildJob.priority(), buildJob.courseId(), buildJob.triggeredByPushTo());
             processingJobs.put(processingJob.id(), processingJob);
             localProcessingJobs.incrementAndGet();
 
@@ -311,9 +338,12 @@ public class LocalCISharedBuildJobQueueService {
             participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
         }
 
-        CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.executeBuildJob(participation, commitHash, isRetry,
-                buildJob.isPushToTestRepository());
+        boolean isPushToTestOrAuxRepository = buildJob.triggeredByPushTo() == RepositoryType.TESTS || buildJob.triggeredByPushTo() == RepositoryType.AUXILIARY;
+
+        CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.executeBuildJob(participation, commitHash, isRetry, isPushToTestOrAuxRepository);
         futureResult.thenAccept(buildResult -> {
+
+            ZonedDateTime buildCompletionDate = ZonedDateTime.now();
 
             // Do not process the result if the participation has been deleted in the meantime
             Optional<Participation> participationOptional = participationRepository.findById(participation.getId());
@@ -339,6 +369,18 @@ public class LocalCISharedBuildJobQueueService {
 
             // process next build job if node is available
             checkAvailabilityAndProcessNextBuild();
+
+            // save build job to database
+            LocalCIBuildJobQueueItem finishedJob = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(), buildJob.participationId(),
+                    buildJob.repositoryName(), buildJob.repositoryType(), buildJob.commitHash(), buildJob.submissionDate(), buildJob.retryCount(), buildJob.buildStartDate(),
+                    buildCompletionDate, buildJob.priority(), buildJob.courseId(), buildJob.triggeredByPushTo());
+
+            try {
+                saveFinishedBuildJob(finishedJob, BuildJobResult.SUCCESSFUL, participation);
+            }
+            catch (Exception e) {
+                log.error("Error while saving finished build job to database: {}", finishedJob, e);
+            }
         }).exceptionally(ex -> {
             log.error("Error while processing build job: {}", buildJob, ex);
 
@@ -348,6 +390,7 @@ public class LocalCISharedBuildJobQueueService {
 
             if (isRetry) {
                 log.error("Build job failed for the second time: {}", buildJob);
+                BuildJob savedBuildJob = saveFinishedBuildJob(buildJob, BuildJobResult.FAILED, participation);
                 return null;
             }
 
@@ -357,8 +400,8 @@ public class LocalCISharedBuildJobQueueService {
             if (participationOptional.isPresent()) {
                 log.warn("Requeueing failed build job: {}", buildJob);
                 LocalCIBuildJobQueueItem requeuedBuildJob = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(), buildJob.participationId(),
-                        buildJob.repositoryTypeOrUserName(), buildJob.commitHash(), buildJob.submissionDate(), buildJob.retryCount() + 1, null, buildJob.priority(),
-                        buildJob.courseId(), buildJob.isPushToTestRepository());
+                        buildJob.repositoryName(), buildJob.repositoryType(), buildJob.commitHash(), buildJob.submissionDate(), buildJob.retryCount() + 1, null, null,
+                        buildJob.priority(), buildJob.courseId(), buildJob.triggeredByPushTo());
                 queue.add(requeuedBuildJob);
             }
             else {

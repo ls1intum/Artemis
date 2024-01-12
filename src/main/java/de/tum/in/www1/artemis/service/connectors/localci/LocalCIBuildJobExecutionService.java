@@ -141,16 +141,16 @@ public class LocalCIBuildJobExecutionService {
      * execute the
      * job.
      *
-     * @param participation          The participation of the repository for which the build job should be executed.
-     * @param commitHash             The commit hash of the commit that should be built. If it is null, the latest commit of the default branch will be built.
-     * @param isPushToTestRepository Defines if the build job is triggered by a push to a test repository
-     * @param containerName          The name of the Docker container that will be used to run the build job.
-     *                                   It needs to be prepared beforehand to stop and remove the container if something goes wrong here.
-     * @param dockerImage            The Docker image that will be used to run the build job.
+     * @param participation               The participation of the repository for which the build job should be executed.
+     * @param commitHash                  The commit hash of the commit that should be built. If it is null, the latest commit of the default branch will be built.
+     * @param isPushToTestOrAuxRepository Defines if the build job is triggered by a push to a test or auxiliary repository
+     * @param containerName               The name of the Docker container that will be used to run the build job.
+     *                                        It needs to be prepared beforehand to stop and remove the container if something goes wrong here.
+     * @param dockerImage                 The Docker image that will be used to run the build job.
      * @return The build result.
      * @throws LocalCIException If some error occurs while preparing or running the build job.
      */
-    public LocalCIBuildResult runBuildJob(ProgrammingExerciseParticipation participation, String commitHash, boolean isPushToTestRepository, String containerName,
+    public LocalCIBuildResult runBuildJob(ProgrammingExerciseParticipation participation, String commitHash, boolean isPushToTestOrAuxRepository, String containerName,
             String dockerImage) {
         // Check if participation has been deleted to cancel the job
         try {
@@ -244,7 +244,7 @@ public class LocalCIBuildJobExecutionService {
          * If this build job is triggered by a push to the test repository, the commit hash reflects changes to the test repository.
          * Thus, we do not checkout the commit hash of the test repository in the assignment repository.
          */
-        if (commitHash != null && !isPushToTestRepository) {
+        if (commitHash != null && !isPushToTestOrAuxRepository) {
             // Clone the assignment repository into a temporary directory with the name of the commit hash and then checkout the commit hash.
             assignmentRepositoryPath = cloneAndCheckoutRepository(participation, commitHash);
         }
@@ -254,7 +254,7 @@ public class LocalCIBuildJobExecutionService {
         CreateContainerResponse container = localCIContainerService.configureContainer(containerName, dockerImage);
 
         return runScriptAndParseResults(participation, containerName, container.getId(), branch, commitHash, assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath,
-                auxiliaryRepositoriesPaths, auxiliaryRepositoryCheckoutDirectories, buildScriptPath, isPushToTestRepository);
+                auxiliaryRepositoriesPaths, auxiliaryRepositoryCheckoutDirectories, buildScriptPath, isPushToTestOrAuxRepository);
     }
 
     /**
