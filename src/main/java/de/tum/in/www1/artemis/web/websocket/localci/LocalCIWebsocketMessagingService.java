@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueu
  * It is also used to send build agent information to the client.
  */
 @Service
-@Profile("localci & scheduling")
+@Profile("localci")
 public class LocalCIWebsocketMessagingService {
 
     private final Logger log = LoggerFactory.getLogger(LocalCIWebsocketMessagingService.class);
