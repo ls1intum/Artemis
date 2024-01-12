@@ -1,18 +1,18 @@
 api: v0.0.1
 actions:
-    - name: build_and_test_the_code
-      script: |-
-          python3 -m compileall . -q || error=true
-          if [ ! $error ]
-          then
-              pytest --junitxml=test-reports/results.xml
-          fi
-      runAlways: false
-    - name: junit
-      script: '#empty script action, just for the results'
-      runAlways: true
-      results:
-          - name: junit_test-reports/*results.xml
-            path: test-reports/*results.xml
-            type: junit
-            before: true
+  - name: build_and_test_the_code
+    script: |-
+      python3 -m compileall . -q || error=true
+      if [ ! $error ]
+      then
+          pytest --junitxml=test-reports/results.xml
+      fi
+    runAlways: false
+  - name: junit
+    script: '#empty script action, just for the results'
+    runAlways: true
+    results:
+      - name: junit_test-reports/*results.xml
+        path: test-reports/*results.xml
+        type: junit
+        before: true
