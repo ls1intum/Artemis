@@ -7,6 +7,12 @@ export interface TutorialGroupFreePeriodFormData {
     date?: Date;
     reason?: string;
 }
+
+export enum TimeFrame {
+    Day,
+    Period,
+    PeriodWithinDay,
+}
 @Component({
     selector: 'jhi-tutorial-free-period-form',
     templateUrl: './tutorial-group-free-period-form.component.html',
@@ -28,6 +34,16 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     faCalendarAlt = faCalendarAlt;
 
     form: FormGroup;
+
+    timeFrame = TimeFrame.Day;
+
+    setTimeFrame(timeFrame: TimeFrame) {
+        this.timeFrame = timeFrame;
+    }
+
+    getTimeFrame(): TimeFrame {
+        return this.timeFrame;
+    }
 
     get dateControl() {
         return this.form.get('date');
@@ -86,4 +102,6 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
             return false;
         }
     }
+
+    protected readonly TimeFrame = TimeFrame;
 }

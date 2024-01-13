@@ -4,10 +4,20 @@
             {{ 'artemisApp.generic.timeZone' | artemisTranslate: { timeZone } }}
         </div>
     </div>
+    <div class="btn-group" role="group">
+        <input type="radio" class="btn-check" name="btnradio" id="FreePeriod" autocomplete="off" (click)="setTimeFrame(TimeFrame.Period)" />
+        <label class="btn btn-outline-primary" for="FreePeriod">Free Period</label>
+
+        <input type="radio" class="btn-check" name="btnradio" id="FreeDay" autocomplete="off" checked (click)="setTimeFrame(TimeFrame.Day)" />
+        <label class="btn btn-outline-primary" for="FreeDay">Free Day</label>
+
+        <input type="radio" class="btn-check" name="btnradio" id="FreePeriodWithinDay" autocomplete="off" (click)="setTimeFrame(TimeFrame.PeriodWithinDay)" />
+        <label class="btn btn-outline-primary" for="FreePeriodWithinDay">Free Period within Day</label>
+    </div>
     <div class="col-12">
         <form class="row" *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
             <!-- Date -->
-            <div>
+            <div *ngIf="timeFrame == TimeFrame.Day">
                 <label class="form-label" for="date">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.label' | artemisTranslate }}</label>
                 <div class="input-group">
                     <input formControlName="date" required [owlDateTime]="date" class="d-none" />
@@ -31,6 +41,10 @@
                     </div>
                 </div>
             </div>
+
+            <div *ngIf="timeFrame == TimeFrame.Period">PeriodPlaceholder</div>
+
+            <div *ngIf="timeFrame == TimeFrame.PeriodWithinDay">PeriodWithinDayPlaceholder</div>
 
             <!-- Reason -->
             <div class="form-group">
