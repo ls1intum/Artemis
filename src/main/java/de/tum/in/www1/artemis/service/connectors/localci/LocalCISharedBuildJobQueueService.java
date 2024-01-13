@@ -410,11 +410,13 @@ public class LocalCISharedBuildJobQueueService {
                 queue.removeAll(toRemove);
             }
             else {
-                // Cancel build job if it is currently being processed
-                LocalCIBuildJobQueueItem buildJob = processingJobs.remove(buildJobId);
-                if (buildJob != null) {
-                    localCIBuildJobManagementService.cancelBuildJob(buildJobId);
-                }
+                /*
+                 * // Cancel build job if it is currently being processed
+                 * LocalCIBuildJobQueueItem buildJob = processingJobs.remove(buildJobId);
+                 * if (buildJob != null) {
+                 * localCIBuildJobManagementService.cancelBuildJob(buildJobId);
+                 * }
+                 */
             }
         }
         finally {
