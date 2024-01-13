@@ -17,7 +17,7 @@ export type ProgrammingExerciseCreationConfig = {
     auxiliaryRepositoryDuplicateDirectories: boolean;
     auxiliaryRepositoryDuplicateNames: boolean;
     checkoutSolutionRepositoryAllowed: boolean;
-    customBuildPlansSupported: boolean;
+    customBuildPlansSupported: string;
     invalidDirectoryNamePattern: RegExp;
     invalidRepositoryNamePattern: RegExp;
     isImportFromExistingExercise: boolean;

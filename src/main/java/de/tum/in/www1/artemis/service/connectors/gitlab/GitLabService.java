@@ -51,7 +51,7 @@ import de.tum.in.www1.artemis.service.util.UrlUtils;
 @Service
 public class GitLabService extends AbstractVersionControlService {
 
-    private final Logger log = LoggerFactory.getLogger(GitLabService.class);
+    private static final Logger log = LoggerFactory.getLogger(GitLabService.class);
 
     @Value("${artemis.version-control.url}")
     private URL gitlabServerUrl;

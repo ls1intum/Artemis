@@ -31,7 +31,7 @@ import io.swagger.annotations.ApiResponses;
 @RequestMapping("/api")
 public class ModelingAssessmentResource extends AssessmentResource {
 
-    private final Logger log = LoggerFactory.getLogger(ModelingAssessmentResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ModelingAssessmentResource.class);
 
     private static final String ENTITY_NAME = "modelingAssessment";
 

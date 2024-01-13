@@ -36,7 +36,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @RequestMapping("api/")
 public class ExerciseResource {
 
-    private final Logger log = LoggerFactory.getLogger(ExerciseResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ExerciseResource.class);
 
     private final ExerciseService exerciseService;
 

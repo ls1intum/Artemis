@@ -49,7 +49,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
     private static final int MAX_GIVE_PERMISSIONS_RETRIES = 5;
 
-    private final Logger log = LoggerFactory.getLogger(BitbucketService.class);
+    private static final Logger log = LoggerFactory.getLogger(BitbucketService.class);
 
     @Value("${artemis.user-management.external.admin-group-name}")
     private String adminGroupName;

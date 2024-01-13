@@ -24,7 +24,7 @@ public class LocalCIDockerService {
 
     private final ReentrantLock lock = new ReentrantLock();
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIDockerService.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalCIDockerService.class);
 
     private final DockerClient dockerClient;
 

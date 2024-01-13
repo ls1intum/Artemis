@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 @RequestMapping("/api")
 public class VideoUnitResource {
 
-    private final Logger log = LoggerFactory.getLogger(VideoUnitResource.class);
+    private static final Logger log = LoggerFactory.getLogger(VideoUnitResource.class);
 
     private final VideoUnitRepository videoUnitRepository;
 
