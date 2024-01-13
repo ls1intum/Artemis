@@ -8,7 +8,8 @@ import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-gr
 type EntityResponseType = HttpResponse<TutorialGroupFreePeriod>;
 
 export class TutorialGroupFreePeriodDTO {
-    public date?: Date;
+    public startDate?: Date;
+    public endDate?: Date;
     public reason?: string;
 }
 
@@ -77,7 +78,7 @@ export class TutorialGroupFreePeriodService {
     private convertTutorialGroupFreePeriodDatesFromClient(tutorialGroupFreePeriodDTO: TutorialGroupFreePeriodDTO): TutorialGroupFreePeriodDTO {
         if (tutorialGroupFreePeriodDTO) {
             return Object.assign({}, tutorialGroupFreePeriodDTO, {
-                date: toISO8601DateString(tutorialGroupFreePeriodDTO.date),
+                startDate: toISO8601DateString(tutorialGroupFreePeriodDTO.startDate),
             });
         } else {
             return tutorialGroupFreePeriodDTO;

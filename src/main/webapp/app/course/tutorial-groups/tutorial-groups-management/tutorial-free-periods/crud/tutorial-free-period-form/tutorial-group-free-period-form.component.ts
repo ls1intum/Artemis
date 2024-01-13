@@ -1,13 +1,15 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
-import { TutorialGroupSessionFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
+// import { TutorialGroupSessionFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 
 export interface TutorialGroupFreePeriodFormData {
-    date?: Date;
+    startDate?: Date;
+    endDate?: Date;
     reason?: string;
 }
 
+// ToDo: TimeFrame Enum
 export enum TimeFrame {
     Day,
     Period,
@@ -18,10 +20,13 @@ export enum TimeFrame {
     templateUrl: './tutorial-group-free-period-form.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
+
+// ToDo: extend TutorialGroupFreePeriodFormData to support an endDate
 export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     @Input()
     formData: TutorialGroupFreePeriodFormData = {
-        date: undefined,
+        startDate: undefined,
+        endDate: undefined,
         reason: undefined,
     };
 
@@ -29,7 +34,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
 
     @Input() timeZone: string;
 
-    @Output() formSubmitted: EventEmitter<TutorialGroupSessionFormData> = new EventEmitter<TutorialGroupSessionFormData>();
+    @Output() formSubmitted: EventEmitter<TutorialGroupFreePeriodFormData> = new EventEmitter<TutorialGroupFreePeriodFormData>();
 
     faCalendarAlt = faCalendarAlt;
 
@@ -37,7 +42,14 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
 
     timeFrame = TimeFrame.Day;
 
+    protected readonly TimeFrame = TimeFrame;
+
+    // Todo: TimeFrame getter/setter. Reset endDate when switching back to single Day
     setTimeFrame(timeFrame: TimeFrame) {
+        // debugger;
+        if (timeFrame == TimeFrame.Day) {
+            this.formData.endDate = undefined;
+        }
         this.timeFrame = timeFrame;
     }
 
@@ -45,8 +57,12 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         return this.timeFrame;
     }
 
-    get dateControl() {
-        return this.form.get('date');
+    get startDateControl() {
+        return this.form.get('startDate');
+    }
+
+    get endDateControl() {
+        return this.form.get('endDate');
     }
 
     get reasonControl() {
@@ -84,24 +100,39 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
             return;
         }
         this.form = this.fb.group({
-            date: [undefined, [Validators.required]],
+            startDate: [undefined, [Validators.required]],
+            endDate: [undefined, [Validators.required]],
             reason: [undefined],
         });
     }
 
-    markDateAsTouched() {
-        if (this.dateControl) {
-            this.dateControl.markAsTouched();
+    markStartDateAsTouched() {
+        if (this.startDateControl) {
+            this.startDateControl.markAsTouched();
         }
     }
 
-    get isDateInvalid() {
-        if (this.dateControl) {
-            return this.dateControl.invalid && (this.dateControl.touched || this.dateControl.dirty);
+    markEndDateAsTouched() {
+        if (this.endDateControl) {
+            this.endDateControl.markAsTouched();
+        }
+    }
+
+    get isStartDateInvalid() {
+        if (this.startDateControl) {
+            return this.startDateControl.invalid && (this.startDateControl.touched || this.startDateControl.dirty);
         } else {
             return false;
         }
     }
 
-    protected readonly TimeFrame = TimeFrame;
+    get isEndDateInvalid() {
+        if (this.endDateControl) {
+            return this.endDateControl.invalid && (this.endDateControl.touched || this.endDateControl.dirty);
+        } else {
+            return false;
+        }
+    }
+
+    protected readonly FormData = FormData;
 }

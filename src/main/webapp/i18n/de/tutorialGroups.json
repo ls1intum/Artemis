@@ -176,6 +176,8 @@
             "tutorialFreePeriodForm": {
                 "dateInput": {
                     "label": "Datum",
+                    "labelStart": "Anfangsdatum",
+                    "labelEnd": "Enddatum",
                     "requiredDateError": "Ein Datum muss angegeben werden!",
                     "parseError": "Das Datum muss im Format 'YYYY-MM-DD' sein"
                 },
