@@ -20,7 +20,7 @@ import net.sourceforge.plantuml.*;
 @Service
 public class PlantUmlService {
 
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private static final Logger log = LoggerFactory.getLogger(PlantUmlService.class);
 
     private static final String DARK_THEME_FILE_NAME = "puml-theme-artemisdark.puml";
 

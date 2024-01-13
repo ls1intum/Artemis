@@ -131,6 +131,16 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
             SELECT plagiarismCase
             FROM PlagiarismCase plagiarismCase
                 LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
+                LEFT JOIN FETCH plagiarismCase.exercise e
+                LEFT JOIN FETCH e.plagiarismDetectionConfig
+            WHERE plagiarismCase.id = :plagiarismCaseId
+            """)
+    Optional<PlagiarismCase> findByIdWithPlagiarismSubmissionsAndPlagiarismDetectionConfig(@Param("plagiarismCaseId") long plagiarismCaseId);
+
+    @Query("""
+            SELECT plagiarismCase
+            FROM PlagiarismCase plagiarismCase
+                LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
             WHERE plagiarismCase.exercise.id = :exerciseId
                 AND plagiarismCase.createdByContinuousPlagiarismControl = true
             """)
@@ -138,6 +148,10 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
 
     default PlagiarismCase findByIdWithPlagiarismSubmissionsElseThrow(long plagiarismCaseId) {
         return findByIdWithPlagiarismSubmissions(plagiarismCaseId).orElseThrow(() -> new EntityNotFoundException("PlagiarismCase", plagiarismCaseId));
+    }
+
+    default PlagiarismCase findByIdWithPlagiarismSubmissionsAndPlagiarismDetectionConfigElseThrow(long plagiarismCaseId) {
+        return findByIdWithPlagiarismSubmissionsAndPlagiarismDetectionConfig(plagiarismCaseId).orElseThrow(() -> new EntityNotFoundException("PlagiarismCase", plagiarismCaseId));
     }
 
     default PlagiarismCase findByIdElseThrow(long plagiarismCaseId) {

@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class ProgrammingExerciseParticipationService {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseParticipationService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseParticipationService.class);
 
     private final ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
 
@@ -470,7 +470,7 @@ public class ProgrammingExerciseParticipationService {
             return gitService.getCommitInfos(participation.getVcsRepositoryUri());
         }
         catch (GitAPIException e) {
-            log.error("Could not get commit infos for participation " + participation.getId() + " with repository uri " + participation.getVcsRepositoryUri());
+            log.error("Could not get commit infos for participation {} with repository uri {}", participation.getId(), participation.getVcsRepositoryUri());
             return List.of();
         }
     }

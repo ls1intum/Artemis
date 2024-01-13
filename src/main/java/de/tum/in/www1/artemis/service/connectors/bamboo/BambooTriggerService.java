@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTrigger
 @Profile("bamboo")
 public class BambooTriggerService implements ContinuousIntegrationTriggerService {
 
-    private final Logger log = LoggerFactory.getLogger(BambooTriggerService.class);
+    private static final Logger log = LoggerFactory.getLogger(BambooTriggerService.class);
 
     @Value("${artemis.continuous-integration.url}")
     protected URL serverUrl;

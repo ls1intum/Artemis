@@ -52,7 +52,7 @@ public class ProgrammingPlagiarismDetectionService {
     @Value("${artemis.repo-download-clone-path}")
     private Path repoDownloadClonePath;
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingPlagiarismDetectionService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingPlagiarismDetectionService.class);
 
     private final FileService fileService;
 

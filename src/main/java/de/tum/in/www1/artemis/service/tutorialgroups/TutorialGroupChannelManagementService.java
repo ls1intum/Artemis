@@ -39,7 +39,7 @@ public class TutorialGroupChannelManagementService {
 
     private final ChannelRepository channelRepository;
 
-    private final Logger log = LoggerFactory.getLogger(TutorialGroupChannelManagementService.class);
+    private static final Logger log = LoggerFactory.getLogger(TutorialGroupChannelManagementService.class);
 
     public TutorialGroupChannelManagementService(ChannelService channelService, ConversationService conversationService, TutorialGroupRepository tutorialGroupRepository,
             TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, ChannelRepository channelRepository) {

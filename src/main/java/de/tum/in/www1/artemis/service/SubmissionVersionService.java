@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 @Service
 public class SubmissionVersionService {
 
-    private final Logger log = LoggerFactory.getLogger(SubmissionVersionService.class);
+    private static final Logger log = LoggerFactory.getLogger(SubmissionVersionService.class);
 
     protected final SubmissionVersionRepository submissionVersionRepository;
 

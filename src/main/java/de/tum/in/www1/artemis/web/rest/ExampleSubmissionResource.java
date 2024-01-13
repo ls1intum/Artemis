@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("/api")
 public class ExampleSubmissionResource {
 
-    private final Logger log = LoggerFactory.getLogger(ExampleSubmissionResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ExampleSubmissionResource.class);
 
     private static final String ENTITY_NAME = "exampleSubmission";
 

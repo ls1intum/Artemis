@@ -83,6 +83,33 @@ public class AeolusRequestMockProvider {
     }
 
     /**
+     * Mocks a failed generate build plan request
+     *
+     * @param target the target to generate for
+     */
+    public void mockFailedGenerateBuildPlan(AeolusTarget target) {
+        final var uriPattern = Pattern.compile(aeolusUrl + "/generate/" + target.getName());
+
+        mockServer.expect(requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR));
+    }
+
+    /**
+     * Mocks a successful generate preview request
+     *
+     * @param target the target to generate for
+     */
+    public void mockGeneratePreview(AeolusTarget target) {
+        final var uriPattern = Pattern.compile(aeolusUrl + "/generate/" + target.getName());
+
+        Map<String, String> responseBody = new HashMap<>();
+        responseBody.put("result", "imagine a result here");
+        String json = new Gson().toJson(responseBody);
+
+        mockServer.expect(requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.OK).body(json).contentType(org.springframework.http.MediaType.APPLICATION_JSON));
+    }
+
+    /**
      * Resets the mock servers
      */
     public void reset() throws Exception {

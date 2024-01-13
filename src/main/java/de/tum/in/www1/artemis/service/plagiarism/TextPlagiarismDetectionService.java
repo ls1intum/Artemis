@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @Service
 public class TextPlagiarismDetectionService {
 
-    private final Logger log = LoggerFactory.getLogger(TextPlagiarismDetectionService.class);
+    private static final Logger log = LoggerFactory.getLogger(TextPlagiarismDetectionService.class);
 
     private final TextSubmissionExportService textSubmissionExportService;
 

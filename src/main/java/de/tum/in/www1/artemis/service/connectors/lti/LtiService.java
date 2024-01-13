@@ -47,7 +47,7 @@ public class LtiService {
 
     protected static final List<SimpleGrantedAuthority> SIMPLE_USER_LIST_AUTHORITY = Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()));
 
-    private final Logger log = LoggerFactory.getLogger(LtiService.class);
+    private static final Logger log = LoggerFactory.getLogger(LtiService.class);
 
     private final UserCreationService userCreationService;
 

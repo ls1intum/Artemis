@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
+import de.tum.in.www1.artemis.service.connectors.BuildScriptProvider;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.ScriptAction;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
@@ -53,12 +54,15 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService
 @Profile("localci")
 public class LocalCIContainerService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIContainerService.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalCIContainerService.class);
 
     private final DockerClient dockerClient;
 
     private final HostConfig hostConfig;
 
+    /**
+     * The directory in which the build jobs are executed
+     */
     public static final String WORKING_DIRECTORY = "/var/tmp";
 
     @Value("${artemis.continuous-integration.local-cis-build-scripts-path}")
@@ -78,10 +82,13 @@ public class LocalCIContainerService {
 
     AeolusTemplateService aeolusTemplateService;
 
-    public LocalCIContainerService(DockerClient dockerClient, HostConfig hostConfig, AeolusTemplateService aeolusTemplateService) {
+    BuildScriptProvider buildScriptProvider;
+
+    public LocalCIContainerService(DockerClient dockerClient, HostConfig hostConfig, AeolusTemplateService aeolusTemplateService, BuildScriptProvider buildScriptProvider) {
         this.dockerClient = dockerClient;
         this.hostConfig = hostConfig;
         this.aeolusTemplateService = aeolusTemplateService;
+        this.buildScriptProvider = buildScriptProvider;
     }
 
     /**
@@ -373,17 +380,6 @@ public class LocalCIContainerService {
     public Path createBuildScript(ProgrammingExerciseParticipation participation, String containerName) {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
 
-        List<ScriptAction> actions = List.of();
-
-        Windfile windfile = programmingExercise.getWindfile();
-
-        if (windfile == null) {
-            windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
-        }
-        if (windfile != null) {
-            actions = windfile.getScriptActions();
-        }
-
         Path scriptsPath = Path.of(localCIBuildScriptBasePath);
 
         if (!Files.exists(scriptsPath)) {
@@ -402,17 +398,37 @@ public class LocalCIContainerService {
         buildScript.append("#!/bin/bash\n");
         buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir\n");
 
-        actions.forEach(action -> {
-            String workdir = action.getWorkdir();
-            if (workdir != null) {
-                buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir/").append(workdir).append("\n");
-            }
-            buildScript.append(action.getScript()).append("\n");
-            if (workdir != null) {
-                buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir\n");
-            }
-        });
+        String customScript = programmingExercise.getBuildScript();
+        if (customScript != null) {
+            buildScript.append(customScript);
+        }
+        else {
+            List<ScriptAction> actions;
 
+            Windfile windfile = programmingExercise.getWindfile();
+
+            if (windfile == null) {
+                windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
+            }
+            if (windfile != null) {
+                actions = windfile.getScriptActions();
+            }
+            else {
+                throw new LocalCIException("No windfile found for programming exercise " + programmingExercise.getId());
+            }
+
+            actions.forEach(action -> {
+                String workdir = action.getWorkdir();
+                if (workdir != null) {
+                    buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir/").append(workdir).append("\n");
+                }
+                buildScript.append(action.getScript()).append("\n");
+                if (workdir != null) {
+                    buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir\n");
+                }
+            });
+
+        }
         try {
             FileUtils.writeStringToFile(buildScriptPath.toFile(), buildScript.toString(), StandardCharsets.UTF_8);
         }
