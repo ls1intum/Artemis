@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 @RequestMapping("api/")
 public class OrganizationResource {
 
-    private final Logger log = LoggerFactory.getLogger(OrganizationResource.class);
+    private static final Logger log = LoggerFactory.getLogger(OrganizationResource.class);
 
     private final OrganizationRepository organizationRepository;
 

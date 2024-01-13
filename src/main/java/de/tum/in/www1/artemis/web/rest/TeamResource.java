@@ -44,7 +44,7 @@ import de.tum.in.www1.artemis.web.websocket.team.TeamWebsocketService;
 @RequestMapping("/api")
 public class TeamResource {
 
-    private final Logger log = LoggerFactory.getLogger(TeamResource.class);
+    private static final Logger log = LoggerFactory.getLogger(TeamResource.class);
 
     public static final String ENTITY_NAME = "team";
 

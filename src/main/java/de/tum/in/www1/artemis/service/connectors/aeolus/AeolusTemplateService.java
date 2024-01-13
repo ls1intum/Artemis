@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.service.connectors.BuildScriptProvider;
 @Profile("aeolus | localci")
 public class AeolusTemplateService {
 
-    private final Logger logger = LoggerFactory.getLogger(AeolusTemplateService.class);
+    private static final Logger log = LoggerFactory.getLogger(AeolusTemplateService.class);
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
@@ -74,7 +74,7 @@ public class AeolusTemplateService {
                 templateCache.put(uniqueKey, windfile);
             }
             catch (IOException | IllegalArgumentException e) {
-                logger.error("Failed to load windfile {}", resource.getFilename(), e);
+                log.error("Failed to load windfile {}", resource.getFilename(), e);
             }
         }
     }
@@ -131,7 +131,7 @@ public class AeolusTemplateService {
         }
         String scriptCache = buildScriptProvider.getCachedScript(uniqueKey);
         if (scriptCache == null) {
-            logger.error("No windfile found for key {}", uniqueKey);
+            log.error("No windfile found for key {}", uniqueKey);
             return null;
         }
         Windfile windfile = readWindfile(scriptCache);
@@ -152,7 +152,7 @@ public class AeolusTemplateService {
                     exercise.hasSequentialTestRuns(), exercise.isTestwiseCoverageEnabled());
         }
         catch (IOException e) {
-            logger.info("No windfile for the settings of exercise {}", exercise.getId(), e);
+            log.info("No windfile for the settings of exercise {}", exercise.getId(), e);
         }
         return null;
     }
