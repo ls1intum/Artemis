@@ -173,11 +173,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         programmingExerciseRepository.save(programmingExercise);
 
         localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
-
-        await().untilAsserted(() -> verify(programmingMessagingService).notifyUserAboutSubmissionError(Mockito.eq(participation), any()));
-
-        // Should notify the user.
-        verifyUserNotification(participation, "de.tum.in.www1.artemis.exception.LocalCIException: Error while getting test result paths");
+        localVCLocalCITestService.testLatestSubmission(participation.getId(), commitHash, 1, false);
 
     }
 
