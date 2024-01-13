@@ -303,7 +303,7 @@ public class LocalCIBuildJobExecutionService {
 
         // Wait for copying results to finish
         try {
-            Thread.sleep(500);
+            Thread.sleep(1000);
         }
         catch (InterruptedException e) {
             throw new LocalCIException("Waiting for copying results got interrupted");
