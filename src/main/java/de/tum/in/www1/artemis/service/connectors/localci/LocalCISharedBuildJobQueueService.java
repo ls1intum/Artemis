@@ -147,19 +147,13 @@ public class LocalCISharedBuildJobQueueService {
      * @param participationId id of the participation
      */
     public void removeQueuedJobsForParticipation(long participationId) {
-        sharedLock.lock();
-        try {
-            List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
-            for (LocalCIBuildJobQueueItem job : queue) {
-                if (job.participationId() == participationId) {
-                    toRemove.add(job);
-                }
+        List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
+        for (LocalCIBuildJobQueueItem job : queue) {
+            if (job.participationId() == participationId) {
+                toRemove.add(job);
             }
-            queue.removeAll(toRemove);
         }
-        finally {
-            sharedLock.unlock();
-        }
+        queue.removeAll(toRemove);
     }
 
     /**
@@ -397,30 +391,24 @@ public class LocalCISharedBuildJobQueueService {
      * @param buildJobId id of the build job to cancel
      */
     public void cancelBuildJob(long buildJobId) {
-        sharedLock.lock();
-        try {
-            // Remove build job if it is queued
-            if (queue.stream().anyMatch(job -> Objects.equals(job.id(), buildJobId))) {
-                List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
-                for (LocalCIBuildJobQueueItem job : queue) {
-                    if (Objects.equals(job.id(), buildJobId)) {
-                        toRemove.add(job);
-                    }
+        // Remove build job if it is queued
+        if (queue.stream().anyMatch(job -> Objects.equals(job.id(), buildJobId))) {
+            List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
+            for (LocalCIBuildJobQueueItem job : queue) {
+                if (Objects.equals(job.id(), buildJobId)) {
+                    toRemove.add(job);
                 }
-                queue.removeAll(toRemove);
             }
-            else {
-                /*
-                 * // Cancel build job if it is currently being processed
-                 * LocalCIBuildJobQueueItem buildJob = processingJobs.remove(buildJobId);
-                 * if (buildJob != null) {
-                 * localCIBuildJobManagementService.cancelBuildJob(buildJobId);
-                 * }
-                 */
-            }
+            queue.removeAll(toRemove);
         }
-        finally {
-            sharedLock.unlock();
+        else {
+            /*
+             * // Cancel build job if it is currently being processed
+             * LocalCIBuildJobQueueItem buildJob = processingJobs.remove(buildJobId);
+             * if (buildJob != null) {
+             * localCIBuildJobManagementService.cancelBuildJob(buildJobId);
+             * }
+             */
         }
     }
 
@@ -462,13 +450,7 @@ public class LocalCISharedBuildJobQueueService {
      */
     public void cancelAllQueuedBuildJobs() {
         log.debug("Cancelling all queued build jobs");
-        sharedLock.lock();
-        try {
-            queue.clear();
-        }
-        finally {
-            sharedLock.unlock();
-        }
+        queue.clear();
     }
 
     /**
@@ -486,19 +468,13 @@ public class LocalCISharedBuildJobQueueService {
      * @param courseId id of the course
      */
     public void cancelAllQueuedBuildJobsForCourse(long courseId) {
-        sharedLock.lock();
-        try {
-            List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
-            for (LocalCIBuildJobQueueItem job : queue) {
-                if (job.courseId() == courseId) {
-                    toRemove.add(job);
-                }
+        List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
+        for (LocalCIBuildJobQueueItem job : queue) {
+            if (job.courseId() == courseId) {
+                toRemove.add(job);
             }
-            queue.removeAll(toRemove);
         }
-        finally {
-            sharedLock.unlock();
-        }
+        queue.removeAll(toRemove);
     }
 
     /**
