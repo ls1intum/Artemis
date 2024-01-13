@@ -147,6 +147,14 @@ public class LocalCISharedBuildJobQueueService {
         return buildAgentInformation.values().stream().toList();
     }
 
+    /**
+     * Save a finished build job to the database.
+     *
+     * @param queueItem           the build job object from the queue
+     * @param result              the result of the build job (SUCCESSFUL, FAILED, CANCELLED)
+     * @param buildCompletionDate the date when the build job was completed
+     * @param participation       the participation for which the build job was executed
+     */
     public void saveFinishedBuildJob(LocalCIBuildJobQueueItem queueItem, BuildJobResult result, ZonedDateTime buildCompletionDate, ProgrammingExerciseParticipation participation) {
         try {
             String dockerImage = participation.getProgrammingExercise().getWindfile().getMetadata().getDocker().getImage();
