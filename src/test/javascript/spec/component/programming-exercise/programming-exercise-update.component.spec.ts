@@ -66,7 +66,6 @@ import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiari
 import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { IrisExerciseCreationWebsocketService } from 'app/iris/exercise-creation-websocket.service';
 import { IrisExerciseCreationChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-creation-chatbot-button.component';
 import {
     ExerciseMetadata,
