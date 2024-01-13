@@ -34,22 +34,6 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     login: async ({ page }, use) => {
         await use(async (credentials: UserCredentials, url?: string) => {
-            // await page.goto('/');
-            // const isLogin = await page.locator('#username').isVisible();
-            //
-            // if (!isLogin) {
-            //     await navigationBar.logout();
-            // }
-            //
-            // await loginPage.login(credentials);
-            // await page.waitForURL('**/courses**');
-            //
-            // if (url) {
-            //     await page.goto(url);
-            // }
-            console.log('Logging in with...');
-            console.log('Username: ' + credentials.username);
-            console.log('Password: ' + credentials.password);
             await Commands.login(page, credentials, url);
         });
     },
@@ -69,41 +53,4 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     courseCreation: async ({ page }, use) => {
         await use(new CourseCreationPage(page));
     },
-    // context: async ({ context }, use) => {
-    //     await context.route('**/*', (route, req) => {
-    //         const options = {
-    //             uri: req.url(),
-    //             method: req.method(),
-    //             headers: req.headers(),
-    //             body: req.postDataBuffer(),
-    //             timeout: 10000,
-    //             followRedirect: false,
-    //             agentOptions: {
-    //                 ca: fs.readFileSync('./certs/rootCA.pem'),
-    //                 cert: fs.readFileSync('./certs/artemis-nginx+4.pem'),
-    //                 key: fs.readFileSync('./certs/artemis-nginx+4-key.pem'),
-    //             },
-    //         };
-    //         let firstTry = true;
-    //         const handler = (err: { code: any }, resp: { statusCode: any; headers: any }, data: any) => {
-    //             if (err) {
-    //                 if (firstTry) {
-    //                     firstTry = false;
-    //                     return request(options, handler);
-    //                 }
-    //                 // console.error(`Unable to call ${options.uri}`, err.code, err);
-    //                 return route.abort();
-    //             } else {
-    //                 return route.fulfill({
-    //                     status: resp.statusCode,
-    //                     headers: resp.headers,
-    //                     body: data,
-    //                 });
-    //             }
-    //         };
-    //         return request(options, handler);
-    //     });
-    //
-    //     await use(context);
-    // },
 });

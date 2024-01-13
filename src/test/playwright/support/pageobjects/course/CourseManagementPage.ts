@@ -48,7 +48,7 @@ export class CourseManagementPage {
     async deleteCourse(course: Course) {
         await this.page.locator('#delete-course').click();
         await expect(this.page.locator('#delete')).toBeDisabled();
-        await this.page.locator('#confirm-exercise-name').fill(course.title!);
+        await this.page.locator('#confirm-entity-name').fill(course.title!);
         const responsePromise = this.page.waitForResponse(BASE_API + 'admin/courses/' + course.id);
         await this.page.locator('#delete').click();
         await responsePromise;
@@ -77,7 +77,6 @@ export class CourseManagementPage {
         await this.page.locator('#typeahead-basic').fill(credentials.username);
         await this.page.keyboard.press('Enter');
         const userResults = this.page.locator('.ngb-highlight', { hasText: credentials.username });
-        console.log('Number of user results: ' + (await userResults.all()).length);
         await userResults.first().click();
         await this.page.locator('#bread-crumb-2').click();
     }
