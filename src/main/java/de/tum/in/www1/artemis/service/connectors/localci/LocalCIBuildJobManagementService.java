@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import java.io.*;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.FutureTask;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -60,7 +63,7 @@ public class LocalCIBuildJobManagementService {
     @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
     private String buildContainerPrefix;
 
-    private final IMap<Long, Future<LocalCIBuildResult>> runningFutures;
+    private final IMap<Long, byte[]> runningFutures;
 
     private final ISet<Long> cancelledBuildJobs;
 
@@ -113,7 +116,7 @@ public class LocalCIBuildJobManagementService {
          * Usually, when using asynchronous build jobs, it will just resolve to "CompletableFuture.supplyAsync".
          */
         Future<LocalCIBuildResult> future = localCIBuildExecutorService.submit(buildJob);
-        runningFutures.put(buildJobId, future);
+        runningFutures.put(buildJobId, FutureTaskSerializer.serialize(new FutureTask<>(buildJob)));
 
         CompletableFuture<LocalCIBuildResult> futureResult = createCompletableFuture(() -> {
             try {
@@ -198,8 +201,9 @@ public class LocalCIBuildJobManagementService {
      * @param buildJobId The id of the build job that should be cancelled.
      */
     public void cancelBuildJob(long buildJobId) {
-        Future<LocalCIBuildResult> future = runningFutures.get(buildJobId);
-        if (future != null) {
+        byte[] futureBytes = runningFutures.get(buildJobId);
+        if (futureBytes != null) {
+            Future<?> future = FutureTaskSerializer.deserialize(futureBytes);
             try {
                 cancelledBuildJobs.add(buildJobId);
                 future.cancel(true); // Attempt to interrupt the build job
@@ -238,4 +242,30 @@ public class LocalCIBuildJobManagementService {
 
         cancelledBuildJobs.remove(buildJobId);
     }
+
+    public static class FutureTaskSerializer {
+
+        public static byte[] serialize(FutureTask<?> futureTask) {
+            try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); ObjectOutputStream out = new ObjectOutputStream(bos)) {
+                out.writeObject(futureTask.get());
+                // Add other relevant information to the stream
+                return bos.toByteArray();
+            }
+            catch (ExecutionException | InterruptedException | IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public static FutureTask<?> deserialize(byte[] bytes) {
+            try (ByteArrayInputStream bis = new ByteArrayInputStream(bytes); ObjectInputStream in = new ObjectInputStream(bis)) {
+                Callable<?> callable = (Callable<?>) in.readObject();
+                // Reconstruct the FutureTask with the Callable
+                return new FutureTask<>(callable);
+            }
+            catch (IOException | ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
 }
