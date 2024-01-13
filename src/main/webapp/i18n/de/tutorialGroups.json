@@ -178,6 +178,8 @@
                     "label": "Datum",
                     "labelStart": "Anfangsdatum",
                     "labelEnd": "Enddatum",
+                    "labelStartTime": "Startuhrzeit",
+                    "labelEndTime": "Enduhrzeit",
                     "requiredDateError": "Ein Datum muss angegeben werden!",
                     "parseError": "Das Datum muss im Format 'YYYY-MM-DD' sein"
                 },

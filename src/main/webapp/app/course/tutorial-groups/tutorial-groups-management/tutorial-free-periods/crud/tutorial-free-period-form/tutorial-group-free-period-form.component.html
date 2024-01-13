@@ -54,7 +54,7 @@
             <div *ngIf="getTimeFrame() == TimeFrame.Period">
                 <label class="form-label" for="endDate">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEnd' | artemisTranslate }}</label>
                 <div class="input-group">
-                    <input formControlName="endDate" required [owlDateTime]="endDate" class="d-none" />
+                    <input formControlName="endDate" [(ngModel)]="formData.endDate" required [owlDateTime]="endDate" class="d-none" />
                     <input
                         name="endDate"
                         id="endDate"
@@ -80,11 +80,16 @@
 
             <!--            Todo: Hour selector for PeriodWithinDay-->
             <div *ngIf="getTimeFrame() == TimeFrame.PeriodWithinDay">
-                <label class="form-label" for="startTime">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStart' | artemisTranslate }}</label>
+                <label class="form-label" for="startTime">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStartTime' | artemisTranslate }}</label>
                 <div class="input-group">
-                    <input name="startTime" id="startTime" required [owlDateTimeTrigger]="dt2" [owlDateTime]="dt2" />
-                    <owl-date-time [pickerType]="'timer'" #dt2></owl-date-time>
-                    <!--                <label class="form-label" for="endTime">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStart' | artemisTranslate }}</label>-->
+                    <input name="startTime" id="startTime" required [owlDateTimeTrigger]="startTime" [owlDateTime]="startTime" readonly class="form-control" />
+                    <owl-date-time [pickerType]="'timer'" #startTime></owl-date-time>
+                </div>
+
+                <label class="form-label" for="endTime">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEndTime' | artemisTranslate }}</label>
+                <div class="input-group">
+                    <input name="endTime" id="endTime" required [owlDateTimeTrigger]="endTime" [owlDateTime]="endTime" readonly class="form-control" />
+                    <owl-date-time [pickerType]="'timer'" #endTime></owl-date-time>
                 </div>
             </div>
 

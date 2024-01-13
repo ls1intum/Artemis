@@ -6,6 +6,8 @@ import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 export interface TutorialGroupFreePeriodFormData {
     startDate?: Date;
     endDate?: Date;
+    startTime?: Date;
+    endTime?: Date;
     reason?: string;
 }
 
@@ -15,6 +17,7 @@ export enum TimeFrame {
     Period,
     PeriodWithinDay,
 }
+
 @Component({
     selector: 'jhi-tutorial-free-period-form',
     templateUrl: './tutorial-group-free-period-form.component.html',
@@ -27,6 +30,8 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     formData: TutorialGroupFreePeriodFormData = {
         startDate: undefined,
         endDate: undefined,
+        startTime: undefined,
+        endTime: undefined,
         reason: undefined,
     };
 
@@ -46,9 +51,11 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
 
     // Todo: TimeFrame getter/setter. Reset endDate when switching back to single Day
     setTimeFrame(timeFrame: TimeFrame) {
-        // debugger;
-        if (timeFrame == TimeFrame.Day) {
-            this.formData.endDate = undefined;
+        if (timeFrame == TimeFrame.Day && this.formData.endDate != undefined) {
+            // @ts-expect-error It will never be null...
+            this.form.get('endDate').setValue(null);
+            // @ts-expect-error It will never be null...
+            this.form.get('endDate').markAsPristine();
         }
         this.timeFrame = timeFrame;
     }
@@ -70,6 +77,10 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     }
 
     get isSubmitPossible() {
+        if (this.timeFrame == TimeFrame.Day) {
+            // @ts-expect-error It will never be null...
+            return this.form.get('startDay').invalid;
+        }
         return !this.form.invalid;
     }
 
@@ -133,6 +144,4 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
             return false;
         }
     }
-
-    protected readonly FormData = FormData;
 }

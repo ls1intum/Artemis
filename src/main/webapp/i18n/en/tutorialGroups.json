@@ -178,6 +178,8 @@
                     "label": "Date",
                     "labelStart": "Start Date",
                     "labelEnd": "End Date",
+                    "labelStartTime": "Start Time",
+                    "labelEndTime": "End Time",
                     "requiredDateError": "You need to select a date for the tutorial free day!",
                     "parseError": "Date must be in the format 'YYYY-MM-DD'"
                 },
