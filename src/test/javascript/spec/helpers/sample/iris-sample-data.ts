@@ -8,6 +8,7 @@ import { IrisChatWebsocketDTO, IrisChatWebsocketMessageType } from 'app/iris/cha
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { IrisCodeEditorWebsocketDTO, IrisCodeEditorWebsocketMessageType, StepExecutionException, StepExecutionSuccess } from 'app/iris/code-editor-websocket.service';
 import { ExerciseMetadata, ExerciseUpdate, IrisExerciseCreationWebsocketDTO, IrisExerciseCreationWebsocketMessageType } from 'app/iris/exercise-creation-websocket.service';
+import { Course } from 'app/entities/course.model';
 
 const map = new Map<string, any>();
 map.set('model', 'gpt-4');
@@ -43,6 +44,8 @@ export const mockExercisePlan = {
     id: 2,
     steps: [mockExercisePlanStep],
 } as IrisExercisePlan;
+
+export const irisCourse = { id: 1 } as Course;
 export const irisExercise = { id: 1, title: 'Metis  Exercise', type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
 
 export const mockServerPlanMessage = {
@@ -204,6 +207,7 @@ export const mockCodeEditorWebsocketUnknownError = {
 
 export const mockConversation = {
     id: 1,
+    course: irisCourse,
     exercise: irisExercise,
     messages: [mockClientMessage, mockServerMessage],
 } as IrisSession;
