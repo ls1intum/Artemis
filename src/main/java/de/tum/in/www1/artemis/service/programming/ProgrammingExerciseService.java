@@ -215,14 +215,14 @@ public class ProgrammingExerciseService {
         final User exerciseCreator = userRepository.getUser();
         VersionControlService versionControl = versionControlService.orElseThrow();
 
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
+
         // Step 1: Setting constant facts for a programming exercise
-        programmingExercise.generateAndSetProjectKey();
-        programmingExercise.setBranch(versionControl.getDefaultBranchOfArtemis());
+        savedProgrammingExercise.generateAndSetProjectKey();
+        savedProgrammingExercise.setBranch(versionControl.getDefaultBranchOfArtemis());
 
         // Step 2: Creating repositories for new exercise
-        programmingExerciseRepositoryService.createRepositoriesForNewExercise(programmingExercise);
-
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
+        programmingExerciseRepositoryService.createRepositoriesForNewExercise(savedProgrammingExercise);
 
         // Step 3: Initializing solution and template participation
         initParticipations(savedProgrammingExercise);
