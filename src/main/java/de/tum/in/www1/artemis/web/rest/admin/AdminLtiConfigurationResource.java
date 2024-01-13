@@ -31,7 +31,7 @@ public class AdminLtiConfigurationResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final Logger log = LoggerFactory.getLogger(AdminLtiConfigurationResource.class);
+    private static final Logger log = LoggerFactory.getLogger(AdminLtiConfigurationResource.class);
 
     private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
 
