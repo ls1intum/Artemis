@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.service.connectors.BuildScriptProvider;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 
@@ -27,17 +28,20 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 @RequestMapping("/api/aeolus")
 public class AeolusTemplateResource {
 
-    private final Logger logger = LoggerFactory.getLogger(AeolusTemplateResource.class);
+    private static final Logger log = LoggerFactory.getLogger(AeolusTemplateResource.class);
 
     private final AeolusTemplateService aeolusTemplateService;
+
+    private final BuildScriptProvider buildScriptProvider;
 
     /**
      * Constructor for the AeolusTemplateResource
      *
      * @param aeolusTemplateService the service for retrieving the aeolus template files
      */
-    public AeolusTemplateResource(AeolusTemplateService aeolusTemplateService) {
+    public AeolusTemplateResource(AeolusTemplateService aeolusTemplateService, BuildScriptProvider buildScriptProvider) {
         this.aeolusTemplateService = aeolusTemplateService;
+        this.buildScriptProvider = buildScriptProvider;
     }
 
     /**
@@ -59,12 +63,39 @@ public class AeolusTemplateResource {
             @RequestParam(value = "staticAnalysis", defaultValue = "false") boolean staticAnalysis,
             @RequestParam(value = "sequentialRuns", defaultValue = "false") boolean sequentialRuns,
             @RequestParam(value = "testCoverage", defaultValue = "false") boolean testCoverage) {
-        logger.debug("REST request to get aeolus template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}, testCoverage: {}", language,
+        log.debug("REST request to get aeolus template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}, testCoverage: {}", language,
                 projectType, staticAnalysis, sequentialRuns, testCoverage);
 
         String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
 
         return getAeolusTemplateFileContentWithResponse(language, projectTypePrefix, staticAnalysis, sequentialRuns, testCoverage);
+    }
+
+    /**
+     * GET /api/aeolus/templates/:language/:projectType : Get the aeolus template file with the given filename<br/>
+     * GET /api/aeolus/templates/:language : Get the aeolus template file with the given filename
+     * <p>
+     * The windfile contains the default build plan configuration for new programming exercises.
+     *
+     * @param language       The programming language for which the aeolus template file should be returned
+     * @param projectType    The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
+     * @param staticAnalysis Whether the static analysis template should be used
+     * @param sequentialRuns Whether the sequential runs template should be used
+     * @param testCoverage   Whether the test coverage template should be used
+     * @return The requested file, or 404 if the file doesn't exist
+     */
+    @GetMapping({ "/templateScripts/{language}/{projectType}", "/templateScripts/{language}" })
+    @EnforceAtLeastEditor
+    public ResponseEntity<String> getAeolusTemplateScript(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
+            @RequestParam(value = "staticAnalysis", defaultValue = "false") boolean staticAnalysis,
+            @RequestParam(value = "sequentialRuns", defaultValue = "false") boolean sequentialRuns,
+            @RequestParam(value = "testCoverage", defaultValue = "false") boolean testCoverage) {
+        log.debug("REST request to get aeolus template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}, testCoverage: {}", language,
+                projectType, staticAnalysis, sequentialRuns, testCoverage);
+
+        String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
+
+        return getAeolusTemplateScriptWithResponse(language, projectTypePrefix, staticAnalysis, sequentialRuns, testCoverage);
     }
 
     /**
@@ -88,13 +119,45 @@ public class AeolusTemplateResource {
                 optionalProjectType = Optional.of(ProjectType.valueOf(projectTypePrefix.toUpperCase()));
             }
             Windfile windfile = aeolusTemplateService.getWindfileFor(language, optionalProjectType, staticAnalysis, sequentialRuns, testCoverage);
+            if (windfile == null) {
+                return new ResponseEntity<>(null, null, HttpStatus.NOT_FOUND);
+            }
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.setContentType(MediaType.APPLICATION_JSON);
             String json = new ObjectMapper().writeValueAsString(windfile);
             return new ResponseEntity<>(json, responseHeaders, HttpStatus.OK);
         }
         catch (IOException ex) {
-            logger.warn("Error when retrieving aeolus template file", ex);
+            log.warn("Error when retrieving aeolus template file", ex);
+            HttpHeaders responseHeaders = new HttpHeaders();
+            return new ResponseEntity<>(null, responseHeaders, HttpStatus.NOT_FOUND);
+        }
+    }
+
+    /**
+     * Returns the file content of the template script for the given language and project type as JSON.
+     *
+     * @param language          The programming language for which the template file should be returned
+     * @param projectTypePrefix The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
+     * @param staticAnalysis    Whether the static analysis template should be used
+     * @param sequentialRuns    Whether the sequential runs template should be used
+     * @param testCoverage      Whether the test coverage template should be used
+     * @return The requested file, or 404 if the file doesn't exist
+     */
+    private ResponseEntity<String> getAeolusTemplateScriptWithResponse(ProgrammingLanguage language, String projectTypePrefix, boolean staticAnalysis, boolean sequentialRuns,
+            boolean testCoverage) {
+        try {
+            Optional<ProjectType> optionalProjectType = Optional.empty();
+            if (!projectTypePrefix.isEmpty()) {
+                optionalProjectType = Optional.of(ProjectType.valueOf(projectTypePrefix.toUpperCase()));
+            }
+            String script = buildScriptProvider.getScriptFor(language, optionalProjectType, staticAnalysis, sequentialRuns, testCoverage);
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.setContentType(MediaType.TEXT_PLAIN);
+            return new ResponseEntity<>(script, responseHeaders, HttpStatus.OK);
+        }
+        catch (IOException ex) {
+            log.warn("Error when retrieving aeolus template script", ex);
             HttpHeaders responseHeaders = new HttpHeaders();
             return new ResponseEntity<>(null, responseHeaders, HttpStatus.NOT_FOUND);
         }

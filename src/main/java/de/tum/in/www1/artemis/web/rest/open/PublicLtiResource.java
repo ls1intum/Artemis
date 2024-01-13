@@ -42,7 +42,7 @@ import io.jsonwebtoken.*;
 @Profile("lti")
 public class PublicLtiResource {
 
-    private final Logger log = LoggerFactory.getLogger(PublicLtiResource.class);
+    private static final Logger log = LoggerFactory.getLogger(PublicLtiResource.class);
 
     private final Lti10Service lti10Service;
 

@@ -123,7 +123,7 @@ public class ExamService {
     @Value("${artemis.course-archives-path}")
     private Path examArchivesDirPath;
 
-    private final Logger log = LoggerFactory.getLogger(ExamService.class);
+    private static final Logger log = LoggerFactory.getLogger(ExamService.class);
 
     private final UserRepository userRepository;
 

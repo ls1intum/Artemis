@@ -39,7 +39,7 @@ public abstract class ExerciseWithSubmissionsExportService {
 
     private static final String API_MARKDOWN_FILE_PATH = "/api/files/markdown/";
 
-    private final Logger log = LoggerFactory.getLogger(ExerciseWithSubmissionsExportService.class);
+    private static final Logger log = LoggerFactory.getLogger(ExerciseWithSubmissionsExportService.class);
 
     private final FileService fileService;
 

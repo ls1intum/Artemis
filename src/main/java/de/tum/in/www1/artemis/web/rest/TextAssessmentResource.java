@@ -25,13 +25,11 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSendingService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
-import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
@@ -47,7 +45,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private static final String ENTITY_NAME = "textAssessment";
 
-    private final Logger log = LoggerFactory.getLogger(TextAssessmentResource.class);
+    private static final Logger log = LoggerFactory.getLogger(TextAssessmentResource.class);
 
     private final TextBlockService textBlockService;
 
@@ -71,12 +69,11 @@ public class TextAssessmentResource extends AssessmentResource {
 
     public TextAssessmentResource(AuthorizationCheckService authCheckService, TextAssessmentService textAssessmentService, TextBlockService textBlockService,
             TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository, UserRepository userRepository,
-            TextSubmissionService textSubmissionService, ResultWebsocketService resultWebsocketService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
+            TextSubmissionService textSubmissionService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             GradingCriterionRepository gradingCriterionRepository, ExamService examService, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, FeedbackRepository feedbackRepository, SingleUserNotificationService singleUserNotificationService,
-            ResultService resultService, Optional<AthenaFeedbackSendingService> athenaFeedbackSendingService) {
-        super(authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, examService, resultWebsocketService, exampleSubmissionRepository,
-                submissionRepository, singleUserNotificationService);
+            SubmissionRepository submissionRepository, FeedbackRepository feedbackRepository, ResultService resultService,
+            Optional<AthenaFeedbackSendingService> athenaFeedbackSendingService) {
+        super(authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, examService, exampleSubmissionRepository, submissionRepository);
 
         this.textAssessmentService = textAssessmentService;
         this.textBlockService = textBlockService;
@@ -152,15 +149,13 @@ public class TextAssessmentResource extends AssessmentResource {
             TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
         }
-        final var response = super.saveExampleAssessment(exampleSubmissionId, textAssessment.getFeedbacks());
-        if (response.getStatusCode().is2xxSuccessful()) {
-            final var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
-            final Submission submission = response.getBody().getSubmission();
-            final var textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submission.getId());
-            final var feedbacksWithIds = response.getBody().getFeedbacks();
-            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, exercise, feedbacksWithIds);
-        }
-        return response;
+        final Result result = super.saveExampleAssessment(exampleSubmissionId, textAssessment.getFeedbacks());
+        final TextExercise exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
+        final Submission submission = result.getSubmission();
+        final TextSubmission textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submission.getId());
+        final List<Feedback> feedbacksWithIds = result.getFeedbacks();
+        saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, exercise, feedbacksWithIds);
+        return ResponseEntity.ok(result);
     }
 
     /**

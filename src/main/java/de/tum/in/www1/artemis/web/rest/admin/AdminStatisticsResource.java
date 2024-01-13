@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.service.StatisticsService;
 @RequestMapping("api/admin/")
 public class AdminStatisticsResource {
 
-    private final Logger log = LoggerFactory.getLogger(AdminStatisticsResource.class);
+    private static final Logger log = LoggerFactory.getLogger(AdminStatisticsResource.class);
 
     private final StatisticsService statisticsService;
 

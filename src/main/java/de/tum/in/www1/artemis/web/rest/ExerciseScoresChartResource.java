@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
 @RequestMapping("api/")
 public class ExerciseScoresChartResource {
 
-    private final Logger log = LoggerFactory.getLogger(ExerciseScoresChartResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ExerciseScoresChartResource.class);
 
     private final ExerciseScoresChartService exerciseScoresChartService;
 

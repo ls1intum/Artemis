@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.*;
 @Service
 public class BehavioralTestCaseService {
 
-    private final Logger log = LoggerFactory.getLogger(BehavioralTestCaseService.class);
+    private static final Logger log = LoggerFactory.getLogger(BehavioralTestCaseService.class);
 
     private final GitService gitService;
 

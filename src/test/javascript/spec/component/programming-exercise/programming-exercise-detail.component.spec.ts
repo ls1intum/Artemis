@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
+import { of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseDetailComponent } from 'app/exercises/programming/manage/programming-exercise-detail.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -24,7 +24,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
-import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
 import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-log-statistics-dto';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
@@ -34,13 +33,13 @@ import {
     ProgrammingLanguageFeature,
     ProgrammingLanguageFeatureService,
 } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
+import { MockRouter } from '../../helpers/mocks/mock-router';
 
 describe('ProgrammingExercise Management Detail Component', () => {
     let comp: ProgrammingExerciseDetailComponent;
     let fixture: ComponentFixture<ProgrammingExerciseDetailComponent>;
     let statisticsService: StatisticsService;
     let exerciseService: ProgrammingExerciseService;
-    let modalService: NgbModal;
     let alertService: AlertService;
     let profileService: ProfileService;
     let programmingLanguageFeatureService: ProgrammingLanguageFeatureService;
@@ -48,9 +47,12 @@ describe('ProgrammingExercise Management Detail Component', () => {
     let gitDiffReportStub: jest.SpyInstance;
     let buildLogStatisticsStub: jest.SpyInstance;
     let findWithTemplateAndSolutionParticipationStub: jest.SpyInstance;
+    let router: Router;
+    let modalService: NgbModal;
 
     const mockProgrammingExercise = {
         id: 1,
+        categories: [{ category: 'Important' }],
         templateParticipation: {
             id: 1,
         } as TemplateProgrammingExerciseParticipation,
@@ -113,8 +115,9 @@ describe('ProgrammingExercise Management Detail Component', () => {
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: ProfileService, useValue: new MockProfileService() },
                 { provide: ProgrammingExerciseGradingService, useValue: new MockProgrammingExerciseGradingService() },
-                { provide: ProgrammingExerciseService, useValue: new MockProgrammingExerciseService() },
+                { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: NgbModal, useValue: new MockNgbModalService() },
+                { provide: Router, useClass: MockRouter },
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(ProgrammingExerciseDetailComponent);
@@ -126,13 +129,15 @@ describe('ProgrammingExercise Management Detail Component', () => {
         exerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
         profileService = fixture.debugElement.injector.get(ProfileService);
         programmingLanguageFeatureService = fixture.debugElement.injector.get(ProgrammingLanguageFeatureService);
+        router = fixture.debugElement.injector.get(Router);
+        modalService = fixture.debugElement.injector.get(NgbModal);
 
         findWithTemplateAndSolutionParticipationStub = jest
             .spyOn(exerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults')
             .mockReturnValue(of(new HttpResponse<ProgrammingExercise>({ body: mockProgrammingExercise })));
         gitDiffReportStub = jest.spyOn(exerciseService, 'getDiffReport').mockReturnValue(of(gitDiffReport));
         buildLogStatisticsStub = jest.spyOn(exerciseService, 'getBuildLogStatistics').mockReturnValue(of(buildLogStatistics));
-        modalService = fixture.debugElement.injector.get(NgbModal);
+
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
         jest.spyOn(programmingLanguageFeatureService, 'getProgrammingLanguageFeature').mockReturnValue({
             plagiarismCheckSupported: true,
@@ -141,19 +146,6 @@ describe('ProgrammingExercise Management Detail Component', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
-    });
-
-    it('should open git-diff', () => {
-        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
-        programmingExercise.id = 123;
-        comp.programmingExercise = programmingExercise;
-
-        jest.spyOn(modalService, 'open');
-
-        comp.showGitDiff();
-
-        expect(modalService.open).toHaveBeenCalledOnce();
-        expect(modalService.open).toHaveBeenCalledWith(GitDiffReportModalComponent, { size: 'xl' });
     });
 
     describe('onInit for course exercise', () => {
@@ -165,16 +157,16 @@ describe('ProgrammingExercise Management Detail Component', () => {
             route.data = of({ programmingExercise });
         });
 
-        it('should not be in exam mode', fakeAsync(() => {
+        it('should not be in exam mode', async () => {
             // WHEN
             comp.ngOnInit();
 
-            tick();
-
             // THEN
+            await Promise.resolve();
             expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
-            expect(statisticsServiceStub).toHaveBeenCalledOnce();
             expect(gitDiffReportStub).toHaveBeenCalledOnce();
+            expect(statisticsServiceStub).toHaveBeenCalledOnce();
+            await Promise.resolve();
             expect(comp.programmingExercise).toEqual(mockProgrammingExercise);
             expect(comp.isExamExercise).toBeFalse();
             expect(comp.doughnutStats.participationsInPercent).toBe(100);
@@ -182,22 +174,26 @@ describe('ProgrammingExercise Management Detail Component', () => {
             expect(comp.doughnutStats.absoluteAveragePoints).toBe(5);
             expect(comp.programmingExercise.gitDiffReport).toBeDefined();
             expect(comp.programmingExercise.gitDiffReport?.entries).toHaveLength(1);
-        }));
-
-        it.each([true, false])('should only call service method to get build log statistics onInit if the user is at least an editor for this exercise', (isEditor: boolean) => {
-            const programmingExercise = new ProgrammingExercise(new Course(), undefined);
-            programmingExercise.id = 123;
-            programmingExercise.isAtLeastEditor = isEditor;
-            jest.spyOn(exerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
-                of({ body: programmingExercise } as unknown as HttpResponse<ProgrammingExercise>),
-            );
-            comp.ngOnInit();
-            if (isEditor) {
-                expect(buildLogStatisticsStub).toHaveBeenCalledOnce();
-            } else {
-                expect(buildLogStatisticsStub).not.toHaveBeenCalled();
-            }
         });
+
+        it.each([true, false])(
+            'should only call service method to get build log statistics onInit if the user is at least an editor for this exercise',
+            async (isEditor: boolean) => {
+                const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+                programmingExercise.id = 123;
+                programmingExercise.isAtLeastEditor = isEditor;
+                jest.spyOn(exerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
+                    of({ body: programmingExercise } as unknown as HttpResponse<ProgrammingExercise>),
+                );
+                comp.ngOnInit();
+                await new Promise((r) => setTimeout(r, 100));
+                if (isEditor) {
+                    expect(buildLogStatisticsStub).toHaveBeenCalledOnce();
+                } else {
+                    expect(buildLogStatisticsStub).not.toHaveBeenCalled();
+                }
+            },
+        );
     });
 
     describe('onInit for exam exercise', () => {
@@ -212,21 +208,37 @@ describe('ProgrammingExercise Management Detail Component', () => {
             route.data = of({ programmingExercise });
         });
 
-        it('should be in exam mode', fakeAsync(() => {
+        it('should be in exam mode', fakeAsync(async () => {
             // WHEN
             comp.ngOnInit();
 
             tick();
 
             // THEN
+            await Promise.resolve();
             expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
             expect(gitDiffReportStub).toHaveBeenCalledOnce();
+            await Promise.resolve();
             expect(comp.programmingExercise).toEqual(mockProgrammingExercise);
             expect(comp.isExamExercise).toBeTrue();
             expect(comp.programmingExercise.gitDiffReport).toBeDefined();
             expect(comp.programmingExercise.gitDiffReport?.entries).toHaveLength(1);
         }));
+    });
+
+    it('should create empty details', () => {
+        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+        programmingExercise.id = 123;
+        comp.programmingExercise = programmingExercise;
+
+        const sections = comp.getExerciseDetails();
+        expect(sections).toBeDefined();
+        for (const section of sections) {
+            for (const detail of section.details) {
+                expect(detail).toBeDefined();
+            }
+        }
     });
 
     it('should create structural solution entries', () => {
@@ -279,5 +291,109 @@ describe('ProgrammingExercise Management Detail Component', () => {
 
         expect(profileInfoStub).toHaveBeenCalledOnce();
         expect(comp.isBuildPlanEditable).toBe(editable);
+    });
+
+    it('should reload on participation change', () => {
+        const loadDiffSpy = jest.spyOn(comp, 'loadGitDiffReport').mockReturnValue(new Promise(() => null));
+        jest.spyOn(exerciseService, 'getLatestResult').mockReturnValue({ successful: true });
+        jest.spyOn(exerciseService, 'getLatestTestwiseCoverageReport').mockReturnValue(of({ coveredLineRatio: 0.5 }));
+        comp.programmingExercise = mockProgrammingExercise;
+        comp.programmingExercise.testwiseCoverageEnabled = true;
+        comp.onParticipationChange();
+        expect(loadDiffSpy).toHaveBeenCalledOnce();
+        expect(comp.programmingExercise.coveredLinesRatio).toBe(0.5);
+    });
+
+    it('should combine template commit', () => {
+        const combineCommitsSpy = jest.spyOn(exerciseService, 'combineTemplateRepositoryCommits').mockReturnValue(of(new HttpResponse({ body: null })));
+        const successSpy = jest.spyOn(alertService, 'success');
+        comp.programmingExercise = mockProgrammingExercise;
+        comp.combineTemplateCommits();
+        expect(combineCommitsSpy).toHaveBeenCalledOnce();
+        expect(successSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should alert on combine template commit error', () => {
+        const combineCommitsSpy = jest.spyOn(exerciseService, 'combineTemplateRepositoryCommits').mockReturnValue(throwError(new HttpResponse({ body: null })));
+        const errorSpy = jest.spyOn(alertService, 'error');
+        comp.programmingExercise = mockProgrammingExercise;
+        comp.combineTemplateCommits();
+        expect(combineCommitsSpy).toHaveBeenCalledOnce();
+        expect(errorSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should delete programming exercise', () => {
+        const routerNavigateSpy = jest.spyOn(router, 'navigateByUrl');
+        jest.spyOn(exerciseService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
+        comp.programmingExercise = mockProgrammingExercise;
+        comp.deleteProgrammingExercise({});
+        expect(routerNavigateSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should delete exam programming exercise', () => {
+        const routerNavigateSpy = jest.spyOn(router, 'navigateByUrl');
+        jest.spyOn(exerciseService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
+        comp.programmingExercise = mockProgrammingExercise;
+        comp.isExamExercise = true;
+        comp.deleteProgrammingExercise({});
+        expect(routerNavigateSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should handle unlock all repsitories', () => {
+        const modalSpy = jest.spyOn(modalService, 'open');
+        comp.programmingExercise = mockProgrammingExercise;
+
+        comp.handleUnlockAllRepositories();
+        expect(modalSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should unlock all repositories', () => {
+        const unlockSpy = jest.spyOn(exerciseService, 'unlockAllRepositories').mockReturnValue(of(new HttpResponse({ body: 2 })));
+        const successSpy = jest.spyOn(alertService, 'addAlert');
+        comp.programmingExercise = mockProgrammingExercise;
+        comp.unlockAllRepositories();
+        expect(unlockSpy).toHaveBeenCalledOnce();
+        expect(successSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should error on unlock all repositories', () => {
+        const unlockSpy = jest.spyOn(exerciseService, 'unlockAllRepositories').mockReturnValue(throwError(new HttpResponse({ body: 2 })));
+        const errorSpy = jest.spyOn(alertService, 'error');
+        comp.programmingExercise = mockProgrammingExercise;
+        comp.unlockAllRepositories();
+        expect(unlockSpy).toHaveBeenCalledOnce();
+        expect(errorSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should handle lock all Repsitories', () => {
+        const modalSpy = jest.spyOn(modalService, 'open');
+        comp.programmingExercise = mockProgrammingExercise;
+
+        comp.handleLockAllRepositories();
+        expect(modalSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should generate structure oracle', async () => {
+        const alertSpy = jest.spyOn(alertService, 'addAlert');
+        jest.spyOn(exerciseService, 'generateStructureOracle').mockReturnValue(of('success'));
+        comp.programmingExercise = mockProgrammingExercise;
+        comp.generateStructureOracle();
+        expect(alertSpy).toHaveBeenCalledWith({
+            type: AlertType.SUCCESS,
+            message: 'success',
+            disableTranslation: true,
+        });
+    });
+
+    it('should error on generate structure oracle', () => {
+        const alertSpy = jest.spyOn(alertService, 'addAlert');
+        jest.spyOn(exerciseService, 'generateStructureOracle').mockReturnValue(throwError({ headers: { get: () => 'error' } }));
+        comp.programmingExercise = mockProgrammingExercise;
+        comp.generateStructureOracle();
+        expect(alertSpy).toHaveBeenCalledWith({
+            type: AlertType.DANGER,
+            message: 'error',
+            disableTranslation: true,
+        });
     });
 });

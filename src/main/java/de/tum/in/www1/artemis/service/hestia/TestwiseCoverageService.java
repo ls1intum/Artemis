@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 @Service
 public class TestwiseCoverageService {
 
-    private final Logger log = LoggerFactory.getLogger(TestwiseCoverageService.class);
+    private static final Logger log = LoggerFactory.getLogger(TestwiseCoverageService.class);
 
     private final CoverageReportRepository coverageReportRepository;
 

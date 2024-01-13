@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 @Service
 public class TitleCacheEvictionService implements PostUpdateEventListener, PostDeleteEventListener {
 
-    private final Logger log = LoggerFactory.getLogger(TitleCacheEvictionService.class);
+    private static final Logger log = LoggerFactory.getLogger(TitleCacheEvictionService.class);
 
     private final CacheManager cacheManager;
 

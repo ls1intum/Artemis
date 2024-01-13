@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.service.FileService;
 public class DragAndDropQuestion extends QuizQuestion {
 
     @Transient
-    private final transient Logger log = LoggerFactory.getLogger(DragAndDropQuestion.class);
+    private static final transient Logger log = LoggerFactory.getLogger(DragAndDropQuestion.class);
 
     @Transient
     private final transient FilePathService filePathService = new FilePathService();
