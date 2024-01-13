@@ -18,28 +18,28 @@ class FilePathServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testActualPathForPublicPath() {
-        Path actualPath = filePathService.actualPathForPublicPath(URI.create("/api/files/drag-and-drop/backgrounds/background.jpeg"));
+        Path actualPath = FilePathService.actualPathForPublicPath(URI.create("/api/files/drag-and-drop/backgrounds/background.jpeg"));
         assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "drag-and-drop", "backgrounds", "background.jpeg"));
 
-        actualPath = filePathService.actualPathForPublicPath(URI.create("/api/files/drag-and-drop/drag-items/image.jpeg"));
+        actualPath = FilePathService.actualPathForPublicPath(URI.create("/api/files/drag-and-drop/drag-items/image.jpeg"));
         assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "drag-and-drop", "drag-items", "image.jpeg"));
 
-        actualPath = filePathService.actualPathForPublicPath(URI.create("/api/files/course/icons/icon.png"));
+        actualPath = FilePathService.actualPathForPublicPath(URI.create("/api/files/course/icons/icon.png"));
         assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "course", "icons", "icon.png"));
 
-        actualPath = filePathService.actualPathForPublicPath(URI.create("/api/files/attachments/lecture/4/slides.pdf"));
+        actualPath = FilePathService.actualPathForPublicPath(URI.create("/api/files/attachments/lecture/4/slides.pdf"));
         assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "lecture", "4", "slides.pdf"));
 
-        actualPath = filePathService.actualPathForPublicPath(URI.create("/api/files/attachments/attachment-unit/4/download.pdf"));
+        actualPath = FilePathService.actualPathForPublicPath(URI.create("/api/files/attachments/attachment-unit/4/download.pdf"));
         assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "attachment-unit", "4", "download.pdf"));
 
-        actualPath = filePathService.actualPathForPublicPath(URI.create("/api/files/attachments/attachment-unit/4/slide/1/1.jpg"));
+        actualPath = FilePathService.actualPathForPublicPath(URI.create("/api/files/attachments/attachment-unit/4/slide/1/1.jpg"));
         assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "attachment-unit", "4", "slide", "1", "1.jpg"));
     }
 
     @Test
     void testActualPathForPublicFileUploadExercisePath_shouldReturnNull() {
-        Path path = filePathService.actualPathForPublicPath(URI.create("/api/unknown-path/unknown-file.pdf"));
+        Path path = FilePathService.actualPathForPublicPath(URI.create("/api/unknown-path/unknown-file.pdf"));
         assertThat(path).isNull();
     }
 

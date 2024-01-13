@@ -102,6 +102,7 @@ public class AeolusBuildPlanService {
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(jsonObject, null);
         try {
             ResponseEntity<AeolusGenerationResponseDTO> response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, entity, AeolusGenerationResponseDTO.class);
+
             if (response.getBody() != null) {
                 return response.getBody().getKey();
             }
@@ -197,7 +198,7 @@ public class AeolusBuildPlanService {
             }
         }
         catch (RestClientException | JsonSyntaxException e) {
-            LOGGER.error("Error while generating build script for build plan {}", buildPlanKey, e);
+            log.error("Error while generating build script for build plan {}", buildPlanKey, e);
         }
         return null;
     }

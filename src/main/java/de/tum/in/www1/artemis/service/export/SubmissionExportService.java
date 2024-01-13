@@ -41,7 +41,7 @@ public abstract class SubmissionExportService {
 
     private static final int EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES = 30;
 
-    private final Logger log = LoggerFactory.getLogger(SubmissionExportService.class);
+    private static final Logger log = LoggerFactory.getLogger(SubmissionExportService.class);
 
     private final ExerciseRepository exerciseRepository;
 

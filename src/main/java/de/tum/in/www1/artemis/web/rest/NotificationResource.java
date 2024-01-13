@@ -37,7 +37,7 @@ import tech.jhipster.web.util.PaginationUtil;
 @RequestMapping("api/")
 public class NotificationResource {
 
-    private final Logger log = LoggerFactory.getLogger(NotificationResource.class);
+    private static final Logger log = LoggerFactory.getLogger(NotificationResource.class);
 
     private static final Set<String> TITLES_TO_NOT_LOAD_NOTIFICATION = Set.of(NEW_MESSAGE_TITLE, MESSAGE_REPLY_IN_CONVERSATION_TITLE);
 

@@ -37,7 +37,7 @@ public class TutorParticipationService {
 
     private static final String ENTITY_NAME = "TutorParticipation";
 
-    private final Logger log = LoggerFactory.getLogger(TutorParticipationService.class);
+    private static final Logger log = LoggerFactory.getLogger(TutorParticipationService.class);
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 

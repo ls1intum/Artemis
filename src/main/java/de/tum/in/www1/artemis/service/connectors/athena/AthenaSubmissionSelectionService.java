@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.service.dto.athena.ExerciseDTO;
 @Profile("athena")
 public class AthenaSubmissionSelectionService {
 
-    private final Logger log = LoggerFactory.getLogger(AthenaSubmissionSelectionService.class);
+    private static final Logger log = LoggerFactory.getLogger(AthenaSubmissionSelectionService.class);
 
     private final AthenaConnector<RequestDTO, ResponseDTO> connector;
 

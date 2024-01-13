@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 @Service
 public class ModelingSubmissionService extends SubmissionService {
 
-    private final Logger log = LoggerFactory.getLogger(ModelingSubmissionService.class);
+    private static final Logger log = LoggerFactory.getLogger(ModelingSubmissionService.class);
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
