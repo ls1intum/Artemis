@@ -23,7 +23,7 @@ export class IrisCompetencyGenerationSubSettingsUpdateComponent implements OnIni
     templateContent: string;
 
     ngOnInit(): void {
-        this.templateContent = this.subSettings.template?.content ?? this.parentSubSettings?.template?.content ?? '';
+        this.templateContent = this.subSettings?.template?.content ?? this.parentSubSettings?.template?.content ?? '';
     }
 
     ngOnChanges(changes: SimpleChanges): void {
