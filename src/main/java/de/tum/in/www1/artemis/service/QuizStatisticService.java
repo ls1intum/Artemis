@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 @Service
 public class QuizStatisticService {
 
-    private final Logger log = LoggerFactory.getLogger(QuizStatisticService.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizStatisticService.class);
 
     private final StudentParticipationRepository studentParticipationRepository;
 

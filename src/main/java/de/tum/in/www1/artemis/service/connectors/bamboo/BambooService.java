@@ -53,7 +53,7 @@ import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 @Profile("bamboo")
 public class BambooService extends AbstractContinuousIntegrationService {
 
-    private final Logger log = LoggerFactory.getLogger(BambooService.class);
+    private static final Logger log = LoggerFactory.getLogger(BambooService.class);
 
     @Value("${artemis.continuous-integration.url}")
     protected URL serverUrl;

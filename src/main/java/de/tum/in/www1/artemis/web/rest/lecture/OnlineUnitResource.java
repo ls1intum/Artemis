@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 @RequestMapping("/api")
 public class OnlineUnitResource {
 
-    private final Logger log = LoggerFactory.getLogger(OnlineUnitResource.class);
+    private static final Logger log = LoggerFactory.getLogger(OnlineUnitResource.class);
 
     private final OnlineUnitRepository onlineUnitRepository;
 

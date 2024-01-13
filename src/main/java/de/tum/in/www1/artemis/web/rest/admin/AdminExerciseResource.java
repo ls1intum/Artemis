@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 @RequestMapping("api/admin/")
 public class AdminExerciseResource {
 
-    private final Logger log = LoggerFactory.getLogger(AdminExerciseResource.class);
+    private static final Logger log = LoggerFactory.getLogger(AdminExerciseResource.class);
 
     private final ExerciseRepository exerciseRepository;
 

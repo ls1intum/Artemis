@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.repository.MigrationChangeRepository;
 @Profile("scheduling")
 public class MigrationService {
 
-    private final Logger log = LoggerFactory.getLogger(MigrationService.class);
+    private static final Logger log = LoggerFactory.getLogger(MigrationService.class);
 
     @Value("${artemis.version}")
     private String artemisVersion;

@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.repository.PersistenceAuditEventRepository;
 @Service
 public class AuditEventService {
 
-    private final Logger log = LoggerFactory.getLogger(AuditEventService.class);
+    private static final Logger log = LoggerFactory.getLogger(AuditEventService.class);
 
     private final PersistenceAuditEventRepository persistenceAuditEventRepository;
 

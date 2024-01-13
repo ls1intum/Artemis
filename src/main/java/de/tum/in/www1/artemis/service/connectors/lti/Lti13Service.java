@@ -46,7 +46,7 @@ public class Lti13Service {
 
     private static final String COURSE_PATH_PATTERN = "/lti/deep-linking/{courseId}";
 
-    private final Logger log = LoggerFactory.getLogger(Lti13Service.class);
+    private static final Logger log = LoggerFactory.getLogger(Lti13Service.class);
 
     private final UserRepository userRepository;
 

@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.service.scheduled.*;
 @Profile("scheduling")
 public class InstanceMessageReceiveService {
 
-    private final Logger log = LoggerFactory.getLogger(InstanceMessageReceiveService.class);
+    private static final Logger log = LoggerFactory.getLogger(InstanceMessageReceiveService.class);
 
     private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
 
