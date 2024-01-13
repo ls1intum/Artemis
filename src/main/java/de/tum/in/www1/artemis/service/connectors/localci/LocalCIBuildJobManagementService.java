@@ -1,12 +1,10 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import java.io.*;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.Callable;
-import java.util.concurrent.FutureTask;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -17,7 +15,6 @@ import org.springframework.stereotype.Service;
 
 import com.hazelcast.collection.ISet;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -63,7 +60,7 @@ public class LocalCIBuildJobManagementService {
     @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
     private String buildContainerPrefix;
 
-    private final IMap<Long, byte[]> runningFutures;
+    private final Map<Long, Future<LocalCIBuildResult>> runningFutures = new ConcurrentHashMap<>();
 
     private final ISet<Long> cancelledBuildJobs;
 
@@ -77,7 +74,6 @@ public class LocalCIBuildJobManagementService {
         this.localCIContainerService = localCIContainerService;
         this.localCIDockerService = localCIDockerService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
-        this.runningFutures = hazelcastInstance.getMap("runningFutures");
         this.cancelledBuildJobs = hazelcastInstance.getSet("cancelledBuildJobs");
     }
 
@@ -116,7 +112,7 @@ public class LocalCIBuildJobManagementService {
          * Usually, when using asynchronous build jobs, it will just resolve to "CompletableFuture.supplyAsync".
          */
         Future<LocalCIBuildResult> future = localCIBuildExecutorService.submit(buildJob);
-        runningFutures.put(buildJobId, FutureTaskSerializer.serialize(new FutureTask<>(buildJob)));
+        runningFutures.put(buildJobId, future);
 
         CompletableFuture<LocalCIBuildResult> futureResult = createCompletableFuture(() -> {
             try {
@@ -201,9 +197,10 @@ public class LocalCIBuildJobManagementService {
      * @param buildJobId The id of the build job that should be cancelled.
      */
     public void cancelBuildJob(long buildJobId) {
-        byte[] futureBytes = runningFutures.get(buildJobId);
-        if (futureBytes != null) {
-            Future<?> future = FutureTaskSerializer.deserialize(futureBytes);
+        Future<LocalCIBuildResult> future = runningFutures.get(buildJobId);
+        log.debug("Cancelling build job with buildJobId {}", buildJobId);
+        if (future != null) {
+            log.debug("Build job with id {} is currently running", buildJobId);
             try {
                 cancelledBuildJobs.add(buildJobId);
                 future.cancel(true); // Attempt to interrupt the build job
@@ -242,30 +239,4 @@ public class LocalCIBuildJobManagementService {
 
         cancelledBuildJobs.remove(buildJobId);
     }
-
-    public static class FutureTaskSerializer {
-
-        public static byte[] serialize(FutureTask<?> futureTask) {
-            try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); ObjectOutputStream out = new ObjectOutputStream(bos)) {
-                out.writeObject(futureTask.get());
-                // Add other relevant information to the stream
-                return bos.toByteArray();
-            }
-            catch (ExecutionException | InterruptedException | IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        public static FutureTask<?> deserialize(byte[] bytes) {
-            try (ByteArrayInputStream bis = new ByteArrayInputStream(bytes); ObjectInputStream in = new ObjectInputStream(bis)) {
-                Callable<?> callable = (Callable<?>) in.readObject();
-                // Reconstruct the FutureTask with the Callable
-                return new FutureTask<>(callable);
-            }
-            catch (IOException | ClassNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
 }
