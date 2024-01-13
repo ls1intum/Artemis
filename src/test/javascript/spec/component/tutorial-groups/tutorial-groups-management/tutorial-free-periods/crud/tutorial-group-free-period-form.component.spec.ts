@@ -54,7 +54,7 @@ describe('TutorialFreePeriodFormComponent', () => {
     it('should correctly set form values in edit mode', () => {
         component.isEditMode = true;
         const formData: TutorialGroupFreePeriodFormData = {
-            startDate: validDate,
+            date: validDate,
             reason: validReason,
         };
         component.formData = formData;
