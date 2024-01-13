@@ -147,31 +147,31 @@ public class LocalCISharedBuildJobQueueService {
         return buildAgentInformation.values().stream().toList();
     }
 
-    public BuildJob saveFinishedBuildJob(LocalCIBuildJobQueueItem queueItem, BuildJobResult result, ZonedDateTime buildCompletionDate,
-            ProgrammingExerciseParticipation participation) {
-        String dockerImage = participation.getProgrammingExercise().getWindfile().getMetadata().getDocker().getImage();
-        BuildJob buildJob = new BuildJob();
-        buildJob.setName(queueItem.name());
-        buildJob.setExerciseId(participation.getProgrammingExercise().getId());
-        buildJob.setCourseId(queueItem.courseId());
-        buildJob.setParticipationId(queueItem.participationId());
-        buildJob.setBuildAgentAddress(queueItem.buildAgentAddress());
-        buildJob.setBuildStartDate(queueItem.buildStartDate());
-        buildJob.setBuildCompletionDate(buildCompletionDate);
-        buildJob.setRepositoryType(queueItem.repositoryType());
-        buildJob.setRepositoryName(queueItem.repositoryName());
-        buildJob.setCommitHash(queueItem.commitHash());
-        buildJob.setRetryCount(queueItem.retryCount());
-        buildJob.setPriority(queueItem.priority());
-        buildJob.setTriggeredByPushTo(queueItem.triggeredByPushTo());
-        buildJob.setBuildJobResult(result);
-        buildJob.setDockerImage(dockerImage);
+    public void saveFinishedBuildJob(LocalCIBuildJobQueueItem queueItem, BuildJobResult result, ZonedDateTime buildCompletionDate, ProgrammingExerciseParticipation participation) {
         try {
-            return buildJobRepository.save(buildJob);
+            String dockerImage = participation.getProgrammingExercise().getWindfile().getMetadata().getDocker().getImage();
+
+            BuildJob buildJob = new BuildJob();
+            buildJob.setName(queueItem.name());
+            buildJob.setExerciseId(participation.getProgrammingExercise().getId());
+            buildJob.setCourseId(queueItem.courseId());
+            buildJob.setParticipationId(queueItem.participationId());
+            buildJob.setBuildAgentAddress(queueItem.buildAgentAddress());
+            buildJob.setBuildStartDate(queueItem.buildStartDate());
+            buildJob.setBuildCompletionDate(buildCompletionDate);
+            buildJob.setRepositoryType(queueItem.repositoryType());
+            buildJob.setRepositoryName(queueItem.repositoryName());
+            buildJob.setCommitHash(queueItem.commitHash());
+            buildJob.setRetryCount(queueItem.retryCount());
+            buildJob.setPriority(queueItem.priority());
+            buildJob.setTriggeredByPushTo(queueItem.triggeredByPushTo());
+            buildJob.setBuildJobResult(result);
+            buildJob.setDockerImage(dockerImage);
+
+            buildJobRepository.save(buildJob);
         }
         catch (Exception e) {
             log.error("Could not save build job to database", e);
-            return null;
         }
     }
 
@@ -376,17 +376,17 @@ public class LocalCISharedBuildJobQueueService {
                 log.warn("Participation with id {} has been deleted. Cancelling the processing of the build result.", participation.getId());
             }
 
-            // after processing a build job, remove it from the processing jobs
+            // save build job to database
             LocalCIBuildJobQueueItem processedJob = processingJobs.get(buildJob.id());
+            saveFinishedBuildJob(processedJob, BuildJobResult.SUCCESSFUL, buildCompletionDate, participation);
+
+            // after processing a build job, remove it from the processing jobs
             processingJobs.remove(buildJob.id());
             localProcessingJobs.decrementAndGet();
             updateLocalBuildAgentInformation();
 
             // process next build job if node is available
             checkAvailabilityAndProcessNextBuild();
-
-            // save build job to database
-            saveFinishedBuildJob(processedJob, BuildJobResult.SUCCESSFUL, buildCompletionDate, participation);
 
         }).exceptionally(ex -> {
             ZonedDateTime buildCompletionDate = ZonedDateTime.now();

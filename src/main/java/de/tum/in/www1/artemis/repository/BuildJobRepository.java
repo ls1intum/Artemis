@@ -16,6 +16,8 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long> {
 
     List<BuildJob> findAllByParticipationId(Long participationId);
 
+    Optional<BuildJob> findFirstByParticipationIdOrderByBuildStartDateDesc(Long participationId);
+
     List<BuildJob> findAllByBuildAgentAddress(String buildAgentAddress);
 
     @Query("SELECT buildjob FROM BuildJob buildjob WHERE buildjob.dockerImage = :dockerImage ORDER BY buildjob.buildStartDate DESC")
