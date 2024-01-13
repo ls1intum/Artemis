@@ -62,7 +62,7 @@ public class IrisHestiaSessionService implements IrisButtonBasedFeatureInterface
      * @return The Iris session for the code hint
      */
     public IrisHestiaSession getOrCreateSession(CodeHint codeHint) {
-        var existingSessions = irisHestiaSessionRepository.findByCodeHintId(codeHint.getId());
+        var existingSessions = irisHestiaSessionRepository.findByCodeHintIdOrderByCreationDateDesc(codeHint.getId());
         // Return the newest session if there is one and it is not older than 1 hour
         if (!existingSessions.isEmpty() && existingSessions.get(0).getCreationDate().plusHours(1).isAfter(ZonedDateTime.now())) {
             checkHasAccessTo(null, existingSessions.get(0));
@@ -87,7 +87,7 @@ public class IrisHestiaSessionService implements IrisButtonBasedFeatureInterface
      */
     @Override
     public CodeHint executeRequest(IrisHestiaSession session) {
-        var irisSession = irisHestiaSessionRepository.findByIdWithMessagesAndContentsAndCodeHint(session.getId());
+        var irisSession = irisHestiaSessionRepository.findWithMessagesAndContentsAndCodeHintById(session.getId());
         var codeHint = irisSession.getCodeHint();
         Map<String, Object> parameters = Map.of("codeHint", irisSession.getCodeHint(), "session", irisSession, "exercise", codeHint.getExercise());
         var irisSettings = irisSettingsService.getCombinedIrisSettingsFor(irisSession.getCodeHint().getExercise(), false);
@@ -96,15 +96,9 @@ public class IrisHestiaSessionService implements IrisButtonBasedFeatureInterface
                     .sendRequestV2(irisSettings.irisHestiaSettings().getTemplate().getContent(), irisSettings.irisHestiaSettings().getPreferredModel(), parameters).get();
             var shortDescription = response.content().get("shortDescription").asText();
             var longDescription = response.content().get("longDescription").asText();
-            var llmMessageContent = """
-                    **Short description:**
-                    %s
-                    **Long description:**
-                    %s
-                    """.formatted(shortDescription, longDescription);
             var llmMessage = new IrisMessage();
             llmMessage.setSender(IrisMessageSender.LLM);
-            llmMessage.addContent(new IrisTextMessageContent(llmMessageContent));
+            llmMessage.addContent(new IrisJsonMessageContent(response.content()));
             irisMessageService.saveMessage(llmMessage, irisSession, IrisMessageSender.LLM);
 
             codeHint.setDescription(shortDescription);

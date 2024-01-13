@@ -4,9 +4,7 @@ import java.util.List;
 
 import javax.persistence.*;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import com.fasterxml.jackson.annotation.*;
 
 /**
  * An IrisExercisePlanMessageContent represents an Iris-generated plan to make changes to an exercise.
@@ -44,6 +42,7 @@ public class IrisExercisePlan extends IrisMessageContent {
     }
 
     @Override
+    @JsonIgnore
     public String getContentAsString() {
         var sb = new StringBuilder("Exercise Plan:\n");
         for (var step : steps) {

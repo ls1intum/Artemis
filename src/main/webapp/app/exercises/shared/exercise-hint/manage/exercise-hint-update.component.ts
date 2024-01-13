@@ -35,8 +35,6 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
 
     courseId: number;
     exercise: ProgrammingExercise;
-    readonly HintType = HintType;
-    readonly ButtonType = ButtonType;
     exerciseHint = new ExerciseHint();
     solutionEntries: ProgrammingExerciseSolutionEntry[];
 
@@ -55,6 +53,10 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     faCircleNotch = faCircleNotch;
     faBan = faBan;
     faSave = faSave;
+
+    // Enums
+    readonly HintType = HintType;
+    readonly ButtonType = ButtonType;
 
     constructor(
         private route: ActivatedRoute,

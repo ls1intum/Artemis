@@ -6,6 +6,7 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -30,6 +31,7 @@ public class IrisTextMessageContent extends IrisMessageContent {
     }
 
     @Override
+    @JsonIgnore
     public String getContentAsString() {
         return textContent;
     }

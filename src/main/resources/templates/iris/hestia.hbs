@@ -45,9 +45,23 @@ These are the previous attempts at creating descriptions for this code hint.
 The instructor did not like the previous attempts and wants you to generate new and different descriptions.
 {{~/system}}
 {{#if (contains session "messages")}}
-{{#each session.messages}}
-    {{#if (equal this.sender "LLM")}}{{#assistant~}}{{this.content[0].textContent}}{{~/assistant}}{{/if}}
-{{~/each}}
+    {{#each session.messages}}
+        {{#if (equal this.sender "LLM")}}
+            {{#if (equal this.content[0].type "json")}}
+                {{#assistant~}}
+                **Short description:**
+                {{this.content[0].attributes.shortDescription}}
+                **Long description:**
+                {{this.content[0].attributes.longDescription}}
+                {{~/assistant}}
+            {{/if}}
+            {{#if (equal this.content[0].type "text")}}
+                {{#assistant~}}
+                {{this.content[0].textContent}}
+                {{~/assistant}}
+            {{/if}}
+        {{/if}}
+    {{~/each}}
 {{/if}}
 {{#system~}}
 
