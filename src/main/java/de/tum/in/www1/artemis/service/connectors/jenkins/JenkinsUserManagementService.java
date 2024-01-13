@@ -40,7 +40,7 @@ import de.tum.in.www1.artemis.service.user.PasswordService;
 @Profile("jenkins")
 public class JenkinsUserManagementService implements CIUserManagementService {
 
-    private final Logger log = LoggerFactory.getLogger(JenkinsUserManagementService.class);
+    private static final Logger log = LoggerFactory.getLogger(JenkinsUserManagementService.class);
 
     @Value("${artemis.continuous-integration.url}")
     private URL jenkinsServerUrl;

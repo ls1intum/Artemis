@@ -18,7 +18,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'Artemis'
-copyright = '2023, Technical University of Munich, Applied Software Engineering'
+copyright = '2024, Technical University of Munich, Applied Software Engineering'
 author = 'Technical University of Munich, Applied Software Engineering'
 
 

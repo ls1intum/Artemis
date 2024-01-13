@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
  */
 class AthenaConnector<RequestType, ResponseType> {
 
-    private final Logger log = LoggerFactory.getLogger(AthenaConnector.class);
+    private static final Logger log = LoggerFactory.getLogger(AthenaConnector.class);
 
     private final RestTemplate restTemplate;
 

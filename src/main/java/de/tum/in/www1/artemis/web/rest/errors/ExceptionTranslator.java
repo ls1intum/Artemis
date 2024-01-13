@@ -39,7 +39,7 @@ import tech.jhipster.web.util.HeaderUtil;
 @ControllerAdvice
 public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait {
 
-    private final Logger log = LoggerFactory.getLogger(ExceptionTranslator.class);
+    private static final Logger log = LoggerFactory.getLogger(ExceptionTranslator.class);
 
     private static final String FIELD_ERRORS_KEY = "fieldErrors";
 

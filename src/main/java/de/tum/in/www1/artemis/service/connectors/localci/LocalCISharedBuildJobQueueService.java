@@ -40,7 +40,7 @@ import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWe
 @Profile("localci")
 public class LocalCISharedBuildJobQueueService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCISharedBuildJobQueueService.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalCISharedBuildJobQueueService.class);
 
     private final HazelcastInstance hazelcastInstance;
 
@@ -318,7 +318,7 @@ public class LocalCISharedBuildJobQueueService {
             return;
         }
 
-        log.info("Processing build job: " + buildJob);
+        log.info("Processing build job: {}", buildJob);
         String commitHash = buildJob.commitHash();
         boolean isRetry = buildJob.retryCount() >= 1;
 

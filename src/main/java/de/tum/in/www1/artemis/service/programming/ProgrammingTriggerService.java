@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWe
 @Service
 public class ProgrammingTriggerService {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingTriggerService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingTriggerService.class);
 
     @Value("${artemis.external-system-request.batch-size}")
     private int externalSystemRequestBatchSize;
