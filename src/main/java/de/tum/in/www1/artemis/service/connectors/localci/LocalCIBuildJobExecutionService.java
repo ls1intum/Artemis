@@ -297,9 +297,17 @@ public class LocalCIBuildJobExecutionService {
 
         log.info("Finished running the build script in container {}", containerName);
 
+        ZonedDateTime buildCompletedDate = ZonedDateTime.now();
+
         localCIContainerService.moveResultsToSpecifiedDirectory(containerId, resultPaths, LocalCIContainerService.WORKING_DIRECTORY + LocalCIContainerService.RESULTS_DIRECTORY);
 
-        ZonedDateTime buildCompletedDate = ZonedDateTime.now();
+        // Wait for copying results to finish
+        try {
+            Thread.sleep(500);
+        }
+        catch (InterruptedException e) {
+            throw new LocalCIException("Waiting for copying results got interrupted");
+        }
 
         String assignmentRepoCommitHash = commitHash;
         String testRepoCommitHash = "";
