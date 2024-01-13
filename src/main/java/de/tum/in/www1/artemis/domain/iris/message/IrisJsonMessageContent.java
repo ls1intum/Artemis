@@ -43,6 +43,12 @@ public class IrisJsonMessageContent extends IrisMessageContent {
         return jsonContent;
     }
 
+    /**
+     * Sets the content of this message as a JSON string.
+     * The string will be parsed into a JsonNode and stored in the jsonNode field.
+     *
+     * @param jsonContent The JSON string to set as content
+     */
     public void setJsonContent(@Nonnull String jsonContent) {
         try {
             this.jsonNode = new ObjectMapper().readTree(jsonContent);
@@ -58,11 +64,20 @@ public class IrisJsonMessageContent extends IrisMessageContent {
         return jsonNode;
     }
 
+    /**
+     * Sets the content of this message as a JsonNode.
+     * The JsonNode will be serialized into a JSON string and stored in the jsonContent field.
+     *
+     * @param jsonNode The JsonNode to set as content
+     */
     public void setJsonNode(@Nonnull JsonNode jsonNode) {
         this.jsonNode = jsonNode;
         this.jsonContent = jsonNode.toPrettyString();
     }
 
+    /**
+     * Loads the JsonNode from the jsonContent field after the entity has been loaded from the database.
+     */
     @PostLoad
     private void postLoad() {
         try {
