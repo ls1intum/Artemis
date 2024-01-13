@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 @RequestMapping("/api/courses")
 public class GroupChatResource extends ConversationManagementResource {
 
-    private final Logger log = LoggerFactory.getLogger(GroupChatResource.class);
+    private static final Logger log = LoggerFactory.getLogger(GroupChatResource.class);
 
     private final UserRepository userRepository;
 

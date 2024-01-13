@@ -67,7 +67,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Profile("localci")
 public class LocalCIBuildJobExecutionService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIBuildJobExecutionService.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalCIBuildJobExecutionService.class);
 
     private final LocalCIBuildPlanService localCIBuildPlanService;
 

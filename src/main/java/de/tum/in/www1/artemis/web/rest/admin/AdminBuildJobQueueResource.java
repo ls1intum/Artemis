@@ -20,7 +20,7 @@ public class AdminBuildJobQueueResource {
 
     private final LocalCISharedBuildJobQueueService localCIBuildJobQueueService;
 
-    private final Logger log = LoggerFactory.getLogger(AdminBuildJobQueueResource.class);
+    private static final Logger log = LoggerFactory.getLogger(AdminBuildJobQueueResource.class);
 
     public AdminBuildJobQueueResource(LocalCISharedBuildJobQueueService localCIBuildJobQueueService) {
         this.localCIBuildJobQueueService = localCIBuildJobQueueService;

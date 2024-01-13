@@ -103,6 +103,7 @@ public class AeolusBuildPlanService {
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(jsonObject, null);
         try {
             ResponseEntity<AeolusGenerationResponseDTO> response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, entity, AeolusGenerationResponseDTO.class);
+
             if (response.getBody() != null) {
                 return response.getBody().getKey();
             }

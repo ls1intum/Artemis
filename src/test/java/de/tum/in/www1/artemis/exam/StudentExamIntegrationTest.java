@@ -140,7 +140,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private static final Logger log = LoggerFactory.getLogger(StudentExamIntegrationTest.class);
 
     private static final String TEST_PREFIX = "studexam";
 

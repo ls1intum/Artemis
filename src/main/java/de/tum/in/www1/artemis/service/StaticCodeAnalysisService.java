@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 @Service
 public class StaticCodeAnalysisService {
 
-    private final Logger log = LoggerFactory.getLogger(StaticCodeAnalysisService.class);
+    private static final Logger log = LoggerFactory.getLogger(StaticCodeAnalysisService.class);
 
     private final StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
