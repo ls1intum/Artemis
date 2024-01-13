@@ -40,7 +40,7 @@ public class DataExportService {
 
     private final FileService fileService;
 
-    private final Logger log = LoggerFactory.getLogger(DataExportService.class);
+    private static final Logger log = LoggerFactory.getLogger(DataExportService.class);
 
     public DataExportService(@Value("${artemis.data-export.days-between-data-exports:14}") int daysBetweenDataExports, UserRepository userRepository,
             DataExportRepository dataExportRepository, FileService fileService) {

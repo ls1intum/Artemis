@@ -15,7 +15,7 @@ export class BuildAction {
     runAlways: boolean;
     workdir: string;
     results?: AeolusResult[];
-    parameters: Map<string, string | boolean | number>;
+    parameters: Map<string, string | boolean | number> = new Map<string, string | boolean | number>();
 }
 
 export class AeolusResult {
@@ -112,6 +112,7 @@ export class ProgrammingExercise extends Exercise {
 
     public projectType?: ProjectType;
     public windFile?: WindFile;
+    public buildScript?: string;
     public buildPlanConfiguration?: string;
 
     public testwiseCoverageEnabled?: boolean;

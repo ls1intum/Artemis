@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ScoreDTO;
 @RequestMapping("/api")
 public class ParticipantScoreResource {
 
-    private final Logger log = LoggerFactory.getLogger(ParticipantScoreResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ParticipantScoreResource.class);
 
     private final CourseRepository courseRepository;
 

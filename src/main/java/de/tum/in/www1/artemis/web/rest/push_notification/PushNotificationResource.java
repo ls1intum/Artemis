@@ -33,7 +33,7 @@ import io.jsonwebtoken.*;
 @RequestMapping("/api/push_notification")
 public class PushNotificationResource {
 
-    private final Logger log = LoggerFactory.getLogger(PushNotificationResource.class);
+    private static final Logger log = LoggerFactory.getLogger(PushNotificationResource.class);
 
     private static final KeyGenerator aesKeyGenerator;
 

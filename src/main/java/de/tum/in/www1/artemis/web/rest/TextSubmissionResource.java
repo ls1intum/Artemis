@@ -35,7 +35,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private static final String ENTITY_NAME = "textSubmission";
 
-    private final Logger log = LoggerFactory.getLogger(TextSubmissionResource.class);
+    private static final Logger log = LoggerFactory.getLogger(TextSubmissionResource.class);
 
     private final TextSubmissionRepository textSubmissionRepository;
 

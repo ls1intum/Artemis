@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 @Service
 public class QuizExerciseImportService extends ExerciseImportService {
 
-    private final Logger log = LoggerFactory.getLogger(QuizExerciseImportService.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizExerciseImportService.class);
 
     private final QuizExerciseService quizExerciseService;
 

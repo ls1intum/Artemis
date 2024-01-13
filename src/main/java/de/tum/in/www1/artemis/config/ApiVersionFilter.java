@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ApiVersionFilter implements Filter {
 
-    private static final Logger logger = LoggerFactory.getLogger(ApiVersionFilter.class);
+    private static final Logger log = LoggerFactory.getLogger(ApiVersionFilter.class);
 
     public static final String CONTENT_VERSION_HEADER = "Content-Version";
 
@@ -44,7 +44,7 @@ public class ApiVersionFilter implements Filter {
         final HttpServletRequest httpRequest = (HttpServletRequest) request;
         final HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        logger.debug("Adding Version to Request {} {}", httpRequest.getMethod(), httpRequest.getRequestURI());
+        log.debug("Adding Version to Request {} {}", httpRequest.getMethod(), httpRequest.getRequestURI());
 
         httpResponse.addHeader(CONTENT_VERSION_HEADER, VERSION);
 

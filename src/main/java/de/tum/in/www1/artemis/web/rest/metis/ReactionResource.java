@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.service.metis.ReactionService;
 @RequestMapping("/api")
 public class ReactionResource {
 
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private static final Logger log = LoggerFactory.getLogger(ReactionResource.class);
 
     private final ReactionService reactionService;
 
