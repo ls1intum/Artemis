@@ -18,7 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @JsonInclude(NON_NULL) // needed for ObjectMapper to ignore null values
 public class NotificationTarget {
 
-    private final Logger log = LoggerFactory.getLogger(NotificationTarget.class);
+    private static final Logger log = LoggerFactory.getLogger(NotificationTarget.class);
 
     private String message;
 

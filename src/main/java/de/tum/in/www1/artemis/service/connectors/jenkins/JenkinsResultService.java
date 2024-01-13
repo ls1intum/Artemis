@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseFeedbackCre
 @Service
 public class JenkinsResultService extends AbstractContinuousIntegrationResultService {
 
-    private final Logger log = LoggerFactory.getLogger(JenkinsResultService.class);
+    private static final Logger log = LoggerFactory.getLogger(JenkinsResultService.class);
 
     public JenkinsResultService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
             BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService,

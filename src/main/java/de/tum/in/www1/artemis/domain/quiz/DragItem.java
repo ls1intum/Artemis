@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.service.FileService;
 public class DragItem extends TempIdObject implements QuizQuestionComponent<DragAndDropQuestion> {
 
     @Transient
-    private final transient Logger log = LoggerFactory.getLogger(DragItem.class);
+    private static final transient Logger log = LoggerFactory.getLogger(DragItem.class);
 
     @Transient
     private final transient FilePathService filePathService = new FilePathService();

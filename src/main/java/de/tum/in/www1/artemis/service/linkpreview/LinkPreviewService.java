@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.web.rest.dto.LinkPreviewDTO;
 @Service
 public class LinkPreviewService {
 
-    private final Logger log = LoggerFactory.getLogger(LinkPreviewService.class);
+    private static final Logger log = LoggerFactory.getLogger(LinkPreviewService.class);
 
     /**
      * Retrieves meta information from a given url.

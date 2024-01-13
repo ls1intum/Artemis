@@ -40,7 +40,7 @@ import oauth.signpost.exception.OAuthException;
 @Profile("lti")
 public class Lti10Service {
 
-    private final Logger log = LoggerFactory.getLogger(Lti10Service.class);
+    private static final Logger log = LoggerFactory.getLogger(Lti10Service.class);
 
     private final UserRepository userRepository;
 

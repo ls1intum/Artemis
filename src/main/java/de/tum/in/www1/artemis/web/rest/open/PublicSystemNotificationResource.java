@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.service.SystemNotificationService;
 @RequestMapping("api/public/")
 public class PublicSystemNotificationResource {
 
-    private final Logger log = LoggerFactory.getLogger(PublicSystemNotificationResource.class);
+    private static final Logger log = LoggerFactory.getLogger(PublicSystemNotificationResource.class);
 
     private final SystemNotificationService systemNotificationService;
 

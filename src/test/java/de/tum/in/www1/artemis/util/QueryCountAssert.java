@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 
 public class QueryCountAssert<T, E extends Exception> extends AbstractAssert<QueryCountAssert<T, E>, ThrowingProducer<T, E>> {
 
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private static final Logger log = LoggerFactory.getLogger(QueryCountAssert.class);
 
     private final HibernateQueryInterceptor interceptor;
 

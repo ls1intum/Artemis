@@ -17,7 +17,7 @@ import tech.jhipster.config.JHipsterConstants;
 @Profile({ JHipsterConstants.SPRING_PROFILE_PRODUCTION })
 public class SentryConfiguration {
 
-    private final Logger log = LoggerFactory.getLogger(SentryConfiguration.class);
+    private static final Logger log = LoggerFactory.getLogger(SentryConfiguration.class);
 
     @Value("${artemis.version}")
     private String artemisVersion;

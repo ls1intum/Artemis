@@ -31,17 +31,14 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 @Service
 public class SlideSplitterService {
 
-    private final Logger log = LoggerFactory.getLogger(SlideSplitterService.class);
+    private static final Logger log = LoggerFactory.getLogger(SlideSplitterService.class);
 
     private final FileService fileService;
 
-    private final FilePathService filePathService;
-
     private final SlideRepository slideRepository;
 
-    public SlideSplitterService(FileService fileService, FilePathService filePathService, SlideRepository slideRepository) {
+    public SlideSplitterService(FileService fileService, SlideRepository slideRepository) {
         this.fileService = fileService;
-        this.filePathService = filePathService;
         this.slideRepository = slideRepository;
     }
 
@@ -52,7 +49,7 @@ public class SlideSplitterService {
      */
     @Async
     public void splitAttachmentUnitIntoSingleSlides(AttachmentUnit attachmentUnit) {
-        Path attachmentPath = filePathService.actualPathForPublicPath(URI.create(attachmentUnit.getAttachment().getLink()));
+        Path attachmentPath = FilePathService.actualPathForPublicPath(URI.create(attachmentUnit.getAttachment().getLink()));
         File file = attachmentPath.toFile();
         try (PDDocument document = Loader.loadPDF(file)) {
             String pdfFilename = file.getName();

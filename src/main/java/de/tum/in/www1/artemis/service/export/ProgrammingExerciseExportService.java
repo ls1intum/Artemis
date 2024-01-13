@@ -62,7 +62,7 @@ import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 @Service
 public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExportService {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseExportService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseExportService.class);
 
     // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
     @Value("${artemis.repo-download-clone-path}")

@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @Profile("lti")
 public class OnlineCourseConfigurationService implements ClientRegistrationRepository {
 
-    private final Logger log = LoggerFactory.getLogger(OnlineCourseConfigurationService.class);
+    private static final Logger log = LoggerFactory.getLogger(OnlineCourseConfigurationService.class);
 
     private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
 

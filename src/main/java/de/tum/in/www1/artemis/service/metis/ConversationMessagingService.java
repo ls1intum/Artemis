@@ -52,7 +52,7 @@ public class ConversationMessagingService extends PostingService {
 
     private static final int TOP_K_SIMILARITY_RESULTS = 5;
 
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private static final Logger log = LoggerFactory.getLogger(ConversationMessagingService.class);
 
     private final ConversationService conversationService;
 
