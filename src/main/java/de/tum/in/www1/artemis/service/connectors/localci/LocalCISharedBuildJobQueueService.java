@@ -120,55 +120,73 @@ public class LocalCISharedBuildJobQueueService {
     }
 
     public List<LocalCIBuildJobQueueItem> getQueuedJobs() {
+        List<LocalCIBuildJobQueueItem> queuedJobs = new ArrayList<>();
         sharedLock.lock();
         try {
-            return queue.stream().toList();
+            queuedJobs.addAll(queue);
         }
         finally {
             sharedLock.unlock();
         }
+        return queuedJobs;
     }
 
     public List<LocalCIBuildJobQueueItem> getProcessingJobs() {
+        List<LocalCIBuildJobQueueItem> processingJobs = new ArrayList<>();
         sharedLock.lock();
         try {
-            return processingJobs.values().stream().toList();
+            processingJobs.addAll(this.processingJobs.values());
         }
         finally {
             sharedLock.unlock();
         }
+        return processingJobs;
     }
 
     public List<LocalCIBuildJobQueueItem> getQueuedJobsForCourse(long courseId) {
+        List<LocalCIBuildJobQueueItem> queuedJobs = new ArrayList<>();
         sharedLock.lock();
         try {
-            return queue.stream().filter(job -> job.courseId() == courseId).toList();
+            for (LocalCIBuildJobQueueItem job : queue) {
+                if (job.courseId() == courseId) {
+                    queuedJobs.add(job);
+                }
+            }
         }
         finally {
             sharedLock.unlock();
         }
+        return queuedJobs;
     }
 
     public List<LocalCIBuildJobQueueItem> getProcessingJobsForCourse(long courseId) {
+        List<LocalCIBuildJobQueueItem> processingJobs = new ArrayList<>();
         sharedLock.lock();
         try {
-            return processingJobs.values().stream().filter(job -> job.courseId() == courseId).toList();
+            for (LocalCIBuildJobQueueItem job : this.processingJobs.values()) {
+                if (job.courseId() == courseId) {
+                    processingJobs.add(job);
+                }
+            }
         }
         finally {
             sharedLock.unlock();
         }
+        return processingJobs;
     }
 
     public List<LocalCIBuildAgentInformation> getBuildAgentInformation() {
+        List<LocalCIBuildAgentInformation> buildAgentInformation = new ArrayList<>();
         sharedLock.lock();
         try {
             // Remove build agent information of offline nodes
             removeOfflineNodes();
-            return buildAgentInformation.values().stream().toList();
+            buildAgentInformation.addAll(this.buildAgentInformation.values());
         }
         finally {
             sharedLock.unlock();
         }
+        return buildAgentInformation;
     }
 
     /**
@@ -290,19 +308,28 @@ public class LocalCISharedBuildJobQueueService {
     }
 
     private List<LocalCIBuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
+        List<LocalCIBuildJobQueueItem> processingJobsOfNode = new ArrayList<>();
         sharedLock.lock();
         try {
-            return processingJobs.values().stream().filter(job -> Objects.equals(job.buildAgentAddress(), memberAddress)).toList();
+            for (LocalCIBuildJobQueueItem job : processingJobs.values()) {
+                if (job.buildAgentAddress().equals(memberAddress)) {
+                    processingJobsOfNode.add(job);
+                }
+            }
         }
         finally {
             sharedLock.unlock();
         }
+        return processingJobsOfNode;
     }
 
     private void removeOfflineNodes() {
         sharedLock.lock();
         try {
-            List<String> memberAddresses = hazelcastInstance.getCluster().getMembers().stream().map(member -> member.getAddress().toString()).toList();
+            List<String> memberAddresses = new ArrayList<>();
+            for (var member : hazelcastInstance.getCluster().getMembers()) {
+                memberAddresses.add(member.getAddress().toString());
+            }
             for (String key : buildAgentInformation.keySet()) {
                 if (!memberAddresses.contains(key)) {
                     buildAgentInformation.remove(key);
@@ -441,14 +468,14 @@ public class LocalCISharedBuildJobQueueService {
     public void cancelBuildJob(long buildJobId) {
         sharedLock.lock();
         try {
-            // Remove build job if it is queued
-            if (queue.stream().anyMatch(job -> Objects.equals(job.id(), buildJobId))) {
-                List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
-                for (LocalCIBuildJobQueueItem job : queue) {
-                    if (Objects.equals(job.id(), buildJobId)) {
-                        toRemove.add(job);
-                    }
+            List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
+            for (LocalCIBuildJobQueueItem job : queue) {
+                if (Objects.equals(job.id(), buildJobId)) {
+                    toRemove.add(job);
                 }
+            }
+            // Remove build job if it is queued
+            if (!toRemove.isEmpty()) {
                 queue.removeAll(toRemove);
             }
             else {
