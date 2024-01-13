@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
 @Profile("gitlab")
 public class GitLabUserManagementService implements VcsUserManagementService {
 
-    private final Logger log = LoggerFactory.getLogger(GitLabUserManagementService.class);
+    private static final Logger log = LoggerFactory.getLogger(GitLabUserManagementService.class);
 
     private final UserRepository userRepository;
 

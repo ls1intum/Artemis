@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 @Service
 public class ProgrammingExerciseTestCaseService {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTestCaseService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTestCaseService.class);
 
     private final ProgrammingExerciseTestCaseRepository testCaseRepository;
 

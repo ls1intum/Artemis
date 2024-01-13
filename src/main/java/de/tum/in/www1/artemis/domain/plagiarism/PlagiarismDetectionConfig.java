@@ -28,6 +28,9 @@ public class PlagiarismDetectionConfig extends DomainObject {
     @Column(name = "continuous_plagiarism_control_post_due_date_checks_enabled")
     private boolean continuousPlagiarismControlPostDueDateChecksEnabled = false;
 
+    @Column(name = "continuous_plagiarism_control_case_student_response_period")
+    private int continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod = 7;
+
     @Column(name = "similarity_threshold")
     private int similarityThreshold;
 
@@ -36,6 +39,17 @@ public class PlagiarismDetectionConfig extends DomainObject {
 
     @Column(name = "minimum_size")
     private int minimumSize;
+
+    /**
+     * Set all sensitive information to placeholders, so no info about plagiarism checks gets leaked to students through json.
+     */
+    public void filterSensitiveInformation() {
+        continuousPlagiarismControlEnabled = false;
+        continuousPlagiarismControlPostDueDateChecksEnabled = false;
+        similarityThreshold = -1;
+        minimumScore = -1;
+        minimumSize = -1;
+    }
 
     public boolean isContinuousPlagiarismControlEnabled() {
         return continuousPlagiarismControlEnabled;
@@ -53,24 +67,32 @@ public class PlagiarismDetectionConfig extends DomainObject {
         this.continuousPlagiarismControlPostDueDateChecksEnabled = continuousPlagiarismControlPostDueDateChecksEnabled;
     }
 
-    public float getSimilarityThreshold() {
+    public int getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod() {
+        return continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod;
+    }
+
+    public void setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(int continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod) {
+        this.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod = continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod;
+    }
+
+    public int getSimilarityThreshold() {
         return similarityThreshold;
-    }
-
-    public int getMinimumScore() {
-        return minimumScore;
-    }
-
-    public int getMinimumSize() {
-        return minimumSize;
     }
 
     public void setSimilarityThreshold(int similarityThreshold) {
         this.similarityThreshold = similarityThreshold;
     }
 
+    public int getMinimumScore() {
+        return minimumScore;
+    }
+
     public void setMinimumScore(int minimumScore) {
         this.minimumScore = minimumScore;
+    }
+
+    public int getMinimumSize() {
+        return minimumSize;
     }
 
     public void setMinimumSize(int minimumSize) {
@@ -86,6 +108,7 @@ public class PlagiarismDetectionConfig extends DomainObject {
         var config = new PlagiarismDetectionConfig();
         config.setContinuousPlagiarismControlEnabled(false);
         config.setContinuousPlagiarismControlPostDueDateChecksEnabled(false);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(7);
         config.setSimilarityThreshold(90);
         config.setMinimumScore(0);
         config.setMinimumSize(50);
@@ -106,19 +129,21 @@ public class PlagiarismDetectionConfig extends DomainObject {
         PlagiarismDetectionConfig that = (PlagiarismDetectionConfig) o;
         return continuousPlagiarismControlEnabled == that.continuousPlagiarismControlEnabled
                 && continuousPlagiarismControlPostDueDateChecksEnabled == that.continuousPlagiarismControlPostDueDateChecksEnabled
-                && Float.compare(similarityThreshold, that.similarityThreshold) == 0 && minimumScore == that.minimumScore && minimumSize == that.minimumSize;
+                && continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod == that.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod
+                && similarityThreshold == that.similarityThreshold && minimumScore == that.minimumScore && minimumSize == that.minimumSize;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), continuousPlagiarismControlEnabled, continuousPlagiarismControlPostDueDateChecksEnabled, similarityThreshold, minimumScore,
-                minimumSize);
+        return Objects.hash(super.hashCode(), continuousPlagiarismControlEnabled, continuousPlagiarismControlPostDueDateChecksEnabled,
+                continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod, similarityThreshold, minimumScore, minimumSize);
     }
 
     @Override
     public String toString() {
-        return "PlagiarismDetectionConfig{continuousPlagiarismControlEnabled=" + continuousPlagiarismControlEnabled + ", continuousPlagiarismControlPostDueDateChecksEnabled="
-                + continuousPlagiarismControlPostDueDateChecksEnabled + ", similarityThreshold=" + similarityThreshold + ", minimumScore=" + minimumScore + ", minimumSize="
-                + minimumSize + '}';
+        return "PlagiarismDetectionConfig{" + "continuousPlagiarismControlEnabled=" + continuousPlagiarismControlEnabled + ", continuousPlagiarismControlPostDueDateChecksEnabled="
+                + continuousPlagiarismControlPostDueDateChecksEnabled + ", continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod="
+                + continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod + ", similarityThreshold=" + similarityThreshold + ", minimumScore=" + minimumScore
+                + ", minimumSize=" + minimumSize + '}';
     }
 }
