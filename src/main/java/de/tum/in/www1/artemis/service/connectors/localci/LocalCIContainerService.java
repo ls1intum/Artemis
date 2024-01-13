@@ -153,6 +153,7 @@ public class LocalCIContainerService {
     public void moveResultsToSpecifiedDirectory(String containerId, List<String> sourcePaths, String destinationPath) {
         StringBuilder command = new StringBuilder("shopt -s globstar && mkdir -p " + destinationPath);
         for (String sourcePath : sourcePaths) {
+            checkPath(sourcePath);
             command.append("; cp ").append(sourcePath).append(" ").append(destinationPath);
         }
         executeDockerCommand(containerId, false, false, true, "bash", "-c", command.toString());
@@ -377,6 +378,12 @@ public class LocalCIContainerService {
             throw new LocalCIException("Interrupted while executing Docker command: " + String.join(" ", command), e);
         }
         return buildLogEntries;
+    }
+
+    private void checkPath(String path) {
+        if (path == null || path.contains("..") || !path.matches("[a-zA-Z0-9_*./-]+")) {
+            throw new LocalCIException("Invalid path: " + path);
+        }
     }
 
     /**
