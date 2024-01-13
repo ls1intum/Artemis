@@ -36,7 +36,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @RequestMapping("api/public/")
 public class PublicResultResource {
 
-    private final Logger log = LoggerFactory.getLogger(PublicResultResource.class);
+    private static final Logger log = LoggerFactory.getLogger(PublicResultResource.class);
 
     @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
     private String artemisAuthenticationTokenValue = "";

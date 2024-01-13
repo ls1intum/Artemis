@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 @ConfigurationProperties(prefix = "artemis.continuous-integration.build")
 public class ProgrammingLanguageConfiguration {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingLanguageConfiguration.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingLanguageConfiguration.class);
 
     private static final ProjectType DEFAULT_PROJECT_TYPE = ProjectType.PLAIN;
 

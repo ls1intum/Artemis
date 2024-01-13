@@ -21,6 +21,11 @@ describe('BuildQueueComponent', () => {
         getRunningBuildJobsByCourseId: jest.fn(),
         getQueuedBuildJobs: jest.fn(),
         getRunningBuildJobs: jest.fn(),
+        cancelBuildJobInCourse: jest.fn(),
+        cancelAllQueuedBuildJobsInCourse: jest.fn(),
+        cancelAllRunningBuildJobsInCourse: jest.fn(),
+        cancelAllQueuedBuildJobs: jest.fn(),
+        cancelAllRunningBuildJobs: jest.fn(),
     };
 
     const accountServiceMock = { identity: jest.fn(), getAuthenticationState: jest.fn() };
@@ -40,6 +45,19 @@ describe('BuildQueueComponent', () => {
             courseId: 10,
             isPushToTestRepository: false,
         },
+        {
+            id: 3,
+            name: 'Build Job 3',
+            participationId: 103,
+            repositoryTypeOrUserName: 'repo3',
+            commitHash: 'abc125',
+            submissionDate: dayjs('2023-01-03'),
+            retryCount: 1,
+            buildStartDate: null,
+            priority: 3,
+            courseId: 10,
+            isPushToTestRepository: false,
+        },
     ];
     const mockRunningJobs = [
         {
@@ -55,10 +73,23 @@ describe('BuildQueueComponent', () => {
             courseId: 10,
             isPushToTestRepository: false,
         },
+        {
+            id: 4,
+            name: 'Build Job 4',
+            participationId: 104,
+            repositoryTypeOrUserName: 'repo4',
+            commitHash: 'abc126',
+            submissionDate: dayjs('2023-01-04'),
+            retryCount: 3,
+            buildStartDate: dayjs('2023-01-04'),
+            priority: 2,
+            courseId: 10,
+            isPushToTestRepository: false,
+        },
     ];
 
     beforeEach(waitForAsync(() => {
-        mockActivatedRoute = { params: of({ courseId: '123' }) };
+        mockActivatedRoute = { params: of({ courseId: testCourseId }) };
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgxDatatableModule],
@@ -138,5 +169,92 @@ describe('BuildQueueComponent', () => {
         const spy = jest.spyOn(component, 'ngOnInit');
         component.ngOnInit();
         expect(spy).toHaveBeenCalled();
+    });
+
+    it('should cancel a build job in a course', () => {
+        const buildJobId = 1;
+
+        // Mock ActivatedRoute to return a specific course ID
+        mockActivatedRoute.paramMap = of(new Map([['courseId', testCourseId]]));
+
+        // Mock BuildQueueService to return a successful response for canceling a build job
+        mockBuildQueueService.cancelBuildJobInCourse.mockReturnValue(of(null));
+
+        // Initialize the component
+        component.ngOnInit();
+
+        // Call the cancelBuildJob method
+        component.cancelBuildJob(buildJobId);
+
+        // Expectations: The service method for canceling a build job in a course is called with the correct parameters
+        expect(mockBuildQueueService.cancelBuildJobInCourse).toHaveBeenCalledWith(testCourseId, buildJobId);
+    });
+
+    it('should cancel all queued build jobs in a course', () => {
+        // Mock ActivatedRoute to return a specific course ID
+        mockActivatedRoute.paramMap = of(new Map([['courseId', testCourseId.toString()]]));
+
+        // Mock BuildQueueService to return a successful response for canceling all queued build jobs in a course
+        mockBuildQueueService.cancelAllQueuedBuildJobsInCourse.mockReturnValue(of(null));
+
+        // Initialize the component
+        component.ngOnInit();
+
+        // Call the cancelAllQueuedBuildJobsInCourse method
+        component.cancelAllQueuedBuildJobs();
+
+        // Expectations: The service method for canceling all queued build jobs in a course is called with the correct parameter
+        expect(mockBuildQueueService.cancelAllQueuedBuildJobsInCourse).toHaveBeenCalledWith(testCourseId);
+    });
+
+    it('should cancel all running build jobs in a course', () => {
+        // Mock ActivatedRoute to return no course ID
+        mockActivatedRoute.paramMap = of(new Map([['courseId', testCourseId.toString()]]));
+
+        // Mock BuildQueueService to return a successful response for canceling all running build jobs
+        mockBuildQueueService.cancelAllRunningBuildJobsInCourse.mockReturnValue(of(null));
+
+        // Initialize the component
+        component.ngOnInit();
+
+        // Call the cancelAllRunningBuildJobs method
+        component.cancelAllRunningBuildJobs();
+
+        // Expectations: The service method for canceling all running build jobs is called with the correct parameter
+        expect(mockBuildQueueService.cancelAllRunningBuildJobsInCourse).toHaveBeenCalledWith(testCourseId);
+    });
+
+    it('should cancel all queued build jobs', () => {
+        // Mock ActivatedRoute to return no course ID
+        mockActivatedRoute.paramMap = of(new Map([]));
+
+        // Mock BuildQueueService to return a successful response for canceling all running build jobs
+        mockBuildQueueService.cancelAllQueuedBuildJobs.mockReturnValue(of(null));
+
+        // Initialize the component
+        component.ngOnInit();
+
+        // Call the cancelAllRunningBuildJobs method
+        component.cancelAllQueuedBuildJobs();
+
+        // Expectations: The service method for canceling all running build jobs is called without a course ID
+        expect(mockBuildQueueService.cancelAllQueuedBuildJobs).toHaveBeenCalled();
+    });
+
+    it('should cancel all running build jobs', () => {
+        // Mock ActivatedRoute to return no course ID
+        mockActivatedRoute.paramMap = of(new Map([]));
+
+        // Mock BuildQueueService to return a successful response for canceling all running build jobs
+        mockBuildQueueService.cancelAllRunningBuildJobs.mockReturnValue(of(null));
+
+        // Initialize the component
+        component.ngOnInit();
+
+        // Call the cancelAllRunningBuildJobs method
+        component.cancelAllRunningBuildJobs();
+
+        // Expectations: The service method for canceling all running build jobs is called without a course ID
+        expect(mockBuildQueueService.cancelAllRunningBuildJobs).toHaveBeenCalled();
     });
 });

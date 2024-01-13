@@ -15,6 +15,15 @@
     }
 }
 
+.text-submission-viewer-warning {
+    display: flex;
+    justify-content: center;
+
+    .icon {
+        margin-right: 0.5rem;
+    }
+}
+
 .plagiarism-match {
     color: dodgerblue;
     font-weight: bold;

@@ -37,7 +37,7 @@ actions:
     runAlways: false
   - name: junit
     script: |
-        chmod -R 777 .
+      chmod -R 777 .
     runAlways: true
     results:
       - name: junit_result.xml

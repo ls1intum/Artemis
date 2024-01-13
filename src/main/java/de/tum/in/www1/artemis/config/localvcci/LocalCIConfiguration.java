@@ -34,7 +34,7 @@ public class LocalCIConfiguration {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIConfiguration.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalCIConfiguration.class);
 
     @Value("${artemis.continuous-integration.queue-size-limit:30}")
     int queueSizeLimit;
@@ -42,11 +42,11 @@ public class LocalCIConfiguration {
     @Value("${artemis.continuous-integration.docker-connection-uri}")
     String dockerConnectionUri;
 
-    @Value("${artemis.continuous-integration.thread-pool-size:1}")
-    int fixedThreadPoolSize;
+    @Value("${artemis.continuous-integration.concurrent-build-size:1}")
+    int concurrentBuildSize;
 
-    @Value("${artemis.continuous-integration.specify-thread-pool-size:false}")
-    boolean specifyThreadPoolSize;
+    @Value("${artemis.continuous-integration.specify-concurrent-builds:false}")
+    boolean specifyConcurrentBuilds;
 
     @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
     private String buildContainerPrefix;
@@ -100,8 +100,8 @@ public class LocalCIConfiguration {
 
         int threadPoolSize;
 
-        if (specifyThreadPoolSize) {
-            threadPoolSize = fixedThreadPoolSize;
+        if (specifyConcurrentBuilds) {
+            threadPoolSize = concurrentBuildSize;
         }
         else {
             int availableProcessors = Runtime.getRuntime().availableProcessors();

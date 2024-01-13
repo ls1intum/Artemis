@@ -22,9 +22,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.in.www1.artemis.connector.AeolusRequestMockProvider;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
@@ -49,6 +51,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
 
     @Autowired
     private CourseUtilService courseUtilService;
+
+    @Autowired
+    private AeolusRequestMockProvider aeolusRequestMockProvider;
 
     private Course course;
 
@@ -137,6 +142,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, WORKING_DIRECTORY + "/testing-dir/build/test-results/test", templateBuildTestResults,
                 solutionBuildTestResults);
         newExercise.setChannelName("testchannelname-pe");
+        aeolusRequestMockProvider.enableMockingOfRequests();
+        aeolusRequestMockProvider.mockFailedGenerateBuildPlan(AeolusTarget.CLI);
         ProgrammingExercise createdExercise = request.postWithResponseBody(ROOT + SETUP, newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         // Check that the repository folders were created in the file system for the template, solution, and tests repository.
