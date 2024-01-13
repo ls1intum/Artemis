@@ -38,7 +38,7 @@ public class MigrationEntry20230920_181600 extends MigrationEntry {
 
     private static final int TIMEOUT_IN_HOURS = 9;
 
-    private final Logger log = LoggerFactory.getLogger(MigrationEntry20230920_181600.class);
+    private static final Logger log = LoggerFactory.getLogger(MigrationEntry20230920_181600.class);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 

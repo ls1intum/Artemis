@@ -31,6 +31,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exercises/course-utils';
 import { PROFILE_AEOLUS, PROFILE_LOCALCI } from 'app/app.constants';
+import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { IrisExerciseCreationChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-creation-chatbot-button.component';
@@ -130,7 +131,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public testwiseCoverageAnalysisSupported = false;
     public auxiliaryRepositoriesSupported = false;
     public auxiliaryRepositoriesValid = true;
-    public customBuildPlansSupported = false;
+    public customBuildPlansSupported: string = '';
 
     // Additional options for import
     public recreateBuildPlans = false;
@@ -166,6 +167,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private exerciseGroupService: ExerciseGroupService,
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private aeolusService: AeolusService,
         private irisSettingsService: IrisSettingsService,
         irisExerciseCreationWebsocketService: IrisExerciseCreationWebsocketService,
     ) {
@@ -517,7 +519,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         });
 
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.customBuildPlansSupported = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI) || profileInfo?.activeProfiles.includes(PROFILE_AEOLUS);
+            if (profileInfo?.activeProfiles.includes(PROFILE_LOCALCI)) {
+                this.customBuildPlansSupported = PROFILE_LOCALCI;
+            }
+            if (profileInfo?.activeProfiles.includes(PROFILE_AEOLUS)) {
+                this.customBuildPlansSupported = PROFILE_AEOLUS;
+            }
         });
         this.defineSupportedProgrammingLanguages();
     }
@@ -620,7 +627,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     saveExercise() {
         if (this.programmingExercise.customizeBuildPlanWithAeolus) {
-            this.programmingExercise.buildPlanConfiguration = JSON.stringify(this.programmingExercise.windFile);
+            this.programmingExercise.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.windFile!);
         } else {
             this.programmingExercise.buildPlanConfiguration = undefined;
             this.programmingExercise.windFile = undefined;

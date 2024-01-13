@@ -38,7 +38,8 @@ describe('ExportModalComponent', () => {
         jest.spyOn(translateService, 'currentLang', 'get').mockReturnValue('en');
         component.ngOnInit();
         expect(component.options.fieldSeparator).toBe(CsvFieldSeparator.COMMA);
-        expect(component.options.quoteStrings).toBe(CsvQuoteStrings.QUOTES_DOUBLE);
+        expect(component.options.quoteCharacter).toBe(CsvQuoteStrings.QUOTES_DOUBLE);
+        expect(component.options.quoteStrings).toBeTrue();
         expect(component.options.decimalSeparator).toBe(CsvDecimalSeparator.PERIOD);
     });
 
@@ -46,7 +47,8 @@ describe('ExportModalComponent', () => {
         jest.spyOn(translateService, 'currentLang', 'get').mockReturnValue('de');
         component.ngOnInit();
         expect(component.options.fieldSeparator).toBe(CsvFieldSeparator.SEMICOLON);
-        expect(component.options.quoteStrings).toBe(CsvQuoteStrings.QUOTES_DOUBLE);
+        expect(component.options.quoteCharacter).toBe(CsvQuoteStrings.QUOTES_DOUBLE);
+        expect(component.options.quoteStrings).toBeTrue();
         expect(component.options.decimalSeparator).toBe(CsvDecimalSeparator.COMMA);
     });
 
@@ -55,7 +57,8 @@ describe('ExportModalComponent', () => {
         component.setCsvQuoteString(CsvQuoteStrings.NONE);
         component.setCsvDecimalSeparator(CsvDecimalSeparator.PERIOD);
         expect(component.options.fieldSeparator).toBe(CsvFieldSeparator.SPACE);
-        expect(component.options.quoteStrings).toBe(CsvQuoteStrings.NONE);
+        expect(component.options.quoteCharacter).toBe(CsvQuoteStrings.NONE);
+        expect(component.options.quoteStrings).toBeFalse();
         expect(component.options.decimalSeparator).toBe(CsvDecimalSeparator.PERIOD);
     });
 
@@ -82,7 +85,8 @@ describe('ExportModalComponent', () => {
     it('should return the csv export options on finish when csv export is active', () => {
         const testOptions: CsvExportOptions = {
             fieldSeparator: CsvFieldSeparator.SEMICOLON,
-            quoteStrings: CsvQuoteStrings.QUOTES_SINGLE,
+            quoteStrings: true,
+            quoteCharacter: CsvQuoteStrings.QUOTES_SINGLE,
             decimalSeparator: CsvDecimalSeparator.COMMA,
         };
         component.options = testOptions;

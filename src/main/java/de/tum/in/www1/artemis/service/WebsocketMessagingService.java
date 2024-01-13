@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class WebsocketMessagingService {
 
-    private final Logger log = LoggerFactory.getLogger(WebsocketMessagingService.class);
+    private static final Logger log = LoggerFactory.getLogger(WebsocketMessagingService.class);
 
     private final SimpMessageSendingOperations messagingTemplate;
 

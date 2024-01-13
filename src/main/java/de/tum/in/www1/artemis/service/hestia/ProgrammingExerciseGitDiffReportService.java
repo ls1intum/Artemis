@@ -42,7 +42,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 @Service
 public class ProgrammingExerciseGitDiffReportService {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGitDiffReportService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGitDiffReportService.class);
 
     private final GitService gitService;
 

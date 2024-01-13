@@ -62,7 +62,7 @@ import tech.jhipster.web.util.PaginationUtil;
 @RequestMapping("api/admin/")
 public class AdminUserResource {
 
-    private final Logger log = LoggerFactory.getLogger(AdminUserResource.class);
+    private static final Logger log = LoggerFactory.getLogger(AdminUserResource.class);
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;

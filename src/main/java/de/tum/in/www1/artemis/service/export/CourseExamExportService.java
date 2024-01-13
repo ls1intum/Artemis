@@ -37,7 +37,7 @@ public class CourseExamExportService {
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
 
-    private final Logger log = LoggerFactory.getLogger(CourseExamExportService.class);
+    private static final Logger log = LoggerFactory.getLogger(CourseExamExportService.class);
 
     private final ProgrammingExerciseExportService programmingExerciseExportService;
 

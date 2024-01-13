@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.service.iris.exception.*;
 @Profile("iris")
 public class IrisConnectorService {
 
-    private final Logger log = LoggerFactory.getLogger(IrisConnectorService.class);
+    private static final Logger log = LoggerFactory.getLogger(IrisConnectorService.class);
 
     private final RestTemplate restTemplate;
 
