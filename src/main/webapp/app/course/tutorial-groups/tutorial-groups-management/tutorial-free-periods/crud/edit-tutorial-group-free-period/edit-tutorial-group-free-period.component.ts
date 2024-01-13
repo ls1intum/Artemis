@@ -43,7 +43,7 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
             console.error('Error: Component not fully configured');
         } else {
             this.formData = {
-                date: this.tutorialGroupFreePeriod.start?.tz(this.course.timeZone).toDate(),
+                startDate: this.tutorialGroupFreePeriod.start?.tz(this.course.timeZone).toDate(),
                 reason: this.tutorialGroupFreePeriod.reason,
             };
             this.isInitialized = true;
@@ -51,10 +51,10 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
     }
 
     updateTutorialGroupFreePeriod(formData: TutorialGroupFreePeriodFormData) {
-        const { date, reason } = formData;
+        const { startDate, reason } = formData;
 
         const tutorialGroupFreePeriodDto = new TutorialGroupFreePeriodDTO();
-        tutorialGroupFreePeriodDto.date = date;
+        tutorialGroupFreePeriodDto.date = startDate;
         tutorialGroupFreePeriodDto.reason = reason;
 
         this.isLoading = true;

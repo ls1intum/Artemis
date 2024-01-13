@@ -1,11 +1,19 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
-import { TutorialGroupSessionFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
+// import { TutorialGroupSessionFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
+// import {TutorialGroupFreePeriod} from "app/entities/tutorial-group/tutorial-group-free-day.model";
 
 export interface TutorialGroupFreePeriodFormData {
-    date?: Date;
+    startDate?: Date;
+    endDate?: Date;
     reason?: string;
+}
+
+export enum TimeFrame {
+    Period,
+    Day,
+    PeriodWithinDay,
 }
 @Component({
     selector: 'jhi-tutorial-free-period-form',
@@ -15,7 +23,8 @@ export interface TutorialGroupFreePeriodFormData {
 export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     @Input()
     formData: TutorialGroupFreePeriodFormData = {
-        date: undefined,
+        startDate: undefined,
+        endDate: undefined,
         reason: undefined,
     };
 
@@ -23,11 +32,21 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
 
     @Input() timeZone: string;
 
-    @Output() formSubmitted: EventEmitter<TutorialGroupSessionFormData> = new EventEmitter<TutorialGroupSessionFormData>();
+    @Output() formSubmitted: EventEmitter<TutorialGroupFreePeriodFormData> = new EventEmitter<TutorialGroupFreePeriodFormData>();
 
     faCalendarAlt = faCalendarAlt;
 
     form: FormGroup;
+
+    selectedTimeFrame = TimeFrame.Day;
+
+    setSelectedTimeFrame(timeframe: TimeFrame) {
+        this.selectedTimeFrame = timeframe;
+    }
+
+    // get periodControl() {
+    //     return this.form.get('period');
+    // }
 
     get dateControl() {
         return this.form.get('date');

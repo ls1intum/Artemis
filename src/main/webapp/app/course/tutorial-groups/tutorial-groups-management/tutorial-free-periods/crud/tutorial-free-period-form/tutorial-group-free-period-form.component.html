@@ -4,10 +4,20 @@
             {{ 'artemisApp.generic.timeZone' | artemisTranslate: { timeZone } }}
         </div>
     </div>
+    <div class="btn-group" role="group">
+        <input type="radio" class="btn-check" name="btnradio" id="FreePeriod" autocomplete="off" (click)="setSelectedTimeFrame(TimeFrame.Period)" />
+        <label class="btn btn-outline-primary" for="FreePeriod">Free Period</label>
+
+        <input type="radio" class="btn-check" name="btnradio" id="FreeDay" autocomplete="off" checked (click)="setSelectedTimeFrame(TimeFrame.Day)" />
+        <label class="btn btn-outline-primary" for="FreeDay">Free Day</label>
+
+        <input type="radio" class="btn-check" name="btnradio" id="FreePeriodWithinDay" autocomplete="off" (click)="setSelectedTimeFrame(TimeFrame.PeriodWithinDay)" />
+        <label class="btn btn-outline-primary" for="FreePeriodWithinDay">Free Period within Day</label>
+    </div>
     <div class="col-12">
         <form class="row" *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
             <!-- Date -->
-            <div>
+            <div *ngIf="selectedTimeFrame == TimeFrame.Day">
                 <label class="form-label" for="date">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.label' | artemisTranslate }}</label>
                 <div class="input-group">
                     <input formControlName="date" required [owlDateTime]="date" class="d-none" />
@@ -30,6 +40,19 @@
                         {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredDateError' | artemisTranslate }}
                     </div>
                 </div>
+            </div>
+
+            <div *ngIf="selectedTimeFrame == TimeFrame.PeriodWithinDay">PeriodWithinDayTestausgabe</div>
+            <div *ngIf="selectedTimeFrame == TimeFrame.Period">
+                <label class="form-label" for="date">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelPeriod' | artemisTranslate }}</label>
+                <!--                <div class="input-group">-->
+                <!--                    <input formControlName="period" required [owlDateTime]="period" class="d-none" />-->
+                <!--                    <input-->
+                <!--                        name="date"-->
+                <!--                        id="period"-->
+                <!--                        required-->
+                <!--                    />-->
+                <!--                </div>-->
             </div>
 
             <!-- Reason -->

@@ -76,6 +76,7 @@
             },
             "tutorialFreePeriod": {
                 "date": "Datum",
+                "timeFrame": "Zeitraum",
                 "reason": "Grund"
             }
         },
@@ -176,6 +177,7 @@
             "tutorialFreePeriodForm": {
                 "dateInput": {
                     "label": "Datum",
+                    "labelPeriod": "Zeitraum",
                     "requiredDateError": "Ein Datum muss angegeben werden!",
                     "parseError": "Das Datum muss im Format 'YYYY-MM-DD' sein"
                 },
@@ -228,7 +230,7 @@
         },
         "pages": {
             "tutorialGroupsManagement": {
-                "intro": "Willkommen auf der Seite zur Verwaltung der Übungsgrupen! Eine Beta-Funktion von Artemis, die es ermöglicht, wöchentliche Online- und Offline-Übungsgruppen zu verwalten. Du kannst damit beginnen, Übungsgruppen aus einer CSV-Datei zu importieren oder manuell eine neue Übungsgruppe zu erstellen.",
+                "intro": "Willkommen auf der Seite zur Verwaltung der Übungsgruppen! Eine Beta-Funktion von Artemis, die es ermöglicht, wöchentliche Online- und Offline-Übungsgruppen zu verwalten. Du kannst damit beginnen, Übungsgruppen aus einer CSV-Datei zu importieren oder manuell eine neue Übungsgruppe zu erstellen.",
                 "title": "Übungsgruppen-Verwaltung",
                 "freePeriodsButtons": "Freie Tage",
                 "creatTutorialGroupButton": "Neue Übungsgruppe",
@@ -271,17 +273,25 @@
             "tutorialFreePeriodsManagement": {
                 "explanation": "Definiere kursweite Tage, an denen keine Übungsgruppen stattfinden sollen. Dies kann verwendet werden, um Feiertage oder andere Tage zu definieren, an denen keine Übungsgruppen stattfinden sollen.",
                 "title": "Freie Tage verwalten",
-                "createFreePeriodButton": "Neuen freien Tag hinzufügen",
+                "createFreeDayButton": "Neuen freien Tag hinzufügen",
+                "createFreePeriodButton": "Neuen freien Zeitraum hinzufügen",
+                "createFreePeriodDuringDayButton": "Neuen freien Zeitraum während eines Tages hinzufügen",
                 "timeZoneExplanation": "Jeder Tag wird in der Zeitzone {{ timeZone }} angezeigt",
                 "deleteDialog": {
-                    "question": "Sicher, dass der freie Tag {{ title }} gelöscht werden soll?"
+                    "question": "Sicher, dass der freie Tag {{ title }} gelöscht werden soll?",
+                    "questionFreePeriod": "Sicher, dass der freie Zeitraum {{ title }} gelöscht werden soll?",
+                    "questionFreePeriodDuringDay": "Sicher, dass der freie Zeitraum innerhalb eines Tages {{ title }} gelöscht werden soll?"
                 }
             },
             "createTutorialFreePeriod": {
-                "title": "Freien Tag erstellen"
+                "title": "Freien Tag erstellen",
+                "titleFreePeriod": "Freien Zeitraum erstellen",
+                "titleFreePeriodDuringDay": "Freien Zeitraum während eines Tages erstellen"
             },
             "editTutorialFreePeriod": {
-                "title": "Freien Tag bearbeiten"
+                "title": "Freien Tag bearbeiten",
+                "titleFreePeriod": "Freien Zeitraum bearbeiten",
+                "titleFreePeriodDuringDay": "Freien Zeitraum während eines Tages bearbeiten"
             },
             "tutorialGroupSessionManagement": {
                 "title": "Sitzungsverwaltung",

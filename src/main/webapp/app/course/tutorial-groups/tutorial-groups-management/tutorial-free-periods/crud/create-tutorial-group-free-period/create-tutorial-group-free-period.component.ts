@@ -42,9 +42,9 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
         }
     }
     createTutorialGroupFreePeriod(formData: TutorialGroupFreePeriodFormData) {
-        const { date, reason } = formData;
+        const { startDate, reason } = formData;
 
-        this.tutorialGroupFreePeriodToCreate.date = date;
+        this.tutorialGroupFreePeriodToCreate.date = startDate;
         this.tutorialGroupFreePeriodToCreate.reason = reason;
 
         this.isLoading = true;

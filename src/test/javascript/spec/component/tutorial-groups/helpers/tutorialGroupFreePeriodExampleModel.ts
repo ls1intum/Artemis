@@ -20,14 +20,14 @@ export const generateExampleTutorialGroupFreePeriod = ({
 
 export const tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData = (entity: TutorialGroupFreePeriod, tz: string): TutorialGroupFreePeriodFormData => {
     return {
-        date: entity.start!.tz(tz).toDate(),
+        startDate: entity.start!.tz(tz).toDate(),
         reason: entity.reason,
     };
 };
 
 export const formDataToTutorialGroupFreePeriodDTO = (formData: TutorialGroupFreePeriodFormData): TutorialGroupFreePeriodDTO => {
     return {
-        date: formData.date,
+        date: formData.startDate,
         reason: formData.reason,
     };
 };
