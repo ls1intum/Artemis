@@ -83,7 +83,7 @@ public class ProgrammingExerciseService {
 
     private final Pattern packageNamePatternForSwift = Pattern.compile(SWIFT_PACKAGE_NAME_REGEX);
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseService.class);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 

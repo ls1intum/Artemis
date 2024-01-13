@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 @Profile("localci")
 public class LocalCIService extends AbstractContinuousIntegrationService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIService.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalCIService.class);
 
     public LocalCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
             BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {

@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.service.util.Tuple;
 @Service
 public class ExerciseLifecycleService {
 
-    private final Logger log = LoggerFactory.getLogger(ExerciseLifecycleService.class);
+    private static final Logger log = LoggerFactory.getLogger(ExerciseLifecycleService.class);
 
     private final TaskScheduler scheduler;
 

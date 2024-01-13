@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.service.ZipFileService;
 @Service
 public class FileUploadSubmissionExportService extends SubmissionExportService {
 
-    private final Logger log = LoggerFactory.getLogger(FileUploadSubmissionExportService.class);
+    private static final Logger log = LoggerFactory.getLogger(FileUploadSubmissionExportService.class);
 
     public FileUploadSubmissionExportService(ExerciseRepository exerciseRepository, ZipFileService zipFileService, FileService fileService) {
         super(exerciseRepository, zipFileService, fileService);

@@ -37,7 +37,7 @@ import tech.jhipster.web.util.ResponseUtil;
 @RequestMapping("api/")
 public class AttachmentResource {
 
-    private final Logger log = LoggerFactory.getLogger(AttachmentResource.class);
+    private static final Logger log = LoggerFactory.getLogger(AttachmentResource.class);
 
     private static final String ENTITY_NAME = "attachment";
 

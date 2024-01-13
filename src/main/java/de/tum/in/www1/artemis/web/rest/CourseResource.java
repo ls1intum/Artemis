@@ -67,7 +67,7 @@ public class CourseResource {
 
     private static final String ENTITY_NAME = "course";
 
-    private final Logger log = LoggerFactory.getLogger(CourseResource.class);
+    private static final Logger log = LoggerFactory.getLogger(CourseResource.class);
 
     private final UserRepository userRepository;
 

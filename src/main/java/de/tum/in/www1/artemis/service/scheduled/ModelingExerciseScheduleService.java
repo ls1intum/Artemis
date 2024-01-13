@@ -31,7 +31,7 @@ import tech.jhipster.config.JHipsterConstants;
 @Profile("scheduling")
 public class ModelingExerciseScheduleService implements IExerciseScheduleService<ModelingExercise> {
 
-    private final Logger log = LoggerFactory.getLogger(ModelingExerciseScheduleService.class);
+    private static final Logger log = LoggerFactory.getLogger(ModelingExerciseScheduleService.class);
 
     private final ScheduleService scheduleService;
 

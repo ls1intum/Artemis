@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 @RequestMapping("api/")
 public class LearningPathResource {
 
-    private final Logger log = LoggerFactory.getLogger(LearningPathResource.class);
+    private static final Logger log = LoggerFactory.getLogger(LearningPathResource.class);
 
     private final CourseRepository courseRepository;
 

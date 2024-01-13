@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWe
 @Service
 public class ProgrammingMessagingService {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingMessagingService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingMessagingService.class);
 
     private final GroupNotificationService groupNotificationService;
 

@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 @Service
 public class AssessmentDashboardService {
 
-    private final Logger log = LoggerFactory.getLogger(AssessmentDashboardService.class);
+    private static final Logger log = LoggerFactory.getLogger(AssessmentDashboardService.class);
 
     private final ComplaintService complaintService;
 
