@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.iris.message.*;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCompetencyGenerationSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisParseResponseException;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
@@ -34,15 +33,11 @@ public class IrisCompetencyGenerationSessionService implements IrisSessionSubSer
 
     private final IrisSettingsService irisSettingsService;
 
-    private final AuthorizationCheckService authCheckService;
-
     private final IrisSessionRepository irisSessionRepository;
 
-    public IrisCompetencyGenerationSessionService(IrisConnectorService irisConnectorService, IrisSettingsService irisSettingsService, AuthorizationCheckService authCheckService,
-            IrisSessionRepository irisSessionRepository) {
+    public IrisCompetencyGenerationSessionService(IrisConnectorService irisConnectorService, IrisSettingsService irisSettingsService, IrisSessionRepository irisSessionRepository) {
         this.irisConnectorService = irisConnectorService;
         this.irisSettingsService = irisSettingsService;
-        this.authCheckService = authCheckService;
         this.irisSessionRepository = irisSessionRepository;
     }
 
