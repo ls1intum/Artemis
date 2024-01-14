@@ -102,8 +102,13 @@
             "buildPlanEditor": "Build-Plan-Editor",
             "buildPlanFetchError": "Konnte keinen Build-Plan für diese Aufgabe finden. Das ist normal für ältere Aufgaben. Du kannst den Build-Plan im CI-System bearbeiten oder den Build-Plan in Artemis zurücksetzen, um einen neuen Build-Plan zu erstellen der hier bearbeitet werden kann.",
             "publishBuildPlanUrl": "Build-Plan veröffentlichen",
+            "customizeBuildPlan": "Build-Plan anpassen",
             "customizeBuildPlanWithAeolus": "Build-Plan mit Aeolus anpassen",
             "runActionAlways": "Immer ausführen, auch wenn andere Aktionen fehlschlagen",
+            "script": "Script",
+            "parameters": "Parameter",
+            "dockerImage": "Docker Image",
+            "workdir": "Verzeichnis",
             "allowOnlineEditor": {
                 "title": "Online-Editor erlauben",
                 "alert": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
@@ -207,7 +212,9 @@
                 "missingTestCases": "{{number}} Testfälle wurde im Test-Repository gefunden, die nicht Teil der Aufgabenstellung sind:",
                 "issues": "Testfallprobleme.",
                 "ok": "Testfälle ok.",
-                "invalidTestCase": "Der Testfall '{{id}}' konnte nicht im Test-Repository gefunden werden."
+                "invalidTestCase": "Der Testfall '{{id}}' konnte nicht im Test-Repository gefunden werden.",
+                "repeatedTestCase": "Der Testfall '{{id}}' wiederholt sich.",
+                "repeatedTestCases": "{{number}} Testfälle wiederholen sich. Das kann unerwartetes Verhalten verursachen:"
             },
             "tasksAnalysis": {
                 "issues": "Aufgabenprobleme.",

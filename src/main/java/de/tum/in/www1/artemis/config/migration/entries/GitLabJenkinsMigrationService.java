@@ -40,7 +40,7 @@ import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 @Profile("jenkins & gitlab")
 public class GitLabJenkinsMigrationService implements CIVCSMigrationService {
 
-    private final Logger log = LoggerFactory.getLogger(GitLabJenkinsMigrationService.class);
+    private static final Logger log = LoggerFactory.getLogger(GitLabJenkinsMigrationService.class);
 
     @Value("${server.url}")
     private String artemisServerUrl;
