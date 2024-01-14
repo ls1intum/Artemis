@@ -58,7 +58,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     private static final String TEST_PREFIX = "quizexerciseintegration";
 
-    private final Logger log = LoggerFactory.getLogger(getClass());
+    private static final Logger log = LoggerFactory.getLogger(QuizExerciseIntegrationTest.class);
 
     @Autowired
     private QuizExerciseService quizExerciseService;
