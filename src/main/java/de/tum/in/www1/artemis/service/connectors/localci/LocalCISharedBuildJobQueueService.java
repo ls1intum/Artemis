@@ -21,7 +21,9 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.cp.lock.FencedLock;
 import com.hazelcast.map.IMap;
 
+import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.BuildJob;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.BuildJobResult;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -49,6 +51,8 @@ public class LocalCISharedBuildJobQueueService {
     private final ThreadPoolExecutor localCIBuildExecutorService;
 
     private final LocalCIBuildJobManagementService localCIBuildJobManagementService;
+
+    private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
     private final ParticipationRepository participationRepository;
 
@@ -80,12 +84,13 @@ public class LocalCISharedBuildJobQueueService {
     private final ReentrantLock instanceLock = new ReentrantLock();
 
     public LocalCISharedBuildJobQueueService(HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
-            LocalCIBuildJobManagementService localCIBuildJobManagementService, ParticipationRepository participationRepository,
-            ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService,
-            ProgrammingExerciseRepository programmingExerciseRepository, BuildJobRepository buildJobRepository) {
+            LocalCIBuildJobManagementService localCIBuildJobManagementService, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
+            ParticipationRepository participationRepository, ProgrammingExerciseGradingService programmingExerciseGradingService,
+            ProgrammingMessagingService programmingMessagingService, ProgrammingExerciseRepository programmingExerciseRepository, BuildJobRepository buildJobRepository) {
         this.hazelcastInstance = hazelcastInstance;
         this.localCIBuildExecutorService = (ThreadPoolExecutor) localCIBuildExecutorService;
         this.localCIBuildJobManagementService = localCIBuildJobManagementService;
+        this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.participationRepository = participationRepository;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.programmingMessagingService = programmingMessagingService;
@@ -121,7 +126,7 @@ public class LocalCISharedBuildJobQueueService {
     public void addBuildJob(String name, long participationId, String repositoryName, RepositoryType repositoryType, String commitHash, ZonedDateTime submissionDate, int priority,
             long courseId, RepositoryType triggeredByPushTo) {
         LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(Long.parseLong(String.valueOf(participationId) + submissionDate.toInstant().toEpochMilli()), name,
-                null, participationId, repositoryName, repositoryType, commitHash, submissionDate, 0, null, null, priority, courseId, triggeredByPushTo);
+                null, participationId, repositoryName, repositoryType, commitHash, submissionDate, 0, null, null, priority, courseId, triggeredByPushTo, null);
         queue.add(buildJobQueueItem);
     }
 
@@ -157,8 +162,6 @@ public class LocalCISharedBuildJobQueueService {
      */
     public void saveFinishedBuildJob(LocalCIBuildJobQueueItem queueItem, BuildJobResult result, ZonedDateTime buildCompletionDate, ProgrammingExerciseParticipation participation) {
         try {
-            String dockerImage = participation.getProgrammingExercise().getWindfile().getMetadata().getDocker().getImage();
-
             BuildJob buildJob = new BuildJob();
             buildJob.setName(queueItem.name());
             buildJob.setExerciseId(participation.getProgrammingExercise().getId());
@@ -174,7 +177,7 @@ public class LocalCISharedBuildJobQueueService {
             buildJob.setPriority(queueItem.priority());
             buildJob.setTriggeredByPushTo(queueItem.triggeredByPushTo());
             buildJob.setBuildJobResult(result);
-            buildJob.setDockerImage(dockerImage);
+            buildJob.setDockerImage(queueItem.dockerImage());
 
             buildJobRepository.save(buildJob);
         }
@@ -281,7 +284,7 @@ public class LocalCISharedBuildJobQueueService {
             String hazelcastMemberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
             LocalCIBuildJobQueueItem processingJob = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), hazelcastMemberAddress, buildJob.participationId(),
                     buildJob.repositoryName(), buildJob.repositoryType(), buildJob.commitHash(), buildJob.submissionDate(), buildJob.retryCount(), ZonedDateTime.now(), null,
-                    buildJob.priority(), buildJob.courseId(), buildJob.triggeredByPushTo());
+                    buildJob.priority(), buildJob.courseId(), buildJob.triggeredByPushTo(), null);
             processingJobs.put(processingJob.id(), processingJob);
             localProcessingJobs.incrementAndGet();
 
@@ -359,10 +362,26 @@ public class LocalCISharedBuildJobQueueService {
             participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
         }
 
+        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
+        String dockerImage;
+        try {
+            dockerImage = programmingExercise.getWindfile().getMetadata().getDocker().getImage();
+        }
+        catch (NullPointerException e) {
+            log.warn("Could not retrieve Docker image from windfile metadata for programming exercise {}. Using default Docker image instead.", programmingExercise.getId());
+            dockerImage = programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()));
+        }
+
+        LocalCIBuildJobQueueItem updatedJob = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(), buildJob.participationId(),
+                buildJob.repositoryName(), buildJob.repositoryType(), buildJob.commitHash(), buildJob.submissionDate(), buildJob.retryCount(), buildJob.buildStartDate(), null,
+                buildJob.priority(), buildJob.courseId(), buildJob.triggeredByPushTo(), dockerImage);
+
+        processingJobs.put(buildJob.id(), updatedJob);
+
         boolean isPushToTestOrAuxRepository = buildJob.triggeredByPushTo() == RepositoryType.TESTS || buildJob.triggeredByPushTo() == RepositoryType.AUXILIARY;
 
         CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.executeBuildJob(participation, commitHash, isRetry, isPushToTestOrAuxRepository,
-                buildJob.id());
+                buildJob.id(), dockerImage);
         futureResult.thenAccept(buildResult -> {
 
             ZonedDateTime buildCompletionDate = ZonedDateTime.now();
@@ -424,7 +443,7 @@ public class LocalCISharedBuildJobQueueService {
                     log.warn("Requeueing failed build job: {}", buildJob);
                     LocalCIBuildJobQueueItem requeuedBuildJob = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(),
                             buildJob.participationId(), buildJob.repositoryName(), buildJob.repositoryType(), buildJob.commitHash(), buildJob.submissionDate(),
-                            buildJob.retryCount() + 1, null, null, buildJob.priority(), buildJob.courseId(), buildJob.triggeredByPushTo());
+                            buildJob.retryCount() + 1, null, null, buildJob.priority(), buildJob.courseId(), buildJob.triggeredByPushTo(), null);
                     queue.add(requeuedBuildJob);
                 }
                 else {

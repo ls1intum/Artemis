@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
@@ -78,10 +77,7 @@ public class LocalCIBuildJobManagementService {
      * @throws LocalCIException If the build job could not be submitted to the executor service.
      */
     public CompletableFuture<LocalCIBuildResult> executeBuildJob(ProgrammingExerciseParticipation participation, String commitHash, boolean isRetry,
-            boolean isPushToTestOrAuxRepository, long buildJobId) throws LocalCIException {
-
-        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-        String dockerImage = programmingExercise.getWindfile().getMetadata().getDocker().getImage();
+            boolean isPushToTestOrAuxRepository, long buildJobId, String dockerImage) throws LocalCIException {
 
         // Check if the Docker image is available. If not, pull it.
         localCIDockerService.pullDockerImage(dockerImage);
