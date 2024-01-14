@@ -13,7 +13,16 @@ export const ltiConfigurationRoute: Routes = [
         },
     },
     {
-        path: 'lti-configuration/:platformId/edit',
+        path: 'lti-configuration/edit/:platformId',
+        component: EditLtiConfigurationComponent,
+        data: {
+            authorities: [Authority.ADMIN],
+            pageTitle: 'artemisApp.lti.edit.ltiPlatform',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'lti-configuration/edit',
         component: EditLtiConfigurationComponent,
         data: {
             authorities: [Authority.ADMIN],

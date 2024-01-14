@@ -40,7 +40,8 @@ public class Lti13AgsClaim {
                 agsClaim.setScope(Collections.singletonList(Scopes.AGS_SCORE));
             }
 
-            JsonElement lineItem = agsClaimJson.get("lineitem");
+            // For moodle lineItem is stored in lineitem claim, for edX it is in lineitems
+            JsonElement lineItem = agsClaimJson.get("lineitem") == null ? agsClaimJson.get("lineitems") : agsClaimJson.get("lineitem");
             if (lineItem != null) {
                 agsClaim.setLineItem(lineItem.getAsString());
             }

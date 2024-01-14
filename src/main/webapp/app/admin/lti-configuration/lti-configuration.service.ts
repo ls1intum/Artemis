@@ -19,6 +19,15 @@ export class LtiConfigurationService {
      * @param ltiPlatformConfiguration The configuration to update.
      * @return Observable of the HTTP response.
      */
+    addLtiPlatformConfiguration(ltiPlatformConfiguration: LtiPlatformConfiguration): Observable<HttpResponse<any>> {
+        return this.http.post<LtiPlatformConfiguration>(`api/admin/lti-platform`, ltiPlatformConfiguration, { observe: 'response' });
+    }
+
+    /**
+     * Updates an LTI platform configuration.
+     * @param ltiPlatformConfiguration The configuration to update.
+     * @return Observable of the HTTP response.
+     */
     updateLtiPlatformConfiguration(ltiPlatformConfiguration: LtiPlatformConfiguration): Observable<HttpResponse<any>> {
         return this.http.put<LtiPlatformConfiguration>(`api/admin/lti-platform`, ltiPlatformConfiguration, { observe: 'response' });
     }
