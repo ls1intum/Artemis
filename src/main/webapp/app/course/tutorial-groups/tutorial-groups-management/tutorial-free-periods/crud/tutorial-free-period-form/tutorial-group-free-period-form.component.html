@@ -18,7 +18,7 @@
                 <label class="btn btn-outline-primary" for="FreePeriodWithinDay">Free Period within Day</label>
             </div>
             <!-- Date -->
-            <!--            Todo: display correct labels for different timeframes-->
+            <!--Todo: display correct labels for different timeframes-->
             <div *ngIf="timeFrame != TimeFrame.Period">
                 <label class="form-label" for="startDate">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.label' | artemisTranslate }}</label>
             </div>
@@ -54,7 +54,7 @@
             <div *ngIf="getTimeFrame() == TimeFrame.Period">
                 <label class="form-label" for="endDate">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEnd' | artemisTranslate }}</label>
                 <div class="input-group">
-                    <input formControlName="endDate" [(ngModel)]="formData.endDate" required [owlDateTime]="endDate" class="d-none" />
+                    <input formControlName="endDate" [(ngModel)]="formData.endDate" required [owlDateTime]="endDate" [min]="getMinEndDate()" class="d-none" />
                     <input
                         name="endDate"
                         id="endDate"
@@ -73,22 +73,44 @@
                 </div>
                 <div *ngIf="endDateControl?.invalid && (endDateControl?.dirty || endDateControl?.touched)" class="alert alert-danger">
                     <div *ngIf="endDateControl?.errors?.required">
-                        {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredDateError' | artemisTranslate }}
+                        {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredEndDateError' | artemisTranslate }}
+                    </div>
+                    <div *ngIf="getMinEndDate() && endDateControl?.dirty">
+                        {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError' | artemisTranslate }}
                     </div>
                 </div>
             </div>
 
-            <!--            Todo: Hour selector for PeriodWithinDay-->
+            <!--Todo: Hour selectors for PeriodWithinDay-->
             <div *ngIf="getTimeFrame() == TimeFrame.PeriodWithinDay">
                 <label class="form-label" for="startTime">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStartTime' | artemisTranslate }}</label>
                 <div class="input-group">
-                    <input name="startTime" id="startTime" required [owlDateTimeTrigger]="startTime" [owlDateTime]="startTime" readonly class="form-control" />
+                    <input
+                        name="startTime"
+                        id="startTime"
+                        required
+                        (focus)="markStartTimeAsTouched()"
+                        [owlDateTimeTrigger]="startTime"
+                        [owlDateTime]="startTime"
+                        readonly
+                        class="form-control"
+                    />
                     <owl-date-time [pickerType]="'timer'" #startTime></owl-date-time>
                 </div>
 
                 <label class="form-label" for="endTime">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEndTime' | artemisTranslate }}</label>
                 <div class="input-group">
-                    <input name="endTime" id="endTime" required [owlDateTimeTrigger]="endTime" [owlDateTime]="endTime" readonly class="form-control" />
+                    <input
+                        name="endTime"
+                        id="endTime"
+                        required
+                        (focus)="markStartTimeAsTouched()"
+                        [owlDateTimeTrigger]="endTime"
+                        [owlDateTime]="endTime"
+                        [min]="getMinEndTime()"
+                        readonly
+                        class="form-control"
+                    />
                     <owl-date-time [pickerType]="'timer'" #endTime></owl-date-time>
                 </div>
             </div>

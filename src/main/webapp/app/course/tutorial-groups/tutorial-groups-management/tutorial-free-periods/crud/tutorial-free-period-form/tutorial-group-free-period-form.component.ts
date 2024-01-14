@@ -51,13 +51,36 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
 
     // Todo: TimeFrame getter/setter. Reset endDate when switching back to single Day
     setTimeFrame(timeFrame: TimeFrame) {
-        if (timeFrame == TimeFrame.Day && this.formData.endDate != undefined) {
-            // @ts-expect-error It will never be null, the ifStatement checks that...
-            this.form.get('endDate').setValue(null);
-            // @ts-expect-error It will never be null, the ifStatement checks that...
-            this.form.get('endDate').markAsPristine();
+        if (this.form.get('endDate') && timeFrame == TimeFrame.Day && this.formData.endDate != undefined) {
+            this.form.get('endDate')?.reset();
+            this.form.get('endDate')?.markAsUntouched();
         }
         this.timeFrame = timeFrame;
+    }
+
+    // Todo: Provide the minimum date that the End date may have in order to be a valid time frame.
+    getMinEndDate() {
+        const startDate = this.form.get('startDate')?.value;
+
+        if (startDate) {
+            const startDateTime = new Date(startDate).getTime();
+            const minEndDate = new Date(startDateTime + 24 * 60 * 60 * 1000); // Ein Tag später
+
+            return minEndDate;
+        }
+
+        return null;
+    }
+
+    getMinEndTime() {
+        const startTime = this.form.get('startTime')?.value;
+        if (startTime) {
+            const minEndTime = new Date();
+            minEndTime.setTime(startTime.hours);
+            return minEndTime;
+        }
+
+        return null;
     }
 
     getTimeFrame(): TimeFrame {
@@ -72,22 +95,34 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         return this.form.get('endDate');
     }
 
+    get startTimeControl() {
+        return this.form.get('startTime');
+    }
+
+    get endTimeControl() {
+        return this.form.get('endTime');
+    }
+
     get reasonControl() {
         return this.form.get('reason');
     }
 
     // ToDo: How can I validate the form for the three different timeFrames? This does not work.
     get isSubmitPossible() {
-        // @ts-expect-error I check against this possibility in the if statement
-        if (this.form.get('startDate') != undefined && this.form.get('startDate').touched) {
+        // debugger;
+        if (this.form.get('startDate') == undefined || !this.form.get('startDate')?.touched) {
             return false;
         }
+
         if (this.timeFrame == TimeFrame.Day) {
-            // @ts-expect-error I check against this possibility in the if statement
-            return this.form.get('startDate').touched && !this.isStartDateInvalid;
+            return this.form.get('startDate')?.touched && !this.isStartDateInvalid;
         } else if (this.timeFrame == TimeFrame.Period) {
-            // @ts-ignore
-            return !this.isStartDateInvalid && !this.isEndDateInvalid; // && this.form.get("startDate") < this.form.get("endDate");
+            if (!this.endDateControl) {
+                return false;
+            }
+            return !this.isStartDateInvalid && !this.isEndDateInvalid && !this.endDateControl.invalid;
+        } else {
+            // return !this.isStartDateInvalid && !this.isStartTimeInvalid && !this.isEndTimeInvalid;
         }
         return !this.form.invalid;
     }
@@ -145,6 +180,18 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         }
     }
 
+    markStartTimeAsTouched() {
+        if (this.startTimeControl) {
+            this.startTimeControl.markAsTouched();
+        }
+    }
+
+    markEndTimeAsTouched() {
+        if (this.endTimeControl) {
+            this.endTimeControl.markAsTouched();
+        }
+    }
+
     get isStartDateInvalid() {
         if (this.startDateControl) {
             return this.startDateControl.invalid && (this.startDateControl.touched || this.startDateControl.dirty);
@@ -160,4 +207,23 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
             return false;
         }
     }
+
+    // get isStartTimeInvalid() {
+    //     if (this.startTimeControl) {
+    //         return this.startTimeControl.invalid && (this.startTimeControl.touched || this.startTimeControl.dirty);
+    //     } else {
+    //         return false;
+    //     }
+    // }
+
+    // get isEndTimeInvalid() {
+    //     if (this.endTimeControl) {
+    //         if (this.startTimeControl && this.startTimeControl.value.minutes >= this.endTimeControl.value.minutes) {
+    //             return true;
+    //         }
+    //         return this.endTimeControl.invalid && (this.endTimeControl.touched || this.endTimeControl.dirty);
+    //     } else {
+    //         return false;
+    //     }
+    // }
 }
