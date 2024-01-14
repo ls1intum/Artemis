@@ -152,12 +152,12 @@ public class LocalCIContainerService {
      */
     public void moveResultsToSpecifiedDirectory(String containerId, List<String> sourcePaths, String destinationPath) {
         String command = "shopt -s globstar && mkdir -p " + destinationPath;
-        executeDockerCommand(containerId, false, false, true, "bash", "-c", command);
+        executeDockerCommand(containerId, true, true, true, "bash", "-c", command);
 
         for (String sourcePath : sourcePaths) {
             checkPath(sourcePath);
             command = "shopt -s globstar && mv " + sourcePath + " " + destinationPath;
-            executeDockerCommand(containerId, false, false, true, "bash", "-c", command);
+            executeDockerCommand(containerId, true, true, true, "bash", "-c", command);
         }
     }
 
