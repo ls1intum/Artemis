@@ -1,4 +1,5 @@
 import { Page } from '@playwright/test';
+import { COURSE_BASE } from '../constants';
 
 export class NavigationBar {
     private readonly page: Page;
@@ -8,9 +9,9 @@ export class NavigationBar {
     }
 
     async openCourseManagement() {
-        // const responsePromise = this.page.waitForResponse(COURSE_BASE + 'course-management-overview*');
+        const responsePromise = this.page.waitForResponse(COURSE_BASE + 'course-management-overview*');
         await this.page.locator('#course-admin-menu').click();
-        // await responsePromise;
+        await responsePromise;
         await this.page.waitForURL('**/course-management**');
     }
 
