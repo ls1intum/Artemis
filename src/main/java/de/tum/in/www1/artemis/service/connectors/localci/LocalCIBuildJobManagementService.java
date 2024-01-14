@@ -73,6 +73,7 @@ public class LocalCIBuildJobManagementService {
      * @param isRetry                     Whether this build job is a retry of a previous build job.
      * @param isPushToTestOrAuxRepository Defines if the build job is triggered by a push to a test or auxiliary repository.
      * @param buildJobId                  The id of the build job.
+     * @param dockerImage                 The Docker image that should be used for the build job container.
      * @return A future that will be completed with the build result.
      * @throws LocalCIException If the build job could not be submitted to the executor service.
      */
