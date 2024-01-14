@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 @Profile("iris")
 public class IrisHestiaSessionService implements IrisButtonBasedFeatureInterface<IrisHestiaSession, CodeHint> {
 
-    private final Logger log = LoggerFactory.getLogger(IrisHestiaSessionService.class);
+    private static final Logger log = LoggerFactory.getLogger(IrisHestiaSessionService.class);
 
     private final IrisConnectorService irisConnectorService;
 

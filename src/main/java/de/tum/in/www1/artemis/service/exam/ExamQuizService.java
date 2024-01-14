@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class ExamQuizService {
 
-    static final Logger log = LoggerFactory.getLogger(ExamQuizService.class);
+    private static final Logger log = LoggerFactory.getLogger(ExamQuizService.class);
 
     private final QuizExerciseRepository quizExerciseRepository;
 

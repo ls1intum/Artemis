@@ -59,7 +59,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("api/")
 public class ParticipationResource {
 
-    private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
 
     private static final String ENTITY_NAME = "participation";
 

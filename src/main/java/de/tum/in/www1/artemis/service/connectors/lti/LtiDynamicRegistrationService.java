@@ -29,7 +29,7 @@ public class LtiDynamicRegistrationService {
     @Value("${server.url}")
     private String artemisServerUrl;
 
-    private final Logger log = LoggerFactory.getLogger(LtiDynamicRegistrationService.class);
+    private static final Logger log = LoggerFactory.getLogger(LtiDynamicRegistrationService.class);
 
     private final OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
 

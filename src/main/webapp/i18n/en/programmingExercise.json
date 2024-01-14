@@ -114,8 +114,13 @@
             "buildPlanEditor": "Build Plan Editor",
             "buildPlanFetchError": "Could not find a build plan for this exercise. This is expected for older exercises. Edit the build plan in the CI system or reset the build plan in Artemis to create a new one that is editable here.",
             "publishBuildPlanUrl": "Publish Build Plan",
+            "customizeBuildPlan": "Customize Build Plan",
             "customizeBuildPlanWithAeolus": "Customize Build Plan with Aeolus",
             "runActionAlways": "Always run, even if other actions fail",
+            "workdir": "Working Directory",
+            "parameters": "Parameters",
+            "dockerImage": "Docker Image",
+            "script": "Script",
             "allowOnlineEditor": {
                 "title": "Allow Online Editor",
                 "alert": "At least one option (Offline IDE or Online Editor) must be selected"
@@ -209,7 +214,9 @@
                 "missingTestCases": "There are {{number}} valid test cases in your test repository that were not found in the markdown of the problem statement:",
                 "issues": "Test case issues.",
                 "ok": "Test cases ok.",
-                "invalidTestCase": "The test case '{{id}}' could not be found in the test repository."
+                "invalidTestCase": "The test case '{{id}}' could not be found in the test repository.",
+                "repeatedTestCase": "The test case '{{id}}' is repeated.",
+                "repeatedTestCases": "There are {{number}} repeated test cases in the problem statement. This might cause unexpected behaviour:"
             },
             "tasksAnalysis": {
                 "issues": "Task issues.",
