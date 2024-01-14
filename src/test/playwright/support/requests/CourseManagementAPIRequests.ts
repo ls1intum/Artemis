@@ -46,7 +46,7 @@ export class CourseManagementAPIRequests {
         const {
             customizeGroups = false,
             courseName = 'Course ' + generateUUID(),
-            courseShortName = 'cypress' + generateUUID(),
+            courseShortName = 'playwright' + generateUUID(),
             start = dayjs().subtract(2, 'hours'),
             end = dayjs().add(2, 'hours'),
             iconFileName,
@@ -102,8 +102,10 @@ export class CourseManagementAPIRequests {
 
         const response = await this.page.request.post(COURSE_ADMIN_BASE, {
             multipart: multipartData,
-            ignoreHTTPSErrors: true,
         });
+
+        console.log('Create course response: {}', response.json());
+
         return response.json();
     }
 
@@ -119,9 +121,7 @@ export class CourseManagementAPIRequests {
             // Sometimes the server fails with a ConstraintViolationError if we delete the course immediately after a login
             await this.page.waitForTimeout(500);
             // TODO: Add retry mechanism in case of failures (with timeout)
-            await this.page.request.delete(`${COURSE_ADMIN_BASE}/${course.id}`, {
-                ignoreHTTPSErrors: true,
-            });
+            await this.page.request.delete(`${COURSE_ADMIN_BASE}/${course.id}`);
         }
     }
 }
