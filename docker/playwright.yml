@@ -17,7 +17,7 @@ services:
             tutorGroupName: "artemis-e2etest-tutors"
             editorGroupName: "artemis-e2etest-editors"
             instructorGroupName: "artemis-e2etest-instructors"
-#            createUsers: "${bamboo_playwright_create_users}"
+            createUsers: "${bamboo_playwright_create_users}"
         command: sh -c "cd /app/artemis/src/test/playwright && chmod 777 /root && npm ci && npm run playwright:test"
         volumes:
             - ..:/app/artemis
