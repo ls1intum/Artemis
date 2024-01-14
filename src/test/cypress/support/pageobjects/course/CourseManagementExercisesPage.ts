@@ -19,7 +19,7 @@ export class CourseManagementExercisesPage {
     }
 
     getExerciseTitle() {
-        return cy.get('#exercise-detail-title');
+        return cy.contains('Title').parent().parent().find('dd');
     }
 
     deleteTextExercise(exercise: Exercise) {

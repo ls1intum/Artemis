@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("api/admin/")
 public class AdminOrganizationResource {
 
-    private final Logger log = LoggerFactory.getLogger(AdminOrganizationResource.class);
+    private static final Logger log = LoggerFactory.getLogger(AdminOrganizationResource.class);
 
     private static final String ENTITY_NAME = "organization";
 

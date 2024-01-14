@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.web.websocket.localci;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,18 +21,20 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueu
  */
 @Service
 @Profile("localci")
-public class LocalCIBuildQueueWebsocketService {
+public class LocalCIWebsocketMessagingService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIBuildQueueWebsocketService.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalCIWebsocketMessagingService.class);
 
     private final WebsocketMessagingService websocketMessagingService;
+
+    private static final Pattern COURSE_DESTINATION_PATTERN = Pattern.compile("^/topic/courses/(\\d+)/(queued-jobs|running-jobs)$");
 
     /**
      * Constructor for dependency injection
      *
      * @param websocketMessagingService the websocket messaging service
      */
-    public LocalCIBuildQueueWebsocketService(WebsocketMessagingService websocketMessagingService) {
+    public LocalCIWebsocketMessagingService(WebsocketMessagingService websocketMessagingService) {
         this.websocketMessagingService = websocketMessagingService;
     }
 
@@ -89,5 +94,36 @@ public class LocalCIBuildQueueWebsocketService {
         String channel = "/topic/admin/build-agents";
         log.debug("Sending message on topic {}: {}", channel, buildAgentInfo);
         websocketMessagingService.sendMessage(channel, buildAgentInfo);
+    }
+
+    /**
+     * Checks if the given destination is a build queue admin destination.
+     * This is the case if the destination is either /topic/admin/queued-jobs or /topic/admin/running-jobs.
+     *
+     * @param destination the destination to check
+     * @return true if the destination is a build queue admin destination, false otherwise
+     */
+    public static boolean isBuildQueueAdminDestination(String destination) {
+        return "/topic/admin/queued-jobs".equals(destination) || "/topic/admin/running-jobs".equals(destination);
+    }
+
+    /**
+     * Checks if the given destination is a build queue course destination. This is the case if the destination is either
+     * /topic/courses/{courseId}/queued-jobs or /topic/courses/{courseId}/running-jobs.
+     * If the destination is a build queue course destination, the courseId is returned.
+     *
+     * @param destination the destination to check
+     * @return the courseId if the destination is a build queue course destination, empty otherwise
+     */
+    public static Optional<Long> isBuildQueueCourseDestination(String destination) {
+        // Define a pattern to match the expected course-related topic format
+        Matcher matcher = COURSE_DESTINATION_PATTERN.matcher(destination);
+
+        // Check if the destination matches the pattern
+        if (matcher.matches()) {
+            // Extract the courseId from the matched groups
+            return Optional.of(Long.parseLong(matcher.group(1)));
+        }
+        return Optional.empty();
     }
 }

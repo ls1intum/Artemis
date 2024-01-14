@@ -44,7 +44,7 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
             The first description should be at most 1000 characters long. The second description should be at most 100 characters long.
             """;
 
-    private final Logger log = LoggerFactory.getLogger(IrisHestiaSessionService.class);
+    private static final Logger log = LoggerFactory.getLogger(IrisHestiaSessionService.class);
 
     private final IrisConnectorService irisConnectorService;
 

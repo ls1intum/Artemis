@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 @RequestMapping("/api")
 public class ExerciseUnitResource {
 
-    private final Logger log = LoggerFactory.getLogger(ExerciseUnitResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ExerciseUnitResource.class);
 
     private static final String ENTITY_NAME = "exerciseUnit";
 
@@ -59,7 +59,7 @@ public class ExerciseUnitResource {
         if (exerciseUnit.getId() != null) {
             throw new BadRequestException();
         }
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             throw new ConflictException("Specified lecture is not part of a course", "ExerciseUnit", "courseMissing");
         }

@@ -105,7 +105,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     void updateVideoUnit_asInstructor_shouldUpdateVideoUnit() throws Exception {
         persistVideoUnitWithLecture();
 
-        this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
+        this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
         this.videoUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         this.videoUnit.setDescription("Changed");
         this.videoUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/video-units", this.videoUnit, VideoUnit.class, HttpStatus.OK);
@@ -117,7 +117,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     void updateVideoUnit_withoutLecture_shouldReturnConflict() throws Exception {
         persistVideoUnitWithLecture();
 
-        this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
+        this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
         this.videoUnit.setLecture(null);
         request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/video-units", this.videoUnit, VideoUnit.class, HttpStatus.CONFLICT);
     }
@@ -137,7 +137,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
         // Updating the lecture unit should not change order attribute
         request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/video-units", videoUnit, VideoUnit.class, HttpStatus.OK);
 
-        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow().getLectureUnits();
+        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits();
         assertThat(updatedOrderedUnits).containsExactlyElementsOf(orderedUnits);
     }
 
@@ -145,7 +145,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
         this.videoUnit = videoUnitRepository.save(this.videoUnit);
         lecture1.addLectureUnit(this.videoUnit);
         lecture1 = lectureRepository.save(lecture1);
-        this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
+        this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
     }
 
     @Test
@@ -153,7 +153,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     void updateVideoUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         persistVideoUnitWithLecture();
 
-        this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
+        this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
         this.videoUnit.setDescription("Changed");
         this.videoUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         this.videoUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/video-units", this.videoUnit, VideoUnit.class, HttpStatus.FORBIDDEN);
@@ -164,7 +164,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     void updateVideoUnit_noId_shouldReturnBadRequest() throws Exception {
         persistVideoUnitWithLecture();
 
-        this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
+        this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
         this.videoUnit.setId(null);
         this.videoUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/video-units", this.videoUnit, VideoUnit.class, HttpStatus.BAD_REQUEST);
     }
@@ -174,7 +174,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     void getVideoUnit_correctId_shouldReturnVideoUnit() throws Exception {
         persistVideoUnitWithLecture();
 
-        this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
+        this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
         VideoUnit videoUnitFromRequest = request.get("/api/lectures/" + lecture1.getId() + "/video-units/" + this.videoUnit.getId(), HttpStatus.OK, VideoUnit.class);
         assertThat(this.videoUnit.getId()).isEqualTo(videoUnitFromRequest.getId());
     }
@@ -184,7 +184,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     void deleteVideoUnit_correctId_shouldDeleteVideoUnit() throws Exception {
         persistVideoUnitWithLecture();
 
-        this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
+        this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
         assertThat(this.videoUnit.getId()).isNotNull();
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.videoUnit.getId(), HttpStatus.OK);
         request.get("/api/lectures/" + lecture1.getId() + "/video-units/" + this.videoUnit.getId(), HttpStatus.NOT_FOUND, VideoUnit.class);

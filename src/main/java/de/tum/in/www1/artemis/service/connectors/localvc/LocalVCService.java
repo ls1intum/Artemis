@@ -46,7 +46,7 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPer
 @Profile("localvc")
 public class LocalVCService extends AbstractVersionControlService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalVCService.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalVCService.class);
 
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;

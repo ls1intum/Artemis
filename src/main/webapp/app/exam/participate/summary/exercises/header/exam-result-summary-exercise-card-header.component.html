@@ -1,4 +1,4 @@
-<div class="card-header d-flex align-items-center justify-content-between">
+<div class="d-flex align-items-center">
     <div class="d-flex align-items-center">
         <h5 class="mb-0" [id]="'exercise-group-title-' + exercise.id">
             #{{ index + 1 }} &nbsp;
@@ -31,14 +31,4 @@
             <span class="badge bg-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"> Warning: You are viewing an illegal submission. </span>
         </div>
     }
-    <button
-        id="{{ 'toggleCollapseExerciseButton-' + exercise.id! }}"
-        class="btn rotate-icon"
-        [class.rotated]="!exerciseInfo?.isCollapsed"
-        (click)="toggleCollapseExercise()"
-        [attr.aria-expanded]="exerciseInfo?.isCollapsed"
-        [attr.aria-controls]="exerciseInfo?.isCollapsed"
-    >
-        <fa-icon size="2x" [icon]="faAngleRight"></fa-icon>
-    </button>
 </div>

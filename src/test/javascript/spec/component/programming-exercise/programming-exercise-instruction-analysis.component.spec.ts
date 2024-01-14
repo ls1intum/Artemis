@@ -74,8 +74,14 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             };
             const invalidTestCases = ['testMergeSort'];
             const missingTestCases = ['testBubbleSort'];
+            const repeatedTestCases = ['testCaseQuickSort'];
 
-            analyzeProblemStatementStub.mockReturnValue({ completeAnalysis, invalidTestCases, missingTestCases });
+            analyzeProblemStatementStub.mockReturnValue({
+                completeAnalysis,
+                invalidTestCases,
+                missingTestCases,
+                repeatedTestCases,
+            });
 
             // dummy data.
             const testCases = ['testabc'];
@@ -89,6 +95,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             // check first analysis
             expect(comp.missingTestCases).toEqual(missingTestCases);
             expect(comp.invalidTestCases).toEqual(invalidTestCases);
+            expect(comp.repeatedTestCases).toEqual(repeatedTestCases);
 
             triggerChanges(comp, {
                 property: 'problemStatement',
@@ -102,6 +109,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             // Check internal state of the component.
             expect(comp.missingTestCases).toEqual(missingTestCases);
             expect(comp.invalidTestCases).toEqual(invalidTestCases);
+            expect(comp.repeatedTestCases).toEqual(repeatedTestCases);
 
             // Check that an event with the updated analysis is emitted.
             // We expect two calls, once in ngOnInit and once in ngOnChanges
@@ -121,6 +129,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
         describe('Analysis service integration test', () => {
             const missingTestCases = ['test6', 'test7'];
             const invalidTestCases = ['test3', 'test4'];
+            const repeatedTestCases = ['test3', 'test4'];
 
             it('should not render if no test cases were provided', () => {
                 comp.problemStatement = problemStatement;
@@ -131,21 +140,26 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
                 expect(debugElement.nativeElement.innerHtml).toBeUndefined();
                 expect(comp.missingTestCases).toEqual([]);
                 expect(comp.invalidTestCases).toEqual([]);
+                expect(comp.repeatedTestCases).toEqual([]);
             });
 
-            it('should render warnings on missing and invalid test cases', fakeAsync(() => {
+            it('should render warnings on missing, invalid and repeated test cases', fakeAsync(() => {
                 comp.problemStatement = problemStatement;
                 comp.taskRegex = taskRegex;
                 comp.exerciseTestCases = exerciseTestCases;
 
                 const completeAnalysis = {
-                    '0': { invalidTestCases: ['artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase'] },
+                    '0': {
+                        invalidTestCases: ['artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase'],
+                        repeatedTestCases: ['artemisApp.programmingExercise.testCaseAnalysis.repeatedTestCase'],
+                    },
                     '2': {
                         invalidTestCases: ['artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase'],
+                        repeatedTestCases: ['artemisApp.programmingExercise.testCaseAnalysis.repeatedTestCase'],
                     },
                 };
 
-                analyzeProblemStatementStub.mockReturnValue({ completeAnalysis, invalidTestCases, missingTestCases });
+                analyzeProblemStatementStub.mockReturnValue({ completeAnalysis, invalidTestCases, repeatedTestCases, missingTestCases });
 
                 comp.ngOnInit();
 
@@ -162,6 +176,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
                 expect(debugElement.query(By.css('fa-icon'))).not.toBeNull();
                 expect(comp.missingTestCases).toEqual(missingTestCases);
                 expect(comp.invalidTestCases).toEqual(invalidTestCases);
+                expect(comp.repeatedTestCases).toEqual(repeatedTestCases);
             }));
         });
     });

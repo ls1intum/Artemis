@@ -4,6 +4,17 @@ Server Tests
 
 This section covers recommended practices for writing Artemis server tests. If you want to write tests for Artemis programming exercises to test students' submissions, check out :ref:`this <best_practices_for_test_cases>`.
 
+You can execute server tests with the following commands:
+
+* Execute tests with coverage report:          ``./gradlew test jacocoTestReport -x webapp``
+* Execute tests without coverage report:       ``./gradlew test -x webapp``
+* Run a single test:                           ``./gradlew test --tests ExamIntegrationTest -x webapp`` or ``./gradlew test --tests ExamIntegrationTest.testGetExamScore -x webapp``
+
+To run the server tests against a real database in a Docker test container, use:
+
+* Execute tests with Postgres container:       ``SPRING_PROFILES_INCLUDE=postgres ./gradlew test -x webapp``
+* Execute tests with MySQL container:          ``SPRING_PROFILES_INCLUDE=mysql ./gradlew test -x webapp``
+
 0. General testing tips
 ========================
 Use appropriate and descriptive names for test cases so developers can easily understand what you test without looking deeper into it.
