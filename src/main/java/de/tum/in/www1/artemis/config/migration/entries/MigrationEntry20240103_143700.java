@@ -114,7 +114,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             return;
         }
 
-        if (bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl() == null) {
+        if (bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl() == null || bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl().toString().equals("http://0.0.0.0")) {
             log.error("Migration will be skipped and marked run because the local VC base URL is not configured.");
             return;
         }

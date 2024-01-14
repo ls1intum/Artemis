@@ -16,10 +16,10 @@ public class BitbucketLocalVCMigrationService {
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
-    @Value("${migration.base-url}")
+    @Value("${migration.base-url:http://0.0.0.0}")
     private URL localVCBaseUrl;
 
-    @Value("${migration.local-vcs-repo-path}")
+    @Value("${migration.local-vcs-repo-path:null}")
     private String localVCBasePath;
 
     public String getDefaultBranch() {
