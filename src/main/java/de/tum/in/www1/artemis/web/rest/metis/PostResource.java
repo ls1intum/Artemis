@@ -34,7 +34,7 @@ import tech.jhipster.web.util.PaginationUtil;
 @RequestMapping("/api")
 public class PostResource {
 
-    private final Logger log = LoggerFactory.getLogger(getClass());
+    private static final Logger log = LoggerFactory.getLogger(PostResource.class);
 
     private final PostService postService;
 

@@ -50,7 +50,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
     private static final String TEST_PREFIX = "quizsubmissiontest";
 
-    private final Logger log = LoggerFactory.getLogger(getClass());
+    private static final Logger log = LoggerFactory.getLogger(QuizSubmissionIntegrationTest.class);
 
     private static final int NUMBER_OF_STUDENTS = 4;
 

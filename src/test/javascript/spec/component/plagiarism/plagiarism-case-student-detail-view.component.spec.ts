@@ -14,6 +14,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import dayjs from 'dayjs/esm';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 
@@ -87,6 +88,22 @@ describe('Plagiarism Cases Student View Component', () => {
         expect(component.plagiarismCaseId).toBe(1);
         tick();
         expect(component.plagiarismCase).toEqual(plagiarismCase);
+    }));
+
+    it('should set isAfterDueDate', fakeAsync(() => {
+        const now = dayjs();
+        exercise.dueDate = now.add(1, 'day');
+        component.ngOnInit();
+        tick();
+        expect(component.isAfterDueDate).toBeFalse();
+    }));
+
+    it('should unset isAfterDueDate', fakeAsync(() => {
+        const now = dayjs();
+        exercise.dueDate = now.subtract(1, 'day');
+        component.ngOnInit();
+        tick();
+        expect(component.isAfterDueDate).toBeTrue();
     }));
 
     it('should load plagiarism case on route update', fakeAsync(() => {

@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.service.PlantUmlService;
 @RequestMapping(PlantUmlResource.Endpoints.ROOT)
 public class PlantUmlResource {
 
-    private final Logger log = LoggerFactory.getLogger(PlantUmlResource.class);
+    private static final Logger log = LoggerFactory.getLogger(PlantUmlResource.class);
 
     private final PlantUmlService plantUmlService;
 

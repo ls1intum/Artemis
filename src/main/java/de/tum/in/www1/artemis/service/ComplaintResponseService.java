@@ -23,7 +23,7 @@ public class ComplaintResponseService {
 
     private static final String ENTITY_NAME = "complaintResponse";
 
-    private final Logger log = LoggerFactory.getLogger(ComplaintResponseService.class);
+    private static final Logger log = LoggerFactory.getLogger(ComplaintResponseService.class);
 
     private final ComplaintRepository complaintRepository;
 
