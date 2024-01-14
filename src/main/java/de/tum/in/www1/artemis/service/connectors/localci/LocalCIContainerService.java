@@ -156,7 +156,7 @@ public class LocalCIContainerService {
 
         for (String sourcePath : sourcePaths) {
             checkPath(sourcePath);
-            command = "shopt -s globstar && cp " + sourcePath + " " + destinationPath;
+            command = "shopt -s globstar && mv " + sourcePath + " " + destinationPath;
             executeDockerCommand(containerId, false, false, true, "bash", "-c", command);
         }
     }
