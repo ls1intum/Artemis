@@ -589,7 +589,7 @@ public class BambooBuildPlanService {
                     auxiliaryRepositories);
 
             String resultHookUrl = artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH;
-            windfile.setPreProcessingMetadata(buildPlanId, programmingExercise.getProjectName(), this.gitUser, resultHookUrl, planDescription, repositories);
+            windfile.setPreProcessingMetadata(buildPlanId, programmingExercise.getProjectName(), this.gitUser, resultHookUrl, planDescription, repositories, null);
             String generatedKey = aeolusBuildPlanService.get().publishBuildPlan(windfile, AeolusTarget.BAMBOO);
             /*
              * Aeolus returns the key of the build plan in the format "PROJECT-BUILDPLANKEY". To stay consistent with the

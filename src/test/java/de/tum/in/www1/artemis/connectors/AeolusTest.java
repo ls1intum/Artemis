@@ -116,12 +116,14 @@ class AeolusTest {
     void testSettersWithoutMetadata() {
         windfile.setMetadata(null);
         AeolusRepository aeolusRepository = new AeolusRepository("url", "branch", "path");
-        windfile.setPreProcessingMetadata("id", "name", "gitCredentials", "resultHook", "description", Map.of("key", aeolusRepository));
+        windfile.setPreProcessingMetadata("id", "name", "gitCredentials", "resultHook", "description", Map.of("key", aeolusRepository), "resultHookCredentials");
         assertThat(windfile.getMetadata().getId()).isEqualTo("id");
         assertThat(windfile.getMetadata().getDescription()).isEqualTo("description");
         assertThat(windfile.getMetadata().getName()).isEqualTo("name");
         assertThat(windfile.getRepositories().get("key")).isEqualTo(aeolusRepository);
         assertThat(windfile.getMetadata().getGitCredentials()).isEqualTo("gitCredentials");
+        assertThat(windfile.getMetadata().getResultHook()).isEqualTo("resultHook");
+        assertThat(windfile.getMetadata().getResultHookCredentials()).isEqualTo("resultHookCredentials");
     }
 
     @Test

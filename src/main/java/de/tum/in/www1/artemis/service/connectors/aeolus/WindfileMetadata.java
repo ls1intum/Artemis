@@ -19,6 +19,8 @@ public class WindfileMetadata {
 
     private String resultHook;
 
+    private String resultHookCredentials;
+
     public String getName() {
         return name;
     }
@@ -73,5 +75,13 @@ public class WindfileMetadata {
 
     public void setResultHook(String resultHook) {
         this.resultHook = resultHook;
+    }
+
+    public void setResultHookCredentials(String resultHookCredentials) {
+        this.resultHookCredentials = resultHookCredentials;
+    }
+
+    public String getResultHookCredentials() {
+        return resultHookCredentials;
     }
 }
