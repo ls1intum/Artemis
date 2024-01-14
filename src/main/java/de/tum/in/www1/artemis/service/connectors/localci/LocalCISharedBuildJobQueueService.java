@@ -270,7 +270,6 @@ public class LocalCISharedBuildJobQueueService {
             finally {
                 sharedLock.unlock();
             }
-
             processBuild(buildJob);
         }
         finally {
@@ -289,8 +288,9 @@ public class LocalCISharedBuildJobQueueService {
             localProcessingJobs.incrementAndGet();
 
             updateLocalBuildAgentInformation();
+            return processingJob;
         }
-        return buildJob;
+        return null;
     }
 
     private void updateLocalBuildAgentInformation() {
@@ -371,7 +371,6 @@ public class LocalCISharedBuildJobQueueService {
             log.warn("Could not retrieve Docker image from windfile metadata for programming exercise {}. Using default Docker image instead.", programmingExercise.getId());
             dockerImage = programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()));
         }
-
         LocalCIBuildJobQueueItem updatedJob = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(), buildJob.participationId(),
                 buildJob.repositoryName(), buildJob.repositoryType(), buildJob.commitHash(), buildJob.submissionDate(), buildJob.retryCount(), buildJob.buildStartDate(), null,
                 buildJob.priority(), buildJob.courseId(), buildJob.triggeredByPushTo(), dockerImage);
@@ -381,7 +380,7 @@ public class LocalCISharedBuildJobQueueService {
         boolean isPushToTestOrAuxRepository = buildJob.triggeredByPushTo() == RepositoryType.TESTS || buildJob.triggeredByPushTo() == RepositoryType.AUXILIARY;
 
         CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.executeBuildJob(participation, commitHash, isRetry, isPushToTestOrAuxRepository,
-                buildJob.id(), dockerImage);
+                updatedJob.id(), dockerImage);
         futureResult.thenAccept(buildResult -> {
 
             ZonedDateTime buildCompletionDate = ZonedDateTime.now();
@@ -404,11 +403,10 @@ public class LocalCISharedBuildJobQueueService {
             }
 
             // save build job to database
-            LocalCIBuildJobQueueItem processedJob = processingJobs.get(buildJob.id());
-            saveFinishedBuildJob(processedJob, BuildJobResult.SUCCESSFUL, buildCompletionDate, participation);
+            saveFinishedBuildJob(updatedJob, BuildJobResult.SUCCESSFUL, buildCompletionDate, participation);
 
             // after processing a build job, remove it from the processing jobs
-            processingJobs.remove(buildJob.id());
+            processingJobs.remove(updatedJob.id());
             localProcessingJobs.decrementAndGet();
             updateLocalBuildAgentInformation();
 
@@ -420,19 +418,18 @@ public class LocalCISharedBuildJobQueueService {
             if (ex.getCause() instanceof CancellationException && ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
                 localProcessingJobs.decrementAndGet();
                 updateLocalBuildAgentInformation();
-                saveFinishedBuildJob(buildJob, BuildJobResult.CANCELLED, buildCompletionDate, participation);
+                saveFinishedBuildJob(updatedJob, BuildJobResult.CANCELLED, buildCompletionDate, participation);
             }
             else {
-                log.error("Error while processing build job: {}", buildJob, ex);
+                log.error("Error while processing build job: {}", updatedJob, ex);
 
-                LocalCIBuildJobQueueItem processedJob = processingJobs.get(buildJob.id());
-                processingJobs.remove(buildJob.id());
+                processingJobs.remove(updatedJob.id());
                 localProcessingJobs.decrementAndGet();
                 updateLocalBuildAgentInformation();
 
                 if (isRetry) {
-                    log.error("Build job failed for the second time: {}", buildJob);
-                    saveFinishedBuildJob(processedJob, BuildJobResult.FAILED, buildCompletionDate, participation);
+                    log.error("Build job failed for the second time: {}", updatedJob);
+                    saveFinishedBuildJob(updatedJob, BuildJobResult.FAILED, buildCompletionDate, participation);
                     return null;
                 }
 
@@ -440,16 +437,16 @@ public class LocalCISharedBuildJobQueueService {
                 SecurityUtils.setAuthorizationObject();
                 Optional<Participation> participationOptional = participationRepository.findById(participation.getId());
                 if (participationOptional.isPresent()) {
-                    log.warn("Requeueing failed build job: {}", buildJob);
-                    LocalCIBuildJobQueueItem requeuedBuildJob = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(),
-                            buildJob.participationId(), buildJob.repositoryName(), buildJob.repositoryType(), buildJob.commitHash(), buildJob.submissionDate(),
-                            buildJob.retryCount() + 1, null, null, buildJob.priority(), buildJob.courseId(), buildJob.triggeredByPushTo(), null);
+                    log.warn("Requeueing failed build job: {}", updatedJob);
+                    LocalCIBuildJobQueueItem requeuedBuildJob = new LocalCIBuildJobQueueItem(updatedJob.id(), updatedJob.name(), null, updatedJob.participationId(),
+                            updatedJob.repositoryName(), updatedJob.repositoryType(), updatedJob.commitHash(), updatedJob.submissionDate(), updatedJob.retryCount() + 1, null, null,
+                            updatedJob.priority(), updatedJob.courseId(), updatedJob.triggeredByPushTo(), null);
                     queue.add(requeuedBuildJob);
                 }
                 else {
                     log.warn("Participation with id {} has been deleted. Cancelling the requeueing of the build job.", participation.getId());
                 }
-                saveFinishedBuildJob(processedJob, BuildJobResult.FAILED, buildCompletionDate, participation);
+                saveFinishedBuildJob(updatedJob, BuildJobResult.FAILED, buildCompletionDate, participation);
             }
             checkAvailabilityAndProcessNextBuild();
             return null;
