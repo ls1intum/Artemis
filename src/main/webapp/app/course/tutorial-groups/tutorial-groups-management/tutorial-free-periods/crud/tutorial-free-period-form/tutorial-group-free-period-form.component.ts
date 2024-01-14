@@ -52,9 +52,9 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     // Todo: TimeFrame getter/setter. Reset endDate when switching back to single Day
     setTimeFrame(timeFrame: TimeFrame) {
         if (timeFrame == TimeFrame.Day && this.formData.endDate != undefined) {
-            // @ts-expect-error It will never be null...
+            // @ts-expect-error It will never be null, the ifStatement checks that...
             this.form.get('endDate').setValue(null);
-            // @ts-expect-error It will never be null...
+            // @ts-expect-error It will never be null, the ifStatement checks that...
             this.form.get('endDate').markAsPristine();
         }
         this.timeFrame = timeFrame;
@@ -76,10 +76,18 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         return this.form.get('reason');
     }
 
+    // ToDo: How can I validate the form for the three different timeFrames? This does not work.
     get isSubmitPossible() {
+        // @ts-expect-error I check against this possibility in the if statement
+        if (this.form.get('startDate') != undefined && this.form.get('startDate').touched) {
+            return false;
+        }
         if (this.timeFrame == TimeFrame.Day) {
-            // @ts-expect-error It will never be null...
-            return this.form.get('startDay').invalid;
+            // @ts-expect-error I check against this possibility in the if statement
+            return this.form.get('startDate').touched && !this.isStartDateInvalid;
+        } else if (this.timeFrame == TimeFrame.Period) {
+            // @ts-ignore
+            return !this.isStartDateInvalid && !this.isEndDateInvalid; // && this.form.get("startDate") < this.form.get("endDate");
         }
         return !this.form.invalid;
     }
@@ -97,8 +105,14 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         }
     }
 
+    // Todo: How can i submit a form with some empty fields? This does not work yet :/ Also, how can i merge the startTime with the date for the freePeriodWithinADay?
     submitForm() {
         const tutorialGroupFreePeriodFormData: TutorialGroupFreePeriodFormData = { ...this.form.value };
+        if (this.timeFrame == TimeFrame.Day) {
+            tutorialGroupFreePeriodFormData.endDate = undefined;
+            tutorialGroupFreePeriodFormData.endTime = undefined;
+            tutorialGroupFreePeriodFormData.startDate = undefined;
+        }
         this.formSubmitted.emit(tutorialGroupFreePeriodFormData);
     }
 
@@ -113,6 +127,8 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         this.form = this.fb.group({
             startDate: [undefined, [Validators.required]],
             endDate: [undefined, [Validators.required]],
+            startTime: [undefined, [Validators.required]],
+            endTime: [undefined, [Validators.required]],
             reason: [undefined],
         });
     }
