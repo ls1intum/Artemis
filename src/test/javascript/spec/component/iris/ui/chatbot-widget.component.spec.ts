@@ -6,11 +6,10 @@ import { ActivatedRoute } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockPipe } from 'ng-mocks';
-import { IrisChatbotDialogWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-dialog-widget.component';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatDialog } from '@angular/material/dialog';
 import {
     ActiveConversationMessageLoadedAction,
     ConversationErrorOccurredAction,
@@ -45,10 +44,11 @@ import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import { ExecutionStage, ExerciseComponent, IrisExercisePlan, IrisExercisePlanStep, IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
 import { IrisHttpCodeEditorMessageService } from 'app/iris/http-code-editor-message.service';
 import { IrisCodeEditorSessionService } from 'app/iris/code-editor-session.service';
+import { ExerciseCreationWidgetComponent } from 'app/iris/exercise-chatbot/widget/exercise-creation-widget.component';
 
 describe('IrisChatbotWidgetComponent', () => {
-    let component: IrisChatbotDialogWidgetComponent;
-    let fixture: ComponentFixture<IrisChatbotDialogWidgetComponent>;
+    let component: ExerciseCreationWidgetComponent;
+    let fixture: ComponentFixture<ExerciseCreationWidgetComponent>;
     let stateStore: IrisStateStore;
     let mockHttpCodeEditorMessageService: IrisHttpCodeEditorMessageService;
     let mockCodeEditorSessionService: IrisCodeEditorSessionService;
@@ -103,10 +103,9 @@ describe('IrisChatbotWidgetComponent', () => {
         } as any;
 
         await TestBed.configureTestingModule({
-            imports: [FormsModule, FontAwesomeModule, MatDialogModule],
-            declarations: [IrisChatbotDialogWidgetComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe)],
+            imports: [FormsModule, FontAwesomeModule],
+            declarations: [ExerciseCreationWidgetComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe)],
             providers: [
-                { provide: MAT_DIALOG_DATA, useValue: { stateStore: stateStore, courseId: 1, exerciseId: 1, sessionService: mockCodeEditorSessionService } },
                 { provide: IrisHttpMessageService, useValue: mockHttpCodeEditorMessageService },
                 { provide: NgbModal, useValue: mockModalService },
                 { provide: MatDialog, useValue: mockDialog },
@@ -125,11 +124,14 @@ describe('IrisChatbotWidgetComponent', () => {
                 global.window ??= window;
                 window.scroll = jest.fn();
                 window.HTMLElement.prototype.scrollTo = jest.fn();
-                fixture = TestBed.createComponent(IrisChatbotDialogWidgetComponent);
+                fixture = TestBed.createComponent(ExerciseCreationWidgetComponent);
                 component = fixture.componentInstance;
                 component.shouldLoadGreetingMessage = false;
+                component.stateStore = stateStore;
+                component.exerciseId = 1;
+                component.courseId = 1;
+                component.sessionService = mockCodeEditorSessionService;
                 fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();
-
                 fixture.detectChanges();
             });
     });
