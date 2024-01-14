@@ -7,10 +7,10 @@ artemis:
     continuous-integration:
         # The Docker connection URI to be used by docker-java to connect to the system's Docker installation. Use "unix:///var/run/docker.sock" for Unix based systems and "tcp://localhost:2375" for Windows systems.
         docker-connection-uri: unix:///var/run/docker.sock
-        # Set this to true if you want to specify the thread pool size. If false, the thread pool size will be determined based on system resources.
-        specify-thread-pool-size: false
-        # The number of threads that are used to execute the CI jobs.
-        thread-pool-size: 1
+        # Set this to true if you want to specify the number of build that can run concurrently on this node. If false, the number will be determined based on system resources.
+        specify-concurrent-builds: false
+        # The number of builds that can run concurrently on this node.
+        concurrent-build-size: 1
         # If true, the CI jobs will be executed asynchronously. If false, the CI jobs will be executed synchronously (e.g. for debugging and tests).
         asynchronous: true
         # The maximum number of seconds that a CI job is allowed to run. If the job exceeds this time, it will be terminated.
@@ -19,6 +19,8 @@ artemis:
         queue-size-limit: 100
         # The path to the local CI build scripts. This path is relative to the Artemis root directory.
         local-cis-build-scripts-path: local-ci-scripts
+        # The prefix that is used for the Docker containers that are created by the local CI system.
+        build-container-prefix: local-ci-
         # In case you need to use a proxy to access the internet from the Docker container (e.g., due to firewall constraints), set use-system-proxy to true and configure the proxy settings below.
         proxies:
             use-system-proxy: false

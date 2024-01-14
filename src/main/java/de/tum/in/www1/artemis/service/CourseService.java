@@ -68,7 +68,7 @@ public class CourseService {
     @Value("${artemis.course-archives-path}")
     private Path courseArchivesDirPath;
 
-    private final Logger log = LoggerFactory.getLogger(CourseService.class);
+    private static final Logger log = LoggerFactory.getLogger(CourseService.class);
 
     private final Environment env;
 

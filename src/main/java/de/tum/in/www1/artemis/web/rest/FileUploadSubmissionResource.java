@@ -43,7 +43,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
     private static final String ENTITY_NAME = "fileUploadSubmission";
 
-    private final Logger log = LoggerFactory.getLogger(FileUploadSubmissionResource.class);
+    private static final Logger log = LoggerFactory.getLogger(FileUploadSubmissionResource.class);
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;

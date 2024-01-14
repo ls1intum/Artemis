@@ -14,6 +14,7 @@ import { UMLModel } from '@ls1intum/apollon';
 export class ModelingSubmissionViewerComponent implements OnChanges {
     @Input() exercise: ModelingExercise;
     @Input() plagiarismSubmission: PlagiarismSubmission<ModelingSubmissionElement>;
+    @Input() hideContent: boolean;
 
     public loading: boolean;
     public submissionModel: UMLModel;
@@ -22,19 +23,20 @@ export class ModelingSubmissionViewerComponent implements OnChanges {
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.plagiarismSubmission) {
-            this.loading = true;
-
             const currentPlagiarismSubmission: PlagiarismSubmission<ModelingSubmissionElement> = changes.plagiarismSubmission.currentValue;
 
-            this.modelingSubmissionService.getSubmissionWithoutLock(currentPlagiarismSubmission.submissionId).subscribe({
-                next: (submission: ModelingSubmission) => {
-                    this.loading = false;
-                    this.submissionModel = JSON.parse(submission.model!) as UMLModel;
-                },
-                error: () => {
-                    this.loading = false;
-                },
-            });
+            if (!this.hideContent) {
+                this.loading = true;
+                this.modelingSubmissionService.getSubmissionWithoutLock(currentPlagiarismSubmission.submissionId).subscribe({
+                    next: (submission: ModelingSubmission) => {
+                        this.loading = false;
+                        this.submissionModel = JSON.parse(submission.model!) as UMLModel;
+                    },
+                    error: () => {
+                        this.loading = false;
+                    },
+                });
+            }
         }
     }
 }

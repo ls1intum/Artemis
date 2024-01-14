@@ -34,7 +34,7 @@ on:
 # Keep in sync with codeql-analysis.yml and test.yml
 env:
   CI: true
-  node: 18
+  node: 20
   java: 17
   RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}
 

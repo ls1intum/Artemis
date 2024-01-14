@@ -37,7 +37,7 @@ import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 @RequestMapping("api/public/")
 public class PublicUserJwtResource {
 
-    private final Logger log = LoggerFactory.getLogger(PublicUserJwtResource.class);
+    private static final Logger log = LoggerFactory.getLogger(PublicUserJwtResource.class);
 
     private final JWTCookieService jwtCookieService;
 

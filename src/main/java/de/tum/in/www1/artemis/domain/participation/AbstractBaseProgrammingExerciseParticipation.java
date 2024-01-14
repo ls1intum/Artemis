@@ -17,18 +17,18 @@ public abstract class AbstractBaseProgrammingExerciseParticipation extends Parti
 
     @Column(name = "repository_url")
     @JsonView(QuizView.Before.class)
-    private String repositoryUrl;
+    private String repositoryUri;
 
     @Column(name = "build_plan_id")
     @JsonView(QuizView.Before.class)
     private String buildPlanId;
 
-    public String getRepositoryUrl() {
-        return repositoryUrl;
+    public String getRepositoryUri() {
+        return repositoryUri;
     }
 
-    public void setRepositoryUrl(String repositoryUrl) {
-        this.repositoryUrl = repositoryUrl;
+    public void setRepositoryUri(String repositoryUri) {
+        this.repositoryUri = repositoryUri;
     }
 
     public String getBuildPlanId() {
@@ -62,6 +62,6 @@ public abstract class AbstractBaseProgrammingExerciseParticipation extends Parti
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "{" + "id=" + getId() + ", repositoryUrl='" + getRepositoryUrl() + "'" + ", buildPlanId='" + getBuildPlanId() + "}";
+        return getClass().getSimpleName() + "{" + "id=" + getId() + ", repositoryUri='" + getRepositoryUri() + "'" + ", buildPlanId='" + getBuildPlanId() + "}";
     }
 }

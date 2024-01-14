@@ -41,7 +41,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     public static final String ENTITY_NAME = "QuizExercise";
 
-    private final Logger log = LoggerFactory.getLogger(QuizExerciseService.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizExerciseService.class);
 
     private final QuizExerciseRepository quizExerciseRepository;
 

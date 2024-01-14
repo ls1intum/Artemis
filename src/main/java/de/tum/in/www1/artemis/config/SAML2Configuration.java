@@ -37,7 +37,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @Profile("saml2")
 public class SAML2Configuration {
 
-    private final Logger log = LoggerFactory.getLogger(SAML2Configuration.class);
+    private static final Logger log = LoggerFactory.getLogger(SAML2Configuration.class);
 
     private final SAML2Properties properties;
 

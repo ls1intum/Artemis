@@ -54,7 +54,7 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentTest 
         List<Course> courses = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, true, 0);
         Course course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         long lecture1Id = course1.getLectures().stream().findFirst().orElseThrow().getId();
-        this.lecture1 = this.lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1Id);
+        this.lecture1 = this.lectureRepository.findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture1Id);
         this.course2 = courseUtilService.createCourse();
 
         assertThat(this.lecture1.getLectureUnits()).isNotEmpty();
@@ -78,7 +78,7 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentTest 
 
         // Find the imported lecture and fetch it with lecture units
         Long lecture2Id = this.course2.getLectures().stream().skip(lectureCount).findFirst().orElseThrow().getId();
-        Lecture lecture2 = this.lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture2Id);
+        Lecture lecture2 = this.lectureRepository.findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture2Id);
 
         assertThat(lecture2.getTitle()).isEqualTo(this.lecture1.getTitle());
         assertThat(lecture2.getDescription()).isNotNull().isEqualTo(this.lecture1.getDescription());

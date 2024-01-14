@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 @Service
 public class QuizMessagingService {
 
-    private final Logger log = LoggerFactory.getLogger(QuizMessagingService.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizMessagingService.class);
 
     private final ObjectMapper objectMapper;
 

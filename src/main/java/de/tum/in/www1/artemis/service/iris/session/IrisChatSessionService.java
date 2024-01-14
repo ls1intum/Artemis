@@ -46,7 +46,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 @Profile("iris")
 public class IrisChatSessionService implements IrisSessionSubServiceInterface {
 
-    private final Logger log = LoggerFactory.getLogger(IrisChatSessionService.class);
+    private static final Logger log = LoggerFactory.getLogger(IrisChatSessionService.class);
 
     private final IrisConnectorService irisConnectorService;
 
@@ -204,7 +204,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         }
         if (studentParticipations.isEmpty()) {
             try {
-                templateRepo = gitService.getOrCheckoutRepository(templateParticipation.get().getVcsRepositoryUrl(), true);
+                templateRepo = gitService.getOrCheckoutRepository(templateParticipation.get().getVcsRepositoryUri(), true);
             }
             catch (GitAPIException e) {
                 throw new InternalServerErrorException("Iris cannot function without template participation");
@@ -214,8 +214,8 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         }
 
         try {
-            templateRepo = gitService.getOrCheckoutRepository(templateParticipation.get().getVcsRepositoryUrl(), true);
-            studentRepo = gitService.getOrCheckoutRepository(studentParticipations.get(studentParticipations.size() - 1).getVcsRepositoryUrl(), true);
+            templateRepo = gitService.getOrCheckoutRepository(templateParticipation.get().getVcsRepositoryUri(), true);
+            studentRepo = gitService.getOrCheckoutRepository(studentParticipations.get(studentParticipations.size() - 1).getVcsRepositoryUri(), true);
         }
         catch (GitAPIException e) {
             throw new InternalServerErrorException("Could not fetch existing student or template participation");

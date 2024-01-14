@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
  */
 public class LocalVCPushFilter extends OncePerRequestFilter {
 
-    private final Logger log = LoggerFactory.getLogger(LocalVCPushFilter.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalVCPushFilter.class);
 
     private final LocalVCServletService localVCServletService;
 

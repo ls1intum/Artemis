@@ -36,8 +36,7 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Notification extends DomainObject {
 
-    @Transient
-    private final Logger log = LoggerFactory.getLogger(Notification.class);
+    private static final Logger log = LoggerFactory.getLogger(Notification.class);
 
     @Column(name = "title")
     private String title;

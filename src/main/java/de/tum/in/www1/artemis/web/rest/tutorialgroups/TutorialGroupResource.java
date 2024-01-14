@@ -56,7 +56,7 @@ public class TutorialGroupResource {
 
     public static final String ENTITY_NAME = "tutorialGroup";
 
-    private final Logger log = LoggerFactory.getLogger(TutorialGroupResource.class);
+    private static final Logger log = LoggerFactory.getLogger(TutorialGroupResource.class);
 
     private final TutorialGroupService tutorialGroupService;
 

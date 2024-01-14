@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain.iris.message;
 
-import java.util.Objects;
-
 import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
@@ -48,10 +46,5 @@ public class IrisTextMessageContent extends IrisMessageContent {
     @Override
     public String toString() {
         return "IrisMessageContent{" + "message=" + (message == null ? "null" : message.getId()) + ", textContent='" + textContent + '\'' + '}';
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return super.equals(obj) && Objects.equals(this.textContent, ((IrisTextMessageContent) obj).textContent);
     }
 }

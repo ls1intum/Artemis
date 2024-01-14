@@ -47,7 +47,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 @Service
 public class FileService implements DisposableBean {
 
-    private final Logger log = LoggerFactory.getLogger(FileService.class);
+    private static final Logger log = LoggerFactory.getLogger(FileService.class);
 
     private final Map<Path, ScheduledFuture<?>> futures = new ConcurrentHashMap<>();
 

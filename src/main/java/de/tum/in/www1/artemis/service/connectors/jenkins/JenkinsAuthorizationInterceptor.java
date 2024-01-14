@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 @Component
 public class JenkinsAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 
-    private final Logger log = LoggerFactory.getLogger(JenkinsAuthorizationInterceptor.class);
+    private static final Logger log = LoggerFactory.getLogger(JenkinsAuthorizationInterceptor.class);
 
     @Value("${artemis.continuous-integration.user}")
     private String username;

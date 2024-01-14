@@ -72,11 +72,11 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
-    void testInvalidLocalVCRepositoryUrl() {
-        // The local repository cannot be resolved to a valid LocalVCRepositoryUrl as it is not located at the correct base path and is not a bare repository.
+    void testInvalidLocalVCRepositoryUri() {
+        // The local repository cannot be resolved to a valid LocalVCRepositoryUri as it is not located at the correct base path and is not a bare repository.
         assertThatExceptionOfType(VersionControlException.class)
                 .isThrownBy(() -> localVCServletService.processNewPush(commitHash, studentAssignmentRepository.localGit.getRepository()))
-                .withMessageContaining("Could not create valid repository URL from path");
+                .withMessageContaining("Could not create valid repository URI from path");
     }
 
     @Test

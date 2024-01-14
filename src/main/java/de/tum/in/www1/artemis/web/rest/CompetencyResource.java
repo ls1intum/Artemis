@@ -42,7 +42,7 @@ public class CompetencyResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final Logger log = LoggerFactory.getLogger(CompetencyResource.class);
+    private static final Logger log = LoggerFactory.getLogger(CompetencyResource.class);
 
     private static final String ENTITY_NAME = "competency";
 

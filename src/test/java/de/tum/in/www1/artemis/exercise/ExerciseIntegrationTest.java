@@ -216,9 +216,9 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 }
                 else if (exerciseServer instanceof ProgrammingExercise programmingExerciseExercise) {
                     assertThat(programmingExerciseExercise.getProjectKey()).as("Project key was set").isNotNull();
-                    assertThat(programmingExerciseExercise.getTemplateRepositoryUrl()).as("Template repository url was filtered out").isNull();
-                    assertThat(programmingExerciseExercise.getSolutionRepositoryUrl()).as("Solution repository url was filtered out").isNull();
-                    assertThat(programmingExerciseExercise.getTestRepositoryUrl()).as("Test repository url was filtered out").isNull();
+                    assertThat(programmingExerciseExercise.getTemplateRepositoryUri()).as("Template repository uri was filtered out").isNull();
+                    assertThat(programmingExerciseExercise.getSolutionRepositoryUri()).as("Solution repository uri was filtered out").isNull();
+                    assertThat(programmingExerciseExercise.getTestRepositoryUri()).as("Test repository uri was filtered out").isNull();
                     assertThat(programmingExerciseExercise.getTemplateBuildPlanId()).as("Template build plan was filtered out").isNull();
                     assertThat(programmingExerciseExercise.getSolutionBuildPlanId()).as("Solution build plan was filtered out").isNull();
                 }
@@ -326,9 +326,9 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 }
                 else if (exerciseWithDetails instanceof ProgrammingExercise programmingExerciseExercise) {
                     assertThat(programmingExerciseExercise.getProjectKey()).as("Project key was set").isNotNull();
-                    assertThat(programmingExerciseExercise.getTemplateRepositoryUrl()).as("Template repository url was filtered out").isNull();
-                    assertThat(programmingExerciseExercise.getSolutionRepositoryUrl()).as("Solution repository url was filtered out").isNull();
-                    assertThat(programmingExerciseExercise.getTestRepositoryUrl()).as("Test repository url was filtered out").isNull();
+                    assertThat(programmingExerciseExercise.getTemplateRepositoryUri()).as("Template repository uri was filtered out").isNull();
+                    assertThat(programmingExerciseExercise.getSolutionRepositoryUri()).as("Solution repository uri was filtered out").isNull();
+                    assertThat(programmingExerciseExercise.getTestRepositoryUri()).as("Test repository uri was filtered out").isNull();
                     assertThat(programmingExerciseExercise.getTemplateBuildPlanId()).as("Template build plan was filtered out").isNull();
                     assertThat(programmingExerciseExercise.getSolutionBuildPlanId()).as("Solution build plan was filtered out").isNull();
                     assertThat(programmingExerciseExercise.getStudentParticipations()).as("Number of participations is correct").hasSize(2);

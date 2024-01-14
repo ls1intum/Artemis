@@ -33,15 +33,12 @@ public class QuizExerciseWithSubmissionsExportService {
 
     private final FileService fileService;
 
-    private final FilePathService filePathService;
-
     public QuizExerciseWithSubmissionsExportService(QuizExerciseRepository quizExerciseRepository, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
-            DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService, FileService fileService, FilePathService filePathService) {
+            DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService, FileService fileService) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.dataExportQuizExerciseCreationService = dataExportQuizExerciseCreationService;
         this.fileService = fileService;
-        this.filePathService = filePathService;
     }
 
     /**
@@ -68,11 +65,11 @@ public class QuizExerciseWithSubmissionsExportService {
         for (var quizQuestion : quizExercise.getQuizQuestions()) {
             if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
                 if (dragAndDropQuestion.getBackgroundFilePath() != null) {
-                    imagesToExport.add(filePathService.actualPathForPublicPath(URI.create(dragAndDropQuestion.getBackgroundFilePath())));
+                    imagesToExport.add(FilePathService.actualPathForPublicPath(URI.create(dragAndDropQuestion.getBackgroundFilePath())));
                 }
                 for (var dragItem : dragAndDropQuestion.getDragItems()) {
                     if (dragItem.getPictureFilePath() != null) {
-                        imagesToExport.add(filePathService.actualPathForPublicPath(URI.create(dragItem.getPictureFilePath())));
+                        imagesToExport.add(FilePathService.actualPathForPublicPath(URI.create(dragItem.getPictureFilePath())));
 
                     }
                 }

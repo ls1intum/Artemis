@@ -3,7 +3,6 @@
         "buildQueue": {
             "title": "Build Queue",
             "pageTitle": "Build Job Information",
-            "refreshLabel": "Refresh",
             "queuedBuildJobs": "Queued Build Jobs",
             "runningBuildJobs": "Running Build Jobs",
             "buildJob": {
@@ -15,7 +14,8 @@
                 "buildStartDate": "Build Start Date",
                 "courseId": "Course ID",
                 "priority": "Priority"
-            }
+            },
+            "cancelAll": "Cancel All"
         }
     }
 }

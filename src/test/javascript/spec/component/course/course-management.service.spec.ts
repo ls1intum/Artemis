@@ -146,8 +146,9 @@ describe('Course Management Service', () => {
     };
 
     it('should update course', fakeAsync(() => {
+        const courseImage = new Blob();
         courseManagementService
-            .update(1, { ...course })
+            .update(1, { ...course }, courseImage)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
 
@@ -314,6 +315,17 @@ describe('Course Management Service', () => {
         req.flush(returnedFromService);
         tick();
     }));
+
+    it('should getStatisticsData', () => {
+        const periodIndex = 0;
+        const periodSize = 5;
+        courseManagementService
+            .getStatisticsData(course.id!, periodIndex, periodSize)
+            .pipe(take(1))
+            .subscribe((stats) => expect(stats).toHaveLength(periodSize));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/statistics?periodIndex=${periodIndex}&periodSize=${periodSize}` });
+        req.flush(returnedFromService);
+    });
 
     it('should register for the course', fakeAsync(() => {
         const groups = ['student-group-name'];
