@@ -33,7 +33,7 @@
                     }
                 </h4>
                 @if (competency.description) {
-                    <p class="m-0" [innerHTML]="competency.description | htmlForMarkdown"></p>
+                    <p class="m-0 markdown-preview" [innerHTML]="competency.description | htmlForMarkdown"></p>
                 }
                 @if (isPrerequisite && competency.course) {
                     <div>

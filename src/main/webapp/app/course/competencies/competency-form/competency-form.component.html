@@ -40,9 +40,8 @@
                             [markdown]="descriptionControl?.value"
                             (markdownChange)="updateDescriptionControl($event)"
                             id="description"
-                            class="markdown-editor"
+                            class="markdown-preview"
                             [enableFileUpload]="false"
-                            [colorCommands]="[]"
                         ></jhi-markdown-editor>
                         @if (descriptionControl?.invalid && descriptionControl?.dirty) {
                             <div class="alert alert-danger">
