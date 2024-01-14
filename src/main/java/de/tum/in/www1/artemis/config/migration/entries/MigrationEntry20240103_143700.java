@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.config.migration.entries;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -16,7 +14,6 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -77,19 +74,14 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
 
     private final CopyOnWriteArrayList<ProgrammingExerciseParticipation> errorList = new CopyOnWriteArrayList<>();
 
-    @Value("${artemis.version-control.default-branch:main}")
-    private String defaultBranch;
-
-    private final URL localVCBaseUrl = new URL("http://localhost:8080");
-
-    @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCBasePath = "./local-vcs-repos";
+    private final Optional<BitbucketLocalVCMigrationService> bitbucketLocalVCMigrationService;
 
     public MigrationEntry20240103_143700(ProgrammingExerciseRepository programmingExerciseRepository, Optional<BambooMigrationService> ciMigrationService, Environment environment,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<LocalVCService> localVCService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, GitService gitService, Optional<BitbucketService> bitbucketService) throws MalformedURLException {
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, GitService gitService, Optional<BitbucketService> bitbucketService,
+            Optional<BitbucketLocalVCMigrationService> bitbucketLocalVCMigrationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.environment = environment;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
@@ -100,6 +92,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         this.gitService = gitService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.bitbucketService = bitbucketService;
+        this.bitbucketLocalVCMigrationService = bitbucketLocalVCMigrationService;
     }
 
     @Override
@@ -108,6 +101,26 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         if (!new HashSet<>(activeProfiles).containsAll(MIGRATABLE_PROFILES)) {
             log.info("Migration will be skipped and marked run because the system does not support a tech-stack that requires this migration: {}",
                     List.of(environment.getActiveProfiles()));
+            return;
+        }
+
+        if (bitbucketLocalVCMigrationService.isEmpty()) {
+            log.error("Migration will be skipped and marked run because the BitbucketLocalVCMigrationService is not available.");
+            return;
+        }
+
+        if (bitbucketLocalVCMigrationService.get().getLocalVCBasePath() == null) {
+            log.error("Migration will be skipped and marked run because the local VC base path is not configured.");
+            return;
+        }
+
+        if (bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl() == null) {
+            log.error("Migration will be skipped and marked run because the local VC base URL is not configured.");
+            return;
+        }
+
+        if (bitbucketLocalVCMigrationService.get().getDefaultBranch() == null) {
+            log.error("Migration will be skipped and marked run because the default branch is not configured.");
             return;
         }
 
@@ -120,7 +133,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             return;
         }
 
-        log.info("Will migrate {} programming exercises and {} student participations now. This might take a while", programmingExerciseCount, studentCount);
+        log.info("Will migrate {} programming exercises and {} student repositories now. This might take a while", programmingExerciseCount, studentCount);
         // Number of full batches. The last batch might be smaller
         long totalFullBatchCount = programmingExerciseCount / BATCH_SIZE;
         int threadCount = (int) Math.max(1, Math.min(totalFullBatchCount, MAX_THREAD_COUNT));
@@ -199,7 +212,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         evaluateErrorList();
     }
 
-    private String migrateTestRepo(ProgrammingExercise programmingExercise) throws GitAPIException, URISyntaxException, IOException {
+    private String migrateTestRepo(ProgrammingExercise programmingExercise) throws GitAPIException, URISyntaxException {
         return cloneRepositoryFromBitbucketAndMoveToLocalVCS(programmingExercise, programmingExercise.getTestRepositoryUri());
     }
 
@@ -292,42 +305,35 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
                 + "the migration with author: {} and date_string: {} and then restarting Artemis.", author(), date());
     }
 
-    private String moveRepo(ProgrammingExercise exercise, String repositoryUrl) throws URISyntaxException, GitAPIException {
-        if (localVCService.isEmpty() || bitbucketService.isEmpty()) {
+    private String cloneRepositoryFromBitbucketAndMoveToLocalVCS(ProgrammingExercise exercise, String repositoryUrl) throws GitAPIException, URISyntaxException {
+        if (localVCService.isEmpty() || bitbucketService.isEmpty() || bitbucketLocalVCMigrationService.isEmpty()) {
             log.error("Failed to clone repository from Bitbucket: {}", repositoryUrl);
             return null;
         }
         var repositoryName = uriService.getRepositorySlugFromRepositoryUriString(repositoryUrl);
         var projectKey = exercise.getProjectKey();
-        Repository oldRepository = gitService.getOrCheckoutRepository(new VcsRepositoryUri(repositoryUrl), true, defaultBranch);
+        Repository oldRepository = gitService.getOrCheckoutRepository(new VcsRepositoryUri(repositoryUrl), true, bitbucketLocalVCMigrationService.get().getDefaultBranch());
         if (oldRepository == null) {
             log.error("Failed to clone repository from Bitbucket: {}", repositoryUrl);
             return null;
         }
         localVCService.get().createProjectForExercise(exercise);
         cloneRepo(projectKey, repositoryName, repositoryUrl);
-        var url = new LocalVCRepositoryUri(projectKey, repositoryName, localVCBaseUrl);
+        var url = new LocalVCRepositoryUri(projectKey, repositoryName, bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl());
         return url.toString();
     }
 
-    private String cloneRepositoryFromBitbucketAndMoveToLocalVCS(ProgrammingExercise exercise, String repositoryUrl) throws GitAPIException, URISyntaxException {
-        if (localVCService.isEmpty()) {
-            log.error("Failed to clone repository from Bitbucket: {}", repositoryUrl);
-            return null;
-        }
-        return moveRepo(exercise, repositoryUrl);
-    }
-
     private void cloneRepo(String projectKey, String repositorySlug, String oldOrigin) {
-        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(projectKey, repositorySlug, localVCBaseUrl);
+        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(projectKey, repositorySlug, bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl());
 
-        Path remoteDirPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath);
+        Path remoteDirPath = localVCRepositoryUri.getLocalRepositoryPath(bitbucketLocalVCMigrationService.get().getLocalVCBasePath());
 
         try {
             Files.createDirectories(remoteDirPath);
 
             // Create a bare local repository with JGit.
-            Git git = Git.cloneRepository().setDirectory(remoteDirPath.toFile()).setBare(true).setURI(oldOrigin).setBranch(defaultBranch).call();
+            Git git = Git.cloneRepository().setDirectory(remoteDirPath.toFile()).setBare(true).setURI(oldOrigin)
+                    .setBranch(bitbucketLocalVCMigrationService.get().getDefaultBranch()).call();
 
             git.close();
             log.debug("Created local git repository {} in folder {}", repositorySlug, remoteDirPath);
