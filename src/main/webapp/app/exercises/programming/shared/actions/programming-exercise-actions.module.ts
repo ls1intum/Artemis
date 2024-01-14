@@ -10,6 +10,7 @@ import {
 import { ProgrammingExerciseReEvaluateButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-re-evaluate-button.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-repo-download.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisSharedComponentModule, FeatureToggleModule],
@@ -20,6 +21,7 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
         ProgrammingExerciseInstructorTriggerAllDialogComponent,
         ProgrammingExerciseTriggerAllButtonComponent,
         ProgrammingExerciseReEvaluateButtonComponent,
+        ProgrammingExerciseInstructorRepoDownloadComponent,
     ],
     exports: [
         ProgrammingExerciseInstructorTriggerBuildButtonComponent,
@@ -27,6 +29,7 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
         ProgrammingExerciseInstructorSubmissionStateComponent,
         ProgrammingExerciseTriggerAllButtonComponent,
         ProgrammingExerciseReEvaluateButtonComponent,
+        ProgrammingExerciseInstructorRepoDownloadComponent,
     ],
 })
 export class ArtemisProgrammingExerciseActionsModule {}

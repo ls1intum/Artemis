@@ -47,7 +47,7 @@ public class SAML2Service {
     @Value("${info.saml2.enable-password:#{null}}")
     private Optional<Boolean> saml2EnablePassword;
 
-    private final Logger log = LoggerFactory.getLogger(SAML2Service.class);
+    private static final Logger log = LoggerFactory.getLogger(SAML2Service.class);
 
     private final UserCreationService userCreationService;
 

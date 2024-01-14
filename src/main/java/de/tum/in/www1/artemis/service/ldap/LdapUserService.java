@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.domain.User;
 @Profile("ldap | ldap-only")
 public class LdapUserService {
 
-    private final Logger log = LoggerFactory.getLogger(LdapUserService.class);
+    private static final Logger log = LoggerFactory.getLogger(LdapUserService.class);
 
     @Value("${artemis.user-management.ldap.base}")
     private String ldapBase;

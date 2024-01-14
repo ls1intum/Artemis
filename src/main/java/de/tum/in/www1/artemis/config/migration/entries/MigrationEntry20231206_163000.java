@@ -30,7 +30,7 @@ public class MigrationEntry20231206_163000 extends MigrationEntry {
 
     private static final List<String> MIGRATABLE_PROFILES = List.of("bamboo");
 
-    private final Logger log = LoggerFactory.getLogger(MigrationEntry20231206_163000.class);
+    private static final Logger log = LoggerFactory.getLogger(MigrationEntry20231206_163000.class);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
