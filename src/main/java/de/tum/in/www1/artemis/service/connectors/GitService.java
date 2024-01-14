@@ -270,7 +270,7 @@ public class GitService {
      * @throws URISyntaxException if SSH is used and the SSH URI could not be retrieved.
      */
     private URI getGitUri(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
-        if (profileService.isLocalVcsCi()) {
+        if (profileService.isLocalVcsCi() && !profileService.isBitbucket()) {
             // Create less generic LocalVCRepositoryUri out of VcsRepositoryUri.
             LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(vcsRepositoryUri.toString(), gitUrl);
             String localVCBasePath = environment.getProperty("artemis.version-control.local-vcs-repo-path");
@@ -1425,7 +1425,25 @@ public class GitService {
         return commitInfos;
     }
 
+    /**
+     * Clear the cached repositories.
+     */
     public void clearCachedRepositories() {
         cachedRepositories.clear();
+    }
+
+    /**
+     * Update the remote url of the given repository to the new repository uri.
+     *
+     * @param repo       the repository for which the remote url should be changed
+     * @param newRepoUri the new repository uri
+     * @throws URISyntaxException if the new repository uri is invalid
+     */
+    public void changeRemoteUrl(Repository repo, VcsRepositoryUri newRepoUri) throws URISyntaxException {
+        var git = new Git(repo);
+        var remoteConfig = new RemoteConfig(git.getRepository().getConfig(), REMOTE_NAME);
+        remoteConfig.removeURI(remoteConfig.getURIs().get(0));
+        remoteConfig.addURI(new URIish(newRepoUri.toString()));
+        remoteConfig.update(git.getRepository().getConfig());
     }
 }

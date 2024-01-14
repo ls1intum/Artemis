@@ -902,4 +902,13 @@ public class BitbucketService extends AbstractVersionControlService {
             return bitbucketServerUrl.getPath() + "/scm/" + projectKey + "/" + repositorySlug + ".git";
         }
     }
+
+    /**
+     * Get the base path of the Bitbucket server
+     *
+     * @return the base path of the Bitbucket server
+     */
+    public String getBasePath() {
+        return bitbucketServerUrl.getPath() + "/scm/";
+    }
 }

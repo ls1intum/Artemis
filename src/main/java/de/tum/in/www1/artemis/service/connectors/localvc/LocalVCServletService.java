@@ -78,7 +78,8 @@ public class LocalVCServletService {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
-    @Value("${artemis.version-control.base-url}")
+    // TODO should be @Value("${artemis.version-control.base-url}") for the migration from bamboo to localvc
+    @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
