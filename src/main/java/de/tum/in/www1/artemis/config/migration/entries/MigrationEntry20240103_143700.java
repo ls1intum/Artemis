@@ -4,12 +4,15 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,8 +30,8 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
@@ -78,6 +81,9 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
     private String defaultBranch;
 
     private final URL localVCBaseUrl = new URL("http://localhost:8080");
+
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private String localVCBasePath = "./local-vcs-repos";
 
     public MigrationEntry20240103_143700(ProgrammingExerciseRepository programmingExerciseRepository, Optional<BambooMigrationService> ciMigrationService, Environment environment,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
@@ -299,22 +305,37 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             return null;
         }
         localVCService.get().createProjectForExercise(exercise);
-        localVCService.get().createRepository(projectKey, repositoryName, null);
+        cloneRepo(projectKey, repositoryName, repositoryUrl);
         var url = new LocalVCRepositoryUri(projectKey, repositoryName, localVCBaseUrl);
-        SecurityUtils.setAuthorizationObject();
-        var newRepositoryUrl = url.toString().replace(bitbucketService.get().getBasePath(), localVCBaseUrl.toString());
-        gitService.changeRemoteUrl(oldRepository, new VcsRepositoryUri(newRepositoryUrl));
-        gitService.stageAllChanges(oldRepository);
-        gitService.commitAndPush(oldRepository, "Migrate repository from Bitbucket to local VCS", true, null);
         return url.toString();
     }
 
-    private String cloneRepositoryFromBitbucketAndMoveToLocalVCS(ProgrammingExercise exercise, String repositoryUrl) throws GitAPIException, URISyntaxException, IOException {
+    private String cloneRepositoryFromBitbucketAndMoveToLocalVCS(ProgrammingExercise exercise, String repositoryUrl) throws GitAPIException, URISyntaxException {
         if (localVCService.isEmpty()) {
             log.error("Failed to clone repository from Bitbucket: {}", repositoryUrl);
             return null;
         }
         return moveRepo(exercise, repositoryUrl);
+    }
+
+    private void cloneRepo(String projectKey, String repositorySlug, String oldOrigin) {
+        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(projectKey, repositorySlug, localVCBaseUrl);
+
+        Path remoteDirPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath);
+
+        try {
+            Files.createDirectories(remoteDirPath);
+
+            // Create a bare local repository with JGit.
+            Git git = Git.cloneRepository().setDirectory(remoteDirPath.toFile()).setBare(true).setURI(oldOrigin).setBranch(defaultBranch).call();
+
+            git.close();
+            log.debug("Created local git repository {} in folder {}", repositorySlug, remoteDirPath);
+        }
+        catch (GitAPIException | IOException e) {
+            log.error("Could not create local git repo {} at location {}", repositorySlug, remoteDirPath, e);
+            throw new LocalVCInternalException("Error while creating local git project.", e);
+        }
     }
 
     @Override

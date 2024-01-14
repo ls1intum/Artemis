@@ -29,6 +29,10 @@ public class ProfileService {
         return isProfileActive("bamboo");
     }
 
+    public boolean isBitbucket() {
+        return isProfileActive("bitbucket");
+    }
+
     public boolean isGitlabCiOrJenkins() {
         return isProfileActive("gitlabci") || isProfileActive("jenkins");
     }
