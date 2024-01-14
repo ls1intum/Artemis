@@ -25,10 +25,6 @@ export class ArtemisRequests {
 }
 
 export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRequests>({
-    page: async ({ context }, use) => {
-        const page = await context.newPage();
-        await use(page);
-    },
     loginPage: async ({ page }, use) => {
         await use(new LoginPage(page));
     },
