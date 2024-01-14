@@ -104,8 +104,6 @@ export class CourseManagementAPIRequests {
             multipart: multipartData,
         });
 
-        console.log('Create course response: {}', await response.json());
-
         return response.json();
     }
 
