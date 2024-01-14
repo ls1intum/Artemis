@@ -20,8 +20,7 @@ import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildScriptGenerationService;
-import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
+import de.tum.in.www1.artemis.service.connectors.aeolus.*;
 
 @Component
 public class MigrationEntry20240104_195600 extends MigrationEntry {
@@ -138,6 +137,7 @@ public class MigrationEntry20240104_195600 extends MigrationEntry {
                 windfile.setName(null);
                 windfile.setAuthor(null);
                 windfile.setGitCredentials(null);
+                this.makeWindfileLocalCICompatible(windfile);
                 // TODO: should we modify the docker parameters here? e.g. remove stuff like --net=host
                 var programmingExercise = solutionParticipation.getProgrammingExercise();
                 programmingExercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
@@ -154,6 +154,19 @@ public class MigrationEntry20240104_195600 extends MigrationEntry {
                 errorList.add(solutionParticipation);
             }
         }
+    }
+
+    private void makeWindfileLocalCICompatible(Windfile windfile) {
+        var actions = windfile.getActions();
+        for (Action action : actions) {
+            if (action instanceof ScriptAction scriptAction) {
+                var script = scriptAction.getScript();
+                if (script.trim().contains("./gradlew clean test")) {
+                    scriptAction.setScript(script.replace("./gradlew clean test", "chmod +x ./gradlew\n./gradlew clean test"));
+                }
+            }
+        }
+
     }
 
     /**
