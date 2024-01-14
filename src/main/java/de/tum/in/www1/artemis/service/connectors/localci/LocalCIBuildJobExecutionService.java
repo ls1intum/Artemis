@@ -301,14 +301,6 @@ public class LocalCIBuildJobExecutionService {
 
         localCIContainerService.moveResultsToSpecifiedDirectory(containerId, resultPaths, LocalCIContainerService.WORKING_DIRECTORY + LocalCIContainerService.RESULTS_DIRECTORY);
 
-        // Wait for copying results to finish
-        try {
-            Thread.sleep(1000);
-        }
-        catch (InterruptedException e) {
-            throw new LocalCIException("Waiting for copying results got interrupted");
-        }
-
         String assignmentRepoCommitHash = commitHash;
         String testRepoCommitHash = "";
 
