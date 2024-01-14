@@ -131,6 +131,15 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
         return this.form.get('optional');
     }
 
+    /**
+     * Updates description form on markdown change
+     * @param content markdown content
+     */
+    updateDescriptionControl(content: string) {
+        this.descriptionControl?.setValue(content);
+        this.descriptionControl?.markAsDirty();
+    }
+
     ngOnChanges(): void {
         this.initializeForm();
         if (this.isEditMode && this.formData) {

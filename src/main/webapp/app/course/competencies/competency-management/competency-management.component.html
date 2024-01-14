@@ -178,7 +178,7 @@
                                 <td>
                                     <a [routerLink]="['/courses', courseId, 'competencies', competency.id]">{{ competency.title }}</a>
                                 </td>
-                                <td [innerHTML]="competency.description"></td>
+                                <td [innerHTML]="competency.description | htmlForMarkdown"></td>
                                 <td>
                                     @if (competency.taxonomy) {
                                         <div>
@@ -254,7 +254,7 @@
                                 <td>
                                     {{ prerequisite.title }}
                                 </td>
-                                <td [innerHTML]="prerequisite.description"></td>
+                                <td [innerHTML]="prerequisite.description | htmlForMarkdown"></td>
                                 <td>
                                     @if (prerequisite.taxonomy) {
                                         <div>

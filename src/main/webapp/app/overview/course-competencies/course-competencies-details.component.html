@@ -30,7 +30,7 @@
                         }
                     </h3>
                     @if (competency.description) {
-                        <div [innerHTML]="competency.description"></div>
+                        <div [innerHTML]="competency.description | htmlForMarkdown"></div>
                     }
                 </div>
                 @if (competency.softDueDate) {

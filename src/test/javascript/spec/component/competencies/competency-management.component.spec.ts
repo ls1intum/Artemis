@@ -26,6 +26,7 @@ import { By } from '@angular/platform-browser';
 import '@angular/localize/init';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgbAccordionBody, NgbAccordionButton, NgbAccordionCollapse, NgbAccordionDirective, NgbAccordionHeader, NgbAccordionItem } from '@ng-bootstrap/ng-bootstrap';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 // eslint-disable-next-line @angular-eslint/component-selector
 @Component({ selector: 'ngx-graph', template: '' })
@@ -52,6 +53,7 @@ describe('CompetencyManagementComponent', () => {
                 MockHasAnyAuthorityDirective,
                 MockComponent(DocumentationButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
+                MockPipe(HtmlForMarkdownPipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(NgbAccordionDirective),

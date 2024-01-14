@@ -36,14 +36,15 @@
                 @if (!isInConnectMode) {
                     <div class="form-group">
                         <label for="description">{{ 'artemisApp.competency.description' | artemisTranslate }}</label>
-                        <textarea
-                            class="form-control"
+                        <jhi-markdown-editor
+                            [markdown]="descriptionControl?.value"
+                            (markdownChange)="updateDescriptionControl($event)"
                             id="description"
-                            rows="6"
-                            formControlName="description"
-                            [placeholder]="'artemisApp.competency.createCompetency.descriptionPlaceholder' | artemisTranslate"
-                        ></textarea>
-                        @if (descriptionControl?.invalid && (descriptionControl?.dirty || descriptionControl?.touched)) {
+                            class="markdown-editor"
+                            [enableFileUpload]="false"
+                            [colorCommands]="[]"
+                        ></jhi-markdown-editor>
+                        @if (descriptionControl?.invalid && descriptionControl?.dirty) {
                             <div class="alert alert-danger">
                                 @if (descriptionControl?.errors?.maxlength) {
                                     <div>
