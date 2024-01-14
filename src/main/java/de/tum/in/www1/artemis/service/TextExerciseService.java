@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 @Service
 public class TextExerciseService {
 
-    private final Logger log = LoggerFactory.getLogger(TextExerciseService.class);
+    private static final Logger log = LoggerFactory.getLogger(TextExerciseService.class);
 
     private final TextExerciseRepository textExerciseRepository;
 

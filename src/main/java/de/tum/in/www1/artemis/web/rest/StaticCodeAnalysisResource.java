@@ -32,7 +32,7 @@ public class StaticCodeAnalysisResource {
 
     private static final String ENTITY_NAME = "StaticCodeAnalysisCategory";
 
-    private final Logger log = LoggerFactory.getLogger(StaticCodeAnalysisResource.class);
+    private static final Logger log = LoggerFactory.getLogger(StaticCodeAnalysisResource.class);
 
     private final AuthorizationCheckService authCheckService;
 

@@ -38,7 +38,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class ExerciseService {
 
-    private final Logger log = LoggerFactory.getLogger(ExerciseService.class);
+    private static final Logger log = LoggerFactory.getLogger(ExerciseService.class);
 
     private final AuthorizationCheckService authCheckService;
 
@@ -692,15 +692,7 @@ public class ExerciseService {
             }
 
             if (!(exercise instanceof ProgrammingExercise programmingExercise)) {
-                final Optional<ZonedDateTime> dueDate;
-                if (result.getParticipation() == null) {
-                    // this is only the case for example submissions, due date does not matter then
-                    dueDate = Optional.empty();
-                }
-                else {
-                    dueDate = ExerciseDateService.getDueDate(result.getParticipation());
-                }
-                resultRepository.submitResult(result, exercise, dueDate);
+                resultRepository.submitResult(result, exercise);
             }
             else {
                 result.calculateScoreForProgrammingExercise(programmingExercise);

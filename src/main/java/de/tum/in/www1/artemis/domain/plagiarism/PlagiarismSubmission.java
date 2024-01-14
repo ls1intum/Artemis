@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 @Table(name = "plagiarism_submission")
 public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends DomainObject {
 
-    private static final Logger logger = LoggerFactory.getLogger(PlagiarismSubmission.class);
+    private static final Logger log = LoggerFactory.getLogger(PlagiarismSubmission.class);
 
     /**
      * ID of the wrapped submission object.
@@ -102,7 +102,7 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
                 submissionId = Long.parseLong(submissionIdAndStudentLogin[0]);
             }
             catch (NumberFormatException e) {
-                logger.error("Invalid submissionId: {}", e.getMessage());
+                log.error("Invalid submissionId: {}", e.getMessage());
             }
 
             studentLogin = submissionIdAndStudentLogin[1];
