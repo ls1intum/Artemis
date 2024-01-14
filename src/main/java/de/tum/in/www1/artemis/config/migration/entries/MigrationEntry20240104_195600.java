@@ -137,7 +137,7 @@ public class MigrationEntry20240104_195600 extends MigrationEntry {
                 windfile.setName(null);
                 windfile.setAuthor(null);
                 windfile.setGitCredentials(null);
-                this.makeWindfileLocalCICompatible(windfile);
+                this.makeWindfileLocalCIOptimized(windfile);
                 // TODO: should we modify the docker parameters here? e.g. remove stuff like --net=host
                 var programmingExercise = solutionParticipation.getProgrammingExercise();
                 programmingExercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
@@ -156,7 +156,7 @@ public class MigrationEntry20240104_195600 extends MigrationEntry {
         }
     }
 
-    private void makeWindfileLocalCICompatible(Windfile windfile) {
+    private void makeWindfileLocalCIOptimized(Windfile windfile) {
         var actions = windfile.getActions();
         for (Action action : actions) {
             if (action instanceof ScriptAction scriptAction) {
@@ -164,9 +164,11 @@ public class MigrationEntry20240104_195600 extends MigrationEntry {
                 if (script.trim().contains("./gradlew clean test")) {
                     scriptAction.setScript(script.replace("./gradlew clean test", "chmod +x ./gradlew\n./gradlew clean test"));
                 }
+                else if (script.trim().contains("chmod -R 777 ${WORKDIR}")) {
+                    scriptAction.setPlatform("bamboo");
+                }
             }
         }
-
     }
 
     /**
