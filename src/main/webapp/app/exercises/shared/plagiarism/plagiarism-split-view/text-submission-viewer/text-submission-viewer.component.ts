@@ -225,6 +225,8 @@ export class TextSubmissionViewerComponent implements OnChanges {
 
     /**
      * Builds the required HTML to highlight the lines with matches in the file content.
+     * Use with programming exercises to improve user experience,
+     * as matches provided by JPlag for them may not be precise for code submissions.
      *
      * @param fileContent The text inside a file.
      * @param matches The found matching plagiarism fragments.

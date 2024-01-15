@@ -123,6 +123,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
      * @param submission the submission to map the elements of
      */
     mapMatchesToElements(matches: SimpleMatch[], submission: PlagiarismSubmission<TextSubmissionElement>) {
+        // sort submission elements so that from and to indexes from matches reference correct elements
         const elements = submission.elements?.sort((a, b) => a.id - b.id);
         const filesToMatchedElements = new Map<string, FromToElement[]>();
 
