@@ -14,7 +14,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
-import { MathExerciseService } from 'app/exercises/math/manage/math-exercise.service';
+import { MathExerciseManageService } from 'app/exercises/math/manage/math-exercise-manage.service';
 
 @Component({
     selector: 'jhi-math-exercise-detail',
@@ -42,7 +42,7 @@ export class MathExerciseDetailComponent implements OnInit, OnDestroy {
 
     constructor(
         private eventManager: EventManager,
-        private mathExerciseService: MathExerciseService,
+        private mathExerciseService: MathExerciseManageService,
         private route: ActivatedRoute,
         private artemisMarkdown: ArtemisMarkdownService,
         private statisticsService: StatisticsService,

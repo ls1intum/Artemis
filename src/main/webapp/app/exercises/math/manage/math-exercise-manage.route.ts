@@ -12,15 +12,15 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 
-import { MathExerciseService } from './math-exercise.service';
+import { MathExerciseManageService } from './math-exercise-manage.service';
 import { MathExerciseDetailComponent } from './math-exercise-detail.component';
-import { MathExerciseComposeComponent } from '../compose/math-exercise-compose.component';
+import { MathExerciseComposeComponent } from './math-exercise-compose.component';
 import { MathExerciseEditComponent } from 'app/exercises/math/manage/math-exercise-edit.component';
 
 @Injectable({ providedIn: 'root' })
 export class MathExerciseResolver implements Resolve<MathExercise> {
     constructor(
-        private mathExerciseService: MathExerciseService,
+        private mathExerciseService: MathExerciseManageService,
         private courseService: CourseManagementService,
         private exerciseGroupService: ExerciseGroupService,
     ) {}
@@ -52,7 +52,7 @@ export class MathExerciseResolver implements Resolve<MathExercise> {
     }
 }
 
-export const mathExerciseRoute: Routes = [
+export const mathExerciseManageRoute: Routes = [
     {
         path: ':courseId/math-exercises/new',
         component: MathExerciseEditComponent,

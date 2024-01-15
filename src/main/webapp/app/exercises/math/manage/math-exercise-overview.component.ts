@@ -15,15 +15,15 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
-import { MathExerciseService } from 'app/exercises/math/manage/math-exercise.service';
+import { MathExerciseManageService } from 'app/exercises/math/manage/math-exercise-manage.service';
 import { onError } from 'app/shared/util/global.utils';
 import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
-    selector: 'jhi-math-exercise',
-    templateUrl: './math-exercise.component.html',
+    selector: 'jhi-math-exercise-overview',
+    templateUrl: './math-exercise-overview.component.html',
 })
-export class MathExerciseComponent extends ExerciseComponent {
+export class MathExerciseOverviewComponent extends ExerciseComponent {
     @Input() mathExercises: MathExercise[];
     filteredMathExercises: MathExercise[];
 
@@ -38,7 +38,7 @@ export class MathExerciseComponent extends ExerciseComponent {
 
     constructor(
         public exerciseService: ExerciseService,
-        public mathExerciseService: MathExerciseService,
+        public mathExerciseService: MathExerciseManageService,
         private courseExerciseService: CourseExerciseService,
         private modalService: NgbModal,
         private router: Router,

@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MathExercise } from 'app/entities/math-exercise.model';
-import { MathExerciseService } from './math-exercise.service';
+import { MathExerciseManageService } from './math-exercise-manage.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -59,7 +59,7 @@ export class MathExerciseEditComponent implements OnInit, OnDestroy {
 
     constructor(
         private alertService: AlertService,
-        private mathExerciseService: MathExerciseService,
+        private mathExerciseService: MathExerciseManageService,
         private modalService: NgbModal,
         private popupService: ExerciseUpdateWarningService,
         private exerciseService: ExerciseService,

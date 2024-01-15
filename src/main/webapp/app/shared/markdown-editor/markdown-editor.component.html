@@ -1,4 +1,4 @@
-<div #wrapper class="markdown-editor-wrapper">
+<div #wrapper class="markdown-editor-wrapper border border-lightgrey rounded-2">
     <nav ngbNav #nav="ngbNav" class="nav-tabs" [destroyOnHide]="false" (navChange)="changeNavigation($event)">
         <!-- editor -->
         <ng-container ngbNavItem="editor_edit">
@@ -13,7 +13,7 @@
                         [autoUpdateContent]="aceEditorOptions.autoUpdateContent"
                         [text]="markdown || ''"
                         (textChange)="markdownTextChange($event)"
-                        class="form-control markdown-editor__content"
+                        class="form-control markdown-editor__content border-0"
                         (textChanged)="editorContentString = $event"
                         [class.file-input]="enableFileUpload"
                         (dragover)="enableFileUpload ? $event.preventDefault() : ''"
@@ -22,15 +22,17 @@
                     />
                     <!-- manual input for file upload -->
                     @if (enableFileUpload) {
-                        <input id="file-upload" class="markdown-editor__file-input" type="file" accept="image/*" [multiple]="true" (change)="onFileUpload($event)" />
-                        <label for="file-upload" class="markdown-editor__file-label d-inline">
-                            <div class="row mx-0 align-items-baseline">
-                                <span class="col upload-subtitle">{{ 'artemisApp.markdownEditor.fileUpload' | artemisTranslate }}</span>
-                                <a class="col-auto" href="http://demo.showdownjs.com">
-                                    <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
-                                </a>
-                            </div>
-                        </label>
+                        <div class="border-top border-bottom border-lightgrey">
+                            <input id="file-upload" class="markdown-editor__file-input" type="file" accept="image/*" [multiple]="true" (change)="onFileUpload($event)" />
+                            <label for="file-upload" class="markdown-editor__file-label d-block px-2">
+                                <div class="d-flex justify-content-between align-items-baseline">
+                                    <span class="upload-subtitle">{{ 'artemisApp.markdownEditor.fileUpload' | artemisTranslate }}</span>
+                                    <a href="http://demo.showdownjs.com">
+                                        <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
+                                    </a>
+                                </div>
+                            </label>
+                        </div>
                     }
                     <!-- Required for resizing; don't remove empty span -->
                     @if (enableResize) {

@@ -15,8 +15,10 @@ export enum ButtonType {
     WARNING = 'btn-warning',
     ERROR = 'btn-danger',
     INFO = 'btn-info',
+    LIGHT = 'btn-light',
 
     PRIMARY_OUTLINE = 'btn-outline-primary',
+    SECONDARY_OUTLINE = 'btn-outline-secondary',
 }
 
 /**

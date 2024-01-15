@@ -1,0 +1,25 @@
+:host {
+    display: block;
+
+    &.ng-invalid {
+        border: none;
+    }
+}
+
+.file-picker-button {
+    border: none;
+    border-radius: 0;
+}
+
+.dropzone.dragging * {
+    pointer-events: none;
+}
+
+.preview-image {
+    height: auto;
+    width: 6rem;
+
+    @media (min-width: 768px) {
+        width: 10rem;
+    }
+}

@@ -11,7 +11,7 @@ type EntityResponseType = HttpResponse<MathExercise>;
 type EntityArrayResponseType = HttpResponse<MathExercise[]>;
 
 @Injectable({ providedIn: 'root' })
-export class MathExerciseService implements ExerciseServicable<MathExercise> {
+export class MathExerciseManageService implements ExerciseServicable<MathExercise> {
     private resourceUrl = 'api/math-exercises';
 
     constructor(

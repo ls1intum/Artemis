@@ -19,7 +19,7 @@
                 "title": "Matheaufgabe"
             },
             "sampleSolution": "Beispiellösung",
-            "exampleSubmissions": "Beispielabgabe",
+            "exampleSubmission": "Beispielabgabe",
             "assessedSubmission": "Deine bewertete Abgabe",
             "assessedSubmissionInstructor": "Die bewertete Abgabe",
             "submission": "Abgabe",
@@ -27,7 +27,27 @@
             "createExampleSubmissions": "Beispielabgabe erstellen",
             "checkPlagiarism": "Auf Plagiate prüfen",
             "saveSuccessful": "Dein Antwort wurde erfolgreich gespeichert!",
-            "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal."
+            "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal.",
+            "editor": {
+                "preview": {
+                    "show": "Vorschau",
+                    "hide": "Bearbeiten",
+                    "unavailable": "Vorschau nicht möglich",
+                    "close": "Close"
+                },
+                "submit": "Absenden",
+                "expression": {
+                    "text": {
+                        "label": "Text"
+                    },
+                    "image": {
+                        "label": "Foto"
+                    },
+                    "sketch": {
+                        "label": "Zeichnung"
+                    }
+                }
+            }
         }
     }
 }

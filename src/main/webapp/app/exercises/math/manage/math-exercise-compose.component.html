@@ -1,0 +1,30 @@
+<div class="row justify-content-center">
+    @if (mathExercise.id) {
+        <form name="editForm" role="form" novalidate [formGroup]="composeForm" class="col-md-8">
+            <div class="form-group">
+                <label jhiTranslate="artemisApp.exercise.problemStatement" for="problemStatement">Problem Statement</label>
+                <jhi-markdown-editor
+                    id="problemStatement"
+                    class="markdown-editor"
+                    [domainCommands]="domainCommands"
+                    formControlName="problemStatement"
+                    [editorMode]="EditorMode.LATEX"
+                />
+            </div>
+            <div class="form-group">
+                <label jhiTranslate="artemisApp.exercise.exampleSolution" for="exampleSolution">Example Solution</label>
+                <jhi-markdown-editor
+                    id="exampleSolution"
+                    class="markdown-editor"
+                    [domainCommands]="domainCommands"
+                    formControlName="exampleSolution"
+                    [editorMode]="EditorMode.LATEX"
+                />
+            </div>
+            <div class="form-group">
+                <label jhiTranslate="artemisApp.mathExercise.exampleSubmission" for="exampleSubmission">Example Preview</label>
+                <jhi-math-task-editor id="exampleSubmission" [exerciseId]="mathExercise.id" />
+            </div>
+        </form>
+    }
+</div>

@@ -15,6 +15,14 @@
                 "plugin:@angular-eslint/template/process-inline-templates"
             ],
             "rules": {
+                "@typescript-eslint/no-unused-vars": [
+                    "error",
+                    {
+                        "argsIgnorePattern": "^_",
+                        "varsIgnorePattern": "^_",
+                        "caughtErrorsIgnorePattern": "^_"
+                    }
+                ],
                 "@angular-eslint/directive-selector": [
                     "warn",
                     {

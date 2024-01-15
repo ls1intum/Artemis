@@ -3,6 +3,7 @@ import { RouterModule } from '@angular/router';
 
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
@@ -22,19 +23,21 @@ import { StructuredGradingCriterionModule } from 'app/exercises/shared/structure
 import { ExerciseUpdatePlagiarismModule } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.module';
 import { ArtemisIncludedInOverallScorePickerModule } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.module';
 import { NonProgrammingExerciseDetailCommonActionsModule } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.module';
-
-import { mathExerciseRoute } from './math-exercise.route';
-import { MathExerciseComponent } from './math-exercise.component';
+import { mathExerciseManageRoute } from './math-exercise-manage.route';
 import { MathExerciseDetailComponent } from './math-exercise-detail.component';
 import { MathExerciseRowButtonsComponent } from './math-exercise-row-buttons.component';
-import { ArtemisMathExerciseComposeModule } from 'app/exercises/math/compose/math-exercise-compose.module';
-import { MathExerciseEditComponent } from 'app/exercises/math/manage/math-exercise-edit.component';
+import { MathExerciseEditComponent } from './math-exercise-edit.component';
+import { MathExerciseComposeComponent } from './math-exercise-compose.component';
+import { MathExerciseOverviewComponent } from './math-exercise-overview.component';
+import { ArtemisMathTaskEditorModule } from '../editor/math-task-editor.module';
 
-const ENTITY_STATES = [...mathExerciseRoute];
+const ENTITY_STATES = [...mathExerciseManageRoute];
 
 @NgModule({
     imports: [
         ArtemisSharedModule,
+        ArtemisSharedLibsModule,
+        ArtemisSharedComponentModule,
         RouterModule.forChild(ENTITY_STATES),
         FormDateTimePickerModule,
         ArtemisCategorySelectorModule,
@@ -47,7 +50,6 @@ const ENTITY_STATES = [...mathExerciseRoute];
         StructuredGradingCriterionModule,
         AssessmentInstructionsModule,
         ExerciseDetailsModule,
-        ArtemisSharedComponentModule,
         ArtemisMarkdownModule,
         NonProgrammingExerciseDetailCommonActionsModule,
         ArtemisExerciseUpdateWarningModule,
@@ -56,9 +58,9 @@ const ENTITY_STATES = [...mathExerciseRoute];
         ExerciseTitleChannelNameModule,
         ExerciseUpdateNotificationModule,
         ExerciseUpdatePlagiarismModule,
-        ArtemisMathExerciseComposeModule,
+        ArtemisMathTaskEditorModule,
     ],
-    declarations: [MathExerciseComponent, MathExerciseDetailComponent, MathExerciseEditComponent, MathExerciseRowButtonsComponent],
-    exports: [MathExerciseComponent],
+    declarations: [MathExerciseOverviewComponent, MathExerciseDetailComponent, MathExerciseComposeComponent, MathExerciseEditComponent, MathExerciseRowButtonsComponent],
+    exports: [MathExerciseOverviewComponent],
 })
-export class ArtemisMathExerciseModule {}
+export class ArtemisMathExerciseManageModule {}

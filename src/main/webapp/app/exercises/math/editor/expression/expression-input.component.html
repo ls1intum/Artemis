@@ -1,0 +1,73 @@
+<div class="d-flex flex-column border border-lightgrey rounded-2 overflow-hidden">
+    <div class="d-flex justify-content-between gap-2 px-2 py-2 border-bottom border-lightgrey">
+        <div class="d-flex gap-1">
+            @for (mode of ExpressionInputModes; track $index) {
+                <jhi-button
+                    class="inline-block"
+                    [btnType]="inputMode === mode ? ButtonType.PRIMARY : ButtonType.PRIMARY_OUTLINE"
+                    [btnSize]="ButtonSize.SMALL"
+                    (onClick)="setInputMode(mode)"
+                    [icon]="ExpressionInputModeIcons[mode]"
+                    title="artemisApp.mathExercise.editor.expression.{{ ExpressionInputMode[mode].toLowerCase() }}.label"
+                />
+            }
+        </div>
+        <div class="d-flex gap-1">
+            @if (fullscreenSupported) {
+                <jhi-button [btnSize]="ButtonSize.SMALL" [btnType]="ButtonType.LIGHT" [icon]="faExpand" />
+            }
+        </div>
+    </div>
+    @if (showPreview) {
+        <div class="p-2">
+            @if (previewSafeHtml) {
+                <div class="preview" [innerHTML]="previewSafeHtml"></div>
+            } @else {
+                <div class="d-flex justify-content-center align-items-center py-4">
+                    <div class="d-flex flex-column justify-content-center align-items-center alert alert-light mb-0" role="alert">
+                        <p class="fw-semibold" jhiTranslate="artemisApp.mathExercise.editor.preview.unavailable"></p>
+                        @if (previewError) {
+                            <p class="fst-italic">{{ previewError }}</p>
+                        }
+                        <hr class="w-100" />
+                        <jhi-button
+                            (onClick)="showPreview = false"
+                            [btnType]="ButtonType.LIGHT"
+                            [btnSize]="ButtonSize.SMALL"
+                            [icon]="faClose"
+                            title="artemisApp.mathExercise.editor.preview.close"
+                        />
+                    </div>
+                </div>
+            }
+        </div>
+    } @else {
+        <div class="d-flex flex-column">
+            @switch (inputMode) {
+                @case (ExpressionInputMode.TEXT) {
+                    <jhi-math-task-expression-editor-text-input #childInputs [exerciseId]="exerciseId" [disabled]="disabled" [(value)]="valueStore" />
+                }
+                @case (ExpressionInputMode.IMAGE) {
+                    <jhi-math-task-expression-editor-image-input #childInputs [exerciseId]="exerciseId" [disabled]="disabled" [(value)]="valueStore" />
+                }
+                @case (ExpressionInputMode.SKETCH) {
+                    <jhi-math-task-expression-editor-sketch-input #childInputs [exerciseId]="exerciseId" [disabled]="disabled" [(value)]="valueStore" />
+                }
+            }
+        </div>
+    }
+    <div class="d-flex flex-column px-2 py-2 border-top border-lightgrey">
+        <div class="d-flex justify-content-end gap-1">
+            <jhi-button
+                [btnSize]="ButtonSize.SMALL"
+                [btnType]="ButtonType.LIGHT"
+                [icon]="showPreview ? faEyeSlash : faEye"
+                title="artemisApp.mathExercise.editor.preview.{{ showPreview ? 'hide' : 'show' }}"
+                (onClick)="showPreview = !showPreview"
+                [isLoading]="previewLoading"
+                [disabled]="!previewAvailable || previewLoading"
+            />
+            <jhi-button [btnSize]="ButtonSize.SMALL" title="artemisApp.mathExercise.editor.submit" />
+        </div>
+    </div>
+</div>

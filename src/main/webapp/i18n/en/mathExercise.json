@@ -21,7 +21,7 @@
                 "title": "Math Exercise"
             },
             "sampleSolution": "Example Solution",
-            "exampleSubmissions": "Example submissions",
+            "exampleSubmission": "Example submission",
             "assessedSubmission": "Your assessed submission",
             "assessedSubmissionInstructor": "The assessed submission",
             "submission": "Submission",
@@ -29,7 +29,30 @@
             "createExampleSubmissions": "Create example submission",
             "checkPlagiarism": "Check Plagiarism",
             "saveSuccessful": "Your answer was saved successfully!",
-            "error": "An error occurred. Please try again later."
+            "error": "An error occurred. Please try again later.",
+            "editor": {
+                "submit": "Submit",
+                "preview": {
+                    "show": "Preview",
+                    "hide": "Edit",
+                    "unavailable": "Could not generate preview",
+                    "close": "Close"
+                },
+                "expression": {
+                    "text": {
+                        "label": "Text"
+                    },
+                    "image": {
+                        "label": "Image",
+                        "title": "Click or drag an image file to upload it",
+                        "drop": "Drop image here",
+                        "invalid": "Invalid file"
+                    },
+                    "sketch": {
+                        "label": "Sketch"
+                    }
+                }
+            }
         }
     }
 }

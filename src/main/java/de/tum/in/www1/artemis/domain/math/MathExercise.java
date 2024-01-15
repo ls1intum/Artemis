@@ -28,11 +28,12 @@ public class MathExercise extends Exercise {
     private String hint;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "input_type", table = "math_exercise_details")
+    @Column(name = "input_type", table = "math_exercise_details", nullable = false)
     private MathInputType inputType;
 
     @Column(name = "input_configuration", columnDefinition = "JSON", table = "math_exercise_details")
-    private String inputConfiguration;
+    @Convert(converter = MathExerciseInputConfigurationConverter.class)
+    private MathExerciseInputConfiguration inputConfiguration;
 
     public String getSolution() {
         return solution;
@@ -66,11 +67,11 @@ public class MathExercise extends Exercise {
         this.inputType = inputType;
     }
 
-    public String getInputConfiguration() {
+    public MathExerciseInputConfiguration getInputConfiguration() {
         return inputConfiguration;
     }
 
-    public void setInputConfiguration(String inputConfiguration) {
+    public void setInputConfiguration(MathExerciseInputConfiguration inputConfiguration) {
         this.inputConfiguration = inputConfiguration;
     }
 

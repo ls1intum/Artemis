@@ -5,7 +5,7 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faBook, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 import { MathExercise } from 'app/entities/math-exercise.model';
-import { MathExerciseService } from 'app/exercises/math/manage/math-exercise.service';
+import { MathExerciseManageService } from 'app/exercises/math/manage/math-exercise-manage.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
@@ -28,7 +28,7 @@ export class MathExerciseRowButtonsComponent {
     farListAlt = faListAlt;
 
     constructor(
-        private mathExerciseService: MathExerciseService,
+        private mathExerciseService: MathExerciseManageService,
         private eventManager: EventManager,
     ) {}
 

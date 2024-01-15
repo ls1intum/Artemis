@@ -4,6 +4,8 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 
 export class MathExercise extends Exercise {
+    public exampleSolution?: string;
+
     constructor(course: Course | undefined, exerciseGroup: ExerciseGroup | undefined) {
         super(ExerciseType.MATH);
         this.course = course;

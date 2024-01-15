@@ -18,6 +18,7 @@
     .tab-list {
         background: var(--md-tab-list-bg);
     }
+
     .tab-content,
     .tab-content > .active {
         display: flex;
@@ -72,9 +73,6 @@
         &__file-label {
             cursor: pointer;
             width: 100%;
-            border: 1px solid var(--border-color);
-            border-top: none;
-            border-radius: 0 0.15em 0.15em 0;
 
             .upload-subtitle {
                 font-size: 12px;
@@ -123,6 +121,7 @@
 .nested {
     padding-left: 30px;
 }
+
 .nested-slide {
     padding-left: 50px;
 }

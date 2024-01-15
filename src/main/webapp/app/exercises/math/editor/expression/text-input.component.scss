@@ -1,0 +1,11 @@
+:host {
+    display: block;
+
+    &.ng-invalid {
+        border: none;
+    }
+}
+
+.text-input {
+    min-height: 6rem;
+}

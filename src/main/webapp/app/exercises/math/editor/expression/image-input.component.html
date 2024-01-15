@@ -1,0 +1,47 @@
+<div class="d-flex flex-column">
+    @if (selectedFile) {
+        <div class="d-flex justify-content-center p-4">
+            <div class="d-flex flex-column flex-lg-row justify-content-center align-items-center gap-4">
+                <img [src]="previewImageData" [alt]="selectedFile.name" class="img-thumbnail preview-image" />
+                <div class="d-flex flex-column gap-1">
+                    <div class="d-flex flex-column justify-content-center gap-1">
+                        <span class="text-center fw-bold">{{ selectedFile.name }}</span>
+                        <!--                        <span class="text-secondary">{{ selectedFile.size | bytes }}</span>-->
+                    </div>
+                    <div class="d-flex flex-row justify-content-center justify-content-lg-start gap-1">
+                        <button class="btn btn-sm btn-light" (click)="onOpenFilePicker()">
+                            <fa-icon [icon]="faEdit" />
+                        </button>
+                        <button class="btn btn-sm btn-danger" (click)="onRemoveFile()">
+                            <fa-icon [icon]="faTrash" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    } @else {
+        <div class="d-flex flex-column dropzone" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)" [class.dragging]="dragActive">
+            @if (dragActive) {
+                <div class="d-flex flex-column justify-content-center align-items-center px-2 py-5" [class.text-primary]="dragValid" [class.text-danger]="!dragValid">
+                    <div class="d-flex flex-column align-items-center text-center gap-1">
+                        @if (dragValid) {
+                            <fa-icon [icon]="faExclamation" size="2x" />
+                            <span jhiTranslate="artemisApp.mathExercise.editor.expression.image.drop"></span>
+                        } @else {
+                            <fa-icon [icon]="faArrowRightToBracket" size="2x" [rotate]="90" />
+                            <span jhiTranslate="artemisApp.mathExercise.editor.expression.image.invalid"></span>
+                        }
+                    </div>
+                </div>
+            } @else {
+                <button class="btn btn-light file-picker-button d-flex flex-column justify-content-center align-items-center px-2 py-5" (click)="onOpenFilePicker()">
+                    <div class="d-flex flex-column align-items-center text-center text-secondary gap-1">
+                        <fa-icon [icon]="faCloudArrowUp" size="2x" />
+                        <span jhiTranslate="artemisApp.mathExercise.editor.expression.image.title"></span>
+                    </div>
+                </button>
+            }
+        </div>
+    }
+</div>
+<input #fileInput type="file" [accept]="acceptedFileTypes" (change)="onFileInput($event)" [disabled]="disabled" class="d-none" />

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 // Note: this import has to be before the 'brace' imports
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
@@ -38,6 +38,8 @@ import { v4 as uuid } from 'uuid';
 import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
 import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
 import { InteractiveSearchCommand } from 'app/shared/markdown-editor/commands/interactiveSearchCommand';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Subscription } from 'rxjs';
 
 export enum MarkdownEditorHeight {
     INLINE = 100,
@@ -68,8 +70,15 @@ const getAceMode = (mode: EditorMode) => {
     templateUrl: './markdown-editor.component.html',
     styleUrls: ['./markdown-editor.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            multi: true,
+            useExisting: MarkdownEditorComponent,
+        },
+    ],
 })
-export class MarkdownEditorComponent implements AfterViewInit {
+export class MarkdownEditorComponent implements AfterViewInit, ControlValueAccessor, OnDestroy {
     public MultiOptionCommand = MultiOptionCommand;
     public DomainMultiOptionCommand = DomainMultiOptionCommand;
     public DomainTagCommand = DomainTagCommand;
@@ -154,26 +163,22 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     /** {visualMode} when editor is created the visual mode is set to false, since the edit mode is set active */
     visualMode = false;
-    @Input()
-    minHeightEditor = MarkdownEditorHeight.SMALL.valueOf();
+
+    @Input() minHeightEditor = MarkdownEditorHeight.SMALL.valueOf();
 
     @ContentChild(MultipleChoiceVisualQuestionComponent, { static: false }) visualChild: MultipleChoiceVisualQuestionComponent;
 
     /** Resizable constants **/
-    @Input()
-    enableResize = true;
-    @Input()
-    resizableMaxHeight = MarkdownEditorHeight.LARGE;
-    @Input()
-    resizableMinHeight = MarkdownEditorHeight.SMALL;
+    @Input() enableResize = true;
+    @Input() resizableMaxHeight = MarkdownEditorHeight.LARGE;
+    @Input() resizableMinHeight = MarkdownEditorHeight.SMALL;
     interactResizable: Interactable;
 
     /** {enableFileUpload}
      * whether to show the file upload field and enable the drag and drop functionality
      * enabled by default
      */
-    @Input()
-    enableFileUpload = true;
+    @Input() enableFileUpload = true;
 
     // Icons
     faQuestionCircle = faQuestionCircle;
@@ -185,12 +190,21 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     editorContentString: string;
 
+    private onTouched = () => {};
+    private onChangeSubs: Subscription[] = [];
+
     constructor(
         private artemisMarkdown: ArtemisMarkdownService,
         private fileUploaderService: FileUploaderService,
         private alertService: AlertService,
     ) {
         this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();
+    }
+
+    ngOnDestroy() {
+        for (const sub of this.onChangeSubs) {
+            sub.unsubscribe();
+        }
     }
 
     /** opens the button for selecting the color */
@@ -513,7 +527,21 @@ export class MarkdownEditorComponent implements AfterViewInit {
     }
 
     markdownTextChange(value: any) {
+        this.onTouched();
         this.markdown = value;
         this.markdownChange.emit(value as string);
+    }
+
+    writeValue(value: string | undefined | null) {
+        if (!value) return;
+        this.markdown = value;
+    }
+
+    registerOnChange(onChange: (_: string) => void) {
+        this.onChangeSubs.push(this.markdownChange.subscribe(onChange));
+    }
+
+    registerOnTouched(fn: () => void) {
+        this.onTouched = fn;
     }
 }

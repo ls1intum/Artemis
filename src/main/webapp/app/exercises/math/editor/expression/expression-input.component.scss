@@ -1,0 +1,11 @@
+:host {
+    display: block;
+
+    &.ng-invalid {
+        border: none;
+    }
+}
+
+.preview > p {
+    margin-bottom: 0;
+}

@@ -1,0 +1,7 @@
+<div class="flex flex-col">
+    @switch (inputType) {
+        @case (MathTaskEditorInputType.EXPRESSION) {
+            <jhi-math-task-expression-input [formControl]="expressionControl" [exerciseId]="exerciseId" />
+        }
+    }
+</div>

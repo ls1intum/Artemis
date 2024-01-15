@@ -10,7 +10,7 @@ import { Router } from '@angular/router';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBook, faChartBar, faListAlt, faTable, faTrash, faUserCheck, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { MathExerciseService } from 'app/exercises/math/manage/math-exercise.service';
+import { MathExerciseManageService } from 'app/exercises/math/manage/math-exercise-manage.service';
 
 @Component({
     selector: 'jhi-non-programming-exercise-detail-common-actions',
@@ -49,7 +49,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
         private textExerciseService: TextExerciseService,
         private fileUploadExerciseService: FileUploadExerciseService,
         private modelingExerciseService: ModelingExerciseService,
-        private mathExerciseService: MathExerciseService,
+        private mathExerciseService: MathExerciseManageService,
         private eventManager: EventManager,
         private router: Router,
     ) {}
