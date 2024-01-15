@@ -32,7 +32,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ReactiveFormsModule } from '@angular/forms';
 import { LtiConfigurationComponent } from 'app/admin/lti-configuration/lti-configuration.component';
-import { EditLtiConfigurationComponent } from 'app/admin/lti-configuration/edit-lti-configuration.component';
+import { LtiConfigurationUpdateComponent } from 'app/admin/lti-configuration/lti-configuration-update.component';
 
 const ENTITY_STATES = [...adminState];
 
@@ -72,7 +72,7 @@ const ENTITY_STATES = [...adminState];
         OrganizationManagementDetailComponent,
         OrganizationManagementUpdateComponent,
         LtiConfigurationComponent,
-        EditLtiConfigurationComponent,
+        LtiConfigurationUpdateComponent,
     ],
 })
 export class ArtemisAdminModule {}
