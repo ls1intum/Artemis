@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.web.websocket.localci.LocalCIWebsocketMessagingSer
  * same information multiple times and thus also avoids unnecessary load on the server.
  */
 @Service
-@Profile("localci & scheduling")
+@Profile("localci")
 public class LocalCIQueueWebsocketService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIQueueWebsocketService.class);
