@@ -298,8 +298,9 @@ public class AssessmentService {
      * @param submit       true if the result should also be submitted
      * @return the saved result
      */
-    public Result saveAndSubmitManualAssessment(final Exercise exercise, final Submission submission, final List<Feedback> feedbackList, Long resultId, boolean submit) {
-        Result result = saveManualAssessment(submission, feedbackList, resultId);
+    public Result saveAndSubmitManualAssessment(final Exercise exercise, final Submission submission, final List<Feedback> feedbackList, Long resultId, String assessmentNoteText,
+            boolean submit) {
+        Result result = saveManualAssessment(submission, feedbackList, resultId, assessmentNoteText);
         if (!submit) {
             return result;
         }

@@ -108,7 +108,7 @@ public abstract class AssessmentResource {
             throw new AccessForbiddenException("The user is not allowed to override the assessment");
         }
 
-        Result result = assessmentService.saveAndSubmitManualAssessment(exercise, submission, feedbackList, resultId, submit);
+        Result result = assessmentService.saveAndSubmitManualAssessment(exercise, submission, feedbackList, resultId, assessmentNote, submit);
 
         var participation = result.getParticipation();
         // remove information about the student for tutors to ensure double-blind assessment
