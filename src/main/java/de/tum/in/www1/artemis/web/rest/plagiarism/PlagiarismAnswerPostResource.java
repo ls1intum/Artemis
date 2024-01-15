@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 @RequestMapping("/api")
 public class PlagiarismAnswerPostResource {
 
-    private static final Logger log = LoggerFactory.getLogger(AnswerPostResource.class);
+    private static final Logger log = LoggerFactory.getLogger(PlagiarismAnswerPostResource.class);
 
     private final PlagiarismAnswerPostService plagiarismAnswerPostService;
 

@@ -34,7 +34,7 @@ import tech.jhipster.web.util.PaginationUtil;
 @RequestMapping("/api")
 public class PlagiarismPostResource {
 
-    private static final Logger log = LoggerFactory.getLogger(PostResource.class);
+    private static final Logger log = LoggerFactory.getLogger(PlagiarismPostResource.class);
 
     private final PlagiarismPostService plagiarismPostService;
 
