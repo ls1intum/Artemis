@@ -102,11 +102,7 @@ public class LocalCISharedBuildJobQueueService {
     @PostConstruct
     public void init() {
         this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
-        // Subscribe to the canceled build jobs topic
-        canceledBuildJobsTopic.addMessageListener(message -> {
-            long canceledBuildJobId = message.getMessageObject();
-            removeCanceledBuildJob(canceledBuildJobId);
-        });
+        this.canceledBuildJobsTopic.addMessageListener(new CanceledBuildJobListener());
     }
 
     /**
@@ -123,9 +119,15 @@ public class LocalCISharedBuildJobQueueService {
      */
     public void addBuildJob(String name, long participationId, String repositoryTypeOrUsername, String commitHash, ZonedDateTime submissionDate, int priority, long courseId,
             boolean isPushToTestRepository) {
-        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(Long.parseLong(String.valueOf(participationId) + submissionDate.toInstant().toEpochMilli()), name,
-                null, participationId, repositoryTypeOrUsername, commitHash, submissionDate, 0, null, priority, courseId, isPushToTestRepository);
-        queue.add(buildJobQueueItem);
+        sharedLock.lock();
+        try {
+            LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(Long.parseLong(String.valueOf(participationId) + submissionDate.toInstant().toEpochMilli()),
+                    name, null, participationId, repositoryTypeOrUsername, commitHash, submissionDate, 0, null, priority, courseId, isPushToTestRepository);
+            queue.add(buildJobQueueItem);
+        }
+        finally {
+            sharedLock.unlock();
+        }
     }
 
     public List<LocalCIBuildJobQueueItem> getQueuedJobs() {
@@ -425,14 +427,15 @@ public class LocalCISharedBuildJobQueueService {
      *
      * @param buildJobId id of the build job to cancel
      */
-    public void cancelBuildJob(long buildJobId) {
+    public void triggerBuildJobCancellation(long buildJobId) {
         // Publish a message to the topic indicating that the specific build job should be canceled
         canceledBuildJobsTopic.publish(buildJobId);
     }
 
-    private void removeCanceledBuildJob(long canceledBuildJobId) {
+    private void cancelBuildJob(long canceledBuildJobId) {
         List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
         for (LocalCIBuildJobQueueItem job : queue) {
+            log.error("Checking if job {} is the canceled job {}", job.id(), canceledBuildJobId);
             if (Objects.equals(job.id(), canceledBuildJobId)) {
                 toRemove.add(job);
             }
@@ -474,6 +477,16 @@ public class LocalCISharedBuildJobQueueService {
         @Override
         public void itemRemoved(ItemEvent<LocalCIBuildJobQueueItem> event) {
             log.debug("CIBuildJobQueueItem removed from queue: {}", event.getItem());
+        }
+    }
+
+    private class CanceledBuildJobListener implements com.hazelcast.topic.MessageListener<Long> {
+
+        @Override
+        public void onMessage(com.hazelcast.topic.Message<Long> message) {
+            log.debug("Received message on topic {}: {}", message.getSource(), message.getMessageObject());
+            log.error("Cancelling build job with id {}", message.getMessageObject());
+            cancelBuildJob(message.getMessageObject());
         }
     }
 }

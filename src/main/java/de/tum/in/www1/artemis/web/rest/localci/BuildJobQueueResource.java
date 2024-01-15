@@ -89,7 +89,7 @@ public class BuildJobQueueResource {
         }
 
         // Call the cancelBuildJob method in LocalCIBuildJobManagementService
-        localCIBuildJobQueueService.cancelBuildJob(buildJobId);
+        localCIBuildJobQueueService.triggerBuildJobCancellation(buildJobId);
 
         return ResponseEntity.noContent().build();
     }

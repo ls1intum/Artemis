@@ -76,7 +76,7 @@ public class AdminBuildJobQueueResource {
     public ResponseEntity<Void> cancelBuildJob(@PathVariable long buildJobId) {
         log.debug("REST request to cancel the build job with id {}", buildJobId);
         // Call the cancelBuildJob method in LocalCIBuildJobManagementService
-        localCIBuildJobQueueService.cancelBuildJob(buildJobId);
+        localCIBuildJobQueueService.triggerBuildJobCancellation(buildJobId);
 
         return ResponseEntity.noContent().build();
     }
