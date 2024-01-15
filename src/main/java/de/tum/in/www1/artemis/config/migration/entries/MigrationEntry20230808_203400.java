@@ -44,7 +44,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
 
     private static final int TIMEOUT_IN_HOURS = 9;
 
-    private final Logger log = LoggerFactory.getLogger(MigrationEntry20230808_203400.class);
+    private static final Logger log = LoggerFactory.getLogger(MigrationEntry20230808_203400.class);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 

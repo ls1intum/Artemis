@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 @Service
 public class ProgrammingExerciseImportService {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseImportService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseImportService.class);
 
     private final Optional<VersionControlService> versionControlService;
 

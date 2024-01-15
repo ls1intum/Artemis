@@ -36,7 +36,7 @@ import tech.jhipster.config.cache.PrefixedKeyGenerator;
 @EnableCaching
 public class CacheConfiguration {
 
-    private final Logger log = LoggerFactory.getLogger(CacheConfiguration.class);
+    private static final Logger log = LoggerFactory.getLogger(CacheConfiguration.class);
 
     private GitProperties gitProperties;
 

@@ -49,7 +49,7 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPer
 @Profile("bitbucket")
 public class BitbucketRequestMockProvider {
 
-    private final Logger log = LoggerFactory.getLogger(BitbucketRequestMockProvider.class);
+    private static final Logger log = LoggerFactory.getLogger(BitbucketRequestMockProvider.class);
 
     @Value("${artemis.version-control.url}")
     private URL bitbucketServerUrl;

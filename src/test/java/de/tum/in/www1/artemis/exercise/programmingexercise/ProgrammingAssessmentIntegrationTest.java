@@ -41,6 +41,10 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
 
     private static final String TEST_PREFIX = "programmingassessment";
 
+    private final String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+
+    private final Double offsetByTenThousandth = 0.0001;
+
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -93,10 +97,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
 
     private Result manualResult;
-
-    private final String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-
-    private final Double offsetByTenThousandth = 0.0001;
 
     @BeforeEach
     void initTestCase() {
@@ -556,6 +556,100 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
                 HttpStatus.OK);
         assertThat(response.getParticipation()).isEqualTo(manualResult.getParticipation());
         assertThat(response.getFeedbacks()).hasSameSizeAs(manualResult.getFeedbacks());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void updateManualProgrammingExerciseResult_addFeedbackAfterManualLongFeedback() throws Exception {
+
+        List<Feedback> feedbacks = new ArrayList<>();
+        var manualLongFeedback = new Feedback().credits(1.00).type(FeedbackType.MANUAL_UNREFERENCED);
+        manualLongFeedback.setDetailText("abc".repeat(5000));
+        feedbacks.add(manualLongFeedback);
+
+        manualResult = setUpManualResultForUpdate(feedbacks);
+
+        // Overwrite the previous assessment with additional feedback.
+        manualResult.addFeedback(new Feedback().credits(1.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
+        double points = manualResult.calculateTotalPointsForProgrammingExercises();
+        manualResult.setScore(points);
+        Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, Result.class,
+                HttpStatus.OK);
+
+        Feedback savedAutomaticLongFeedback = response.getFeedbacks().stream().filter(Feedback::getHasLongFeedbackText).findFirst().orElse(null);
+
+        assertThat(savedAutomaticLongFeedback).isNotNull();
+
+        // Retrieve long feedback text with id.
+        String longFeedbackText = request.get(String.format("/api/results/%d/feedbacks/%d/long-feedback", response.getId(), savedAutomaticLongFeedback.getId()), HttpStatus.OK,
+                String.class);
+
+        assertThat(response.getScore()).isEqualTo(2);
+        assertThat(response.getFeedbacks()).anySatisfy(feedback -> {
+            assertThat(feedback.getHasLongFeedbackText()).isTrue();
+            assertThat(feedback.getType()).isEqualTo(FeedbackType.MANUAL_UNREFERENCED);
+        });
+        assertThat(longFeedbackText).isEqualTo(manualLongFeedback.getLongFeedback().map(LongFeedbackText::getText).orElse(""));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void updateManualProgrammingExerciseResult_addFeedbackAfterAutomaticLongFeedback() throws Exception {
+        var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "testCase");
+
+        List<Feedback> feedbacks = new ArrayList<>();
+        var automaticLongFeedback = new Feedback().credits(1.00).type(FeedbackType.AUTOMATIC);
+        automaticLongFeedback.testCase(testCase);
+        automaticLongFeedback.setDetailText("abc".repeat(5000));
+        automaticLongFeedback.setText("abc");
+        feedbacks.add(automaticLongFeedback);
+
+        manualResult = setUpManualResultForUpdate(feedbacks);
+
+        // Overwrite the previous assessment with additional feedback.
+        manualResult.addFeedback(new Feedback().credits(1.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
+        double points = manualResult.calculateTotalPointsForProgrammingExercises();
+        manualResult.setScore(points);
+        Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, Result.class,
+                HttpStatus.OK);
+
+        Feedback savedAutomaticLongFeedback = response.getFeedbacks().stream().filter(Feedback::getHasLongFeedbackText).findFirst().orElse(null);
+
+        assertThat(savedAutomaticLongFeedback).isNotNull();
+
+        // Retrieve long feedback text with id.
+        String longFeedbackText = request.get(String.format("/api/results/%d/feedbacks/%d/long-feedback", response.getId(), savedAutomaticLongFeedback.getId()), HttpStatus.OK,
+                String.class);
+
+        assertThat(response.getScore()).isEqualTo(2);
+        assertThat(response.getFeedbacks()).anySatisfy(feedback -> {
+            assertThat(feedback.getType()).isEqualTo(FeedbackType.AUTOMATIC);
+            assertThat(feedback.getHasLongFeedbackText()).isTrue();
+        });
+        assertThat(longFeedbackText).isEqualTo(automaticLongFeedback.getLongFeedback().map(LongFeedbackText::getText).orElse(""));
+    }
+
+    private Result setUpManualResultForUpdate(List<Feedback> feedbacks) {
+        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
+        programmingSubmission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, programmingSubmission, TEST_PREFIX + "student1");
+        var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
+
+        resultRepository.save(manualResult);
+
+        manualResult.setParticipation(participation);
+        manualResult.setSubmission(programmingSubmission);
+        programmingSubmission.addResult(manualResult);
+
+        programmingSubmissionRepository.save(programmingSubmission);
+
+        // Result has to be manual to be updated
+        manualResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+
+        // Remove feedbacks, change text and score.
+        manualResult.setFeedbacks(feedbacks);
+        double points = manualResult.calculateTotalPointsForProgrammingExercises();
+        manualResult.setScore(points);
+        return resultRepository.save(manualResult);
     }
 
     @Test

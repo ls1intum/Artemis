@@ -43,7 +43,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class ProgrammingExerciseGradingService {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingService.class);
 
     private final Optional<ContinuousIntegrationResultService> continuousIntegrationResultService;
 

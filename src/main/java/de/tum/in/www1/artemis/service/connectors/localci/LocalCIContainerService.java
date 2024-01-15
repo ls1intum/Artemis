@@ -54,7 +54,7 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService
 @Profile("localci")
 public class LocalCIContainerService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIContainerService.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalCIContainerService.class);
 
     private final DockerClient dockerClient;
 

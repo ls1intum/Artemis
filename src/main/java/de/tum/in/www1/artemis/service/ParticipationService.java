@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class ParticipationService {
 
-    private final Logger log = LoggerFactory.getLogger(ParticipationService.class);
+    private static final Logger log = LoggerFactory.getLogger(ParticipationService.class);
 
     private final GitService gitService;
 
