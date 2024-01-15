@@ -215,23 +215,27 @@ public class ProgrammingExerciseService {
         final User exerciseCreator = userRepository.getUser();
         VersionControlService versionControl = versionControlService.orElseThrow();
 
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
+        programmingExercise.setSolutionParticipation(null);
+        programmingExercise.setTemplateParticipation(null);
+        programmingExerciseRepository.saveAndFlush(programmingExercise);
 
         // Step 1: Setting constant facts for a programming exercise
-        savedProgrammingExercise.generateAndSetProjectKey();
-        savedProgrammingExercise.setBranch(versionControl.getDefaultBranchOfArtemis());
+        programmingExercise.generateAndSetProjectKey();
+        programmingExercise.setBranch(versionControl.getDefaultBranchOfArtemis());
 
         // Step 2: Creating repositories for new exercise
-        programmingExerciseRepositoryService.createRepositoriesForNewExercise(savedProgrammingExercise);
-
+        programmingExerciseRepositoryService.createRepositoriesForNewExercise(programmingExercise);
         // Step 3: Initializing solution and template participation
-        initParticipations(savedProgrammingExercise);
+        initParticipations(programmingExercise);
 
         // Step 4a: Setting build plan IDs and URLs for template and solution participation
-        setURLsAndBuildPlanIDsForNewExercise(savedProgrammingExercise);
+        setURLsAndBuildPlanIDsForNewExercise(programmingExercise);
 
         // Step 4b: Connecting base participations with the exercise
-        connectBaseParticipationsToExerciseAndSave(savedProgrammingExercise);
+        connectBaseParticipationsToExerciseAndSave(programmingExercise);
+
+        programmingExerciseRepository.saveAndFlush(programmingExercise);
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.findForCreationByIdElseThrow(programmingExercise.getId());
 
         // Step 4c: Connect auxiliary repositories
         connectAuxiliaryRepositoriesToExercise(savedProgrammingExercise);
