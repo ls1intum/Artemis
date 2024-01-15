@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("api/")
 public class NotificationSettingsResource {
 
-    private final Logger log = LoggerFactory.getLogger(NotificationSettingsResource.class);
+    private static final Logger log = LoggerFactory.getLogger(NotificationSettingsResource.class);
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;

@@ -51,7 +51,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 @Profile("iris")
 public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterface {
 
-    private final Logger log = LoggerFactory.getLogger(IrisCodeEditorSessionService.class);
+    private static final Logger log = LoggerFactory.getLogger(IrisCodeEditorSessionService.class);
 
     private final IrisConnectorService irisConnectorService;
 
@@ -176,11 +176,11 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 return null;
             }
             if (response == null || !response.content().hasNonNull("response")) {
-                log.error("No response from Iris model: " + response);
+                log.error("No response from Iris model: {}", response);
                 irisCodeEditorWebsocketService.sendException(session, new IrisNoResponseException());
                 return null;
             }
-            log.info("Received response from iris model: " + response.content().toPrettyString());
+            log.info("Received response from iris model: {}", response.content().toPrettyString());
             try {
                 var irisMessage = toIrisMessage(response.content());
                 var saved = irisMessageService.saveMessage(irisMessage, session, IrisMessageSender.LLM);
@@ -211,7 +211,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             message.addContent(new IrisTextMessageContent(chatWindowResponse));
         }
         catch (IllegalArgumentException e) {
-            log.error("Missing fields, could not parse IrisTextMessageContent: " + content.toPrettyString(), e);
+            log.error("Missing fields, could not parse IrisTextMessageContent: {}", content.toPrettyString(), e);
             throw new IrisParseResponseException("Iris response does not have the correct structure");
         }
 
@@ -263,7 +263,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 planSteps.add(new IrisExercisePlanStep(component, instructions));
             }
             catch (IllegalArgumentException e) {
-                log.error("Missing fields, could not parse IrisExercisePlanStep: " + node.toPrettyString(), e);
+                log.error("Missing fields, could not parse IrisExercisePlanStep: {}", node.toPrettyString(), e);
             }
         }
         exercisePlan.setSteps(planSteps);
@@ -308,18 +308,18 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 irisCodeEditorWebsocketService.notifyStepException(session, exerciseStep, new IrisNoResponseException());
                 return null;
             }
-            log.info("Received response from iris model: " + response.content().toPrettyString());
+            log.info("Received response from iris model: {}", response.content().toPrettyString());
             try {
                 String updatedProblemStatement = null;
                 Set<FileChange> successfulChanges = null;
                 if (component == ExerciseComponent.PROBLEM_STATEMENT) {
                     var changes = extractProblemStatementChanges(response.content());
-                    log.info("Extracted problem statement changes: " + changes);
+                    log.info("Extracted problem statement changes: {}", changes);
                     updatedProblemStatement = injectChangesIntoProblemStatement(exercise, changes);
                 }
                 else {
                     var changes = extractFileChanges(response.content());
-                    log.info("Extracted file changes for exercise " + component + ": " + changes);
+                    log.info("Extracted file changes for exercise {}: {}", component, changes);
                     successfulChanges = injectChangesIntoRepository(repositoryFor(exercise, component), changes);
                 }
                 log.info("Setting exercise step as executed");
@@ -503,7 +503,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 case "overwrite" -> changes.add(ProblemStatementOverwrite.parse(content));
                 case "modify" -> {
                     if (!content.path("changes").isArray()) {
-                        log.error("Missing fields, could not parse ProblemStatementChange: " + content.toPrettyString());
+                        log.error("Missing fields, could not parse ProblemStatementChange: {}", content.toPrettyString());
                         break;
                     }
                     for (JsonNode node : content.required("changes")) {
@@ -512,7 +512,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                                 node = objectMapper.readTree(node.required("json").asText());
                             }
                             catch (JsonProcessingException e) {
-                                log.error("Could not parse json field of ProblemStatementChange: " + node.toPrettyString(), e);
+                                log.error("Could not parse json field of ProblemStatementChange: {}", node.toPrettyString(), e);
                                 continue;
                             }
                         }
@@ -529,14 +529,14 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                             changes.add(ProblemStatementReplacement.parse(node));
                         }
                         catch (IllegalArgumentException e) {
-                            log.error("Missing fields, could not parse ProblemStatementReplacement: " + node.toPrettyString(), e);
+                            log.error("Missing fields, could not parse ProblemStatementReplacement: {}", node.toPrettyString(), e);
                         }
                     }
                 }
             }
         }
         catch (IllegalArgumentException e) {
-            log.error("Missing fields, could not parse ProblemStatementChange: " + content.toPrettyString(), e);
+            log.error("Missing fields, could not parse ProblemStatementChange: {}", content.toPrettyString(), e);
         }
         if (changes.isEmpty()) {
             throw new IrisParseResponseException("Was not able to parse any changes");
@@ -581,7 +581,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                         node = objectMapper.readTree(node.required("json").asText());
                     }
                     catch (JsonProcessingException e) {
-                        log.error("Could not parse json field of FileChange: " + node.toPrettyString(), e);
+                        log.error("Could not parse json field of FileChange: {}", node.toPrettyString(), e);
                         continue;
                     }
                 }
@@ -597,7 +597,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 }
             }
             catch (IllegalArgumentException e) {
-                log.error("Missing fields, could not parse FileChange: " + node.toPrettyString(), e);
+                log.error("Missing fields, could not parse FileChange: {}", node.toPrettyString(), e);
                 throw new IrisParseResponseException("Parsing failed");
             }
         }
@@ -616,7 +616,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * @return The updated problem statement
      */
     private String injectChangesIntoProblemStatement(ProgrammingExercise exercise, List<ProblemStatementChange> changes) {
-        log.info("Injecting changes into problem statement: \n" + changes);
+        log.info("Injecting changes into problem statement: \n{}", changes);
         var problemStatement = exercise.getProblemStatement();
         int successes = 0;
         int failures = 0;
@@ -631,7 +631,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 failures++;
             }
         }
-        log.info("Successfully applied " + successes + " changes to problem statement, " + failures + " changes failed");
+        log.info("Successfully applied {} changes to problem statement, {} changes failed", successes, failures);
         return problemStatement;
     }
 
@@ -644,7 +644,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * @param changes    The changes to inject
      */
     private Set<FileChange> injectChangesIntoRepository(Repository repository, List<FileChange> changes) {
-        log.info("Injecting changes into repository: \n" + changes);
+        log.info("Injecting changes into repository: \n{}", changes);
         // @formatter:off
         Map<String, Optional<File>> targetedFiles = changes.stream()
                 .map(FileChange::path)
@@ -663,14 +663,14 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 successes++;
             }
             catch (IOException e) {
-                log.error("Encountered an IOException while applying change: " + change, e);
+                log.error("Encountered an IOException while applying change: {}", change, e);
             }
             catch (IrisChangeException e) {
                 log.info(e.getMessage());
                 failures++;
             }
         }
-        log.info("Successfully applied " + successes + " changes to repository, " + failures + " changes failed");
+        log.info("Successfully applied {} changes to repository, {} changes failed", successes, failures);
         return successful;
     }
 

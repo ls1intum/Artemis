@@ -5,6 +5,13 @@
                 "title": "Exercises",
                 "createLabel": "Create a new Exercise"
             },
+            "sections": {
+                "general": "General Information",
+                "mode": "Mode",
+                "grading": "Grading",
+                "problem": "Problem Statement",
+                "solution": "Example Solution"
+            },
             "details": "Exercise details",
             "addCriterion": "Add a Grading Criterion",
             "resultsPerPage": "{{number}} results per page",
