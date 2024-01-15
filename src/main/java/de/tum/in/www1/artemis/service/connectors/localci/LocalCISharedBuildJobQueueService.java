@@ -20,6 +20,7 @@ import com.hazelcast.collection.ItemListener;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.cp.lock.FencedLock;
 import com.hazelcast.map.IMap;
+import com.hazelcast.topic.ITopic;
 
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -65,6 +66,8 @@ public class LocalCISharedBuildJobQueueService {
 
     private final AtomicInteger localProcessingJobs = new AtomicInteger(0);
 
+    private final ITopic<Long> canceledBuildJobsTopic;
+
     /**
      * Lock to prevent multiple nodes from processing the same build job.
      */
@@ -90,14 +93,20 @@ public class LocalCISharedBuildJobQueueService {
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
         this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
+        this.canceledBuildJobsTopic = this.hazelcastInstance.getTopic("canceledBuildJobsTopic");
     }
 
     /**
      * Add listener to the shared build job queue.
      */
     @PostConstruct
-    public void addListener() {
+    public void init() {
         this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
+        // Subscribe to the canceled build jobs topic
+        canceledBuildJobsTopic.addMessageListener(message -> {
+            long canceledBuildJobId = message.getMessageObject();
+            removeCanceledBuildJob(canceledBuildJobId);
+        });
     }
 
     /**
@@ -379,24 +388,6 @@ public class LocalCISharedBuildJobQueueService {
     }
 
     /**
-     * Cancel a build job by removing it from the queue or stopping the build process.
-     *
-     * @param buildJobId id of the build job to cancel
-     */
-    public void cancelBuildJob(long buildJobId) {
-        // Remove build job if it is queued
-        if (queue.stream().anyMatch(job -> Objects.equals(job.id(), buildJobId))) {
-            List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
-            for (LocalCIBuildJobQueueItem job : queue) {
-                if (Objects.equals(job.id(), buildJobId)) {
-                    toRemove.add(job);
-                }
-            }
-            queue.removeAll(toRemove);
-        }
-    }
-
-    /**
      * Retrieve participation from database with retries.
      * This is necessary because the participation might not be persisted in the database yet.
      *
@@ -427,6 +418,26 @@ public class LocalCISharedBuildJobQueueService {
             }
         }
         throw new IllegalStateException("Could not retrieve participation with id " + participationId + " from database after " + maxRetries + " retries.");
+    }
+
+    /**
+     * Cancel a build job by removing it from the queue or stopping the build process.
+     *
+     * @param buildJobId id of the build job to cancel
+     */
+    public void cancelBuildJob(long buildJobId) {
+        // Publish a message to the topic indicating that the specific build job should be canceled
+        canceledBuildJobsTopic.publish(buildJobId);
+    }
+
+    private void removeCanceledBuildJob(long canceledBuildJobId) {
+        List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
+        for (LocalCIBuildJobQueueItem job : queue) {
+            if (Objects.equals(job.id(), canceledBuildJobId)) {
+                toRemove.add(job);
+            }
+        }
+        queue.removeAll(toRemove);
     }
 
     /**
