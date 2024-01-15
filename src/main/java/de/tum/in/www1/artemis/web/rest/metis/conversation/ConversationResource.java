@@ -40,7 +40,7 @@ import tech.jhipster.web.util.PaginationUtil;
 @RequestMapping("/api/courses")
 public class ConversationResource extends ConversationManagementResource {
 
-    private final Logger log = LoggerFactory.getLogger(ConversationResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ConversationResource.class);
 
     private final ConversationService conversationService;
 

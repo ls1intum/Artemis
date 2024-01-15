@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.service.user.PasswordService;
 @Service
 public class UserUtilService {
 
-    private final Logger log = LoggerFactory.getLogger(getClass());
+    private static final Logger log = LoggerFactory.getLogger(UserUtilService.class);
 
     private static final Authority userAuthority = new Authority(Role.STUDENT.getAuthority());
 

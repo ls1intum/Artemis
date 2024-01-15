@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 @Service
 public class ExamUserService {
 
-    private final Logger log = LoggerFactory.getLogger(ExamUserService.class);
+    private static final Logger log = LoggerFactory.getLogger(ExamUserService.class);
 
     private final ExamUserRepository examUserRepository;
 

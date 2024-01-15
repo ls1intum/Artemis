@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public abstract class AssessmentResource {
 
-    private final Logger log = LoggerFactory.getLogger(AssessmentResource.class);
+    private static final Logger log = LoggerFactory.getLogger(AssessmentResource.class);
 
     protected final AuthorizationCheckService authCheckService;
 

@@ -51,7 +51,7 @@ public class DataExportExerciseCreationService {
 
     private final Path repoClonePath;
 
-    private final Logger log = LoggerFactory.getLogger(DataExportExerciseCreationService.class);
+    private static final Logger log = LoggerFactory.getLogger(DataExportExerciseCreationService.class);
 
     private final FileService fileService;
 

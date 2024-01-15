@@ -45,7 +45,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private static final String ENTITY_NAME = "textAssessment";
 
-    private final Logger log = LoggerFactory.getLogger(TextAssessmentResource.class);
+    private static final Logger log = LoggerFactory.getLogger(TextAssessmentResource.class);
 
     private final TextBlockService textBlockService;
 

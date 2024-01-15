@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 @Service
 public class UriService {
 
-    private final Logger log = LoggerFactory.getLogger(UriService.class);
+    private static final Logger log = LoggerFactory.getLogger(UriService.class);
 
     /**
      * Gets the repository slug from the given repository URI, see {@link #getRepositorySlugFromUri}
