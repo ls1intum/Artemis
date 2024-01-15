@@ -20,7 +20,7 @@ Artemis brings interactive learning to life with instant, individual feedback on
    * **Policies**: Instructors can define submission policies (e.g., penalties after 10 attempts) to prevent that students try out all possibilities without thinking.
    * **Grading**: Instructors have many options to configure grading, analyze the results based on tests and static code analysis categories and re-evaluate the results
    * **Secure**: Test cases and student code run in Docker environments on build agents. Test frameworks such as [Ares](https://github.com/ls1intum/Ares) simplify the creation of structural and dynamic tests and prevent that students can cheat.
-2. **[Integrated Code Lifecycle](https://docs.artemis.cit.tum.de/dev/setup/integrated-code-lifecycle)**: Elevating the programming exercise experience, Artemis seamlessly integrates **version control** and **continuous integration**, creating a streamlined, cohesive development environment. Unlike external systems, this integrated approach minimizes maintenance overhead and is tailored to the specific needs of a learning platform, offering unparalleled flexibility. It simplifies the initial setup for administrators and ensures a smoother, integrated workflow for students and instructors alike.
+2. **[Integrated code lifecycle](https://docs.artemis.cit.tum.de/dev/setup/integrated-code-lifecycle)**: Elevating the programming exercise experience, Artemis seamlessly integrates **version control** and **continuous integration**, creating a streamlined, cohesive development environment. Unlike external systems, this integrated approach minimizes maintenance overhead and is tailored to the specific needs of a learning platform, offering unparalleled flexibility. It simplifies the initial setup for administrators and ensures a smoother, integrated workflow for students and instructors alike.
 3. **[Quiz exercises](https://docs.artemis.cit.tum.de/user/exercises/quiz/)** with multiple choice, drag and drop, and short answer questions
     * **Modeling quizzes**: Instructors can easily create drag and drop quizzes based on UML models
     * **Different modes**: Quizzes support a live mode (rated) during lectures, a practice mode for students to repeat the quiz as often as they want, and an exam mode (see below)
@@ -33,8 +33,8 @@ Artemis brings interactive learning to life with instant, individual feedback on
    * **Language detection**: Artemis detects the language of the submission and shows the word and character count. 
 6. **[File upload exercises](https://docs.artemis.cit.tum.de/user/exercises/file-upload/)** allow full flexibility to instructors. Students can create any kind of file (e.g. PDF, PNG) and submit it to Artemis when they have completed their work. Artemis allows instructors and tutors to download the files and assess them manually based on structured grading criteria (see below in the section Assessment).
 7. **[Exam mode](https://docs.artemis.cit.tum.de/user/exam_mode/)**: Instructors can create online exams with exercise variants, integrated plagiarism checks, test runs and student reviews. You can find more information on [Exam mode student features](https://artemis.cit.tum.de/features/students) and on [Exam mode instructor features](https://artemis.cit.tum.de/features/instructors).
-8**[Grading](https://docs.artemis.cit.tum.de/user/grading/)**: Instructors can configure grade keys for courses and exams to automatically calculate grades and display them to students. Grades can be easily exported as csv files to upload them into university systems (such as Campus online). Instructors can optionally define bonus configurations for final exams to improve student grades according to their grades from a midterm exam or course exercises.
-**[Assessment](https://docs.artemis.cit.tum.de/user/exercises/assessment/)**: Artemis uses double-blind grading and structured grading criteria to improve consistency and fairness. It integrates an assessment training process (based on example submissions and example assessments defined by the instructor), has a grading leader board, and allows students to rate the assessments. Students can complain or ask for more feedback.   
+8. **[Grading](https://docs.artemis.cit.tum.de/user/grading/)**: Instructors can configure grade keys for courses and exams to automatically calculate grades and display them to students. Grades can be easily exported as csv files to upload them into university systems (such as Campus online). Instructors can optionally define bonus configurations for final exams to improve student grades according to their grades from a midterm exam or course exercises.
+9. **[Assessment](https://docs.artemis.cit.tum.de/user/exercises/assessment/)**: Artemis uses double-blind grading and structured grading criteria to improve consistency and fairness. It integrates an assessment training process (based on example submissions and example assessments defined by the instructor), has a grading leader board, and allows students to rate the assessments. Students can complain or ask for more feedback.   
 10. **[Communication](https://docs.artemis.cit.tum.de/user/communication/)**: Instructors can post announcements. Students can ask questions, post comments, and react to other posts in channels or private chats. Tutors can filter unanswered questions.
 11. **[Notifications](https://docs.artemis.cit.tum.de/user/notifications)**: Artemis supports customizable web and email notifications. Users can enable and disable different notification types.
 12. **[Team Exercises](https://docs.artemis.cit.tum.de/user/exercises/team-exercises/)**: Instructors can configure team exercises with real time collaboration and dedicated tutors per team.
@@ -82,7 +82,7 @@ You can find a guide on [how to write documentation](docs/README.md).
 
 ### Server setup
 
-Setting up Artemis in your development environment or a demo production environment is really easy following the instructions on https://docs.artemis.cit.tum.de/dev/setup. When you want to support programming exercises, we recommend to use the modules for [Integrated Code Lifecycle](https://docs.artemis.cit.tum.de/dev/setup/#integrated-code-lifecycle-setup).
+Setting up Artemis in your development environment or a demo production environment is really easy following the instructions on https://docs.artemis.cit.tum.de/dev/setup. When you want to support programming exercises, we recommend using the [Integrated Code Lifecycle](https://docs.artemis.cit.tum.de/dev/setup/#integrated-code-lifecycle-setup).
 
 Artemis can also be set up in conjunction with external tools for version control and continuous integration:
 1. [GitLab and Jenkins](https://docs.artemis.cit.tum.de/dev/setup/#jenkins-and-gitlab-setup)
@@ -99,7 +99,7 @@ If needed, you can configure self service [user registration](https://docs.artem
 
 Please read the guide on [how to contribute](CONTRIBUTING.md) to Artemis.
 
-Once the PR is ready to merge, notify the responsible feature maintainer:
+Once your PR is ready to merge, notify the responsible feature maintainer on Slack:
 
 #### Maintainers
 
