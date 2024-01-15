@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
@@ -7,7 +9,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.cp.lock.FencedLock;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -23,11 +24,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService;
 
-    private final FencedLock sharedLock;
+    private final HazelcastInstance hazelcastInstance;
 
     public LocalCITriggerService(LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService, HazelcastInstance hazelcastInstance) {
         this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
-        this.sharedLock = hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
+        this.hazelcastInstance = hazelcastInstance;
     }
 
     /**
@@ -65,13 +66,9 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         // Exam exercises have a higher priority than normal exercises
         int priority = programmingExercise.isExamExercise() ? 1 : 2;
 
-        sharedLock.lock();
-        try {
-            localCISharedBuildJobQueueService.addBuildJob(participation.getBuildPlanId(), participation.getId(), repositoryTypeOrUserName, commitHash, ZonedDateTime.now(),
-                    priority, courseId, isPushToTestRepository);
-        }
-        finally {
-            sharedLock.unlock();
-        }
+        ZonedDateTime currentDateTime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(hazelcastInstance.getCluster().getClusterTime()), ZoneId.systemDefault());
+
+        localCISharedBuildJobQueueService.addBuildJob(participation.getBuildPlanId(), participation.getId(), repositoryTypeOrUserName, commitHash, currentDateTime, priority,
+                courseId, isPushToTestRepository);
     }
 }
