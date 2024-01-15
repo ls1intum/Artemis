@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
  */
 public class MigrationEntry20230810_150000 extends MigrationEntry {
 
-    private final Logger log = LoggerFactory.getLogger(MigrationEntry20230810_150000.class);
+    private static final Logger log = LoggerFactory.getLogger(MigrationEntry20230810_150000.class);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 

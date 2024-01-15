@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 @RequestMapping("/api")
 public class BuildJobQueueResource {
 
-    private final Logger log = LoggerFactory.getLogger(BuildJobQueueResource.class);
+    private static final Logger log = LoggerFactory.getLogger(BuildJobQueueResource.class);
 
     private final LocalCISharedBuildJobQueueService localCIBuildJobQueueService;
 

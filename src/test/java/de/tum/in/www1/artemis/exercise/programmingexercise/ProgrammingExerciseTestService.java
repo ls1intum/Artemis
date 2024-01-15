@@ -107,7 +107,7 @@ import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 @Service
 public class ProgrammingExerciseTestService {
 
-    private final Logger log = LoggerFactory.getLogger(getClass());
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTestService.class);
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;

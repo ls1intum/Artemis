@@ -19,7 +19,7 @@ import com.hazelcast.core.HazelcastInstance;
 @Profile("!scheduling")
 public class DistributedInstanceMessageSendService implements InstanceMessageSendService {
 
-    private final Logger log = LoggerFactory.getLogger(DistributedInstanceMessageSendService.class);
+    private static final Logger log = LoggerFactory.getLogger(DistributedInstanceMessageSendService.class);
 
     private final ScheduledExecutorService exec = Executors.newScheduledThreadPool(1);
 
