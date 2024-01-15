@@ -159,7 +159,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("In case feedback is present, a feedback must contain points.", ENTITY_NAME, "feedbackCreditsNull");
         }
 
-        newManualResult = programmingAssessmentService.saveAndSubmitManualAssessment(participation, newManualResult, existingManualResult, user, submit);
+        newManualResult = programmingAssessmentService.saveAndSubmitManualAssessment(participation, newManualResult, existingManualResult, user,
+                newManualResult.getAssessmentNote(), submit);
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {
             newManualResult.getParticipation().filterSensitiveInformation();

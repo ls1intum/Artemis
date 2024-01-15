@@ -267,8 +267,6 @@ public class AssessmentService {
         result.determineAssessmentType();
 
         if (assessmentNoteText != null) {
-            // get assessment note for result first
-
             AssessmentNote assessmentNote = new AssessmentNote();
             assessmentNote.setNote(assessmentNoteText);
             assessmentNote.setCreator(user);
