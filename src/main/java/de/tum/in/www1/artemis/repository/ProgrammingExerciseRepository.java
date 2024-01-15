@@ -77,7 +77,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesById(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results",
-            "auxiliaryRepositories", "plagiarismDetectionConfig", "buildPlanConfiguration", "build_script" })
+            "auxiliaryRepositories", "plagiarismDetectionConfig", "buildPlanConfiguration", "buildScript" })
     Optional<ProgrammingExercise> findForCreationById(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "testCases")
