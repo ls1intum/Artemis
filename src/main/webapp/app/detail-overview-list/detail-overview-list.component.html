@@ -183,7 +183,7 @@
                 @case (DetailType.Markdown) {
                     <dd id="detail-value-{{ detail.title }}">
                         @if (detail.data.innerHtml) {
-                            <div class="p-3 border" [innerHTML]="detail.data.innerHtml"></div>
+                            <div class="p-3 border markdown-preview" [innerHTML]="detail.data.innerHtml"></div>
                         } @else {
                             <ng-container *ngTemplateOutlet="noData" />
                         }
