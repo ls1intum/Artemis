@@ -215,48 +215,46 @@ public class ProgrammingExerciseService {
         final User exerciseCreator = userRepository.getUser();
         VersionControlService versionControl = versionControlService.orElseThrow();
 
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
+
         // Step 1: Setting constant facts for a programming exercise
-        programmingExercise.generateAndSetProjectKey();
-        programmingExercise.setBranch(versionControl.getDefaultBranchOfArtemis());
+        savedProgrammingExercise.generateAndSetProjectKey();
+        savedProgrammingExercise.setBranch(versionControl.getDefaultBranchOfArtemis());
 
         // Step 2: Creating repositories for new exercise
-        programmingExerciseRepositoryService.createRepositoriesForNewExercise(programmingExercise);
+        programmingExerciseRepositoryService.createRepositoriesForNewExercise(savedProgrammingExercise);
 
         // Step 3: Initializing solution and template participation
-        initParticipations(programmingExercise);
+        initParticipations(savedProgrammingExercise);
 
         // Step 4a: Setting build plan IDs and URLs for template and solution participation
-        setURLsAndBuildPlanIDsForNewExercise(programmingExercise);
+        setURLsAndBuildPlanIDsForNewExercise(savedProgrammingExercise);
 
         // Step 4b: Connecting base participations with the exercise
-        connectBaseParticipationsToExerciseAndSave(programmingExercise);
+        connectBaseParticipationsToExerciseAndSave(savedProgrammingExercise);
 
         // Step 4c: Connect auxiliary repositories
-        connectAuxiliaryRepositoriesToExercise(programmingExercise);
+        connectAuxiliaryRepositoriesToExercise(savedProgrammingExercise);
 
         // Step 5: Setup exercise template
-        programmingExerciseRepositoryService.setupExerciseTemplate(programmingExercise, exerciseCreator);
+        programmingExerciseRepositoryService.setupExerciseTemplate(savedProgrammingExercise, exerciseCreator);
 
         // Step 6: Create initial submission
-        programmingSubmissionService.createInitialSubmissions(programmingExercise);
+        programmingSubmissionService.createInitialSubmissions(savedProgrammingExercise);
 
         // Step 7: Make sure that plagiarism detection config does not use existing id
-        Optional.ofNullable(programmingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
+        Optional.ofNullable(savedProgrammingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
 
         // Step 8: For LocalCI and Aeolus, we store the build plan definition in the database as a windfile
         if (aeolusTemplateService.isPresent() && programmingExercise.getBuildPlanConfiguration() == null) {
             Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(programmingExercise);
             if (windfile != null) {
-                programmingExercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
+                savedProgrammingExercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
             }
             else {
-                log.warn("No windfile for the settings of exercise {}", programmingExercise.getId());
+                log.warn("No windfile for the settings of exercise {}", savedProgrammingExercise.getId());
             }
         }
-
-        programmingExerciseRepository.saveAndFlush(programmingExercise);
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository
-                .findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(programmingExercise.getId());
 
         // Step 9: Create exercise channel
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
