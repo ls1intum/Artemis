@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import org.eclipse.jgit.api.Git;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.slf4j.Logger;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 import com.tngtech.archunit.base.DescribedPredicate;
@@ -25,6 +26,7 @@ import com.tngtech.archunit.library.GeneralCodingRules;
 
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.web.rest.repository.RepositoryResource;
 
 class ArchitectureTest extends AbstractArchitectureTest {
 
@@ -107,6 +109,19 @@ class ArchitectureTest extends AbstractArchitectureTest {
         // The ParallelConsoleAppender is used to print test logs to the console (necessary due to parallel test execution)
         var classes = allClasses.that(not(simpleName("ProgrammingExerciseTemplateIntegrationTest").or(simpleName("ParallelConsoleAppender"))));
         GeneralCodingRules.NO_CLASSES_SHOULD_ACCESS_STANDARD_STREAMS.check(classes);
+    }
+
+    @Test
+    void testCorrectLoggerFields() {
+        var naming = fields().that().haveRawType(Logger.class).should().haveName("log");
+        var modifiers = fields().that().haveRawType(Logger.class).should().bePrivate().andShould().beFinal().andShould().beStatic();
+
+        // Interfaces can only contain public attributes
+        // The RepositoryResource inherits its logger
+        var modifierExclusions = allClasses.that(are(not(INTERFACES)).and(not(type(RepositoryResource.class))));
+
+        naming.check(allClasses);
+        modifiers.check(modifierExclusions);
     }
 
     @Test

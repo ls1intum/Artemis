@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 @Service
 public class EntityFileService {
 
-    private final Logger log = LoggerFactory.getLogger(EntityFileService.class);
+    private static final Logger log = LoggerFactory.getLogger(EntityFileService.class);
 
     private final FileService fileService;
 

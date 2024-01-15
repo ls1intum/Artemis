@@ -21,7 +21,7 @@ import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.mod
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { QuizExerciseDetailComponent } from 'app/exercises/quiz/manage/quiz-exercise-detail.component';
+import { QuizExerciseUpdateComponent } from 'app/exercises/quiz/manage/quiz-exercise-update.component';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
@@ -41,13 +41,13 @@ import { Duration } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
 import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit.component';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 
-describe('QuizExercise Management Detail Component', () => {
-    let comp: QuizExerciseDetailComponent;
+describe('QuizExercise Update Detail Component', () => {
+    let comp: QuizExerciseUpdateComponent;
     let exerciseGroupService: ExerciseGroupService;
     let courseManagementService: CourseManagementService;
     let quizExerciseService: QuizExerciseService;
     let exerciseService: ExerciseService;
-    let fixture: ComponentFixture<QuizExerciseDetailComponent>;
+    let fixture: ComponentFixture<QuizExerciseUpdateComponent>;
     let router: Router;
     let alertService: AlertService;
     let dragAndDropQuestionUtil: DragAndDropQuestionUtil;
@@ -146,7 +146,7 @@ describe('QuizExercise Management Detail Component', () => {
     const configureTestBed = (testRoute?: ActivatedRoute) => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [QuizExerciseDetailComponent],
+            declarations: [QuizExerciseUpdateComponent],
             providers: [
                 MockProvider(NgbModal),
                 MockProvider(ChangeDetectorRef),
@@ -159,12 +159,12 @@ describe('QuizExercise Management Detail Component', () => {
                 { provide: Router, useClass: MockRouter },
             ],
         })
-            .overrideTemplate(QuizExerciseDetailComponent, '')
+            .overrideTemplate(QuizExerciseUpdateComponent, '')
             .compileComponents();
     };
 
     const configureFixtureAndServices = () => {
-        fixture = TestBed.createComponent(QuizExerciseDetailComponent);
+        fixture = TestBed.createComponent(QuizExerciseUpdateComponent);
         comp = fixture.componentInstance;
         courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
         quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
