@@ -255,7 +255,8 @@ public class ProgrammingExerciseService {
         }
 
         programmingExerciseRepository.saveAndFlush(programmingExercise);
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(savedProgrammingExercise.getId());
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository
+                .findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(programmingExercise.getId());
 
         // Step 9: Create exercise channel
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
