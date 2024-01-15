@@ -241,6 +241,7 @@ public class LocalCISharedBuildJobQueueService {
                     buildJob.repositoryTypeOrUserName(), buildJob.commitHash(), buildJob.submissionDate(), buildJob.retryCount(), ZonedDateTime.now(), buildJob.priority(),
                     buildJob.courseId(), buildJob.isPushToTestRepository());
             processingJobs.put(processingJob.id(), processingJob);
+            processingJobs.flush();
             localProcessingJobs.incrementAndGet();
 
             updateLocalBuildAgentInformation();
@@ -256,6 +257,7 @@ public class LocalCISharedBuildJobQueueService {
         int maxNumberOfConcurrentBuilds = localCIBuildExecutorService.getMaximumPoolSize();
         LocalCIBuildAgentInformation info = new LocalCIBuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember);
         buildAgentInformation.put(memberAddress, info);
+        buildAgentInformation.flush();
     }
 
     private List<LocalCIBuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
@@ -267,6 +269,7 @@ public class LocalCISharedBuildJobQueueService {
         for (String key : buildAgentInformation.keySet()) {
             if (!memberAddresses.contains(key)) {
                 buildAgentInformation.remove(key);
+                buildAgentInformation.flush();
             }
         }
     }
@@ -297,6 +300,7 @@ public class LocalCISharedBuildJobQueueService {
         catch (IllegalStateException e) {
             log.error("Cannot process build job for participation with id {} because it could not be retrieved from the database.", buildJob.participationId());
             processingJobs.remove(buildJob.id());
+            processingJobs.flush();
             localProcessingJobs.decrementAndGet();
             updateLocalBuildAgentInformation();
             checkAvailabilityAndProcessNextBuild();
@@ -305,6 +309,7 @@ public class LocalCISharedBuildJobQueueService {
         catch (Exception e) {
             log.error("Cannot process build job for participation with id {} because of an unexpected error.", buildJob.participationId(), e);
             processingJobs.remove(buildJob.id());
+            processingJobs.flush();
             localProcessingJobs.decrementAndGet();
             updateLocalBuildAgentInformation();
             checkAvailabilityAndProcessNextBuild();
@@ -340,6 +345,7 @@ public class LocalCISharedBuildJobQueueService {
 
             // after processing a build job, remove it from the processing jobs
             processingJobs.remove(buildJob.id());
+            processingJobs.flush();
             localProcessingJobs.decrementAndGet();
             updateLocalBuildAgentInformation();
 
@@ -349,6 +355,7 @@ public class LocalCISharedBuildJobQueueService {
             log.error("Error while processing build job: {}", buildJob, ex);
 
             processingJobs.remove(buildJob.id());
+            processingJobs.flush();
             localProcessingJobs.decrementAndGet();
             updateLocalBuildAgentInformation();
 
