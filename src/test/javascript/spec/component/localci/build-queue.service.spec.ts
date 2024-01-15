@@ -120,30 +120,6 @@ describe('BuildQueueService', () => {
         req.flush({}); // Flush an empty response to indicate success
     });
 
-    it('should cancel all running build jobs', () => {
-        service.cancelAllRunningBuildJobs().subscribe(() => {
-            // Ensure that the cancellation was successful
-            expect(true).toBeTrue();
-        });
-
-        const req = httpMock.expectOne(`${service.adminResourceUrl}/cancel-all-running-jobs`);
-        expect(req.request.method).toBe('DELETE');
-        req.flush({}); // Flush an empty response to indicate success
-    });
-
-    it('should cancel all running build jobs in a course', () => {
-        const courseId = 1;
-
-        service.cancelAllRunningBuildJobsInCourse(courseId).subscribe(() => {
-            // Ensure that the cancellation was successful
-            expect(true).toBeTrue();
-        });
-
-        const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/cancel-all-running-jobs`);
-        expect(req.request.method).toBe('DELETE');
-        req.flush({}); // Flush an empty response to indicate success
-    });
-
     it('should cancel all queued build jobs', () => {
         service.cancelAllQueuedBuildJobs().subscribe(() => {
             // Ensure that the cancellation was successful
@@ -228,64 +204,6 @@ describe('BuildQueueService', () => {
         });
 
         const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/cancel-job/${buildJobId}`);
-        expect(req.request.method).toBe('DELETE');
-
-        // Simulate an error response from the server
-        req.flush(null, { status: 500, statusText: 'Internal Server Error' });
-
-        tick();
-
-        // Verify that an error occurred during the subscription
-        expect(errorOccurred).toBeTrue();
-    }));
-
-    it('should handle errors when cancelling all running build jobs', fakeAsync(() => {
-        let errorOccurred = false;
-
-        service.cancelAllRunningBuildJobs().subscribe({
-            error: (err) => {
-                // Ensure that the error is handled properly
-                expect(err.message).toBe(
-                    'Failed to cancel all running build jobs' + '\nHttp failure response for ' + service.adminResourceUrl + '/cancel-all-running-jobs: 500 Internal Server Error',
-                );
-                errorOccurred = true;
-            },
-        });
-
-        const req = httpMock.expectOne(`${service.adminResourceUrl}/cancel-all-running-jobs`);
-        expect(req.request.method).toBe('DELETE');
-
-        // Simulate an error response from the server
-        req.flush(null, { status: 500, statusText: 'Internal Server Error' });
-
-        tick();
-
-        // Verify that an error occurred during the subscription
-        expect(errorOccurred).toBeTrue();
-    }));
-
-    it('should handle errors when cancelling all running build jobs in a course', fakeAsync(() => {
-        const courseId = 1;
-
-        let errorOccurred = false;
-
-        service.cancelAllRunningBuildJobsInCourse(courseId).subscribe({
-            error: (err) => {
-                // Ensure that the error is handled properly
-                expect(err.message).toBe(
-                    'Failed to cancel all running build jobs in course ' +
-                        courseId +
-                        '\nHttp failure response for ' +
-                        service.resourceUrl +
-                        '/courses/' +
-                        courseId +
-                        '/cancel-all-running-jobs: 500 Internal Server Error',
-                );
-                errorOccurred = true;
-            },
-        });
-
-        const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/cancel-all-running-jobs`);
         expect(req.request.method).toBe('DELETE');
 
         // Simulate an error response from the server

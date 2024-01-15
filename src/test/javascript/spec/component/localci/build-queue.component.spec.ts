@@ -207,23 +207,6 @@ describe('BuildQueueComponent', () => {
         expect(mockBuildQueueService.cancelAllQueuedBuildJobsInCourse).toHaveBeenCalledWith(testCourseId);
     });
 
-    it('should cancel all running build jobs in a course', () => {
-        // Mock ActivatedRoute to return no course ID
-        mockActivatedRoute.paramMap = of(new Map([['courseId', testCourseId.toString()]]));
-
-        // Mock BuildQueueService to return a successful response for canceling all running build jobs
-        mockBuildQueueService.cancelAllRunningBuildJobsInCourse.mockReturnValue(of(null));
-
-        // Initialize the component
-        component.ngOnInit();
-
-        // Call the cancelAllRunningBuildJobs method
-        component.cancelAllRunningBuildJobs();
-
-        // Expectations: The service method for canceling all running build jobs is called with the correct parameter
-        expect(mockBuildQueueService.cancelAllRunningBuildJobsInCourse).toHaveBeenCalledWith(testCourseId);
-    });
-
     it('should cancel all queued build jobs', () => {
         // Mock ActivatedRoute to return no course ID
         mockActivatedRoute.paramMap = of(new Map([]));
@@ -239,22 +222,5 @@ describe('BuildQueueComponent', () => {
 
         // Expectations: The service method for canceling all running build jobs is called without a course ID
         expect(mockBuildQueueService.cancelAllQueuedBuildJobs).toHaveBeenCalled();
-    });
-
-    it('should cancel all running build jobs', () => {
-        // Mock ActivatedRoute to return no course ID
-        mockActivatedRoute.paramMap = of(new Map([]));
-
-        // Mock BuildQueueService to return a successful response for canceling all running build jobs
-        mockBuildQueueService.cancelAllRunningBuildJobs.mockReturnValue(of(null));
-
-        // Initialize the component
-        component.ngOnInit();
-
-        // Call the cancelAllRunningBuildJobs method
-        component.cancelAllRunningBuildJobs();
-
-        // Expectations: The service method for canceling all running build jobs is called without a course ID
-        expect(mockBuildQueueService.cancelAllRunningBuildJobs).toHaveBeenCalled();
     });
 });

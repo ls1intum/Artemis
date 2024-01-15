@@ -103,23 +103,6 @@
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="cancel" [minWidth]="150" [width]="100">
-                    <div class="d-flex justify-content-center align-items-center">
-                        <ng-template ngx-datatable-header-template>
-                            <span class="datatable-header-cell-wrapper">
-                                <button class="btn btn-danger btn-sm" (click)="cancelAllRunningBuildJobs()">
-                                    <fa-icon [icon]="faTimes"></fa-icon>
-                                    <span jhiTranslate="artemisApp.buildQueue.cancelAll"> Cancel All </span>
-                                </button>
-                            </span>
-                        </ng-template>
-                        <ng-template ngx-datatable-cell-template let-row="row">
-                            <button class="btn btn-danger btn-sm" (click)="cancelBuildJob(row.id)">
-                                <fa-icon [icon]="faTimes"></fa-icon>
-                            </button>
-                        </ng-template>
-                    </div>
-                </ngx-datatable-column>
             </ngx-datatable>
         </ng-template>
     </jhi-data-table>
