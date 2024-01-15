@@ -1,14 +1,17 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import java.time.ZonedDateTime;
 import java.util.Objects;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.cp.lock.FencedLock;
+
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.service.TimeService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 
 /**
@@ -20,11 +23,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService;
 
-    private final TimeService timeService;
+    private final FencedLock sharedLock;
 
-    public LocalCITriggerService(LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService, TimeService timeService) {
+    public LocalCITriggerService(LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService, HazelcastInstance hazelcastInstance) {
         this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
-        this.timeService = timeService;
+        this.sharedLock = hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
     }
 
     /**
@@ -62,7 +65,13 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         // Exam exercises have a higher priority than normal exercises
         int priority = programmingExercise.isExamExercise() ? 1 : 2;
 
-        localCISharedBuildJobQueueService.addBuildJob(participation.getBuildPlanId(), participation.getId(), repositoryTypeOrUserName, commitHash, timeService.now(), priority,
-                courseId, isPushToTestRepository);
+        sharedLock.lock();
+        try {
+            localCISharedBuildJobQueueService.addBuildJob(participation.getBuildPlanId(), participation.getId(), repositoryTypeOrUserName, commitHash, ZonedDateTime.now(),
+                    priority, courseId, isPushToTestRepository);
+        }
+        finally {
+            sharedLock.unlock();
+        }
     }
 }
