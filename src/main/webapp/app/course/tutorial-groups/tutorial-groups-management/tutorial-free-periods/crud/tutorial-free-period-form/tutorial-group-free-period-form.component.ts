@@ -6,8 +6,8 @@ import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 export interface TutorialGroupFreePeriodFormData {
     startDate?: Date;
     endDate?: Date;
-    startTime?: Date;
-    endTime?: Date;
+    // startTime?: Date;
+    // endTime?: Date;
     reason?: string;
 }
 
@@ -30,8 +30,8 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     formData: TutorialGroupFreePeriodFormData = {
         startDate: undefined,
         endDate: undefined,
-        startTime: undefined,
-        endTime: undefined,
+        // startTime: undefined,
+        // endTime: undefined,
         reason: undefined,
     };
 
@@ -58,29 +58,11 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         this.timeFrame = timeFrame;
     }
 
-    // Todo: Provide the minimum date that the End date may have in order to be a valid time frame.
-    getMinEndDate() {
-        const startDate = this.form.get('startDate')?.value;
-
-        if (startDate) {
-            const startDateTime = new Date(startDate).getTime();
-            const minEndDate = new Date(startDateTime + 24 * 60 * 60 * 1000); // Ein Tag später
-
-            return minEndDate;
+    get isEndBeforeStart() {
+        if (this.startDateControl && this.endDateControl) {
+            return this.startDateControl.value > this.endDateControl.value;
         }
-
-        return null;
-    }
-
-    getMinEndTime() {
-        const startTime = this.form.get('startTime')?.value;
-        if (startTime) {
-            const minEndTime = new Date();
-            minEndTime.setTime(startTime.hours);
-            return minEndTime;
-        }
-
-        return null;
+        return false;
     }
 
     getTimeFrame(): TimeFrame {
@@ -95,13 +77,13 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         return this.form.get('endDate');
     }
 
-    get startTimeControl() {
-        return this.form.get('startTime');
-    }
+    // get startTimeControl() {
+    //     return this.form.get('startTime');
+    // }
 
-    get endTimeControl() {
-        return this.form.get('endTime');
-    }
+    // get endTimeControl() {
+    //     return this.form.get('endTime');
+    // }
 
     get reasonControl() {
         return this.form.get('reason');
@@ -109,7 +91,6 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
 
     // ToDo: How can I validate the form for the three different timeFrames? This does not work.
     get isSubmitPossible() {
-        // debugger;
         if (this.form.get('startDate') == undefined || !this.form.get('startDate')?.touched) {
             return false;
         }
@@ -120,9 +101,10 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
             if (!this.endDateControl) {
                 return false;
             }
-            return !this.isStartDateInvalid && !this.isEndDateInvalid && !this.endDateControl.invalid;
+            return !this.isStartDateInvalid && !this.isEndDateInvalid && !this.endDateControl.invalid && !this.isEndBeforeStart;
         } else {
-            return !this.isStartDateInvalid && !this.isStartTimeInvalid && this.startTimeControl?.touched;
+            return false;
+            // return !this.isStartDateInvalid && !this.isStartTimeInvalid && this.startTimeControl?.touched;
         }
     }
 
@@ -144,7 +126,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         const tutorialGroupFreePeriodFormData: TutorialGroupFreePeriodFormData = { ...this.form.value };
         if (this.timeFrame == TimeFrame.Day) {
             tutorialGroupFreePeriodFormData.endDate = undefined;
-            tutorialGroupFreePeriodFormData.endTime = undefined;
+            // tutorialGroupFreePeriodFormData.endTime = undefined;
             tutorialGroupFreePeriodFormData.startDate = undefined;
         }
         this.formSubmitted.emit(tutorialGroupFreePeriodFormData);
@@ -161,8 +143,8 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         this.form = this.fb.group({
             startDate: [undefined, [Validators.required]],
             endDate: [undefined, [Validators.required]],
-            startTime: [undefined, [Validators.required]],
-            endTime: [undefined, [Validators.required]],
+            // startTime: [undefined, [Validators.required]],
+            // endTime: [undefined, [Validators.required]],
             reason: [undefined],
         });
     }
@@ -179,17 +161,17 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         }
     }
 
-    markStartTimeAsTouched() {
-        if (this.startTimeControl) {
-            this.startTimeControl.markAsTouched();
-        }
-    }
+    // markStartTimeAsTouched() {
+    //     if (this.startTimeControl) {
+    //         this.startTimeControl.markAsTouched();
+    //     }
+    // }
 
-    markEndTimeAsTouched() {
-        if (this.endTimeControl) {
-            this.endTimeControl.markAsTouched();
-        }
-    }
+    // markEndTimeAsTouched() {
+    //     if (this.endTimeControl) {
+    //         this.endTimeControl.markAsTouched();
+    //     }
+    // }
 
     get isStartDateInvalid() {
         if (this.startDateControl) {
@@ -207,22 +189,22 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         }
     }
 
-    get isStartTimeInvalid() {
-        if (this.startTimeControl) {
-            return this.startTimeControl.invalid && (this.startTimeControl.touched || this.startTimeControl.dirty);
-        } else {
-            return false;
-        }
-    }
+    // get isStartTimeInvalid() {
+    //     if (this.startTimeControl) {
+    //         return this.startTimeControl.invalid && (this.startTimeControl.touched || this.startTimeControl.dirty);
+    //     } else {
+    //         return false;
+    //     }
+    // }
 
-    get isEndTimeInvalid() {
-        if (this.endTimeControl) {
-            // if (this.startTimeControl && this.startTimeControl.value.minutes >= this.endTimeControl.value.minutes) {
-            //     return true;
-            // }
-            return this.endTimeControl.invalid && (this.endTimeControl.touched || this.endTimeControl.dirty);
-        } else {
-            return false;
-        }
-    }
+    // get isEndTimeInvalid() {
+    //     if (this.endTimeControl) {
+    //         // if (this.startTimeControl && this.startTimeControl.value.minutes >= this.endTimeControl.value.minutes) {
+    //         //     return true;
+    //         // }
+    //         return this.endTimeControl.invalid && (this.endTimeControl.touched || this.endTimeControl.dirty);
+    //     } else {
+    //         return false;
+    //     }
+    // }
 }

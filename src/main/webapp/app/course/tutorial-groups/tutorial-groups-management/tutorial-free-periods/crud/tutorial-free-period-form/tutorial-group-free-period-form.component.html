@@ -54,7 +54,7 @@
             <div *ngIf="getTimeFrame() == TimeFrame.Period">
                 <label class="form-label" for="endDate">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEnd' | artemisTranslate }}</label>
                 <div class="input-group">
-                    <input formControlName="endDate" [(ngModel)]="formData.endDate" required [owlDateTime]="endDate" [min]="getMinEndDate()" class="d-none" />
+                    <input formControlName="endDate" [(ngModel)]="formData.endDate" required [owlDateTime]="endDate" class="d-none" />
                     <input
                         name="endDate"
                         id="endDate"
@@ -75,9 +75,9 @@
                     <div *ngIf="endDateControl?.errors?.required">
                         {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredEndDateError' | artemisTranslate }}
                     </div>
-                    <div *ngIf="getMinEndDate() && endDateControl?.dirty">
-                        {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError' | artemisTranslate }}
-                    </div>
+                </div>
+                <div *ngIf="endDateControl?.dirty && isEndBeforeStart" class="alert alert-danger">
+                    {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError' | artemisTranslate }}
                 </div>
             </div>
 
@@ -85,34 +85,34 @@
             <div *ngIf="getTimeFrame() == TimeFrame.PeriodWithinDay">
                 <label class="form-label" for="startTime">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStartTime' | artemisTranslate }}</label>
                 <div class="input-group">
+                    <input formControlName="startDate" [(ngModel)]="formData.startDate" required [owlDateTime]="startDate" class="d-none" />
                     <input
                         name="startTime"
                         id="startTime"
-                        [(ngModel)]="formData.startTime"
                         required
-                        (focus)="markStartTimeAsTouched()"
-                        [owlDateTimeTrigger]="startTime"
-                        [owlDateTime]="startTime"
+                        (focus)="markStartDateAsTouched()"
+                        [owlDateTimeTrigger]="startDate"
+                        [owlDateTime]="startDate"
                         readonly
                         class="form-control"
                     />
-                    <owl-date-time [pickerType]="'timer'" #startTime [pickerMode]="'dialog'"></owl-date-time>
+                    <owl-date-time [pickerType]="'timer'" #startDate [pickerMode]="'dialog'"></owl-date-time>
                 </div>
 
                 <label class="form-label" for="endTime">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEndTime' | artemisTranslate }}</label>
                 <div class="input-group">
+                    <input formControlName="endTime" [(ngModel)]="formData.endDate" required [owlDateTime]="endDate" class="d-none" />
                     <input
                         name="endTime"
                         id="endTime"
                         required
-                        (focus)="markEndTimeAsTouched()"
-                        [owlDateTimeTrigger]="endTime"
-                        [owlDateTime]="endTime"
-                        [min]="getMinEndTime()"
+                        (focus)="markEndDateAsTouched()"
+                        [owlDateTimeTrigger]="endDate"
+                        [owlDateTime]="endDate"
                         readonly
                         class="form-control"
                     />
-                    <owl-date-time [pickerType]="'timer'" #endTime></owl-date-time>
+                    <owl-date-time [pickerType]="'timer'" #endDate [pickerMode]="'dialog'"></owl-date-time>
                 </div>
             </div>
 
