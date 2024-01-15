@@ -31,7 +31,7 @@ Artemis brings interactive learning to life with instant, individual feedback on
 5. **[Text exercises](https://docs.artemis.cit.tum.de/user/exercises/textual/)** with manual, semi-automatic assessment based on supervised machine learning and natural language processing (NLP) using [Athena](https://github.com/ls1intum/Athena)
    * **Integrated feedback**: Reviews can provide feedback and points directly next to the text segments.
    * **Language detection**: Artemis detects the language of the submission and shows the word and character count. 
-6. **[File upload exercises](https://docs.artemis.cit.tum.de/user/exercises/file-upload/)** with manual assessment
+6. **[File upload exercises](https://docs.artemis.cit.tum.de/user/exercises/file-upload/)** allow full flexibility to instructors. Students can create any kind of file (e.g. PDF, PNG) and submit it to Artemis when they have completed their work. Artemis allows instructors and tutors to download the files and assess them manually based on structured grading criteria (see below in the section Assessment).
 7. **[Exam mode](https://docs.artemis.cit.tum.de/user/exam_mode/)**: Instructors can create online exams with exercise variants, integrated plagiarism checks, test runs and student reviews. You can find more information on [Exam mode student features](https://artemis.cit.tum.de/features/students) and on [Exam mode instructor features](https://artemis.cit.tum.de/features/instructors).
 8**[Grading](https://docs.artemis.cit.tum.de/user/grading/)**: Instructors can configure grade keys for courses and exams to automatically calculate grades and display them to students. Grades can be easily exported as csv files to upload them into university systems (such as Campus online). Instructors can optionally define bonus configurations for final exams to improve student grades according to their grades from a midterm exam or course exercises.
 **[Assessment](https://docs.artemis.cit.tum.de/user/exercises/assessment/)**: Artemis uses double-blind grading and structured grading criteria to improve consistency and fairness. It integrates an assessment training process (based on example submissions and example assessments defined by the instructor), has a grading leader board, and allows students to rate the assessments. Students can complain or ask for more feedback.   
@@ -82,7 +82,7 @@ You can find a guide on [how to write documentation](docs/README.md).
 
 ### Server setup
 
-Setting up Artemis in your development environment or a demo production environment is really easy following the instructions on https://docs.artemis.cit.tum.de/dev/setup. When you want to support programming exercises, we recommend to use the modules for [Integrated Code Lifecycle](https://docs.artemis.cit.tum.de/dev/setup/#local-ci-and-local-vc-setup).
+Setting up Artemis in your development environment or a demo production environment is really easy following the instructions on https://docs.artemis.cit.tum.de/dev/setup. When you want to support programming exercises, we recommend to use the modules for [Integrated Code Lifecycle](https://docs.artemis.cit.tum.de/dev/setup/#integrated-code-lifecycle-setup).
 
 Artemis can also be set up in conjunction with external tools for version control and continuous integration:
 1. [GitLab and Jenkins](https://docs.artemis.cit.tum.de/dev/setup/#jenkins-and-gitlab-setup)
@@ -108,6 +108,7 @@ The following members of the project management team are responsible for specifi
 | Feature / Aspect               | Maintainer                                                                                          |
 |--------------------------------|-----------------------------------------------------------------------------------------------------|
 | Programming exercises          | [@krusche](https://github.com/krusche)                                                              |
+| Integrated code lifecycle      | [@krusche](https://github.com/krusche)                                                              |
 | Quiz exercises                 | [@Santia-go](https://github.com/Santia-go)                                                          |
 | Modeling exercises (+ Apollon) | [@krusche](https://github.com/krusche)                                                              |
 | Text exercises                 | [@maximiliansoelch](https://github.com/maximiliansoelch)                                            |
