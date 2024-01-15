@@ -205,8 +205,7 @@ public class ProgrammingExerciseService {
      * </ol>
      *
      * @param programmingExercise The programmingExercise that should be setup
-     * @param isImportedFromFile  defines if the programming exercise is imported from a file, if the
-     *                                exercise is imported, the build plans will not be triggered to prevent erroneous builds
+     * @param isImportedFromFile  defines if the programming exercise is imported from a file
      * @return The new setup exercise
      * @throws GitAPIException If something during the communication with the remote Git repository went wrong
      * @throws IOException     If the template files couldn't be read
@@ -264,7 +263,7 @@ public class ProgrammingExerciseService {
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
         // Step 10: Setup build plans for template and solution participation
-        setupBuildPlansForNewExercise(savedProgrammingExercise);
+        setupBuildPlansForNewExercise(savedProgrammingExercise, isImportedFromFile);
 
         // Step 11: Update task from problem statement
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
