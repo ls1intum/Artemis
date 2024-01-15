@@ -6,8 +6,8 @@ import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 export interface TutorialGroupFreePeriodFormData {
     startDate?: Date;
     endDate?: Date;
-    // startTime?: Date;
-    // endTime?: Date;
+    startTime?: Date;
+    endTime?: Date;
     reason?: string;
 }
 
@@ -30,8 +30,8 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     formData: TutorialGroupFreePeriodFormData = {
         startDate: undefined,
         endDate: undefined,
-        // startTime: undefined,
-        // endTime: undefined,
+        startTime: undefined,
+        endTime: undefined,
         reason: undefined,
     };
 
@@ -45,7 +45,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
 
     form: FormGroup;
 
-    timeFrame = TimeFrame.Day;
+    private timeFrame = TimeFrame.Day;
 
     protected readonly TimeFrame = TimeFrame;
 
@@ -58,14 +58,16 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         this.timeFrame = timeFrame;
     }
 
-    get isEndBeforeStart() {
-        if (this.startDateControl && this.endDateControl) {
-            return this.startDateControl.value > this.endDateControl.value;
+    isEndBeforeStart(endDate: Date, startDate: Date) {
+        if (endDate && startDate) {
+            return endDate <= startDate;
+        } else if (this.endDateControl && this.startDateControl) {
+            return this.endDateControl.value >= this.startDateControl.value;
         }
         return false;
     }
 
-    getTimeFrame(): TimeFrame {
+    get TimeFrameControl(): TimeFrame {
         return this.timeFrame;
     }
 
@@ -77,13 +79,13 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         return this.form.get('endDate');
     }
 
-    // get startTimeControl() {
-    //     return this.form.get('startTime');
-    // }
+    get startTimeControl() {
+        return this.form.get('startTime');
+    }
 
-    // get endTimeControl() {
-    //     return this.form.get('endTime');
-    // }
+    get endTimeControl() {
+        return this.form.get('endTime');
+    }
 
     get reasonControl() {
         return this.form.get('reason');
@@ -102,10 +104,20 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
                 return false;
             }
             return !this.isStartDateInvalid && !this.isEndDateInvalid && !this.endDateControl.invalid && !this.isEndBeforeStart;
-        } else {
-            return false;
-            // return !this.isStartDateInvalid && !this.isStartTimeInvalid && this.startTimeControl?.touched;
+        } else if (this.timeFrame == TimeFrame.PeriodWithinDay) {
+            if (!this.startTimeControl || !this.endTimeControl) {
+                return false;
+            }
+            return (
+                !this.isStartDateInvalid &&
+                !this.isStartTimeInvalid &&
+                !this.isEndTimeInvalid &&
+                !this.startTimeControl.invalid &&
+                !this.endTimeControl.invalid &&
+                !this.isEndBeforeStart(this.endTimeControl.value, this.startTimeControl.value)
+            );
         }
+        return false;
     }
 
     constructor(private fb: FormBuilder) {}
@@ -126,10 +138,26 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         const tutorialGroupFreePeriodFormData: TutorialGroupFreePeriodFormData = { ...this.form.value };
         if (this.timeFrame == TimeFrame.Day) {
             tutorialGroupFreePeriodFormData.endDate = undefined;
-            // tutorialGroupFreePeriodFormData.endTime = undefined;
-            tutorialGroupFreePeriodFormData.startDate = undefined;
+            tutorialGroupFreePeriodFormData.endTime = undefined;
+            tutorialGroupFreePeriodFormData.startTime = undefined;
+        } else if (this.timeFrame == TimeFrame.PeriodWithinDay) {
+            // this.form.get('startDate')?.setValue(this.combineDateAndTime(this.startDateControl!.value, this.startTimeControl!.value));
+            // this.form.get('endDate')?.setValue(this.combineDateAndTime(this.endDateControl!.value, this.endTimeControl!.value));
+            tutorialGroupFreePeriodFormData.startDate = this.combineDateAndTime(this.startDateControl!.value, this.startTimeControl!.value);
+            tutorialGroupFreePeriodFormData.endDate = this.combineDateAndTime(this.startDateControl!.value, this.endTimeControl!.value);
+            tutorialGroupFreePeriodFormData.endTime = undefined;
+            tutorialGroupFreePeriodFormData.startTime = undefined;
+        } else if (this.timeFrame == TimeFrame.Period) {
+            tutorialGroupFreePeriodFormData.endTime = undefined;
+            tutorialGroupFreePeriodFormData.startTime = undefined;
         }
         this.formSubmitted.emit(tutorialGroupFreePeriodFormData);
+    }
+
+    combineDateAndTime(datePart: Date, timePart: Date): Date {
+        const combinedDate = new Date(datePart);
+        combinedDate.setHours(timePart.getHours(), timePart.getMinutes());
+        return combinedDate;
     }
 
     private setFormValues(formData: TutorialGroupFreePeriodFormData) {
@@ -143,8 +171,8 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         this.form = this.fb.group({
             startDate: [undefined, [Validators.required]],
             endDate: [undefined, [Validators.required]],
-            // startTime: [undefined, [Validators.required]],
-            // endTime: [undefined, [Validators.required]],
+            startTime: [undefined, [Validators.required]],
+            endTime: [undefined, [Validators.required]],
             reason: [undefined],
         });
     }
@@ -161,17 +189,17 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         }
     }
 
-    // markStartTimeAsTouched() {
-    //     if (this.startTimeControl) {
-    //         this.startTimeControl.markAsTouched();
-    //     }
-    // }
+    markStartTimeAsTouched() {
+        if (this.startTimeControl) {
+            this.startTimeControl.markAsTouched();
+        }
+    }
 
-    // markEndTimeAsTouched() {
-    //     if (this.endTimeControl) {
-    //         this.endTimeControl.markAsTouched();
-    //     }
-    // }
+    markEndTimeAsTouched() {
+        if (this.endTimeControl) {
+            this.endTimeControl.markAsTouched();
+        }
+    }
 
     get isStartDateInvalid() {
         if (this.startDateControl) {
@@ -189,22 +217,22 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         }
     }
 
-    // get isStartTimeInvalid() {
-    //     if (this.startTimeControl) {
-    //         return this.startTimeControl.invalid && (this.startTimeControl.touched || this.startTimeControl.dirty);
-    //     } else {
-    //         return false;
-    //     }
-    // }
+    get isStartTimeInvalid() {
+        if (this.startTimeControl) {
+            return this.startTimeControl.invalid && (this.startTimeControl.touched || this.startTimeControl.dirty);
+        } else {
+            return false;
+        }
+    }
 
-    // get isEndTimeInvalid() {
-    //     if (this.endTimeControl) {
-    //         // if (this.startTimeControl && this.startTimeControl.value.minutes >= this.endTimeControl.value.minutes) {
-    //         //     return true;
-    //         // }
-    //         return this.endTimeControl.invalid && (this.endTimeControl.touched || this.endTimeControl.dirty);
-    //     } else {
-    //         return false;
-    //     }
-    // }
+    get isEndTimeInvalid() {
+        if (this.endTimeControl) {
+            // if (this.startTimeControl && this.startTimeControl.value.minutes >= this.endTimeControl.value.minutes) {
+            //     return true;
+            // }
+            return this.endTimeControl.invalid && (this.endTimeControl.touched || this.endTimeControl.dirty);
+        } else {
+            return false;
+        }
+    }
 }

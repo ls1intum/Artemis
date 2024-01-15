@@ -19,10 +19,10 @@
             </div>
             <!-- Date -->
             <!--Todo: display correct labels for different timeframes-->
-            <div *ngIf="timeFrame != TimeFrame.Period">
+            <div *ngIf="TimeFrameControl != TimeFrame.Period">
                 <label class="form-label" for="startDate">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.label' | artemisTranslate }}</label>
             </div>
-            <div *ngIf="timeFrame == TimeFrame.Period">
+            <div *ngIf="TimeFrameControl == TimeFrame.Period">
                 <label class="form-label" for="startDate">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStart' | artemisTranslate }}</label>
             </div>
 
@@ -51,7 +51,7 @@
             </div>
 
             <!--            Todo: EndDate selector and lables. Where is the endDate saved before submitting the form?-->
-            <div *ngIf="getTimeFrame() == TimeFrame.Period">
+            <div *ngIf="TimeFrameControl == TimeFrame.Period">
                 <label class="form-label" for="endDate">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEnd' | artemisTranslate }}</label>
                 <div class="input-group">
                     <input formControlName="endDate" [(ngModel)]="formData.endDate" required [owlDateTime]="endDate" class="d-none" />
@@ -82,37 +82,37 @@
             </div>
 
             <!--Todo: Hour selectors for PeriodWithinDay-->
-            <div *ngIf="getTimeFrame() == TimeFrame.PeriodWithinDay">
+            <div *ngIf="TimeFrameControl == TimeFrame.PeriodWithinDay">
                 <label class="form-label" for="startTime">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStartTime' | artemisTranslate }}</label>
                 <div class="input-group">
-                    <input formControlName="startDate" [(ngModel)]="formData.startDate" required [owlDateTime]="startDate" class="d-none" />
+                    <input formControlName="startTime" [(ngModel)]="formData.startTime" required [owlDateTime]="startTime" class="d-none" />
                     <input
                         name="startTime"
                         id="startTime"
                         required
-                        (focus)="markStartDateAsTouched()"
-                        [owlDateTimeTrigger]="startDate"
-                        [owlDateTime]="startDate"
+                        (focus)="markStartTimeAsTouched()"
+                        [owlDateTimeTrigger]="startTime"
+                        [owlDateTime]="startTime"
                         readonly
                         class="form-control"
                     />
-                    <owl-date-time [pickerType]="'timer'" #startDate [pickerMode]="'dialog'"></owl-date-time>
+                    <owl-date-time [pickerType]="'timer'" #startTime [pickerMode]="'dialog'"></owl-date-time>
                 </div>
 
                 <label class="form-label" for="endTime">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEndTime' | artemisTranslate }}</label>
                 <div class="input-group">
-                    <input formControlName="endTime" [(ngModel)]="formData.endDate" required [owlDateTime]="endDate" class="d-none" />
+                    <input formControlName="endTime" [(ngModel)]="formData.endTime" required [owlDateTime]="endTime" class="d-none" />
                     <input
                         name="endTime"
                         id="endTime"
                         required
-                        (focus)="markEndDateAsTouched()"
-                        [owlDateTimeTrigger]="endDate"
-                        [owlDateTime]="endDate"
+                        (focus)="markEndTimeAsTouched()"
+                        [owlDateTimeTrigger]="endTime"
+                        [owlDateTime]="endTime"
                         readonly
                         class="form-control"
                     />
-                    <owl-date-time [pickerType]="'timer'" #endDate [pickerMode]="'dialog'"></owl-date-time>
+                    <owl-date-time [pickerType]="'timer'" #endTime [pickerMode]="'dialog'"></owl-date-time>
                 </div>
             </div>
 
