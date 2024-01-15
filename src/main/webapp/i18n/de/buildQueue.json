@@ -14,7 +14,8 @@
                 "buildStartDate": "Build Start Datum",
                 "courseId": "Kurs ID",
                 "priority": "Priorität"
-            }
+            },
+            "cancelAll": "Alle abbrechen"
         }
     }
 }

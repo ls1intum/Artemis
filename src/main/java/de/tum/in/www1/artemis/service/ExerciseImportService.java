@@ -19,7 +19,7 @@ public abstract class ExerciseImportService {
 
     private final FeedbackService feedbackService;
 
-    private final Logger log = LoggerFactory.getLogger(ExerciseImportService.class);
+    private static final Logger log = LoggerFactory.getLogger(ExerciseImportService.class);
 
     protected ExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             FeedbackService feedbackService) {

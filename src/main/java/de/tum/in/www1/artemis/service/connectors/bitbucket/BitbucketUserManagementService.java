@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.service.user.PasswordService;
 @Profile("bitbucket")
 public class BitbucketUserManagementService implements VcsUserManagementService {
 
-    private final Logger log = LoggerFactory.getLogger(BitbucketUserManagementService.class);
+    private static final Logger log = LoggerFactory.getLogger(BitbucketUserManagementService.class);
 
     private final BitbucketService bitbucketService;
 

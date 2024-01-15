@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 @Service
 public class LectureImportService {
 
-    private final Logger log = LoggerFactory.getLogger(LectureImportService.class);
+    private static final Logger log = LoggerFactory.getLogger(LectureImportService.class);
 
     private final LectureRepository lectureRepository;
 

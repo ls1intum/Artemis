@@ -24,31 +24,11 @@
                             [exerciseType]="ExerciseType.FILE_UPLOAD"
                             class="d-flex justify-content-around"
                         ></jhi-exercise-detail-statistics>
-                        <hr />
-                        <div>
-                            <h2><span jhiTranslate="artemisApp.exercise.details">Exercise Details</span></h2>
-                        </div>
-                        <hr />
                     </div>
                 }
-                <dl class="row-md jh-entity-details markdown-preview">
-                    <jhi-exercise-details [exercise]="fileUploadExercise"></jhi-exercise-details>
-                    <dt><span jhiTranslate="artemisApp.fileUploadExercise.filePattern">File Pattern</span></dt>
-                    <dd>
-                        <span>{{ fileUploadExercise.filePattern }}</span>
-                    </dd>
-                    <dt><span jhiTranslate="artemisApp.exercise.exampleSolution">Example Solution</span></dt>
-                    <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.exampleSolution! | htmlForMarkdown"></dd>
-                    <dt><span jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDate">Example Solution Publication Date</span></dt>
-                    <dd>
-                        @if (fileUploadExercise.exampleSolutionPublicationDate) {
-                            <span>{{ fileUploadExercise.exampleSolutionPublicationDate | artemisDate }}</span>
-                        }
-                        @if (!fileUploadExercise.exampleSolutionPublicationDate) {
-                            <span jhiTranslate="artemisApp.exercise.dateNotSet"></span>
-                        }
-                    </dd>
-                </dl>
+                @if (exerciseDetailSections) {
+                    <jhi-detail-overview-list [sections]="exerciseDetailSections"></jhi-detail-overview-list>
+                }
             </div>
         }
     </div>
