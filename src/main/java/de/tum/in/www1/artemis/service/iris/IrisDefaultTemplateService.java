@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.service.ResourceLoaderService;
 @Component
 public final class IrisDefaultTemplateService {
 
-    private final Logger log = LoggerFactory.getLogger(IrisDefaultTemplateService.class);
+    private static final Logger log = LoggerFactory.getLogger(IrisDefaultTemplateService.class);
 
     private final ResourceLoaderService resourceLoaderService;
 

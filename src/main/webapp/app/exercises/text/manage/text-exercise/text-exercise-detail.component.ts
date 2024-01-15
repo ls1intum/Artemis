@@ -14,6 +14,15 @@ import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
+import {
+    getExerciseGeneralDetailsSection,
+    getExerciseGradingDefaultDetails,
+    getExerciseGradingInstructionsCriteriaDetails,
+    getExerciseMarkdownSolution,
+    getExerciseModeDetailSection,
+    getExerciseProblemDetailSection,
+} from 'app/exercises/shared/utils';
 
 @Component({
     selector: 'jhi-text-exercise-detail',
@@ -27,13 +36,14 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     readonly dayjs = dayjs;
 
     textExercise: TextExercise;
-    course: Course | undefined;
+    course?: Course;
     isExamExercise: boolean;
     formattedProblemStatement: SafeHtml | null;
     formattedExampleSolution: SafeHtml | null;
     formattedGradingInstructions: SafeHtml | null;
 
     doughnutStats: ExerciseManagementStatisticsDto;
+    detailOverviewSections: DetailOverviewSection[];
 
     private subscription: Subscription;
     private eventSubscriber: Subscription;
@@ -71,10 +81,35 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
             this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.gradingInstructions);
             this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.problemStatement);
             this.formattedExampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.exampleSolution);
+            this.detailOverviewSections = this.getExerciseDetailSections();
         });
         this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
             this.doughnutStats = statistics;
         });
+    }
+
+    getExerciseDetailSections(): DetailOverviewSection[] {
+        const exercise = this.textExercise;
+        const generalSection = getExerciseGeneralDetailsSection(exercise);
+        const modeSection = getExerciseModeDetailSection(exercise);
+        const problemSection = getExerciseProblemDetailSection(this.formattedProblemStatement);
+        const solutionSection = getExerciseMarkdownSolution(exercise, this.formattedExampleSolution);
+        const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise);
+        const gradingInstructionsCriteriaDetails = getExerciseGradingInstructionsCriteriaDetails(exercise, this.formattedGradingInstructions);
+        return [
+            generalSection,
+            modeSection,
+            problemSection,
+            solutionSection,
+            {
+                headline: 'artemisApp.exercise.sections.grading',
+                details: [
+                    ...defaultGradingDetails,
+                    { type: DetailType.Boolean, title: 'artemisApp.exercise.feedbackSuggestionsEnabled', data: { boolean: exercise.feedbackSuggestionsEnabled } },
+                    ...gradingInstructionsCriteriaDetails,
+                ].filter(Boolean),
+            },
+        ] as DetailOverviewSection[];
     }
 
     /**

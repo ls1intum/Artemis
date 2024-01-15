@@ -15,12 +15,6 @@
                             [exercise]="textExercise"
                         ></jhi-non-programming-exercise-detail-common-actions>
                     }
-                    <!-- Check Plagiarism -->
-                    @if (textExercise.isAtLeastEditor) {
-                        <a class="btn btn-outline-primary btn-sm me-1" id="check-plagiarism-download" routerLink="plagiarism">
-                            <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
-                        </a>
-                    }
                 </div>
                 @if (!textExercise.releaseDate || dayjs(textExercise.releaseDate).isBefore(dayjs())) {
                     <div class="mt-3">
@@ -30,31 +24,11 @@
                             [exerciseType]="ExerciseType.TEXT"
                             class="d-flex justify-content-around"
                         ></jhi-exercise-detail-statistics>
-                        <hr />
-                        <div>
-                            <h2><span jhiTranslate="artemisApp.exercise.details">Exercise Details</span></h2>
-                        </div>
-                        <hr />
                     </div>
                 }
-                <dl class="row-md jh-entity-details markdown-preview">
-                    <jhi-exercise-details [exercise]="textExercise"></jhi-exercise-details>
-                    <dt><span jhiTranslate="artemisApp.exercise.feedbackSuggestionsEnabled">Enable feedback suggestions from Athena</span></dt>
-                    <dd>
-                        <span>{{ (textExercise.feedbackSuggestionsEnabled ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
-                    </dd>
-                    <dt><span jhiTranslate="artemisApp.exercise.exampleSolution">Example Solution</span></dt>
-                    <dd class="editor-outline-background" [innerHTML]="formattedExampleSolution"></dd>
-                    <dt><span jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDate">Example Solution Publication Date</span></dt>
-                    <dd>
-                        @if (textExercise.exampleSolutionPublicationDate) {
-                            <span>{{ textExercise.exampleSolutionPublicationDate | artemisDate }}</span>
-                        }
-                        @if (!textExercise.exampleSolutionPublicationDate) {
-                            <span jhiTranslate="artemisApp.exercise.dateNotSet"></span>
-                        }
-                    </dd>
-                </dl>
+                @if (detailOverviewSections) {
+                    <jhi-detail-overview-list [sections]="detailOverviewSections"></jhi-detail-overview-list>
+                }
             </div>
         }
     </div>

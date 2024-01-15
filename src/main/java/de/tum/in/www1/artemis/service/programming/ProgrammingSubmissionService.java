@@ -39,7 +39,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class ProgrammingSubmissionService extends SubmissionService {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
 
     @Value("${artemis.git.name}")
     private String artemisGitName;
