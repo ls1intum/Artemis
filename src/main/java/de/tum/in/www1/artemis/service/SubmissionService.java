@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 // TODO: this class has too many dependencies to other services. We should reduce this
 public class SubmissionService {
 
-    private final Logger log = LoggerFactory.getLogger(SubmissionService.class);
+    private static final Logger log = LoggerFactory.getLogger(SubmissionService.class);
 
     private final ExamDateService examDateService;
 

@@ -30,7 +30,7 @@ public class QuizBatchService {
         SECURE_RANDOM.nextBytes(new byte[64]);
     }
 
-    private final Logger log = LoggerFactory.getLogger(QuizBatchService.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizBatchService.class);
 
     private final QuizBatchRepository quizBatchRepository;
 
