@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import com.hazelcast.collection.IQueue;
 import com.hazelcast.collection.ItemEvent;
 import com.hazelcast.collection.ItemListener;
-import com.hazelcast.config.EntryListenerConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import com.hazelcast.map.listener.EntryAddedListener;
@@ -59,7 +58,6 @@ public class LocalCIQueueWebsocketService {
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
         this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
-        hazelcastInstance.getConfig().getMapConfig("processingJobs").addEntryListenerConfig(new EntryListenerConfig("ProcessingBuildJobItemListener", false, true));
     }
 
     /**
@@ -68,8 +66,8 @@ public class LocalCIQueueWebsocketService {
     @PostConstruct
     public void addListeners() {
         this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
-        this.processingJobs.addLocalEntryListener(new ProcessingBuildJobItemListener());
-        this.buildAgentInformation.addLocalEntryListener(new BuildAgentListener());
+        this.processingJobs.addEntryListener(new ProcessingBuildJobItemListener(), true);
+        this.buildAgentInformation.addEntryListener(new BuildAgentListener(), true);
     }
 
     private void sendQueuedJobsOverWebsocket(long courseId) {
