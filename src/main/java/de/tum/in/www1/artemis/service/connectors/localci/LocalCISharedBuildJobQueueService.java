@@ -119,15 +119,9 @@ public class LocalCISharedBuildJobQueueService {
      */
     public void addBuildJob(String name, long participationId, String repositoryTypeOrUsername, String commitHash, ZonedDateTime submissionDate, int priority, long courseId,
             boolean isPushToTestRepository) {
-        sharedLock.lock();
-        try {
-            LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(Long.parseLong(String.valueOf(participationId) + submissionDate.toInstant().toEpochMilli()),
-                    name, null, participationId, repositoryTypeOrUsername, commitHash, submissionDate, 0, null, priority, courseId, isPushToTestRepository);
-            queue.add(buildJobQueueItem);
-        }
-        finally {
-            sharedLock.unlock();
-        }
+        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(Long.parseLong(String.valueOf(participationId) + submissionDate.toInstant().toEpochMilli()), name,
+                null, participationId, repositoryTypeOrUsername, commitHash, submissionDate, 0, null, priority, courseId, isPushToTestRepository);
+        queue.add(buildJobQueueItem);
     }
 
     public List<LocalCIBuildJobQueueItem> getQueuedJobs() {
