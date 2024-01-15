@@ -21,7 +21,7 @@
                         <jhi-help-icon text="artemisApp.lti.configuredPlatformsTooltip"></jhi-help-icon>
                     </div>
                     <div class="modal-header" style="margin-bottom: 20px">
-                        <a [routerLink]="['/admin', 'lti-configuration', 'edit']" class="btn btn-primary">
+                        <a [routerLink]="['/admin', 'lti-configuration', 'new']" class="btn btn-primary">
                             <fa-icon [icon]="faPlus"></fa-icon>
                             <span jhiTranslate="artemisApp.lti13.addNewPlatform">Add New Platform Configuration</span>
                         </a>
@@ -81,7 +81,7 @@
                                             <td>
                                                 <div class="d-flex gap-1 flex-column justify-content-center col-3 col-sm-2 col-lg-1" role="group">
                                                     <div class="d-flex gap-1 w-100">
-                                                        <a [routerLink]="['/admin', 'lti-configuration', 'edit', platform.id]" class="btn btn-primary">
+                                                        <a [routerLink]="['/admin', 'lti-configuration', platform.id, 'edit']" class="btn btn-primary">
                                                             <fa-icon [icon]="faPencilAlt"></fa-icon>
                                                             <span jhiTranslate="entity.action.edit"> Edit</span>
                                                         </a>

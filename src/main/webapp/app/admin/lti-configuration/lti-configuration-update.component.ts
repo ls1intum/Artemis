@@ -10,9 +10,9 @@ import { HttpClient } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-edit-lti-configuration',
-    templateUrl: './edit-lti-configuration.component.html',
+    templateUrl: './lti-configuration-update.component.html',
 })
-export class EditLtiConfigurationComponent implements OnInit {
+export class LtiConfigurationUpdateComponent implements OnInit {
     platform: LtiPlatformConfiguration;
     platformConfigurationForm: FormGroup;
 
@@ -37,7 +37,7 @@ export class EditLtiConfigurationComponent implements OnInit {
     ngOnInit() {
         const platformId = this.route.snapshot.paramMap.get('platformId');
         if (platformId) {
-            this.http.get<LtiPlatformConfiguration>(`api/admin/lti-platform/${platformId}`).subscribe({
+            this.ltiConfigurationService.getLtiPlatformById(Number(platformId)).subscribe({
                 next: (data) => {
                     this.platform = data;
                     this.initializeForm();

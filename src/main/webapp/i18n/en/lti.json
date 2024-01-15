@@ -68,12 +68,12 @@
                         "forbidden": "User prefix cannot contain special characters."
                     }
                 },
-                "ltiPlatform": "Add or edit LTI Platform Configuration",
                 "customNameIdTooltip": "Enter a recognizable name for the platform to easily identify it in the list. This name is for administrative reference only and will not affect the platform's actual configuration or connectivity."
             },
             "configuredPlatforms": "Configured Platforms",
             "viewAdvancedSettings": "View Advanced Settings",
-            "closeAdvancedSettings": "Close Advanced Settings"
+            "closeAdvancedSettings": "Close Advanced Settings",
+            "addOrEditLtiPlatform": "Add or edit LTI Platform Configuration"
         },
         "lti13": {
             "launch": {

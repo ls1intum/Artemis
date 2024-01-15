@@ -7,9 +7,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.hibernate.Hibernate;
 import org.junit.jupiter.api.BeforeEach;
@@ -191,7 +189,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
     private void fillLtiPlatformConfig(LtiPlatformConfiguration ltiPlatformConfiguration) {
         ltiPlatformConfiguration.setRegistrationId("registrationId");
-        ltiPlatformConfiguration.setClientId("clientId");
+        ltiPlatformConfiguration.setClientId("platform-" + UUID.randomUUID());
         ltiPlatformConfiguration.setAuthorizationUri("authUri");
         ltiPlatformConfiguration.setTokenUri("tokenUri");
         ltiPlatformConfiguration.setJwkSetUri("jwkUri");

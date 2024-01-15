@@ -39,4 +39,8 @@ export class LtiConfigurationService {
     deleteLtiPlatform(platformId: number): Observable<HttpResponse<any>> {
         return this.http.delete<any>(`api/admin/lti-platform/${platformId}`, { observe: 'response' });
     }
+
+    getLtiPlatformById(platformId: number): Observable<LtiPlatformConfiguration> {
+        return this.http.get<LtiPlatformConfiguration>(`api/admin/lti-platform/${platformId}`);
+    }
 }
