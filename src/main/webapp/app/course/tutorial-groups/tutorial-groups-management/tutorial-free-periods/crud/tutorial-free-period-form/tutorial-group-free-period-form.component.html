@@ -88,6 +88,7 @@
                     <input
                         name="startTime"
                         id="startTime"
+                        [(ngModel)]="formData.startTime"
                         required
                         (focus)="markStartTimeAsTouched()"
                         [owlDateTimeTrigger]="startTime"
@@ -95,7 +96,7 @@
                         readonly
                         class="form-control"
                     />
-                    <owl-date-time [pickerType]="'timer'" #startTime></owl-date-time>
+                    <owl-date-time [pickerType]="'timer'" #startTime [pickerMode]="'dialog'"></owl-date-time>
                 </div>
 
                 <label class="form-label" for="endTime">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEndTime' | artemisTranslate }}</label>
@@ -104,7 +105,7 @@
                         name="endTime"
                         id="endTime"
                         required
-                        (focus)="markStartTimeAsTouched()"
+                        (focus)="markEndTimeAsTouched()"
                         [owlDateTimeTrigger]="endTime"
                         [owlDateTime]="endTime"
                         [min]="getMinEndTime()"

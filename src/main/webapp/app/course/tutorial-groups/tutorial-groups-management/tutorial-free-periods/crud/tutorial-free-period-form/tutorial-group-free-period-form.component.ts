@@ -122,9 +122,8 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
             }
             return !this.isStartDateInvalid && !this.isEndDateInvalid && !this.endDateControl.invalid;
         } else {
-            // return !this.isStartDateInvalid && !this.isStartTimeInvalid && !this.isEndTimeInvalid;
+            return !this.isStartDateInvalid && !this.isStartTimeInvalid && this.startTimeControl?.touched;
         }
-        return !this.form.invalid;
     }
 
     constructor(private fb: FormBuilder) {}
@@ -208,22 +207,22 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         }
     }
 
-    // get isStartTimeInvalid() {
-    //     if (this.startTimeControl) {
-    //         return this.startTimeControl.invalid && (this.startTimeControl.touched || this.startTimeControl.dirty);
-    //     } else {
-    //         return false;
-    //     }
-    // }
+    get isStartTimeInvalid() {
+        if (this.startTimeControl) {
+            return this.startTimeControl.invalid && (this.startTimeControl.touched || this.startTimeControl.dirty);
+        } else {
+            return false;
+        }
+    }
 
-    // get isEndTimeInvalid() {
-    //     if (this.endTimeControl) {
-    //         if (this.startTimeControl && this.startTimeControl.value.minutes >= this.endTimeControl.value.minutes) {
-    //             return true;
-    //         }
-    //         return this.endTimeControl.invalid && (this.endTimeControl.touched || this.endTimeControl.dirty);
-    //     } else {
-    //         return false;
-    //     }
-    // }
+    get isEndTimeInvalid() {
+        if (this.endTimeControl) {
+            // if (this.startTimeControl && this.startTimeControl.value.minutes >= this.endTimeControl.value.minutes) {
+            //     return true;
+            // }
+            return this.endTimeControl.invalid && (this.endTimeControl.touched || this.endTimeControl.dirty);
+        } else {
+            return false;
+        }
+    }
 }
