@@ -60,7 +60,7 @@ public class IrisExerciseCreationSessionService implements IrisSessionSubService
         }
     }
 
-    private final Logger log = LoggerFactory.getLogger(IrisExerciseCreationSessionService.class);
+    private static final Logger log = LoggerFactory.getLogger(IrisExerciseCreationSessionService.class);
 
     private final IrisConnectorService irisConnectorService;
 
