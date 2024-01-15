@@ -416,7 +416,8 @@ public class ProgrammingExerciseService {
             String script = buildScriptGenerationService.get().getScript(programmingExercise);
             programmingExercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
             programmingExercise.setBuildScript(script);
-            programmingExercise = programmingExerciseRepository.save(programmingExercise);
+            programmingExerciseRepository.save(programmingExercise);
+            programmingExercise = programmingExerciseRepository.findForCreationByIdElseThrow(programmingExercise.getId());
         }
 
         // if the exercise is imported from a file, the changes fixing the project name will trigger a first build anyway, so
