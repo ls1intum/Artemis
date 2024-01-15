@@ -1,16 +1,16 @@
 import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
-import { BuildAction, PlatformAction, ProgrammingExercise, ProgrammingLanguage, ProjectType, ScriptAction, WindFile } from 'app/entities/programming-exercise.model';
+import { BuildAction, ProgrammingExercise, ProgrammingLanguage, ProjectType, ScriptAction } from 'app/entities/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 
 @Component({
-    selector: 'jhi-programming-exercise-custom-build-plan',
-    templateUrl: './programming-exercise-custom-build-plan.component.html',
-    styleUrls: ['../../programming-exercise-form.scss'],
+    selector: 'jhi-programming-exercise-custom-aeolus-build-plan',
+    templateUrl: './programming-exercise-custom-aeolus-build-plan.component.html',
+    styleUrls: ['../../../programming-exercise-form.scss'],
 })
-export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
+export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChanges {
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
 
@@ -24,6 +24,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
 
     code: string = '#!/bin/bash\n\n# Add your custom build plan action here';
     active?: BuildAction = undefined;
+    isScriptAction: boolean = false;
 
     private _editor?: AceEditorComponent;
 
@@ -61,12 +62,16 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         this.programmingExercise.windFile = undefined;
         this.programmingExercise.buildPlanConfiguration = undefined;
     }
+
     /**
      * Loads the predefined template for the selected programming language and project type
      * if there is one available.
      * @private
      */
     loadAeolusTemplate() {
+        if (this.programmingExercise?.id) {
+            return; // do not load template for existing exercises
+        }
         this.resetCustomBuildPlan();
         if (!this.programmingExercise.programmingLanguage) {
             return;
@@ -76,33 +81,17 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         this.staticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
         this.sequentialTestRuns = this.programmingExercise.sequentialTestRuns;
         this.testwiseCoverageEnabled = this.programmingExercise.testwiseCoverageEnabled;
-        if (this.programmingExerciseCreationConfig.customBuildPlansSupported) {
-            this.aeolusService
-                .getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
-                .subscribe({
-                    next: (file) => {
-                        if (file && !this.programmingExerciseCreationConfig.buildPlanLoaded) {
-                            this.programmingExerciseCreationConfig.buildPlanLoaded = true;
-                            const templateFile: WindFile = JSON.parse(file);
-                            const windFile: WindFile = Object.assign(new WindFile(), templateFile);
-                            const actions: BuildAction[] = [];
-                            templateFile.actions.forEach((anyAction: any) => {
-                                if (anyAction.class === 'script-action' || anyAction.script) {
-                                    actions.push(Object.assign(new ScriptAction(), anyAction));
-                                } else {
-                                    actions.push(Object.assign(new PlatformAction(), anyAction));
-                                }
-                            });
-                            windFile.actions = actions;
-                            this.programmingExercise.windFile = windFile;
-                        }
-                    },
-                    error: () => {
-                        this.resetCustomBuildPlan();
-                        this.programmingExerciseCreationConfig.buildPlanLoaded = true;
-                    },
-                });
-        }
+        this.aeolusService
+            .getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
+            .subscribe({
+                next: (file) => {
+                    this.programmingExercise.windFile = this.aeolusService.parseWindFile(file);
+                },
+                error: () => {
+                    this.programmingExercise.windFile = undefined;
+                },
+            });
+        this.programmingExerciseCreationConfig.buildPlanLoaded = true;
     }
 
     get editor(): AceEditorComponent | undefined {
@@ -119,10 +108,6 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         return '';
     }
 
-    isScriptAction(action: BuildAction): boolean {
-        return action instanceof ScriptAction;
-    }
-
     changeActiveAction(action: string): void {
         if (!this.programmingExercise.windFile) {
             return;
@@ -130,13 +115,10 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
 
         this.code = this.getActionScript(action);
         this.active = this.programmingExercise.windFile.actions.find((a) => a.name === action);
-        if (this.needsEditor() && this.editor) {
+        this.isScriptAction = this.active instanceof ScriptAction;
+        if (this.isScriptAction && this.editor) {
             this.editor.setText(this.code);
         }
-    }
-
-    protected needsEditor(): boolean {
-        return this.active instanceof ScriptAction;
     }
 
     deleteAction(action: string): void {
@@ -160,10 +142,36 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         }
     }
 
+    addParameter(): void {
+        if (this.active) {
+            if (!this.active.parameters) {
+                this.active.parameters = new Map<string, string | boolean | number>();
+            }
+            this.active.parameters.set('newParameter' + this.active.parameters.size, 'newValue');
+        }
+    }
+
+    deleteParameter(key: string): void {
+        if (this.active && this.active.parameters) {
+            this.active.parameters.delete(key);
+        }
+    }
+
     codeChanged(code: string): void {
         if (this.active instanceof ScriptAction) {
             (this.active as ScriptAction).script = code;
         }
+    }
+
+    getParameterKeys(): string[] {
+        if (this.active && this.active.parameters) {
+            return Array.from(this.active.parameters.keys());
+        }
+        return [];
+    }
+
+    getParameter(key: string): string | number | boolean {
+        return this.active?.parameters?.get(key) ?? '';
     }
 
     /**
@@ -186,5 +194,12 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         this._editor.getEditor().renderer.setOptions({
             showFoldWidgets: false,
         });
+    }
+
+    setDockerImage(dockerImage: string) {
+        if (!this.programmingExercise.windFile || !this.programmingExercise.windFile.metadata.docker) {
+            return;
+        }
+        this.programmingExercise.windFile.metadata.docker.image = dockerImage;
     }
 }

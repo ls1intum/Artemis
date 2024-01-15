@@ -10,6 +10,7 @@ import { DomainChange, DomainType, FileType } from 'app/exercises/programming/sh
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { FileWithHasMatch } from 'app/exercises/shared/plagiarism/plagiarism-split-view/split-pane-header/split-pane-header.component';
 import { escape } from 'lodash-es';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 type FilesWithType = { [p: string]: FileType };
 
@@ -66,6 +67,13 @@ export class TextSubmissionViewerComponent implements OnChanges {
      */
     binaryFile?: boolean;
 
+    /**
+     * True if fetching submission files resulted in an error.
+     */
+    cannotLoadFiles: boolean = false;
+
+    faExclamationTriangle = faExclamationTriangle;
+
     constructor(
         private repositoryService: CodeEditorRepositoryFileService,
         private textSubmissionService: TextSubmissionService,
@@ -92,15 +100,16 @@ export class TextSubmissionViewerComponent implements OnChanges {
      * @param currentPlagiarismSubmission The submission to load the plagiarism information for.
      */
     private loadProgrammingExercise(currentPlagiarismSubmission: PlagiarismSubmission<TextSubmissionElement>) {
-        this.isProgrammingExercise = true;
-
         const domain: DomainChange = [DomainType.PARTICIPATION, { id: currentPlagiarismSubmission.submissionId }];
         this.repositoryService.getRepositoryContent(domain).subscribe({
             next: (files) => {
+                this.cannotLoadFiles = false;
+                this.isProgrammingExercise = true;
                 this.loading = false;
                 this.files = this.programmingExerciseFilesWithMatches(files);
             },
             error: () => {
+                this.cannotLoadFiles = true;
                 this.loading = false;
             },
         });

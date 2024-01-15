@@ -49,7 +49,7 @@ public class ProgrammingExerciseRepositoryService {
 
     private static final String APP_NAME_PLACEHOLDER = "${appName}";
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseRepositoryService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseRepositoryService.class);
 
     private final FileService fileService;
 

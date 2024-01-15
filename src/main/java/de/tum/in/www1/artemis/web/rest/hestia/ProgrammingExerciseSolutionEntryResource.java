@@ -39,7 +39,7 @@ import tech.jhipster.web.util.HeaderUtil;
 @RequestMapping("api/")
 public class ProgrammingExerciseSolutionEntryResource {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseSolutionEntryResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseSolutionEntryResource.class);
 
     private static final String ENTITY_NAME = "programmingExerciseSolutionEntry";
 

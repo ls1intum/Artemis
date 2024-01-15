@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @Service
 public class ModelingPlagiarismDetectionService {
 
-    private final Logger log = LoggerFactory.getLogger(ModelingPlagiarismDetectionService.class);
+    private static final Logger log = LoggerFactory.getLogger(ModelingPlagiarismDetectionService.class);
 
     private final PlagiarismWebsocketService plagiarismWebsocketService;
 

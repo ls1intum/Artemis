@@ -30,7 +30,7 @@ public class ProgrammingExerciseGradingResource {
 
     public static final String STATISTICS = "/programming-exercises/{exerciseId}/grading/statistics";
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingResource.class);
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 

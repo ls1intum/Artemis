@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @Service
 public class CodeHintService {
 
-    private final Logger log = LoggerFactory.getLogger(CodeHintService.class);
+    private static final Logger log = LoggerFactory.getLogger(CodeHintService.class);
 
     private final Optional<IrisHestiaSessionService> irisHestiaSessionService;
 

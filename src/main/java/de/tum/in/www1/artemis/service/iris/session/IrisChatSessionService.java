@@ -46,7 +46,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 @Profile("iris")
 public class IrisChatSessionService implements IrisSessionSubServiceInterface {
 
-    private final Logger log = LoggerFactory.getLogger(IrisChatSessionService.class);
+    private static final Logger log = LoggerFactory.getLogger(IrisChatSessionService.class);
 
     private final IrisConnectorService irisConnectorService;
 

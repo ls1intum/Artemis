@@ -12,7 +12,7 @@ export const programmingExerciseCreationConfigMock: ProgrammingExerciseCreationC
     auxiliaryRepositoryDuplicateNames: false,
     checkoutSolutionRepositoryAllowed: false,
     buildPlanLoaded: false,
-    customBuildPlansSupported: false,
+    customBuildPlansSupported: '',
     exerciseCategories: [],
     existingCategories: [],
     hasUnsavedChanges: false,
