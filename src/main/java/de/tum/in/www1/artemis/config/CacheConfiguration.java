@@ -239,8 +239,7 @@ public class CacheConfiguration {
     // default config, if nothing specific is defined
     private MapConfig initializeDefaultMapConfig(JHipsterProperties jHipsterProperties) {
         return new MapConfig()
-                // Number of backups. If 1 is set as the backup-count for example, then all entries of the map will be copied to another JVM for fail-safety. Valid numbers are 0
-                // (no
+                // Number of backups. If 1 is set as the backup-count e.g., then all entries of the map will be copied to another JVM for fail-safety. Valid numbers are 0 (no
                 // backup), 1, 2, 3. While we store most of the data in the database, we might use the backup for live quiz exercises and their corresponding hazelcast hash maps
                 .setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount())
                 .setEvictionConfig(new EvictionConfig().setEvictionPolicy(EvictionPolicy.LRU).setMaxSizePolicy(MaxSizePolicy.PER_NODE));
