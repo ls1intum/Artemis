@@ -68,7 +68,6 @@ export class MetisConversationService implements OnDestroy {
         });
 
         this.activeConversationSubscription = this.notificationService.newOrUpdatedMessage.subscribe((postDTO: MetisPostDTO) => {
-            // c
             if (postDTO.action === MetisPostAction.CREATE && postDTO.post.author?.id !== this.userId) {
                 this.handleNewMessage(postDTO.post.conversation?.id, postDTO.post.conversation?.lastMessageDate);
             }
@@ -345,7 +344,7 @@ export class MetisConversationService implements OnDestroy {
      * - Channels/GroupChats: When the user is added to the channel or group chat (channel or group chat shows up when user is added)
      */
     private getConversationMembershipTopic(courseId: number, userId: number) {
-        const courseTopicName = MetisWebsocketChannelPrefix + 'courses/' + courseId;
+        const courseTopicName = '/user' + MetisWebsocketChannelPrefix + 'courses/' + courseId;
         return courseTopicName + '/conversations/user/' + userId;
     }
 
