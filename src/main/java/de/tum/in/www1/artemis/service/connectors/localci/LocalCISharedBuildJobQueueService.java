@@ -124,7 +124,7 @@ public class LocalCISharedBuildJobQueueService {
     }
 
     public List<LocalCIBuildJobQueueItem> getProcessingJobs() {
-        return processingJobs.values().stream().toList();
+        return new ArrayList<>(this.processingJobs.values());
     }
 
     public List<LocalCIBuildJobQueueItem> getQueuedJobsForCourse(long courseId) {
@@ -132,13 +132,19 @@ public class LocalCISharedBuildJobQueueService {
     }
 
     public List<LocalCIBuildJobQueueItem> getProcessingJobsForCourse(long courseId) {
-        return processingJobs.values().stream().filter(job -> job.courseId() == courseId).toList();
+        List<LocalCIBuildJobQueueItem> processingJobsForCourse = new ArrayList<>();
+        for (LocalCIBuildJobQueueItem job : processingJobs.values()) {
+            if (job.courseId() == courseId) {
+                processingJobsForCourse.add(job);
+            }
+        }
+        return processingJobsForCourse;
     }
 
     public List<LocalCIBuildAgentInformation> getBuildAgentInformation() {
         // Remove build agent information of offline nodes
         removeOfflineNodes();
-        return buildAgentInformation.values().stream().toList();
+        return new ArrayList<>(buildAgentInformation.values());
     }
 
     /**
@@ -261,7 +267,13 @@ public class LocalCISharedBuildJobQueueService {
     }
 
     private List<LocalCIBuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
-        return processingJobs.values().stream().filter(job -> Objects.equals(job.buildAgentAddress(), memberAddress)).toList();
+        List<LocalCIBuildJobQueueItem> processingJobsOfMember = new ArrayList<>();
+        for (LocalCIBuildJobQueueItem job : processingJobs.values()) {
+            if (Objects.equals(job.buildAgentAddress(), memberAddress)) {
+                processingJobsOfMember.add(job);
+            }
+        }
+        return processingJobsOfMember;
     }
 
     private void removeOfflineNodes() {
