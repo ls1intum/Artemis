@@ -230,7 +230,7 @@
                 }
                 @case (DetailType.ProgrammingIrisEnabled) {
                     <dd>
-                        <jhi-iris-enabled [exercise]="detail.data.exercise" [irisSubSettingsType]="CHAT" [disabled]="!detail.data.isAtLeastInstructor" />
+                        <jhi-iris-enabled [exercise]="detail.data.exercise" [irisSubSettingsType]="CHAT" [disabled]="!detail.data.exercise?.isAtLeastInstructor" />
                     </dd>
                 }
                 @case (DetailType.ModelingEditor) {
