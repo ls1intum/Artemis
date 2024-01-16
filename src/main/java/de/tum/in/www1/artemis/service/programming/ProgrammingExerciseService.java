@@ -264,6 +264,7 @@ public class ProgrammingExerciseService {
 
         // Step 10: Setup build plans for template and solution participation
         setupBuildPlansForNewExercise(savedProgrammingExercise, isImportedFromFile);
+        savedProgrammingExercise = programmingExerciseRepository.findForCreationByIdElseThrow(savedProgrammingExercise.getId());
 
         // Step 11: Update task from problem statement
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
@@ -277,7 +278,7 @@ public class ProgrammingExerciseService {
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(savedProgrammingExercise);
 
         programmingExerciseRepository.saveAndFlush(savedProgrammingExercise);
-        return programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(savedProgrammingExercise.getId());
+        return programmingExerciseRepository.findForCreationByIdElseThrow(savedProgrammingExercise.getId());
     }
 
     public void scheduleOperations(Long programmingExerciseId) {
@@ -416,7 +417,7 @@ public class ProgrammingExerciseService {
             String script = buildScriptGenerationService.get().getScript(programmingExercise);
             programmingExercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
             programmingExercise.setBuildScript(script);
-            programmingExerciseRepository.save(programmingExercise);
+            programmingExerciseRepository.saveAndFlush(programmingExercise);
             programmingExercise = programmingExerciseRepository.findForCreationByIdElseThrow(programmingExercise.getId());
         }
 
