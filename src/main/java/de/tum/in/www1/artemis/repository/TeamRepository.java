@@ -29,6 +29,9 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     @EntityGraph(type = LOAD, attributePaths = "students")
     List<Team> findAllByExerciseId(@Param("exerciseId") Long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = "students")
+    List<Team> findAllWithStudentsByIdIn(@Param("teamIds") List<Long> teamIds);
+
     List<Team> findAllByExerciseCourseIdAndShortName(@Param("courseId") Long courseId, @Param("shortName") String shortName);
 
     /**

@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -30,34 +29,20 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "team.students", "exercise" })
     Optional<TeamScore> findByExercise_IdAndTeam_Id(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "team.students", "exercise", "lastResult", "lastRatedResult" })
-    List<TeamScore> findAllByExerciseIn(Set<Exercise> exercises, Pageable pageable);
-
     @Query("""
-            SELECT DISTINCT s
+            SELECT t.id, SUM(s.lastRatedPoints)
             FROM TeamScore s
-                LEFT JOIN FETCH s.team t
-                LEFT JOIN FETCH t.students
-            WHERE s.exercise = :exercise
-                AND :user MEMBER OF t.students
-            """)
-    Optional<TeamScore> findWithStudentsTeamScoreByExerciseAndUserLazy(@Param("exercise") Exercise exercise, @Param("user") User user);
-
-    @Query("""
-            SELECT t, SUM(s.lastRatedPoints)
-            FROM TeamScore s
-                LEFT JOIN FETCH s.team t
-                LEFT JOIN FETCH t.students
+                LEFT JOIN s.team t
             WHERE s.exercise IN :exercises
             GROUP BY t.id
             """)
-    List<Object[]> findAllWithStudentsAchievedPointsOfTeams(@Param("exercises") Set<Exercise> exercises);
+    List<Object[]> getAchievedPointsOfTeams(@Param("exercises") Set<Exercise> exercises);
 
     @Query("""
             SELECT s
             FROM TeamScore s
-                LEFT JOIN FETCH FETCH s.exercise
-                LEFT JOIN s.team t
+                LEFT JOIN FETCH s.exercise
+                LEFT JOIN FETCH s.team t
                 LEFT JOIN FETCH t.students
             WHERE s.exercise IN :exercises
                 AND :user MEMBER OF t.students
