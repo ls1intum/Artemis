@@ -37,7 +37,7 @@ public class LocalCITestConfiguration {
      * @return a mocked DockerClient Bean
      */
     @Bean
-    public DockerClient dockerClient() {
+    public DockerClient dockerClient() throws InterruptedException {
         DockerClient dockerClient = mock(DockerClient.class);
 
         // Mock dockerClient.inspectImageCmd(String dockerImage).exec()
@@ -45,6 +45,13 @@ public class LocalCITestConfiguration {
         InspectImageResponse inspectImageResponse = new InspectImageResponse();
         doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
         doReturn(inspectImageResponse).when(inspectImageCmd).exec();
+
+        // Mock PullImageCmd
+        PullImageCmd pullImageCmd = mock(PullImageCmd.class);
+        doReturn(pullImageCmd).when(dockerClient).pullImageCmd(anyString());
+        PullImageResultCallback callback1 = mock(PullImageResultCallback.class);
+        doReturn(callback1).when(pullImageCmd).exec(any(PullImageResultCallback.class));
+        doReturn(null).when(callback1).awaitCompletion();
 
         String dummyContainerId = "1234567890";
 

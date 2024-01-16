@@ -9,6 +9,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.github.dockerjava.api.command.InspectImageCmd;
+import com.github.dockerjava.api.exception.NotFoundException;
+
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
@@ -59,5 +62,19 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
 
         // Verify that removeImageCmd() was not called.
         verify(dockerClient, times(0)).removeImageCmd(anyString());
+    }
+
+    @Test
+    void testPullDockerImage() {
+        // Mock dockerClient.inspectImageCmd(String dockerImage).exec()
+        InspectImageCmd inspectImageCmd = mock(InspectImageCmd.class);
+        doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
+        doThrow(new NotFoundException("")).when(inspectImageCmd).exec();
+
+        // Pull image
+        localCIDockerService.pullDockerImage("test-image-name");
+
+        // Verify that pullImageCmd() was called.
+        verify(dockerClient, times(1)).pullImageCmd("test-image-name");
     }
 }
