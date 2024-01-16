@@ -25,8 +25,8 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long> {
             SELECT b FROM BuildJob b
             WHERE b.dockerImage = :#{#dockerImage}
             AND b.buildStartDate = (
-                SELECT max(b2.buildStartDate)\s
-                FROM BuildJob b2\s
+                SELECT max(b2.buildStartDate)
+                FROM BuildJob b2
                 WHERE b2.dockerImage = :#{#dockerImage}
             )
             """)
