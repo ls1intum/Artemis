@@ -46,15 +46,15 @@
                 "import": "Kompetenz importieren",
                 "create": "Kompetenz erstellen"
             },
-            "importCompetency": {
-                "title": "Kompetenz importieren",
+            "import": {
+                "label": "Kompetenz importieren",
                 "search": "Suche nach einer Kompetenz:",
                 "loading": "Lade...",
                 "table": {
-                    "title": "Titel",
-                    "course": "Kurs",
-                    "semester": "Semester",
-                    "doSelect": "Auswählen"
+                    "TITLE": "Titel",
+                    "COURSE_TITLE": "Kurs",
+                    "SEMESTER": "Semester",
+                    "doImport": "Auswählen"
                 }
             },
             "createCompetency": {
@@ -123,14 +123,14 @@
                     "select": "Voraussetzung auswählen"
                 },
                 "import": {
-                    "title": "Voraussetzungen hinzufügen",
+                    "label": "Voraussetzungen hinzufügen",
                     "table": {
-                        "title": "Titel",
-                        "course": "Kurs",
-
-                        "doSelect": "Auswählen"
+                        "TITLE": "Titel",
+                        "COURSE_TITLE": "Kurs",
+                        "SEMESTER": "Semester",
+                        "doImport": "Auswählen"
                     },
-                    "searchCompetency": "Nach Kompetenz suchen:",
+                    "search": "Nach Kompetenz suchen:",
                     "loading": "Lade..."
                 }
             },
