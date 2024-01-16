@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 @Service
 public class MathSubmissionService extends SubmissionService {
 
-    private final Logger log = LoggerFactory.getLogger(MathSubmissionService.class);
+    private static final Logger log = LoggerFactory.getLogger(MathSubmissionService.class);
 
     private final MathSubmissionRepository mathSubmissionRepository;
 

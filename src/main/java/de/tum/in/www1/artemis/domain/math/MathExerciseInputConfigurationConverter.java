@@ -14,7 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Converter
 public class MathExerciseInputConfigurationConverter implements AttributeConverter<MathExerciseInputConfiguration, String> {
 
-    private final Logger log = LoggerFactory.getLogger(MathExerciseInputConfigurationConverter.class);
+    private static final Logger log = LoggerFactory.getLogger(MathExerciseInputConfigurationConverter.class);
 
     @Override
     public String convertToDatabaseColumn(MathExerciseInputConfiguration inputConfiguration) {

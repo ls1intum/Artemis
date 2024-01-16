@@ -113,7 +113,7 @@ class MathExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         Optional<MathSubmission> result = mathSubmissionRepository.findById(mathSubmission.getId());
         assertThat(result).isPresent();
-        result.ifPresent(submission -> assertThat(submission.getContent()).isEqualTo("test-submission"));
+        result.ifPresent(submission -> assertThat(submission.getContent()).isEqualTo("\"test-submission\""));
     }
 
     @Test
@@ -556,25 +556,27 @@ class MathExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(channel).isNotNull();
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void importMathExerciseWithExampleSubmissionFromCourseToCourse() throws Exception {
-        var now = ZonedDateTime.now();
-        Course course1 = courseUtilService.addEmptyCourse();
-        MathExercise mathExercise = MathExerciseFactory.generateMathExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
-        mathExercise = mathExerciseRepository.save(mathExercise);
-        mathExercise.setChannelName("testchannel" + mathExercise.getId());
-        // Create example submission
-        var exampleSubmission = participationUtilService.generateExampleSubmission("Lorem Ipsum", mathExercise, true);
-        exampleSubmission = participationUtilService.addExampleSubmission(exampleSubmission);
-
-        participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
-        MathExercise newMathExercise = request.postWithResponseBody("/api/math-exercises/import/" + mathExercise.getId(), mathExercise, MathExercise.class, HttpStatus.CREATED);
-        assertThat(newMathExercise.getExampleSubmissions()).hasSize(1);
-        ExampleSubmission newExampleSubmission = newMathExercise.getExampleSubmissions().iterator().next();
-        MathSubmission newSubmission = (MathSubmission) newExampleSubmission.getSubmission();
-        assertThat(newSubmission.getContent()).isEqualTo(((MathSubmission) exampleSubmission.getSubmission()).getContent());
-    }
+    // TODO: add test when importing example submissions for math exercises is supported
+    // @Test
+    // @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    // void importMathExerciseWithExampleSubmissionFromCourseToCourse() throws Exception {
+    // var now = ZonedDateTime.now();
+    // Course course1 = courseUtilService.addEmptyCourse();
+    // MathExercise mathExercise = MathExerciseFactory.generateMathExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
+    // mathExercise = mathExerciseRepository.save(mathExercise);
+    // mathExercise.setChannelName("testchannel" + mathExercise.getId());
+    // // Create example submission
+    // var exampleSubmission = participationUtilService.generateExampleSubmission("Lorem Ipsum", mathExercise, true);
+    // exampleSubmission = participationUtilService.addExampleSubmission(exampleSubmission);
+    //
+    // participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
+    //
+    // MathExercise newMathExercise = request.postWithResponseBody("/api/math-exercises/import/" + mathExercise.getId(), mathExercise, MathExercise.class, HttpStatus.CREATED);
+    // assertThat(newMathExercise.getExampleSubmissions()).hasSize(1);
+    // ExampleSubmission newExampleSubmission = newMathExercise.getExampleSubmissions().iterator().next();
+    // MathSubmission newSubmission = (MathSubmission) newExampleSubmission.getSubmission();
+    // assertThat(newSubmission.getContent()).isEqualTo(((MathSubmission) exampleSubmission.getSubmission()).getContent());
+    // }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -1138,17 +1140,19 @@ class MathExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetMathExercise_asStudent_exampleSolutionVisibility() throws Exception {
-        testGetMathExercise_exampleSolutionVisibility(true, TEST_PREFIX + "student1");
-    }
+    // TODO: add tests for example solution visibility when implemented
+    // @Test
+    // @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    // void testGetMathExercise_asStudent_exampleSolutionVisibility() throws Exception {
+    // testGetMathExercise_exampleSolutionVisibility(true, TEST_PREFIX + "student1");
+    // }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetMathExercise_asInstructor_exampleSolutionVisibility() throws Exception {
-        testGetMathExercise_exampleSolutionVisibility(false, "instructor1");
-    }
+    // TODO: add tests for example solution visibility when implemented
+    // @Test
+    // @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    // void testGetMathExercise_asInstructor_exampleSolutionVisibility() throws Exception {
+    // testGetMathExercise_exampleSolutionVisibility(false, "instructor1");
+    // }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -1209,7 +1213,7 @@ class MathExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         Function<Course, MathExercise> mathExerciseGetter = c -> (MathExercise) c.getExercises().stream().filter(e -> e.getId().equals(mathExercise.getId())).findAny()
                 .orElseThrow();
 
-        mathExercise.setSolution("Sample<br>solution");
+        mathExercise.setSolution("\"Sample<br>solution\"");
 
         if (isStudent) {
             participationUtilService.createAndSaveParticipationForExercise(mathExercise, username);

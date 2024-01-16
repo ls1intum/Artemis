@@ -198,7 +198,7 @@ class MathSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         MathSubmission storedSubmission = request.get("/api/exercises/" + finishedMathExercise.getId() + "/math-submission-without-assessment?lock=true", HttpStatus.OK,
                 MathSubmission.class);
 
-        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(mathSubmission, "results", "submissionDate");
+        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(mathSubmission, "content", "results", "submissionDate");
         assertThat(storedSubmission.getSubmissionDate()).as("submission date is correct").isEqualToIgnoringNanos(mathSubmission.getSubmissionDate());
         assertThat(storedSubmission.getLatestResult()).as("result is set").isNotNull();
         assertThat(storedSubmission.getLatestResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);

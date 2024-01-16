@@ -37,7 +37,7 @@ public class MathSubmissionResource extends AbstractSubmissionResource {
 
     private static final String ENTITY_NAME = "mathSubmission";
 
-    private final Logger log = LoggerFactory.getLogger(MathSubmissionResource.class);
+    private static final Logger log = LoggerFactory.getLogger(MathSubmissionResource.class);
 
     private final MathSubmissionRepository mathSubmissionRepository;
 

@@ -22,7 +22,7 @@ public interface SubmissionVersionRepository extends JpaRepository<SubmissionVer
                 LEFT JOIN submission.versions
              WHERE
                 submission.id = :submissionId and version.id = (
-                    SELECT max(version.id)
+                    SELECT max(id)
                     FROM submission.versions
                 )
             """)

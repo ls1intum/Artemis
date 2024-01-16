@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.service.dto.MathOCRTokenResponseDTO;
 @Service
 public class MathOCRService {
 
-    private final Logger log = LoggerFactory.getLogger(MathOCRService.class);
+    private static final Logger log = LoggerFactory.getLogger(MathOCRService.class);
 
     private static final String ocrApiBaseUrl = "https://api.mathpix.com/v3";
 
