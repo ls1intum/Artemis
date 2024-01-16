@@ -595,7 +595,6 @@ public class CourseUtilService {
         onlineCourseConfiguration.setLtiKey("artemis_lti_key");
         onlineCourseConfiguration.setLtiSecret("fake-secret");
         onlineCourseConfiguration.setUserPrefix("prefix");
-        onlineCourseConfiguration.setRegistrationId(course.getId().toString());
         onlineCourseConfiguration.setCourse(course);
         course.setOnlineCourseConfiguration(onlineCourseConfiguration);
         courseRepo.save(course);
