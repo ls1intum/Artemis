@@ -12,6 +12,7 @@ import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,12 @@ public class LocalCIDockerService {
     private final DockerClient dockerClient;
 
     private final BuildJobRepository buildJobRepository;
+
+    @Value("${artemis.continuous-integration.image-cleanup.enabled:false}")
+    private Boolean imageCleanupEnabled;
+
+    @Value("${artemis.continuous-integration.image-cleanup.expiry-days:2}")
+    private int imageExpiryDays;
 
     public LocalCIDockerService(DockerClient dockerClient, BuildJobRepository buildJobRepository) {
         this.dockerClient = dockerClient;
@@ -91,9 +98,13 @@ public class LocalCIDockerService {
         }
     }
 
-    // delete old docker images every day at 3am
-    @Scheduled(cron = "0 0 3 * * *")
+    @Scheduled(cron = "${artemis.continuous-integration.image-cleanup.cleanup-schedule-time:0 0 3 * * *}")
     public void deleteOldDockerImages() {
+
+        if (!imageCleanupEnabled) {
+            log.info("Docker image cleanup is disabled");
+            return;
+        }
 
         // Get list of all running containers
         List<Container> containers = dockerClient.listContainersCmd().exec();
@@ -111,14 +122,14 @@ public class LocalCIDockerService {
             String[] imageRepoTags = image.getRepoTags();
             if (imageRepoTags != null) {
                 for (String imageRepoTag : imageRepoTags) {
-                    Optional<BuildJob> buildJob = buildJobRepository.findFirstByDockerImageOrderByBuildStartDateDesc(imageRepoTag);
+                    Optional<BuildJob> buildJob = buildJobRepository.findLatestBuildJobByDockerImage(imageRepoTag);
 
                     if (buildJob.isPresent()) {
                         ZonedDateTime buildJobStartDate = buildJob.get().getBuildStartDate();
                         ZonedDateTime now = ZonedDateTime.now(buildJobStartDate.getZone());
 
-                        if (ChronoUnit.DAYS.between(buildJobStartDate, now) > 2) {
-                            log.info("Removing image {}", imageRepoTag);
+                        if (ChronoUnit.DAYS.between(buildJobStartDate, now) > imageExpiryDays) {
+                            log.info("Docker image {} has not been used for over {} day(s). Removing it.", imageRepoTag, imageExpiryDays);
                             try {
                                 dockerClient.removeImageCmd(imageRepoTag).exec();
                             }
