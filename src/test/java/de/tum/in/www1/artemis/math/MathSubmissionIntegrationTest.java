@@ -20,6 +20,8 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.math.MathExercise;
+import de.tum.in.www1.artemis.domain.math.MathSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.mathexercise.MathExerciseUtilService;
@@ -117,7 +119,7 @@ class MathSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
         assertThat(mathSubmission).as("math submission without assessment was found").isNotNull();
         assertThat(mathSubmission.getId()).as("correct math submission was found").isEqualTo(this.mathSubmission.getId());
-        assertThat(mathSubmission.getText()).as("text of math submission is correct").isEqualTo(this.mathSubmission.getText());
+        assertThat(mathSubmission.getContent()).as("text of math submission is correct").isEqualTo(this.mathSubmission.getContent());
         assertThat(mathSubmission.getResults()).as("results are not loaded properly").isNotEmpty();
     }
 
@@ -294,10 +296,10 @@ class MathSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(version).as("submission version was created").isNotEmpty();
         assertThat(version.orElseThrow().getId()).isEqualTo(1);
         assertThat(version.orElseThrow().getAuthor().getLogin()).as("submission version has correct author").isEqualTo(TEST_PREFIX + "student1");
-        assertThat(version.get().getContent()).as("submission version has correct content").isEqualTo(submission.getText());
+        assertThat(version.get().getContent()).as("submission version has correct content").isEqualTo(submission.getContent());
 
         userUtilService.changeUser(TEST_PREFIX + "student2");
-        submission.setText(submission.getText() + " Extra contribution.");
+        submission.setContent(submission.getContent() + " Extra contribution.");
         request.put("/api/exercises/" + releasedMathExercise.getId() + "/math-submissions", submission, HttpStatus.OK);
 
         // create new submission to simulate other teams working at the same time
@@ -308,9 +310,9 @@ class MathSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(version).as("submission version was created").isNotEmpty();
         assertThat(version.orElseThrow().getId()).isEqualTo(2);
         assertThat(version.orElseThrow().getAuthor().getLogin()).as("submission version has correct author").isEqualTo(TEST_PREFIX + "student2");
-        assertThat(version.get().getContent()).as("submission version has correct content").isEqualTo(submission.getText());
+        assertThat(version.get().getContent()).as("submission version has correct content").isEqualTo(submission.getContent());
 
-        submission.setText(submission.getText() + " Even more.");
+        submission.setContent(submission.getContent() + " Even more.");
         request.put("/api/exercises/" + releasedMathExercise.getId() + "/math-submissions", submission, HttpStatus.OK);
         userUtilService.changeUser(TEST_PREFIX + "student2");
         Optional<SubmissionVersion> newVersion = submissionVersionRepository.findLatestVersion(submission.getId());
@@ -335,13 +337,13 @@ class MathSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         // should be ok
         char[] chars = new char[(int) (Constants.MAX_SUBMISSION_TEXT_LENGTH)];
         Arrays.fill(chars, 'a');
-        mathSubmission.setText(new String(chars));
+        mathSubmission.setContent(new String(chars));
         request.postWithResponseBody("/api/exercises/" + releasedMathExercise.getId() + "/math-submissions", mathSubmission, MathSubmission.class, HttpStatus.OK);
 
         // should be too large
         char[] charsTooLarge = new char[(int) (Constants.MAX_SUBMISSION_TEXT_LENGTH + 1)];
         Arrays.fill(charsTooLarge, 'a');
-        mathSubmission.setText(new String(charsTooLarge));
+        mathSubmission.setContent(new String(charsTooLarge));
         request.put("/api/exercises/" + releasedMathExercise.getId() + "/math-submissions", mathSubmission, HttpStatus.BAD_REQUEST);
     }
 
@@ -351,12 +353,12 @@ class MathSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         final var submitPath = "/api/exercises/" + releasedMathExercise.getId() + "/math-submissions";
         final var newSubmissionText = "Some other test text";
         mathSubmission = request.putWithResponseBody(submitPath, mathSubmission, MathSubmission.class, HttpStatus.OK);
-        mathSubmission.setText(newSubmissionText);
+        mathSubmission.setContent(newSubmissionText);
         request.put(submitPath, mathSubmission, HttpStatus.OK);
 
         final var submissionInDb = submissionRepository.findById(mathSubmission.getId());
         assertThat(submissionInDb).isPresent();
-        assertThat(submissionInDb.get().getText()).isEqualTo(newSubmissionText);
+        assertThat(submissionInDb.get().getContent()).isEqualTo(newSubmissionText);
     }
 
     @Test

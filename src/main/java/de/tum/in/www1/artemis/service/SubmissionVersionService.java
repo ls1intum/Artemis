@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.math.MathSubmission;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.SubmissionVersionRepository;
@@ -90,7 +91,7 @@ public class SubmissionVersionService {
             }
         }
         else if (submission instanceof MathSubmission mathSubmission) {
-            return mathSubmission.getText();
+            return mathSubmission.getContent();
         }
         else {
             throw new IllegalArgumentException("Versioning for this submission type not supported: " + submission.getType());

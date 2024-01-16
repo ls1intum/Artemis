@@ -10,7 +10,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.math.MathExercise;
 import de.tum.in.www1.artemis.domain.math.MathSubmission;
@@ -359,7 +361,7 @@ public class MathExerciseUtilService {
      * @return The created MathSubmission
      */
     public MathSubmission createSubmissionForMathExercise(MathExercise mathExercise, Participant participant, String text) {
-        MathSubmission mathSubmission = ParticipationFactory.generateMathSubmission(text, Language.ENGLISH, true);
+        MathSubmission mathSubmission = ParticipationFactory.generateMathSubmission(text, true);
         mathSubmission = mathSubmissionRepository.save(mathSubmission);
 
         StudentParticipation studentParticipation;
@@ -417,7 +419,7 @@ public class MathExerciseUtilService {
      * @return The created MathSubmission
      */
     public MathSubmission createMathSubmissionWithResultAndAssessor(MathExercise mathExercise, String studentLogin, String assessorLogin) {
-        MathSubmission mathSubmission = ParticipationFactory.generateMathSubmission("Some text", Language.ENGLISH, true);
+        MathSubmission mathSubmission = ParticipationFactory.generateMathSubmission("Some text", true);
         mathSubmission = saveMathSubmissionWithResultAndAssessor(mathExercise, mathSubmission, studentLogin, assessorLogin);
         return mathSubmission;
     }

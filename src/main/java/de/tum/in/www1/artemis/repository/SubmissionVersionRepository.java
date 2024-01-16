@@ -18,11 +18,13 @@ public interface SubmissionVersionRepository extends JpaRepository<SubmissionVer
     @Query("""
             SELECT version
             FROM SubmissionVersion version
-            WHERE version.id = (
-                SELECT max(version.id)
-                FROM SubmissionVersion version
-                WHERE version.submission.id = :submissionId
-            )
+                LEFT JOIN version.submission submission
+                LEFT JOIN submission.versions
+             WHERE
+                submission.id = :submissionId and version.id = (
+                    SELECT max(version.id)
+                    FROM submission.versions
+                )
             """)
     Optional<SubmissionVersion> findLatestVersion(@Param("submissionId") long submissionId);
 

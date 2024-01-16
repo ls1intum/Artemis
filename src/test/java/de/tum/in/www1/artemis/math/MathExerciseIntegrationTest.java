@@ -22,6 +22,8 @@ import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.math.MathExercise;
+import de.tum.in.www1.artemis.domain.math.MathSubmission;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
@@ -111,7 +113,7 @@ class MathExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         Optional<MathSubmission> result = mathSubmissionRepository.findById(mathSubmission.getId());
         assertThat(result).isPresent();
-        result.ifPresent(submission -> assertThat(submission.getText()).isEqualTo("test-submission"));
+        result.ifPresent(submission -> assertThat(submission.getContent()).isEqualTo("test-submission"));
     }
 
     @Test
@@ -571,7 +573,7 @@ class MathExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(newMathExercise.getExampleSubmissions()).hasSize(1);
         ExampleSubmission newExampleSubmission = newMathExercise.getExampleSubmissions().iterator().next();
         MathSubmission newSubmission = (MathSubmission) newExampleSubmission.getSubmission();
-        assertThat(newSubmission.getText()).isEqualTo(((MathSubmission) exampleSubmission.getSubmission()).getText());
+        assertThat(newSubmission.getContent()).isEqualTo(((MathSubmission) exampleSubmission.getSubmission()).getContent());
     }
 
     @Test
@@ -1207,7 +1209,7 @@ class MathExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         Function<Course, MathExercise> mathExerciseGetter = c -> (MathExercise) c.getExercises().stream().filter(e -> e.getId().equals(mathExercise.getId())).findAny()
                 .orElseThrow();
 
-        mathExercise.setExampleSolution("Sample<br>solution");
+        mathExercise.setSolution("Sample<br>solution");
 
         if (isStudent) {
             participationUtilService.createAndSaveParticipationForExercise(mathExercise, username);
@@ -1223,10 +1225,10 @@ class MathExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         MathExercise mathExerciseFromApi = mathExerciseGetter.apply(course);
 
         if (isStudent) {
-            assertThat(mathExerciseFromApi.getExampleSolution()).isNull();
+            assertThat(mathExerciseFromApi.getSolution()).isNull();
         }
         else {
-            assertThat(mathExerciseFromApi.getExampleSolution()).isEqualTo(mathExercise.getExampleSolution());
+            assertThat(mathExerciseFromApi.getSolution()).isEqualTo(mathExercise.getSolution());
         }
 
         // Test example solution publication date in the past.
@@ -1238,7 +1240,7 @@ class MathExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course = courseForDashboard.course();
         mathExerciseFromApi = mathExerciseGetter.apply(course);
 
-        assertThat(mathExerciseFromApi.getExampleSolution()).isEqualTo(mathExercise.getExampleSolution());
+        assertThat(mathExerciseFromApi.getSolution()).isEqualTo(mathExercise.getSolution());
 
         // Test example solution publication date in the future.
         mathExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
@@ -1250,10 +1252,10 @@ class MathExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         mathExerciseFromApi = mathExerciseGetter.apply(course);
 
         if (isStudent) {
-            assertThat(mathExerciseFromApi.getExampleSolution()).isNull();
+            assertThat(mathExerciseFromApi.getSolution()).isNull();
         }
         else {
-            assertThat(mathExerciseFromApi.getExampleSolution()).isEqualTo(mathExercise.getExampleSolution());
+            assertThat(mathExerciseFromApi.getSolution()).isEqualTo(mathExercise.getSolution());
         }
     }
 }

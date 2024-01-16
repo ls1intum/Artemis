@@ -10,7 +10,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.GradingCriterion;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.math.MathExercise;
+import de.tum.in.www1.artemis.domain.math.MathSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
@@ -137,12 +141,6 @@ public class MathSubmissionResource extends AbstractSubmissionResource {
     public ResponseEntity<MathSubmission> getMathSubmissionWithResults(@PathVariable long submissionId) {
         log.debug("REST request to get math submission: {}", submissionId);
         var mathSubmission = mathSubmissionRepository.findWithEagerResultsById(submissionId).orElseThrow(() -> new EntityNotFoundException("MathSubmission", submissionId));
-
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(mathSubmission.getParticipation().getExercise())) {
-            // anonymize and throw exception if not authorized to view submission
-            plagiarismService.checkAccessAndAnonymizeSubmissionForStudent(mathSubmission, userRepository.getUser().getLogin());
-            return ResponseEntity.ok(mathSubmission);
-        }
 
         return ResponseEntity.ok().body(mathSubmission);
     }
