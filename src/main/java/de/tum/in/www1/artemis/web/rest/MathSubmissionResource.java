@@ -37,7 +37,7 @@ public class MathSubmissionResource extends AbstractSubmissionResource {
 
     private static final String ENTITY_NAME = "mathSubmission";
 
-    private final Logger log = LoggerFactory.getLogger(MathSubmissionResource.class);
+    private static final Logger log = LoggerFactory.getLogger(MathSubmissionResource.class);
 
     private final MathSubmissionRepository mathSubmissionRepository;
 
@@ -141,6 +141,13 @@ public class MathSubmissionResource extends AbstractSubmissionResource {
     public ResponseEntity<MathSubmission> getMathSubmissionWithResults(@PathVariable long submissionId) {
         log.debug("REST request to get math submission: {}", submissionId);
         var mathSubmission = mathSubmissionRepository.findWithEagerResultsById(submissionId).orElseThrow(() -> new EntityNotFoundException("MathSubmission", submissionId));
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(mathSubmission.getParticipation().getExercise())) {
+            // anonymize and throw exception if not authorized to view submission
+            plagiarismService.checkAccessAndAnonymizeSubmissionForStudent(mathSubmission, userRepository.getUser().getLogin(),
+                    mathSubmission.getParticipation().getExercise().getDueDate());
+            return ResponseEntity.ok(mathSubmission);
+        }
 
         return ResponseEntity.ok().body(mathSubmission);
     }

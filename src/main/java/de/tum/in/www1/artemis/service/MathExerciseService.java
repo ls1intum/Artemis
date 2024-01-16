@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 @Service
 public class MathExerciseService {
 
-    private final Logger log = LoggerFactory.getLogger(MathExerciseService.class);
+    private static final Logger log = LoggerFactory.getLogger(MathExerciseService.class);
 
     private final MathExerciseRepository mathExerciseRepository;
 
