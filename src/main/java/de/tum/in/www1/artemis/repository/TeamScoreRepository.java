@@ -36,7 +36,7 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
     @Query("""
             SELECT DISTINCT s
             FROM TeamScore s
-                LEFT JOIN s.team t
+                LEFT JOIN FETCH s.team t
                 LEFT JOIN FETCH t.students
             WHERE s.exercise = :exercise
                 AND :user MEMBER OF t.students
@@ -46,7 +46,7 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
     @Query("""
             SELECT t, SUM(s.lastRatedPoints)
             FROM TeamScore s
-                LEFT JOIN s.team t
+                LEFT JOIN FETCH s.team t
                 LEFT JOIN FETCH t.students
             WHERE s.exercise IN :exercises
             GROUP BY t.id
@@ -56,7 +56,7 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
     @Query("""
             SELECT s
             FROM TeamScore s
-                LEFT JOIN FETCH s.exercise
+                LEFT JOIN FETCH FETCH s.exercise
                 LEFT JOIN s.team t
                 LEFT JOIN FETCH t.students
             WHERE s.exercise IN :exercises
@@ -67,7 +67,7 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
     @Query("""
             SELECT s
             FROM TeamScore s
-                LEFT JOIN s.team t
+                LEFT JOIN FETCH s.team t
                 LEFT JOIN FETCH t.students
             WHERE s.exercise IN :exercises
                 AND :user MEMBER OF t.students
