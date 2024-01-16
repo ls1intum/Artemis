@@ -17,6 +17,8 @@ import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.math.MathExercise;
+import de.tum.in.www1.artemis.domain.math.MathSubmission;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -248,7 +250,7 @@ public class ExerciseUtilService {
                 course = mathExerciseUtilService.addCourseWithOneFinishedMathExercise();
                 exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
-                    MathSubmission submission = ParticipationFactory.generateMathSubmission("Math" + j + j, true);
+                    MathSubmission submission = ParticipationFactory.generateMathSubmission("Math" + j + j, null, true);
                     mathExerciseUtilService.saveMathSubmission((MathExercise) exercise, submission, userPrefix + "student" + j);
                 }
                 return course;
@@ -407,29 +409,6 @@ public class ExerciseUtilService {
         fail("Could not find text exercise with title " + title);
         // just to prevent compiler warnings, we have failed anyway here
         return new TextExercise();
-    }
-
-    /**
-     * Looks for a math exercise with the passed title within an exercise collection. If the exercise is not found, the test fails.
-     *
-     * @param exercises Collection in which the math exercise with the title should be located.
-     * @param title     The title of the exercise to look for.
-     * @return The found math exercise.
-     */
-    @NotNull
-    public MathExercise findMathExerciseWithTitle(Collection<Exercise> exercises, String title) {
-        Optional<Exercise> exercise = exercises.stream().filter(e -> e.getTitle().equals(title)).findFirst();
-        if (exercise.isEmpty()) {
-            fail("Could not find math exercise with title " + title);
-        }
-        else {
-            if (exercise.get() instanceof MathExercise) {
-                return (MathExercise) exercise.get();
-            }
-        }
-        fail("Could not find math exercise with title " + title);
-        // just to prevent compiler warnings, we have failed anyway here
-        return new MathExercise();
     }
 
     /**

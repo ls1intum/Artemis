@@ -17,6 +17,8 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.math.MathExercise;
+import de.tum.in.www1.artemis.domain.math.MathSubmission;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -232,7 +234,7 @@ public class CourseUtilService {
      * @throws IOException If a file cannot be loaded from resources.
      */
     public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(String userPrefix, boolean withParticipations, boolean withFiles,
-            int numberOfTutorParticipations) throws Exception {
+            int numberOfTutorParticipations) throws IOException {
         List<Course> courses = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
         return courses.stream().peek(course -> {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
@@ -250,7 +252,7 @@ public class CourseUtilService {
      * @return The list of created and saved courses.
      * @throws IOException If a file cannot be loaded from resources.
      */
-    public List<Course> createCoursesWithExercisesAndLectures(String userPrefix, boolean withParticipations, int numberOfTutorParticipations) throws Exception {
+    public List<Course> createCoursesWithExercisesAndLectures(String userPrefix, boolean withParticipations, int numberOfTutorParticipations) throws IOException {
         return createCoursesWithExercisesAndLectures(userPrefix, withParticipations, false, numberOfTutorParticipations);
     }
 
@@ -264,7 +266,8 @@ public class CourseUtilService {
      * @return The list of created and saved courses.
      * @throws IOException If a file cannot be loaded from resources.
      */
-    public List<Course> createCoursesWithExercisesAndLectures(String userPrefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations) throws Exception {
+    public List<Course> createCoursesWithExercisesAndLectures(String userPrefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations)
+            throws IOException {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
@@ -309,7 +312,6 @@ public class CourseUtilService {
 
         MathExercise mathExercise = MathExerciseFactory.generateMathExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
         mathExercise.setGradingInstructions("some grading instructions");
-        mathExercise.setExampleSolution("Example Solution");
         exerciseUtilService.addGradingInstructionsToExercise(mathExercise);
         mathExercise.getCategories().add("Math");
         course1.addExercises(mathExercise);
@@ -375,7 +377,7 @@ public class CourseUtilService {
             Submission textSubmission = ParticipationFactory.generateTextSubmission("text", Language.ENGLISH, true);
             Submission programmingSubmission1 = ParticipationFactory.generateProgrammingSubmission(true, "1234", SubmissionType.MANUAL);
             Submission programmingSubmission2 = ParticipationFactory.generateProgrammingSubmission(true, "5678", SubmissionType.MANUAL);
-            Submission mathSubmission = ParticipationFactory.generateMathSubmission("math", true);
+            Submission mathSubmission = ParticipationFactory.generateMathSubmission("math", Language.ENGLISH, true);
 
             Result result1 = generateResult(true, 10D);
             Result result2 = generateResult(true, 12D);
@@ -573,7 +575,7 @@ public class CourseUtilService {
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
         QuizSubmission quizSubmission = ParticipationFactory.generateQuizSubmission(true);
         ProgrammingSubmission programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
-        MathSubmission mathSubmission = ParticipationFactory.generateMathSubmission("text of math submission", true);
+        MathSubmission mathSubmission = ParticipationFactory.generateMathSubmission("text of math submission", Language.ENGLISH, true);
 
         // Save submissions
         modelingSubmission = submissionRepository.save(modelingSubmission);
@@ -1000,7 +1002,7 @@ public class CourseUtilService {
         var exerciseGroup4 = exerciseGroupRepository.save(new ExerciseGroup());
         var mathExercise = MathExerciseFactory.generateMathExerciseForExam(exerciseGroup4);
         mathExercise = exerciseRepo.save(mathExercise);
-        var mathSubmission = ParticipationFactory.generateMathSubmission("example math text", true);
+        var mathSubmission = ParticipationFactory.generateMathSubmission("example math text", Language.ENGLISH, true);
         mathExerciseUtilService.saveMathSubmission(mathExercise, mathSubmission, userPrefix + "student1");
         exerciseGroup4.addExercise(mathExercise);
         exerciseGroup4 = exerciseGroupRepository.save(exerciseGroup4);

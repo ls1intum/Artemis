@@ -11,6 +11,7 @@ import javax.validation.constraints.NotNull;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.math.MathSubmission;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -56,17 +57,18 @@ public class ParticipationFactory {
      * Generates a MathSubmission with the given arguments.
      *
      * @param text      The text of the Submission
+     * @param language  The Language of the Submission
      * @param submitted True, if the Submission was submitted one day ago; False, if the Submission was not submitted
      * @return The generated MathSubmission
      */
-    public static MathSubmission generateMathSubmission(String text, boolean submitted) {
-        MathSubmission textSubmission = new MathSubmission();
-        textSubmission.text(text);
-        textSubmission.setSubmitted(submitted);
+    public static MathSubmission generateMathSubmission(String text, Language language, boolean submitted) {
+        MathSubmission mathSubmission = new MathSubmission();
+        mathSubmission.setContent(text);
+        mathSubmission.setSubmitted(submitted);
         if (submitted) {
-            textSubmission.setSubmissionDate(now().minusDays(1));
+            mathSubmission.setSubmissionDate(now().minusDays(1));
         }
-        return textSubmission;
+        return mathSubmission;
     }
 
     /**
@@ -77,23 +79,9 @@ public class ParticipationFactory {
      * @return The generated TextSubmission
      */
     public static TextSubmission generateLateTextSubmission(String text, Language language) {
-        TextSubmission textSubmission = new TextSubmission();
-        textSubmission.text(text);
-        textSubmission.setLanguage(language);
-        textSubmission.setSubmitted(true);
-        textSubmission.setSubmissionDate(now().plusDays(1));
-        return textSubmission;
-    }
-
-    /**
-     * Generates a TextSubmission with SubmissionDate in the future (now + 1 day).
-     *
-     * @param text The text of the Submission
-     * @return The generated TextSubmission
-     */
-    public static MathSubmission generateLateMathSubmission(String text) {
-        MathSubmission mathSubmission = new MathSubmission();
+        TextSubmission mathSubmission = new TextSubmission();
         mathSubmission.text(text);
+        mathSubmission.setLanguage(language);
         mathSubmission.setSubmitted(true);
         mathSubmission.setSubmissionDate(now().plusDays(1));
         return mathSubmission;

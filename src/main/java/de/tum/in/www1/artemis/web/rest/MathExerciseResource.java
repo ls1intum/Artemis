@@ -4,6 +4,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
+import javax.ws.rs.BadRequestException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,18 +13,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.math.MathExercise;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
-import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
+import de.tum.in.www1.artemis.security.annotations.*;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.dto.MathOCRRequestDTO;
+import de.tum.in.www1.artemis.service.dto.MathOCRResponseDTO;
+import de.tum.in.www1.artemis.service.dto.MathOCRTokenResponseDTO;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
-import de.tum.in.www1.artemis.service.plagiarism.PlagiarismDetectionService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -45,6 +47,8 @@ public class MathExerciseResource {
     private String applicationName;
 
     private final MathExerciseService mathExerciseService;
+
+    private final MathOCRService mathOCRService;
 
     private final ExerciseService exerciseService;
 
@@ -74,13 +78,11 @@ public class MathExerciseResource {
 
     private final ChannelRepository channelRepository;
 
-    public MathExerciseResource(MathExerciseRepository mathExerciseRepository, MathExerciseService mathExerciseService, FeedbackRepository feedbackRepository,
-            ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository,
-            AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
-            ParticipationRepository participationRepository, ResultRepository resultRepository, MathExerciseImportService mathExerciseImportService,
-            ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository,
-            GroupNotificationScheduleService groupNotificationScheduleService, PlagiarismDetectionService plagiarismDetectionService, CourseRepository courseRepository,
-            ChannelService channelService, ChannelRepository channelRepository) {
+    public MathExerciseResource(MathExerciseRepository mathExerciseRepository, MathExerciseService mathExerciseService, ExerciseDeletionService exerciseDeletionService,
+            UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationRepository participationRepository,
+            MathExerciseImportService mathExerciseImportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
+            GradingCriterionRepository gradingCriterionRepository, GroupNotificationScheduleService groupNotificationScheduleService, CourseRepository courseRepository,
+            ChannelService channelService, ChannelRepository channelRepository, MathOCRService mathOCRService) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.mathExerciseService = mathExerciseService;
         this.mathExerciseRepository = mathExerciseRepository;
@@ -96,6 +98,7 @@ public class MathExerciseResource {
         this.courseRepository = courseRepository;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
+        this.mathOCRService = mathOCRService;
     }
 
     /**
@@ -344,5 +347,93 @@ public class MathExerciseResource {
         exerciseService.reEvaluateExercise(mathExercise, deleteFeedbackAfterGradingInstructionUpdate);
 
         return updateMathExercise(mathExercise, null);
+    }
+
+    /**
+     * GET /math-exercises/{exerciseId}/editor/ocr/token : Get a short-lived client token for OCR
+     * for the exercise with the given id. If the OCR service is not enabled, or OCR is not available
+     * for the given exercise, a bad request exception is thrown.
+     *
+     * @param exerciseId id of the exercise for which to get the token
+     * @return the ResponseEntity with status 200 (OK) and the token in the body, or with status 400
+     *         (Bad Request) if OCR is not enabled for the exercise.
+     */
+    @PostMapping("math-exercises/{exerciseId}/editor/ocr/token")
+    @EnforceAtLeastStudent
+    public ResponseEntity<MathOCRTokenResponseDTO> getOCRClientToken(@PathVariable long exerciseId) {
+        log.debug("REST request to get OCR client token");
+
+        // check that the exercise exists for given id
+        MathExercise mathExercise = mathExerciseRepository.findByIdElseThrow(exerciseId);
+
+        this.checkOCREnabled(mathExercise);
+
+        try {
+            return ResponseEntity.ok(mathOCRService.getClientToken());
+        }
+        catch (Exception e) {
+            log.error("Error while performing OCR", e);
+            throw new BadRequestException("OCR could not be performed");
+        }
+    }
+
+    /**
+     * POST /math-exercises/{exerciseId}/editor/ocr/process : Process an OCR request for the exercise
+     * with the given id. If the OCR service is not enabled, or OCR is not available for the given
+     * exercise, a bad request exception is thrown. If the OCR request is invalid, a bad request
+     * exception is thrown.
+     *
+     * <p>
+     * The request body must contain either an image or strokes, but not both. Each of the fields
+     * follows the format of the <a href="https://docs.mathpix.com/#introduction">Mathpix API</a>.
+     * <ul>
+     * <li>If an image is provided, it must be a base64 encoded string of a png or jpeg image.</li>
+     * <li>If strokes are provided, they must be a list of strokes, separated by x and y coordinates.</li>
+     * </ul>
+     * </p>
+     *
+     * @param exerciseId id of the exercise for which to process the OCR request
+     * @param ocrRequest the OCR request
+     * @return the ResponseEntity with status 200 (OK) and the OCR response in the body, or with
+     *         status 400 (Bad Request) if OCR is not enabled for the exercise, or if the OCR request is
+     *         invalid.
+     */
+    @PostMapping("math-exercises/{exerciseId}/editor/ocr/process")
+    @EnforceAtLeastStudent
+    public ResponseEntity<MathOCRResponseDTO> processOCRFromImageOrStroke(@PathVariable long exerciseId, @RequestBody MathOCRRequestDTO ocrRequest) {
+        log.debug("REST request to get OCR expression from image or stroke : {}", ocrRequest);
+
+        // check that the exercise exists for given id
+        MathExercise mathExercise = mathExerciseRepository.findByIdElseThrow(exerciseId);
+
+        this.checkOCREnabled(mathExercise);
+
+        if (ocrRequest.image() == null && ocrRequest.strokes() == null) {
+            throw new BadRequestException("Either an image or strokes must be provided");
+        }
+
+        try {
+            return ResponseEntity.ok(mathOCRService.getExpressionFromImageOrStroke(ocrRequest));
+        }
+        catch (Exception e) {
+            log.error("Error while processing OCR", e);
+            throw new BadRequestException("OCR could not be performed");
+        }
+    }
+
+    /**
+     * Checks if OCR is enabled for the given exercise. If not, a bad request exception is thrown.
+     *
+     * @param exercise the exercise to check
+     * @throws BadRequestException if OCR is not enabled for the exercise
+     */
+    private void checkOCREnabled(MathExercise exercise) throws BadRequestException {
+        // TODO: OCR is currently enabled for all exercises, enable this check
+        // once we have a way to enable/disable OCR for exercises
+        // if (exercise.getInputConfiguration() != null && (exercise.getInputConfiguration() instanceof MathExerciseExpressionInputConfiguration expressionInputConfiguration)
+        // && expressionInputConfiguration.ocrEnabled()) {
+        // return;
+        // }
+        // throw new BadRequestException("OCR is not enabled for this exercise");
     }
 }

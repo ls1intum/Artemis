@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.math.MathExercise;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -484,8 +485,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
                     relevantParticipation = participation;
                 }
                 // this case handles FINISHED participations which typically happen when manual results are involved
-                else if (exercise instanceof ModelingExercise || exercise instanceof TextExercise
-                        || exercise instanceof FileUploadExercise || exercise instanceof MathExercise
+                else if (exercise instanceof ModelingExercise || exercise instanceof TextExercise || exercise instanceof MathExercise || exercise instanceof FileUploadExercise
                         || (exercise instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
                     relevantParticipation = participation;
                 }

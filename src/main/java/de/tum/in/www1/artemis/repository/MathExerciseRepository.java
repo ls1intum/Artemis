@@ -11,8 +11,8 @@ import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.MathExercise;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.math.MathExercise;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -22,9 +22,9 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface MathExerciseRepository extends JpaRepository<MathExercise, Long>, JpaSpecificationExecutor<MathExercise> {
 
     @Query("""
-            SELECT DISTINCT e FROM MathExercise e
-            LEFT JOIN FETCH e.categories
-            WHERE e.course.id = :#{#courseId}
+                SELECT DISTINCT e FROM MathExercise e
+                LEFT JOIN FETCH e.categories
+                WHERE e.course.id = :#{#courseId}
             """)
     List<MathExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
