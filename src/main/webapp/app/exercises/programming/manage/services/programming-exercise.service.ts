@@ -502,7 +502,7 @@ export class ProgrammingExerciseService {
         ProgrammingExerciseService.convertProgrammingExerciseResponseDatesFromServer(exerciseRes);
         ExerciseService.convertExerciseCategoriesFromServer(exerciseRes);
         this.exerciseService.setAccessRightsExerciseEntityResponseType(exerciseRes);
-        this.exerciseService.sendExerciseTitleToTitleService(exerciseRes?.body);
+        this.exerciseService.sendExerciseTitleToTitleService(exerciseRes?.body ?? undefined);
         return exerciseRes;
     }
 
