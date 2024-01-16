@@ -55,4 +55,11 @@ public class PageUtil {
         sortOptions = search.getSortingOrder() == SortingOrder.ASCENDING ? sortOptions.ascending() : sortOptions.descending();
         return PageRequest.of(search.getPage() - 1, search.getPageSize(), sortOptions);
     }
+
+    @NotNull
+    public static PageRequest createCoursePageRequest(PageableSearchDTO<String> search) {
+        var sortOptions = Sort.by(Course.CourseSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
+        sortOptions = search.getSortingOrder() == SortingOrder.ASCENDING ? sortOptions.ascending() : sortOptions.descending();
+        return PageRequest.of(search.getPage() - 1, search.getPageSize(), sortOptions);
+    }
 }

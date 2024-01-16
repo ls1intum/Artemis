@@ -366,6 +366,21 @@ public class CourseResource {
         return userCourses.toList();
     }
 
+    // TODO: add course DTO?
+
+    /**
+     * GET /courses/paginated : get all courses for administration purposes.
+     *
+     * @return the list of courses (the user has access to)
+     */
+    @GetMapping("courses/paginated")
+    @EnforceAtLeastEditor
+    public ResponseEntity<SearchResultPageDTO<Course>> getCoursesPaginated(PageableSearchDTO<String> search) {
+        log.debug("REST request to get paginated list of courses.");
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        return ResponseEntity.ok(courseService.getAllOnPageWithSize(search, user));
+    }
+
     /**
      * GET /courses/courses-with-quiz : get all courses with quiz exercises for administration purposes.
      *
