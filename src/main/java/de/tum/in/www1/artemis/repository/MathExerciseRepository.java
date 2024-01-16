@@ -33,7 +33,16 @@ public interface MathExerciseRepository extends JpaRepository<MathExercise, Long
     @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencies" })
     Optional<MathExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(Long exerciseId);
 
-    @Query("select mathExercise from MathExercise mathExercise left join fetch mathExercise.exampleSubmissions exampleSubmissions left join fetch exampleSubmissions.submission submission left join fetch submission.results result left join fetch result.feedbacks left join fetch result.assessor left join fetch mathExercise.teamAssignmentConfig where mathExercise.id = :#{#exerciseId}")
+    @Query("""
+            SELECT mathExercise FROM MathExercise mathExercise
+                LEFT JOIN FETCH mathExercise.exampleSubmissions exampleSubmissions
+                LEFT JOIN FETCH exampleSubmissions.submission submission
+                LEFT JOIN FETCH submission.results result
+                LEFT JOIN FETCH result.feedbacks
+                LEFT JOIN FETCH result.assessor
+                LEFT JOIN FETCH mathExercise.teamAssignmentConfig
+            WHERE mathExercise.id = :#{#exerciseId}
+                """)
     Optional<MathExercise> findByIdWithExampleSubmissionsAndResults(@Param("exerciseId") Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })

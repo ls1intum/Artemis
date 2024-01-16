@@ -6,8 +6,6 @@ import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -24,7 +22,15 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface MathSubmissionRepository extends JpaRepository<MathSubmission, Long> {
 
-    @Query("select distinct submission from MathSubmission submission left join fetch submission.participation participation left join fetch participation.exercise left join fetch submission.results result left join fetch result.assessor left join fetch result.feedbacks where submission.id = :#{#submissionId}")
+    @Query("""
+                SELECT DISTINCT submission FROM MathSubmission submission
+                LEFT JOIN FETCH submission.participation participation
+                LEFT JOIN FETCH participation.exercise
+                LEFT JOIN FETCH submission.results result
+                LEFT JOIN FETCH result.assessor
+                LEFT JOIN FETCH result.feedbacks
+                WHERE submission.id = :#{#submissionId}
+            """)
     Optional<MathSubmission> findByIdWithEagerParticipationExerciseResultAssessor(@Param("submissionId") long submissionId);
 
     /**
@@ -51,30 +57,17 @@ public interface MathSubmissionRepository extends JpaRepository<MathSubmission, 
      * @param submissionId the submission id we are interested in
      * @return the submission with its feedback and assessor
      */
-    @Query("select distinct s from MathSubmission s left join fetch s.results r left join fetch r.feedbacks left join fetch r.assessor where s.id = :#{#submissionId}")
+    @Query("""
+                SELECT DISTINCT s FROM MathSubmission s
+                    LEFT JOIN FETCH s.results r
+                    LEFT JOIN FETCH r.feedbacks
+                    LEFT JOIN FETCH r.assessor
+                WHERE s.id = :#{#submissionId}
+            """)
     Optional<MathSubmission> findWithEagerResultsAndFeedbackById(@Param("submissionId") long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.assessor", "results.feedbacks" })
     Optional<MathSubmission> findWithEagerResultAndFeedbackByResults_Id(long resultId);
-
-    /**
-     * Gets all TextSubmissions which are submitted
-     *
-     * @param exerciseId the ID of the exercise
-     * @return Set of Text Submissions
-     */
-    @EntityGraph(type = LOAD)
-    Set<MathSubmission> findByParticipation_ExerciseIdAndSubmittedIsTrue(long exerciseId);
-
-    /**
-     * Gets all MathSubmissions which are submitted
-     *
-     * @param exerciseId the ID of the exercise
-     * @param pageable   the pagination information for the query
-     * @return Set of Math Submissions
-     */
-    @EntityGraph(type = LOAD)
-    Page<MathSubmission> findByParticipation_ExerciseIdAndSubmittedIsTrue(long exerciseId, Pageable pageable);
 
     @NotNull
     default MathSubmission getSubmissionWithResultAndFeedbackByResultIdElseThrow(long resultId) {
