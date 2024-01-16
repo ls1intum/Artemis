@@ -142,6 +142,13 @@ public class MathSubmissionResource extends AbstractSubmissionResource {
         log.debug("REST request to get math submission: {}", submissionId);
         var mathSubmission = mathSubmissionRepository.findWithEagerResultsById(submissionId).orElseThrow(() -> new EntityNotFoundException("MathSubmission", submissionId));
 
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(mathSubmission.getParticipation().getExercise())) {
+            // anonymize and throw exception if not authorized to view submission
+            plagiarismService.checkAccessAndAnonymizeSubmissionForStudent(mathSubmission, userRepository.getUser().getLogin(),
+                    mathSubmission.getParticipation().getExercise().getDueDate());
+            return ResponseEntity.ok(mathSubmission);
+        }
+
         return ResponseEntity.ok().body(mathSubmission);
     }
 
