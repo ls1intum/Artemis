@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCIDockerService;
 
-public class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
     private LocalCIDockerService localCIDockerService;
