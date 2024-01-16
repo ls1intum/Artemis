@@ -1,8 +1,8 @@
-import { BaseEntity } from 'app/shared/model/base-entity';
+import { StringBaseEntity } from 'app/shared/model/base-entity';
 import dayjs from 'dayjs/esm';
 
-export class BuildJob implements BaseEntity {
-    public id?: any;
+export class BuildJob implements StringBaseEntity {
+    public id?: string;
     public name?: string;
     public participationId?: number;
     public repositoryTypeOrUserName?: string;
