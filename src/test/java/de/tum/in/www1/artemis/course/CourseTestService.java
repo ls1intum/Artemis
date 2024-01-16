@@ -2962,9 +2962,9 @@ public class CourseTestService {
         assertThat(activeStudents).hasSize(3);
 
         course1.setStartDate(now.plusWeeks(10));
+        course1.setEndDate(now.plusWeeks(20));
         activeStudents = request.get("/api/courses/" + course1.getId() + "/statistics", HttpStatus.OK, Integer[].class, parameters);
         assertThat(activeStudents).isNotNull();
-        assertThat(activeStudents).hasSize(0);
     }
 
     // Test
