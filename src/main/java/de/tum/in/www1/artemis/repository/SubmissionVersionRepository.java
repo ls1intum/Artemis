@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -23,9 +22,9 @@ public interface SubmissionVersionRepository extends JpaRepository<SubmissionVer
                 LEFT JOIN submission.versions
              WHERE
                 submission.id = :submissionId and version.id = (
-                    SELECT max(id)
+                    SELECT max(version.id)
                     FROM submission.versions
-                    )
+                )
             """)
     Optional<SubmissionVersion> findLatestVersion(@Param("submissionId") long submissionId);
 
