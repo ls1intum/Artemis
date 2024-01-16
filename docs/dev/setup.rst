@@ -45,7 +45,7 @@ following dependencies/tools on your machine:
    * `GitLab and Jenkins <#jenkins-and-gitlab-setup>`__
    * `GitLab and GitLab CI <#gitlab-ci-and-gitlab-setup>`__ (experimental, not yet production ready)
    * `Bamboo, Bitbucket and Jira <#bamboo-bitbucket-and-jira-setup>`__
-   * `Local CI and local VC <#local-ci-and-local-vc-setup>`__ (experimental, not yet production ready)
+   * `Integrated Code Lifecycle <#integrated-code-lifecycle>`__
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -74,7 +74,7 @@ following dependencies/tools on your machine:
    setup/bamboo-bitbucket-jira
    setup/jenkins-gitlab
    setup/gitlabci-gitlab
-   setup/localci-localvc
+   setup/integrated-code-lifecycle
    setup/common-problems
    setup/docker-compose
    setup/local-database-tests
