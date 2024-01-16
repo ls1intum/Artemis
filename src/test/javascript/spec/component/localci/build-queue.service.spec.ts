@@ -95,7 +95,7 @@ describe('BuildQueueService', () => {
 
     it('should cancel a specific build job in a course', () => {
         const courseId = 1;
-        const buildJobId = 1;
+        const buildJobId = '1';
 
         service.cancelBuildJobInCourse(courseId, buildJobId).subscribe(() => {
             // Ensure that the cancellation was successful
@@ -108,7 +108,7 @@ describe('BuildQueueService', () => {
     });
 
     it('should cancel a specific build job', () => {
-        const buildJobId = 1;
+        const buildJobId = '1';
 
         service.cancelBuildJob(buildJobId).subscribe(() => {
             // Ensure that the cancellation was successful
@@ -145,7 +145,7 @@ describe('BuildQueueService', () => {
     });
 
     it('should handle errors when cancelling a specific build job', fakeAsync(() => {
-        const buildJobId = 1;
+        const buildJobId = '1';
 
         let errorOccurred = false;
 
@@ -179,7 +179,7 @@ describe('BuildQueueService', () => {
 
     it('should handle errors when cancelling a specific build job in a course', fakeAsync(() => {
         const courseId = 1;
-        const buildJobId = 1;
+        const buildJobId = '1';
 
         let errorOccurred = false;
 
