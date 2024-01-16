@@ -97,6 +97,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     public ngOnChanges(changes: SimpleChanges) {
         if (this.exercise?.isAtLeastTutor) {
+            if (this.testCasesSubscription) {
+                this.testCasesSubscription.unsubscribe();
+            }
             this.testCasesSubscription = this.programmingExerciseGradingService
                 .getTestCases(this.exercise.id!)
                 .pipe(
