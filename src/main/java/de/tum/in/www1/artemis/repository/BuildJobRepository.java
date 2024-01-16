@@ -24,7 +24,11 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long> {
     @Query("""
             SELECT b FROM BuildJob b
             WHERE b.dockerImage = :#{#dockerImage}
-            AND b.buildStartDate = (SELECT max(b2.buildStartDate) FROM BuildJob b2 WHERE b2.dockerImage = :#{#dockerImage})
+            AND b.buildStartDate = (
+                SELECT max(b2.buildStartDate)
+                FROM BuildJob b2
+                WHERE b2.dockerImage = :#{#dockerImage}
+            )
             """)
     Optional<BuildJob> findLatestBuildJobByDockerImage(@Param("dockerImage") String dockerImage);
 
