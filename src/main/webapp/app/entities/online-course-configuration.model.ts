@@ -8,10 +8,4 @@ export class OnlineCourseConfiguration implements BaseEntity {
     public ltiSecret?: string;
     public userPrefix?: string;
     public requireExistingUser?: boolean;
-    public originalUrl?: string;
-    public registrationId?: string;
-    public clientId?: string;
-    public authorizationUri?: string;
-    public jwkSetUri?: string;
-    public tokenUri?: string;
 }
