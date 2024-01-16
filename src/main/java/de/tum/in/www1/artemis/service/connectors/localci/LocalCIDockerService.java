@@ -98,6 +98,9 @@ public class LocalCIDockerService {
         }
     }
 
+    /**
+     * Deletes all docker images that have not been used for more than {@link #imageExpiryDays} days on a schedule
+     */
     @Scheduled(cron = "${artemis.continuous-integration.image-cleanup.cleanup-schedule-time:0 0 3 * * *}")
     public void deleteOldDockerImages() {
 
