@@ -39,7 +39,7 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
                 LEFT JOIN s.team t
                 LEFT JOIN FETCH t.students
             WHERE s.exercise = :exercise
-                AND :user MEMBER OF s.team.students
+                AND :user MEMBER OF t.students
             """)
     Optional<TeamScore> findWithStudentsTeamScoreByExerciseAndUserLazy(@Param("exercise") Exercise exercise, @Param("user") User user);
 
@@ -60,7 +60,7 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
                 LEFT JOIN s.team t
                 LEFT JOIN FETCH t.students
             WHERE s.exercise IN :exercises
-                AND :user MEMBER OF s.team.students
+                AND :user MEMBER OF t.students
             """)
     List<TeamScore> findAllByExerciseAndUserWithEagerExercise(@Param("exercises") Set<Exercise> exercises, @Param("user") User user);
 
@@ -70,7 +70,7 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
                 LEFT JOIN s.team t
                 LEFT JOIN FETCH t.students
             WHERE s.exercise IN :exercises
-                AND :user MEMBER OF s.team.students
+                AND :user MEMBER OF t.students
             """)
     List<TeamScore> findAllByExercisesAndUser(@Param("exercises") Set<Exercise> exercises, @Param("user") User user);
 
