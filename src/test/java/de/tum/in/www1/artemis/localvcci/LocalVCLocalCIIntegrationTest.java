@@ -267,8 +267,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         // Mock the results for the solution repository build and for the template repository build that will both be triggered as a result of updating the tests.
         Map<String, String> solutionBuildTestResults = localVCLocalCITestService.createMapFromTestResultsFolder(ALL_SUCCEED_TEST_RESULTS_PATH);
         Map<String, String> templateBuildTestResults = localVCLocalCITestService.createMapFromTestResultsFolder(ALL_FAIL_TEST_RESULTS_PATH);
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, WORKING_DIRECTORY + "/testing-dir/build/test-results/test", solutionBuildTestResults,
-                templateBuildTestResults);
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, WORKING_DIRECTORY + RESULTS_DIRECTORY, solutionBuildTestResults, templateBuildTestResults);
 
         localVCLocalCITestService.testPushSuccessful(auxiliaryRepository.localGit, instructor1Login, projectKey1, auxiliaryRepositorySlug);
 
@@ -712,7 +711,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         String commitHash = localVCLocalCITestService.commitFile(instructorExamTestRunRepository.localRepoFile.toPath(), instructorExamTestRunRepository.localGit);
         localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
                 Map.of("commitHash", commitHash), Map.of("commitHash", commitHash));
-        localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, WORKING_DIRECTORY + "/testing-dir/build/test-results/test");
+        localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, WORKING_DIRECTORY + RESULTS_DIRECTORY);
 
         localVCLocalCITestService.testPushSuccessful(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug);
 

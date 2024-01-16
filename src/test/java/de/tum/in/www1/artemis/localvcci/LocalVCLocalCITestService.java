@@ -123,6 +123,17 @@ public class LocalVCLocalCITestService {
     }
 
     /**
+     * Overloaded version of mockTestResults(DockerClient dockerClient, Path mockedTestResultsPath, String testResultsPath) that allows to mock multiple test result folders.
+     *
+     * @param dockerClient           the DockerClient to mock.
+     * @param mockedTestResultsPaths the paths to the directories containing the test results in the resources folder.
+     * @param testResultsPath        the path to the directory containing the test results inside the container.
+     */
+    public void mockTestResults(DockerClient dockerClient, List<Path> mockedTestResultsPaths, String testResultsPath) throws IOException {
+        mockInputStreamReturnedFromContainer(dockerClient, testResultsPath, createMapFromMultipleTestResultFolders(mockedTestResultsPaths));
+    }
+
+    /**
      * Mocks the InputStream returned by dockerClient.copyArchiveFromContainerCmd(String containerId, String resource).exec()
      *
      * @param dockerClient         the DockerClient to mock.
@@ -345,6 +356,20 @@ public class LocalVCLocalCITestService {
             resultMap.put(key, value);
         }
 
+        return resultMap;
+    }
+
+    /**
+     * Overloaded version of createMapFromTestResultsFolder(Path testResultsPath) that allows to create a map from multiple test result folders.
+     *
+     * @param testResultsPaths Paths to the folders containing the test results.
+     * @return Map containing the file paths and the content of the files.
+     */
+    public Map<String, String> createMapFromMultipleTestResultFolders(List<Path> testResultsPaths) throws IOException {
+        Map<String, String> resultMap = new HashMap<>();
+        for (Path testResultsPath : testResultsPaths) {
+            resultMap.putAll(createMapFromTestResultsFolder(testResultsPath));
+        }
         return resultMap;
     }
 
