@@ -36,7 +36,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
@@ -77,8 +76,6 @@ public class CourseResource {
 
     private final Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService;
 
-    private final Optional<OAuth2JWKSService> oAuth2JWKSService;
-
     private final CourseRepository courseRepository;
 
     private final ExerciseService exerciseService;
@@ -115,7 +112,7 @@ public class CourseResource {
     private final ExamRepository examRepository;
 
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
-            Optional<OAuth2JWKSService> oAuth2JWKSService, Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
+            Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
@@ -124,7 +121,6 @@ public class CourseResource {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
-        this.oAuth2JWKSService = oAuth2JWKSService;
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.authCheckService = authCheckService;
         this.tutorParticipationRepository = tutorParticipationRepository;
@@ -270,7 +266,7 @@ public class CourseResource {
     }
 
     /**
-     * PUT courses/:courseId/onlineCourseConfiguration : Updates the onlineCourseConfiguration for the given cours.
+     * PUT courses/:courseId/onlineCourseConfiguration : Updates the onlineCourseConfiguration for the given course.
      *
      * @param courseId                  the id of the course to update
      * @param onlineCourseConfiguration the online course configuration to update
@@ -301,8 +297,6 @@ public class CourseResource {
         }
 
         courseRepository.save(course);
-
-        oAuth2JWKSService.ifPresent(auth2JWKSService -> auth2JWKSService.updateKey(course.getOnlineCourseConfiguration().getRegistrationId()));
 
         return ResponseEntity.ok(onlineCourseConfiguration);
     }
