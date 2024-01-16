@@ -95,4 +95,19 @@ public class AdminBuildJobQueueResource {
 
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * Cancels all running build jobs.
+     *
+     * @return the ResponseEntity with the result of the cancellation
+     */
+    @DeleteMapping("/cancel-all-running-jobs")
+    @EnforceAdmin
+    public ResponseEntity<Void> cancelAllRunningBuildJobs() {
+        log.debug("REST request to cancel all running build jobs");
+        // Call the cancelAllRunningBuildJobs method in LocalCIBuildJobManagementService
+        localCIBuildJobQueueService.cancelAllRunningBuildJobs();
+
+        return ResponseEntity.noContent().build();
+    }
 }

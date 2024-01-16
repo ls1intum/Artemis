@@ -132,4 +132,18 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
             }
         });
     }
+
+    /**
+     * Cancel all running build jobs
+     */
+    cancelAllRunningBuildJobs() {
+        this.route.paramMap.pipe(take(1)).subscribe((params) => {
+            const courseId = Number(params.get('courseId'));
+            if (courseId) {
+                this.buildQueueService.cancelAllRunningBuildJobsInCourse(courseId).subscribe();
+            } else {
+                this.buildQueueService.cancelAllRunningBuildJobs().subscribe();
+            }
+        });
+    }
 }

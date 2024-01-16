@@ -317,8 +317,9 @@ public class LocalCISharedBuildJobQueueService {
             participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
         }
 
-        CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.executeBuildJob(participation, commitHash, isRetry,
-                buildJob.isPushToTestRepository());
+        CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.executeBuildJob(participation, commitHash, isRetry, buildJob.isPushToTestRepository(),
+                buildJob.id());
+
         futureResult.thenAccept(buildResult -> {
 
             // Do not process the result if the participation has been deleted in the meantime
@@ -346,31 +347,37 @@ public class LocalCISharedBuildJobQueueService {
             // process next build job if node is available
             checkAvailabilityAndProcessNextBuild();
         }).exceptionally(ex -> {
-            log.error("Error while processing build job: {}", buildJob, ex);
-
-            processingJobs.remove(buildJob.id());
-            localProcessingJobs.decrementAndGet();
-            updateLocalBuildAgentInformation();
-
-            if (isRetry) {
-                log.error("Build job failed for the second time: {}", buildJob);
-                return null;
-            }
-
-            // Do not requeue the build job if the participation has been deleted in the meantime
-            SecurityUtils.setAuthorizationObject();
-            Optional<Participation> participationOptional = participationRepository.findById(participation.getId());
-            if (participationOptional.isPresent()) {
-                log.warn("Requeueing failed build job: {}", buildJob);
-                LocalCIBuildJobQueueItem requeuedBuildJob = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(), buildJob.participationId(),
-                        buildJob.repositoryTypeOrUserName(), buildJob.commitHash(), buildJob.submissionDate(), buildJob.retryCount() + 1, null, buildJob.priority(),
-                        buildJob.courseId(), buildJob.isPushToTestRepository());
-                queue.add(requeuedBuildJob);
+            if (ex.getCause() instanceof CancellationException && ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
+                localProcessingJobs.decrementAndGet();
+                updateLocalBuildAgentInformation();
             }
             else {
-                log.warn("Participation with id {} has been deleted. Cancelling the requeueing of the build job.", participation.getId());
+                log.error("Error while processing build job: {}", buildJob, ex);
+
+                processingJobs.remove(buildJob.id());
+                localProcessingJobs.decrementAndGet();
+                updateLocalBuildAgentInformation();
+
+                if (isRetry) {
+                    log.error("Build job failed for the second time: {}", buildJob);
+                    return null;
+                }
+
+                // Do not requeue the build job if the participation has been deleted in the meantime
+                SecurityUtils.setAuthorizationObject();
+                Optional<Participation> participationOptional = participationRepository.findById(participation.getId());
+                if (participationOptional.isPresent()) {
+                    log.warn("Requeueing failed build job: {}", buildJob);
+                    LocalCIBuildJobQueueItem requeuedBuildJob = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(),
+                            buildJob.participationId(), buildJob.repositoryTypeOrUserName(), buildJob.commitHash(), buildJob.submissionDate(), buildJob.retryCount() + 1, null,
+                            buildJob.priority(), buildJob.courseId(), buildJob.isPushToTestRepository());
+                    queue.add(requeuedBuildJob);
+                }
+                else {
+                    log.warn("Participation with id {} has been deleted. Cancelling the requeueing of the build job.", participation.getId());
+                }
+                checkAvailabilityAndProcessNextBuild();
             }
-            checkAvailabilityAndProcessNextBuild();
             return null;
         });
     }
@@ -425,13 +432,23 @@ public class LocalCISharedBuildJobQueueService {
     public void cancelBuildJob(String buildJobId) {
         sharedLock.lock();
         try {
-            List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
-            for (LocalCIBuildJobQueueItem job : queue) {
-                if (Objects.equals(job.id(), buildJobId)) {
-                    toRemove.add(job);
+            // Remove build job if it is queued
+            if (queue.stream().anyMatch(job -> Objects.equals(job.id(), buildJobId))) {
+                List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
+                for (LocalCIBuildJobQueueItem job : queue) {
+                    if (Objects.equals(job.id(), buildJobId)) {
+                        toRemove.add(job);
+                    }
+                }
+                queue.removeAll(toRemove);
+            }
+            else {
+                // Cancel build job if it is currently being processed
+                LocalCIBuildJobQueueItem buildJob = processingJobs.remove(buildJobId);
+                if (buildJob != null) {
+                    localCIBuildJobManagementService.triggerBuildJobCancellation(buildJobId);
                 }
             }
-            queue.removeAll(toRemove);
         }
         finally {
             sharedLock.unlock();
@@ -446,6 +463,21 @@ public class LocalCISharedBuildJobQueueService {
         try {
             log.debug("Cancelling all queued build jobs");
             queue.clear();
+        }
+        finally {
+            sharedLock.unlock();
+        }
+    }
+
+    /**
+     * Cancel all running build jobs.
+     */
+    public void cancelAllRunningBuildJobs() {
+        sharedLock.lock();
+        try {
+            for (LocalCIBuildJobQueueItem buildJob : processingJobs.values()) {
+                cancelBuildJob(buildJob.id());
+            }
         }
         finally {
             sharedLock.unlock();
@@ -470,6 +502,19 @@ public class LocalCISharedBuildJobQueueService {
         }
         finally {
             sharedLock.unlock();
+        }
+    }
+
+    /**
+     * Cancel all running build jobs for a course.
+     *
+     * @param courseId id of the course
+     */
+    public void cancelAllRunningBuildJobsForCourse(long courseId) {
+        for (LocalCIBuildJobQueueItem buildJob : processingJobs.values()) {
+            if (buildJob.courseId() == courseId) {
+                cancelBuildJob(buildJob.id());
+            }
         }
     }
 

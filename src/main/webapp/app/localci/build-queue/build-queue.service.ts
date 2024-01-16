@@ -88,4 +88,26 @@ export class BuildQueueService {
             }),
         );
     }
+
+    /**
+     * Cancel all running build jobs
+     */
+    cancelAllRunningBuildJobs(): Observable<void> {
+        return this.http.delete<void>(`${this.adminResourceUrl}/cancel-all-running-jobs`).pipe(
+            catchError((err) => {
+                return throwError(() => new Error(`Failed to cancel all running build jobs\n${err.message}`));
+            }),
+        );
+    }
+
+    /**
+     * Cancel all running build jobs associated with a course
+     */
+    cancelAllRunningBuildJobsInCourse(courseId: number): Observable<void> {
+        return this.http.delete<void>(`${this.resourceUrl}/courses/${courseId}/cancel-all-running-jobs`).pipe(
+            catchError((err) => {
+                return throwError(() => new Error(`Failed to cancel all running build jobs in course ${courseId}\n${err.message}`));
+            }),
+        );
+    }
 }
