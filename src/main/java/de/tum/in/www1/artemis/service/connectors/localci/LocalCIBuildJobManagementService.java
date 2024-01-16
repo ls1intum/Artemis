@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 /**
- * This service is responsible for adding build jobs to the local CI executor service.
+ * This service is responsible for adding build jobs to the Integrated Code Lifecycle executor service.
  * It handles timeouts as well as exceptions that occur during the execution of the build job.
  */
 @Service
