@@ -275,6 +275,11 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         // Solution submissions created as a result from a push to the auxiliary repository should contain the last commit of the tests repository.
         localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), commitHash, 13, false);
         localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), commitHash, 0, false);
+
+        await().until(() -> {
+            Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(templateParticipation.getId());
+            return buildJobOptional.isPresent() && buildJobOptional.get().getRepositoryType().equals(RepositoryType.TEMPLATE);
+        });
     }
 
     // ---- Tests for the student assignment repository ----

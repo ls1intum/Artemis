@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.ci;
 
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 
