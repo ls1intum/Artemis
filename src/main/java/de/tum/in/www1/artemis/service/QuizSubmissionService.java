@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSubmission> {
 
-    private final Logger log = LoggerFactory.getLogger(QuizSubmissionService.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizSubmissionService.class);
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 

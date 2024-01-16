@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 @ComponentScan("de.tum.in.www1.artemis.*")
 public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImpl implements ArtemisAuthenticationProvider {
 
-    private final Logger log = LoggerFactory.getLogger(LdapAuthenticationProvider.class);
+    private static final Logger log = LoggerFactory.getLogger(LdapAuthenticationProvider.class);
 
     private final LdapUserService ldapUserService;
 

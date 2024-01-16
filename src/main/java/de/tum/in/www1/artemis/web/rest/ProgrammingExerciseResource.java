@@ -58,7 +58,7 @@ import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseState
 @RequestMapping(ROOT)
 public class ProgrammingExerciseResource {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseResource.class);
 
     private static final String ENTITY_NAME = "programmingExercise";
 
