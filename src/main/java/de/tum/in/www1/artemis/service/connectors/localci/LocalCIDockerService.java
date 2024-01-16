@@ -2,13 +2,9 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
-
-import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,9 +20,9 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 
-import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild;
 
 /**
  * Service for Docker related operations in local CI
@@ -53,11 +49,6 @@ public class LocalCIDockerService {
     public LocalCIDockerService(DockerClient dockerClient, BuildJobRepository buildJobRepository) {
         this.dockerClient = dockerClient;
         this.buildJobRepository = buildJobRepository;
-    }
-
-    @PostConstruct
-    public void init() {
-        deleteOldDockerImages();
     }
 
     /**
@@ -100,6 +91,7 @@ public class LocalCIDockerService {
 
     /**
      * Deletes all docker images that have not been used for more than {@link #imageExpiryDays} days on a schedule
+     * If not otherwise specified, the schedule is set to 3:00 AM every day
      */
     @Scheduled(cron = "${artemis.continuous-integration.image-cleanup.cleanup-schedule-time:0 0 3 * * *}")
     public void deleteOldDockerImages() {
@@ -121,26 +113,25 @@ public class LocalCIDockerService {
         // Filter out images that are in use
         List<Image> unusedImages = allImages.stream().filter(image -> !imageIdsInUse.contains(image.getId())).toList();
 
+        List<String> imageName = new ArrayList<>();
         for (Image image : unusedImages) {
             String[] imageRepoTags = image.getRepoTags();
             if (imageRepoTags != null) {
-                for (String imageRepoTag : imageRepoTags) {
-                    Optional<BuildJob> buildJob = buildJobRepository.findLatestBuildJobByDockerImage(imageRepoTag);
+                imageName.addAll(Arrays.asList(imageRepoTags));
+            }
+        }
 
-                    if (buildJob.isPresent()) {
-                        ZonedDateTime buildJobStartDate = buildJob.get().getBuildStartDate();
-                        ZonedDateTime now = ZonedDateTime.now(buildJobStartDate.getZone());
+        Set<DockerImageBuild> lastBuildDatesForDockerImages = buildJobRepository.findLastBuildDatesForDockerImages(imageName);
 
-                        if (ChronoUnit.DAYS.between(buildJobStartDate, now) > imageExpiryDays) {
-                            log.info("Docker image {} has not been used for over {} day(s). Removing it.", imageRepoTag, imageExpiryDays);
-                            try {
-                                dockerClient.removeImageCmd(imageRepoTag).exec();
-                            }
-                            catch (NotFoundException e) {
-                                log.warn("Image {} not found", imageRepoTag);
-                            }
-                        }
-                    }
+        // Delete images that have not been used for more than imageExpiryDays days
+        for (DockerImageBuild dockerImageBuild : lastBuildDatesForDockerImages) {
+            if (dockerImageBuild.lastBuildCompletionDate().isBefore(ZonedDateTime.now().minus(imageExpiryDays, ChronoUnit.DAYS))) {
+                log.info("Deleting docker image {}", dockerImageBuild.dockerImage());
+                try {
+                    dockerClient.removeImageCmd(dockerImageBuild.dockerImage()).exec();
+                }
+                catch (NotFoundException e) {
+                    log.warn("Docker image {} not found", dockerImageBuild.dockerImage());
                 }
             }
         }
