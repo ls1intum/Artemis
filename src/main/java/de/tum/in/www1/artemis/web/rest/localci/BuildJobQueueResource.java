@@ -81,7 +81,7 @@ public class BuildJobQueueResource {
      */
     @DeleteMapping("/courses/{courseId}/cancel-job/{buildJobId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Void> cancelBuildJob(@PathVariable long courseId, @PathVariable long buildJobId) {
+    public ResponseEntity<Void> cancelBuildJob(@PathVariable long courseId, @PathVariable String buildJobId) {
         log.debug("REST request to cancel the build job for course {} and with id {}", courseId, buildJobId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
@@ -89,7 +89,7 @@ public class BuildJobQueueResource {
         }
 
         // Call the cancelBuildJob method in LocalCIBuildJobManagementService
-        localCIBuildJobQueueService.triggerBuildJobCancellation(buildJobId);
+        localCIBuildJobQueueService.cancelBuildJob(buildJobId);
 
         return ResponseEntity.noContent().build();
     }

@@ -108,7 +108,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * Cancel a specific build job associated with the build job id
      * @param buildJobId    the id of the build job to cancel
      */
-    cancelBuildJob(buildJobId: number) {
+    cancelBuildJob(buildJobId: string) {
         this.route.paramMap.pipe(take(1)).subscribe((params) => {
             const courseId = Number(params.get('courseId'));
             if (courseId) {

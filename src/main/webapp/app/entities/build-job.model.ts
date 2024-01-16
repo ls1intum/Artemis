@@ -2,7 +2,7 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import dayjs from 'dayjs/esm';
 
 export class BuildJob implements BaseEntity {
-    public id?: number;
+    public id?: any;
     public name?: string;
     public participationId?: number;
     public repositoryTypeOrUserName?: string;

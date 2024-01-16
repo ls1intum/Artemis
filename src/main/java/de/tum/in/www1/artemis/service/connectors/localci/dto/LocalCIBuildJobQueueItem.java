@@ -4,7 +4,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 
-public record LocalCIBuildJobQueueItem(long id, String name, String buildAgentAddress, long participationId, String repositoryTypeOrUserName, String commitHash,
+public record LocalCIBuildJobQueueItem(String id, String name, String buildAgentAddress, long participationId, String repositoryTypeOrUserName, String commitHash,
         ZonedDateTime submissionDate, int retryCount, ZonedDateTime buildStartDate, int priority, long courseId, boolean isPushToTestRepository) implements Serializable {
 
     @Serial

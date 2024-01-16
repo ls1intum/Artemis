@@ -20,7 +20,6 @@ import com.hazelcast.collection.ItemListener;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.cp.lock.FencedLock;
 import com.hazelcast.map.IMap;
-import com.hazelcast.topic.ITopic;
 
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -60,13 +59,11 @@ public class LocalCISharedBuildJobQueueService {
     /**
      * Map of build jobs currently being processed across all nodes
      */
-    private final IMap<Long, LocalCIBuildJobQueueItem> processingJobs;
+    private final IMap<String, LocalCIBuildJobQueueItem> processingJobs;
 
     private final IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
 
     private final AtomicInteger localProcessingJobs = new AtomicInteger(0);
-
-    private final ITopic<Long> canceledBuildJobsTopic;
 
     /**
      * Lock to prevent multiple nodes from processing the same build job.
@@ -93,7 +90,6 @@ public class LocalCISharedBuildJobQueueService {
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
         this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
-        this.canceledBuildJobsTopic = this.hazelcastInstance.getTopic("canceledBuildJobsTopic");
     }
 
     /**
@@ -102,7 +98,6 @@ public class LocalCISharedBuildJobQueueService {
     @PostConstruct
     public void init() {
         this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
-        this.canceledBuildJobsTopic.addMessageListener(new CanceledBuildJobListener());
     }
 
     /**
@@ -119,8 +114,8 @@ public class LocalCISharedBuildJobQueueService {
      */
     public void addBuildJob(String name, long participationId, String repositoryTypeOrUsername, String commitHash, ZonedDateTime submissionDate, int priority, long courseId,
             boolean isPushToTestRepository) {
-        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(Long.parseLong(String.valueOf(participationId) + submissionDate.toInstant().toEpochMilli()), name,
-                null, participationId, repositoryTypeOrUsername, commitHash, submissionDate, 0, null, priority, courseId, isPushToTestRepository);
+        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(String.valueOf(participationId) + submissionDate.toInstant().toEpochMilli(), name, null,
+                participationId, repositoryTypeOrUsername, commitHash, submissionDate, 0, null, priority, courseId, isPushToTestRepository);
         queue.add(buildJobQueueItem);
     }
 
@@ -421,16 +416,11 @@ public class LocalCISharedBuildJobQueueService {
      *
      * @param buildJobId id of the build job to cancel
      */
-    public void triggerBuildJobCancellation(long buildJobId) {
-        // Publish a message to the topic indicating that the specific build job should be canceled
-        canceledBuildJobsTopic.publish(buildJobId);
-    }
-
-    private void cancelBuildJob(long canceledBuildJobId) {
+    public void cancelBuildJob(String buildJobId) {
         List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
         for (LocalCIBuildJobQueueItem job : queue) {
-            log.error("Checking if job {} is the canceled job {}", job.id(), canceledBuildJobId);
-            if (Objects.equals(job.id(), canceledBuildJobId)) {
+            log.error("Checking if job {} is the canceled job {}", job.id(), buildJobId);
+            if (Objects.equals(job.id(), buildJobId)) {
                 toRemove.add(job);
             }
         }
@@ -474,13 +464,4 @@ public class LocalCISharedBuildJobQueueService {
         }
     }
 
-    private class CanceledBuildJobListener implements com.hazelcast.topic.MessageListener<Long> {
-
-        @Override
-        public void onMessage(com.hazelcast.topic.Message<Long> message) {
-            log.debug("Received message on topic {}: {}", message.getSource(), message.getMessageObject());
-            log.error("Cancelling build job with id {}", message.getMessageObject());
-            cancelBuildJob(message.getMessageObject());
-        }
-    }
 }
