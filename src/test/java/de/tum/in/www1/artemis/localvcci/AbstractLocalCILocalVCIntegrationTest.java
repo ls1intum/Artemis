@@ -9,16 +9,27 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -57,6 +68,9 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
 
     @Autowired
     protected AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
+    @Autowired
+    private AeolusTemplateService aeolusTemplateService;
 
     @Value("${artemis.version-control.user}")
     protected String localVCBaseUsername;
@@ -110,7 +124,7 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
     protected String auxiliaryRepositorySlug;
 
     @BeforeEach
-    void initUsersAndExercise() {
+    void initUsersAndExercise() throws JsonProcessingException {
         // The port cannot be injected into the LocalVCLocalCITestService because {local.server.port} is not available when the class is instantiated.
         // Thus, "inject" the port from here.
         localVCLocalCITestService.setPort(port);
@@ -135,6 +149,7 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setAllowOfflineIde(true);
         programmingExercise.setTestRepositoryUri(localVCBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-tests.git");
+        programmingExercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(aeolusTemplateService.getDefaultWindfileFor(programmingExercise)));
         programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
         staticCodeAnalysisService.createDefaultCategories(programmingExercise);

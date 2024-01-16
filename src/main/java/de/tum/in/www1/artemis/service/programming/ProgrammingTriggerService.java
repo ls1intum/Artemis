@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
@@ -268,28 +269,35 @@ public class ProgrammingTriggerService {
      * @param programmingExerciseId is used to retrieve the template participation.
      * @param commitHash            the unique hash code of the git repository identifying the submission, will be used for the created submission.
      * @param submissionType        will be used for the created submission.
+     * @param triggeredByPushTo     specifies the type of repository the push was made to.
      * @throws EntityNotFoundException if the programming exercise has no template participation (edge case).
      */
-    public void triggerTemplateBuildAndNotifyUser(long programmingExerciseId, String commitHash, SubmissionType submissionType) throws EntityNotFoundException {
+    public void triggerTemplateBuildAndNotifyUser(long programmingExerciseId, String commitHash, SubmissionType submissionType, RepositoryType triggeredByPushTo)
+            throws EntityNotFoundException {
         TemplateProgrammingExerciseParticipation templateParticipation = programmingExerciseParticipationService
                 .findTemplateParticipationByProgrammingExerciseId(programmingExerciseId);
         // If for some reason the programming exercise does not have a template participation, we can only log and abort.
-        createSubmissionTriggerBuildAndNotifyUser(templateParticipation, commitHash, submissionType);
+        createSubmissionTriggerBuildAndNotifyUser(templateParticipation, commitHash, submissionType, triggeredByPushTo);
+    }
+
+    public void triggerTemplateBuildAndNotifyUser(long programmingExerciseId, String commitHash, SubmissionType submissionType) throws EntityNotFoundException {
+        triggerTemplateBuildAndNotifyUser(programmingExerciseId, commitHash, submissionType, RepositoryType.TESTS);
     }
 
     /**
      * Creates a submission with the given type and commitHash for the provided participation.
      * Will notify the user about occurring errors when trying to trigger the build.
      *
-     * @param participation  for which to create the submission.
-     * @param commitHash     the unique hash code of the git repository identifying the submission,to assign to the submission.
-     * @param submissionType to assign to the submission.
+     * @param participation     for which to create the submission.
+     * @param commitHash        the unique hash code of the git repository identifying the submission,to assign to the submission.
+     * @param submissionType    to assign to the submission.
+     * @param triggeredByPushTo specifies the type of repository the push was made to.
      */
-    private void createSubmissionTriggerBuildAndNotifyUser(ProgrammingExerciseParticipation participation, String commitHash, SubmissionType submissionType) {
+    private void createSubmissionTriggerBuildAndNotifyUser(ProgrammingExerciseParticipation participation, String commitHash, SubmissionType submissionType,
+            RepositoryType triggeredByPushTo) {
         ProgrammingSubmission submission = createSubmissionWithCommitHashAndSubmissionType(participation, commitHash, submissionType);
         try {
-            continuousIntegrationTriggerService.orElseThrow().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation(), commitHash,
-                    submissionType.equals(SubmissionType.TEST));
+            continuousIntegrationTriggerService.orElseThrow().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation(), commitHash, triggeredByPushTo);
             programmingMessagingService.notifyUserAboutSubmission(submission, participation.getProgrammingExercise().getId());
         }
         catch (Exception e) {
