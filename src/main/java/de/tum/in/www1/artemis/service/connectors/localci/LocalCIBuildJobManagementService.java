@@ -61,8 +61,17 @@ public class LocalCIBuildJobManagementService {
     @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
     private String buildContainerPrefix;
 
+    /**
+     * A map that contains all build jobs that are currently running.
+     * The key is the id of the build job, the value is the future that will be completed with the build result.
+     * This map is unique for each node and contains only the build jobs that are running on this node.
+     */
     private final Map<String, Future<LocalCIBuildResult>> runningFutures = new ConcurrentHashMap<>();
 
+    /**
+     * A set that contains all build jobs that were cancelled by the user.
+     * This set is unique for each node and contains only the build jobs that were cancelled on this node.
+     */
     private final Set<String> cancelledBuildJobs = new HashSet<>();
 
     private final ITopic<String> canceledBuildJobsTopic;
@@ -82,7 +91,7 @@ public class LocalCIBuildJobManagementService {
 
     /**
      * Add a listener to the canceledBuildJobsTopic that cancels the build job for the given buildJobId.
-     * It gets broadcast to all nodes in the cluster. Only one node will actually cancel the build job.
+     * It gets broadcast to all nodes in the cluster. Only the node that is running the build job will cancel it.
      */
     @PostConstruct
     public void addListener() {
@@ -101,6 +110,7 @@ public class LocalCIBuildJobManagementService {
      * @param commitHash             The commit hash of the submission that led to this build. If it is "null", the latest commit of the repository will be used.
      * @param isRetry                Whether this build job is a retry of a previous build job.
      * @param isPushToTestRepository Defines if the build job is triggered by a push to a test repository.
+     * @param buildJobId             The id of the build job that should be executed.
      * @return A future that will be completed with the build result.
      * @throws LocalCIException If the build job could not be submitted to the executor service.
      */
