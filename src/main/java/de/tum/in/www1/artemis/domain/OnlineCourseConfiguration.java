@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.domain;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
@@ -35,23 +37,9 @@ public class OnlineCourseConfiguration extends DomainObject {
     @Column(name = "require_existing_user")
     private boolean requireExistingUser;
 
-    @Column(name = "original_url")
-    private String originalUrl;
-
-    @Column(name = "registration_id")
-    private String registrationId;
-
-    @Column(name = "client_id")
-    private String clientId;
-
-    @Column(name = "authorization_uri")
-    private String authorizationUri;
-
-    @Column(name = "jkw_set_uri")
-    private String jwkSetUri;
-
-    @Column(name = "token_uri")
-    private String tokenUri;
+    @ManyToOne
+    @JoinColumn(name = "lti_platform_id", referencedColumnName = "id")
+    private LtiPlatformConfiguration ltiPlatformConfiguration;
 
     public Course getCourse() {
         return course;
@@ -93,51 +81,12 @@ public class OnlineCourseConfiguration extends DomainObject {
         this.requireExistingUser = requireExistingUser;
     }
 
-    public String getOriginalUrl() {
-        return originalUrl;
+    public LtiPlatformConfiguration getLtiPlatformConfiguration() {
+        return ltiPlatformConfiguration;
     }
 
-    public void setOriginalUrl(String originalUrl) {
-        this.originalUrl = originalUrl;
+    public void setLtiPlatformConfiguration(LtiPlatformConfiguration ltiPlatformConfiguration) {
+        this.ltiPlatformConfiguration = ltiPlatformConfiguration;
     }
 
-    public String getRegistrationId() {
-        return registrationId;
-    }
-
-    public void setRegistrationId(String registrationId) {
-        this.registrationId = registrationId;
-    }
-
-    public String getClientId() {
-        return clientId;
-    }
-
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    public String getAuthorizationUri() {
-        return authorizationUri;
-    }
-
-    public void setAuthorizationUri(String authorizationUri) {
-        this.authorizationUri = authorizationUri;
-    }
-
-    public String getJwkSetUri() {
-        return jwkSetUri;
-    }
-
-    public void setJwkSetUri(String jwkSetUri) {
-        this.jwkSetUri = jwkSetUri;
-    }
-
-    public String getTokenUri() {
-        return tokenUri;
-    }
-
-    public void setTokenUri(String tokenUri) {
-        this.tokenUri = tokenUri;
-    }
 }
