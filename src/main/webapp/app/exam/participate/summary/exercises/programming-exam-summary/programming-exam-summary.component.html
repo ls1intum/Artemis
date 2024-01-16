@@ -4,7 +4,7 @@
             <div class="col-md-4">
                 <div class="mb-4">
                     <h5>{{ 'artemisApp.exam.examSummary.yourSubmission' | artemisTranslate }}</h5>
-                    <jhi-clone-repo-button [smallButtons]="true" [repositoryUrl]="participation?.userIndependentRepositoryUrl || ''" />
+                    <jhi-clone-repo-button [smallButtons]="true" [repositoryUri]="participation?.userIndependentRepositoryUri || ''" />
                     <br />
                     <span>
                         {{ 'artemisApp.exam.examSummary.submissionLinkedToCommit' | artemisTranslate }}
@@ -19,7 +19,7 @@
                 </div>
                 @if (isAfterResultsArePublished) {
                     <h5>{{ 'artemisApp.exam.examSummary.assessment' | artemisTranslate }}</h5>
-                    @if (feedbackComponentParameters.result) {
+                    @if (feedbackComponentParameters && feedbackComponentParameters.result) {
                         <jhi-result-detail
                             [exercise]="feedbackComponentParameters.exercise"
                             [result]="feedbackComponentParameters.result"
@@ -47,7 +47,7 @@
             class="mb-2 mt-2 ms-3"
             [exercise]="exercise"
             [participation]="participation"
-            [result]="participation.results?.[0]"
+            [result]="participation.results?.[0] ?? submission?.results?.[0]"
             [exam]="exam"
             [testRun]="isTestRun!"
         />

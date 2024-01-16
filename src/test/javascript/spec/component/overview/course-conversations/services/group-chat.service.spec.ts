@@ -8,6 +8,8 @@ import { MockTranslateService } from '../../../../helpers/mocks/service/mock-tra
 import { AccountService } from 'app/core/auth/account.service';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { GroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { NotificationService } from 'app/shared/notification/notification.service';
+import { MockNotificationService } from '../../../../helpers/mocks/service/mock-notification.service';
 
 describe('GroupChatService', () => {
     let service: GroupChatService;
@@ -20,6 +22,7 @@ describe('GroupChatService', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: NotificationService, useClass: MockNotificationService },
             ],
         });
         service = TestBed.inject(GroupChatService);

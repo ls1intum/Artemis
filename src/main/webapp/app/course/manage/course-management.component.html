@@ -30,7 +30,7 @@
                 <div class="course-table-container mb-3">
                     <div class="control-label my-3" (click)="semesterCollapsed[semester] = !semesterCollapsed[semester]">
                         <fa-icon size="2x" class="pe-3" [icon]="semesterCollapsed[semester] ? faAngleDown : faAngleUp" />
-                        @if (semester !== '' && semester !== 'test') {
+                        @if (semester !== '' && semester !== 'test' && semester !== 'recent') {
                             <span style="font-size: 24px"> {{ 'artemisApp.course.semester' | artemisTranslate }}: {{ semester }} </span>
                         }
                         @if (semester === '') {
@@ -39,6 +39,11 @@
                         @if (semester === 'test') {
                             <span style="font-size: 24px">
                                 {{ 'artemisApp.course.testCourse.plural' | artemisTranslate }}
+                            </span>
+                        }
+                        @if (semester === 'recent') {
+                            <span style="font-size: 24px">
+                                {{ 'artemisApp.course.recentlyAccessed' | artemisTranslate }}
                             </span>
                         }
                     </div>

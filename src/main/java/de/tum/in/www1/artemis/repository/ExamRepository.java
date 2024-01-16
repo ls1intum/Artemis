@@ -21,6 +21,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.web.rest.dto.CourseContentCount;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -70,6 +71,19 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             """)
     Set<Exam> findByCourseIdsForUser(@Param("courseIds") Set<Long> courseIds, @Param("userId") Long userId, @Param("groupNames") Set<String> groupNames,
             @Param("now") ZonedDateTime now);
+
+    @Query("""
+            select
+            new de.tum.in.www1.artemis.web.rest.dto.CourseContentCount(
+                COUNT(e.id),
+                e.course.id
+                )
+            FROM Exam e
+            WHERE e.course.id IN :courseIds
+                AND e.visibleDate <= :now
+            GROUP BY e.course.id
+            """)
+    Set<CourseContentCount> countVisibleExams(@Param("courseIds") Set<Long> courseIds, @Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT exam
@@ -459,4 +473,16 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
                 examIdAndRegisteredUsersCountPair -> Math.toIntExact(examIdAndRegisteredUsersCountPair[1]) // registeredUsersCount
         ));
     }
+
+    @Query("""
+            SELECT e
+            FROM Exam e
+                LEFT JOIN e.examUsers registeredUsers
+            WHERE e.course.id IN :courseIds
+                AND e.visibleDate <= :visible
+                AND e.endDate >= :end
+                AND e.testExam = false
+                AND registeredUsers.user.id = :userId
+            """)
+    Set<Exam> findActiveExams(@Param("courseIds") Set<Long> courseIds, @Param("userId") Long userId, @Param("visible") ZonedDateTime visible, @Param("end") ZonedDateTime end);
 }

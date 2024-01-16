@@ -51,13 +51,14 @@ import { CourseGroupMembershipComponent } from './course-group-membership/course
 import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/course-lti-configuration.component';
 import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
 import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
-import { ArtemisLearningPathManagementModule } from 'app/course/learning-paths/learning-path-management/learning-path-management.module';
 
 import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
 import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
 import { ArtemisParticipationModule } from 'app/exercises/shared/participation/participation.module';
 import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-scores/exercise-scores.module';
 import { ArtemisExerciseCreateButtonsModule } from 'app/exercises/shared/manage/exercise-create-buttons.module';
+import { ArtemisLearningPathManagementModule } from 'app/course/learning-paths/learning-path-management/learning-path-management.module';
+import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
 import { ArtemisExerciseHintManagementModule } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-management.module';
 import { ArtemisFileUploadAssessmentModule } from 'app/exercises/file-upload/assess/file-upload-assessment.module';
 import { ArtemisFileUploadExerciseManagementModule } from 'app/exercises/file-upload/manage/file-upload-exercise-management.module';
@@ -89,8 +90,8 @@ import { ArtemisTextExerciseManagementModule } from 'app/exercises/text/manage/t
         ArtemisProgrammingExerciseManagementModule,
         ArtemisFileUploadExerciseManagementModule,
         ArtemisQuizManagementModule,
-        ArtemisTextExerciseManagementModule,
         ArtemisMathExerciseManageModule,
+        ArtemisTextExerciseManagementModule,
         ArtemisModelingExerciseManagementModule,
         ArtemisProgrammingExerciseModule,
         ArtemisTextExerciseModule,
@@ -142,6 +143,7 @@ import { ArtemisTextExerciseManagementModule } from 'app/exercises/text/manage/t
         CourseLtiConfigurationComponent,
         EditCourseLtiConfigurationComponent,
         CourseManagementTabBarComponent,
+        BuildQueueComponent,
     ],
 })
 export class ArtemisCourseManagementModule {}

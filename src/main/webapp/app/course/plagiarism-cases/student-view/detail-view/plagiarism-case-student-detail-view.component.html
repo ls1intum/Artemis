@@ -61,13 +61,26 @@
                                     [hasChannelModerationRights]="false"
                                 />
                             </div>
-                            @if (!this.plagiarismCase.createdByContinuousPlagiarismControl && (this.posts[0].answers?.length ?? 0) === 0) {
+                            @if (
+                                !this.posts[0].answers?.length &&
+                                (!this.plagiarismCase.createdByContinuousPlagiarismControl || (this.plagiarismCase.createdByContinuousPlagiarismControl && this.isAfterDueDate))
+                            ) {
                                 <div class="alert alert-warning my-2">
                                     @if (posts[0].creationDate) {
                                         <h5
                                             [innerHTML]="
                                                 'artemisApp.plagiarism.replyToAccusationDueDateNotification'
-                                                    | artemisTranslate: { dueDate: posts[0].creationDate.add(7, 'day').format('DD.MM.YYYY') }
+                                                    | artemisTranslate
+                                                        : {
+                                                              dueDate: (plagiarismCase.createdByContinuousPlagiarismControl
+                                                                  ? dayjs(plagiarismCase.exercise!.dueDate!).add(
+                                                                        plagiarismCase.exercise!.plagiarismDetectionConfig!
+                                                                            .continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod!,
+                                                                        'day'
+                                                                    )
+                                                                  : posts[0].creationDate.add(7, 'day')
+                                                              ).format('DD.MM.YYYY')
+                                                          }
                                             "
                                         ></h5>
                                     }
@@ -86,7 +99,7 @@
             <section>
                 <h3 class="mt-5">{{ 'artemisApp.plagiarism.plagiarismCases.comparisons' | artemisTranslate }}</h3>
                 <div class="container-fluid">
-                    <jhi-plagiarism-case-review [plagiarismCase]="plagiarismCase" [forStudent]="false" />
+                    <jhi-plagiarism-case-review [plagiarismCase]="plagiarismCase" [forStudent]="true" />
                 </div>
             </section>
         </div>

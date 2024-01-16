@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @RequestMapping("api/public/")
 public class PublicBuildPlanResource {
 
-    private final Logger log = LoggerFactory.getLogger(getClass());
+    private static final Logger log = LoggerFactory.getLogger(PublicBuildPlanResource.class);
 
     private final BuildPlanRepository buildPlanRepository;
 

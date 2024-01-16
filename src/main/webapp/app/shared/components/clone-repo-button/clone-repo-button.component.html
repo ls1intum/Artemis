@@ -45,16 +45,16 @@
                 [ngClass]="
                     sshEnabled && !useSsh ? 'url-box-remove-line-left url-box-remove-line-right' : sshEnabled && useSsh ? 'url-box-remove-line-left' : 'url-box-remove-line-right'
                 "
-                [cdkCopyToClipboard]="getHttpOrSshRepositoryUrl(false)"
+                [cdkCopyToClipboard]="getHttpOrSshRepositoryUri(false)"
                 (cdkCopyToClipboardCopied)="onCopyFinished($event)"
-                >{{ getHttpOrSshRepositoryUrl() }} </pre
+                >{{ getHttpOrSshRepositoryUri() }} </pre
             >
             @if (!useSsh && !localVCEnabled) {
                 <div class="d-flex align-items-center">
                     <a
                         style="flex: 1"
                         class="btn btn-secondary btn-sm me-2 open-repository-button"
-                        [href]="getHttpRepositoryUrl() | safeUrl"
+                        [href]="getHttpRepositoryUri() | safeUrl"
                         target="_blank"
                         rel="noopener noreferrer"
                     >
@@ -70,7 +70,7 @@
             </p>
         }
         <button
-            [cdkCopyToClipboard]="getHttpOrSshRepositoryUrl(false)"
+            [cdkCopyToClipboard]="getHttpOrSshRepositoryUri(false)"
             (cdkCopyToClipboardCopied)="onCopyFinished($event)"
             [class.btn-success]="wasCopied"
             class="btn btn-primary btn-sm me-2"

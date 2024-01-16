@@ -10,8 +10,8 @@ public interface ContinuousIntegrationUpdateService {
      *
      * @param buildPlanKey The key of the buildPlan, which is usually the username, e.g. 'ga56hur'.
      * @param ciRepoName   The name of the configured repository in the continuous integration plan, normally 'assignment' or 'test'
-     * @param newRepoUrl   The new repository URL
+     * @param newRepoUri   The new repository URI
      * @param branchName   The name of the default name of the repository
      */
-    void updatePlanRepository(String buildPlanKey, String ciRepoName, String newRepoUrl, String branchName);
+    void updatePlanRepository(String buildPlanKey, String ciRepoName, String newRepoUri, String branchName);
 }

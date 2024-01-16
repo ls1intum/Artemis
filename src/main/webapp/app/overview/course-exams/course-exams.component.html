@@ -1,3 +1,15 @@
+<!-- Section for no exams. Should only be displayed if no real and test exams exist -->
+@if (realExamsOfCourse.length === 0 && testExamsOfCourse.length === 0) {
+    <div class="d-flex flex-column align-items-center justify-content-center mt-3">
+        <h3 jhiTranslate="artemisApp.exam.overview.noExams">No exams present</h3>
+        <button [routerLink]="['/courses', this.course?.id, 'exercises']" class="btn btn-primary">
+            <fa-icon [icon]="faListAlt" class="pe-1" />
+            {{ 'artemisApp.exam.overview.goToExercises' | artemisTranslate }}
+        </button>
+    </div>
+}
+
+<!-- Section for real exams. Should not be displayed if no real exams exist -->
 @if (realExamsOfCourse.length > 0) {
     <h2 class="my-2" jhiTranslate="artemisApp.exam.overview.realExamsHeading">Exams</h2>
     <div class="row d-flex align-items-start">
@@ -7,7 +19,7 @@
     </div>
     <hr />
 }
-<!-- Section test exams. Should not be displayed, if no test exams exist -->
+<!-- Section test exams. Should not be displayed if no test exams exist -->
 @if (testExamsOfCourse.length > 0) {
     <h2 jhiTranslate="artemisApp.exam.overview.testExamsHeading">Test Exams</h2>
     <div class="row">

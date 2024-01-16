@@ -206,7 +206,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
         conversation.id = this._activeConversation.id;
         this.refreshMetisConversationPostContextFilter();
-        return this.metisService.createEmptyPostForContext(undefined, undefined, undefined, undefined, conversation);
+        return this.metisService.createEmptyPostForContext(conversation);
     }
 
     postsTrackByFn = (index: number, post: Post): number => post.id!;

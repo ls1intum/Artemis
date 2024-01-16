@@ -7,7 +7,10 @@ import java.util.Set;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-import de.tum.in.www1.artemis.domain.iris.settings.*;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisCourseSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisExerciseSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisGlobalSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -38,6 +41,12 @@ public interface IrisSettingsRepository extends JpaRepository<IrisSettings, Long
             """)
     Optional<IrisCourseSettings> findCourseSettings(Long courseId);
 
+    /**
+     * Retrieves Iris exercise settings for a given exercise ID.
+     *
+     * @param exerciseId for which settings are to be retrieved.
+     * @return An Optional containing IrisExerciseSettings if found, otherwise empty.
+     */
     @Query("""
             SELECT irisSettings
             FROM IrisExerciseSettings irisSettings

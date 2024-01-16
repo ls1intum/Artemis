@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResour
 import static javax.persistence.Persistence.getPersistenceUtil;
 
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -101,8 +100,9 @@ public class TutorialGroupService {
             tutorialGroup.setTeachingAssistantName(null);
         }
 
-        var channel = tutorialGroupChannelManagementService.getTutorialGroupChannel(tutorialGroup);
-        channel.ifPresent(value -> tutorialGroup.setChannel(conversationDTOService.convertChannelToDto(user, value)));
+        if (tutorialGroup.getTutorialGroupChannel() != null) {
+            tutorialGroup.setChannel(conversationDTOService.convertChannelToDto(user, tutorialGroup.getTutorialGroupChannel()));
+        }
 
         this.setNextSession(tutorialGroup);
         this.setAverageAttendance(tutorialGroup);
@@ -134,11 +134,7 @@ public class TutorialGroupService {
                         && tutorialGroupSession.getEnd().isBefore(ZonedDateTime.now()))
                 .sorted(Comparator.comparing(TutorialGroupSession::getStart).reversed()).limit(3)
                 .map(tutorialGroupSession -> Optional.ofNullable(tutorialGroupSession.getAttendanceCount())).flatMap(Optional::stream).mapToInt(attendance -> attendance).average()
-                .ifPresentOrElse(value -> {
-                    tutorialGroup.setAverageAttendance((int) Math.round(value));
-                }, () -> {
-                    tutorialGroup.setAverageAttendance(null);
-                });
+                .ifPresentOrElse(value -> tutorialGroup.setAverageAttendance((int) Math.round(value)), () -> tutorialGroup.setAverageAttendance(null));
     }
 
     /**
@@ -153,11 +149,11 @@ public class TutorialGroupService {
             // we show currently running sessions and up to 30 minutes after the end of the session so that students can still join and tutors can easily update the attendance of
             // the session
             nextSessionOptional = tutorialGroup.getTutorialGroupSessions().stream().filter(session -> session.getStatus() == TutorialGroupSessionStatus.ACTIVE)
-                    .filter(session -> session.getEnd().plus(30, ChronoUnit.MINUTES).isAfter(ZonedDateTime.now())).min(Comparator.comparing(TutorialGroupSession::getStart));
+                    .filter(session -> session.getEnd().plusMinutes(30).isAfter(ZonedDateTime.now())).min(Comparator.comparing(TutorialGroupSession::getStart));
         }
         else {
             var nextSessions = tutorialGroupSessionRepository.findNextSessionsOfStatus(tutorialGroup.getId(), ZonedDateTime.now(), TutorialGroupSessionStatus.ACTIVE);
-            if (nextSessions.size() > 0) {
+            if (!nextSessions.isEmpty()) {
                 nextSessionOptional = Optional.of(nextSessions.get(0));
             }
         }
@@ -406,9 +402,7 @@ public class TutorialGroupService {
         var tutorialGroupsMentionedInRegistrations = new HashSet<>(foundTutorialGroups);
         tutorialGroupsMentionedInRegistrations.addAll(tutorialGroupRepository.saveAll(tutorialGroupsToCreate));
 
-        tutorialGroupsMentionedInRegistrations.forEach(tutorialGroup -> {
-            tutorialGroupChannelManagementService.createChannelForTutorialGroup(tutorialGroup);
-        });
+        tutorialGroupsMentionedInRegistrations.forEach(tutorialGroupChannelManagementService::createChannelForTutorialGroup);
 
         return tutorialGroupsMentionedInRegistrations;
     }
@@ -507,7 +501,8 @@ public class TutorialGroupService {
      */
     public Set<TutorialGroup> findAllForCourse(@NotNull Course course, @NotNull User user) {
         // do not load all sessions here as they are not needed for the overview page and would slow down the request
-        Set<TutorialGroup> tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantAndRegistrations(course.getId());
+        Set<TutorialGroup> tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantRegistrationsAndSchedule(course.getId());
+        // TODO: this is some overkill, we calculate way too many information with way too many database calls, we must reduce this
         tutorialGroups.forEach(tutorialGroup -> this.setTransientPropertiesForUser(user, tutorialGroup));
         tutorialGroups.forEach(tutorialGroup -> {
             if (!this.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {

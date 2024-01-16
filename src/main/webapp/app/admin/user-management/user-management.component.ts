@@ -10,12 +10,9 @@ import { SortingOrder } from 'app/shared/table/pageable-table';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
 import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { ParseLinks } from 'app/core/util/parse-links.service';
 import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/shared/constants/pagination.constants';
 import { faEye, faFilter, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { LocalStorageService } from 'ngx-webstorage';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -26,10 +23,8 @@ export class UserFilter {
     authorityFilter: Set<AuthorityFilter> = new Set();
     originFilter: Set<OriginFilter> = new Set();
     statusFilter: Set<StatusFilter> = new Set();
-    courseFilter: Set<number> = new Set();
     registrationNumberFilter: Set<RegistrationNumberFilter> = new Set();
     noAuthority = false;
-    noCourse = false;
 
     /**
      * Adds the http param options
@@ -44,12 +39,6 @@ export class UserFilter {
         options = options.append('origins', [...this.originFilter].join(','));
         options = options.append('registrationNumbers', [...this.registrationNumberFilter].join(','));
         options = options.append('status', [...this.statusFilter].join(','));
-        if (this.noCourse) {
-            // -1 means that we filter for users without any course
-            options = options.append('courseIds', -1);
-        } else {
-            options = options.append('courseIds', [...this.courseFilter].join(','));
-        }
         return options;
     }
 
@@ -57,15 +46,7 @@ export class UserFilter {
      * Returns the number of applied filters.
      */
     get numberOfAppliedFilters() {
-        return (
-            this.authorityFilter.size +
-            this.originFilter.size +
-            this.registrationNumberFilter.size +
-            this.statusFilter.size +
-            this.courseFilter.size +
-            (this.noAuthority ? 1 : 0) +
-            (this.noCourse ? 1 : 0)
-        );
+        return this.authorityFilter.size + this.originFilter.size + this.registrationNumberFilter.size + this.statusFilter.size + (this.noAuthority ? 1 : 0);
     }
 }
 
@@ -97,7 +78,6 @@ export enum UserStorageKey {
     NO_AUTHORITY = 'artemis.userManagement.noAuthority',
     ORIGIN = 'artemis.userManagement.origin',
     STATUS = 'artemis.userManagement.status',
-    NO_COURSE = 'artemis.userManagement.noCourse',
     REGISTRATION_NUMBER = 'artemis.userManagement.registrationNumber',
 }
 
@@ -128,7 +108,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     // filters
     filters: UserFilter = new UserFilter();
     faFilter = faFilter;
-    courses: Course[] = [];
     authorityKey = UserStorageKey.AUTHORITY;
     statusKey = UserStorageKey.STATUS;
     originKey = UserStorageKey.ORIGIN;
@@ -152,12 +131,10 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         private userService: UserService,
         private alertService: AlertService,
         private accountService: AccountService,
-        private parseLinks: ParseLinks,
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private eventManager: EventManager,
         private localStorage: LocalStorageService,
-        private courseManagementService: CourseManagementService,
         private modalService: NgbModal,
         private profileService: ProfileService,
     ) {}
@@ -166,13 +143,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Retrieves the current user and calls the {@link loadAll} and {@link registerChangeInUsers} methods on init
      */
     ngOnInit(): void {
-        // Load all courses and create id to title map
-        this.courseManagementService.getAll().subscribe((courses) => {
-            if (courses.body) {
-                this.courses = courses.body.sort((c1, c2) => (c1.title ?? '').localeCompare(c2.title ?? ''));
-            }
-            this.initFilters();
-        });
+        this.initFilters();
         this.search
             .pipe(
                 tap(() => (this.loadingSearchResult = true)),
@@ -233,8 +204,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         this.filters.originFilter = this.initFilter<OriginFilter>(UserStorageKey.ORIGIN, OriginFilter);
         this.filters.registrationNumberFilter = this.initFilter<RegistrationNumberFilter>(UserStorageKey.REGISTRATION_NUMBER, RegistrationNumberFilter);
         this.filters.statusFilter = this.initFilter<StatusFilter>(UserStorageKey.STATUS, StatusFilter);
-
-        this.filters.noCourse = !!this.localStorage.retrieve(UserStorageKey.NO_COURSE);
         this.filters.noAuthority = !!this.localStorage.retrieve(UserStorageKey.NO_AUTHORITY);
     }
 
@@ -266,15 +235,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         if (key) {
             this.localStorage.store(key, Array.from(filter).join(','));
         }
-    }
-
-    /**
-     * Method to add or remove a course filter.
-     */
-    toggleCourseFilter(filter: Set<number>, value: number) {
-        this.filters.noCourse = false;
-        this.updateNoCourse(false);
-        this.toggleFilter<number>(filter, value);
     }
 
     /**
@@ -363,52 +323,12 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Get all filter options for course.
-     */
-    get courseFilters() {
-        return this.courses;
-    }
-
-    /**
-     * Update the no course selection and the local storage.
-     * @param value new value
-     */
-    updateNoCourse(value: boolean) {
-        this.localStorage.store(UserStorageKey.NO_COURSE, value);
-        this.filters.noCourse = value;
-    }
-
-    /**
      * Update the no authority selection and the local storage.
      * @param value new value
      */
     updateNoAuthority(value: boolean) {
         this.localStorage.store(UserStorageKey.NO_AUTHORITY, value);
         this.filters.noAuthority = value;
-    }
-
-    /**
-     * Deselect all courses
-     */
-    deselectAllCourses() {
-        this.filters.courseFilter.clear();
-        this.updateNoCourse(false);
-    }
-
-    /**
-     * Select all users without course
-     */
-    selectEmptyCourses() {
-        this.filters.courseFilter.clear();
-        this.updateNoCourse(true);
-    }
-
-    /**
-     * Select all courses
-     */
-    selectAllCourses() {
-        this.filters.courseFilter = new Set(this.courses.map((course) => course.id!));
-        this.updateNoCourse(false);
     }
 
     /**

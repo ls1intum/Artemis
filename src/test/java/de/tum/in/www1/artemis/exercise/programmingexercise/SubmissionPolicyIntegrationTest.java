@@ -268,7 +268,7 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
         String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-" + TEST_PREFIX + "student2";
         User student2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student2");
         bitbucketRequestMockProvider.enableMockingOfRequests();
-        mockSetRepositoryPermissionsToReadOnly(participation2.getVcsRepositoryUrl(), programmingExercise.getProjectKey(), Set.of(student2));
+        mockSetRepositoryPermissionsToReadOnly(participation2.getVcsRepositoryUri(), programmingExercise.getProjectKey(), Set.of(student2));
         bitbucketRequestMockProvider.mockProtectBranches(programmingExercise, repositoryName);
         request.patch(requestUrl(), SubmissionPolicyBuilder.lockRepo().active(true).limit(2).policy(), HttpStatus.OK);
     }
@@ -488,7 +488,7 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
     private void mockBitbucketRequests(ProgrammingExerciseParticipation participation) throws Exception {
         User student = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
         bitbucketRequestMockProvider.enableMockingOfRequests();
-        mockSetRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUrl(), programmingExercise.getProjectKey(), Set.of(student));
+        mockSetRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUri(), programmingExercise.getProjectKey(), Set.of(student));
         bitbucketRequestMockProvider.mockProtectBranches(programmingExercise, programmingExercise.getProjectKey().toLowerCase() + "-student1");
     }
 

@@ -37,6 +37,7 @@ const esModules = [
     'd3-shape',
     'd3-time',
     'd3-transition',
+    'export-to-csv',
     'dayjs/esm',
     'franc-min',
     'internmap',
@@ -47,7 +48,7 @@ const esModules = [
     'ngx-slider-v2',
     'ngx-webstorage',
     'rxjs/operators',
-    'trigram-utils'
+    'trigram-utils',
 ].join('|');
 
 const {
@@ -101,8 +102,8 @@ module.exports = {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
             statements: 86.7,
-            branches: 73.6,
-            functions: 80.6,
+            branches: 73.7,
+            functions: 80.7,
             lines: 86.7,
         },
     },
@@ -147,6 +148,6 @@ module.exports = {
         '@src/(.*)': '<rootDir>/src/src/$1',
         '@state/(.*)': '<rootDir>/src/app/state/$1',
         '^lodash-es$': 'lodash',
-        "@sentry/angular-ivy": "<rootDir>/node_modules/@sentry/angular-ivy/bundles/sentry-angular-ivy.umd.js"
+        '@sentry/angular-ivy': '<rootDir>/node_modules/@sentry/angular-ivy/bundles/sentry-angular-ivy.umd.js',
     },
 };

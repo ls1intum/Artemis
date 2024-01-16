@@ -4,15 +4,15 @@
             {{ programmingExercise.shortName || '' }}
         </div>
     }
-    @if (displayRepositoryUrl) {
+    @if (displayRepositoryUri) {
         <div>
             <div>
-                @if (programmingExercise.templateParticipation?.repositoryUrl) {
+                @if (programmingExercise.templateParticipation?.repositoryUri) {
                     <!--Checks if the programming exercise has a setup with VCS and CI, if this not the case
                                             the links/clone-buttons are disabled--->
                     @if (!localVCEnabled) {
                         <span>
-                            <a href="{{ programmingExercise.templateParticipation?.repositoryUrl || '' }}" target="_blank">Template</a>
+                            <a href="{{ programmingExercise.templateParticipation?.repositoryUri || '' }}" target="_blank">Template</a>
                         </span>
                     } @else {
                         <a [routerLink]="" (click)="downloadRepository('TEMPLATE')"> <fa-icon [icon]="faDownload" /> Template </a>
@@ -27,10 +27,10 @@
                 }
             </div>
             <div>
-                @if (programmingExercise.solutionParticipation?.repositoryUrl) {
+                @if (programmingExercise.solutionParticipation?.repositoryUri) {
                     @if (!localVCEnabled) {
                         <span>
-                            <a href="{{ programmingExercise.solutionParticipation?.repositoryUrl || '' }}" target="_blank">Solution</a>
+                            <a href="{{ programmingExercise.solutionParticipation?.repositoryUri || '' }}" target="_blank">Solution</a>
                         </span>
                     } @else {
                         <a [routerLink]="" (click)="downloadRepository('SOLUTION')"> <fa-icon [icon]="faDownload" /> Solution </a>
@@ -45,10 +45,10 @@
                 }
             </div>
             <div>
-                @if (programmingExercise.testRepositoryUrl) {
+                @if (programmingExercise.testRepositoryUri) {
                     @if (!localVCEnabled) {
                         <span>
-                            <a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank">Test</a>
+                            <a href="{{ programmingExercise.testRepositoryUri }}" target="_blank">Test</a>
                         </span>
                     } @else {
                         <a [routerLink]="" (click)="downloadRepository('TESTS')"> <fa-icon [icon]="faDownload" /> Test </a>

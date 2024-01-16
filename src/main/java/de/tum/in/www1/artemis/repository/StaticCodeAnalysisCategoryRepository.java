@@ -90,8 +90,7 @@ public interface StaticCodeAnalysisCategoryRepository extends JpaRepository<Stat
                 // find the category for this issue
                 for (var categoryPair : categoryPairs) {
                     var categoryMappings = categoryPair.right;
-                    if (categoryMappings.stream()
-                            .anyMatch(mapping -> mapping.getTool().name().equals(feedback.getReference()) && mapping.getCategory().equals(issue.getCategory()))) {
+                    if (categoryMappings.stream().anyMatch(mapping -> mapping.tool().name().equals(feedback.getReference()) && mapping.category().equals(issue.getCategory()))) {
                         category = Optional.of(categoryPair.left);
                         break;
                     }

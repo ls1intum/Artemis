@@ -39,7 +39,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @RequestMapping(ROOT)
 public class ProgrammingExercisePlagiarismResource {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExercisePlagiarismResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExercisePlagiarismResource.class);
 
     private static final String ENTITY_NAME = "programmingExercise";
 
