@@ -57,6 +57,8 @@ jobs:
         distribution: 'temurin'
         java-version: '${{ env.java }}'
         cache: 'gradle'
+    - name: apt install fontconfig
+      run: sudo apt-get install -y fontconfig
     - name: Java Tests
       run: set -o pipefail && ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
     - name: Print failed tests
