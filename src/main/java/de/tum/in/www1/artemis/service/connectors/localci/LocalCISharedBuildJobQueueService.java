@@ -446,6 +446,7 @@ public class LocalCISharedBuildJobQueueService {
                 else {
                     log.warn("Participation with id {} has been deleted. Cancelling the requeueing of the build job.", participation.getId());
                 }
+                saveFinishedBuildJob(updatedJob, BuildJobResult.FAILED, buildCompletionDate, participation);
             }
             checkAvailabilityAndProcessNextBuild();
             return null;
