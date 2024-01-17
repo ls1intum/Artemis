@@ -145,9 +145,6 @@ public class CourseTestService {
     private CourseExamExportService courseExamExportService;
 
     @Autowired
-    private FilePathService filePathService;
-
-    @Autowired
     private FileUploadExerciseRepository fileUploadExerciseRepository;
 
     @Autowired
