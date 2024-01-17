@@ -109,14 +109,6 @@ export class ConversationSidebarSectionComponent implements OnInit {
         return containsUnreadConversation;
     }
 
-    get isConversationListVisible() {
-        return this.visibleConversations.length + this.mutedConversations.length > 0 || this.hiddenConversations.length > 0;
-    }
-
-    get isHiddenConversationListVisible() {
-        return this.hiddenConversations && this.hiddenConversations.length > 0;
-    }
-
     conversationsTrackByFn = (index: number, conversation: ConversationDto): number => conversation.id!;
 
     toggleCollapsed() {

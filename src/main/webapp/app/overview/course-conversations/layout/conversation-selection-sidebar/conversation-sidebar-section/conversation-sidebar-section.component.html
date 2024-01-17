@@ -15,7 +15,7 @@
         }
     </div>
     <div [(ngbCollapse)]="isCollapsed">
-        @if (visibleConversations.length > 0 || hiddenConversations.length > 0) {
+        @if (visibleConversations.length > 0 || mutedConversations.length > 0 || hiddenConversations.length > 0) {
             <ul class="conversation-list">
                 @for (conversation of visibleConversations; track conversationsTrackByFn($index, conversation)) {
                     <li
@@ -47,7 +47,7 @@
                     <li (click)="isHiddenConversationListPresented = !isHiddenConversationListPresented" class="hidden-conversation-divider text-center">
                         {{ hiddenConversations.length }}
                         {{
-                            isHiddenConversationListVisible
+                            isHiddenConversationListPresented
                                 ? ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.shown' | artemisTranslate)
                                 : ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.hidden' | artemisTranslate)
                         }}
@@ -55,7 +55,7 @@
                             <fa-icon [icon]="faMessage" class="text-info"></fa-icon>
                         </span>
                     </li>
-                    @if (isHiddenConversationListVisible) {
+                    @if (isHiddenConversationListPresented) {
                         @for (conversation of hiddenConversations; track conversationsTrackByFn($index, conversation)) {
                             <li
                                 [conversation]="conversation"
