@@ -1,9 +1,9 @@
-.. _Local CI and local VC Setup:
+.. _Integrated Code Lifecycle Setup:
 
-Local CI and local VC setup
----------------------------
+Integrated Code Lifecycle Setup
+-------------------------------
 
-This section describes how to set up a programming exercise environment based on the local CI and local VC systems.
+This section describes how to set up a programming exercise environment based on Integrated Code Lifecycle.
 These two systems are integrated into the Artemis server application and thus the setup is greatly simplified compared to the external options.
 This also reduces system requirements as you do not have to run any systems in addition to the Artemis server.
 For now, this setup is only recommended for development and testing purposes.
@@ -47,7 +47,7 @@ Create a file ``src/main/resources/config/application-local.yml`` with the follo
            continuous-integration:
                docker-connection-uri: tcp://localhost:2375
 
-The values configured here are sufficient for a basic Artemis setup that allows for running programming exercises with the local VC and local CI systems.
+The values configured here are sufficient for a basic Artemis setup that allows for running programming exercises with Integrated Code Lifecycle.
 
 If you are running Artemis on Windows, you also need to add a property ``artemis.continuous-integration.docker-connection-uri``
 with the value ``tcp://localhost:2375`` as shown above.
@@ -63,7 +63,7 @@ You can then use that admin user to create further users in Artemis' internal us
 Configure Jira
 ^^^^^^^^^^^^^^
 
-The local CI and local VC systems work fine without external user management configured so this step is **optional**.
+The Integrated Code Lifecycle also works without external user management, therefore this step is **optional**.
 Setting up Jira allows you to run a script that sets up a number of users and groups for you.
 
 If you have already set up your system with Bamboo, Bitbucket, and Jira, you can keep using Jira for user management. Just stop the Bamboo and Bitbucket containers.
@@ -145,7 +145,7 @@ For unauthorized access, your Git client will display the respective error messa
 Setup with Docker Compose
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You can also use Docker Compose to set up the local CI and local VC systems. Using the following command, you can start the Artemis and MySQL containers:
+You can also use Docker Compose to set up Integrated Code Lifecycle. Using the following command, you can start the Artemis and MySQL containers:
 
 .. code-block:: bash
 
