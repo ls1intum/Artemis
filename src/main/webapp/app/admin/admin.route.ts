@@ -15,6 +15,7 @@ import { organizationMgmtRoute } from 'app/admin/organization-management/organiz
 import { MetricsComponent } from 'app/admin/metrics/metrics.component';
 import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
 import { BuildQueueGuard } from 'app/localci/build-queue/build-queue.guard';
+import { ltiConfigurationRoute } from 'app/admin/lti-configuration/lti-configuration.route';
 
 export const adminState: Routes = [
     {
@@ -108,6 +109,7 @@ export const adminState: Routes = [
             ...userManagementRoute,
             ...systemNotificationManagementRoute,
             upcomingExamsAndExercisesRoute,
+            ...ltiConfigurationRoute,
         ],
     },
 ];
