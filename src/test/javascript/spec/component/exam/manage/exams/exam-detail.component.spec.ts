@@ -267,4 +267,11 @@ describe('ExamDetailComponent', () => {
         expect(service.delete).toHaveBeenCalledOnce();
         expect(router.navigate).toHaveBeenCalledOnce();
     });
+
+    it('should call window.scrollTo(0, 0) on component initialization', () => {
+        const scrollToSpy = jest.spyOn(window, 'scrollTo');
+        examDetailComponent.ngOnInit();
+        expect(scrollToSpy).toHaveBeenCalledWith(0, 0);
+        scrollToSpy.mockRestore();
+    });
 });
