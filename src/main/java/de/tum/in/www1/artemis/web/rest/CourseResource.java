@@ -360,16 +360,15 @@ public class CourseResource {
         return userCourses.toList();
     }
 
-    // TODO: add course DTO?
-
+    // TODO: add course DTO as we only need very limited course data for this(?)
     /**
-     * GET /courses/paginated : get all courses for administration purposes.
+     * GET /courses/paginated : get a paginated list of courses.
      *
      * @return the list of courses (the user has access to)
      */
     @GetMapping("courses/paginated")
-    @EnforceAtLeastEditor
-    public ResponseEntity<SearchResultPageDTO<Course>> getCoursesPaginated(PageableSearchDTO<String> search) {
+    @EnforceAtLeastInstructor
+    public ResponseEntity<SearchResultPageDTO<Course>> getAllCoursesOnPage(PageableSearchDTO<String> search) {
         log.debug("REST request to get paginated list of courses.");
         User user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(courseService.getAllOnPageWithSize(search, user));

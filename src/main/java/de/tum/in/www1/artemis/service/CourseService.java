@@ -208,7 +208,7 @@ public class CourseService {
         final var searchTerm = search.getSearchTerm();
         final Page<Course> coursePage;
         if (authCheckService.isAdmin(user)) {
-            coursePage = courseRepository.findByTitleIgnoreCase(searchTerm, pageable);
+            coursePage = courseRepository.findByTitleIgnoreCaseContaining(searchTerm, pageable);
         }
         else {
             coursePage = courseRepository.findByTitleAndUserHasAccessToCourse(searchTerm, user.getGroups(), pageable);
