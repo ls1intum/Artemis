@@ -16,6 +16,7 @@ on:
     - develop
     - main
     - release/*
+    - ci/*
     tags: '[0-9]+.[0-9]+.[0-9]+'
     paths-ignore:
     - 'README.md'
@@ -46,7 +47,7 @@ env:
 jobs:
 
   server-tests:
-    runs-on: ubuntu-latest
+    runs-on: ase-medium-ubuntu
     timeout-minutes: 60
     steps:
     - uses: actions/checkout@v4
@@ -87,11 +88,11 @@ jobs:
 
   server-tests-mysql:
       needs: [ server-tests ]
-      runs-on: ubuntu-latest
+      runs-on: ase-large-ubuntu
       timeout-minutes: 120
       # Limit the number of concurrent mysql tests to one in total
       concurrency:
-          group: server-tests-mysql
+          group: server-tests-mysql-ase
       steps:
           - uses: actions/checkout@v4
           - name: Setup Java
@@ -141,11 +142,11 @@ jobs:
 
   server-tests-postgres:
       needs: [ server-tests ]
-      runs-on: ubuntu-latest
+      runs-on: ase-large-ubuntu
       timeout-minutes: 150
       # Limit the number of concurrent postgres tests to one in total
       concurrency:
-          group: server-tests-postgres
+          group: server-tests-postgres-ase
       steps:
           - uses: actions/checkout@v4
           - name: Setup Java
@@ -221,7 +222,7 @@ jobs:
         reporter: java-junit
 
   client-tests:
-    runs-on: ubuntu-latest
+    runs-on: ase-medium-ubuntu
     timeout-minutes: 30
     steps:
         - uses: actions/checkout@v4
