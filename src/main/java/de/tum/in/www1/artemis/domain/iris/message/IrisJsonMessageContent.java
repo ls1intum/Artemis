@@ -38,7 +38,6 @@ public class IrisJsonMessageContent extends IrisMessageContent {
     }
 
     @Override
-    @JsonIgnore
     public String getContentAsString() {
         return jsonContent;
     }

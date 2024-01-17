@@ -41,7 +41,6 @@ public abstract class IrisMessageContent extends DomainObject {
     }
 
     @Nullable
-    @JsonIgnore
     public abstract String getContentAsString();
 
 }

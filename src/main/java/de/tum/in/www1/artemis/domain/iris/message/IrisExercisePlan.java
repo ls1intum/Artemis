@@ -42,7 +42,6 @@ public class IrisExercisePlan extends IrisMessageContent {
     }
 
     @Override
-    @JsonIgnore
     public String getContentAsString() {
         var sb = new StringBuilder("Exercise Plan:\n");
         for (var step : steps) {
