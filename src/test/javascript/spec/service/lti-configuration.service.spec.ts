@@ -22,8 +22,22 @@ describe('LtiConfigurationService', () => {
 
     it('should return all lti platforms', () => {
         const dummyLtiPlatforms: LtiPlatformConfiguration[] = [
-            { id: 1, customName: 'Platform A', clientId: 'client-id-a' },
-            { id: 2, customName: 'Platform B', clientId: 'client-id-b' },
+            {
+                id: 1,
+                customName: 'Platform A',
+                clientId: 'client-id-a',
+                authorizationUri: 'platformA.com/auth-login',
+                jwkSetUri: 'platformA.com/jwk',
+                tokenUri: 'platformA.com/token',
+            },
+            {
+                id: 2,
+                customName: 'Platform B',
+                clientId: 'client-id-b',
+                authorizationUri: 'platformB.com/auth-login',
+                jwkSetUri: 'platformB.com/jwk',
+                tokenUri: 'platformB.com/token',
+            },
         ];
 
         service.findAll().subscribe((platforms) => {
@@ -38,7 +52,14 @@ describe('LtiConfigurationService', () => {
 
     it('should update lti platform', () => {
         const dummyResponse = { status: 200, statusText: 'OK' };
-        const dummyConfig: LtiPlatformConfiguration = { id: 1, customName: 'Updated Platform', clientId: 'updated-client-id' };
+        const dummyConfig: LtiPlatformConfiguration = {
+            id: 1,
+            customName: 'Updated Platform',
+            clientId: 'updated-client-id',
+            authorizationUri: 'platformA.com/auth-login',
+            jwkSetUri: 'platformA.com/jwk',
+            tokenUri: 'platformA.com/token',
+        };
 
         service.updateLtiPlatformConfiguration(dummyConfig).subscribe((response) => {
             expect(response.status).toBe(200);

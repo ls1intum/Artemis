@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.iris;
 
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.context.annotation.Profile;
@@ -11,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
-import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -20,43 +17,28 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisHealthIndicator;
-import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisStatusDTO;
-import de.tum.in.www1.artemis.service.iris.session.IrisCodeEditorSessionService;
+import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedSettingsDTO;
+import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
+import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
  * REST controller for managing {@link IrisCodeEditorSession}.
- * TODO: Lots of duplication with IrisChatSessionResource. Problem is lots of overlap but a few very important differences.
  */
 @RestController
 @Profile("iris")
 @RequestMapping("api/iris/")
-public class IrisCodeEditorSessionResource {
-
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
-    private final AuthorizationCheckService authCheckService;
+public class IrisCodeEditorSessionResource extends IrisExerciseChatBasedSessionResource<ProgrammingExercise, IrisCodeEditorSession> {
 
     private final IrisCodeEditorSessionRepository irisCodeEditorSessionRepository;
 
-    private final UserRepository userRepository;
-
-    private final IrisCodeEditorSessionService irisCodeEditorSessionService;
-
-    private final IrisSettingsService irisSettingsService;
-
-    private final IrisHealthIndicator irisHealthIndicator;
-
-    public IrisCodeEditorSessionResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
-            IrisCodeEditorSessionRepository irisCodeEditorSessionRepository, UserRepository userRepository, IrisCodeEditorSessionService irisCodeEditorSessionService,
-            IrisSettingsService irisSettingsService, IrisHealthIndicator irisHealthIndicator) {
-        this.programmingExerciseRepository = programmingExerciseRepository;
-        this.authCheckService = authCheckService;
+    protected IrisCodeEditorSessionResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            IrisSessionService irisSessionService, IrisSettingsService irisSettingsService, IrisHealthIndicator irisHealthIndicator, IrisRateLimitService irisRateLimitService,
+            IrisCodeEditorSessionRepository irisCodeEditorSessionRepository) {
+        super(authCheckService, userRepository, irisSessionService, irisSettingsService, irisHealthIndicator, irisRateLimitService,
+                programmingExerciseRepository::findByIdElseThrow);
         this.irisCodeEditorSessionRepository = irisCodeEditorSessionRepository;
-        this.userRepository = userRepository;
-        this.irisCodeEditorSessionService = irisCodeEditorSessionService;
-        this.irisSettingsService = irisSettingsService;
-        this.irisHealthIndicator = irisHealthIndicator;
     }
 
     /**
@@ -69,15 +51,9 @@ public class IrisCodeEditorSessionResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/code-editor-sessions/current")
     @EnforceAtLeastEditor
-    public ResponseEntity<IrisSession> getCurrentSession(@PathVariable Long exerciseId) {
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CODE_EDITOR, exercise);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
-
-        var session = irisCodeEditorSessionRepository.findNewestByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
-        irisCodeEditorSessionService.checkHasAccessTo(user, session);
-        return ResponseEntity.ok(session);
+    public ResponseEntity<IrisCodeEditorSession> getCurrentSession(@PathVariable Long exerciseId) {
+        return super.getCurrentSession(exerciseId, IrisSubSettingsType.CODE_EDITOR, Role.EDITOR,
+                (exercise, user) -> irisCodeEditorSessionRepository.findNewestByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId()));
     }
 
     /**
@@ -91,14 +67,8 @@ public class IrisCodeEditorSessionResource {
     @GetMapping("programming-exercises/{exerciseId}/code-editor-sessions")
     @EnforceAtLeastEditor
     public ResponseEntity<List<IrisCodeEditorSession>> getAllSessions(@PathVariable Long exerciseId) {
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CODE_EDITOR, exercise);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
-
-        var sessions = irisCodeEditorSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
-        sessions.forEach(s -> irisCodeEditorSessionService.checkHasAccessTo(user, s));
-        return ResponseEntity.ok(sessions);
+        return super.getAllSessions(exerciseId, IrisSubSettingsType.CODE_EDITOR, Role.EDITOR,
+                (exercise, user) -> irisCodeEditorSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId()));
     }
 
     /**
@@ -112,16 +82,15 @@ public class IrisCodeEditorSessionResource {
      */
     @PostMapping("programming-exercises/{exerciseId}/code-editor-sessions")
     @EnforceAtLeastEditor
-    public ResponseEntity<IrisSession> createSessionForProgrammingExercise(@PathVariable Long exerciseId) throws URISyntaxException {
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CODE_EDITOR, exercise);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
-
-        var session = irisCodeEditorSessionService.createSession(exercise, user);
-
-        var uriString = "/api/iris/code-editor-sessions/" + session.getId();
-        return ResponseEntity.created(new URI(uriString)).body(session);
+    public ResponseEntity<IrisCodeEditorSession> createSessionForProgrammingExercise(@PathVariable Long exerciseId) throws URISyntaxException {
+        return super.createSessionForExercise(exerciseId, IrisSubSettingsType.CODE_EDITOR, Role.EDITOR, (exercise, user) -> {
+            if (exercise instanceof ProgrammingExercise programmingExercise) {
+                return irisCodeEditorSessionRepository.save(new IrisCodeEditorSession(programmingExercise, user));
+            }
+            else {
+                throw new ConflictException("Iris is only supported for programming exercises", "Iris", "irisProgrammingExercise");
+            }
+        });
     }
 
     /**
@@ -135,17 +104,6 @@ public class IrisCodeEditorSessionResource {
     @EnforceAtLeastEditor
     public ResponseEntity<Boolean> isIrisActive(@PathVariable Long sessionId) {
         var session = irisCodeEditorSessionRepository.findByIdElseThrow(sessionId);
-        var user = userRepository.getUser();
-        irisCodeEditorSessionService.checkHasAccessTo(user, session);
-        irisCodeEditorSessionService.checkIsFeatureActivatedFor(session);
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(session.getExercise(), false);
-        var health = irisHealthIndicator.health();
-        IrisStatusDTO[] modelStatuses = (IrisStatusDTO[]) health.getDetails().get("modelStatuses");
-        var specificModelStatus = false;
-        if (modelStatuses != null) {
-            specificModelStatus = Arrays.stream(modelStatuses).filter(x -> x.model().equals(settings.irisCodeEditorSettings().getPreferredModel()))
-                    .anyMatch(x -> x.status() == IrisStatusDTO.ModelStatus.UP);
-        }
-        return ResponseEntity.ok(specificModelStatus);
+        return ResponseEntity.ok(super.isIrisActiveInternal(session.getExercise(), session, IrisCombinedSettingsDTO::irisCodeEditorSettings).active());
     }
 }

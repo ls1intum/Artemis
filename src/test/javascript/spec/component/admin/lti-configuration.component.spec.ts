@@ -15,6 +15,8 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('LtiConfigurationComponent', () => {
     let component: LtiConfigurationComponent;
@@ -43,6 +45,7 @@ describe('LtiConfigurationComponent', () => {
                 { provide: LtiConfigurationService, useClass: MockLtiConfigurationService },
                 { provide: Router, useValue: mockRouter },
                 { provide: SortService, useValue: mockSortService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 
@@ -84,8 +87,22 @@ describe('LtiConfigurationComponent', () => {
 
     it('should sort platforms', () => {
         const dummyPlatforms: LtiPlatformConfiguration[] = [
-            { id: 1, customName: 'Platform A' },
-            { id: 2, customName: 'Platform B' },
+            {
+                id: 1,
+                customName: 'Platform A',
+                clientId: 'platform-a',
+                authorizationUri: 'platformA.com/auth-login',
+                jwkSetUri: 'platformA.com/jwk',
+                tokenUri: 'platformA.com/token',
+            },
+            {
+                id: 2,
+                customName: 'Platform B',
+                clientId: 'platform-b',
+                authorizationUri: 'platformB.com/auth-login',
+                jwkSetUri: 'platformB.com/jwk',
+                tokenUri: 'platformB.com/token',
+            },
         ];
         component.platforms = dummyPlatforms;
         component.sortRows();
