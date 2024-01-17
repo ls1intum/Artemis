@@ -40,7 +40,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      *
      * @param participation     the participation of the repository which should be built and tested
      * @param commitHash        the commit hash of the commit that triggers the build. If it is null, the latest commit of the default branch will be built.
-     * @param triggeredByPushTo defines ...
+     * @param triggeredByPushTo type of the repository that was pushed to and triggered the build job
      * @throws LocalCIException if the build job could not be added to the queue.
      */
     @Override
