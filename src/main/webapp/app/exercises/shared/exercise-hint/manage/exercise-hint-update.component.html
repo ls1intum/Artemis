@@ -59,6 +59,7 @@
                             [isLoading]="isGeneratingDescription"
                             [title]="'artemisApp.codeHint.management.step4.iris.generateDescription.label'"
                             [tooltip]="'artemisApp.codeHint.management.step4.iris.generateDescription.tooltip'"
+                            [disabled]="((exerciseHint | castToCodeHint).solutionEntries?.length ?? 0) === 0"
                             >Generate description
                         </jhi-iris-logo-button>
                     </div>

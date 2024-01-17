@@ -162,6 +162,9 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     }
 
     generateDescriptionForCodeHint() {
+        if (((this.exerciseHint as CodeHint).solutionEntries?.length ?? 0) === 0) {
+            return;
+        }
         this.isGeneratingDescription = true;
         this.codeHintService.generateDescriptionForCodeHint(this.exercise.id!, this.exerciseHint.id!).subscribe({
             next: (response) => {
