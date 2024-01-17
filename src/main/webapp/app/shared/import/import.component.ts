@@ -1,29 +1,26 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Subject } from 'rxjs';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
-import { SortService } from 'app/shared/service/sort.service';
 import { Router } from '@angular/router';
 import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { PagingService } from 'app/exercises/shared/manage/paging.service';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { CompetencyPagingService } from 'app/course/competencies/competency-paging.service';
+import { SortService } from 'app/shared/service/sort.service';
+import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
+import { Subject, debounceTime, switchMap, tap } from 'rxjs';
 
-export enum TableColumn {
-    ID = 'ID',
-    TITLE = 'TITLE',
-    COURSE_TITLE = 'COURSE_TITLE',
-    SEMESTER = 'SEMESTER',
-}
-
-// TODO: Generalize this component further to make it compatible with all potential implementations (ExerciseImportComponent, LectureImportComponent, etc.)
 /**
  * An abstract component intended for cases where a resource needs to be imported from one course into another.
  *
- * @template T
+ * @template T generic class parameter of the entity that gets imported
  */
+
+export type Column<T extends BaseEntity> = {
+    name: string;
+    getProperty(entity: T): string | undefined;
+};
+
 @Component({ template: '' })
 export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
-    readonly column = TableColumn;
     loading = false;
     content: SearchResult<T>;
     total = 0;
@@ -32,22 +29,26 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
         pageSize: 10,
         searchTerm: '',
         sortingOrder: SortingOrder.DESCENDING,
-        sortedColumn: TableColumn.ID,
+        sortedColumn: 'ID',
     };
 
+    // These two attributes should be set when using the common template (import.component.html)
+    entityName: string;
+    columns: Column<T>[];
+
+    @Input() public disabledIds: number[] = [];
+
     // Icons
-    faSort = faSort;
-    faCheck = faCheck;
-    private search = new Subject<void>();
-    private sort = new Subject<void>();
+    readonly faSort = faSort;
+    readonly faCheck = faCheck;
+    protected readonly search = new Subject<void>();
+    protected readonly sort = new Subject<void>();
 
-    @Input() public disabledIds: number[];
-
-    constructor(
-        private router: Router,
-        public pagingService: CompetencyPagingService,
+    protected constructor(
+        protected router: Router,
         private sortService: SortService,
-        private activeModal: NgbActiveModal,
+        protected activeModal: NgbActiveModal,
+        protected pagingService?: PagingService<T>,
     ) {}
 
     get page(): number {
@@ -146,9 +147,35 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
      * @param searchSubject The search subject which we use to search.
      * @param debounce The delay we apply to delay the feedback / wait for input
      */
-    abstract performSearch(searchSubject: Subject<void>, debounce: number): void;
+    performSearch(searchSubject: Subject<void>, debounce: number) {
+        searchSubject
+            .pipe(
+                debounceTime(debounce),
+                tap(() => (this.loading = true)),
+                switchMap(() => this.pagingService!.search(this.state, this.createOptions())),
+            )
+            .subscribe((resp: SearchResult<T>) => {
+                this.content = resp;
+                this.loading = false;
+                this.total = resp.numberOfPages * this.state.pageSize;
+                this.onSearchResult();
+            });
+    }
 
-    private setSearchParam(patch: Partial<PageableSearch>) {
+    /**
+     * This method is used to create additional options passed to the paging service.
+     */
+    protected createOptions(): object | undefined {
+        return undefined;
+    }
+
+    /**
+     * This method is called after retrieving a result from the paging service.
+     * Used to perform some special logic with the search result (e.g. calculating the submission size for the example submission import)
+     */
+    protected onSearchResult(): void {}
+
+    protected setSearchParam(patch: Partial<PageableSearch>) {
         Object.assign(this.state, patch);
         this.sort.next();
     }
