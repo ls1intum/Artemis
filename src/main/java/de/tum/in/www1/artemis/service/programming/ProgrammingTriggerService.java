@@ -156,7 +156,7 @@ public class ProgrammingTriggerService {
         // Let the instructor know that a build run was triggered.
         programmingMessagingService.notifyInstructorAboutStartedExerciseBuildRun(programmingExercise);
         List<ProgrammingExerciseStudentParticipation> participations = new ArrayList<>(
-                programmingExerciseStudentParticipationRepository.findWithSubmissionsByExerciseId(exerciseId));
+                programmingExerciseStudentParticipationRepository.findWithSubmissionsAndTeamStudentsByExerciseId(exerciseId));
 
         triggerBuildForParticipations(participations);
 
@@ -213,10 +213,13 @@ public class ProgrammingTriggerService {
      * @param participation the participation for which we create a new submission and new result
      */
     public void triggerBuild(ProgrammingExerciseStudentParticipation participation) {
-        Optional<ProgrammingSubmission> submission = participation.findLatestSubmission();
+        Optional<ProgrammingSubmission> optionalSubmission = participation.findLatestSubmission();
         // we only need to trigger the build if the student actually already made a submission, otherwise this is not needed
-        if (submission.isPresent()) {
+        if (optionalSubmission.isPresent()) {
+            var submission = optionalSubmission.get();
             try {
+                // Make sure the relation is set correctly to avoid issues with lazy-loading until participation is used for notifying students
+                submission.setParticipation(participation);
                 if (participation.getBuildPlanId() == null || !participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
                     // in this case, we first have to resume the exercise: this includes that we again set up the build plan properly before we trigger it
                     participationService.resumeProgrammingExercise(participation);
@@ -224,7 +227,7 @@ public class ProgrammingTriggerService {
                 }
                 continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation);
                 // TODO: this is a workaround, in the future we should use the participation to notify the client and avoid using the submission
-                programmingMessagingService.notifyUserAboutSubmission(submission.get(), participation.getProgrammingExercise().getId());
+                programmingMessagingService.notifyUserAboutSubmission(submission, participation.getProgrammingExercise().getId());
             }
             catch (Exception e) {
                 log.error("Trigger build failed for {} with the exception {}", participation.getBuildPlanId(), e.getMessage());

@@ -311,7 +311,8 @@ public class ResultService {
         else if (planKey.endsWith("-" + BuildPlanType.SOLUTION.getName())) {
             return solutionProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
         }
-        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository.findByBuildPlanId(planKey);
+        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository
+                .findWithResultsAndExerciseAndTeamStudentsByBuildPlanId(planKey);
         ProgrammingExerciseStudentParticipation participation = null;
         if (!participations.isEmpty()) {
             participation = participations.get(0);

@@ -48,8 +48,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(@Param("participationId") Long participationId,
             @Param("dateTime") ZonedDateTime dateTime);
 
-    @EntityGraph(type = LOAD, attributePaths = { "results", "exercise" })
-    List<ProgrammingExerciseStudentParticipation> findByBuildPlanId(String buildPlanId);
+    @EntityGraph(type = LOAD, attributePaths = { "results", "exercise", "team.students" })
+    List<ProgrammingExerciseStudentParticipation> findWithResultsAndExerciseAndTeamStudentsByBuildPlanId(String buildPlanId);
 
     @Query("""
                 SELECT DISTINCT p
@@ -110,6 +110,9 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseId(Long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "submissions.team.students" })
+    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndTeamStudentsByExerciseId(Long exerciseId);
 
     /**
      * Will return the participations matching the provided participation ids, but only if they belong to the given exercise.

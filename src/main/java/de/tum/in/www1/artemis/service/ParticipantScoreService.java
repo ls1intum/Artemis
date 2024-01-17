@@ -31,11 +31,11 @@ public class ParticipantScoreService {
     private final GradingScaleService gradingScaleService;
 
     private final PresentationPointsCalculationService presentationPointsCalculationService;
+
     private final TeamRepository teamRepository;
 
     public ParticipantScoreService(UserRepository userRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
-            GradingScaleService gradingScaleService, PresentationPointsCalculationService presentationPointsCalculationService,
-                                   TeamRepository teamRepository) {
+            GradingScaleService gradingScaleService, PresentationPointsCalculationService presentationPointsCalculationService, TeamRepository teamRepository) {
         this.userRepository = userRepository;
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
