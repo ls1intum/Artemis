@@ -189,6 +189,7 @@
             "createBehavioralSolutionEntriesTooltip": "Erstellt Lösungs Codeschnipsel für alle Verhaltenstests dieser Aufgabe.",
             "createBehavioralSolutionEntriesTitle": "Erstelle verhaltensweise Lösungs Codeschnipsel",
             "createBehavioralSolutionEntriesSuccess": "Verhaltensweise Lösungs Codeschnipsel wurden erfolgreich erstellt",
+            "studentView": "Studentenansicht",
             "editable": {
                 "unsaved": "Ungespeichert.",
                 "unsavedTooltip": "Es gibt ungespeicherte Änderungen in der Aufgabenstellung.",

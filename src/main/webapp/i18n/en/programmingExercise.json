@@ -191,6 +191,7 @@
             "createBehavioralSolutionEntriesTooltip": "Creates Solution Code Snippets for all behavioral test cases of this exercise.",
             "createBehavioralSolutionEntriesTitle": "Create behavioral Solution Code Snippets",
             "createBehavioralSolutionEntriesSuccess": "Behavioral Solution Code Snippets have been created successfully",
+            "studentView": "Student view",
             "editable": {
                 "unsaved": "Unsaved.",
                 "unsavedTooltip": "There are unsaved changes in the problem statement.",
