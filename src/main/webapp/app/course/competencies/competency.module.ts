@@ -15,9 +15,20 @@ import { CompetencyRingsComponent } from 'app/course/competencies/competency-rin
 import { CompetencyImportComponent } from 'app/course/competencies/competency-management/competency-import.component';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, FormsModule, ReactiveFormsModule, NgxGraphModule, ArtemisSharedComponentModule, RouterModule, FormDateTimePickerModule, NgbAccordionModule],
+    imports: [
+        ArtemisSharedModule,
+        FormsModule,
+        ReactiveFormsModule,
+        NgxGraphModule,
+        ArtemisSharedComponentModule,
+        RouterModule,
+        FormDateTimePickerModule,
+        NgbAccordionModule,
+        ArtemisMarkdownModule,
+    ],
     declarations: [
         CompetencyFormComponent,
         CompetencyRingsComponent,

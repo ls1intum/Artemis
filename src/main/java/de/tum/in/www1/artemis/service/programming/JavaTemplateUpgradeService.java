@@ -42,7 +42,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
 
     private static final List<String> FILES_TO_OVERWRITE = List.of("AttributeTest.java", "ClassTest.java", "ConstructorTest.java", "MethodTest.java");
 
-    private final Logger log = LoggerFactory.getLogger(JavaTemplateUpgradeService.class);
+    private static final Logger log = LoggerFactory.getLogger(JavaTemplateUpgradeService.class);
 
     private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
 
@@ -87,7 +87,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
      * @param repositoryType The type of repository to be updated
      */
     private void upgradeTemplateFiles(ProgrammingExercise exercise, RepositoryType repositoryType) {
-        if (repositoryType == RepositoryType.AUXILIARY) {
+        if (repositoryType == RepositoryType.AUXILIARY || repositoryType == RepositoryType.USER) {
             return;
         }
         try {

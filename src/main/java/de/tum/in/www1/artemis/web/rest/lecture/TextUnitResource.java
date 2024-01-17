@@ -29,7 +29,7 @@ public class TextUnitResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final Logger log = LoggerFactory.getLogger(TextUnitResource.class);
+    private static final Logger log = LoggerFactory.getLogger(TextUnitResource.class);
 
     private static final String ENTITY_NAME = "textUnit";
 
