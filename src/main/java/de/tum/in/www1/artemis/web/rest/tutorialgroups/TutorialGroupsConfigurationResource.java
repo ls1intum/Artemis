@@ -33,7 +33,7 @@ public class TutorialGroupsConfigurationResource {
 
     private static final String ENTITY_NAME = "tutorialGroupsConfiguration";
 
-    private final Logger log = LoggerFactory.getLogger(TutorialGroupsConfigurationResource.class);
+    private static final Logger log = LoggerFactory.getLogger(TutorialGroupsConfigurationResource.class);
 
     private final TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
 

@@ -1,0 +1,21 @@
+name: Check if windfiles and scripts match
+
+on:
+  pull_request:
+    paths:
+    - 'src/main/resources/templates/aeolus/**'
+  push:
+    paths:
+      - 'src/main/resources/templates/aeolus/**'
+
+jobs:
+
+  build:
+    name: Check if windfiles and scripts match
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Check if windfiles and scripts match
+      run: bash supporting_scripts/generate-aeolus-scripts.sh check

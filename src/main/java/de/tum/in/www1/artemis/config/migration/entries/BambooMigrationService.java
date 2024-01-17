@@ -60,7 +60,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
 
     private Optional<Long> sharedCredentialId = Optional.empty();
 
-    private final Logger log = LoggerFactory.getLogger(BambooMigrationService.class);
+    private static final Logger log = LoggerFactory.getLogger(BambooMigrationService.class);
 
     public BambooMigrationService(@Qualifier("bambooRestTemplate") RestTemplate restTemplate, BambooService bambooService, BambooInternalUrlService bambooInternalUrlService) {
         this.restTemplate = restTemplate;

@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 @Service
 public class ModelingExerciseService {
 
-    private final Logger log = LoggerFactory.getLogger(ModelingExerciseService.class);
+    private static final Logger log = LoggerFactory.getLogger(ModelingExerciseService.class);
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 
