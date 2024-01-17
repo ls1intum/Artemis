@@ -35,6 +35,7 @@ import { ExamEditWorkingTimeComponent } from 'app/exam/manage/exams/exam-checkli
 import { ExamLiveAnnouncementCreateButtonComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-button.component';
 import { QuizPoolService } from 'app/exercises/quiz/manage/quiz-pool.service';
 import { QuizPool } from 'app/entities/quiz/quiz-pool.model';
+import * as Utils from 'app/shared/util/utils';
 
 @Component({
     template: '',
@@ -268,10 +269,10 @@ describe('ExamDetailComponent', () => {
         expect(router.navigate).toHaveBeenCalledOnce();
     });
 
-    it('should call window.scrollTo(0, 0) on component initialization', () => {
-        const scrollToSpy = jest.spyOn(window, 'scrollTo');
+    it('should call scrollToTopOfPage on component initialization', () => {
+        const scrollToTopOfPageSpy = jest.spyOn(Utils, 'scrollToTopOfPage');
         examDetailComponent.ngOnInit();
-        expect(scrollToSpy).toHaveBeenCalledWith(0, 0);
-        scrollToSpy.mockRestore();
+        expect(scrollToTopOfPageSpy).toHaveBeenCalled();
+        scrollToTopOfPageSpy.mockRestore();
     });
 });
