@@ -87,8 +87,22 @@ describe('LtiConfigurationComponent', () => {
 
     it('should sort platforms', () => {
         const dummyPlatforms: LtiPlatformConfiguration[] = [
-            { id: 1, customName: 'Platform A' },
-            { id: 2, customName: 'Platform B' },
+            {
+                id: 1,
+                customName: 'Platform A',
+                clientId: 'platform-a',
+                authorizationUri: 'platformA.com/auth-login',
+                jwkSetUri: 'platformA.com/jwk',
+                tokenUri: 'platformA.com/token',
+            },
+            {
+                id: 2,
+                customName: 'Platform B',
+                clientId: 'platform-b',
+                authorizationUri: 'platformB.com/auth-login',
+                jwkSetUri: 'platformB.com/jwk',
+                tokenUri: 'platformB.com/token',
+            },
         ];
         component.platforms = dummyPlatforms;
         component.sortRows();
