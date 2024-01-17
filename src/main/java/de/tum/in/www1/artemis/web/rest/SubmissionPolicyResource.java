@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping(SubmissionPolicyResource.ROOT)
 public class SubmissionPolicyResource {
 
-    private final Logger log = LoggerFactory.getLogger(SubmissionPolicyResource.class);
+    private static final Logger log = LoggerFactory.getLogger(SubmissionPolicyResource.class);
 
     public static final String ENTITY_NAME = "programmingExercise.submissionPolicy";
 

@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.service.exam.ExamService;
 @RequestMapping("/api")
 public class FileUploadAssessmentResource extends AssessmentResource {
 
-    private final Logger log = LoggerFactory.getLogger(FileUploadAssessmentResource.class);
+    private static final Logger log = LoggerFactory.getLogger(FileUploadAssessmentResource.class);
 
     private static final String ENTITY_NAME = "fileUploadAssessment";
 

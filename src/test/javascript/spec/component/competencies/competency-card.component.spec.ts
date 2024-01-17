@@ -10,6 +10,7 @@ import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipM
 import dayjs from 'dayjs/esm';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { By } from '@angular/platform-browser';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 describe('CompetencyCardComponent', () => {
     let competencyCardComponentFixture: ComponentFixture<CompetencyCardComponent>;
@@ -20,6 +21,7 @@ describe('CompetencyCardComponent', () => {
             declarations: [
                 CompetencyCardComponent,
                 MockPipe(ArtemisTranslatePipe),
+                MockPipe(HtmlForMarkdownPipe),
                 MockComponent(FaIconComponent),
                 MockComponent(CompetencyRingsComponent),
                 MockPipe(ArtemisTimeAgoPipe),
