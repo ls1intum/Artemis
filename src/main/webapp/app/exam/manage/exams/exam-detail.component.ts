@@ -62,6 +62,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
      */
     ngOnInit(): void {
         this.route.data.subscribe(({ exam }) => {
+            window.scrollTo(0, 0);
             this.exam = exam;
             this.formattedStartText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.startText);
             this.formattedConfirmationStartText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationStartText);
