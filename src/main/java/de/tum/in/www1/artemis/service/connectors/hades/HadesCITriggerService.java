@@ -15,6 +15,7 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
@@ -71,7 +72,7 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
     }
 
     @Override
-    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash, boolean isTestPush) throws ContinuousIntegrationException {
+    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash, RepositoryType triggeredByPushTo) throws ContinuousIntegrationException {
         log.warn("Triggering with a test push is not supported for Hades. Triggering build without test push.");
         triggerBuild(participation, commitHash);
     }
@@ -121,7 +122,7 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
         resultMetadata.put("INGEST_DIR", "/shared/build/test-results/test");
         resultMetadata.put("API_ENDPOINT", artemisServerUrl.toString() + "/api/public/programming-exercises/new-result");
         resultMetadata.put("JOB_NAME", participation.getBuildPlanId());
-        steps.add(new HadesBuildStepDTO(3, "Result", resultDockerIamge, resultMetadata, "sleep 1000"));
+        steps.add(new HadesBuildStepDTO(3, "Result", resultDockerIamge, resultMetadata));
 
         // Create Hades Job
         var timestamp = java.time.Instant.now().toString();

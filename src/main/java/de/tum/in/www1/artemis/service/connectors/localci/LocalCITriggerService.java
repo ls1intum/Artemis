@@ -38,7 +38,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash) throws ContinuousIntegrationException {
-        triggerBuild(participation, commitHash, false);
+        triggerBuild(participation, commitHash, null);
     }
 
     /**
