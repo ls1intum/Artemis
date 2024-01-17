@@ -14,6 +14,7 @@ import { faAward, faClipboard, faEye, faFlaskVial, faHeartBroken, faListAlt, faT
 import { AlertService } from 'app/core/util/alert.service';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType } from 'app/entities/grading-scale.model';
+import { scrollToTopOfPage } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-exam-detail',
@@ -62,7 +63,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
      */
     ngOnInit(): void {
         this.route.data.subscribe(({ exam }) => {
-            window.scrollTo(0, 0);
+            scrollToTopOfPage();
             this.exam = exam;
             this.formattedStartText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.startText);
             this.formattedConfirmationStartText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationStartText);
