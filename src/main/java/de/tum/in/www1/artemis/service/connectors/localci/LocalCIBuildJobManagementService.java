@@ -66,7 +66,7 @@ public class LocalCIBuildJobManagementService {
      * A set that contains all build jobs that were cancelled by the user.
      * This set is unique for each node and contains only the build jobs that were cancelled on this node.
      */
-    private final Set<String> cancelledBuildJobs = new HashSet<>();
+    private final Set<String> cancelledBuildJobs = new ConcurrentSkipListSet<>();
 
     private final ITopic<String> canceledBuildJobsTopic;
 
