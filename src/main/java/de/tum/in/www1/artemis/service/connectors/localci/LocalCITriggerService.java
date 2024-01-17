@@ -1,12 +1,12 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
 import java.time.ZonedDateTime;
-import java.util.Objects;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
@@ -32,7 +32,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws LocalCIException {
-        triggerBuild(participation, null, false);
+        triggerBuild(participation, null, null);
     }
 
     /**
@@ -43,23 +43,35 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      * @throws LocalCIException if the build job could not be added to the queue.
      */
     @Override
-    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash, boolean isPushToTestRepository) throws LocalCIException {
+    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash, RepositoryType triggeredByPushTo) throws LocalCIException {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
         String repositoryTypeOrUserName = participation.getVcsRepositoryUri().repositoryNameWithoutProjectKey();
 
-        if (Objects.equals(repositoryTypeOrUserName, "exercise")) {
-            repositoryTypeOrUserName = "BASE";
+        String repositoryName = participation.getVcsRepositoryUri().repositorySlug();
+
+        RepositoryType repositoryType;
+        // Only template, solution and user repositories are build
+        if (repositoryTypeOrUserName.equals("exercise")) {
+            repositoryType = RepositoryType.TEMPLATE;
         }
-        else if (Objects.equals(repositoryTypeOrUserName, "solution")) {
-            repositoryTypeOrUserName = repositoryTypeOrUserName.toUpperCase();
+        else if (repositoryTypeOrUserName.equals("solution")) {
+            repositoryType = RepositoryType.SOLUTION;
+        }
+        else {
+            repositoryType = RepositoryType.USER;
+        }
+
+        // if the build is not triggered by a push to the test or an auxiliary repository, it was triggered by a push to its own repository
+        if (triggeredByPushTo == null) {
+            triggeredByPushTo = repositoryType;
         }
 
         // Exam exercises have a higher priority than normal exercises
         int priority = programmingExercise.isExamExercise() ? 1 : 2;
 
-        localCISharedBuildJobQueueService.addBuildJob(participation.getBuildPlanId(), participation.getId(), repositoryTypeOrUserName, commitHash, ZonedDateTime.now(), priority,
-                courseId, isPushToTestRepository);
+        localCISharedBuildJobQueueService.addBuildJob(participation.getBuildPlanId(), participation.getId(), repositoryName, repositoryType, commitHash, ZonedDateTime.now(),
+                priority, courseId, triggeredByPushTo);
     }
 }

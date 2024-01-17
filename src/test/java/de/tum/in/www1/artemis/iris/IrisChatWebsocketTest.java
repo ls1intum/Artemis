@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
-import de.tum.in.www1.artemis.service.iris.IrisSessionService;
+import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 
 @ActiveProfiles("iris")
@@ -29,7 +29,7 @@ class IrisChatWebsocketTest extends AbstractIrisIntegrationTest {
     private IrisChatWebsocketService irisChatWebsocketService;
 
     @Autowired
-    private IrisSessionService irisSessionService;
+    private IrisChatSessionService irisChatSessionService;
 
     @Autowired
     private WebsocketMessagingService websocketMessagingService;
@@ -47,7 +47,7 @@ class IrisChatWebsocketTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendMessage() {
-        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var irisSession = irisChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var message = irisSession.newMessage();
         message.addContent(createMockContent(message), createMockContent(message));
         message.setMessageDifferentiator(101010);
