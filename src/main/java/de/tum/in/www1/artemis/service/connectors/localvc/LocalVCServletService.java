@@ -54,7 +54,7 @@ import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 @Profile("localvc")
 public class LocalVCServletService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalVCServletService.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalVCServletService.class);
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
@@ -318,13 +318,15 @@ public class LocalVCServletService {
 
         ProgrammingExerciseParticipation participation = getProgrammingExerciseParticipation(localVCRepositoryUri, repositoryTypeOrUserName, exercise);
 
+        RepositoryType repositoryType = getRepositoryType(repositoryTypeOrUserName, exercise);
+
         try {
             if (commitHash == null) {
                 commitHash = getLatestCommitHash(repository);
             }
 
-            if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.getName())) {
-                processNewPushToTestRepository(exercise, commitHash, (SolutionProgrammingExerciseParticipation) participation);
+            if (repositoryType.equals(RepositoryType.TESTS) || repositoryType.equals(RepositoryType.AUXILIARY)) {
+                processNewPushToTestOrAuxRepository(exercise, commitHash, (SolutionProgrammingExerciseParticipation) participation, repositoryType);
                 return;
             }
 
@@ -389,34 +391,38 @@ public class LocalVCServletService {
      * Process a new push to the test repository.
      * Build and test the solution repository to make sure all tests are still passing.
      *
-     * @param exercise   the exercise for which the push was made.
-     * @param commitHash the hash of the last commit to the test repository.
+     * @param exercise       the exercise for which the push was made.
+     * @param commitHash     the hash of the last commit to the test repository.
+     * @param repositoryType type of repository that has been pushed to
      * @throws VersionControlException if something unexpected goes wrong when creating the submission or triggering the build.
      */
-    private void processNewPushToTestRepository(ProgrammingExercise exercise, String commitHash, SolutionProgrammingExerciseParticipation solutionParticipation) {
+    private void processNewPushToTestOrAuxRepository(ProgrammingExercise exercise, String commitHash, SolutionProgrammingExerciseParticipation solutionParticipation,
+            RepositoryType repositoryType) throws VersionControlException {
         // Create a new submission for the solution repository.
         ProgrammingSubmission submission = getProgrammingSubmission(exercise, commitHash);
 
         programmingMessagingService.notifyUserAboutSubmission(submission, exercise.getId());
 
-        try {
-            // Set a flag to inform the instructor that the student results are now outdated.
-            programmingTriggerService.setTestCasesChanged(exercise.getId(), true);
-        }
-        catch (EntityNotFoundException e) {
-            throw new VersionControlException("Could not set test cases changed flag", e);
+        if (repositoryType.equals(RepositoryType.TESTS)) {
+            try {
+                // Set a flag to inform the instructor that the student results are now outdated.
+                programmingTriggerService.setTestCasesChanged(exercise.getId(), true);
+            }
+            catch (EntityNotFoundException e) {
+                throw new VersionControlException("Could not set test cases changed flag", e);
+            }
         }
 
-        ciTriggerService.triggerBuild(solutionParticipation, commitHash, true);
+        ciTriggerService.triggerBuild(solutionParticipation, commitHash, repositoryType);
 
         try {
-            programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST);
+            programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST, repositoryType);
         }
         catch (EntityNotFoundException e) {
             // Something went wrong while retrieving the template participation.
             // At this point, programmingMessagingService.notifyUserAboutSubmissionError() does not work, because the template participation is not available.
             // The instructor will see in the UI that no build of the template repository was conducted and will receive an error message when triggering the build manually.
-            log.error("Something went wrong while triggering the template build for exercise " + exercise.getId() + " after the solution build was finished.", e);
+            log.error("Something went wrong while triggering the template build for exercise {} after the solution build was finished.", exercise.getId(), e);
         }
     }
 
@@ -429,6 +435,24 @@ public class LocalVCServletService {
             throw new VersionControlException("Could not create submission for solution participation", e);
         }
         return submission;
+    }
+
+    private RepositoryType getRepositoryType(String repositoryTypeOrUserName, ProgrammingExercise exercise) {
+        if (repositoryTypeOrUserName.equals("exercise")) {
+            return RepositoryType.TEMPLATE;
+        }
+        else if (repositoryTypeOrUserName.equals("solution")) {
+            return RepositoryType.SOLUTION;
+        }
+        else if (repositoryTypeOrUserName.equals("tests")) {
+            return RepositoryType.TESTS;
+        }
+        else if (auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise)) {
+            return RepositoryType.AUXILIARY;
+        }
+        else {
+            return RepositoryType.USER;
+        }
     }
 
     /**

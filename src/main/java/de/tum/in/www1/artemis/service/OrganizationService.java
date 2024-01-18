@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 @Service
 public class OrganizationService {
 
-    private final Logger log = LoggerFactory.getLogger(OrganizationService.class);
+    private static final Logger log = LoggerFactory.getLogger(OrganizationService.class);
 
     private final OrganizationRepository organizationRepository;
 

@@ -5,6 +5,13 @@
                 "title": "Übungen",
                 "createLabel": "Übung erstellen"
             },
+            "sections": {
+                "general": "Informationen",
+                "mode": "Modus",
+                "grading": "Bewertung",
+                "problem": "Aufgabenstellung",
+                "solution": "Lösung"
+            },
             "details": "Aufgabendetails",
             "addCriterion": "Bewertungskriterium hinzufügen",
             "resultsPerPage": "{{number}} Ergebnisse pro Seite",

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
+import static de.tum.in.www1.artemis.service.connectors.localci.LocalCIContainerService.RESULTS_DIRECTORY;
 import static de.tum.in.www1.artemis.service.connectors.localci.LocalCIContainerService.WORKING_DIRECTORY;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.IMPORT;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.PROGRAMMING_EXERCISES;
@@ -22,9 +23,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.in.www1.artemis.connector.AeolusRequestMockProvider;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
@@ -49,6 +52,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
 
     @Autowired
     private CourseUtilService courseUtilService;
+
+    @Autowired
+    private AeolusRequestMockProvider aeolusRequestMockProvider;
 
     private Course course;
 
@@ -134,9 +140,10 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         // Mock the results for the template repository build and for the solution repository build that will both be triggered as a result of creating the exercise.
         Map<String, String> templateBuildTestResults = localVCLocalCITestService.createMapFromTestResultsFolder(ALL_FAIL_TEST_RESULTS_PATH);
         Map<String, String> solutionBuildTestResults = localVCLocalCITestService.createMapFromTestResultsFolder(ALL_SUCCEED_TEST_RESULTS_PATH);
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, WORKING_DIRECTORY + "/testing-dir/build/test-results/test", templateBuildTestResults,
-                solutionBuildTestResults);
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, WORKING_DIRECTORY + RESULTS_DIRECTORY, templateBuildTestResults, solutionBuildTestResults);
         newExercise.setChannelName("testchannelname-pe");
+        aeolusRequestMockProvider.enableMockingOfRequests();
+        aeolusRequestMockProvider.mockFailedGenerateBuildPlan(AeolusTarget.CLI);
         ProgrammingExercise createdExercise = request.postWithResponseBody(ROOT + SETUP, newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         // Check that the repository folders were created in the file system for the template, solution, and tests repository.
@@ -206,8 +213,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         // Mock the results for the template repository build and for the solution repository build that will both be triggered as a result of creating the exercise.
         Map<String, String> templateBuildTestResults = localVCLocalCITestService.createMapFromTestResultsFolder(ALL_FAIL_TEST_RESULTS_PATH);
         Map<String, String> solutionBuildTestResults = localVCLocalCITestService.createMapFromTestResultsFolder(ALL_SUCCEED_TEST_RESULTS_PATH);
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, WORKING_DIRECTORY + "/testing-dir/build/test-results/test", templateBuildTestResults,
-                solutionBuildTestResults);
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, WORKING_DIRECTORY + RESULTS_DIRECTORY, templateBuildTestResults, solutionBuildTestResults);
 
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", programmingExercise,
                 courseUtilService.addEmptyCourse());

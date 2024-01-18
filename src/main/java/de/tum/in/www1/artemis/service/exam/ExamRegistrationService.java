@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class ExamRegistrationService {
 
-    private final Logger log = LoggerFactory.getLogger(ExamRegistrationService.class);
+    private static final Logger log = LoggerFactory.getLogger(ExamRegistrationService.class);
 
     private final UserRepository userRepository;
 

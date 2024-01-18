@@ -36,7 +36,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("api/admin/")
 public class AdminCourseResource {
 
-    private final Logger log = LoggerFactory.getLogger(AdminCourseResource.class);
+    private static final Logger log = LoggerFactory.getLogger(AdminCourseResource.class);
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;

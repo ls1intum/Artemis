@@ -16,13 +16,12 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
-import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Service
 @Profile("bitbucket")
 public class BitbucketUserManagementService implements VcsUserManagementService {
 
-    private final Logger log = LoggerFactory.getLogger(BitbucketUserManagementService.class);
+    private static final Logger log = LoggerFactory.getLogger(BitbucketUserManagementService.class);
 
     private final BitbucketService bitbucketService;
 
@@ -30,8 +29,7 @@ public class BitbucketUserManagementService implements VcsUserManagementService 
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public BitbucketUserManagementService(BitbucketService bitbucketService, UserRepository userRepository, PasswordService passwordService,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+    public BitbucketUserManagementService(BitbucketService bitbucketService, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.bitbucketService = bitbucketService;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;

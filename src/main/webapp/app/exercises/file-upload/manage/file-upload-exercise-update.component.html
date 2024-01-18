@@ -1,16 +1,18 @@
 <form name="editForm" role="form" novalidate #editForm="ngForm">
     <div class="d-flex align-items-center">
         @if (fileUploadExercise.id && !isImport) {
-            <h4 id="jhi-file-upload-exercise-heading-edit" jhiTranslate="artemisApp.fileUploadExercise.home.editLabel">Edit a File Upload Exercise</h4>
+            <h2 id="jhi-file-upload-exercise-heading-edit" jhiTranslate="artemisApp.fileUploadExercise.home.editLabel">Edit a File Upload Exercise</h2>
         }
         @if (!fileUploadExercise.id) {
-            <h4 id="jhi-file-upload-exercise-heading-create" jhiTranslate="artemisApp.fileUploadExercise.home.createLabel">Create a new File Upload Exercise</h4>
+            <h2 id="jhi-file-upload-exercise-heading-create" jhiTranslate="artemisApp.fileUploadExercise.home.createLabel">Create a new File Upload Exercise</h2>
         }
         @if (isImport) {
-            <h4 id="jhi-file-upload-exercise-heading-import" jhiTranslate="artemisApp.fileUploadExercise.home.importLabel">Import a File Upload Exercise</h4>
+            <h2 id="jhi-file-upload-exercise-heading-import" jhiTranslate="artemisApp.fileUploadExercise.home.importLabel">Import a File Upload Exercise</h2>
         }
         <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
     </div>
+    <hr />
+    <h3 jhiTranslate="artemisApp.exercise.sections.general">General Information</h3>
     <div>
         <div class="form-group" [hidden]="!fileUploadExercise.id || isImport">
             <label for="id" jhiTranslate="global.field.id">ID</label>
@@ -30,6 +32,7 @@
                 <jhi-category-selector [categories]="exerciseCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)" />
             </div>
         }
+        <h3 jhiTranslate="artemisApp.exercise.sections.mode">Mode</h3>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty">Difficulty</label>
             <div>
@@ -37,6 +40,45 @@
             </div>
         </div>
         <jhi-team-config-form-group class="form-element" [exercise]="fileUploadExercise" [isImport]="isImport"></jhi-team-config-form-group>
+        <h3 jhiTranslate="artemisApp.exercise.sections.problem">Problem Statement</h3>
+        <div class="form-group" id="field_problemStatement">
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
+            <jhi-markdown-editor
+                class="markdown-editor"
+                [domainCommands]="domainCommandsProblemStatement"
+                [(markdown)]="fileUploadExercise.problemStatement"
+                [editorMode]="EditorMode.LATEX"
+            ></jhi-markdown-editor>
+        </div>
+        <h3 jhiTranslate="artemisApp.exercise.sections.solution">Example Solution</h3>
+        <!-- TODO we want to have a file upload here and store a PDF, not a text. We could allow to add text in the sample_solution_explanation field -->
+        <div class="form-group" id="field_exampleSolution">
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.exampleSolution" for="field_exampleSolution">Example Solution</label>
+            <jhi-markdown-editor
+                class="markdown-editor"
+                [domainCommands]="domainCommandsSampleSolution"
+                [(markdown)]="fileUploadExercise.exampleSolution"
+                [editorMode]="EditorMode.LATEX"
+            ></jhi-markdown-editor>
+        </div>
+        @if (!isExamMode) {
+            <div class="form-group">
+                <jhi-date-time-picker
+                    class="form-element"
+                    name="exampleSolutionPublicationDate"
+                    labelName="{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}"
+                    [(ngModel)]="fileUploadExercise.exampleSolutionPublicationDate"
+                    [error]="fileUploadExercise.exampleSolutionPublicationDateError!"
+                    (valueChange)="validateDate()"
+                ></jhi-date-time-picker>
+                @if (fileUploadExercise.exampleSolutionPublicationDateError) {
+                    <span class="invalid-feedback">
+                        {{ 'artemisApp.exercise.exampleSolutionPublicationDateError' | artemisTranslate }}
+                    </span>
+                }
+            </div>
+        }
+        <h3 jhiTranslate="artemisApp.exercise.sections.grading">Grading</h3>
         @if (!isExamMode) {
             <div class="d-flex">
                 <div class="form-group flex-grow-1">
@@ -160,40 +202,6 @@
             <input required minlength="2" type="text" class="form-control" name="filePattern" id="field_filePattern" [(ngModel)]="fileUploadExercise.filePattern" />
         </div>
         <jhi-presentation-score-checkbox [exercise]="fileUploadExercise"></jhi-presentation-score-checkbox>
-        <div class="form-group" id="field_problemStatement">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
-            <jhi-markdown-editor
-                class="markdown-editor"
-                [domainCommands]="domainCommandsProblemStatement"
-                [(markdown)]="fileUploadExercise.problemStatement"
-                [editorMode]="EditorMode.LATEX"
-            ></jhi-markdown-editor>
-        </div>
-        <!-- TODO we want to have a file upload here and store a PDF, not a text. We could allow to add text in the sample_solution_explanation field -->
-        <div class="form-group" id="field_exampleSolution">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.exampleSolution" for="field_exampleSolution">Example Solution</label>
-            <jhi-markdown-editor
-                class="markdown-editor"
-                [domainCommands]="domainCommandsSampleSolution"
-                [(markdown)]="fileUploadExercise.exampleSolution"
-                [editorMode]="EditorMode.LATEX"
-            ></jhi-markdown-editor>
-        </div>
-        @if (!isExamMode) {
-            <div class="form-group">
-                <jhi-date-time-picker
-                    class="form-element"
-                    name="exampleSolutionPublicationDate"
-                    labelName="{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}"
-                    [(ngModel)]="fileUploadExercise.exampleSolutionPublicationDate"
-                    [error]="fileUploadExercise.exampleSolutionPublicationDateError!"
-                    (valueChange)="validateDate()"
-                ></jhi-date-time-picker>
-                @if (fileUploadExercise.exampleSolutionPublicationDateError) {
-                    <span class="invalid-feedback">{{ 'artemisApp.exercise.exampleSolutionPublicationDateError' | artemisTranslate }}</span>
-                }
-            </div>
-        }
         @if (!isExamMode) {
             <div class="form-group">
                 <jhi-competency-selection

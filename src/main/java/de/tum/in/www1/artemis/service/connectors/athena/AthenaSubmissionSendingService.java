@@ -31,7 +31,7 @@ public class AthenaSubmissionSendingService {
 
     private static final int SUBMISSIONS_PER_REQUEST = 100;
 
-    private final Logger log = LoggerFactory.getLogger(AthenaSubmissionSendingService.class);
+    private static final Logger log = LoggerFactory.getLogger(AthenaSubmissionSendingService.class);
 
     private final SubmissionRepository submissionRepository;
 
