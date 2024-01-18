@@ -5,6 +5,8 @@ import { By } from '@angular/platform-browser';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { ScienceDirective } from 'app/shared/science/science.directive';
 import { ScienceService } from 'app/shared/science/science.service';
+import { MockLocalStorageService } from '../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService } from 'ngx-webstorage';
 
 @Component({
     template: '<div [jhiScience]="ScienceEventType.LECTURE__OPEN"></div>',
@@ -22,6 +24,7 @@ describe('ScienceDirective', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [ScienceDirective, ScienceDirectiveComponent],
+            providers: [{ provide: LocalStorageService, useClass: MockLocalStorageService }],
         })
             .compileComponents()
             .then(() => {

@@ -12,6 +12,9 @@ import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-loc
 
 const scienceSetting: ScienceSetting = {
     settingId: SettingId.SCIENCE__GENERAL__ACTIVITY_TRACKING,
+    changed: false,
+    descriptionKey: 'activityDescription',
+    key: 'activity',
     active: false,
 };
 
@@ -42,6 +45,9 @@ describe('ScienceSettingsService', () => {
 
         scienceSettingsService['listenForScienceSettingsChanges']();
         expect(spy).toHaveBeenCalled();
+
+        const settings = scienceSettingsService.getScienceSettings();
+        expect(settings).toEqual(scienceSettingsForTesting);
     });
 
     it('should provide getters for science settings and updates to it', () => {
@@ -50,6 +56,7 @@ describe('ScienceSettingsService', () => {
 
         const settings = scienceSettingsService.getScienceSettings();
         expect(settings).not.toBeEmpty();
+        expect(settings).toEqual(scienceSettingsForTesting);
 
         // Subscribing to the updates
         scienceSettingsService.getScienceSettingsUpdates().subscribe((updatedSettings) => {
