@@ -315,7 +315,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         // Remove all permissions assigned to the instructors and teaching assistants that do not belong to the course anymore.
         var programmingExercises = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(updatedCourse);
         log.info("Update Jenkins permissions for programming exercises: {}", programmingExercises.stream().map(ProgrammingExercise::getProjectKey).toList());
-        removePermissionsFromInstructorsAndEditorsAndTAsForCourse(oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup, updatedCourse, programmingExercises);
+        removePermissionsFromInstructorsAndEditorsAndTAsForCourse(oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup, programmingExercises);
 
         // Assign teaching assistant and instructor permissions
         assignPermissionsToInstructorAndEditorAndTAsForCourse(updatedCourse, programmingExercises);
@@ -354,10 +354,9 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * @param instructorGroup        the group of instructors
      * @param editorGroup            the group of editors
      * @param teachingAssistantGroup the group of teaching assistants
-     * @param course                 the course
      * @param programmingExercises   list of programmingExercises for which the permissions should be changed
      */
-    private void removePermissionsFromInstructorsAndEditorsAndTAsForCourse(String instructorGroup, String editorGroup, String teachingAssistantGroup, Course course,
+    private void removePermissionsFromInstructorsAndEditorsAndTAsForCourse(String instructorGroup, String editorGroup, String teachingAssistantGroup,
             List<ProgrammingExercise> programmingExercises) {
         // Fetch all instructors and editors and teaching assistants belonging to the group that was removed from the course.
         var oldInstructors = userRepository.findAllInGroupWithAuthorities(instructorGroup);
