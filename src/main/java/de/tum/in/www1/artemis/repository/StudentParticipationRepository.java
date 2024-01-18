@@ -39,7 +39,11 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     Set<StudentParticipation> findByExerciseId(@Param("exerciseId") Long exerciseId);
 
     @Query("""
-            SELECT DISTINCT p FROM StudentParticipation p LEFT JOIN FETCH p.results r
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.results r
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
             WHERE p.exercise.course.id = :#{#courseId}
                 AND (r.rated IS NULL OR r.rated = true)
             """)
@@ -127,11 +131,13 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH p.team t
+            LEFT JOIN FETCH t.students
             where p.exercise.id = :#{#exerciseId}
                 AND p.team.id = :#{#teamId}
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)
-    Optional<StudentParticipation> findWithEagerLegalSubmissionsByExerciseIdAndTeamId(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
+    Optional<StudentParticipation> findWithEagerLegalSubmissionsAndTeamStudentsByExerciseIdAndTeamId(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
@@ -362,16 +368,19 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     List<StudentParticipation> findAllByExerciseIdAndTeamId(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
     @Query("""
-            select distinct p from StudentParticipation p
-            left join fetch p.results r
-            left join fetch r.submission rs
-            left join fetch p.submissions s
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.results r
+                LEFT JOIN FETCH r.submission rs
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
             where p.exercise.id = :#{#exerciseId}
                 and p.team.id = :#{#teamId}
                 and (s.type <> 'ILLEGAL' or s.type is null)
                 and (rs.type <> 'ILLEGAL' or rs.type is null)
             """)
-    List<StudentParticipation> findByExerciseIdAndTeamIdWithEagerResultsAndLegalSubmissions(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
+    List<StudentParticipation> findByExerciseIdAndTeamIdWithEagerResultsAndLegalSubmissionsAndTeamStudents(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
     @Query("""
             SELECT DISTINCT p
@@ -460,10 +469,13 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     Optional<StudentParticipation> findWithEagerLegalSubmissionsById(@Param("participationId") Long participationId);
 
     @Query("""
-            select p from Participation p
-            left join fetch p.results r
-            left join fetch r.submission
-            where p.id = :#{#participationId}
+            SELECT p
+            FROM StudentParticipation p
+            LEFT JOIN FETCH p.results r
+            LEFT JOIN FETCH r.submission
+            LEFT JOIN FETCH p.team t
+            LEFT JOIN FETCH t.students
+            WHERE p.id = :participationId
             """)
     Optional<StudentParticipation> findWithEagerResultsById(@Param("participationId") Long participationId);
 
@@ -698,7 +710,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH s.results r
             WHERE p.exercise.id = :#{#exerciseId}
                 AND p.testRun = FALSE
-                AND s.id = (SELECT max(id) FROM p.submissions)
+                AND s.id = (SELECT max(s1.id) FROM p.submissions s1)
                 AND EXISTS (SELECT s1 FROM p.submissions s1
                     WHERE s1.participation.id = p.id
                     AND s1.submitted = TRUE
