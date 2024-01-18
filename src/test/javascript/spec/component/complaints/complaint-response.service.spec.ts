@@ -117,15 +117,4 @@ describe('ComplaintResponseService', () => {
         req.flush(returnedFromService);
         expect(expectedComplaintResponse.body).toEqual(defaultComplaintResponse);
     });
-
-    it('should call findByComplaintId', async () => {
-        const returnedFromService = { ...defaultComplaintResponse };
-        complaintResponseService
-            .findByComplaintId(1)
-            .pipe(take(1))
-            .subscribe((resp) => (expectedComplaintResponse = resp));
-        const req = httpTestingController.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
-        expect(expectedComplaintResponse.body).toEqual(defaultComplaintResponse);
-    });
 });

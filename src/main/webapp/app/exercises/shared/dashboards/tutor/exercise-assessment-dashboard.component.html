@@ -216,11 +216,11 @@
                     <div class="col-12">
                         <h4>{{ 'artemisApp.exerciseAssessmentDashboard.exampleSolution' | artemisTranslate }}</h4>
                         @if (!localVCEnabled) {
-                            <a jhiSecureLink [href]="programmingExercise.solutionParticipation?.repositoryUrl || ''">
+                            <a jhiSecureLink [href]="programmingExercise.solutionParticipation?.repositoryUri || ''">
                                 <jhi-button jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution"> Example solution repository </jhi-button>
                             </a>
                         } @else {
-                            <jhi-clone-repo-button [smallButtons]="true" [repositoryUrl]="programmingExercise.solutionParticipation?.repositoryUrl || ''"></jhi-clone-repo-button>
+                            <jhi-clone-repo-button [smallButtons]="true" [repositoryUri]="programmingExercise.solutionParticipation?.repositoryUri || ''"></jhi-clone-repo-button>
                         }
                     </div>
                 }

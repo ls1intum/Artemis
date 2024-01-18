@@ -39,7 +39,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class ProgrammingSubmissionService extends SubmissionService {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
 
     @Value("${artemis.git.name}")
     private String artemisGitName;
@@ -153,7 +153,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
         // TODO: there might be cases in which Artemis should NOT trigger the build
         try {
-            continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation, commit.commitHash(), false);
+            continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation, commit.commitHash(), null);
         }
         catch (ContinuousIntegrationException ex) {
             // TODO: This case is currently not handled. The correct handling would be creating the submission and informing the user that the build trigger failed.
@@ -357,7 +357,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private String getLastCommitHashForParticipation(ProgrammingExerciseParticipation participation) throws IllegalStateException {
         try {
-            return gitService.getLastCommitHash(participation.getVcsRepositoryUrl()).getName();
+            return gitService.getLastCommitHash(participation.getVcsRepositoryUri()).getName();
         }
         catch (EntityNotFoundException ex) {
             var message = "Last commit hash for participation " + participation.getId() + " could not be retrieved due to exception: " + ex.getMessage();
@@ -382,7 +382,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         if (commitHash == null) {
             ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExerciseId);
             try {
-                commitHash = gitService.getLastCommitHash(programmingExercise.getVcsTestRepositoryUrl()).getName();
+                commitHash = gitService.getLastCommitHash(programmingExercise.getVcsTestRepositoryUri()).getName();
             }
             catch (EntityNotFoundException ex) {
                 throw new IllegalStateException("Last commit hash for test repository of programming exercise with id " + programmingExercise.getId() + " could not be retrieved");
@@ -623,7 +623,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      */
     private void createInitialSubmission(ProgrammingExercise programmingExercise, AbstractBaseProgrammingExerciseParticipation participation) {
         ProgrammingSubmission submission = (ProgrammingSubmission) submissionRepository.initializeSubmission(participation, programmingExercise, SubmissionType.INSTRUCTOR);
-        var latestHash = gitService.getLastCommitHash(participation.getVcsRepositoryUrl());
+        var latestHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri());
         submission.setCommitHash(latestHash.getName());
         submission.setSubmissionDate(ZonedDateTime.now());
         submissionRepository.save(submission);

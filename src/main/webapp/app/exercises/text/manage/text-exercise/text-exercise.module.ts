@@ -15,7 +15,6 @@ import { TextExerciseDetailComponent } from 'app/exercises/text/manage/text-exer
 import { ArtemisTeamConfigFormGroupModule } from 'app/exercises/shared/team-config-form-group/team-config-form-group.module';
 import { StructuredGradingCriterionModule } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
-import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-details/exercise-details.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { TextExerciseRowButtonsComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-row-buttons.component';
 import { ArtemisIncludedInOverallScorePickerModule } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.module';
@@ -27,6 +26,8 @@ import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercis
 import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.module';
 import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.module';
 import { ExerciseUpdatePlagiarismModule } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.module';
+import { DetailModule } from 'app/detail-overview-list/detail.module';
+import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
 
 const ENTITY_STATES = [...textExerciseRoute];
 
@@ -44,16 +45,17 @@ const ENTITY_STATES = [...textExerciseRoute];
         ArtemisTeamConfigFormGroupModule,
         StructuredGradingCriterionModule,
         AssessmentInstructionsModule,
-        ExerciseDetailsModule,
         ArtemisSharedComponentModule,
         ArtemisMarkdownModule,
         NonProgrammingExerciseDetailCommonActionsModule,
         ArtemisExerciseUpdateWarningModule,
         ExampleSubmissionsModule,
+        ArtemisExerciseModule,
         ExerciseCategoriesModule,
         ExerciseTitleChannelNameModule,
         ExerciseUpdateNotificationModule,
         ExerciseUpdatePlagiarismModule,
+        DetailModule,
     ],
     declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent, TextExerciseRowButtonsComponent],
     exports: [TextExerciseComponent],

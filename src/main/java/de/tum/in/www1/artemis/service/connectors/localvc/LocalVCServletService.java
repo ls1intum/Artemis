@@ -54,7 +54,7 @@ import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 @Profile("localvc")
 public class LocalVCServletService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalVCServletService.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalVCServletService.class);
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
@@ -159,7 +159,7 @@ public class LocalVCServletService {
      * @param repositoryAction Indicates whether the method should authenticate a fetch or a push request. For a push request, additional checks are conducted.
      * @throws LocalVCAuthException      If the user authentication fails or the user is not authorized to access a certain repository.
      * @throws LocalVCForbiddenException If the user is not allowed to access the repository, e.g. because offline IDE usage is not allowed or the due date has passed.
-     * @throws LocalVCInternalException  If an internal error occurs, e.g. because the LocalVCRepositoryUrl could not be created.
+     * @throws LocalVCInternalException  If an internal error occurs, e.g. because the LocalVCRepositoryUri could not be created.
      */
     public void authenticateAndAuthorizeGitRequest(HttpServletRequest request, RepositoryActionType repositoryAction) throws LocalVCAuthException, LocalVCForbiddenException {
 
@@ -169,7 +169,7 @@ public class LocalVCServletService {
 
         // Optimization.
         // For each git command (i.e. 'git fetch' or 'git push'), the git client sends three requests.
-        // The URLs of the first two requests end on '[repository URL]/info/refs'. The third one ends on '[repository URL]/git-receive-pack' (for push) and '[repository
+        // The URLs of the first two requests end on '[repository URI]/info/refs'. The third one ends on '[repository URI]/git-receive-pack' (for push) and '[repository
         // URL]/git-upload-pack' (for fetch).
         // The following checks will only be conducted for the second request, so we do not have to access the database too often.
         // The first request does not contain credentials and will thus already be blocked by the 'authenticateUser' method above.
@@ -177,10 +177,10 @@ public class LocalVCServletService {
             return;
         }
 
-        LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(request.getRequestURL().toString().replace("/info/refs", ""), localVCBaseUrl);
+        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(request.getRequestURL().toString().replace("/info/refs", ""), localVCBaseUrl);
 
-        String projectKey = localVCRepositoryUrl.getProjectKey();
-        String repositoryTypeOrUserName = localVCRepositoryUrl.getRepositoryTypeOrUserName();
+        String projectKey = localVCRepositoryUri.getProjectKey();
+        String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
 
         ProgrammingExercise exercise;
 
@@ -196,9 +196,9 @@ public class LocalVCServletService {
             throw new LocalVCForbiddenException();
         }
 
-        authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUrl.isPracticeRepository());
+        authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri.isPracticeRepository());
 
-        log.info("Authorizing user {} for repository {} took {}", user.getLogin(), localVCRepositoryUrl, TimeLogUtil.formatDurationFrom(timeNanoStart));
+        log.info("Authorizing user {} for repository {} took {}", user.getLogin(), localVCRepositoryUri, TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
 
     private User authenticateUser(String authorizationHeader) throws LocalVCAuthException {
@@ -280,10 +280,10 @@ public class LocalVCServletService {
      * Returns the HTTP status code for the given exception thrown by the above method "authenticateAndAuthorizeGitRequest".
      *
      * @param exception     The exception thrown.
-     * @param repositoryUrl The URL of the repository that was accessed.
+     * @param repositoryUri The URL of the repository that was accessed.
      * @return The HTTP status code.
      */
-    public int getHttpStatusForException(Exception exception, String repositoryUrl) {
+    public int getHttpStatusForException(Exception exception, String repositoryUri) {
         if (exception instanceof LocalVCAuthException) {
             return HttpStatus.UNAUTHORIZED.value();
         }
@@ -291,7 +291,7 @@ public class LocalVCServletService {
             return HttpStatus.FORBIDDEN.value();
         }
         else {
-            log.error("Internal server error while trying to access repository {}: {}", repositoryUrl, exception.getMessage());
+            log.error("Internal server error while trying to access repository {}: {}", repositoryUri, exception.getMessage());
             return HttpStatus.INTERNAL_SERVER_ERROR.value();
         }
     }
@@ -309,22 +309,24 @@ public class LocalVCServletService {
 
         Path repositoryFolderPath = repository.getDirectory().toPath();
 
-        LocalVCRepositoryUrl localVCRepositoryUrl = getLocalVCRepositoryUrl(repositoryFolderPath);
+        LocalVCRepositoryUri localVCRepositoryUri = getLocalVCRepositoryUri(repositoryFolderPath);
 
-        String repositoryTypeOrUserName = localVCRepositoryUrl.getRepositoryTypeOrUserName();
-        String projectKey = localVCRepositoryUrl.getProjectKey();
+        String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
+        String projectKey = localVCRepositoryUri.getProjectKey();
 
         ProgrammingExercise exercise = getProgrammingExercise(projectKey);
 
-        ProgrammingExerciseParticipation participation = getProgrammingExerciseParticipation(localVCRepositoryUrl, repositoryTypeOrUserName, exercise);
+        ProgrammingExerciseParticipation participation = getProgrammingExerciseParticipation(localVCRepositoryUri, repositoryTypeOrUserName, exercise);
+
+        RepositoryType repositoryType = getRepositoryType(repositoryTypeOrUserName, exercise);
 
         try {
             if (commitHash == null) {
                 commitHash = getLatestCommitHash(repository);
             }
 
-            if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.getName())) {
-                processNewPushToTestRepository(exercise, commitHash, (SolutionProgrammingExerciseParticipation) participation);
+            if (repositoryType.equals(RepositoryType.TESTS) || repositoryType.equals(RepositoryType.AUXILIARY)) {
+                processNewPushToTestOrAuxRepository(exercise, commitHash, (SolutionProgrammingExerciseParticipation) participation, repositoryType);
                 return;
             }
 
@@ -337,18 +339,18 @@ public class LocalVCServletService {
             // This catch clause does not catch exceptions that happen during runBuildJob() as that method is called asynchronously.
             // For exceptions happening inside runBuildJob(), the user is notified. See the addBuildJobToQueue() method in the LocalCIBuildJobManagementService for that.
             throw new VersionControlException(
-                    "Could not process new push to repository " + localVCRepositoryUrl.getURI() + " and commit " + commitHash + ". No build job was queued.", e);
+                    "Could not process new push to repository " + localVCRepositoryUri.getURI() + " and commit " + commitHash + ". No build job was queued.", e);
         }
 
-        log.info("New push processed to repository {} for commit {} in {}. A build job was queued.", localVCRepositoryUrl.getURI(), commitHash,
+        log.info("New push processed to repository {} for commit {} in {}. A build job was queued.", localVCRepositoryUri.getURI(), commitHash,
                 TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
 
-    private ProgrammingExerciseParticipation getProgrammingExerciseParticipation(LocalVCRepositoryUrl localVCRepositoryUrl, String repositoryTypeOrUserName,
+    private ProgrammingExerciseParticipation getProgrammingExerciseParticipation(LocalVCRepositoryUri localVCRepositoryUri, String repositoryTypeOrUserName,
             ProgrammingExercise exercise) {
         ProgrammingExerciseParticipation participation;
         try {
-            participation = programmingExerciseParticipationService.getParticipationForRepository(exercise, repositoryTypeOrUserName, localVCRepositoryUrl.isPracticeRepository(),
+            participation = programmingExerciseParticipationService.getParticipationForRepository(exercise, repositoryTypeOrUserName, localVCRepositoryUri.isPracticeRepository(),
                     true);
         }
         catch (EntityNotFoundException e) {
@@ -368,13 +370,13 @@ public class LocalVCServletService {
         return exercise;
     }
 
-    private LocalVCRepositoryUrl getLocalVCRepositoryUrl(Path repositoryFolderPath) {
+    private LocalVCRepositoryUri getLocalVCRepositoryUri(Path repositoryFolderPath) {
         try {
-            return new LocalVCRepositoryUrl(repositoryFolderPath, localVCBaseUrl);
+            return new LocalVCRepositoryUri(repositoryFolderPath, localVCBaseUrl);
         }
         catch (LocalVCInternalException e) {
             // This means something is misconfigured.
-            throw new VersionControlException("Could not create valid repository URL from path " + repositoryFolderPath, e);
+            throw new VersionControlException("Could not create valid repository URI from path " + repositoryFolderPath, e);
         }
     }
 
@@ -393,30 +395,33 @@ public class LocalVCServletService {
      * @param commitHash the hash of the last commit to the test repository.
      * @throws VersionControlException if something unexpected goes wrong when creating the submission or triggering the build.
      */
-    private void processNewPushToTestRepository(ProgrammingExercise exercise, String commitHash, SolutionProgrammingExerciseParticipation solutionParticipation) {
+    private void processNewPushToTestOrAuxRepository(ProgrammingExercise exercise, String commitHash, SolutionProgrammingExerciseParticipation solutionParticipation,
+            RepositoryType repositoryType) throws VersionControlException {
         // Create a new submission for the solution repository.
         ProgrammingSubmission submission = getProgrammingSubmission(exercise, commitHash);
 
         programmingMessagingService.notifyUserAboutSubmission(submission, exercise.getId());
 
-        try {
-            // Set a flag to inform the instructor that the student results are now outdated.
-            programmingTriggerService.setTestCasesChanged(exercise.getId(), true);
-        }
-        catch (EntityNotFoundException e) {
-            throw new VersionControlException("Could not set test cases changed flag", e);
+        if (repositoryType.equals(RepositoryType.TESTS)) {
+            try {
+                // Set a flag to inform the instructor that the student results are now outdated.
+                programmingTriggerService.setTestCasesChanged(exercise.getId(), true);
+            }
+            catch (EntityNotFoundException e) {
+                throw new VersionControlException("Could not set test cases changed flag", e);
+            }
         }
 
-        ciTriggerService.triggerBuild(solutionParticipation, commitHash, true);
+        ciTriggerService.triggerBuild(solutionParticipation, commitHash, repositoryType);
 
         try {
-            programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST);
+            programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST, repositoryType);
         }
         catch (EntityNotFoundException e) {
             // Something went wrong while retrieving the template participation.
             // At this point, programmingMessagingService.notifyUserAboutSubmissionError() does not work, because the template participation is not available.
             // The instructor will see in the UI that no build of the template repository was conducted and will receive an error message when triggering the build manually.
-            log.error("Something went wrong while triggering the template build for exercise " + exercise.getId() + " after the solution build was finished.", e);
+            log.error("Something went wrong while triggering the template build for exercise {} after the solution build was finished.", exercise.getId(), e);
         }
     }
 
@@ -429,6 +434,24 @@ public class LocalVCServletService {
             throw new VersionControlException("Could not create submission for solution participation", e);
         }
         return submission;
+    }
+
+    private RepositoryType getRepositoryType(String repositoryTypeOrUserName, ProgrammingExercise exercise) {
+        if (repositoryTypeOrUserName.equals("exercise")) {
+            return RepositoryType.TEMPLATE;
+        }
+        else if (repositoryTypeOrUserName.equals("solution")) {
+            return RepositoryType.SOLUTION;
+        }
+        else if (repositoryTypeOrUserName.equals("tests")) {
+            return RepositoryType.TESTS;
+        }
+        else if (auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise)) {
+            return RepositoryType.AUXILIARY;
+        }
+        else {
+            return RepositoryType.USER;
+        }
     }
 
     /**

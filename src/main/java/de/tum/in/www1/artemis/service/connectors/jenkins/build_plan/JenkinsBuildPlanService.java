@@ -102,16 +102,16 @@ public class JenkinsBuildPlanService {
      *
      * @param exercise      the programming exercise
      * @param planKey       the name of the plan
-     * @param repositoryURL the url of the vcs repository
+     * @param repositoryUri the uri of the vcs repository
      */
-    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL) {
-        final JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs internalRepositoryUrls = getInternalRepositoryUrls(exercise, repositoryURL);
+    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri) {
+        final JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs internalRepositoryUris = getInternalRepositoryUris(exercise, repositoryUri);
 
         final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
         final String buildPlanUrl = jenkinsPipelineScriptCreator.generateBuildPlanURL(exercise);
         final boolean checkoutSolution = exercise.getCheckoutSolutionRepository();
-        final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUrls, checkoutSolution,
+        final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUris, checkoutSolution,
                 buildPlanUrl);
 
         // create build plan in database first, otherwise the job in Jenkins cannot find it for the initial build
@@ -125,10 +125,10 @@ public class JenkinsBuildPlanService {
         triggerBuild(jobFolder, job);
     }
 
-    private JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs getInternalRepositoryUrls(final ProgrammingExercise exercise, final VcsRepositoryUrl assignmentRepositoryUrl) {
-        final VcsRepositoryUrl assignmentUrl = jenkinsInternalUrlService.toInternalVcsUrl(assignmentRepositoryUrl);
-        final VcsRepositoryUrl testUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURL(RepositoryType.TESTS));
-        final VcsRepositoryUrl solutionUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURL(RepositoryType.SOLUTION));
+    private JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs getInternalRepositoryUris(final ProgrammingExercise exercise, final VcsRepositoryUri assignmentRepositoryUri) {
+        final VcsRepositoryUri assignmentUrl = jenkinsInternalUrlService.toInternalVcsUrl(assignmentRepositoryUri);
+        final VcsRepositoryUri testUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURL(RepositoryType.TESTS));
+        final VcsRepositoryUri solutionUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURL(RepositoryType.SOLUTION));
 
         return new JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs(assignmentUrl, testUrl, solutionUrl);
     }
@@ -166,8 +166,8 @@ public class JenkinsBuildPlanService {
 
         String projectKey = programmingExercise.getProjectKey();
         String planKey = participation.getBuildPlanId();
-        String templateRepoUrl = programmingExercise.getTemplateRepositoryUrl();
-        updateBuildPlanRepositories(projectKey, planKey, participation.getRepositoryUrl(), templateRepoUrl);
+        String templateRepoUri = programmingExercise.getTemplateRepositoryUri();
+        updateBuildPlanRepositories(projectKey, planKey, participation.getRepositoryUri(), templateRepoUri);
         enablePlan(projectKey, planKey);
 
         // Students currently always have access to the build plan in Jenkins
@@ -178,19 +178,19 @@ public class JenkinsBuildPlanService {
      *
      * @param buildProjectKey the project key of the programming exercise
      * @param buildPlanKey    the build plan id of the participation
-     * @param newRepoUrl      the repository url that will replace the old url
-     * @param existingRepoUrl the old repository url that will be replaced
+     * @param newRepoUri      the repository uri that will replace the old url
+     * @param existingRepoUri the old repository uri that will be replaced
      */
-    public void updateBuildPlanRepositories(String buildProjectKey, String buildPlanKey, String newRepoUrl, String existingRepoUrl) {
-        newRepoUrl = jenkinsInternalUrlService.toInternalVcsUrl(newRepoUrl);
-        existingRepoUrl = jenkinsInternalUrlService.toInternalVcsUrl(existingRepoUrl);
+    public void updateBuildPlanRepositories(String buildProjectKey, String buildPlanKey, String newRepoUri, String existingRepoUri) {
+        newRepoUri = jenkinsInternalUrlService.toInternalVcsUrl(newRepoUri);
+        existingRepoUri = jenkinsInternalUrlService.toInternalVcsUrl(existingRepoUri);
 
-        // remove potential username from repo URL. Jenkins uses the Artemis Admin user and will fail if other usernames are in the URL
-        final var repoUrl = newRepoUrl.replaceAll("(https?://)(.*@)(.*)", "$1$3");
+        // remove potential username from repo URI. Jenkins uses the Artemis Admin user and will fail if other usernames are in the URI
+        final var repoUri = newRepoUri.replaceAll("(https?://)(.*@)(.*)", "$1$3");
         final Document jobConfig = jenkinsJobService.getJobConfigForJobInFolder(buildProjectKey, buildPlanKey);
 
         try {
-            JenkinsBuildPlanUtils.replaceScriptParameters(jobConfig, existingRepoUrl, repoUrl);
+            JenkinsBuildPlanUtils.replaceScriptParameters(jobConfig, existingRepoUri, repoUri);
         }
         catch (IllegalArgumentException e) {
             log.error("Pipeline Script not found", e);

@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.web.rest.dto.CoursesForDashboardDTO;
 
 class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
 
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private static final Logger log = LoggerFactory.getLogger(DatabaseQueryCountTest.class);
 
     private static final String TEST_PREFIX = "databasequerycount";
 
