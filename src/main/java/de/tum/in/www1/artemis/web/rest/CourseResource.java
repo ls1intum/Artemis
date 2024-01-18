@@ -1212,9 +1212,8 @@ public class CourseResource {
         var chartEndDate = courseService.determineEndDateForActiveStudents(course);
         var spanEndDate = chartEndDate.plusWeeks(periodSize.orElse(17) * periodIndex);
         var returnedSpanSize = courseService.determineTimeSpanSizeForActiveStudents(course, spanEndDate, periodSize.orElse(17));
-        var activeStudents = courseService.getActiveStudents(exerciseIds, periodIndex, periodSize.orElse(17), chartEndDate);
-        // We omit data concerning the time before the start date
-        return ResponseEntity.ok(activeStudents.subList(activeStudents.size() - returnedSpanSize, activeStudents.size()));
+        var activeStudents = courseService.getActiveStudents(exerciseIds, periodIndex, Math.min(returnedSpanSize, periodSize.orElse(17)), chartEndDate);
+        return ResponseEntity.ok(activeStudents);
     }
 
     /**

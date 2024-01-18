@@ -172,7 +172,7 @@ describe('BuildQueueComponent', () => {
     });
 
     it('should cancel a build job in a course', () => {
-        const buildJobId = 1;
+        const buildJobId = '1';
 
         // Mock ActivatedRoute to return a specific course ID
         mockActivatedRoute.paramMap = of(new Map([['courseId', testCourseId]]));

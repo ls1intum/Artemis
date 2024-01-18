@@ -21,6 +21,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ButtonType } from 'app/shared/components/button.component';
 
 const DEFAULT_DISPLAY_THRESHOLD = 3;
 
@@ -34,7 +35,6 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
 
     courseId: number;
     exercise: ProgrammingExercise;
-    readonly HintType = HintType;
     exerciseHint = new ExerciseHint();
     solutionEntries: ProgrammingExerciseSolutionEntry[];
 
@@ -53,6 +53,10 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     faCircleNotch = faCircleNotch;
     faBan = faBan;
     faSave = faSave;
+
+    // Enums
+    readonly HintType = HintType;
+    readonly ButtonType = ButtonType;
 
     constructor(
         private route: ActivatedRoute,
@@ -158,6 +162,9 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     }
 
     generateDescriptionForCodeHint() {
+        if (((this.exerciseHint as CodeHint).solutionEntries?.length ?? 0) === 0) {
+            return;
+        }
         this.isGeneratingDescription = true;
         this.codeHintService.generateDescriptionForCodeHint(this.exercise.id!, this.exerciseHint.id!).subscribe({
             next: (response) => {

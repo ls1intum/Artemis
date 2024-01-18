@@ -68,13 +68,15 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             SELECT p
             FROM Participation p
                 LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
             WHERE p.id = :participationId
             """)
-    Optional<Participation> findWithEagerSubmissionsById(@Param("participationId") Long participationId);
+    Optional<Participation> findWithEagerSubmissionsByIdWithTeamStudents(@Param("participationId") Long participationId);
 
     @NotNull
-    default Participation findByIdWithSubmissionsElseThrow(long participationId) {
-        return findWithEagerSubmissionsById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+    default Participation findWithEagerSubmissionsByIdWithTeamStudentsElseThrow(long participationId) {
+        return findWithEagerSubmissionsByIdWithTeamStudents(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
     }
 
     @NotNull
