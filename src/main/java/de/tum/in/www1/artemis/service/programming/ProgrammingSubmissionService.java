@@ -39,7 +39,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class ProgrammingSubmissionService extends SubmissionService {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
 
     @Value("${artemis.git.name}")
     private String artemisGitName;
@@ -153,7 +153,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
         // TODO: there might be cases in which Artemis should NOT trigger the build
         try {
-            continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation, commit.commitHash(), false);
+            continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation, commit.commitHash(), null);
         }
         catch (ContinuousIntegrationException ex) {
             // TODO: This case is currently not handled. The correct handling would be creating the submission and informing the user that the build trigger failed.

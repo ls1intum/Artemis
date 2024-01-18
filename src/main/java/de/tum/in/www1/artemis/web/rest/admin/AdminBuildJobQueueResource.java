@@ -20,7 +20,7 @@ public class AdminBuildJobQueueResource {
 
     private final LocalCISharedBuildJobQueueService localCIBuildJobQueueService;
 
-    private final Logger log = LoggerFactory.getLogger(AdminBuildJobQueueResource.class);
+    private static final Logger log = LoggerFactory.getLogger(AdminBuildJobQueueResource.class);
 
     public AdminBuildJobQueueResource(LocalCISharedBuildJobQueueService localCIBuildJobQueueService) {
         this.localCIBuildJobQueueService = localCIBuildJobQueueService;
@@ -73,7 +73,7 @@ public class AdminBuildJobQueueResource {
      */
     @DeleteMapping("/cancel-job/{buildJobId}")
     @EnforceAdmin
-    public ResponseEntity<Void> cancelBuildJob(@PathVariable long buildJobId) {
+    public ResponseEntity<Void> cancelBuildJob(@PathVariable String buildJobId) {
         log.debug("REST request to cancel the build job with id {}", buildJobId);
         // Call the cancelBuildJob method in LocalCIBuildJobManagementService
         localCIBuildJobQueueService.cancelBuildJob(buildJobId);

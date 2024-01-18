@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.metis;
+package de.tum.in.www1.artemis.service.plagiarism;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
-import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService;
+import de.tum.in.www1.artemis.service.metis.PostingService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 @Service
-public class PostService extends PostingService {
+public class PlagiarismPostService extends PostingService {
 
     private final PostRepository postRepository;
 
@@ -34,8 +34,8 @@ public class PostService extends PostingService {
 
     private final PlagiarismCaseService plagiarismCaseService;
 
-    protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, PostRepository postRepository,
-            ExerciseRepository exerciseRepository, LectureRepository lectureRepository, WebsocketMessagingService websocketMessagingService,
+    protected PlagiarismPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
+            PostRepository postRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, WebsocketMessagingService websocketMessagingService,
             PlagiarismCaseService plagiarismCaseService, PlagiarismCaseRepository plagiarismCaseRepository, ConversationParticipantRepository conversationParticipantRepository) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository);
         this.postRepository = postRepository;

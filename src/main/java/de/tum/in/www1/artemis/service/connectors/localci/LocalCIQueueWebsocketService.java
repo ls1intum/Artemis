@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.web.websocket.localci.LocalCIWebsocketMessagingSer
 @Profile("localci & scheduling")
 public class LocalCIQueueWebsocketService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIQueueWebsocketService.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalCIQueueWebsocketService.class);
 
     private final HazelcastInstance hazelcastInstance;
 
@@ -67,8 +67,8 @@ public class LocalCIQueueWebsocketService {
     @PostConstruct
     public void addListeners() {
         this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
-        this.processingJobs.addLocalEntryListener(new ProcessingBuildJobItemListener());
-        this.buildAgentInformation.addLocalEntryListener(new BuildAgentListener());
+        this.processingJobs.addEntryListener(new ProcessingBuildJobItemListener(), true);
+        this.buildAgentInformation.addEntryListener(new BuildAgentListener(), true);
     }
 
     private void sendQueuedJobsOverWebsocket(long courseId) {
