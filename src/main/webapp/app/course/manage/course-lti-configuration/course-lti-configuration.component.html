@@ -54,25 +54,6 @@
             </ng-template>
         </ng-container>
         <ng-container ngbNavItem [ngbNavItem]="2">
-            <a ngbNavLink jhiTranslate="artemisApp.lti.version10">LTI 1.0</a>
-            <ng-template ngbNavContent>
-                <dt>
-                    <span>{{ 'artemisApp.lti.ltiKey' | artemisTranslate }}</span>
-                </dt>
-                <dd>
-                    <span>{{ onlineCourseConfiguration?.ltiKey }}</span>
-                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiKey ?? ''"></jhi-copy-icon-button>
-                </dd>
-                <dt>
-                    <span>{{ 'artemisApp.lti.ltiSecret' | artemisTranslate }}</span>
-                </dt>
-                <dd>
-                    <span>{{ onlineCourseConfiguration?.ltiSecret }}</span>
-                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiSecret ?? ''"></jhi-copy-icon-button>
-                </dd>
-            </ng-template>
-        </ng-container>
-        <ng-container ngbNavItem [ngbNavItem]="3">
             <a ngbNavLink jhiTranslate="artemisApp.lti.exercises">Exercises</a>
             <ng-template ngbNavContent>
                 <div class="row">
@@ -121,10 +102,6 @@
                                             <td>{{ exercise.id ? exercise.id : '' }}</td>
                                             <td>{{ exercise.type ? exercise.type : '' }}</td>
                                             <td>{{ exercise.title ? exercise.title : '' }}</td>
-                                            <td>
-                                                {{ getExerciseLti10LaunchUrl(exercise) }}
-                                                <jhi-copy-icon-button [copyText]="getExerciseLti10LaunchUrl(exercise)"></jhi-copy-icon-button>
-                                            </td>
                                             <td>
                                                 {{ getExerciseLti13LaunchUrl(exercise) }}
                                                 <jhi-copy-icon-button [copyText]="getExerciseLti13LaunchUrl(exercise)"></jhi-copy-icon-button>
