@@ -7,6 +7,8 @@ import { HttpResponse } from '@angular/common/http';
 import { Setting } from 'app/shared/user-settings/user-settings.model';
 import { ScienceSetting } from 'app/shared/user-settings/science-settings/science-settings-structure';
 import { ScienceSettingsService } from 'app/shared/user-settings/science-settings/science-settings.service';
+import { LocalStorageService } from 'ngx-webstorage';
+import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 
 const scienceSetting: ScienceSetting = {
     settingId: SettingId.SCIENCE__GENERAL__ACTIVITY_TRACKING,
@@ -22,6 +24,7 @@ describe('ScienceSettingsService', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
+            providers: [{ provide: LocalStorageService, useClass: MockLocalStorageService }],
         })
             .compileComponents()
             .then(() => {
