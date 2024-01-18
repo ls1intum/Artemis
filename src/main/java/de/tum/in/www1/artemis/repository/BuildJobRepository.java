@@ -2,12 +2,14 @@ package de.tum.in.www1.artemis.repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import de.tum.in.www1.artemis.domain.BuildJob;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild;
 
 public interface BuildJobRepository extends JpaRepository<BuildJob, Long> {
 
@@ -22,14 +24,14 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long> {
     List<BuildJob> findAllByBuildAgentAddress(String buildAgentAddress);
 
     @Query("""
-            SELECT b FROM BuildJob b
-            WHERE b.dockerImage = :#{#dockerImage}
-            AND b.buildStartDate = (
-                SELECT max(b2.buildStartDate)
-                FROM BuildJob b2
-                WHERE b2.dockerImage = :#{#dockerImage}
+            SELECT new de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild(
+                b.dockerImage,
+                max(b.buildStartDate)
             )
+            FROM BuildJob b
+            WHERE b.dockerImage IN :#{#dockerImageNames}
+            GROUP BY b.dockerImage
             """)
-    Optional<BuildJob> findLatestBuildJobByDockerImage(@Param("dockerImage") String dockerImage);
+    Set<DockerImageBuild> findLastBuildDatesForDockerImages(@Param("dockerImageNames") List<String> dockerImageNames);
 
 }
