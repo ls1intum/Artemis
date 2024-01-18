@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.metis;
 
-import static de.tum.in.www1.artemis.metis.AnswerPostIntegrationTest.MAX_POSTS_PER_PAGE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
@@ -67,6 +66,8 @@ import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "messageintegration";
+
+    static final int MAX_POSTS_PER_PAGE = 20;
 
     @Autowired
     private ConversationMessageRepository conversationMessageRepository;
