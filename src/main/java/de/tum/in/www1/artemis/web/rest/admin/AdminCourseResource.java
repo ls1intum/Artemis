@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest.admin;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.*;
 
 import org.slf4j.Logger;
@@ -22,9 +23,7 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -55,8 +54,10 @@ public class AdminCourseResource {
 
     private final Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService;
 
+    private final FilePathService filePathService;
+
     public AdminCourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
-            FileService fileService, Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, ChannelService channelService) {
+            FileService fileService, Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, ChannelService channelService, FilePathService filePathService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
@@ -64,6 +65,7 @@ public class AdminCourseResource {
         this.fileService = fileService;
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.channelService = channelService;
+        this.filePathService = filePathService;
     }
 
     /**
@@ -124,8 +126,9 @@ public class AdminCourseResource {
         courseService.createOrValidateGroups(course);
 
         if (file != null) {
-            String pathString = fileService.handleSaveFile(file, false, false).toString();
-            course.setCourseIcon(pathString);
+            Path basePath = FilePathService.getCourseIconFilePath();
+            Path savePath = fileService.saveFileFoo(file, basePath);
+            course.setCourseIcon(filePathService.publicPathForActualPathOrThrow(savePath, course.getId()).toString());
         }
 
         Course createdCourse = courseRepository.save(course);
@@ -152,6 +155,7 @@ public class AdminCourseResource {
         log.info("User {} has requested to delete the course {}", user.getLogin(), course.getTitle());
 
         courseService.delete(course);
+        fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(URI.create(course.getCourseIcon())), 30);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, Course.ENTITY_NAME, course.getTitle())).build();
     }
 

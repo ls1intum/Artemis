@@ -111,13 +111,15 @@ public class CourseResource {
 
     private final ExamRepository examRepository;
 
+    private final FilePathService filePathService;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
             CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathService learningPathService,
-            ConductAgreementService conductAgreementService, ExamRepository examRepository) {
+            ConductAgreementService conductAgreementService, ExamRepository examRepository, FilePathService filePathService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -138,6 +140,7 @@ public class CourseResource {
         this.learningPathService = learningPathService;
         this.conductAgreementService = conductAgreementService;
         this.examRepository = examRepository;
+        this.filePathService = filePathService;
     }
 
     /**
@@ -222,8 +225,9 @@ public class CourseResource {
         courseUpdate.validateUnenrollmentEndDate();
 
         if (file != null) {
-            String pathString = fileService.handleSaveFile(file, false, false).toString();
-            courseUpdate.setCourseIcon(pathString);
+            Path basePath = FilePathService.getCourseIconFilePath();
+            Path savePath = fileService.saveFileFoo(file, basePath);
+            courseUpdate.setCourseIcon(filePathService.publicPathForActualPathOrThrow(savePath, courseId).toString());
         }
 
         if (courseUpdate.isOnlineCourse() != existingCourse.isOnlineCourse()) {
