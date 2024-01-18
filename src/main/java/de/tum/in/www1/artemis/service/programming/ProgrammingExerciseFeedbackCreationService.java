@@ -45,12 +45,12 @@ public class ProgrammingExerciseFeedbackCreationService {
 
     private static final Predicate<String> IS_PYTHON_EXCEPTION_LINE = line -> line.startsWith(PYTHON_EXCEPTION_LINE_PREFIX);
 
-    private static final String TIMEOUT_EXCEPTIONS_REGEX = String.join("|", "org.junit.runners.model.TestTimedOutException", "java.util.concurrent.TimeoutException",
-            "org.awaitility.core.ConditionTimeoutException", "Timed?OutException");
+    private static final String TIMEOUT_EXCEPTIONS_REGEX = String.join("|", "org\\.junit\\.runners\\.model\\.TestTimedOutException", "java\\.util\\.concurrent\\.TimeoutException",
+            "org\\.awaitility\\.core\\.ConditionTimeoutException", "Timed?OutException");
 
-    private static final String EXCEPTION_PREFIX_MESSAGE_REGEX = "[\\w. ]{1,5000}";
+    private static final String EXCEPTION_PREFIX_MESSAGE_REGEX = "[\\w. ]{0,5000}";
 
-    private static final String EXCEPTION_MESSAGE_REGEX = "[\\w.:\t ]{1,5000}";
+    private static final String EXCEPTION_MESSAGE_REGEX = ".{0,5000}";
 
     /**
      * Defines two pattern groups, (1) the exception name and (2) the exception text
