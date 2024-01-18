@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.domain.iris.message;
 
+import jakarta.persistence.*;
+
 import javax.annotation.Nonnull;
-import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
