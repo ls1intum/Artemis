@@ -1,11 +1,7 @@
 package de.tum.in.www1.artemis.authentication;
 
-import static de.tum.in.www1.artemis.authentication.AuthenticationIntegrationTestHelper.LTI_USER_EMAIL;
-import static de.tum.in.www1.artemis.authentication.AuthenticationIntegrationTestHelper.LTI_USER_EMAIL_UPPER_CASE;
 import static de.tum.in.www1.artemis.user.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
 
 import java.util.HashMap;
 import java.util.List;
@@ -13,11 +9,8 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -35,21 +28,11 @@ import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUt
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 
 class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "jiraauthintegration";
-
-    @Value("${artemis.user-management.external.admin-group-name}")
-    private String ADMIN_GROUP_NAME;
-
-    @Value("${artemis.user-management.external.user}")
-    private String JIRA_USER;
-
-    @Value("${artemis.user-management.external.password}")
-    private String JIRA_PASSWORD;
 
     @Autowired
     private JiraRequestMockProvider jiraRequestMockProvider;
@@ -62,9 +45,6 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     protected UserRepository userRepository;
-
-    @Autowired
-    protected LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
 
     @Autowired
     protected AuthorityRepository authorityRepository;
@@ -84,17 +64,12 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
 
     protected Course course;
 
-    protected LtiLaunchRequestDTO ltiLaunchRequest;
-
     @BeforeEach
     void setUp() {
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         courseUtilService.addOnlineCourseConfigurationToCourse(course);
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
-
-        ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
-        doReturn(null).when(lti10Service).verifyRequest(any(), any());
 
         final var userAuthority = new Authority(Role.STUDENT.getAuthority());
         final var instructorAuthority = new Authority(Role.INSTRUCTOR.getAuthority());
@@ -111,26 +86,6 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
     void analyzeApplicationContext_withExternalUserManagement_NoInternalAuthenticationBeanPresent() {
         assertThatExceptionOfType(NoSuchBeanDefinitionException.class).as("No bean of type ArtemisInternalAuthenticationProvider initialized")
                 .isThrownBy(() -> applicationContext.getBean(ArtemisInternalAuthenticationProvider.class));
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = { LTI_USER_EMAIL, LTI_USER_EMAIL_UPPER_CASE })
-    @WithAnonymousUser
-    void launchLtiRequest_authViaEmail_success(String launchEmail) throws Exception {
-        ltiOutcomeUrlRepository.deleteAll();
-
-        final var username = "mrrobot";
-        userRepository.findOneByLogin(username).ifPresent(userRepository::delete);
-        final var firstName = "Elliot";
-        final var groups = Set.of("allsec", "security", ADMIN_GROUP_NAME, course.getInstructorGroupName(), course.getTeachingAssistantGroupName(), course.getEditorGroupName());
-        final var email = LTI_USER_EMAIL;
-        ltiLaunchRequest.setLis_person_contact_email_primary(launchEmail);
-        jiraRequestMockProvider.mockGetUsernameForEmail(launchEmail, email, username);
-        jiraRequestMockProvider.mockGetOrCreateUserLti(JIRA_USER, JIRA_PASSWORD, username, email, firstName, groups);
-        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course.getStudentGroupName()));
-        jiraRequestMockProvider.mockGetOrCreateUserLti(username, "", username, email, firstName, groups);
-
-        request.postFormWithoutLocation("/api/public/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.BAD_REQUEST);
     }
 
     @Test

@@ -82,7 +82,7 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     void init() {
         // do not use the schedule service based on a time interval in the tests, because this would result in flaky tests that run much slower
         quizScheduleService.stopSchedule();
-        arrangeLtiServiceMocks();
+        doNothing().when(lti13Service).onNewResult(any());
     }
 
     @AfterEach
@@ -110,7 +110,6 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isZero();
         quizScheduleService.processCachedQuizSubmissions();
 
-        verifyNoInteractions(lti10Service);
         verifyNoInteractions(lti13Service);
 
         // End the quiz right now
@@ -121,7 +120,6 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
         quizScheduleService.processCachedQuizSubmissions();
 
-        verify(lti10Service).onNewResult(any());
         verify(lti13Service).onNewResult(any());
 
     }
@@ -153,7 +151,6 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(10);
         assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
 
-        verify(lti10Service, times(10)).onNewResult(any());
         verify(lti13Service, times(10)).onNewResult(any());
 
     }
@@ -166,11 +163,6 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, releaseDate, null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(duration);
         return quizExercise;
-    }
-
-    private void arrangeLtiServiceMocks() {
-        doNothing().when(lti10Service).onNewResult(any());
-        doNothing().when(lti13Service).onNewResult(any());
     }
 
     private QuizExercise createQuizExercise(ZonedDateTime releaseDate) throws Exception {
