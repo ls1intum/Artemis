@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
 
-import { Course } from 'app/entities/course.model';
+import { Course, CourseForImportDTO } from 'app/entities/course.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { CoursePagingService } from 'app/course/course-paging-service';
+import { CourseForImportDTOPagingService } from 'app/course/course-for-import-dto-paging-service';
 import { Column, ImportComponent } from 'app/shared/import/import.component';
 
 const tableColumns: Column<Course>[] = [
@@ -29,7 +29,7 @@ const tableColumns: Column<Course>[] = [
 ];
 
 export type ImportAllFromCourseResult = {
-    course: Course;
+    courseForImportDTO: CourseForImportDTO;
     importRelations: boolean;
 };
 
@@ -37,17 +37,17 @@ export type ImportAllFromCourseResult = {
     selector: 'jhi-competency-import',
     templateUrl: './competency-import-course.component.html',
 })
-export class CompetencyImportCourseComponent extends ImportComponent<Course> {
+export class CompetencyImportCourseComponent extends ImportComponent<CourseForImportDTO> {
     //import relations by default
     protected importRelations = true;
 
-    constructor(router: Router, sortService: SortService, activeModal: NgbActiveModal, pagingService: CoursePagingService) {
+    constructor(router: Router, sortService: SortService, activeModal: NgbActiveModal, pagingService: CourseForImportDTOPagingService) {
         super(router, sortService, activeModal, pagingService);
         super.columns = tableColumns;
-        super.entityName = 'course';
+        super.entityName = 'courseForImportDTO';
     }
 
-    override selectImport(item: Course) {
-        this.activeModal.close({ course: item, importRelations: this.importRelations } as ImportAllFromCourseResult);
+    override selectImport(item: CourseForImportDTO) {
+        this.activeModal.close({ courseForImportDTO: item, importRelations: this.importRelations } as ImportAllFromCourseResult);
     }
 }

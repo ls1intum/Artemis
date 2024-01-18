@@ -4,13 +4,13 @@ import { PagingService } from 'app/exercises/shared/manage/paging.service';
 import { PageableSearch, SearchResult } from 'app/shared/table/pageable-table';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Course } from 'app/entities/course.model';
+import { CourseForImportDTO } from 'app/entities/course.model';
 
-type EntityResponseType = SearchResult<Course>;
+type EntityResponseType = SearchResult<CourseForImportDTO>;
 
 @Injectable({ providedIn: 'root' })
-export class CoursePagingService extends PagingService<Course> {
-    public resourceUrl = 'api/courses';
+export class CourseForImportDTOPagingService extends PagingService<CourseForImportDTO> {
+    private readonly resourceUrl = 'api/courses';
 
     constructor(private http: HttpClient) {
         super();

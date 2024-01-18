@@ -265,7 +265,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         modalRef.result.then((result: ImportAllFromCourseResult) => {
             console.log(result);
             this.competencyService
-                .importAll(this.courseId, result.course.id!, result.importRelations)
+                .importAll(this.courseId, result.courseForImportDTO.id!, result.importRelations)
                 .pipe(
                     filter((res: HttpResponse<Array<Competency>>) => res.ok),
                     map((res: HttpResponse<Array<Competency>>) => res.body),

@@ -275,7 +275,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             WHERE (c.instructorGroupName IN :groups OR c.editorGroupName IN :groups)
                 AND (c.title LIKE %:partialTitle%)
             """)
-    Page<Course> findByTitleAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("groups") Set<String> groups, Pageable pageable);
+    Page<Course> findByTitleInCoursesWhereInstructorOrEditor(@Param("partialTitle") String partialTitle, @Param("groups") Set<String> groups, Pageable pageable);
 
     @NotNull
     default Course findByIdElseThrow(long courseId) throws EntityNotFoundException {

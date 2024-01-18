@@ -288,12 +288,12 @@ public class CompetencyResource {
         if (courseId == sourceCourseId) {
             throw new ConflictException("Cannot import from a course into itself", "Course", "courseCycle");
         }
-        var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
         var sourceCourse = courseRepository.findWithEagerCompetenciesByIdElseThrow(sourceCourseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, sourceCourse, null);
 
-        var competencies = competencyRepository.findAllForCourse(sourceCourseId);
+        var competencies = sourceCourse.getCompetencies();
         List<Competency> createdCompetencies = new ArrayList<>();
         // map the id of the old competency to the new one to later copy the competency relations
         var idMap = new HashMap<Long, Competency>();
@@ -623,19 +623,13 @@ public class CompetencyResource {
     }
 
     /**
-     * Creates a new Competency from an existing one to save to the database
+     * Creates a new Competency from an existing one (without relations)
      *
      * @param competency the existing competency
      * @return the new Competency
      */
     public Competency getCompetencyToCreate(Competency competency) {
-        Competency competencyToCreate = new Competency();
-        competencyToCreate.setTitle(competency.getTitle().trim());
-        competencyToCreate.setDescription(competency.getDescription());
-        competencyToCreate.setSoftDueDate(competency.getSoftDueDate());
-        competencyToCreate.setTaxonomy(competency.getTaxonomy());
-        competencyToCreate.setMasteryThreshold(competency.getMasteryThreshold());
-        competencyToCreate.setOptional(competency.isOptional());
-        return competencyToCreate;
+        return new Competency(competency.getTitle().trim(), competency.getDescription(), competency.getSoftDueDate(), competency.getMasteryThreshold(), competency.getTaxonomy(),
+                competency.isOptional());
     }
 }

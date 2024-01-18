@@ -360,18 +360,20 @@ public class CourseResource {
         return userCourses.toList();
     }
 
-    // TODO: add course DTO as we only need very limited course data for this(?)
     /**
-     * GET /courses/paginated : get a paginated list of courses.
+     * GET /courses/paginated : Get a list of {@link CourseForImportDTO} where the user is instructor/editor. The result is pageable.
      *
-     * @return the list of courses (the user has access to)
+     * @param search The pageable search containing the page size, page number and query string
+     * @return the ResponseEntity with status 200 (OK) and with body the desired page
      */
     @GetMapping("courses/paginated")
     @EnforceAtLeastInstructor
-    public ResponseEntity<SearchResultPageDTO<Course>> getAllCoursesOnPage(PageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<CourseForImportDTO>> getAllCoursesOnPage(PageableSearchDTO<String> search) {
         log.debug("REST request to get paginated list of courses.");
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        return ResponseEntity.ok(courseService.getAllOnPageWithSize(search, user));
+        var coursePage = courseService.getAllOnPageWithSize(search, user);
+        var resultsOnPage = coursePage.getResultsOnPage().stream().map(CourseForImportDTO::new).toList();
+        return ResponseEntity.ok(new SearchResultPageDTO<>(resultsOnPage, coursePage.getNumberOfPages()));
     }
 
     /**

@@ -42,11 +42,7 @@
                             </td>
                         }
                         <td class="col-1">
-                            <jhi-button
-                                (onClick)="selectImport(course)"
-                                [disabled]="disabledIds.includes(course.id!)"
-                                [title]="'artemisApp.competency.importAll.table.doImport'"
-                            ></jhi-button>
+                            <jhi-button (onClick)="selectImport(course)" [disabled]="disabledIds.includes(course.id!)" [title]="'artemisApp.competency.importAll.table.doImport'" />
                         </td>
                     </tr>
                 }

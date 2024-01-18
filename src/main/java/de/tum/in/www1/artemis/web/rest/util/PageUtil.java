@@ -56,6 +56,7 @@ public class PageUtil {
         return PageRequest.of(search.getPage() - 1, search.getPageSize(), sortOptions);
     }
 
+    // TODO: deduplicate this logic.
     @NotNull
     public static PageRequest createCoursePageRequest(PageableSearchDTO<String> search) {
         var sortOptions = Sort.by(Course.CourseSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());

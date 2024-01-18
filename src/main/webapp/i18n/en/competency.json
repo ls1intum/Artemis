@@ -43,7 +43,7 @@
             "manageCompetencies": {
                 "title": "Competency Management",
                 "import": "Import competency",
-                "importAll": "Import all competencies from a course",
+                "importAll": "Import all competencies from another course",
                 "create": "Create competency"
             },
             "import": {
