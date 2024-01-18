@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.mockito.ArgumentCaptor.*;
 import static org.mockito.Mockito.*;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -78,6 +79,9 @@ class Lti13ServiceTest {
     @Mock
     private ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
+    @Mock
+    private LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
+
     private OidcIdToken oidcIdToken;
 
     private String clientRegistrationId;
@@ -90,7 +94,7 @@ class Lti13ServiceTest {
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
         lti13Service = new Lti13Service(userRepository, exerciseRepository, courseRepository, launchRepository, ltiService, resultRepository, tokenRetriever,
-                onlineCourseConfigurationService, restTemplate, artemisAuthenticationProvider);
+                onlineCourseConfigurationService, restTemplate, artemisAuthenticationProvider, ltiPlatformConfigurationRepository);
         clientRegistrationId = "clientId";
         onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.setUserPrefix("prefix");
@@ -407,7 +411,11 @@ class Lti13ServiceTest {
         doReturn(Collections.singletonList(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
         doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
-
+        List<LtiPlatformConfiguration> ltiPlatformConfigurations = new ArrayList<>();
+        LtiPlatformConfiguration ltiPlatformConfiguration = new LtiPlatformConfiguration();
+        ltiPlatformConfiguration.setRegistrationId("client-registration");
+        ltiPlatformConfigurations.add(ltiPlatformConfiguration);
+        doReturn(ltiPlatformConfigurations).when(ltiPlatformConfigurationRepository).findAll();
         doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());
 
         String accessToken = "accessToken";

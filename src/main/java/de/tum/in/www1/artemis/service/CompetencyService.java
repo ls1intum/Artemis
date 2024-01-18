@@ -21,12 +21,9 @@ public class CompetencyService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final CompetencyProgressService competencyProgressService;
-
-    public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService, CompetencyProgressService competencyProgressService) {
+    public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService) {
         this.competencyRepository = competencyRepository;
         this.authCheckService = authCheckService;
-        this.competencyProgressService = competencyProgressService;
     }
 
     /**
