@@ -65,6 +65,8 @@ public class LocalCIContainerService {
      */
     public static final String WORKING_DIRECTORY = "/var/tmp";
 
+    public static final String RESULTS_DIRECTORY = "/results";
+
     @Value("${artemis.continuous-integration.local-cis-build-scripts-path}")
     private String localCIBuildScriptBasePath;
 
@@ -142,20 +144,32 @@ public class LocalCIContainerService {
     }
 
     /**
+     * Moves the generated result files to a specified directory so it can easily be retrieved
+     *
+     * @param containerId     the id of the container which generated the files
+     * @param sourcePaths     the list of paths in the container where the generated files can be found
+     * @param destinationPath the path of the directory where the files shall be moved
+     */
+    public void moveResultsToSpecifiedDirectory(String containerId, List<String> sourcePaths, String destinationPath) {
+        String command = "shopt -s globstar && mkdir -p " + destinationPath;
+        executeDockerCommand(containerId, true, true, true, "bash", "-c", command);
+
+        for (String sourcePath : sourcePaths) {
+            checkPath(sourcePath);
+            command = "shopt -s globstar && mv " + sourcePath + " " + destinationPath;
+            executeDockerCommand(containerId, true, true, true, "bash", "-c", command);
+        }
+    }
+
+    /**
      * Retrieve an archive from a running Docker container.
      *
      * @param containerId the id of the container.
      * @param path        the path to the file or directory to be retrieved.
      * @return a {@link TarArchiveInputStream} that can be used to read the archive.
      */
-    public TarArchiveInputStream getArchiveFromContainer(String containerId, String path) {
-        try {
-            return new TarArchiveInputStream(dockerClient.copyArchiveFromContainerCmd(containerId, path).exec());
-        }
-        catch (NotFoundException e) {
-            return null;
-        }
-
+    public TarArchiveInputStream getArchiveFromContainer(String containerId, String path) throws NotFoundException {
+        return new TarArchiveInputStream(dockerClient.copyArchiveFromContainerCmd(containerId, path).exec());
     }
 
     /**
@@ -170,7 +184,7 @@ public class LocalCIContainerService {
      * @throws IOException if no commit hash could be retrieved
      */
     public String getCommitHashOfBranch(String containerId, LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType repositoryType, String branchName,
-            ProgrammingLanguage programmingLanguage) throws IOException {
+            ProgrammingLanguage programmingLanguage) throws IOException, NotFoundException {
         // Get an input stream of the file in .git folder of the repository that contains the current commit hash of the branch.
 
         String repositoryCheckoutPath = RepositoryCheckoutPath.valueOf(repositoryType.toString().toUpperCase()).forProgrammingLanguage(programmingLanguage);
@@ -366,6 +380,12 @@ public class LocalCIContainerService {
             throw new LocalCIException("Interrupted while executing Docker command: " + String.join(" ", command), e);
         }
         return buildLogEntries;
+    }
+
+    private void checkPath(String path) {
+        if (path == null || path.contains("..") || !path.matches("[a-zA-Z0-9_*./-]+")) {
+            throw new LocalCIException("Invalid path: " + path);
+        }
     }
 
     /**

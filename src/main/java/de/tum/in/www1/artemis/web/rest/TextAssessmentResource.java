@@ -114,9 +114,8 @@ public class TextAssessmentResource extends AssessmentResource {
         ResponseEntity<Result> response = super.saveAssessment(textSubmission, false, textAssessment.getFeedbacks(), resultId, textAssessment.getAssessmentNote());
 
         if (response.getStatusCode().is2xxSuccessful()) {
-            final var exercise = (TextExercise) result.getParticipation().getExercise();
             final var feedbacksWithIds = response.getBody().getFeedbacks();
-            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, exercise, feedbacksWithIds);
+            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, feedbacksWithIds);
         }
 
         return response;
@@ -150,11 +149,10 @@ public class TextAssessmentResource extends AssessmentResource {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
         }
         final Result result = super.saveExampleAssessment(exampleSubmissionId, textAssessment.getFeedbacks());
-        final TextExercise exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         final Submission submission = result.getSubmission();
         final TextSubmission textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submission.getId());
         final List<Feedback> feedbacksWithIds = result.getFeedbacks();
-        saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, exercise, feedbacksWithIds);
+        saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, feedbacksWithIds);
         return ResponseEntity.ok(result);
     }
 
@@ -231,7 +229,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
         if (response.getStatusCode().is2xxSuccessful()) {
             final var feedbacksWithIds = response.getBody().getFeedbacks();
-            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, exercise, feedbacksWithIds);
+            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, feedbacksWithIds);
             sendFeedbackToAthena(exercise, textSubmission, feedbacksWithIds);
         }
 
@@ -263,7 +261,7 @@ public class TextAssessmentResource extends AssessmentResource {
         TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(textExercise, user);
         Result result = textAssessmentService.updateAssessmentAfterComplaint(textSubmission.getLatestResult(), textExercise, assessmentUpdate);
-        saveTextBlocks(assessmentUpdate.getTextBlocks(), textSubmission, textExercise, result.getFeedbacks());
+        saveTextBlocks(assessmentUpdate.getTextBlocks(), textSubmission, result.getFeedbacks());
 
         if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
             ((StudentParticipation) result.getParticipation()).setParticipant(null);
@@ -456,8 +454,9 @@ public class TextAssessmentResource extends AssessmentResource {
      *
      * @param textBlocks     received from Client
      * @param textSubmission to associate blocks with
+     * @param feedbacks      the feedbacks to associate with the blocks
      */
-    private void saveTextBlocks(final Set<TextBlock> textBlocks, final TextSubmission textSubmission, final TextExercise exercise, final List<Feedback> feedbacks) {
+    private void saveTextBlocks(final Set<TextBlock> textBlocks, final TextSubmission textSubmission, final List<Feedback> feedbacks) {
         if (textBlocks != null) {
             List<Feedback> nonGeneralFeedbacks = feedbacks.stream().filter(feedback -> feedback.getReference() != null).toList();
             Map<String, Feedback> feedbackMap = nonGeneralFeedbacks.stream().collect(Collectors.toMap(Feedback::getReference, Function.identity()));

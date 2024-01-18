@@ -87,7 +87,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
      * @param repositoryType The type of repository to be updated
      */
     private void upgradeTemplateFiles(ProgrammingExercise exercise, RepositoryType repositoryType) {
-        if (repositoryType == RepositoryType.AUXILIARY) {
+        if (repositoryType == RepositoryType.AUXILIARY || repositoryType == RepositoryType.USER) {
             return;
         }
         try {

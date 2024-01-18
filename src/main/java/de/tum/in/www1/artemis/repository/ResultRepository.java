@@ -76,6 +76,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "feedbacks.testCase" })
     Optional<Result> findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(Long participationId);
 
+    @EntityGraph(type = LOAD, attributePaths = "submission")
     Optional<Result> findFirstByParticipationIdOrderByCompletionDateDesc(Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = "submission")

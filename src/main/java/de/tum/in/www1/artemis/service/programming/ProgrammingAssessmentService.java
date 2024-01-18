@@ -106,12 +106,10 @@ public class ProgrammingAssessmentService extends AssessmentService {
         }
 
         // Note: we always need to report the result over LTI, even if the assessment due date is not over yet.
-        // Otherwise it might never become visible in the external system
-        if (ltiNewResultService.isPresent()) {
-            ltiNewResultService.get().onNewResult((StudentParticipation) newManualResult.getParticipation());
-        }
+        // Otherwise, it might never become visible in the external system
+        ltiNewResultService.ifPresent(newResultService -> newResultService.onNewResult(participation));
         if (ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
-            resultWebsocketService.broadcastNewResult(newManualResult.getParticipation(), newManualResult);
+            resultWebsocketService.broadcastNewResult(participation, newManualResult);
         }
 
         sendFeedbackToAthena(exercise, submission, newManualResult.getFeedbacks());

@@ -185,7 +185,7 @@ public class ComplaintResource {
         }
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         boolean isTeamParticipation = participation.getParticipant() instanceof Team;
-        boolean isTutorOfTeam = user.getLogin().equals(participation.getTeam().map(team -> team.getOwner().getLogin()).orElse(null));
+        boolean isTutorOfTeam = user.getLogin().equals(participation.getTeam().map(team -> team.getOwner() != null ? team.getOwner().getLogin() : null).orElse(null));
 
         if (!isAtLeastTutor) {
             complaint.getResult().filterSensitiveInformation();
