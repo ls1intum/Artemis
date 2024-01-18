@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,8 +62,6 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
     public OnlineCourseConfiguration createOnlineCourseConfiguration(Course course) {
         OnlineCourseConfiguration ocConfiguration = new OnlineCourseConfiguration();
         ocConfiguration.setCourse(course);
-        ocConfiguration.setLtiKey(RandomStringUtils.random(12, true, true));
-        ocConfiguration.setLtiSecret(RandomStringUtils.random(12, true, true));
         ocConfiguration.setUserPrefix(course.getShortName());
         course.setOnlineCourseConfiguration(ocConfiguration);
         return ocConfiguration;
@@ -76,9 +73,6 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
      * @param ocConfiguration the online course configuration being validated
      */
     public void validateOnlineCourseConfiguration(OnlineCourseConfiguration ocConfiguration) {
-        if (StringUtils.isBlank(ocConfiguration.getLtiKey()) || StringUtils.isBlank(ocConfiguration.getLtiSecret())) {
-            throw new BadRequestAlertException("Invalid online course configuration", ENTITY_NAME, "invalidOnlineCourseConfiguration");
-        }
         if (StringUtils.isBlank(ocConfiguration.getUserPrefix()) || !ocConfiguration.getUserPrefix().matches(LOGIN_REGEX)) {
             throw new BadRequestAlertException("Invalid user prefix, must match login regex defined in Constants.java", ENTITY_NAME, "invalidUserPrefix");
         }
