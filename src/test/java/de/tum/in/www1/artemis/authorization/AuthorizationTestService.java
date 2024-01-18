@@ -40,7 +40,7 @@ public class AuthorizationTestService {
 
         // Test each endpoint and collect the reports
         for (Map.Entry<RequestMappingInfo, HandlerMethod> entry : endpointMap.entrySet()) {
-            testEndpoint(entry.getKey(), entry.getValue(), classReports, methodReports);
+            testEndpoint(entry.getKey(), entry.getValue(), methodReports);
         }
 
         printReports(classReports, methodReports);
@@ -76,10 +76,9 @@ public class AuthorizationTestService {
      *
      * @param info          The request mapping info of the endpoint
      * @param method        The handler method of the endpoint
-     * @param classReports  The current class reports
      * @param methodReports The current method reports
      */
-    private void testEndpoint(RequestMappingInfo info, HandlerMethod method, Map<Class<?>, Set<String>> classReports, Map<Method, Set<String>> methodReports) {
+    private void testEndpoint(RequestMappingInfo info, HandlerMethod method, Map<Method, Set<String>> methodReports) {
         checkForPath(info, method, methodReports);
     }
 
