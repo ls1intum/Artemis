@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
+import de.tum.in.www1.artemis.service.connectors.BuildScriptProvider;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.ScriptAction;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
@@ -53,13 +54,18 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService
 @Profile("localci")
 public class LocalCIContainerService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIContainerService.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalCIContainerService.class);
 
     private final DockerClient dockerClient;
 
     private final HostConfig hostConfig;
 
+    /**
+     * The directory in which the build jobs are executed
+     */
     public static final String WORKING_DIRECTORY = "/var/tmp";
+
+    public static final String RESULTS_DIRECTORY = "/results";
 
     @Value("${artemis.continuous-integration.local-cis-build-scripts-path}")
     private String localCIBuildScriptBasePath;
@@ -78,10 +84,13 @@ public class LocalCIContainerService {
 
     AeolusTemplateService aeolusTemplateService;
 
-    public LocalCIContainerService(DockerClient dockerClient, HostConfig hostConfig, AeolusTemplateService aeolusTemplateService) {
+    BuildScriptProvider buildScriptProvider;
+
+    public LocalCIContainerService(DockerClient dockerClient, HostConfig hostConfig, AeolusTemplateService aeolusTemplateService, BuildScriptProvider buildScriptProvider) {
         this.dockerClient = dockerClient;
         this.hostConfig = hostConfig;
         this.aeolusTemplateService = aeolusTemplateService;
+        this.buildScriptProvider = buildScriptProvider;
     }
 
     /**
@@ -135,20 +144,32 @@ public class LocalCIContainerService {
     }
 
     /**
+     * Moves the generated result files to a specified directory so it can easily be retrieved
+     *
+     * @param containerId     the id of the container which generated the files
+     * @param sourcePaths     the list of paths in the container where the generated files can be found
+     * @param destinationPath the path of the directory where the files shall be moved
+     */
+    public void moveResultsToSpecifiedDirectory(String containerId, List<String> sourcePaths, String destinationPath) {
+        String command = "shopt -s globstar && mkdir -p " + destinationPath;
+        executeDockerCommand(containerId, true, true, true, "bash", "-c", command);
+
+        for (String sourcePath : sourcePaths) {
+            checkPath(sourcePath);
+            command = "shopt -s globstar && mv " + sourcePath + " " + destinationPath;
+            executeDockerCommand(containerId, true, true, true, "bash", "-c", command);
+        }
+    }
+
+    /**
      * Retrieve an archive from a running Docker container.
      *
      * @param containerId the id of the container.
      * @param path        the path to the file or directory to be retrieved.
      * @return a {@link TarArchiveInputStream} that can be used to read the archive.
      */
-    public TarArchiveInputStream getArchiveFromContainer(String containerId, String path) {
-        try {
-            return new TarArchiveInputStream(dockerClient.copyArchiveFromContainerCmd(containerId, path).exec());
-        }
-        catch (NotFoundException e) {
-            return null;
-        }
-
+    public TarArchiveInputStream getArchiveFromContainer(String containerId, String path) throws NotFoundException {
+        return new TarArchiveInputStream(dockerClient.copyArchiveFromContainerCmd(containerId, path).exec());
     }
 
     /**
@@ -163,7 +184,7 @@ public class LocalCIContainerService {
      * @throws IOException if no commit hash could be retrieved
      */
     public String getCommitHashOfBranch(String containerId, LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType repositoryType, String branchName,
-            ProgrammingLanguage programmingLanguage) throws IOException {
+            ProgrammingLanguage programmingLanguage) throws IOException, NotFoundException {
         // Get an input stream of the file in .git folder of the repository that contains the current commit hash of the branch.
 
         String repositoryCheckoutPath = RepositoryCheckoutPath.valueOf(repositoryType.toString().toUpperCase()).forProgrammingLanguage(programmingLanguage);
@@ -361,6 +382,12 @@ public class LocalCIContainerService {
         return buildLogEntries;
     }
 
+    private void checkPath(String path) {
+        if (path == null || path.contains("..") || !path.matches("[a-zA-Z0-9_*./-]+")) {
+            throw new LocalCIException("Invalid path: " + path);
+        }
+    }
+
     /**
      * Creates a build script for a given programming exercise.
      * The build script is stored in a file in the local-ci-scripts directory.
@@ -372,17 +399,6 @@ public class LocalCIContainerService {
      */
     public Path createBuildScript(ProgrammingExerciseParticipation participation, String containerName) {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-
-        List<ScriptAction> actions = List.of();
-
-        Windfile windfile = programmingExercise.getWindfile();
-
-        if (windfile == null) {
-            windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
-        }
-        if (windfile != null) {
-            actions = windfile.getScriptActions();
-        }
 
         Path scriptsPath = Path.of(localCIBuildScriptBasePath);
 
@@ -402,17 +418,37 @@ public class LocalCIContainerService {
         buildScript.append("#!/bin/bash\n");
         buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir\n");
 
-        actions.forEach(action -> {
-            String workdir = action.getWorkdir();
-            if (workdir != null) {
-                buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir/").append(workdir).append("\n");
-            }
-            buildScript.append(action.getScript()).append("\n");
-            if (workdir != null) {
-                buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir\n");
-            }
-        });
+        String customScript = programmingExercise.getBuildScript();
+        if (customScript != null) {
+            buildScript.append(customScript);
+        }
+        else {
+            List<ScriptAction> actions;
 
+            Windfile windfile = programmingExercise.getWindfile();
+
+            if (windfile == null) {
+                windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
+            }
+            if (windfile != null) {
+                actions = windfile.getScriptActions();
+            }
+            else {
+                throw new LocalCIException("No windfile found for programming exercise " + programmingExercise.getId());
+            }
+
+            actions.forEach(action -> {
+                String workdir = action.getWorkdir();
+                if (workdir != null) {
+                    buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir/").append(workdir).append("\n");
+                }
+                buildScript.append(action.getScript()).append("\n");
+                if (workdir != null) {
+                    buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir\n");
+                }
+            });
+
+        }
         try {
             FileUtils.writeStringToFile(buildScriptPath.toFile(), buildScript.toString(), StandardCharsets.UTF_8);
         }

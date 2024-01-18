@@ -36,7 +36,7 @@ public class BambooBuildPlanUpdateService implements ContinuousIntegrationUpdate
 
     private final BambooInternalUrlService bambooInternalUrlService;
 
-    private final Logger log = LoggerFactory.getLogger(BambooBuildPlanUpdateService.class);
+    private static final Logger log = LoggerFactory.getLogger(BambooBuildPlanUpdateService.class);
 
     private final RestTemplate bambooRestTemplate;
 

@@ -59,7 +59,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @ComponentScan("de.tum.in.www1.artemis.*")
 public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImpl implements ArtemisAuthenticationProvider {
 
-    private final Logger log = LoggerFactory.getLogger(JiraAuthenticationProvider.class);
+    private static final Logger log = LoggerFactory.getLogger(JiraAuthenticationProvider.class);
 
     @Value("${artemis.user-management.external.url}")
     private URL jiraUrl;

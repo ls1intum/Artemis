@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("/api")
 public class ComplaintResource {
 
-    private final Logger log = LoggerFactory.getLogger(ComplaintResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ComplaintResource.class);
 
     private static final String COMPLAINT_ENTITY_NAME = "complaint";
 
@@ -185,7 +185,7 @@ public class ComplaintResource {
         }
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         boolean isTeamParticipation = participation.getParticipant() instanceof Team;
-        boolean isTutorOfTeam = user.getLogin().equals(participation.getTeam().map(team -> team.getOwner().getLogin()).orElse(null));
+        boolean isTutorOfTeam = user.getLogin().equals(participation.getTeam().map(team -> team.getOwner() != null ? team.getOwner().getLogin() : null).orElse(null));
 
         if (!isAtLeastTutor) {
             complaint.getResult().setAssessor(null);

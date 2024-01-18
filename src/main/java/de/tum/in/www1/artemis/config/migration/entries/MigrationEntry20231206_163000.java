@@ -24,13 +24,11 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 @Component
 public class MigrationEntry20231206_163000 extends MigrationEntry {
 
-    private static final int BATCH_SIZE = 100;
-
     private static final int THREADS = 10;
 
     private static final List<String> MIGRATABLE_PROFILES = List.of("bamboo");
 
-    private final Logger log = LoggerFactory.getLogger(MigrationEntry20231206_163000.class);
+    private static final Logger log = LoggerFactory.getLogger(MigrationEntry20231206_163000.class);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 

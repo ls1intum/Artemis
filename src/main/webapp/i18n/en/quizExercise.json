@@ -9,6 +9,13 @@
                 "exportLabel": "Export Quiz Exercises",
                 "createModelDragAndDrop": "Create Drag and Drop Model Quiz"
             },
+            "detail": {
+                "title": "Quiz Exercise",
+                "questionCount": {
+                    "title": "Number of Questions",
+                    "value": "Multiple Choice: {{ mcCount }}, Drag And Drop: {{ dndCount }}, Short Answer: {{ shortCount }}"
+                }
+            },
             "created": "Created new Quiz Exercise with identifier {{ param }}",
             "updated": "Updated Quiz Exercise with identifier {{ param }}",
             "deleted": "Deleted Quiz Exercise with identifier {{ param }}",
