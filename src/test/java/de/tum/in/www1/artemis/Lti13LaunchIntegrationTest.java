@@ -20,9 +20,6 @@ import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
-import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.open.PublicLtiResource;
@@ -53,19 +50,11 @@ class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private static final String TEST_PREFIX = "lti13launchintegrationtest";
 
-    private Course course;
-
     @Autowired
     private UserUtilService userUtilService;
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @BeforeEach
     void init() {
@@ -73,10 +62,6 @@ class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
         user.setInternal(false);
         userRepository.save(user);
-
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        course.setOnlineCourse(true);
-        courseUtilService.addOnlineCourseConfigurationToCourse(course);
         jiraRequestMockProvider.enableMockingOfRequests();
     }
 

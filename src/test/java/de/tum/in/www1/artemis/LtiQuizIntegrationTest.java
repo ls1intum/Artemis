@@ -168,7 +168,8 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     private QuizExercise createQuizExercise(ZonedDateTime releaseDate) throws Exception {
         QuizExercise quizExercise = createSimpleQuizExercise(releaseDate, 3600);
 
-        QuizExercise quizExerciseServer = createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED);
+        QuizExercise quizExerciseServer = createQuizExerciseWithFiles(quizExercise);
+        assertThat(quizExerciseServer).isNotNull();
         QuizExercise quizExerciseDatabase = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
         assertThat(quizExerciseServer).isNotNull();
         assertThat(quizExerciseDatabase).isNotNull();
@@ -176,12 +177,12 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         return quizExerciseDatabase;
     }
 
-    private QuizExercise createQuizExerciseWithFiles(QuizExercise quizExercise, HttpStatus expectedStatus) throws Exception {
+    private QuizExercise createQuizExerciseWithFiles(QuizExercise quizExercise) throws Exception {
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/quiz-exercises");
         addFilesToBuilderAndModifyExercise(builder, quizExercise);
         builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(quizExercise)))
                 .contentType(MediaType.MULTIPART_FORM_DATA);
-        MvcResult result = request.getMvc().perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult result = request.getMvc().perform(builder).andExpect(status().is(HttpStatus.CREATED.value())).andReturn();
         request.restoreSecurityContext();
         if (HttpStatus.valueOf(result.getResponse().getStatus()).is2xxSuccessful()) {
             assertThat(result.getResponse().getContentAsString()).isNotBlank();

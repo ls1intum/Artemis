@@ -57,7 +57,7 @@ public class PublicLtiResource {
         }
 
         if (!isValidJwtIgnoreSignature(idToken)) {
-            errorOnIllegalParameter(response, "id_token");
+            errorOnIllegalParameter(response);
             return;
         }
 
@@ -96,8 +96,8 @@ public class PublicLtiResource {
         response.sendError(HttpStatus.BAD_REQUEST.value(), message);
     }
 
-    private void errorOnIllegalParameter(HttpServletResponse response, String missingParamName) throws IOException {
-        String message = "Illegal parameter on oauth2 authorization response: " + missingParamName;
+    private void errorOnIllegalParameter(HttpServletResponse response) throws IOException {
+        String message = "Illegal parameter on oauth2 authorization response: id_token";
         log.error(message);
         response.sendError(HttpStatus.BAD_REQUEST.value(), message);
     }
