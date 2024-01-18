@@ -125,15 +125,17 @@ public class AdminCourseResource {
 
         courseService.createOrValidateGroups(course);
 
+        Course createdCourse = courseRepository.save(course);
+
         if (file != null) {
             Path basePath = FilePathService.getCourseIconFilePath();
             Path savePath = fileService.saveFileFoo(file, basePath);
-            course.setCourseIcon(filePathService.publicPathForActualPathOrThrow(savePath, course.getId()).toString());
+            createdCourse.setCourseIcon(filePathService.publicPathForActualPathOrThrow(savePath, createdCourse.getId()).toString());
+            createdCourse = courseRepository.save(createdCourse);
         }
 
-        Course createdCourse = courseRepository.save(course);
-
-        Arrays.stream(DefaultChannelType.values()).forEach(channelType -> createDefaultChannel(createdCourse, channelType));
+        Course finalCreatedCourse = createdCourse;
+        Arrays.stream(DefaultChannelType.values()).forEach(channelType -> createDefaultChannel(finalCreatedCourse, channelType));
 
         return ResponseEntity.created(new URI("/api/courses/" + createdCourse.getId())).body(createdCourse);
     }
