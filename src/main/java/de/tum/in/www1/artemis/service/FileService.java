@@ -192,7 +192,7 @@ public class FileService implements DisposableBean {
      * @return the path where the file was saved
      */
     @NotNull
-    public Path saveFileFoo(MultipartFile file, Path basePath) {
+    public Path saveFile(MultipartFile file, Path basePath) {
         String sanitizedFilename = checkAndSanitizeFilename(file.getOriginalFilename());
         validateExtension(sanitizedFilename, false);
         String generatedFilename = generateFilename(generateTargetFilenameBase(basePath), FilenameUtils.getExtension(sanitizedFilename));
