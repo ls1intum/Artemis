@@ -33,8 +33,8 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     };
 
     // These two attributes should be set when using the common template (import.component.html)
-    entityName: string;
-    columns: Column<T>[];
+    protected entityName: string;
+    protected columns: Column<T>[];
 
     @Input() public disabledIds: number[] = [];
 

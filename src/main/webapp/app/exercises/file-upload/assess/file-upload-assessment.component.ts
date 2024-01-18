@@ -412,7 +412,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.assessments);
         // Cap totalScore to maxPoints
         if (this.exercise) {
-            const maxPoints = this.exercise.maxPoints! + this.exercise.bonusPoints! ?? 0.0;
+            const maxPoints = this.exercise.maxPoints! + this.exercise.bonusPoints!;
             if (this.totalScore > maxPoints) {
                 this.totalScore = maxPoints;
             }
