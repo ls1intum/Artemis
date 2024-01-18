@@ -246,6 +246,10 @@ public class GradingScale extends DomainObject {
         public String getMappedColumnName() {
             return mappedColumnName;
         }
+
+        public static String getMappedColumnName(String searchColumnName) {
+            return valueOf(searchColumnName).mappedColumnName;
+        }
     }
 
     @Override

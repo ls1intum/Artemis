@@ -732,7 +732,7 @@ public class ProgrammingExerciseService {
             return new SearchResultPageDTO<>(Collections.emptyList(), 0);
         }
         String searchTerm = search.getSearchTerm();
-        PageRequest pageable = PageUtil.createExercisePageRequest(search);
+        PageRequest pageable = PageUtil.createDefaultPageRequest(search, Exercise.ExerciseSearchColumn::getMappedColumnName);
         Specification<ProgrammingExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
         return getAllOnPageForSpecification(pageable, specification);
     }
@@ -753,7 +753,7 @@ public class ProgrammingExerciseService {
             return new SearchResultPageDTO<>(Collections.emptyList(), 0);
         }
         String searchTerm = search.getSearchTerm();
-        PageRequest pageable = PageUtil.createExercisePageRequest(search);
+        PageRequest pageable = PageUtil.createDefaultPageRequest(search, Exercise.ExerciseSearchColumn::getMappedColumnName);
         Specification<ProgrammingExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
         specification = specification.and(exerciseSpecificationService.createSCAFilter(programmingLanguage));
         return getAllOnPageForSpecification(pageable, specification);

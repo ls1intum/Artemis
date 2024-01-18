@@ -165,6 +165,10 @@ public class Lecture extends DomainObject {
         public String getMappedColumnName() {
             return mappedColumnName;
         }
+
+        public static String getMappedColumnName(String searchColumnName) {
+            return valueOf(searchColumnName).mappedColumnName;
+        }
     }
 
     public String getChannelName() {

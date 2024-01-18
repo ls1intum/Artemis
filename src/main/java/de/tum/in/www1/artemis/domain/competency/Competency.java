@@ -248,5 +248,9 @@ public class Competency extends DomainObject {
         public String getMappedColumnName() {
             return mappedColumnName;
         }
+
+        public static String getMappedColumnName(String searchColumnName) {
+            return valueOf(searchColumnName).mappedColumnName;
+        }
     }
 }

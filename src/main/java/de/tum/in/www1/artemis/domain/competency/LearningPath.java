@@ -97,5 +97,9 @@ public class LearningPath extends DomainObject {
         public String getMappedColumnName() {
             return mappedColumnName;
         }
+
+        public static String getMappedColumnName(String searchColumnName) {
+            return valueOf(searchColumnName).mappedColumnName;
+        }
     }
 }

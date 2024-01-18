@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
@@ -210,7 +211,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         if (!isCourseFilter && !isExamFilter) {
             return new SearchResultPageDTO<>(Collections.emptyList(), 0);
         }
-        final var pageable = PageUtil.createExercisePageRequest(search);
+        final var pageable = PageUtil.createDefaultPageRequest(search, Exercise.ExerciseSearchColumn::getMappedColumnName);
         final var searchTerm = search.getSearchTerm();
         Specification<QuizExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
         Page<QuizExercise> exercisePage = quizExerciseRepository.findAll(specification, pageable);

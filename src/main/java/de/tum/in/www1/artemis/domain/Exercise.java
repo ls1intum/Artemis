@@ -1008,6 +1008,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         public String getMappedColumnName() {
             return mappedColumnName;
         }
+
+        public static String getMappedColumnName(String searchColumnName) {
+            return valueOf(searchColumnName).mappedColumnName;
+        }
     }
 
     public abstract ExerciseType getExerciseType();
