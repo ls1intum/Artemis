@@ -6,7 +6,7 @@ import java.time.ZonedDateTime;
 
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 
-public record LocalCIBuildJobQueueItem(long id, String name, String buildAgentAddress, long participationId, String repositoryName, RepositoryType repositoryType,
+public record LocalCIBuildJobQueueItem(String id, String name, String buildAgentAddress, long participationId, String repositoryName, RepositoryType repositoryType,
         String commitHash, ZonedDateTime submissionDate, int retryCount, ZonedDateTime buildStartDate, ZonedDateTime buildCompletionDate, int priority, long courseId,
         RepositoryType triggeredByPushTo, String dockerImage) implements Serializable {
 
