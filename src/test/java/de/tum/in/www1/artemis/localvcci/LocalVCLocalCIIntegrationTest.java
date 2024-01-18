@@ -697,6 +697,11 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         instructorExam.setStartedAndStartDate(ZonedDateTime.now());
         studentExamRepository.save(instructorExam);
 
+        await().until(() -> {
+            Optional<StudentExam> studentExamOptional = studentExamRepository.findById(instructorExam.getId());
+            return studentExamOptional.isPresent() && studentExamOptional.get().getWorkingTime() != null;
+        });
+
         // Student should not able to fetch or push.
         localVCLocalCITestService.testFetchReturnsError(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
         localVCLocalCITestService.testPushReturnsError(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
