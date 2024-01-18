@@ -35,13 +35,16 @@ public class ComplaintService {
 
     private final ExamRepository examRepository;
 
+    private final TeamRepository teamRepository;
+
     public ComplaintService(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, ResultRepository resultRepository,
-            ExamRepository examRepository, UserRepository userRepository) {
+            ExamRepository examRepository, UserRepository userRepository, TeamRepository teamRepository) {
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.resultRepository = resultRepository;
         this.examRepository = examRepository;
         this.userRepository = userRepository;
+        this.teamRepository = teamRepository;
     }
 
     /**
@@ -95,6 +98,10 @@ public class ComplaintService {
                         "moreFeedbackRequestsDisabled");
             }
             validateTimeOfComplaintOrRequestMoreFeedback(originalResult, studentParticipation.getExercise(), studentParticipation, course, complaint.getComplaintType());
+        }
+
+        if (studentParticipation.getParticipant() instanceof Team team) {
+            studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
         }
 
         if (!studentParticipation.isOwnedBy(principal.getName())) {
