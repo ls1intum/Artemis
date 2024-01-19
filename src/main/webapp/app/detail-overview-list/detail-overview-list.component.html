@@ -230,7 +230,12 @@
                 }
                 @case (DetailType.ProgrammingIrisEnabled) {
                     <dd id="detail-value-{{ detail.title }}">
-                        <jhi-iris-enabled [exercise]="detail.data.exercise" [irisSubSettingsType]="detail.data.subSettingsType" [disabled]="detail.data.disabled" />
+                        <jhi-iris-enabled
+                            [exercise]="detail.data.exercise"
+                            [course]="detail.data.course"
+                            [irisSubSettingsType]="detail.data.subSettingsType"
+                            [disabled]="detail.data.disabled"
+                        />
                     </dd>
                 }
                 @case (DetailType.ModelingEditor) {
