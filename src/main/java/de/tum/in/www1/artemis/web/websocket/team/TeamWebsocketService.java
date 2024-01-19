@@ -4,8 +4,6 @@ import java.util.*;
 
 import javax.annotation.Nullable;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -18,8 +16,6 @@ import de.tum.in.www1.artemis.web.websocket.dto.TeamAssignmentPayload;
 @Controller
 public class TeamWebsocketService {
 
-    private static final Logger log = LoggerFactory.getLogger(TeamWebsocketService.class);
-
     private final WebsocketMessagingService websocketMessagingService;
 
     private final String assignmentTopic = "/topic/team-assignments";
@@ -30,7 +26,7 @@ public class TeamWebsocketService {
 
     /**
      * Sends out team assignment information for an exercise to students of a created/updated/deleted team
-     *
+     * <p>
      * Cases:
      * 1. Team was created: sendTeamAssignmentUpdate(exercise, null, createdTeam);
      * 2. Team was updated: sendTeamAssignmentUpdate(exercise, existingTeam, updatedTeam);

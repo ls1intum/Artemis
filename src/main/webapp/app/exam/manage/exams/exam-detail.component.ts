@@ -16,6 +16,7 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { GradeType } from 'app/entities/grading-scale.model';
 import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { scrollToTopOfPage } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-exam-detail',
@@ -67,6 +68,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
      */
     ngOnInit(): void {
         this.route.data.subscribe(({ exam }) => {
+            scrollToTopOfPage();
             this.exam = exam;
             this.formattedStartText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.startText);
             this.formattedConfirmationStartText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationStartText);

@@ -40,6 +40,7 @@ import { MockTranslateService } from '../../../../helpers/mocks/service/mock-tra
 import { TranslateService } from '@ngx-translate/core';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
+import * as Utils from 'app/shared/util/utils';
 
 @Component({
     template: '',
@@ -273,5 +274,12 @@ describe('ExamDetailComponent', () => {
         // THEN
         expect(service.delete).toHaveBeenCalledOnce();
         expect(router.navigate).toHaveBeenCalledOnce();
+    });
+
+    it('should call scrollToTopOfPage on component initialization', () => {
+        const scrollToTopOfPageSpy = jest.spyOn(Utils, 'scrollToTopOfPage');
+        examDetailComponent.ngOnInit();
+        expect(scrollToTopOfPageSpy).toHaveBeenCalled();
+        scrollToTopOfPageSpy.mockRestore();
     });
 });
