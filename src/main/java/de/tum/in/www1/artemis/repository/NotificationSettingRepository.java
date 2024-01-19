@@ -64,7 +64,7 @@ public interface NotificationSettingRepository extends JpaRepository<Notificatio
     @Query("""
             SELECT cp.conversation.id
             FROM ConversationParticipant cp
-            WHERE cp.user.id = :userId AND cp.isHidden = true
+            WHERE cp.user.id = :userId AND (cp.isMuted = true OR cp.isHidden = true)
             """)
     Set<Long> findMutedConversations(@Param("userId") long userId);
 }
