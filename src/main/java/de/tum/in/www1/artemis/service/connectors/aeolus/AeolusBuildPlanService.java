@@ -14,8 +14,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -46,13 +44,16 @@ public class AeolusBuildPlanService {
     @Value("${aeolus.url}")
     private URL aeolusUrl;
 
-    @Value("${artemis.continuous-integration.token}")
+    @Value("${aeolus.token:null}")
+    private String token;
+
+    @Value("${artemis.continuous-integration.token:null}")
     private String ciToken;
 
-    @Value("${artemis.continuous-integration.user}")
+    @Value("${artemis.continuous-integration.user:null}")
     private String ciUsername;
 
-    @Value("${artemis.continuous-integration.url}")
+    @Value("${artemis.continuous-integration.url:null}")
     private String ciUrl;
 
     /**
@@ -92,12 +93,21 @@ public class AeolusBuildPlanService {
         String requestUrl = aeolusUrl + "/publish/" + target.getName();
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
         Map<String, Object> jsonObject = new HashMap<>();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        if (token == null) {
+            jsonObject.put("username", ciUsername);
+            jsonObject.put("token", ciToken);
+        }
+        else {
+            jsonObject.put("username", null);
+            jsonObject.put("token", null);
+            headers.setBearerAuth(token);
+        }
         jsonObject.put("url", url);
-        jsonObject.put("username", ciUsername);
-        jsonObject.put("token", ciToken);
         jsonObject.put("windfile", buildPlan);
 
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(jsonObject, null);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(jsonObject, headers);
         try {
             ResponseEntity<AeolusGenerationResponseDTO> response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, entity, AeolusGenerationResponseDTO.class);
 
@@ -123,8 +133,11 @@ public class AeolusBuildPlanService {
         String requestUrl = aeolusUrl + "/generate/" + target.getName();
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
 
-        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-        headers.add("Content-Type", "application/json");
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        if (token != null) {
+            headers.setBearerAuth(token);
+        }
         HttpEntity<String> entity = new HttpEntity<>(buildPlan, headers);
         try {
             ResponseEntity<AeolusGenerationResponseDTO> response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, entity, AeolusGenerationResponseDTO.class);
