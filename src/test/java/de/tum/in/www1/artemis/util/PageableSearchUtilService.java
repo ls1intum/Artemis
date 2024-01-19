@@ -10,7 +10,6 @@ import com.google.gson.reflect.TypeToken;
 
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
-import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 /**
  * Service responsible for initializing the database with specific testdata related to searches for use in integration tests.
@@ -29,7 +28,7 @@ public class PageableSearchUtilService {
         search.setPage(1);
         search.setPageSize(10);
         search.setSearchTerm(searchTerm);
-        search.setSortedColumn(PageUtil.ColumnMapping.EXERCISE.getMappedColumnName("ID"));
+        search.setSortedColumn("ID");
         if ("".equals(searchTerm)) {
             search.setSortingOrder(SortingOrder.ASCENDING);
         }
@@ -50,7 +49,7 @@ public class PageableSearchUtilService {
         search.setPage(1);
         search.setPageSize(10);
         search.setSearchTerm(searchTerm);
-        search.setSortedColumn(PageUtil.ColumnMapping.STUDENT_PARTICIPATION.getMappedColumnName("ID"));
+        search.setSortedColumn("ID");
         if ("".equals(searchTerm)) {
             search.setSortingOrder(SortingOrder.ASCENDING);
         }
@@ -71,7 +70,7 @@ public class PageableSearchUtilService {
         search.setPage(1);
         search.setPageSize(10);
         search.setSearchTerm(searchTerm);
-        search.setSortedColumn(PageUtil.ColumnMapping.LECTURE.getMappedColumnName("COURSE_TITLE"));
+        search.setSortedColumn("COURSE_TITLE");
         search.setSortingOrder(SortingOrder.DESCENDING);
         return search;
     }
