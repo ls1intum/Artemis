@@ -50,15 +50,15 @@
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="runningBuildJobs" [minWidth]="150" [maxWidth]="200">
+                <ngx-datatable-column prop="runningBuildJobsIds" [minWidth]="150" [maxWidth]="200">
                     <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('runningBuildJobs')">
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('runningBuildJobsIds')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.runningBuildJobs"> Running build jobs </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('runningBuildJobs')"></fa-icon>
+                            <fa-icon [icon]="controls.iconForSortPropField('runningBuildJobsIds')"></fa-icon>
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <span>{{ getBuildJobIds(value) }}</span>
+                        <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column prop="status" [minWidth]="150" [maxWidth]="200">

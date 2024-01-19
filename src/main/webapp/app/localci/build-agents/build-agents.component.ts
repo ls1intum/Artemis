@@ -42,6 +42,7 @@ export class BuildAgentsComponent implements OnInit, OnDestroy {
         this.websocketService.subscribe(this.channel);
         this.websocketSubscription = this.websocketService.receive(this.channel).subscribe((buildAgents) => {
             this.buildAgents = buildAgents;
+            this.setBuildAgentBuildJobIds(buildAgents);
         });
     }
 
@@ -51,19 +52,20 @@ export class BuildAgentsComponent implements OnInit, OnDestroy {
     load() {
         this.restSubscription = this.buildAgentsService.getBuildAgents().subscribe((buildAgents) => {
             this.buildAgents = buildAgents;
+            this.setBuildAgentBuildJobIds(buildAgents);
         });
     }
 
     /**
-     * This method is used to get the build job IDs from the given build jobs.
-     * @param buildJobs The build jobs to get the IDs from.
+     * This method is used to set the build job ids string for each build agent.
+     * @param buildAgents the build agents for which the build job ids string should be set
      */
-    getBuildJobIds(buildJobs: BuildJob[]): string {
-        if (!buildJobs?.length) {
-            return '';
+    setBuildAgentBuildJobIds(buildAgents: BuildAgent[]) {
+        for (const buildAgent of buildAgents) {
+            buildAgent.runningBuildJobsIds = '';
+            if (buildAgent.runningBuildJobs) {
+                buildAgent.runningBuildJobsIds = buildAgent.runningBuildJobs.map((buildJob: BuildJob) => buildJob.id).join(', ');
+            }
         }
-
-        // Extract and concatenate build IDs
-        return buildJobs.map((job) => job.id).join(', ');
     }
 }
