@@ -101,9 +101,13 @@ export class CourseManagementService {
      * gets the active users for the line chart in the detail view
      * @param courseId the id of the course of which the statistics should be fetched
      * @param periodIndex the period of the statistics we want to have
+     * @param periodSize the size of the statistics-period to be fetched
      */
-    getStatisticsData(courseId: number, periodIndex: number): Observable<number[]> {
-        const params = new HttpParams().set('periodIndex', '' + periodIndex);
+    getStatisticsData(courseId: number, periodIndex: number, periodSize?: number): Observable<number[]> {
+        const params: Record<string, number> = { periodIndex };
+        if (periodSize) {
+            params.periodSize = periodSize;
+        }
         return this.http.get<number[]>(`${this.resourceUrl}/${courseId}/statistics`, { params });
     }
 

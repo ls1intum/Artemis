@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 @Service
 public class StructuralTestCaseService {
 
-    private final Logger log = LoggerFactory.getLogger(StructuralTestCaseService.class);
+    private static final Logger log = LoggerFactory.getLogger(StructuralTestCaseService.class);
 
     private final GitService gitService;
 

@@ -39,7 +39,7 @@ public class DataExportCreationService {
 
     private static final String ZIP_FILE_EXTENSION = ".zip";
 
-    private final Logger log = LoggerFactory.getLogger(DataExportCreationService.class);
+    private static final Logger log = LoggerFactory.getLogger(DataExportCreationService.class);
 
     private final Path dataExportsPath;
 
