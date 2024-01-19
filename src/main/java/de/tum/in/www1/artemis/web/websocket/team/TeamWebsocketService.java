@@ -26,7 +26,7 @@ public class TeamWebsocketService {
 
     /**
      * Sends out team assignment information for an exercise to students of a created/updated/deleted team
-     *
+     * <p>
      * Cases:
      * 1. Team was created: sendTeamAssignmentUpdate(exercise, null, createdTeam);
      * 2. Team was updated: sendTeamAssignmentUpdate(exercise, existingTeam, updatedTeam);
