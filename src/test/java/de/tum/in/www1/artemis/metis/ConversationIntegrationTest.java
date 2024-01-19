@@ -312,11 +312,11 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         var trueParams = new LinkedMultiValueMap<String, String>();
         trueParams.add("isMuted", String.valueOf(true));
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/muted", HttpStatus.OK, trueParams);
-        this.assertIsHidden(channel.getId(), "tutor1", true);
+        this.assertIsMuted(channel.getId(), "tutor1", true);
         var falseParams = new LinkedMultiValueMap<String, String>();
         falseParams.add("isMuted", String.valueOf(false));
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/muted", HttpStatus.OK, falseParams);
-        this.assertIsHidden(channel.getId(), "tutor1", false);
+        this.assertIsMuted(channel.getId(), "tutor1", false);
 
         // cleanup
         conversationRepository.deleteById(channel.getId());
