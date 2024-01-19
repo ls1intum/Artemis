@@ -291,8 +291,8 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
 
         var trueParams = new LinkedMultiValueMap<String, String>();
-        trueParams.add("isMuted", String.valueOf(true));
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/muted", HttpStatus.FORBIDDEN, trueParams);
+        trueParams.add("isFavorite", String.valueOf(true));
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/favorite", HttpStatus.FORBIDDEN, trueParams);
 
         // active messaging again
         setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
@@ -310,12 +310,12 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         // then
         userUtilService.changeUser(testPrefix + "tutor1");
         var trueParams = new LinkedMultiValueMap<String, String>();
-        trueParams.add("isHidden", String.valueOf(true));
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/hidden", HttpStatus.OK, trueParams);
+        trueParams.add("isMuted", String.valueOf(true));
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/muted", HttpStatus.OK, trueParams);
         this.assertIsHidden(channel.getId(), "tutor1", true);
         var falseParams = new LinkedMultiValueMap<String, String>();
-        falseParams.add("isHidden", String.valueOf(false));
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/hidden", HttpStatus.OK, falseParams);
+        falseParams.add("isMuted", String.valueOf(false));
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/muted", HttpStatus.OK, falseParams);
         this.assertIsHidden(channel.getId(), "tutor1", false);
 
         // cleanup
