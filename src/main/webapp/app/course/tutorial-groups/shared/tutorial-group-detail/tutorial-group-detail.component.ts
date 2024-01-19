@@ -59,7 +59,7 @@ export class TutorialGroupDetailComponent implements OnChanges {
         this.getTutorialDetailSections();
     }
 
-    getTutorialTimeSlotString() {
+    getTutorialTimeSlotString(): string | undefined {
         if (!this.tutorialGroup.tutorialGroupSchedule) {
             return undefined;
         }
