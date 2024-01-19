@@ -160,4 +160,22 @@ describe('Feedback', () => {
             expect(Feedback.isTestCaseFeedback(feedback)).toBeTrue();
         });
     });
+
+    describe('content functions', () => {
+        it('should return the detail text if present', () => {
+            const feedback: Feedback = { detailText: 'content' };
+            expect(Feedback.getContent(feedback)).toBe('content');
+        });
+
+        it.each([undefined, ''])('should return the grading instruction feedback if no direct detail text is present', (detailText) => {
+            const gradingInstruction: GradingInstruction = {
+                credits: 0,
+                gradingScale: '',
+                instructionDescription: '',
+                feedback: 'grading instruction feedback',
+            };
+            const feedback: Feedback = { detailText: detailText, gradingInstruction: gradingInstruction };
+            expect(Feedback.getContent(feedback)).toBe('grading instruction feedback');
+        });
+    });
 });
