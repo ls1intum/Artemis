@@ -71,6 +71,8 @@ public class LocalCISharedBuildJobQueueService {
 
     private final IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
 
+    private final IMap<String, List<LocalCIBuildJobQueueItem>> recentBuildJobs;
+
     private final AtomicInteger localProcessingJobs = new AtomicInteger(0);
 
     /**
@@ -102,6 +104,7 @@ public class LocalCISharedBuildJobQueueService {
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
         this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
+        this.recentBuildJobs = this.hazelcastInstance.getMap("recentBuildJobs");
     }
 
     /**
@@ -158,6 +161,10 @@ public class LocalCISharedBuildJobQueueService {
         return buildAgentInformation.values().stream().toList();
     }
 
+    public Map<String, List<LocalCIBuildJobQueueItem>> getRecentBuildJobs() {
+        return recentBuildJobs;
+    }
+
     /**
      * Save a finished build job to the database.
      *
@@ -190,6 +197,15 @@ public class LocalCISharedBuildJobQueueService {
         catch (Exception e) {
             log.error("Could not save build job to database", e);
         }
+
+        recentBuildJobs.computeIfAbsent(hazelcastInstance.getCluster().getLocalMember().getAddress().toString(), k -> new ArrayList<>());
+        recentBuildJobs.computeIfPresent(hazelcastInstance.getCluster().getLocalMember().getAddress().toString(), (k, v) -> {
+            if (v.size() > 5) {
+                v.remove(0);
+            }
+            v.add(queueItem);
+            return v;
+        });
     }
 
     /**
