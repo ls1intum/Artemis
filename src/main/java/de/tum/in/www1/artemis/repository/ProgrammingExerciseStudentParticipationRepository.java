@@ -193,4 +193,13 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
                 WHERE p.buildPlanId IS NOT NULL or p.repositoryUri IS NOT NULL
             """)
     Page<ProgrammingExerciseStudentParticipation> findAllWithRepositoryUriOrBuildPlanId(Pageable pageable);
+
+    @Transactional
+    @Modifying
+    @Query("""
+            UPDATE ProgrammingExerciseStudentParticipation p
+            SET p.buildPlanId = NULL
+            WHERE p.exercise.id = :#{#exerciseId}
+            """)
+    void unsetBuildPlanIdForExercise(@Param("exerciseId") Long exerciseId);
 }

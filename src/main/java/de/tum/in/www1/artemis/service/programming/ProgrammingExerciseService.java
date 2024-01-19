@@ -45,9 +45,7 @@ import de.tum.in.www1.artemis.service.connectors.BuildScriptGenerationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
-import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
-import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
+import de.tum.in.www1.artemis.service.connectors.ci.*;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
@@ -141,7 +139,11 @@ public class ProgrammingExerciseService {
 
     private final Optional<AeolusTemplateService> aeolusTemplateService;
 
+    private final AbstractContinuousIntegrationService buildPlanService;
+
     private final Optional<BuildScriptGenerationService> buildScriptGenerationService;
+
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
@@ -155,7 +157,8 @@ public class ProgrammingExerciseService {
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, ChannelService channelService,
             ProgrammingSubmissionService programmingSubmissionService, Optional<IrisSettingsService> irisSettingsService, Optional<AeolusTemplateService> aeolusTemplateService,
-            Optional<BuildScriptGenerationService> buildScriptGenerationService) {
+            Optional<BuildScriptGenerationService> buildScriptGenerationService, AbstractContinuousIntegrationService buildPlanService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -185,6 +188,8 @@ public class ProgrammingExerciseService {
         this.irisSettingsService = irisSettingsService;
         this.aeolusTemplateService = aeolusTemplateService;
         this.buildScriptGenerationService = buildScriptGenerationService;
+        this.buildPlanService = buildPlanService;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
     }
 
     /**
@@ -483,6 +488,13 @@ public class ProgrammingExerciseService {
             @Nullable String notificationText) {
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
+
+        if (!Objects.equals(programmingExerciseBeforeUpdate.getBuildPlanConfiguration(), updatedProgrammingExercise.getBuildPlanConfiguration())) {
+            buildPlanService.deleteProject(updatedProgrammingExercise.getProjectKey());
+            buildPlanService.createProjectForExercise(updatedProgrammingExercise);
+            buildPlanService.recreateBuildPlansForExercise(updatedProgrammingExercise);
+            resetAllStudentBuildPlanIdsForExercise(updatedProgrammingExercise);
+        }
 
         channelService.updateExerciseChannel(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
@@ -848,5 +860,9 @@ public class ProgrammingExerciseService {
                 .map(ProgrammingExerciseTestCase::getSolutionEntries).flatMap(Collection::stream).collect(Collectors.toSet());
         programmingExerciseTaskRepository.deleteAll(tasks);
         programmingExerciseSolutionEntryRepository.deleteAll(solutionEntries);
+    }
+
+    private void resetAllStudentBuildPlanIdsForExercise(ProgrammingExercise programmingExercise) {
+        programmingExerciseStudentParticipationRepository.unsetBuildPlanIdForExercise(programmingExercise.getId());
     }
 }
