@@ -97,7 +97,7 @@
             "templateBuildPlanId": "Vorlagen-Build-Plan-Id",
             "solutionBuildPlanId": "Lösungs-Build-Plan-Id",
             "repositories": "Repositories",
-            "openRepositories": "Repository Öffnen",
+            "openRepository": "Repository Öffnen",
             "buildplans": "Build-Pläne",
             "buildplan": "Build-Plan",
             "buildPlanEditor": "Build-Plan-Editor",
