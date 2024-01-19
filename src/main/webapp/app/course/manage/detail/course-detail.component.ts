@@ -18,6 +18,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Detail, DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -102,9 +103,9 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
                 this.messagingEnabled = !!this.course.courseInformationSharingConfiguration?.includes('MESSAGING');
                 this.communicationEnabled = !!this.course.courseInformationSharingConfiguration?.includes('COMMUNICATION');
                 this.fetchOrganizations(course.id);
-                this.getCourseDetailSections();
             }
             this.isAdmin = this.accountService.isAdmin();
+            this.getCourseDetailSections();
         });
         this.paramSub = this.route.params.subscribe((params) => {
             const courseId = params['courseId'];
@@ -215,21 +216,26 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     }
 
     getIrisDetails(): Detail[] {
-        // TODO: Enable in future PR
-        // if (this.irisEnabled) {
-        //   return [
-        //         this.irisHestiaEnabled && {
-        //             type: DetailType.ProgrammingIrisEnabled,
-        //             title: 'artemisApp.iris.settings.subSettings.enabled.hesita',
-        //             data: { course: this.course, disabled: !this.isAdmin, subSettingsType: this.HESTIA },
-        //         },
-        //         this.irisCodeEditorEnabled && {
-        //             type: DetailType.ProgrammingIrisEnabled,
-        //             title: 'artemisApp.iris.settings.subSettings.enabled.codeEditor',
-        //             data: { course: this.course, disabled: !this.isAdmin, subSettingsType: this.CODE_EDITOR },
-        //         },
-        //     ].filter(Boolean) as Detail[];
-        // }
+        if (this.irisEnabled) {
+            return [
+                this.irisChatEnabled && {
+                    type: DetailType.ProgrammingIrisEnabled,
+                    title: 'artemisApp.iris.settings.subSettings.enabled.chat',
+                    data: { course: this.course, disabled: !this.isAdmin, subSettingsType: IrisSubSettingsType.CHAT },
+                },
+                // TODO: Enable in future PR
+                // this.irisHestiaEnabled && {
+                //     type: DetailType.ProgrammingIrisEnabled,
+                //     title: 'artemisApp.iris.settings.subSettings.enabled.hesita',
+                //     data: { course: this.course, disabled: !this.isAdmin, subSettingsType: this.HESTIA },
+                // },
+                // this.irisCodeEditorEnabled && {
+                //     type: DetailType.ProgrammingIrisEnabled,
+                //     title: 'artemisApp.iris.settings.subSettings.enabled.codeEditor',
+                //     data: { course: this.course, disabled: !this.isAdmin, subSettingsType: this.CODE_EDITOR },
+                // },
+            ].filter(Boolean) as Detail[];
+        }
         return [];
     }
 
@@ -315,6 +321,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         this.eventSubscriber = this.eventManager.subscribe('courseListModification', () => {
             this.courseManagementService.find(courseId).subscribe((courseResponse) => {
                 this.course = courseResponse.body!;
+                this.getCourseDetailSections();
             });
             this.fetchCourseStatistics(courseId);
         });
