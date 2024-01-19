@@ -21,11 +21,10 @@ public interface AttachmentUnitRepository extends JpaRepository<AttachmentUnit, 
 
     @Query("""
             SELECT attachmentUnit
-            FROM Lecture lecture
-                LEFT JOIN TREAT(lecture.lectureUnits as AttachmentUnit) attachmentUnit
+            FROM AttachmentUnit attachmentUnit
                 LEFT JOIN FETCH attachmentUnit.attachment attachment
+                LEFT JOIN attachmentUnit.lecture lecture
             WHERE lecture.id = :lectureId
-                AND TYPE (attachmentUnit) = AttachmentUnit
                 AND attachment.attachmentType = :attachmentType
             ORDER BY INDEX(lecture.lectureUnits)
             """)
