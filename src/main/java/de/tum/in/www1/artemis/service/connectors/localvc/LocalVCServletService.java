@@ -391,8 +391,9 @@ public class LocalVCServletService {
      * Process a new push to the test repository.
      * Build and test the solution repository to make sure all tests are still passing.
      *
-     * @param exercise   the exercise for which the push was made.
-     * @param commitHash the hash of the last commit to the test repository.
+     * @param exercise       the exercise for which the push was made.
+     * @param commitHash     the hash of the last commit to the test repository.
+     * @param repositoryType type of repository that has been pushed to
      * @throws VersionControlException if something unexpected goes wrong when creating the submission or triggering the build.
      */
     private void processNewPushToTestOrAuxRepository(ProgrammingExercise exercise, String commitHash, SolutionProgrammingExerciseParticipation solutionParticipation,
