@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 
-type FormSectionStatus = {
+export type FormSectionStatus = {
     title: string;
     valid: boolean;
 };
@@ -13,4 +13,8 @@ type FormSectionStatus = {
 export class FormStatusBarComponent {
     @Input()
     formStatusSections: FormSectionStatus[];
+
+    scrollToHeadline(id: string) {
+        document.getElementById(id)?.scrollIntoView();
+    }
 }
