@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("api/")
 public class ScienceSettingsResource {
 
-    private final Logger log = LoggerFactory.getLogger(ScienceSettingsResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ScienceSettingsResource.class);
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
