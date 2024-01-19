@@ -98,4 +98,14 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
             this.subSettings!.allowedModels = this.allowedIrisModels.map((model) => model.id);
         }
     }
+
+    get inheritDisabled() {
+        if (this.parentSubSettings) {
+            return !this.parentSubSettings.enabled;
+        }
+        return false;
+    }
+    get isChatSettingsSwitchDisabled() {
+        return this.inheritDisabled || (!this.isAdmin && this.settingsType !== this.EXERCISE);
+    }
 }

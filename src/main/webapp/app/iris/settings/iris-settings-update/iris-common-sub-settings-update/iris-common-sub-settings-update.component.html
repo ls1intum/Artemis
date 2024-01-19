@@ -1,12 +1,5 @@
 <div class="form-check form-switch">
-    <input
-        class="form-check-input"
-        type="checkbox"
-        id="enabledDisabledSwitch"
-        [disabled]="!isAdmin && settingsType !== EXERCISE"
-        [(ngModel)]="enabled"
-        (change)="onEnabledChange()"
-    />
+    <input class="form-check-input" type="checkbox" id="enabledDisabledSwitch" [disabled]="isChatSettingsSwitchDisabled" [(ngModel)]="enabled" (change)="onEnabledChange()" />
     <label class="form-check-label" for="enabledDisabledSwitch" jhiTranslate="artemisApp.iris.settings.subSettings.enabled-disabled"> Enabled/Disabled </label>
 </div>
 <h4 class="form-label mt-3" jhiTranslate="artemisApp.iris.settings.subSettings.models.title">Models</h4>
