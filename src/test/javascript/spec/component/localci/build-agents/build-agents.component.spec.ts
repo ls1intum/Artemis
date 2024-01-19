@@ -10,6 +10,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { BuildAgent } from 'app/entities/build-agent.model';
 
 describe('BuildAgentsComponent', () => {
     let component: BuildAgentsComponent;
@@ -54,36 +55,36 @@ describe('BuildAgentsComponent', () => {
         },
     ];
 
-    const mockRunningJobs2 = [
+    const mockRunningJobs2: BuildJob[] = [
         {
-            id: 1,
+            id: '1',
             name: 'Build Job 1',
             participationId: 101,
             repositoryTypeOrUserName: 'repo1',
             commitHash: 'abc123',
             submissionDate: dayjs('2023-01-02'),
             retryCount: 2,
-            buildStartDate: null,
+            buildStartDate: dayjs('2023-01-05'),
             priority: 5,
             courseId: 10,
             isPushToTestRepository: false,
         },
         {
-            id: 3,
+            id: '3',
             name: 'Build Job 3',
             participationId: 103,
             repositoryTypeOrUserName: 'repo3',
             commitHash: 'abc125',
             submissionDate: dayjs('2023-01-03'),
             retryCount: 1,
-            buildStartDate: null,
+            buildStartDate: dayjs('2023-01-05'),
             priority: 3,
             courseId: 10,
             isPushToTestRepository: false,
         },
     ];
 
-    const mockBuildAgents = [
+    const mockBuildAgents: BuildAgent[] = [
         {
             id: 1,
             name: 'buildagent1',
@@ -91,6 +92,7 @@ describe('BuildAgentsComponent', () => {
             numberOfCurrentBuildJobs: 2,
             runningBuildJobs: mockRunningJobs1,
             status: true,
+            runningBuildJobsIds: '',
         },
         {
             id: 2,
@@ -99,6 +101,7 @@ describe('BuildAgentsComponent', () => {
             numberOfCurrentBuildJobs: 2,
             runningBuildJobs: mockRunningJobs2,
             status: true,
+            runningBuildJobsIds: '',
         },
     ];
 
@@ -152,14 +155,15 @@ describe('BuildAgentsComponent', () => {
     });
 
     it('should get build job IDs', () => {
-        const result = component.getBuildJobIds(mockRunningJobs1);
+        component.setBuildAgentBuildJobIds(mockBuildAgents);
 
-        expect(result).toBe('2, 4');
+        expect(mockBuildAgents[0].runningBuildJobsIds).toBe('2, 4');
     });
 
     it('should return an empty string for no build jobs', () => {
-        const result = component.getBuildJobIds([]);
+        mockBuildAgents[0].runningBuildJobs = [];
+        component.setBuildAgentBuildJobIds(mockBuildAgents);
 
-        expect(result).toBe('');
+        expect(mockBuildAgents[0].runningBuildJobsIds).toBe('');
     });
 });

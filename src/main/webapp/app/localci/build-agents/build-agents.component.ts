@@ -62,9 +62,10 @@ export class BuildAgentsComponent implements OnInit, OnDestroy {
      */
     setBuildAgentBuildJobIds(buildAgents: BuildAgent[]) {
         for (const buildAgent of buildAgents) {
-            buildAgent.runningBuildJobsIds = '';
             if (buildAgent.runningBuildJobs) {
                 buildAgent.runningBuildJobsIds = buildAgent.runningBuildJobs.map((buildJob: BuildJob) => buildJob.id).join(', ');
+            } else {
+                buildAgent.runningBuildJobsIds = '';
             }
         }
     }
