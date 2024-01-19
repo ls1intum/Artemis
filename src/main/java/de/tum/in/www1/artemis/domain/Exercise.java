@@ -991,29 +991,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         }
     }
 
-    /**
-     * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.TextExerciseService#getAllOnPageWithSize(PageableSearchDTO, User)}}
-     * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
-     */
-    public enum ExerciseSearchColumn {
-
-        ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title"), EXAM_TITLE("exerciseGroup.exam.title");
-
-        private final String mappedColumnName;
-
-        ExerciseSearchColumn(String mappedColumnName) {
-            this.mappedColumnName = mappedColumnName;
-        }
-
-        public String getMappedColumnName() {
-            return mappedColumnName;
-        }
-
-        public static String getMappedColumnName(String searchColumnName) {
-            return valueOf(searchColumnName).mappedColumnName;
-        }
-    }
-
     public abstract ExerciseType getExerciseType();
 
     public abstract String getType();

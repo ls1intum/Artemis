@@ -107,7 +107,7 @@ public class LearningPathService {
      * @return A wrapper object containing a list of all found learning paths and the total number of pages
      */
     public SearchResultPageDTO<LearningPathInformationDTO> getAllOfCourseOnPageWithSize(@NotNull PageableSearchDTO<String> search, @NotNull Course course) {
-        final var pageable = PageUtil.createDefaultPageRequest(search, LearningPath.LearningPathSearchColumn::getMappedColumnName);
+        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.LEARNING_PATH);
         final var searchTerm = search.getSearchTerm();
         final Page<LearningPath> learningPathPage = learningPathRepository.findByLoginOrNameInCourse(searchTerm, course.getId(), pageable);
         final List<LearningPathInformationDTO> contentDTOs = learningPathPage.getContent().stream().map(LearningPathInformationDTO::new).toList();

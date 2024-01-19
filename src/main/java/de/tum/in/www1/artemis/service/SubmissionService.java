@@ -777,7 +777,7 @@ public class SubmissionService {
      * @return A wrapper object containing a list of all found submissions and the total number of pages
      */
     public SearchResultPageDTO<Submission> getSubmissionsOnPageWithSize(PageableSearchDTO<String> search, Long exerciseId) {
-        final var pageable = PageUtil.createDefaultPageRequest(search, StudentParticipation.StudentParticipationSearchColumn::getMappedColumnName);
+        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.STUDENT_PARTICIPATION);
         String searchTerm = search.getSearchTerm();
         Page<StudentParticipation> studentParticipationPage = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(exerciseId, searchTerm,
                 pageable);

@@ -83,23 +83,4 @@ public class LearningPath extends DomainObject {
     public String toString() {
         return "LearningPath{" + "id=" + getId() + ", user=" + user + ", course=" + course + ", competencies=" + competencies + '}';
     }
-
-    public enum LearningPathSearchColumn {
-
-        ID("id"), USER_LOGIN("user.login"), USER_NAME("user.lastName"), PROGRESS("progress");
-
-        private final String mappedColumnName;
-
-        LearningPathSearchColumn(String mappedColumnName) {
-            this.mappedColumnName = mappedColumnName;
-        }
-
-        public String getMappedColumnName() {
-            return mappedColumnName;
-        }
-
-        public static String getMappedColumnName(String searchColumnName) {
-            return valueOf(searchColumnName).mappedColumnName;
-        }
-    }
 }

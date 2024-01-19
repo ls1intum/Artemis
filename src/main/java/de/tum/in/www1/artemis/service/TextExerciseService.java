@@ -8,7 +8,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
@@ -51,7 +50,7 @@ public class TextExerciseService {
         if (!isCourseFilter && !isExamFilter) {
             return new SearchResultPageDTO<>(Collections.emptyList(), 0);
         }
-        final var pageable = PageUtil.createDefaultPageRequest(search, Exercise.ExerciseSearchColumn::getMappedColumnName);
+        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.EXERCISE);
         final var searchTerm = search.getSearchTerm();
         Specification<TextExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
         Page<TextExercise> exercisePage = textExerciseRepository.findAll(specification, pageable);

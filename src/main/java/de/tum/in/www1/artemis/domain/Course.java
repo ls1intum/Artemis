@@ -1077,20 +1077,4 @@ public class Course extends DomainObject {
     public void setCourseInformationSharingMessagingCodeOfConduct(String courseInformationSharingMessagingCodeOfConduct) {
         this.courseInformationSharingMessagingCodeOfConduct = courseInformationSharingMessagingCodeOfConduct;
     }
-
-    public enum CourseSearchColumn {
-
-        ID("id"), TITLE("title"), SHORT_NAME("shortName"), SEMESTER("semester");
-
-        private final String mappedColumnName;
-
-        CourseSearchColumn(String mappedColumnName) {
-            this.mappedColumnName = mappedColumnName;
-        }
-
-        public static String getMappedColumnName(String searchColumnName) {
-            return valueOf(searchColumnName).mappedColumnName;
-        }
-    }
-
 }

@@ -501,27 +501,4 @@ public class Exam extends DomainObject {
         // exam titles are non-nullable
         return StringUtil.sanitizeStringForFileName(this.title);
     }
-
-    /**
-     * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.TextExerciseService#getAllOnPageWithSize(PageableSearchDTO, User)}}
-     * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
-     */
-    public enum ExamSearchColumn {
-
-        ID("id"), TITLE("title"), COURSE_TITLE("course.title"), EXAM_MODE("exam.testExam");
-
-        private final String mappedColumnName;
-
-        ExamSearchColumn(String mappedColumnName) {
-            this.mappedColumnName = mappedColumnName;
-        }
-
-        public String getMappedColumnName() {
-            return mappedColumnName;
-        }
-
-        public static String getMappedColumnName(String searchColumnName) {
-            return valueOf(searchColumnName).mappedColumnName;
-        }
-    }
 }

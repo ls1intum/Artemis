@@ -234,23 +234,4 @@ public class Competency extends DomainObject {
     public void prePersistOrUpdate() {
         this.lectureUnits.removeIf(lectureUnit -> lectureUnit instanceof ExerciseUnit);
     }
-
-    public enum CompetencySearchColumn {
-
-        ID("id"), TITLE("title"), COURSE_TITLE("course.title"), SEMESTER("course.semester");
-
-        private final String mappedColumnName;
-
-        CompetencySearchColumn(String mappedColumnName) {
-            this.mappedColumnName = mappedColumnName;
-        }
-
-        public String getMappedColumnName() {
-            return mappedColumnName;
-        }
-
-        public static String getMappedColumnName(String searchColumnName) {
-            return valueOf(searchColumnName).mappedColumnName;
-        }
-    }
 }

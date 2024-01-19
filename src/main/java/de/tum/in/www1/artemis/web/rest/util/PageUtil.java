@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.util;
 
-import java.util.function.Function;
+import java.util.Map;
 
 import javax.validation.constraints.NotNull;
 
@@ -12,9 +12,39 @@ import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
 public class PageUtil {
 
+    /**
+     * Enum of column name maps for different entities. Maps column (client) to attribute (persistence entity) <br/>
+     * Each map contains only the columns for which we want to allow a pageable search.
+     */
+    public enum ColumnMapping {
+
+        COMPETENCY(Map.of("ID", "id", "TITLE", "title", "COURSE_TITLE", "course.title", "SEMESTER", "course.semester")),
+        COURSE(Map.of("ID", "id", "TITLE", "title", "SHORT_NAME", "shortName", "SEMESTER", "semester")),
+        EXAM(Map.of("ID", "id", "TITLE", "title", "COURSE_TITLE", "course.title", "EXAM_MODE", "testExam")),
+        EXERCISE(Map.of("ID", "id", "TITLE", "title", "PROGRAMMING_LANGUAGE", "programmingLanguage", "COURSE_TITLE", "course.title", "EXAM_TITLE", "exerciseGroup.exam.title")),
+        GRADING_SCALE(Map.of("ID", "id", "COURSE_TITLE", "course.title", "EXAM_TITLE", "exam.title")),
+        LEARNING_PATH(Map.of("ID", "id", "USER_LOGIN", "user.login", "USER_NAME", "user.lastName", "PROGRESS", "progress")),
+        LECTURE(Map.of("ID", "id", "TITLE", "title", "COURSE_TITLE", "course.title", "SEMESTER", "course.semester")),
+        STUDENT_PARTICIPATION(Map.of("ID", "id", "STUDENT_NAME", "student.firstName"));
+
+        private final Map<String, String> columnNameMap;
+
+        ColumnMapping(Map<String, String> columnNameMap) {
+            this.columnNameMap = columnNameMap;
+        }
+
+        public Map<String, String> getColumnNameMap() {
+            return columnNameMap;
+        }
+
+        public String getMappedColumnName(String columnName) {
+            return columnNameMap.get(columnName);
+        }
+    }
+
     @NotNull
-    public static PageRequest createDefaultPageRequest(PageableSearchDTO<String> search, Function<String, String> getMappedColumnName) {
-        var sortOptions = Sort.by(getMappedColumnName.apply(search.getSortedColumn()));
+    public static PageRequest createDefaultPageRequest(PageableSearchDTO<String> search, ColumnMapping columnMapping) {
+        var sortOptions = Sort.by(columnMapping.getMappedColumnName(search.getSortedColumn()));
         sortOptions = search.getSortingOrder() == SortingOrder.ASCENDING ? sortOptions.ascending() : sortOptions.descending();
         return PageRequest.of(search.getPage() - 1, search.getPageSize(), sortOptions);
     }

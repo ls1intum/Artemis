@@ -105,7 +105,7 @@ public class LectureService {
      * @return A wrapper object containing a list of all found lectures and the total number of pages
      */
     public SearchResultPageDTO<Lecture> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
-        final var pageable = PageUtil.createDefaultPageRequest(search, Lecture.LectureSearchColumn::getMappedColumnName);
+        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.LECTURE);
         final var searchTerm = search.getSearchTerm();
         final Page<Lecture> lecturePage;
         if (authCheckService.isAdmin(user)) {
