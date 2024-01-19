@@ -37,23 +37,23 @@ public class AeolusBuildPlanService {
 
     private static final Logger log = LoggerFactory.getLogger(AeolusBuildPlanService.class);
 
-    private final InternalUrlService internalUrlService;
+    private final Optional<InternalUrlService> internalUrlService;
 
     private final RestTemplate restTemplate;
 
     @Value("${aeolus.url}")
     private URL aeolusUrl;
 
-    @Value("${aeolus.token:null}")
+    @Value("${aeolus.token:#{null}}")
     private String token;
 
-    @Value("${artemis.continuous-integration.token:null}")
+    @Value("${artemis.continuous-integration.token:#{null}}")
     private String ciToken;
 
-    @Value("${artemis.continuous-integration.user:null}")
+    @Value("${artemis.continuous-integration.user:#{null}}")
     private String ciUsername;
 
-    @Value("${artemis.continuous-integration.url:null}")
+    @Value("${artemis.continuous-integration.url:#{null}}")
     private String ciUrl;
 
     /**
@@ -62,18 +62,34 @@ public class AeolusBuildPlanService {
      * @param restTemplate       the rest template to use
      * @param internalUrlService the internal URL service
      */
-    public AeolusBuildPlanService(@Qualifier("aeolusRestTemplate") RestTemplate restTemplate, InternalUrlService internalUrlService) {
+    public AeolusBuildPlanService(@Qualifier("aeolusRestTemplate") RestTemplate restTemplate, Optional<InternalUrlService> internalUrlService) {
         this.restTemplate = restTemplate;
         this.internalUrlService = internalUrlService;
     }
 
     /**
-     * Returns the internal URL of the CI server for Bamboo
+     * Returns the internal URL of the CI server
      *
      * @return the internal URL of the CI server
      */
     private String getCiUrl() {
-        return internalUrlService.toInternalCiUrl(ciUrl);
+        if (internalUrlService.isEmpty()) {
+            return ciUrl;
+        }
+        return internalUrlService.get().toInternalCiUrl(ciUrl);
+    }
+
+    /**
+     * Returns the internal VCS URL to the CI server
+     *
+     * @param url the URL of the repository
+     * @return the internal URL to the CI server
+     */
+    private String getVCSUrl(VcsRepositoryUri url) {
+        if (internalUrlService.isEmpty()) {
+            return url.toString();
+        }
+        return internalUrlService.get().toInternalVcsUrl(url).toString();
     }
 
     /**
@@ -166,16 +182,15 @@ public class AeolusBuildPlanService {
     public Map<String, AeolusRepository> createRepositoryMapForWindfile(ProgrammingLanguage programmingLanguage, String branch, boolean checkoutSolutionRepository,
             VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri, VcsRepositoryUri solutionRepositoryUri,
             List<AuxiliaryRepository.AuxRepoNameWithUri> auxiliaryRepositories) {
-
         Map<String, AeolusRepository> repositoryMap = new HashMap<>();
-        repositoryMap.put(ASSIGNMENT_REPO_NAME, new AeolusRepository(internalUrlService.toInternalVcsUrl(repositoryUri).toString(), branch,
-                ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage)));
+        repositoryMap.put(ASSIGNMENT_REPO_NAME,
+                new AeolusRepository(getVCSUrl(repositoryUri), branch, ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage)));
         if (checkoutSolutionRepository) {
-            repositoryMap.put(SOLUTION_REPO_NAME, new AeolusRepository(internalUrlService.toInternalVcsUrl(solutionRepositoryUri).toString(), branch,
+            repositoryMap.put(SOLUTION_REPO_NAME, new AeolusRepository(getVCSUrl(solutionRepositoryUri), branch,
                     ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage)));
         }
-        repositoryMap.put(TEST_REPO_NAME, new AeolusRepository(internalUrlService.toInternalVcsUrl(testRepositoryUri).toString(), branch,
-                ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage)));
+        repositoryMap.put(TEST_REPO_NAME,
+                new AeolusRepository(getVCSUrl(testRepositoryUri), branch, ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage)));
         for (var auxRepo : auxiliaryRepositories) {
             repositoryMap.put(auxRepo.name(), new AeolusRepository(auxRepo.repositoryUri().toString(), branch, auxRepo.name()));
         }
