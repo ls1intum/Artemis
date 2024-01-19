@@ -3,6 +3,7 @@ import { BuildAgent } from 'app/entities/build-agent.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { BuildJob } from 'app/entities/build-job.model';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-build-agents',
@@ -12,6 +13,8 @@ import { BuildJob } from 'app/entities/build-job.model';
 export class BuildAgentsComponent implements OnInit, OnDestroy {
     buildAgents: BuildAgent[];
     channel: string = '/topic/admin/build-agents';
+    websocketSubscription: Subscription;
+    restSubscription: Subscription;
 
     constructor(
         private websocketService: JhiWebsocketService,
@@ -28,6 +31,8 @@ export class BuildAgentsComponent implements OnInit, OnDestroy {
      */
     ngOnDestroy() {
         this.websocketService.unsubscribe(this.channel);
+        this.websocketSubscription?.unsubscribe();
+        this.restSubscription?.unsubscribe();
     }
 
     /**
@@ -35,7 +40,7 @@ export class BuildAgentsComponent implements OnInit, OnDestroy {
      */
     initWebsocketSubscription() {
         this.websocketService.subscribe(this.channel);
-        this.websocketService.receive(this.channel).subscribe((buildAgents) => {
+        this.websocketSubscription = this.websocketService.receive(this.channel).subscribe((buildAgents) => {
             this.buildAgents = buildAgents;
         });
     }
@@ -44,7 +49,7 @@ export class BuildAgentsComponent implements OnInit, OnDestroy {
      * This method is used to load the build agents.
      */
     load() {
-        this.buildAgentsService.getBuildAgents().subscribe((buildAgents) => {
+        this.restSubscription = this.buildAgentsService.getBuildAgents().subscribe((buildAgents) => {
             this.buildAgents = buildAgents;
         });
     }
@@ -54,7 +59,7 @@ export class BuildAgentsComponent implements OnInit, OnDestroy {
      * @param buildJobs The build jobs to get the IDs from.
      */
     getBuildJobIds(buildJobs: BuildJob[]): string {
-        if (!buildJobs || buildJobs.length === 0) {
+        if (!buildJobs?.length) {
             return '';
         }
 

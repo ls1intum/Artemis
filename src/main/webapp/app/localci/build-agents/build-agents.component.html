@@ -15,7 +15,7 @@
                 [rowClass]="settings.rowClass"
                 [scrollbarH]="settings.scrollbarH"
             >
-                <ngx-datatable-column prop="name" [minWidth]="150" [width]="200" [maxWidth]="200">
+                <ngx-datatable-column prop="name" [minWidth]="150" [maxWidth]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.name"> Name </span>
@@ -26,7 +26,7 @@
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="maxNumberOfConcurrentBuildJobs" [minWidth]="150" [width]="200" [maxWidth]="200">
+                <ngx-datatable-column prop="maxNumberOfConcurrentBuildJobs" [minWidth]="150" [maxWidth]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('maxNumberOfConcurrentBuildJobs')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.maxNumberOfConcurrentBuildJobs">
@@ -39,7 +39,7 @@
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="numberOfCurrentBuildJobs" [minWidth]="150" [width]="200" [maxWidth]="200">
+                <ngx-datatable-column prop="numberOfCurrentBuildJobs" [minWidth]="150" [maxWidth]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('numberOfCurrentBuildJobs')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.numberOfCurrentBuildJobs"> # of current build jobs </span>
@@ -50,7 +50,7 @@
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="runningBuildJobs" [minWidth]="150" [width]="200" [maxWidth]="200">
+                <ngx-datatable-column prop="runningBuildJobs" [minWidth]="150" [maxWidth]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('runningBuildJobs')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.runningBuildJobs"> Running build jobs </span>
@@ -61,7 +61,7 @@
                         <span>{{ getBuildJobIds(value) }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="status" [minWidth]="150" [width]="200" [maxWidth]="200">
+                <ngx-datatable-column prop="status" [minWidth]="150" [maxWidth]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('status')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.status"> Status </span>
