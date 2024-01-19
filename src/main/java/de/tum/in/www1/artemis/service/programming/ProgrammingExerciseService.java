@@ -139,8 +139,6 @@ public class ProgrammingExerciseService {
 
     private final Optional<AeolusTemplateService> aeolusTemplateService;
 
-    private final AbstractContinuousIntegrationService buildPlanService;
-
     private final Optional<BuildScriptGenerationService> buildScriptGenerationService;
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
@@ -157,7 +155,7 @@ public class ProgrammingExerciseService {
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, ChannelService channelService,
             ProgrammingSubmissionService programmingSubmissionService, Optional<IrisSettingsService> irisSettingsService, Optional<AeolusTemplateService> aeolusTemplateService,
-            Optional<BuildScriptGenerationService> buildScriptGenerationService, AbstractContinuousIntegrationService buildPlanService,
+            Optional<BuildScriptGenerationService> buildScriptGenerationService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
@@ -188,7 +186,6 @@ public class ProgrammingExerciseService {
         this.irisSettingsService = irisSettingsService;
         this.aeolusTemplateService = aeolusTemplateService;
         this.buildScriptGenerationService = buildScriptGenerationService;
-        this.buildPlanService = buildPlanService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
     }
 
@@ -489,11 +486,13 @@ public class ProgrammingExerciseService {
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
 
-        if (!Objects.equals(programmingExerciseBeforeUpdate.getBuildPlanConfiguration(), updatedProgrammingExercise.getBuildPlanConfiguration())) {
-            buildPlanService.deleteProject(updatedProgrammingExercise.getProjectKey());
-            buildPlanService.createProjectForExercise(updatedProgrammingExercise);
-            buildPlanService.recreateBuildPlansForExercise(updatedProgrammingExercise);
-            resetAllStudentBuildPlanIdsForExercise(updatedProgrammingExercise);
+        if (continuousIntegrationService.isPresent()) {
+            if (!Objects.equals(programmingExerciseBeforeUpdate.getBuildPlanConfiguration(), updatedProgrammingExercise.getBuildPlanConfiguration())) {
+                continuousIntegrationService.get().deleteProject(updatedProgrammingExercise.getProjectKey());
+                continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
+                continuousIntegrationService.get().recreateBuildPlansForExercise(updatedProgrammingExercise);
+                resetAllStudentBuildPlanIdsForExercise(updatedProgrammingExercise);
+            }
         }
 
         channelService.updateExerciseChannel(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
