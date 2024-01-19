@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
-import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 class LectureServiceTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -124,8 +123,7 @@ class LectureServiceTest extends AbstractSpringIntegrationIndependentTest {
         lecture = lectureRepository.findByIdElseThrow(lecture.getId());
 
         PageableSearchDTO<String> pageable = pageableSearchUtilService.configureLectureSearch(lecture.getTitle());
-        String sortedColumnName = PageUtil.ColumnMapping.LECTURE.getMappedColumnName("ID");
-        pageable.setSortedColumn(sortedColumnName);
+        pageable.setSortedColumn("ID");
         pageable.setPageSize(1);
 
         SearchResultPageDTO<Lecture> result1 = lectureService.getAllOnPageWithSize(pageable, editor);
