@@ -68,7 +68,7 @@ public class LocalCISharedBuildJobQueueService {
     /**
      * Map of build jobs currently being processed across all nodes
      */
-    private final IMap<Long, LocalCIBuildJobQueueItem> processingJobs;
+    private final IMap<String, LocalCIBuildJobQueueItem> processingJobs;
 
     private final IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
 
@@ -83,6 +83,8 @@ public class LocalCISharedBuildJobQueueService {
      * Lock for operations on single instance.
      */
     private final ReentrantLock instanceLock = new ReentrantLock();
+
+    private UUID listenerId;
 
     public LocalCISharedBuildJobQueueService(HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
             LocalCIBuildJobManagementService localCIBuildJobManagementService, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
@@ -108,7 +110,11 @@ public class LocalCISharedBuildJobQueueService {
      */
     @PostConstruct
     public void addListener() {
-        this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
+        this.listenerId = this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
+    }
+
+    public void removeListener() {
+        this.queue.removeItemListener(this.listenerId);
     }
 
     /**
@@ -126,8 +132,8 @@ public class LocalCISharedBuildJobQueueService {
      */
     public void addBuildJob(String name, long participationId, String repositoryName, RepositoryType repositoryType, String commitHash, ZonedDateTime submissionDate, int priority,
             long courseId, RepositoryType triggeredByPushTo) {
-        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(Long.parseLong(String.valueOf(participationId) + submissionDate.toInstant().toEpochMilli()), name,
-                null, participationId, repositoryName, repositoryType, commitHash, submissionDate, 0, null, null, priority, courseId, triggeredByPushTo, null);
+        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem((String.valueOf(participationId) + submissionDate.toInstant().toEpochMilli()), name, null,
+                participationId, repositoryName, repositoryType, commitHash, submissionDate, 0, null, null, priority, courseId, triggeredByPushTo, null);
         queue.add(buildJobQueueItem);
     }
 
@@ -464,37 +470,6 @@ public class LocalCISharedBuildJobQueueService {
     }
 
     /**
-     * Cancel a build job by removing it from the queue or stopping the build process.
-     *
-     * @param buildJobId id of the build job to cancel
-     */
-    public void cancelBuildJob(long buildJobId) {
-        sharedLock.lock();
-        try {
-            // Remove build job if it is queued
-            if (queue.stream().anyMatch(job -> Objects.equals(job.id(), buildJobId))) {
-                List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
-                for (LocalCIBuildJobQueueItem job : queue) {
-                    if (Objects.equals(job.id(), buildJobId)) {
-                        toRemove.add(job);
-                    }
-                }
-                queue.removeAll(toRemove);
-            }
-            else {
-                // Cancel build job if it is currently being processed
-                LocalCIBuildJobQueueItem buildJob = processingJobs.remove(buildJobId);
-                if (buildJob != null) {
-                    localCIBuildJobManagementService.cancelBuildJob(buildJobId);
-                }
-            }
-        }
-        finally {
-            sharedLock.unlock();
-        }
-    }
-
-    /**
      * Retrieve participation from database with retries.
      * This is necessary because the participation might not be persisted in the database yet.
      *
@@ -528,12 +503,43 @@ public class LocalCISharedBuildJobQueueService {
     }
 
     /**
+     * Cancel a build job by removing it from the queue or stopping the build process.
+     *
+     * @param buildJobId id of the build job to cancel
+     */
+    public void cancelBuildJob(String buildJobId) {
+        sharedLock.lock();
+        try {
+            // Remove build job if it is queued
+            if (queue.stream().anyMatch(job -> Objects.equals(job.id(), buildJobId))) {
+                List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
+                for (LocalCIBuildJobQueueItem job : queue) {
+                    if (Objects.equals(job.id(), buildJobId)) {
+                        toRemove.add(job);
+                    }
+                }
+                queue.removeAll(toRemove);
+            }
+            else {
+                // Cancel build job if it is currently being processed
+                LocalCIBuildJobQueueItem buildJob = processingJobs.remove(buildJobId);
+                if (buildJob != null) {
+                    localCIBuildJobManagementService.triggerBuildJobCancellation(buildJobId);
+                }
+            }
+        }
+        finally {
+            sharedLock.unlock();
+        }
+    }
+
+    /**
      * Cancel all queued build jobs.
      */
     public void cancelAllQueuedBuildJobs() {
-        log.debug("Cancelling all queued build jobs");
         sharedLock.lock();
         try {
+            log.debug("Cancelling all queued build jobs");
             queue.clear();
         }
         finally {
@@ -545,8 +551,14 @@ public class LocalCISharedBuildJobQueueService {
      * Cancel all running build jobs.
      */
     public void cancelAllRunningBuildJobs() {
-        for (LocalCIBuildJobQueueItem buildJob : processingJobs.values()) {
-            cancelBuildJob(buildJob.id());
+        sharedLock.lock();
+        try {
+            for (LocalCIBuildJobQueueItem buildJob : processingJobs.values()) {
+                cancelBuildJob(buildJob.id());
+            }
+        }
+        finally {
+            sharedLock.unlock();
         }
     }
 
@@ -584,7 +596,7 @@ public class LocalCISharedBuildJobQueueService {
         }
     }
 
-    private class QueuedBuildJobItemListener implements ItemListener<LocalCIBuildJobQueueItem> {
+    public class QueuedBuildJobItemListener implements ItemListener<LocalCIBuildJobQueueItem> {
 
         @Override
         public void itemAdded(ItemEvent<LocalCIBuildJobQueueItem> event) {
