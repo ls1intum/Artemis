@@ -4,6 +4,7 @@ import { ChannelDTO, getAsChannelDto } from 'app/entities/metis/conversation/cha
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import { EMPTY, Subject, debounceTime, distinctUntilChanged, from, takeUntil } from 'rxjs';
+import { mergeWith } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -18,6 +19,7 @@ import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-ch
 import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/overview/course-conversations/other/conversation.util';
 import { catchError } from 'rxjs/operators';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { NotificationService } from 'app/shared/notification/notification.service';
 
 @Component({
     // eslint-disable-next-line @angular-eslint/component-selector
@@ -63,6 +65,7 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
     constructor(
         public conversationService: ConversationService,
         private metisService: MetisService,
+        private notificationService: NotificationService,
         private alertService: AlertService,
         private modalService: NgbModal,
     ) {}
@@ -115,6 +118,7 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
                 this.settingsDidChange.emit();
             });
     }
+
     ngOnInit(): void {
         this.favorite$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((isFavorite) => {
             this.conversationService.updateIsFavorite(this.course.id!, this.conversation.id!, isFavorite).subscribe({
@@ -142,6 +146,14 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
+        });
+        this.conversationIsHiddenDidChange.pipe(mergeWith(this.conversationIsMutedDidChange), takeUntil(this.ngUnsubscribe)).subscribe(() => {
+            if (!this.conversation.id) return;
+            if (this.conversation.isHidden || this.conversation.isMuted) {
+                this.notificationService.muteNotificationsForConversation(this.conversation.id);
+            } else {
+                this.notificationService.unmuteNotificationsForConversation(this.conversation.id);
+            }
         });
         this.conversationAsChannel = getAsChannelDto(this.conversation);
         this.channelSubTypeReferenceTranslationKey = getChannelSubTypeReferenceTranslationKey(this.conversationAsChannel?.subType);
