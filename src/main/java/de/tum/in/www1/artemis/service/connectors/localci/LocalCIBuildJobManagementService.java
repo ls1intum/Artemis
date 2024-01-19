@@ -6,11 +6,16 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
 
+import javax.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.topic.ITopic;
 
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.LocalCIException;
@@ -50,19 +55,45 @@ public class LocalCIBuildJobManagementService {
     @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
     private String buildContainerPrefix;
 
-    private final Map<Long, Future<LocalCIBuildResult>> runningBuildJobs = new ConcurrentHashMap<>();
+    /**
+     * A map that contains all build jobs that are currently running.
+     * The key is the id of the build job, the value is the future that will be completed with the build result.
+     * This map is unique for each node and contains only the build jobs that are running on this node.
+     */
+    private final Map<String, Future<LocalCIBuildResult>> runningFutures = new ConcurrentHashMap<>();
 
-    private final Set<Long> cancelledBuildJobs = new HashSet<>();
+    /**
+     * A set that contains all build jobs that were cancelled by the user.
+     * This set is unique for each node and contains only the build jobs that were cancelled on this node.
+     */
+    private final Set<String> cancelledBuildJobs = new ConcurrentSkipListSet<>();
 
-    public LocalCIBuildJobManagementService(LocalCIBuildJobExecutionService localCIBuildJobExecutionService, ExecutorService localCIBuildExecutorService,
-            ProgrammingMessagingService programmingMessagingService, LocalCIBuildPlanService localCIBuildPlanService, LocalCIContainerService localCIContainerService,
-            LocalCIDockerService localCIDockerService) {
+    private final ITopic<String> canceledBuildJobsTopic;
+
+    public LocalCIBuildJobManagementService(HazelcastInstance hazelcastInstance, LocalCIBuildJobExecutionService localCIBuildJobExecutionService,
+            ExecutorService localCIBuildExecutorService, ProgrammingMessagingService programmingMessagingService, LocalCIBuildPlanService localCIBuildPlanService,
+            LocalCIContainerService localCIContainerService, LocalCIDockerService localCIDockerService) {
         this.localCIBuildJobExecutionService = localCIBuildJobExecutionService;
         this.localCIBuildExecutorService = localCIBuildExecutorService;
         this.programmingMessagingService = programmingMessagingService;
         this.localCIBuildPlanService = localCIBuildPlanService;
         this.localCIContainerService = localCIContainerService;
         this.localCIDockerService = localCIDockerService;
+        this.canceledBuildJobsTopic = hazelcastInstance.getTopic("canceledBuildJobsTopic");
+    }
+
+    /**
+     * Add a listener to the canceledBuildJobsTopic that cancels the build job for the given buildJobId.
+     * It gets broadcast to all nodes in the cluster. Only the node that is running the build job will cancel it.
+     */
+    @PostConstruct
+    public void addListener() {
+        canceledBuildJobsTopic.addMessageListener(message -> {
+            String buildJobId = message.getMessageObject();
+            if (runningFutures.containsKey(buildJobId)) {
+                cancelBuildJob(buildJobId);
+            }
+        });
     }
 
     /**
@@ -78,7 +109,7 @@ public class LocalCIBuildJobManagementService {
      * @throws LocalCIException If the build job could not be submitted to the executor service.
      */
     public CompletableFuture<LocalCIBuildResult> executeBuildJob(ProgrammingExerciseParticipation participation, String commitHash, boolean isRetry,
-            boolean isPushToTestOrAuxRepository, long buildJobId, String dockerImage) throws LocalCIException {
+            boolean isPushToTestOrAuxRepository, String buildJobId, String dockerImage) throws LocalCIException {
 
         // Check if the Docker image is available. If not, pull it.
         localCIDockerService.pullDockerImage(dockerImage);
@@ -97,7 +128,7 @@ public class LocalCIBuildJobManagementService {
          * Usually, when using asynchronous build jobs, it will just resolve to "CompletableFuture.supplyAsync".
          */
         Future<LocalCIBuildResult> future = localCIBuildExecutorService.submit(buildJob);
-        runningBuildJobs.put(buildJobId, future);
+        runningFutures.put(buildJobId, future);
 
         CompletableFuture<LocalCIBuildResult> futureResult = createCompletableFuture(() -> {
             try {
@@ -119,7 +150,7 @@ public class LocalCIBuildJobManagementService {
         });
         // Update the build plan status to "QUEUED".
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.QUEUED);
-        futureResult.whenComplete(((result, throwable) -> runningBuildJobs.remove(buildJobId)));
+        futureResult.whenComplete(((result, throwable) -> runningFutures.remove(buildJobId)));
 
         return futureResult;
     }
@@ -177,12 +208,23 @@ public class LocalCIBuildJobManagementService {
     }
 
     /**
+     * Trigger the cancellation of the build job for the given buildJobId.
+     * The listener for the canceledBuildJobsTopic will then cancel the build job.
+     *
+     * @param buildJobId The id of the build job that should be cancelled.
+     */
+    public void triggerBuildJobCancellation(String buildJobId) {
+        // Publish a message to the topic indicating that the specific build job should be canceled
+        canceledBuildJobsTopic.publish(buildJobId);
+    }
+
+    /**
      * Cancel the build job for the given buildJobId.
      *
      * @param buildJobId The id of the build job that should be cancelled.
      */
-    public void cancelBuildJob(long buildJobId) {
-        Future<LocalCIBuildResult> future = runningBuildJobs.get(buildJobId);
+    private void cancelBuildJob(String buildJobId) {
+        Future<LocalCIBuildResult> future = runningFutures.get(buildJobId);
         if (future != null) {
             try {
                 cancelledBuildJobs.add(buildJobId);
@@ -193,7 +235,7 @@ public class LocalCIBuildJobManagementService {
             }
         }
         else {
-            log.warn("Attempted to cancel a non-existent build job for id {}", buildJobId);
+            log.warn("Could not cancel build job with id {} as it was not found in the running build jobs", buildJobId);
         }
     }
 
@@ -204,7 +246,7 @@ public class LocalCIBuildJobManagementService {
      * @param buildJobId    The id of the cancelled build job
      * @param containerName The name of the Docker container that was used to execute the build job.
      */
-    private void finishCancelledBuildJob(ProgrammingExerciseParticipation participation, long buildJobId, String containerName) {
+    private void finishCancelledBuildJob(ProgrammingExerciseParticipation participation, String buildJobId, String containerName) {
         log.debug("Build job with id {} in repository {} was cancelled", buildJobId, participation.getRepositoryUri());
 
         // Set the build status to "INACTIVE" to indicate that the build is not running anymore.
