@@ -67,6 +67,13 @@ export class CompetencyRelation implements BaseEntity {
     constructor() {}
 }
 
+export class CompetencyWithTailRelationDTO {
+    competency?: Competency;
+    tailRelations?: CompetencyRelation[];
+
+    constructor() {}
+}
+
 export function getIcon(competencyTaxonomy?: CompetencyTaxonomy): IconProp {
     if (!competencyTaxonomy) {
         return faQuestion as IconProp;

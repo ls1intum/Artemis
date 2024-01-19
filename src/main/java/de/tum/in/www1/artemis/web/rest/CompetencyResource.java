@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -281,7 +282,7 @@ public class CompetencyResource {
      */
     @PostMapping("/courses/{courseId}/competencies/import-all/{sourceCourseId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<Competency>> importAllCompetenies(@PathVariable long courseId, @PathVariable long sourceCourseId,
+    public ResponseEntity<List<CompetencyWithTailRelationDTO>> importAllCompetenies(@PathVariable long courseId, @PathVariable long sourceCourseId,
             @RequestParam(defaultValue = "false") boolean importRelations) throws URISyntaxException {
         log.info("REST request to all competencies from course {} into course {}", sourceCourseId, courseId);
 
@@ -289,36 +290,45 @@ public class CompetencyResource {
             throw new ConflictException("Cannot import from a course into itself", "Course", "courseCycle");
         }
         var course = courseRepository.findByIdElseThrow(courseId);
-        var sourceCourse = courseRepository.findWithEagerCompetenciesByIdElseThrow(sourceCourseId);
+        var sourceCourse = courseRepository.findByIdElseThrow(sourceCourseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, sourceCourse, null);
 
-        var competencies = sourceCourse.getCompetencies();
-        List<Competency> createdCompetencies = new ArrayList<>();
-        // map the id of the old competency to the new one to later copy the competency relations
-        var idMap = new HashMap<Long, Competency>();
+        var competencies = competencyRepository.findAllForCourse(sourceCourseId);
+        // map the id of the old competency to the new one
+        // used for importing relations and assigning relations to the CompetencyDTO.
+        var idToImportedCompetency = new HashMap<Long, CompetencyWithTailRelationDTO>();
 
         for (var competency : competencies) {
             Competency competencyToImport = getCompetencyToCreate(competency);
             competencyToImport.setCourse(course);
 
             competencyToImport = competencyRepository.save(competencyToImport);
-            createdCompetencies.add(competencyToImport);
-            idMap.put(competency.getId(), competencyToImport);
+            idToImportedCompetency.put(competency.getId(), new CompetencyWithTailRelationDTO(competencyToImport, new ArrayList<>()));
         }
 
         if (importRelations) {
             var relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(sourceCourseId);
             for (var relation : relations) {
-                CompetencyRelation relationToCreate = new CompetencyRelation();
-                relationToCreate.setType(relation.getType());
-                relationToCreate.setHeadCompetency(idMap.get(relation.getHeadCompetency().getId()));
-                relationToCreate.setTailCompetency(idMap.get(relation.getTailCompetency().getId()));
+                var tailCompetencyDTO = idToImportedCompetency.get(relation.getTailCompetency().getId());
+                var headCompetencyDTO = idToImportedCompetency.get(relation.getHeadCompetency().getId());
+                if (tailCompetencyDTO == null || headCompetencyDTO == null) {
+                    log.warn("Tried to import competency relation with id {} but it has no head/tail", relation.getId());
+                    continue;
+                }
 
-                competencyRelationRepository.save(relationToCreate);
+                CompetencyRelation relationToImport = new CompetencyRelation();
+                relationToImport.setType(relation.getType());
+                relationToImport.setTailCompetency(tailCompetencyDTO.competency());
+                relationToImport.setHeadCompetency(headCompetencyDTO.competency());
+
+                relationToImport = competencyRelationRepository.save(relationToImport);
+                tailCompetencyDTO.tailRelations().add(relationToImport);
             }
         }
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(createdCompetencies);
+
+        List<CompetencyWithTailRelationDTO> importedCompetencies = idToImportedCompetency.values().stream().toList();
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(importedCompetencies);
     }
 
     /**
