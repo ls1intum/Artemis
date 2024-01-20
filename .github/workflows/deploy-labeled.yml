@@ -1,0 +1,48 @@
+name: Deploy to Pyris Test
+
+on:
+  pull_request:
+    types: [labeled]
+
+jobs:
+  compute-tag:
+    needs: [ check-build-status ]
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.compute-tag.outputs.result }}
+      label: ${{ steps.strip-label-prefix.outputs.result }}
+    steps:
+      - name: Compute Tag
+        uses: actions/github-script@v6
+        id: compute-tag
+        with:
+          result-encoding: string
+          script: |
+            if (context.eventName === "pull_request") {
+              return "pr-" + context.issue.number;
+            }
+            if (context.eventName === "release") {
+              return "latest";
+            }
+            if (context.eventName === "push") {
+              if (context.ref.startsWith("refs/tags/")) {
+                return context.ref.slice(10);
+              }
+              if (context.ref === "refs/heads/develop") {
+                return "develop";
+              }
+            }
+            return "FALSE";
+
+      - name: Strip label prefix "deploy:"
+        id: strip-label-prefix
+        run: echo "::set-output name=result::${{ github.event.label.name:7 }}"
+
+  deploy:
+    needs: [ compute-tag, pre-deployment ]
+    uses: ./.github/workflows/deploy.yml
+    with:
+      docker-tag: ${{ needs.compute-tag.outputs.tag }}
+      ref: ${{ github.event.pull_request.head.ref }}
+      test-server: ${{ needs.compute-tag.outputs.label }}
+    secrets: inherit

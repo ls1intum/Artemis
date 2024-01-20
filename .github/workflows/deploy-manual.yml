@@ -1,0 +1,27 @@
+name: Deploy Artemis
+
+on:
+  workflow_dispatch:
+    inputs:
+      docker-tag:
+        description: 'Docker tag to deploy (e.g. 1.0.0 or latest, default: latest)'
+        required: true
+        default: 'latest'
+      branch-name:
+        description: 'Branch name to deploy (default: develop)'
+        required: true
+        default: 'develop'
+      test-server:
+        type: environment
+        description: 'Test server to deploy to'
+        required: true
+
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/deploy.yml
+    with:
+      docker-tag: ${{ github.event.inputs.docker-tag }}
+      branch-name: ${{ github.event.inputs.branch-name }}
+      test-server: ${{ github.event.inputs.test-server }}
+    secrets: inherit

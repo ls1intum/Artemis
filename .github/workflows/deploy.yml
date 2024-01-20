@@ -1,0 +1,66 @@
+name: Deploy Artemis
+
+on:
+  workflow_call:
+    inputs:
+      docker-tag:
+        required: true
+        type: string
+      ref:
+        required: true
+        type: string
+      pr-number:
+        required: false
+        type: number
+      test-server:
+        required: true
+        type: string
+    secrets:
+      GITHUB_TOKEN:
+        required: true
+      GITHUB_ORG_TOKEN:
+        required: false
+      DEPLOYMENT_GATEWAY_SSH_KEY:
+        required: true
+
+concurrency: test-servers-deployment
+
+jobs:
+  deploy:
+    needs: [ process-matrix ]
+    runs-on: ubuntu-latest
+
+    environment:
+      name: ${{ inputs.test-server }}.artemis.cit.tum.de
+      url: https://${{ inputs.test-server }}.artemis.cit.tum.de
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run python script to configure SSH Key
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ORG_TOKEN: ${{ secrets.GITHUB_ORG_TOKEN }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_USER: ${{ github.actor.login }}
+          ORG: "ls1intum"
+          REPO: "Artemis"
+          REF: ${{ inputs.ref }}
+          PR: ${{ inputs.pr-number }}
+          LABEL: ${{ inputs.test-server }}
+          TAG: ${{ inputs.docker-tag }}
+          DEPLOYMENT_USER: ${{ env.DEPLOYMENT_USER }}
+          DEPLOYMENT_HOSTS: ${{ env.DEPLOYMENT_HOSTS }}
+          DEPLOYMENT_FOLDER: ${{ env.DEPLOYMENT_FOLDER }}
+          DEPLOYMENT_HOST_PUBLIC_KEYS: ${{ env.DEPLOYMENT_HOST_PUBLIC_KEYS }}
+          DEPLOYMENT_SSH_KEY: "${{ secrets.DEPLOYMENT_SSH_KEY }}"
+          GATEWAY_USER: "jump"
+          GATEWAY_HOST: "gateway.artemis.in.tum.de:2010"
+          GATEWAY_HOST_PUBLIC_KEYS: "[gateway.artemis.in.tum.de]:2010 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKtTLiKRILjKZ+Qg4ReWKsG7mLDXkzHfeY5nalSQUNQ4"
+          GATEWAY_SSH_KEY: "${{ secrets.DEPLOYMENT_GATEWAY_SSH_KEY }}"
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        run: python3 .ci/deployment/main.py
+
+
+
