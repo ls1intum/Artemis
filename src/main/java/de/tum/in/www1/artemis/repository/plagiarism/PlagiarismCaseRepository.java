@@ -65,8 +65,8 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
                 LEFT JOIN FETCH plagiarismCase.post p
                 LEFT JOIN FETCH p.answers
             WHERE plagiarismCase.exercise.id = :exerciseId
-                  AND (plagiarismCase.student.id = :userId OR teamStudent.id = :userId)
-                  AND p.id IS NOT NULL
+                AND (plagiarismCase.student.id = :userId OR teamStudent.id = :userId)
+                AND p.id IS NOT NULL
             """)
     Optional<PlagiarismCase> findByStudentIdAndExerciseIdWithPostAndAnswerPost(@Param("userId") Long userId, @Param("exerciseId") Long exerciseId);
 
@@ -167,8 +167,8 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
     @Query("""
             SELECT COUNT(plagiarismCase)
             FROM PlagiarismCase plagiarismCase
-                WHERE plagiarismCase.student.isDeleted = false
-                      AND plagiarismCase.exercise.id = :exerciseId
+            WHERE plagiarismCase.student.isDeleted = false
+                AND plagiarismCase.exercise.id = :exerciseId
             """)
     long countByExerciseId(long exerciseId);
 }
