@@ -26,7 +26,7 @@ public interface IrisCodeEditorSessionRepository extends JpaRepository<IrisCodeE
      */
     @Query("""
             SELECT s
-            FROM IrisCodeEditorSession s
+                FROM IrisCodeEditorSession s
             WHERE s.exercise.id = :exerciseId
                 AND s.user.id = :userId
             ORDER BY s.creationDate DESC

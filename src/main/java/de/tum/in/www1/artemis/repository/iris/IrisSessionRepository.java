@@ -18,7 +18,7 @@ public interface IrisSessionRepository extends JpaRepository<IrisSession, Long> 
     @Query("""
             SELECT s
             FROM IrisSession s
-            LEFT JOIN FETCH s.messages m
+                LEFT JOIN FETCH s.messages m
             WHERE s.id = :sessionId
             """)
     Optional<IrisSession> findByIdWithMessages(long sessionId);
@@ -26,8 +26,8 @@ public interface IrisSessionRepository extends JpaRepository<IrisSession, Long> 
     @Query("""
             SELECT s
             FROM IrisSession s
-            LEFT JOIN FETCH s.messages m
-            LEFT JOIN FETCH m.content c
+                LEFT JOIN FETCH s.messages m
+                LEFT JOIN FETCH m.content c
             WHERE s.id = :sessionId
             """)
     IrisSession findByIdWithMessagesAndContents(long sessionId);
