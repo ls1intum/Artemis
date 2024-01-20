@@ -74,12 +74,12 @@ export class CourseManagementAPIRequests {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
         }
 
-        const allowGroupCustomization: boolean = process.env.allowGroupCustomization === 'true';
+        const allowGroupCustomization: boolean = process.env.ALLOW_GROUP_CUSTOMIZATION === 'true';
         if (customizeGroups && allowGroupCustomization) {
-            course.studentGroupName = process.env.studentGroupName;
-            course.teachingAssistantGroupName = process.env.tutorGroupName;
-            course.editorGroupName = process.env.editorGroupName;
-            course.instructorGroupName = process.env.instructorGroupName;
+            course.studentGroupName = process.env.STUDENT_GROUP_NAME;
+            course.teachingAssistantGroupName = process.env.TUTOR_GROUP_NAME;
+            course.editorGroupName = process.env.EDITOR_GROUP_NAME;
+            course.instructorGroupName = process.env.INSTRUCTOR_GROUP_NAME;
         }
 
         const iconBuffer = await new Response(iconFile).arrayBuffer();

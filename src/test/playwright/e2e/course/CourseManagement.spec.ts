@@ -17,10 +17,10 @@ const courseData = {
     maxPoints: 40,
     programmingLanguage: 'JAVA',
     customizeGroupNames: false,
-    studentGroupName: process.env.studentGroupName ?? '',
-    tutorGroupName: process.env.tutorGroupName ?? '',
-    editorGroupName: process.env.editorGroupName ?? '',
-    instructorGroupName: process.env.instructorGroupName ?? '',
+    studentGroupName: process.env.STUDENT_GROUP_NAME ?? '',
+    tutorGroupName: process.env.TUTOR_GROUP_NAME ?? '',
+    editorGroupName: process.env.EDITOR_GROUP_NAME ?? '',
+    instructorGroupName: process.env.INSTRUCTOR_GROUP_NAME ?? '',
     enableComplaints: true,
     maxComplaints: 5,
     maxTeamComplaints: 3,
@@ -36,7 +36,7 @@ const editedCourseData = {
     testCourse: false,
 };
 
-const allowGroupCustomization = process.env.allowGroupCustomization;
+const allowGroupCustomization = process.env.ALLOW_GROUP_CUSTOMIZATION;
 const dateFormat = 'MMM D, YYYY HH:mm';
 
 test.describe('Course management', () => {

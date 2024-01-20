@@ -4,7 +4,7 @@ import { USER_ID, USER_ROLE, users } from '../support/users';
 import { expect } from '@playwright/test';
 
 test.describe('Setup users', async () => {
-    if (process.env.createUsers == 'true') {
+    if (process.env.CREATE_USERS == 'true') {
         test.beforeEach('Creates all required users', async ({ login, userManagementAPIRequests }) => {
             await login(admin);
             for (const userKey in USER_ID) {
