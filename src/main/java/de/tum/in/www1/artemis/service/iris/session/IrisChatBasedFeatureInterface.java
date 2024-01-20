@@ -18,6 +18,7 @@ public interface IrisChatBasedFeatureInterface<S extends IrisSession> extends Ir
      * Sends a request to Iris to get a message for the given session.
      *
      * @param irisSession The session to get a message for
+     * @param context     Client context for the request
      */
     void requestAndHandleResponse(IrisSession irisSession, JsonNode context);
 }

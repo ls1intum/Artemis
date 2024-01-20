@@ -66,6 +66,7 @@ public class IrisSessionService {
      * It decides which Iris subsystem should handle it based on the session type.
      *
      * @param session The session to get a message for
+     * @param context Client context for the request
      * @param <S>     The type of the session
      * @throws BadRequestException If the session type is invalid
      */
