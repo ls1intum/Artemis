@@ -67,7 +67,8 @@
                     "SHORT_NAME": "Short Name",
                     "doImport": "Select"
                 },
-                "success": "Successfully imported {{ noOfCompetencies }} competencies from course \"{{ courseTitle }}\"."
+                "success": "Imported {{ noOfCompetencies }} competencies from course \"{{ courseTitle }}\".",
+                "warning": "No competencies were found for course \"{{ courseTitle }}\"."
             },
             "createCompetency": {
                 "title": "Create a new competency",

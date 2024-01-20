@@ -68,7 +68,8 @@
                     "SHORT_NAME": "Kurzname",
                     "doImport": "Auswählen"
                 },
-                "success": "Erfolgreich {{ noOfCompetencies }} Kompetezen aus dem Kurs \"{{ courseTitle }}\" importiert."
+                "success": "{{ noOfCompetencies }} Kompetezen aus dem Kurs \"{{ courseTitle }}\" importiert.",
+                "warning": "Es wurden keine Kompetenzen für den Kurs \"{{ courseTitle }}\" gefunden."
             },
             "createCompetency": {
                 "title": "Erstelle eine neue Kompetenz",

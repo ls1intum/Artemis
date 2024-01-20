@@ -9,6 +9,7 @@ import {
     CompetencyRelationError,
     CompetencyWithTailRelationDTO,
     CourseCompetencyProgress,
+    dtoToCompetencyRelation,
     getIcon,
     getIconTooltip,
 } from 'app/entities/competency.model';
@@ -253,15 +254,17 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
                 )
                 .subscribe({
                     next: (res: Array<CompetencyWithTailRelationDTO>) => {
-                        this.alertService.success('artemisApp.competency.importAll.success', { noOfCompetencies: res.length, courseTitle: courseTitle });
+                        if (res.length > 0) {
+                            this.alertService.success('artemisApp.competency.importAll.success', { noOfCompetencies: res.length, courseTitle: courseTitle });
+                        } else {
+                            this.alertService.warning('artemisApp.competency.importAll.warning', { courseTitle: courseTitle });
+                        }
                         const importedCompetencies = res.map((dto) => dto.competency).filter((element): element is Competency => !!element);
                         const importedRelations = res
                             .map((dto) => dto.tailRelations)
                             .flat()
                             .filter((element): element is CompetencyRelationDTO => !!element)
-                            .map((dto) => dto.toCompetencyRelation());
-                        console.log(importedRelations);
-                        console.log(res);
+                            .map((dto) => dtoToCompetencyRelation(dto));
 
                         this.competencies = this.competencies.concat(importedCompetencies);
                         this.updateNodes(importedCompetencies);
