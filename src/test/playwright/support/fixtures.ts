@@ -8,6 +8,10 @@ import { CourseCreationPage } from './pageobjects/course/CourseCreationPage';
 import { UserManagementAPIRequests } from './requests/UserManagementAPIRequests';
 import { Commands } from './commands';
 
+/*
+ * Define custom types for fixtures
+ */
+
 type ArtemisCommands = {
     login: (credentials: UserCredentials, url?: string) => Promise<void>;
 };
@@ -19,11 +23,14 @@ type ArtemisPageObjects = {
     courseCreation: CourseCreationPage;
 };
 
-export class ArtemisRequests {
+type ArtemisRequests = {
     courseManagementAPIRequests: CourseManagementAPIRequests;
     userManagementAPIRequests: UserManagementAPIRequests;
-}
+};
 
+/**
+ * Custom test object extended to use Artemis related fixtures.
+ */
 export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRequests>({
     loginPage: async ({ page }, use) => {
         await use(new LoginPage(page));

@@ -2,7 +2,16 @@ import { UserCredentials } from './users';
 import { BASE_API } from '../../cypress/support/constants';
 import { Page, expect } from '@playwright/test';
 
+/**
+ * A class that encapsulates static helper command methods.
+ */
 export class Commands {
+    /**
+     * Logs in using API.
+     * @param page - Playwright page object.
+     * @param credentials - UserCredentials object containing username and password.
+     * @param url - Optional URL to navigate to after successful login.
+     */
     static login = async (page: Page, credentials: UserCredentials, url?: string): Promise<void> => {
         const { username, password } = credentials;
 
