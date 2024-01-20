@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.service.FilePathService.actualPathForPublic
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -25,6 +27,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -54,13 +57,16 @@ public class AttachmentResource {
 
     private final FileService fileService;
 
+    private final FilePathService filePathService;
+
     public AttachmentResource(AttachmentRepository attachmentRepository, GroupNotificationService groupNotificationService, AuthorizationCheckService authorizationCheckService,
-            UserRepository userRepository, FileService fileService) {
+            UserRepository userRepository, FileService fileService, FilePathService filePathService) {
         this.attachmentRepository = attachmentRepository;
         this.groupNotificationService = groupNotificationService;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.fileService = fileService;
+        this.filePathService = filePathService;
     }
 
     /**
@@ -77,11 +83,12 @@ public class AttachmentResource {
         log.debug("REST request to save Attachment : {}", attachment);
         attachment.setId(null);
 
-        String pathString = fileService.handleSaveFile(file, false, false).toString();
-        attachment.setLink(pathString);
+        Path basePath = FilePathService.getLectureAttachmentFilePath();
+        Path savePath = fileService.saveFile(file, basePath, false);
+        attachment.setLink(filePathService.publicPathForActualPath(savePath, attachment.getLecture().getId()).toString());
 
         Attachment result = attachmentRepository.save(attachment);
-        this.fileService.evictCacheForPath(actualPathForPublicPath(URI.create(result.getLink())));
+
         return ResponseEntity.created(new URI("/api/attachments/" + result.getId())).body(result);
     }
 
@@ -107,12 +114,16 @@ public class AttachmentResource {
         attachment.setAttachmentUnit(originalAttachment.getAttachmentUnit());
 
         if (file != null) {
-            String pathString = fileService.handleSaveFile(file, false, false).toString();
-            attachment.setLink(pathString);
+            Path basePath = FilePathService.getLectureAttachmentFilePath();
+            Path savePath = fileService.saveFile(file, basePath, false);
+            attachment.setLink(filePathService.publicPathForActualPath(savePath, originalAttachment.getLecture().getId()).toString());
+            // Delete the old file
+            URI oldPath = URI.create(originalAttachment.getLink());
+            fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(oldPath), 0);
+            this.fileService.evictCacheForPath(filePathService.actualPathForPublicPathOrThrow(oldPath));
         }
 
         Attachment result = attachmentRepository.save(attachment);
-        this.fileService.evictCacheForPath(actualPathForPublicPath(URI.create(result.getLink())));
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(result, notificationText);
         }
@@ -166,12 +177,6 @@ public class AttachmentResource {
         if (attachment.getLecture() != null) {
             course = attachment.getLecture().getCourse();
             relatedEntity = "lecture " + attachment.getLecture().getTitle();
-            try {
-                this.fileService.evictCacheForPath(actualPathForPublicPath(URI.create(attachment.getLink())));
-            }
-            catch (RuntimeException exception) {
-                // this catch is required for deleting wrongly formatted attachment database entries
-            }
         }
         else if (attachment.getExercise() != null) {
             course = attachment.getExercise().getCourseViaExerciseGroupOrCourseMember();
@@ -184,6 +189,17 @@ public class AttachmentResource {
 
         log.info("{} deleted attachment with id {} for {}", user.getLogin(), attachmentId, relatedEntity);
         attachmentRepository.deleteById(attachmentId);
+
+        try {
+            if (AttachmentType.FILE.equals(attachment.getAttachmentType())) {
+                URI oldPath = URI.create(attachment.getLink());
+                fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(oldPath), 0);
+                this.fileService.evictCacheForPath(actualPathForPublicPath(oldPath));
+            }
+        }
+        catch (RuntimeException exception) {
+            // this catch is required for deleting wrongly formatted attachment database entries
+        }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, attachmentId.toString())).build();
     }
 }

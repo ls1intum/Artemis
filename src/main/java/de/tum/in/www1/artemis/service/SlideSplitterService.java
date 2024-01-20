@@ -37,9 +37,12 @@ public class SlideSplitterService {
 
     private final SlideRepository slideRepository;
 
-    public SlideSplitterService(FileService fileService, SlideRepository slideRepository) {
+    private final FilePathService filePathService;
+
+    public SlideSplitterService(FileService fileService, SlideRepository slideRepository, FilePathService filePathService) {
         this.fileService = fileService;
         this.slideRepository = slideRepository;
+        this.filePathService = filePathService;
     }
 
     /**
@@ -78,11 +81,13 @@ public class SlideSplitterService {
             for (int page = 0; page < numPages; page++) {
                 BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(page, 72, ImageType.RGB);
                 byte[] imageInByte = bufferedImageToByteArray(bufferedImage, "png");
-                MultipartFile slideFile = fileService.convertByteArrayToMultipart(fileNameWithOutExt + "_" + attachmentUnit.getId() + "_Slide_" + (page + 1), ".png", imageInByte);
-                String filePath = fileService.handleSaveFile(slideFile, true, false).toString();
+                int slideNumber = page + 1;
+                String filename = fileNameWithOutExt + "_" + attachmentUnit.getId() + "_Slide_" + slideNumber + ".png";
+                MultipartFile slideFile = fileService.convertByteArrayToMultipart(filename, ".png", imageInByte);
+                Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentUnitFilePath().resolve(filename));
                 Slide slideEntity = new Slide();
-                slideEntity.setSlideImagePath(filePath);
-                slideEntity.setSlideNumber(page + 1);
+                slideEntity.setSlideImagePath(filePathService.publicPathForActualPath(savePath, (long) slideNumber).toString());
+                slideEntity.setSlideNumber(slideNumber);
                 slideEntity.setAttachmentUnit(attachmentUnit);
                 slideRepository.save(slideEntity);
             }

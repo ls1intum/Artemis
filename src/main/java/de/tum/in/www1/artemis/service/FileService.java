@@ -164,19 +164,12 @@ public class FileService implements DisposableBean {
         String filename = checkAndSanitizeFilename(file.getOriginalFilename());
 
         validateExtension(filename, markdown);
-        final String fileExtension = FilenameUtils.getExtension(filename);
 
         final String filenamePrefix = markdown ? "Markdown_" : "Temp_";
         final Path path = markdown ? FilePathService.getMarkdownFilePath() : FilePathService.getTempFilePath();
 
-        Path filePath;
-        if (keepFilename) {
-            filePath = path.resolve(filename);
-        }
-        else {
-            String generatedFilename = generateFilename(filenamePrefix, fileExtension);
-            filePath = path.resolve(generatedFilename);
-        }
+        String generatedFilename = generateFilename(filenamePrefix, filename, keepFilename);
+        Path filePath = path.resolve(generatedFilename);
 
         copyFile(file, filePath);
 
@@ -192,13 +185,24 @@ public class FileService implements DisposableBean {
      * @return the path where the file was saved
      */
     @NotNull
-    public Path saveFile(MultipartFile file, Path basePath) {
+    public Path saveFile(MultipartFile file, Path basePath, boolean keepFilename) {
         String sanitizedFilename = checkAndSanitizeFilename(file.getOriginalFilename());
         validateExtension(sanitizedFilename, false);
-        String generatedFilename = generateFilename(generateTargetFilenameBase(basePath), FilenameUtils.getExtension(sanitizedFilename));
+        String generatedFilename = generateFilename(generateTargetFilenameBase(basePath), sanitizedFilename, keepFilename);
         Path savePath = basePath.resolve(generatedFilename);
-        copyFile(file, savePath);
-        return savePath;
+        return saveFile(file, savePath);
+    }
+
+    /**
+     * Saves a file to the given path. If the file already exists, it will be <b>overwritten</b>. Make sure the path is <b>sanitized</b> and does not override files unexpectedly!
+     *
+     * @param file     the file to save
+     * @param fullPath the full path to save the file to
+     * @return the path where the file was saved
+     */
+    public Path saveFile(MultipartFile file, Path fullPath) {
+        copyFile(file, fullPath);
+        return fullPath;
     }
 
     private void copyFile(MultipartFile file, Path filePath) {
@@ -244,13 +248,18 @@ public class FileService implements DisposableBean {
     }
 
     /**
-     * Generates a new filename based on the current time and a random UUID.
+     * Generates a new filename based on the current time and either the supplied filename or a random UUID.
      *
      * @param filenamePrefix the prefix of the filename
-     * @param fileExtension  the extension of the file
+     * @param filename       the sanitized filename including the extension
+     * @param keepFilename   whether to keep the original filename or not
      * @return the generated filename
      */
-    public String generateFilename(String filenamePrefix, String fileExtension) {
+    public String generateFilename(String filenamePrefix, String filename, boolean keepFilename) {
+        if (keepFilename) {
+            return filenamePrefix + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + filename;
+        }
+        String fileExtension = FilenameUtils.getExtension(filename);
         return filenamePrefix + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "." + fileExtension;
     }
 
@@ -265,7 +274,7 @@ public class FileService implements DisposableBean {
         if (oldFilePath != null && !pathContains(oldFilePath, Path.of(("files/temp")))) {
             String filename = oldFilePath.getFileName().toString();
             try {
-                Path target = targetFolder.resolve(generateFilename(generateTargetFilenameBase(targetFolder), FilenameUtils.getExtension(filename)));
+                Path target = targetFolder.resolve(generateFilename(generateTargetFilenameBase(targetFolder), filename, false));
                 FileUtils.copyFile(oldFilePath.toFile(), target.toFile());
                 log.debug("Moved File from {} to {}", oldFilePath, target);
                 return target;

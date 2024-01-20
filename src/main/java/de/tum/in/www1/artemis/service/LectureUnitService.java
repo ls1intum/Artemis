@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -11,13 +12,8 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
-import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
-import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
-import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
-import de.tum.in.www1.artemis.repository.CompetencyRepository;
-import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
-import de.tum.in.www1.artemis.repository.LectureUnitRepository;
+import de.tum.in.www1.artemis.domain.lecture.*;
+import de.tum.in.www1.artemis.repository.*;
 
 @Service
 public class LectureUnitService {
@@ -30,12 +26,21 @@ public class LectureUnitService {
 
     private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
+    private final FileService fileService;
+
+    private final FilePathService filePathService;
+
+    private final SlideRepository slideRepository;
+
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, CompetencyRepository competencyRepository,
-            LectureUnitCompletionRepository lectureUnitCompletionRepository) {
+            LectureUnitCompletionRepository lectureUnitCompletionRepository, FileService fileService, FilePathService filePathService, SlideRepository slideRepository) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.competencyRepository = competencyRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
+        this.fileService = fileService;
+        this.filePathService = filePathService;
+        this.slideRepository = slideRepository;
     }
 
     /**
@@ -88,16 +93,20 @@ public class LectureUnitService {
             }).toList());
         }
 
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureUnitToDelete.getLecture().getId());
-        // Creating a new list of lecture units without the one we want to remove
-        List<LectureUnit> lectureUnitsUpdated = new ArrayList<>();
-        for (LectureUnit unit : lecture.getLectureUnits()) {
-            if (unit != null && !unit.getId().equals(lectureUnitToDelete.getId())) {
-                lectureUnitsUpdated.add(unit);
+        if (lectureUnitToDelete instanceof AttachmentUnit attachmentUnit) {
+            fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(URI.create((attachmentUnit.getAttachment().getLink()))), 5);
+            if (attachmentUnit.getSlides() != null && !attachmentUnit.getSlides().isEmpty()) {
+                List<Slide> slides = attachmentUnit.getSlides();
+                for (Slide slide : slides) {
+                    fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(URI.create(slide.getSlideImagePath())), 5);
+                }
+                slideRepository.deleteAll(slides);
             }
         }
-        lecture.getLectureUnits().clear();
-        lecture.getLectureUnits().addAll(lectureUnitsUpdated);
+
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureUnitToDelete.getLecture().getId());
+        // Creating a new list of lecture units without the one we want to remove
+        lecture.getLectureUnits().removeIf(unit -> unit == null || unit.getId().equals(lectureUnitToDelete.getId()));
         lectureRepository.save(lecture);
     }
 }
