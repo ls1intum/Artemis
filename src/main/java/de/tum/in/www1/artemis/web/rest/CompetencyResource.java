@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -312,10 +313,6 @@ public class CompetencyResource {
             for (var relation : relations) {
                 var tailCompetencyDTO = idToImportedCompetency.get(relation.getTailCompetency().getId());
                 var headCompetencyDTO = idToImportedCompetency.get(relation.getHeadCompetency().getId());
-                if (tailCompetencyDTO == null || headCompetencyDTO == null) {
-                    log.warn("Tried to import competency relation with id {} but it has no head/tail", relation.getId());
-                    continue;
-                }
 
                 CompetencyRelation relationToImport = new CompetencyRelation();
                 relationToImport.setType(relation.getType());
@@ -323,7 +320,7 @@ public class CompetencyResource {
                 relationToImport.setHeadCompetency(headCompetencyDTO.competency());
 
                 relationToImport = competencyRelationRepository.save(relationToImport);
-                tailCompetencyDTO.tailRelations().add(relationToImport);
+                tailCompetencyDTO.tailRelations().add(new CompetencyRelationDTO(relationToImport));
             }
         }
 

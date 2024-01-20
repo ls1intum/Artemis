@@ -5,6 +5,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import {
     Competency,
     CompetencyRelation,
+    CompetencyRelationDTO,
     CompetencyRelationError,
     CompetencyWithTailRelationDTO,
     CourseCompetencyProgress,
@@ -257,7 +258,10 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
                         const importedRelations = res
                             .map((dto) => dto.tailRelations)
                             .flat()
-                            .filter((element): element is CompetencyRelation => !!element);
+                            .filter((element): element is CompetencyRelationDTO => !!element)
+                            .map((dto) => dto.toCompetencyRelation());
+                        console.log(importedRelations);
+                        console.log(res);
 
                         this.competencies = this.competencies.concat(importedCompetencies);
                         this.updateNodes(importedCompetencies);

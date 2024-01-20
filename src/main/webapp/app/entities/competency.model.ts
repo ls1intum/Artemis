@@ -67,9 +67,27 @@ export class CompetencyRelation implements BaseEntity {
     constructor() {}
 }
 
+export class CompetencyRelationDTO implements BaseEntity {
+    id?: number;
+    tailCompetencyId?: number;
+    headCompetencyId?: number;
+    type?: string;
+
+    constructor() {}
+
+    public toCompetencyRelation(): CompetencyRelation {
+        return {
+            id: this.id,
+            tailCompetency: { id: this.headCompetencyId },
+            headCompetency: { id: this.tailCompetencyId },
+            type: this.type,
+        };
+    }
+}
+
 export class CompetencyWithTailRelationDTO {
     competency?: Competency;
-    tailRelations?: CompetencyRelation[];
+    tailRelations?: CompetencyRelationDTO[];
 
     constructor() {}
 }
