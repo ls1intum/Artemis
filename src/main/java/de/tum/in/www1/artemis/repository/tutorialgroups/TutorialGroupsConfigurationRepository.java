@@ -17,7 +17,7 @@ public interface TutorialGroupsConfigurationRepository extends JpaRepository<Tut
             SELECT t
             FROM TutorialGroupsConfiguration t
                 LEFT JOIN t.tutorialGroupFreePeriods
-            WHERE t.id = :#{#tutorialGroupConfigurationId}
+            WHERE t.id = :tutorialGroupConfigurationId
             """)
     Optional<TutorialGroupsConfiguration> findByIdWithEagerTutorialGroupFreePeriods(@Param("tutorialGroupConfigurationId") Long tutorialGroupConfigurationId);
 
@@ -30,7 +30,7 @@ public interface TutorialGroupsConfigurationRepository extends JpaRepository<Tut
             SELECT t
             FROM TutorialGroupsConfiguration t
                 LEFT JOIN FETCH t.tutorialGroupFreePeriods
-            WHERE t.course.id = :#{#courseId}
+            WHERE t.course.id = :courseId
             """)
     Optional<TutorialGroupsConfiguration> findByCourseIdWithEagerTutorialGroupFreePeriods(Long courseId);
 }
