@@ -27,6 +27,7 @@ import { MockMetisService } from '../../../../../../../helpers/mocks/service/moc
 import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
 import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
+import { NotificationService } from 'app/shared/notification/notification.service';
 
 const examples: ConversationDto[] = [
     generateOneToOneChatDTO({}),
@@ -66,7 +67,13 @@ examples.forEach((conversation) => {
                     MockComponent(ChannelIconComponent),
                     MockComponent(GroupChatIconComponent),
                 ],
-                providers: [MockProvider(ConversationService), MockProvider(AlertService), MockProvider(NgbModal), { provide: MetisService, useClass: MockMetisService }],
+                providers: [
+                    MockProvider(ConversationService),
+                    MockProvider(AlertService),
+                    MockProvider(NotificationService),
+                    MockProvider(NgbModal),
+                    { provide: MetisService, useClass: MockMetisService },
+                ],
             }).compileComponents();
         }));
 
