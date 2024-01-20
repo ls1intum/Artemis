@@ -164,10 +164,6 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
         }
         var exercise = session.getExercise();
         var params = initializeParams(exercise);
-        if (context.hasNonNull("problemStatement")) {
-            // Add the problem statement from the client to the request
-            params.put("problemStatement", context.get("problemStatement").asText());
-        }
         params.put("chatHistory", session.getMessages()); // Additionally add the chat history to the request
 
         var settings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false).irisCodeEditorSettings();
@@ -564,8 +560,8 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
      *     }
      * </pre>
      * <p>
-     * If the type of change is unrecognized, it will be ignored. This conveniently also allows us to ignore the final
-     * "!done!" change that Iris sends.
+     * If the type of change is unrecognized, it will be ignored.
+     * This conveniently also allows us to ignore the final"!done!" change that Iris sends.
      *
      * @param content The JsonNode to extract the changes from
      * @return The extracted changes

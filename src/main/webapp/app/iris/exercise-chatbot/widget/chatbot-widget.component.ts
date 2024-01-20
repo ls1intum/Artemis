@@ -370,9 +370,10 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
                 this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT));
                 this.scrollToBottom('smooth');
             }, 60000);
+            console.log('Sending context: ' + JSON.stringify(this.contextOnSend()));
             this.stateStore
                 .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
-                .then(() => this.sessionService.sendMessage(this.sessionId, message, this.contextOnSend()))
+                .then(() => this.sessionService.sendMessage(-1, message, this.contextOnSend()))
                 .then(() => this.scrollToBottom('smooth'))
                 .catch((error) => this.handleIrisError(error));
             this.newMessageTextContent = '';
