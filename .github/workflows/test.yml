@@ -57,7 +57,7 @@ jobs:
         distribution: 'temurin'
         java-version: '${{ env.java }}'
         cache: 'gradle'
-    - name: apt install fontconfig
+    - name: Install apt dependencies
       run: sudo apt-get install -y fontconfig maven
     - name: Java Tests
       run: set -o pipefail && ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
@@ -103,6 +103,8 @@ jobs:
                 distribution: 'temurin'
                 java-version: '${{ env.java }}'
                 cache: 'gradle'
+          - name: Install apt dependencies
+            run: sudo apt-get install -y fontconfig maven
           - name: Java Tests
             id: tests
             run: set -o pipefail && SPRING_PROFILES_INCLUDE=mysql ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
@@ -157,6 +159,8 @@ jobs:
                 distribution: 'temurin'
                 java-version: '${{ env.java }}'
                 cache: 'gradle'
+          - name: Install apt dependencies
+            run: sudo apt-get install -y fontconfig maven
           - name: Java Tests
             id: tests
             run: set -o pipefail && SPRING_PROFILES_INCLUDE=postgres ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
