@@ -12,7 +12,6 @@ import { AlertService } from 'app/core/util/alert.service';
 import { Feedback } from 'app/entities/feedback.model';
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     template: '',
@@ -35,7 +34,6 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
         protected accountService: AccountService,
         protected assessmentsService: TextAssessmentService,
         protected structuredGradingCriterionService: StructuredGradingCriterionService,
-        protected exerciseService: ExerciseService,
     ) {}
 
     async ngOnInit() {

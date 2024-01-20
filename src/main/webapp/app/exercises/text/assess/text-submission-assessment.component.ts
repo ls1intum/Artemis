@@ -38,7 +38,6 @@ import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { AthenaService } from 'app/assessment/athena.service';
 import { TextBlock } from 'app/entities/text-block.model';
 import { Subscription } from 'rxjs';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -114,9 +113,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         assessmentsService: TextAssessmentService,
         structuredGradingCriterionService: StructuredGradingCriterionService,
         translateService: TranslateService,
-        exerciseService: ExerciseService,
     ) {
-        super(alertService, accountService, assessmentsService, structuredGradingCriterionService, exerciseService);
+        super(alertService, accountService, assessmentsService, structuredGradingCriterionService);
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
         this.correctionRound = 0;
         this.resetComponent();

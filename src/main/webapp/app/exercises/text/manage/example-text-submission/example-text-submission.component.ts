@@ -69,13 +69,13 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         private router: Router,
         private guidedTourService: GuidedTourService,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private exerciseService: ExerciseService,
         alertService: AlertService,
         accountService: AccountService,
         assessmentsService: TextAssessmentService,
         structuredGradingCriterionService: StructuredGradingCriterionService,
-        exerciseService: ExerciseService,
     ) {
-        super(alertService, accountService, assessmentsService, structuredGradingCriterionService, exerciseService);
+        super(alertService, accountService, assessmentsService, structuredGradingCriterionService);
         this.textBlockRefs = [];
         this.unusedTextBlockRefs = [];
         this.submission = new TextSubmission();
