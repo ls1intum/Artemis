@@ -69,10 +69,10 @@ public class IrisSessionService {
      * @param <S>     The type of the session
      * @throws BadRequestException If the session type is invalid
      */
-    public <S extends IrisSession> void requestMessageFromIris(S session, JsonNode args) {
+    public <S extends IrisSession> void requestMessageFromIris(S session, JsonNode context) {
         var wrapper = getIrisSessionSubService(session);
         if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface<S> chatWrapper) {
-            chatWrapper.requestAndHandleResponse(wrapper.irisSession, args);
+            chatWrapper.requestAndHandleResponse(wrapper.irisSession, context);
         }
         else {
             throw new BadRequestException("Invalid Iris session type " + session.getClass().getSimpleName());

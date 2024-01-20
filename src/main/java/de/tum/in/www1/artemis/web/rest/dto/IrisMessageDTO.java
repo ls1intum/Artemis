@@ -4,5 +4,5 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 
-public record IrisMessageDTO(IrisMessage message, JsonNode args) {
+public record IrisMessageDTO(IrisMessage message, JsonNode context) {
 }

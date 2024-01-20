@@ -154,19 +154,19 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
      * conversation history to the LLM, and handles the response.
      *
      * @param irisSession The code editor session to send the request for with all messages and message contents loaded
-     * @param args        JsonNode containing the most up-to-date problem statement on the client
+     * @param context     JsonNode containing the most up-to-date problem statement on the client
      */
     @Override
-    public void requestAndHandleResponse(IrisSession irisSession, JsonNode args) {
+    public void requestAndHandleResponse(IrisSession irisSession, JsonNode context) {
         var sessionFromDB = irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
         if (!(sessionFromDB instanceof IrisCodeEditorSession session)) {
             throw new BadRequestException("Iris session is not a code editor session");
         }
         var exercise = session.getExercise();
         var params = initializeParams(exercise);
-        if (args.hasNonNull("problemStatement")) {
+        if (context.hasNonNull("problemStatement")) {
             // Add the problem statement from the client to the request
-            params.put("problemStatement", args.get("problemStatement").asText());
+            params.put("problemStatement", context.get("problemStatement").asText());
         }
         params.put("chatHistory", session.getMessages()); // Additionally add the chat history to the request
 

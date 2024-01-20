@@ -20,7 +20,7 @@ export abstract class IrisChatbotButtonComponent implements OnInit, OnDestroy {
     private stateSubscription: Subscription;
     private chatOpenSubscription: Subscription;
 
-    @Input() argumentsOnSend: () => Record<string, unknown> = () => ({});
+    @Input() contextOnSend: () => Record<string, unknown> = () => ({});
 
     // Icons
     faCircle = faCircle;
@@ -97,7 +97,7 @@ export abstract class IrisChatbotButtonComponent implements OnInit, OnDestroy {
                 courseId: this.courseId,
                 exerciseId: this.exerciseId,
                 sessionService: this.sessionService,
-                argumentsOnSend: this.argumentsOnSend,
+                contextOnSend: this.contextOnSend,
             },
         });
     }

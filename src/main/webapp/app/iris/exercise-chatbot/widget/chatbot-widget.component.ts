@@ -104,7 +104,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
     faThumbsDown = faThumbsDown;
     faRedo = faRedo;
 
-    @Input() argumentsOnSend: () => Record<string, unknown> = () => ({});
+    @Input() contextOnSend: () => Record<string, unknown> = () => ({});
 
     // ViewChilds
     @ViewChild('chatBody') chatBody!: ElementRef;
@@ -172,7 +172,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
             }
         });
         this.fullSize = data.fullSize ?? false;
-        this.argumentsOnSend = data.argumentsOnSend;
+        this.contextOnSend = data.contextOnSend;
     }
 
     ngOnInit() {
@@ -372,7 +372,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
             }, 60000);
             this.stateStore
                 .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
-                .then(() => this.sessionService.sendMessage(this.sessionId, message, this.argumentsOnSend()))
+                .then(() => this.sessionService.sendMessage(this.sessionId, message, this.contextOnSend()))
                 .then(() => this.scrollToBottom('smooth'))
                 .catch((error) => this.handleIrisError(error));
             this.newMessageTextContent = '';
@@ -394,9 +394,9 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
             .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
             .then(() => {
                 if (message.id) {
-                    return this.sessionService.resendMessage(this.sessionId, message, this.argumentsOnSend());
+                    return this.sessionService.resendMessage(this.sessionId, message, this.contextOnSend());
                 } else {
-                    return this.sessionService.sendMessage(this.sessionId, message, this.argumentsOnSend());
+                    return this.sessionService.sendMessage(this.sessionId, message, this.contextOnSend());
                 }
             })
             .then(() => {

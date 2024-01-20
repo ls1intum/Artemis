@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.iris.session;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 
@@ -17,5 +19,5 @@ public interface IrisChatBasedFeatureInterface<S extends IrisSession> extends Ir
      *
      * @param irisSession The session to get a message for
      */
-    void requestAndHandleResponse(IrisSession irisSession);
+    void requestAndHandleResponse(IrisSession irisSession, JsonNode context);
 }

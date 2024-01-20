@@ -148,10 +148,10 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
      * student via the Websocket.
      *
      * @param session The chat session to send to the LLM
-     * @param args    Extra arguments from the client to consider in the request (unused)
+     * @param context Extra arguments from the client to consider in the request (currently unused for this feature)
      */
     @Override
-    public void requestAndHandleResponse(IrisSession session, JsonNode args) {
+    public void requestAndHandleResponse(IrisSession session, JsonNode context) {
         var fullSession = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
         Map<String, Object> parameters = new HashMap<>();
         if (!(fullSession instanceof IrisChatSession chatSession)) {
