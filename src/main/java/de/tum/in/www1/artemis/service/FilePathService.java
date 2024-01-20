@@ -170,7 +170,7 @@ public class FilePathService {
      * @throws FilePathParsingException if the path is unknown
      * @return the public file url that can be used by users to access the file from outside
      */
-    public URI publicPathForActualPathOrThrow(Path actualPathString, @Nullable Long entityId) {
+    public static URI publicPathForActualPathOrThrow(Path actualPathString, @Nullable Long entityId) {
         URI publicPath = publicPathForActualPath(actualPathString, entityId);
         if (publicPath == null) {
             // path is unknown => cannot convert
@@ -187,7 +187,7 @@ public class FilePathService {
      * @param entityId the id of the entity associated with the file
      * @return the public file url that can be used by users to access the file from outside
      */
-    public URI publicPathForActualPath(Path path, @Nullable Long entityId) {
+    public static URI publicPathForActualPath(Path path, @Nullable Long entityId) {
         // first extract filename
         String filename = path.getFileName().toString();
 
@@ -225,7 +225,7 @@ public class FilePathService {
         return null;
     }
 
-    private URI publicPathForActualAttachmentUnitFilePath(Path path, String filename, String id) {
+    private static URI publicPathForActualAttachmentUnitFilePath(Path path, String filename, String id) {
         if (!path.toString().contains("/slide")) {
             return URI.create("/api/files/attachments/attachment-unit/" + id + "/" + filename);
         }
@@ -241,7 +241,7 @@ public class FilePathService {
         }
     }
 
-    private URI publicPathForActualFileUploadExercisesFilePath(Path path, String filename, String id) {
+    private static URI publicPathForActualFileUploadExercisesFilePath(Path path, String filename, String id) {
         try {
             // The last name is the file name, the one before that is the submissionId and the one before that is the exerciseId, in which we are interested
             final var expectedExerciseId = path.getName(path.getNameCount() - 3).toString();

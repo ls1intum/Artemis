@@ -172,7 +172,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
             }
         }
 
-        URI publicFilePath = filePathService.publicPathForActualPathOrThrow(actualFilePath, returnedSubmission.getId());
+        URI publicFilePath = FilePathService.publicPathForActualPathOrThrow(actualFilePath, returnedSubmission.getId());
         assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
         assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath.toString());
         var fileBytes = Files.readAllBytes(actualFilePath);

@@ -74,7 +74,7 @@ public class EntityFileService {
                 FileUtils.delete(target.toFile());
             }
             FileUtils.moveFile(source.toFile(), target.toFile());
-            URI newPath = filePathService.publicPathForActualPathOrThrow(target, entityId);
+            URI newPath = FilePathService.publicPathForActualPathOrThrow(target, entityId);
             log.debug("Moved File from {} to {}", source, target);
             return newPath.toString();
         }

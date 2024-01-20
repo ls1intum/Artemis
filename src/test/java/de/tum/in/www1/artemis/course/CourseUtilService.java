@@ -304,15 +304,21 @@ public class CourseUtilService {
         course1.addExercises(quizExercise);
 
         Lecture lecture1 = LectureFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
-        Attachment attachment1 = withFiles ? LectureFactory.generateAttachmentWithFile(pastTimestamp) : LectureFactory.generateAttachment(pastTimestamp);
+        lecture1.setCourse(null);
+        lecture1 = lectureRepo.save(lecture1); // Save early to receive lecture ID
+        Attachment attachment1 = withFiles ? LectureFactory.generateAttachmentWithFile(pastTimestamp, lecture1.getId(), false) : LectureFactory.generateAttachment(pastTimestamp);
         attachment1.setLecture(lecture1);
         lecture1.addAttachments(attachment1);
+        lecture1.setCourse(course1);
         course1.addLectures(lecture1);
 
         Lecture lecture2 = LectureFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
-        Attachment attachment2 = withFiles ? LectureFactory.generateAttachmentWithFile(pastTimestamp) : LectureFactory.generateAttachment(pastTimestamp);
+        lecture2.setCourse(null);
+        lecture2 = lectureRepo.save(lecture2); // Save early to receive lecture ID
+        Attachment attachment2 = withFiles ? LectureFactory.generateAttachmentWithFile(pastTimestamp, lecture2.getId(), false) : LectureFactory.generateAttachment(pastTimestamp);
         attachment2.setLecture(lecture2);
         lecture2.addAttachments(attachment2);
+        lecture2.setCourse(course1);
         course1.addLectures(lecture2);
 
         course1 = courseRepo.save(course1);
