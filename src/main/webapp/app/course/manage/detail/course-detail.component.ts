@@ -164,7 +164,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         } as DetailOverviewSection;
     }
 
-    getComplaitsDetails(): Detail[] {
+    getComplaintsDetails(): Detail[] {
         if (this.course.complaintsEnabled) {
             return [
                 {
@@ -240,7 +240,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     }
 
     getModeDetailSection(): DetailOverviewSection {
-        const complaintsDetails = this.getComplaitsDetails();
+        const complaintsDetails = this.getComplaintsDetails();
         const ltiDetails = this.getLtiDetails();
         const irisDetails = this.getIrisDetails();
         return {
