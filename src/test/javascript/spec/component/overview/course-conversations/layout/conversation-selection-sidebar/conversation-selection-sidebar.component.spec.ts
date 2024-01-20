@@ -33,6 +33,7 @@ import { ChannelIconComponent } from 'app/overview/course-conversations/other/ch
 import { NgbTooltipMocksModule } from '../../../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { CourseInformationSharingConfiguration } from 'app/entities/course.model';
+import { NotificationService } from 'app/shared/notification/notification.service';
 
 const examples: (ConversationDto | undefined)[] = [
     undefined,
@@ -103,6 +104,7 @@ examples.forEach((activeConversation) => {
                         MockProvider(TranslateService),
                         MockProvider(NgbModal),
                         MockProvider(MetisConversationService),
+                        MockProvider(NotificationService),
                         MockProvider(AccountService),
                         MockProvider(MetisService),
                         { provide: LocalStorageService, useClass: MockLocalStorageService },
