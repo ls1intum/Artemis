@@ -160,8 +160,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
 
         // There can't be two submissions for the same participation and commitHash!
-        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDesc(participation.getId(),
-                commit.commitHash());
+        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository
+                .findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participation.getId(), commit.commitHash());
         if (programmingSubmission != null) {
             throw new IllegalStateException("Submission for participation id " + participation.getId() + " and commitHash " + commit.commitHash() + " already exists!");
         }
@@ -350,7 +350,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
             throws IllegalStateException {
         String lastCommitHash = getLastCommitHashForParticipation(participation);
         // we first try to get an existing programming submission with the last commit hash
-        var programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDesc(participation.getId(), lastCommitHash);
+        var programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participation.getId(),
+                lastCommitHash);
         // in case no programming submission is available, we create one
         return Objects.requireNonNullElseGet(programmingSubmission, () -> createSubmissionWithCommitHashAndSubmissionType(participation, lastCommitHash, submissionType));
     }
