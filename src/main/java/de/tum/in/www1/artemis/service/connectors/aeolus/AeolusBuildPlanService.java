@@ -126,17 +126,11 @@ public class AeolusBuildPlanService {
         String requestUrl = aeolusUrl + "/publish/" + target.getName();
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
         Map<String, Object> jsonObject = new HashMap<>();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        if (token == null) {
-            jsonObject.put("username", ciUsername);
-            jsonObject.put("token", getCredentialsBasedOnTarget(target));
-        }
-        else {
-            jsonObject.put("username", null);
-            jsonObject.put("token", null);
-            headers.setBearerAuth(token);
-        }
+        HttpHeaders headers = getBaseHttpHeaders();
+
+        jsonObject.put("username", token == null ? ciUsername : null);
+        jsonObject.put("token", token == null ? getCredentialsBasedOnTarget(target) : null);
+
         jsonObject.put("url", url);
         jsonObject.put("windfile", buildPlan);
 
@@ -166,12 +160,7 @@ public class AeolusBuildPlanService {
         String requestUrl = aeolusUrl + "/generate/" + target.getName();
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        if (token != null) {
-            headers.setBearerAuth(token);
-        }
-        HttpEntity<String> entity = new HttpEntity<>(buildPlan, headers);
+        HttpEntity<String> entity = new HttpEntity<>(buildPlan, getBaseHttpHeaders());
         try {
             ResponseEntity<AeolusGenerationResponseDTO> response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, entity, AeolusGenerationResponseDTO.class);
             if (response.getBody() != null) {
@@ -182,6 +171,15 @@ public class AeolusBuildPlanService {
             log.error("Error while generating build script for build plan {}", buildPlan, e);
         }
         return null;
+    }
+
+    private HttpHeaders getBaseHttpHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        if (token != null) {
+            headers.setBearerAuth(token);
+        }
+        return headers;
     }
 
     /**
