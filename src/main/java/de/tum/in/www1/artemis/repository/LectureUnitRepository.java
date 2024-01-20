@@ -28,9 +28,10 @@ public interface LectureUnitRepository extends JpaRepository<LectureUnit, Long> 
                 LEFT JOIN FETCH lu.competencies
                 LEFT JOIN FETCH lu.exercise exercise
                 LEFT JOIN FETCH exercise.competencies
+                LEFT JOIN FETCH lu.slides
             WHERE lu.id = :lectureUnitId
             """)
-    Optional<LectureUnit> findByIdWithCompetencies(@Param("lectureUnitId") Long lectureUnitId);
+    Optional<LectureUnit> findWithCompetenciesAndSlidesById(@Param("lectureUnitId") Long lectureUnitId);
 
     @Query("""
             SELECT lu
@@ -59,7 +60,7 @@ public interface LectureUnitRepository extends JpaRepository<LectureUnit, Long> 
     }
 
     default LectureUnit findByIdWithCompetenciesElseThrow(long lectureUnitId) {
-        return findByIdWithCompetencies(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("LectureUnit", lectureUnitId));
+        return findWithCompetenciesAndSlidesById(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("LectureUnit", lectureUnitId));
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "completedUsers" })
