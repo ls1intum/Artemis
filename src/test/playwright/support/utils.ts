@@ -50,6 +50,29 @@ export function trimDate(date: string) {
 }
 
 /**
+ * Converts a snake_case word to Title Case (each word's first letter capitalized and spaces in between).
+ * @param str - The snake_case word to be converted to Title Case.
+ * @returns The word in Title Case.
+ */
+export function titleCaseWord(str: string) {
+    str = str.replace('_', ' ');
+    const sentence = str.toLowerCase().split(' ');
+    for (let i = 0; i < sentence.length; i++) {
+        sentence[i] = sentence[i][0].toUpperCase() + sentence[i].slice(1);
+    }
+    return sentence.join(' ');
+}
+
+/**
+ * Converts a title to lowercase and replaces spaces with hyphens.
+ * @param title - The title to be converted to lowercase with hyphens.
+ * @returns The converted title in lowercase with hyphens.
+ */
+export function titleLowercase(title: string) {
+    return title.replace(' ', '-').toLowerCase();
+}
+
+/**
  * Converts a boolean value to "Yes" if true, or "No" if false.
  * @param boolean - The boolean value to be converted.
  * @returns The corresponding "Yes" or "No" string.

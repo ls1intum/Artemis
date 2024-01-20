@@ -1,4 +1,6 @@
-import { USER_ID_SELECTOR } from './constants';
+import { BASE_API, USER_ID_SELECTOR } from './constants';
+import { User } from 'app/core/user/user.model';
+import { Page } from '@playwright/test';
 
 export interface UserCredentials {
     username: string;
@@ -99,6 +101,11 @@ export class PlaywrightUserManagement {
      */
     private getPasswordTemplate(): string {
         return process.env.password ?? 'password_' + USER_ID_SELECTOR;
+    }
+
+    public async getUserInfo(username: string, page: Page): Promise<User> {
+        const response = await page.request.get(BASE_API + 'users/' + username);
+        return response.json();
     }
 }
 

@@ -7,6 +7,11 @@ import { CourseManagementPage } from './pageobjects/course/CourseManagementPage'
 import { CourseCreationPage } from './pageobjects/course/CourseCreationPage';
 import { UserManagementAPIRequests } from './requests/UserManagementAPIRequests';
 import { Commands } from './commands';
+import { ExerciseAPIRequests } from './requests/ExerciseAPIRequests';
+import { CourseOverviewPage } from './pageobjects/course/CourseOverviewPage';
+import { CourseMessagesPage } from './pageobjects/course/CourseMessagesPage';
+import { ExamAPIRequests } from './requests/ExamAPIRequests';
+import { CommunicationAPIRequests } from './requests/CommunicationAPIRequests';
 
 type ArtemisCommands = {
     login: (credentials: UserCredentials, url?: string) => Promise<void>;
@@ -17,11 +22,16 @@ type ArtemisPageObjects = {
     navigationBar: NavigationBar;
     courseManagement: CourseManagementPage;
     courseCreation: CourseCreationPage;
+    courseOverview: CourseOverviewPage;
+    courseMessages: CourseMessagesPage;
 };
 
 export class ArtemisRequests {
     courseManagementAPIRequests: CourseManagementAPIRequests;
     userManagementAPIRequests: UserManagementAPIRequests;
+    exerciseAPIRequests: ExerciseAPIRequests;
+    examAPIRequests: ExamAPIRequests;
+    communicationAPIRequests: CommunicationAPIRequests;
 }
 
 export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRequests>({
@@ -36,17 +46,31 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     navigationBar: async ({ page }, use) => {
         await use(new NavigationBar(page));
     },
-    courseManagementAPIRequests: async ({ page }, use) => {
-        await use(new CourseManagementAPIRequests(page));
-    },
-    // eslint-disable-next-line no-empty-pattern
-    userManagementAPIRequests: async ({ page }, use) => {
-        await use(new UserManagementAPIRequests(page));
-    },
     courseManagement: async ({ page }, use) => {
         await use(new CourseManagementPage(page));
     },
     courseCreation: async ({ page }, use) => {
         await use(new CourseCreationPage(page));
+    },
+    courseOverview: async ({ page }, use) => {
+        await use(new CourseOverviewPage(page));
+    },
+    courseMessages: async ({ page }, use) => {
+        await use(new CourseMessagesPage(page));
+    },
+    courseManagementAPIRequests: async ({ page }, use) => {
+        await use(new CourseManagementAPIRequests(page));
+    },
+    userManagementAPIRequests: async ({ page }, use) => {
+        await use(new UserManagementAPIRequests(page));
+    },
+    exerciseAPIRequests: async ({ page }, use) => {
+        await use(new ExerciseAPIRequests(page));
+    },
+    examAPIRequests: async ({ page }, use) => {
+        await use(new ExamAPIRequests(page));
+    },
+    communicationAPIRequests: async ({ page }, use) => {
+        await use(new CommunicationAPIRequests(page));
     },
 });

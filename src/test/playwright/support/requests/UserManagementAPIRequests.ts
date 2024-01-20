@@ -8,7 +8,7 @@ import * as fs from 'fs';
  * A class which encapsulates all API requests related to user management.
  */
 export class UserManagementAPIRequests {
-    private page: Page;
+    private readonly page: Page;
 
     constructor(page: Page) {
         this.page = page;
