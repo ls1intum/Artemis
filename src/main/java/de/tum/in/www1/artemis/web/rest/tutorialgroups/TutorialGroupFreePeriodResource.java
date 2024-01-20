@@ -109,8 +109,8 @@ public class TutorialGroupFreePeriodResource {
         updatedFreePeriod.setId(existingFreePeriod.getId());
         updatedFreePeriod.setTutorialGroupsConfiguration(configuration);
         updatedFreePeriod.setReason(tutorialGroupFreePeriod.reason);
-        updatedFreePeriod.setStart(interpretInTimeZone(tutorialGroupFreePeriod.date, START_OF_DAY, configuration.getCourse().getTimeZone()));
-        updatedFreePeriod.setEnd(interpretInTimeZone(tutorialGroupFreePeriod.date, END_OF_DAY, configuration.getCourse().getTimeZone()));
+        updatedFreePeriod.setStart(interpretInTimeZone(tutorialGroupFreePeriod.startDate, configuration.getCourse().getTimeZone()));
+        updatedFreePeriod.setEnd(interpretInTimeZone(tutorialGroupFreePeriod.startDate, configuration.getCourse().getTimeZone()));
         isValidTutorialGroupPeriod(updatedFreePeriod);
 
         // activate previously cancelled sessions
@@ -136,6 +136,7 @@ public class TutorialGroupFreePeriodResource {
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupFreePeriod> create(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
             @RequestBody @Valid TutorialGroupFreePeriodDTO tutorialGroupFreePeriod) throws URISyntaxException {
+
         log.debug("REST request to create TutorialGroupFreePeriod: {} for tutorial group configuration: {} of course: {}", tutorialGroupFreePeriod, tutorialGroupsConfigurationId,
                 courseId);
         TutorialGroupsConfiguration tutorialGroupsConfiguration = tutorialGroupsConfigurationRepository
@@ -149,8 +150,8 @@ public class TutorialGroupFreePeriodResource {
         newTutorialGroupFreePeriod.setTutorialGroupsConfiguration(tutorialGroupsConfiguration);
         newTutorialGroupFreePeriod.setReason(tutorialGroupFreePeriod.reason);
 
-        newTutorialGroupFreePeriod.setStart(interpretInTimeZone(tutorialGroupFreePeriod.date, START_OF_DAY, tutorialGroupsConfiguration.getCourse().getTimeZone()));
-        newTutorialGroupFreePeriod.setEnd(interpretInTimeZone(tutorialGroupFreePeriod.date, END_OF_DAY, tutorialGroupsConfiguration.getCourse().getTimeZone()));
+        newTutorialGroupFreePeriod.setStart(interpretInTimeZone(tutorialGroupFreePeriod.startDate, tutorialGroupsConfiguration.getCourse().getTimeZone()));
+        newTutorialGroupFreePeriod.setEnd(interpretInTimeZone(tutorialGroupFreePeriod.startDate, tutorialGroupsConfiguration.getCourse().getTimeZone()));
 
         checkEntityIdMatchesPathIds(newTutorialGroupFreePeriod, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         isValidTutorialGroupPeriod(newTutorialGroupFreePeriod);
@@ -227,9 +228,10 @@ public class TutorialGroupFreePeriodResource {
     /**
      * Used because we want to interpret the date in the time zone of the tutorial groups configuration
      *
-     * @param date
+     * @param startDate
+     * @param endDate
      * @param reason
      */
-    public record TutorialGroupFreePeriodDTO(@NotNull LocalDate date, String reason) {
+    public record TutorialGroupFreePeriodDTO(@NotNull LocalDateTime startDate, LocalDateTime endDate, String reason) {
     }
 }

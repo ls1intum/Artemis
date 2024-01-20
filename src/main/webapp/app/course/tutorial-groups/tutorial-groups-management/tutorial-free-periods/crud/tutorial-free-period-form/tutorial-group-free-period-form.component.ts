@@ -51,11 +51,24 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
 
     // Todo: TimeFrame getter/setter. Reset endDate when switching back to single Day
     setTimeFrame(timeFrame: TimeFrame) {
-        if (this.form.get('endDate') && timeFrame == TimeFrame.Day && this.formData.endDate != undefined) {
-            this.form.get('endDate')?.reset();
-            this.form.get('endDate')?.markAsUntouched();
+        if (timeFrame == TimeFrame.Day && this.formData.endDate != undefined) {
+            this.resetDateControl('endDate');
+            this.resetDateControl('endTime');
+            this.resetDateControl('startTime');
+        } else if (timeFrame == TimeFrame.Period) {
+            this.resetDateControl('startTime');
+            this.resetDateControl('endTime');
+        } else if (timeFrame == TimeFrame.PeriodWithinDay) {
+            this.resetDateControl('endDate');
         }
         this.timeFrame = timeFrame;
+    }
+
+    private resetDateControl(controlName: string) {
+        if (this.form.get(controlName)) {
+            this.form.get(controlName)?.reset();
+            this.form.get(controlName)?.markAsUntouched();
+        }
     }
 
     get isStartBeforeEnd() {
@@ -137,28 +150,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     // Todo: How can i submit a form with some empty fields? This does not work yet :/ Also, how can i merge the startTime with the date for the freePeriodWithinADay?
     submitForm() {
         const tutorialGroupFreePeriodFormData: TutorialGroupFreePeriodFormData = { ...this.form.value };
-        if (this.timeFrame == TimeFrame.Day) {
-            tutorialGroupFreePeriodFormData.endDate = undefined;
-            tutorialGroupFreePeriodFormData.endTime = undefined;
-            tutorialGroupFreePeriodFormData.startTime = undefined;
-        } else if (this.timeFrame == TimeFrame.PeriodWithinDay) {
-            // this.form.get('startDate')?.setValue(this.combineDateAndTime(this.startDateControl!.value, this.startTimeControl!.value));
-            // this.form.get('endDate')?.setValue(this.combineDateAndTime(this.endDateControl!.value, this.endTimeControl!.value));
-            tutorialGroupFreePeriodFormData.startDate = this.combineDateAndTime(this.startDateControl!.value, this.startTimeControl!.value);
-            tutorialGroupFreePeriodFormData.endDate = this.combineDateAndTime(this.startDateControl!.value, this.endTimeControl!.value);
-            tutorialGroupFreePeriodFormData.endTime = undefined;
-            tutorialGroupFreePeriodFormData.startTime = undefined;
-        } else if (this.timeFrame == TimeFrame.Period) {
-            tutorialGroupFreePeriodFormData.endTime = undefined;
-            tutorialGroupFreePeriodFormData.startTime = undefined;
-        }
         this.formSubmitted.emit(tutorialGroupFreePeriodFormData);
-    }
-
-    combineDateAndTime(date: Date, time: Date): Date {
-        const combinedDate = new Date(date);
-        combinedDate.setHours(time.getHours(), time.getMinutes());
-        return combinedDate;
     }
 
     private setFormValues(formData: TutorialGroupFreePeriodFormData) {

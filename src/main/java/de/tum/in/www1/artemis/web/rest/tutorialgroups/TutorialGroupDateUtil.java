@@ -6,7 +6,7 @@ import java.time.format.DateTimeParseException;
 public class TutorialGroupDateUtil {
 
     /*
-     * Note: We can NOT use LocalTime.MIN as the precision is not supported by the database, and thus it will rounded
+     * Note: We can NOT use LocalTime.MIN as the precision is not supported by the database, and thus it will be rounded
      */
     public static final LocalTime START_OF_DAY = LocalTime.of(0, 0, 0);
 

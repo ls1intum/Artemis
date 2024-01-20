@@ -42,10 +42,10 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
         }
     }
     createTutorialGroupFreePeriod(formData: TutorialGroupFreePeriodFormData) {
-        const { startDate, endDate, reason } = formData;
+        const { startDate, endDate, startTime, endTime, reason } = formData;
 
-        this.tutorialGroupFreePeriodToCreate.startDate = startDate;
-        this.tutorialGroupFreePeriodToCreate.endDate = endDate;
+        this.tutorialGroupFreePeriodToCreate.startDate = this.combineDateAndTimeWithAlternativeDate(startDate, startTime, undefined);
+        this.tutorialGroupFreePeriodToCreate.endDate = this.combineDateAndTimeWithAlternativeDate(endDate, endTime, startDate);
         this.tutorialGroupFreePeriodToCreate.reason = reason;
 
         this.isLoading = true;
@@ -66,6 +66,27 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
                     this.clear();
                 },
             });
+    }
+
+    combineDateAndTimeWithAlternativeDate(date?: Date, time?: Date, alternativeDate?: Date): Date {
+        if (date == undefined) {
+            if (alternativeDate == undefined) {
+                throw new Error('date and time are undefined');
+            } else if (time == undefined) {
+                const resDate = new Date(alternativeDate);
+                resDate.setHours(23, 59, 59);
+                return resDate;
+            } else {
+                const resDate = new Date(alternativeDate);
+                resDate.setHours(time.getHours(), time.getMinutes());
+                return resDate;
+            }
+        } else if (time == undefined) {
+            return date;
+        } else {
+            date.setHours(time.getHours(), time.getMinutes());
+            return date;
+        }
     }
 
     clear() {

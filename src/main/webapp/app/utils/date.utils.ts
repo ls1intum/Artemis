@@ -29,7 +29,7 @@ function padWithZero(x: number): string {
 }
 
 /**
- * Creates date without a time-zone in the ISO-8601 calendar system, such as 2007-12-03.
+ * Creates date and Time without a time-zone in the ISO-8601 calendar system, such as 2007-12-03-12:30.
  *
  * Note: It does this WITHOUT any time zone conversion! The server is responsible for interpreting the date in the correct time zone.
  * Note: Useful if you want to send a date exactly to the server as the user has entered it.
@@ -40,7 +40,17 @@ function padWithZero(x: number): string {
  */
 export function toISO8601DateString(date: Date | undefined | null) {
     if (date) {
-        return date.getFullYear() + '-' + padWithZero(date.getMonth() + 1) + '-' + padWithZero(date.getDate());
+        return (
+            date.getFullYear() +
+            '-' +
+            padWithZero(date.getMonth() + 1) +
+            '-' +
+            padWithZero(date.getDate()) +
+            'T' +
+            padWithZero(date.getHours()) +
+            ':' +
+            padWithZero(date.getMinutes())
+        );
     } else {
         return date;
     }

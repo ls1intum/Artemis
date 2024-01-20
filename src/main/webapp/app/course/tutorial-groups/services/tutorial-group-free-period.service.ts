@@ -28,6 +28,7 @@ export class TutorialGroupFreePeriodService {
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupFreePeriodResponseDatesFromServer(res)));
     }
 
+    // ToDo: What is being done here?
     create(courseId: number, tutorialGroupConfigurationId: number, tutorialGroupFreePeriodDTO: TutorialGroupFreePeriodDTO): Observable<EntityResponseType> {
         const copy = this.convertTutorialGroupFreePeriodDatesFromClient(tutorialGroupFreePeriodDTO);
         return this.httpClient
@@ -79,6 +80,7 @@ export class TutorialGroupFreePeriodService {
         if (tutorialGroupFreePeriodDTO) {
             return Object.assign({}, tutorialGroupFreePeriodDTO, {
                 startDate: toISO8601DateString(tutorialGroupFreePeriodDTO.startDate),
+                endDate: toISO8601DateString(tutorialGroupFreePeriodDTO.endDate),
             });
         } else {
             return tutorialGroupFreePeriodDTO;
