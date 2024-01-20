@@ -182,6 +182,7 @@ public class FileService implements DisposableBean {
      *
      * @param file     the file to save
      * @param basePath the base path to save the file to
+     * @param keepFilename whether to keep the original filename or not
      * @return the path where the file was saved
      */
     @NotNull
