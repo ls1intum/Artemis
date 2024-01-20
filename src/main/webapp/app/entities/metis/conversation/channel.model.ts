@@ -22,6 +22,7 @@ export class Channel extends Conversation {
     public isPublic?: boolean;
     public isAnnouncementChannel?: boolean;
     public isArchived?: boolean;
+    public isCourseWide?: boolean;
 
     public exercise?: Exercise;
     public lecture?: Lecture;

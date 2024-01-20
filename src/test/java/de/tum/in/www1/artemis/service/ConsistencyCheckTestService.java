@@ -67,9 +67,9 @@ public class ConsistencyCheckTestService {
         exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
 
         mockDelegate.mockCheckIfProjectExistsInVcs(exercise, true);
-        mockDelegate.mockRepositoryUrlIsValid(exercise.getVcsTemplateRepositoryUrl(), exercise.getProjectKey(), true);
-        mockDelegate.mockRepositoryUrlIsValid(exercise.getVcsTestRepositoryUrl(), exercise.getProjectKey(), true);
-        mockDelegate.mockRepositoryUrlIsValid(exercise.getVcsSolutionRepositoryUrl(), exercise.getProjectKey(), true);
+        mockDelegate.mockRepositoryUriIsValid(exercise.getVcsTemplateRepositoryUri(), exercise.getProjectKey(), true);
+        mockDelegate.mockRepositoryUriIsValid(exercise.getVcsTestRepositoryUri(), exercise.getProjectKey(), true);
+        mockDelegate.mockRepositoryUriIsValid(exercise.getVcsSolutionRepositoryUri(), exercise.getProjectKey(), true);
         mockDelegate.mockCheckIfBuildPlanExists(exercise.getProjectKey(), exercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(exercise.getProjectKey(), exercise.getSolutionBuildPlanId(), true, false);
 
@@ -107,9 +107,9 @@ public class ConsistencyCheckTestService {
         exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
 
         mockDelegate.mockCheckIfProjectExistsInVcs(exercise, true);
-        mockDelegate.mockRepositoryUrlIsValid(exercise.getVcsTemplateRepositoryUrl(), exercise.getProjectKey(), false);
-        mockDelegate.mockRepositoryUrlIsValid(exercise.getVcsTestRepositoryUrl(), exercise.getProjectKey(), false);
-        mockDelegate.mockRepositoryUrlIsValid(exercise.getVcsSolutionRepositoryUrl(), exercise.getProjectKey(), false);
+        mockDelegate.mockRepositoryUriIsValid(exercise.getVcsTemplateRepositoryUri(), exercise.getProjectKey(), false);
+        mockDelegate.mockRepositoryUriIsValid(exercise.getVcsTestRepositoryUri(), exercise.getProjectKey(), false);
+        mockDelegate.mockRepositoryUriIsValid(exercise.getVcsSolutionRepositoryUri(), exercise.getProjectKey(), false);
         mockDelegate.mockCheckIfBuildPlanExists(exercise.getProjectKey(), exercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(exercise.getProjectKey(), exercise.getSolutionBuildPlanId(), true, false);
 
@@ -133,9 +133,9 @@ public class ConsistencyCheckTestService {
         exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
 
         mockDelegate.mockCheckIfProjectExistsInVcs(exercise, true);
-        mockDelegate.mockRepositoryUrlIsValid(exercise.getVcsTemplateRepositoryUrl(), exercise.getProjectKey(), true);
-        mockDelegate.mockRepositoryUrlIsValid(exercise.getVcsTestRepositoryUrl(), exercise.getProjectKey(), true);
-        mockDelegate.mockRepositoryUrlIsValid(exercise.getVcsSolutionRepositoryUrl(), exercise.getProjectKey(), true);
+        mockDelegate.mockRepositoryUriIsValid(exercise.getVcsTemplateRepositoryUri(), exercise.getProjectKey(), true);
+        mockDelegate.mockRepositoryUriIsValid(exercise.getVcsTestRepositoryUri(), exercise.getProjectKey(), true);
+        mockDelegate.mockRepositoryUriIsValid(exercise.getVcsSolutionRepositoryUri(), exercise.getProjectKey(), true);
         mockDelegate.mockCheckIfBuildPlanExists(exercise.getProjectKey(), exercise.getTemplateBuildPlanId(), false, false);
         mockDelegate.mockCheckIfBuildPlanExists(exercise.getProjectKey(), exercise.getSolutionBuildPlanId(), false, false);
 

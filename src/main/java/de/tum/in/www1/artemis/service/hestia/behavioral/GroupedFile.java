@@ -118,63 +118,24 @@ public class GroupedFile {
                 && Objects.equals(commonChanges, that.commonChanges);
     }
 
-    public static class ChangeBlock implements Comparable<ChangeBlock> {
-
-        private SortedSet<Integer> lines;
-
-        private boolean isPotential;
+    public record ChangeBlock(SortedSet<Integer> lines, boolean isPotential) implements Comparable<ChangeBlock> {
 
         public ChangeBlock(Collection<Integer> lines) {
-            this.lines = new TreeSet<>(lines);
-            this.isPotential = false;
+            this(new TreeSet<>(lines), false);
         }
 
         public ChangeBlock(Collection<Integer> lines, boolean isPotential) {
-            this.lines = new TreeSet<>(lines);
-            this.isPotential = isPotential;
-        }
-
-        public boolean intersectsOrTouches(GroupedFile.ChangeBlock other) {
-            return (this.lines.first() > other.lines.first() && this.lines.first() <= other.lines.last() + 1)
-                    || (this.lines.first() < other.lines.first() && this.lines.last() >= other.lines.first() - 1);
+            this(new TreeSet<>(lines), isPotential);
         }
 
         @Override
         public int compareTo(GroupedFile.ChangeBlock other) {
-            return this.lines.first().compareTo(other.lines.first());
+            return Integer.compare(this.lines.first(), other.lines.first());
         }
 
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null || getClass() != obj.getClass()) {
-                return false;
-            }
-            ChangeBlock that = (ChangeBlock) obj;
-            return isPotential == that.isPotential && lines.equals(that.lines);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(lines, isPotential);
-        }
-
-        public SortedSet<Integer> getLines() {
-            return lines;
-        }
-
-        public void setLines(Collection<Integer> lines) {
-            this.lines = new TreeSet<>(lines);
-        }
-
-        public boolean isPotential() {
-            return isPotential;
-        }
-
-        public void setPotential(boolean potential) {
-            isPotential = potential;
+        public boolean intersectsOrTouches(ChangeBlock other) {
+            return (this.lines.first() > other.lines.first() && this.lines.first() <= other.lines.last() + 1)
+                    || (this.lines.first() < other.lines.first() && this.lines.last() >= other.lines.first() - 1);
         }
     }
 }

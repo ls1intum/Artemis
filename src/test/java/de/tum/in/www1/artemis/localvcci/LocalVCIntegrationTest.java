@@ -50,7 +50,7 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     private LocalRepository solutionRepository;
 
     @BeforeEach
-    void initRepositories() throws GitAPIException, IOException, URISyntaxException, InvalidNameException {
+    void initRepositories() throws GitAPIException, IOException, URISyntaxException {
         // Create assignment repository
         assignmentRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, assignmentRepositorySlug);
 
@@ -183,8 +183,8 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         // ":" prefix in the refspec means delete the branch in the remote repository.
         RefSpec refSpec = new RefSpec(":refs/heads/" + defaultBranch);
-        String repositoryUrl = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
-        PushResult pushResult = assignmentRepository.localGit.push().setRefSpecs(refSpec).setRemote(repositoryUrl).call().iterator().next();
+        String repositoryUri = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
+        PushResult pushResult = assignmentRepository.localGit.push().setRefSpecs(refSpec).setRemote(repositoryUri).call().iterator().next();
         RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
         assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot delete a branch.");
@@ -194,23 +194,23 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserTriesToForcePush() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
-        String repositoryUrl = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
+        String repositoryUri = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
 
         // Create a second local repository, push a file from there, and then try to force push from the original local repository.
         Path tempDirectory = Files.createTempDirectory("tempDirectory");
-        Git secondLocalGit = Git.cloneRepository().setURI(repositoryUrl).setDirectory(tempDirectory.toFile()).call();
+        Git secondLocalGit = Git.cloneRepository().setURI(repositoryUri).setDirectory(tempDirectory.toFile()).call();
         localVCLocalCITestService.commitFile(tempDirectory, secondLocalGit);
         localVCLocalCITestService.testPushSuccessful(secondLocalGit, student1Login, projectKey1, assignmentRepositorySlug);
 
         localVCLocalCITestService.commitFile(assignmentRepository.localRepoFile.toPath(), assignmentRepository.localGit, "second-test.txt");
 
         // Try to push normally, should fail because the remote already contains work that does not exist locally.
-        PushResult pushResultNormal = assignmentRepository.localGit.push().setRemote(repositoryUrl).call().iterator().next();
+        PushResult pushResultNormal = assignmentRepository.localGit.push().setRemote(repositoryUri).call().iterator().next();
         RemoteRefUpdate remoteRefUpdateNormal = pushResultNormal.getRemoteUpdates().iterator().next();
         assertThat(remoteRefUpdateNormal.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD);
 
         // Force push from the original local repository.
-        PushResult pushResultForce = assignmentRepository.localGit.push().setForce(true).setRemote(repositoryUrl).call().iterator().next();
+        PushResult pushResultForce = assignmentRepository.localGit.push().setForce(true).setRemote(repositoryUri).call().iterator().next();
         RemoteRefUpdate remoteRefUpdate = pushResultForce.getRemoteUpdates().iterator().next();
         assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot force push.");
@@ -227,10 +227,10 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         // Users can create new branches, but pushing to them should not result in a new submission. A warning message should be returned.
         assignmentRepository.localGit.branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
-        String repositoryUrl = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
+        String repositoryUri = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
 
         // Push the new branch.
-        PushResult pushResult = assignmentRepository.localGit.push().setRemote(repositoryUrl).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch")).call()
+        PushResult pushResult = assignmentRepository.localGit.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch")).call()
                 .iterator().next();
         assertThat(pushResult.getMessages()).contains("Only pushes to the default branch will be graded.");
         Optional<ProgrammingSubmission> submission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(studentParticipation.getId());
@@ -242,7 +242,7 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         Files.createFile(testFilePath);
         assignmentRepository.localGit.add().addFilepattern(".").call();
         GitService.commit(assignmentRepository.localGit).setMessage("Add new file").call();
-        pushResult = assignmentRepository.localGit.push().setRemote(repositoryUrl).call().iterator().next();
+        pushResult = assignmentRepository.localGit.push().setRemote(repositoryUri).call().iterator().next();
         assertThat(pushResult.getMessages()).contains("Only pushes to the default branch will be graded.");
         submission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(studentParticipation.getId());
         assertThat(submission).isNotPresent();

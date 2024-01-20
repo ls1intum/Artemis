@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.localvcci;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
@@ -62,7 +63,7 @@ public class LocalCITestConfiguration {
         doReturn(createContainerCmd).when(dockerClient).createContainerCmd(anyString());
         doReturn(createContainerCmd).when(createContainerCmd).withName(anyString());
         doReturn(createContainerCmd).when(createContainerCmd).withHostConfig(any());
-        doReturn(createContainerCmd).when(createContainerCmd).withEnv(anyString(), anyString(), anyString());
+        doReturn(createContainerCmd).when(createContainerCmd).withEnv(anyList());
         doReturn(createContainerCmd).when(createContainerCmd).withUser(anyString());
         doReturn(createContainerCmd).when(createContainerCmd).withCmd(anyString(), anyString(), anyString());
         doReturn(createContainerResponse).when(createContainerCmd).exec();

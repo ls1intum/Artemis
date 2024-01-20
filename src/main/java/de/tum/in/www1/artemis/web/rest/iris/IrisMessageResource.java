@@ -86,7 +86,7 @@ public class IrisMessageResource {
 
         var savedMessage = irisMessageService.saveMessage(dto.message(), session, IrisMessageSender.USER);
         savedMessage.setMessageDifferentiator(dto.message().getMessageDifferentiator());
-        irisSessionService.sendOverWebsocket(savedMessage);
+        irisSessionService.sendOverWebsocket(savedMessage, session);
         irisSessionService.requestMessageFromIris(session, dto.args());
 
         var uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();

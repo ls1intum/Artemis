@@ -61,15 +61,6 @@ export enum ProgrammingExerciseAssessmentType {
     MANUAL,
 }
 
-// CourseWideContext
-// Copied from src\main\webapp\app\shared\metis\metis.util.ts
-export enum CourseWideContext {
-    TECH_SUPPORT = 'TECH_SUPPORT',
-    ORGANIZATION = 'ORGANIZATION',
-    RANDOM = 'RANDOM',
-    ANNOUNCEMENT = 'ANNOUNCEMENT',
-}
-
 // AdditionalData
 export class AdditionalData {
     quizExerciseID?: number;

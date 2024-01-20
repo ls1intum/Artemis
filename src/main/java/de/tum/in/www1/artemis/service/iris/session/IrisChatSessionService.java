@@ -46,9 +46,9 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
  */
 @Service
 @Profile("iris")
-public class IrisChatSessionService implements IrisSessionSubServiceInterface {
+public class IrisChatSessionService implements IrisChatBasedFeatureInterface<IrisChatSession>, IrisRateLimitedFeatureInterface {
 
-    private final Logger log = LoggerFactory.getLogger(IrisChatSessionService.class);
+    private static final Logger log = LoggerFactory.getLogger(IrisChatSessionService.class);
 
     private final IrisConnectorService irisConnectorService;
 
@@ -94,18 +94,31 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
     }
 
     /**
+     * Creates a new Iris session for the given exercise and user.
+     *
+     * @param exercise The exercise the session belongs to
+     * @param user     The user the session belongs to
+     * @return The created session
+     */
+    public IrisChatSession createChatSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
+        if (exercise.isExamExercise()) {
+            throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
+        }
+        return irisSessionRepository.save(new IrisChatSession(exercise, user));
+    }
+
+    /**
      * Checks if the user has access to the Iris session.
      * A user has access if they have access to the exercise and the session belongs to them.
      * If the user is null, the user is fetched from the database.
      *
-     * @param session The session to check
      * @param user    The user to check
+     * @param session The session to check
      */
     @Override
-    public void checkHasAccessToIrisSession(IrisSession session, User user) {
-        var chatSession = castToSessionType(session, IrisChatSession.class);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, chatSession.getExercise(), user);
-        if (!Objects.equals(chatSession.getUser(), user)) {
+    public void checkHasAccessTo(User user, IrisChatSession session) {
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, session.getExercise(), user);
+        if (!Objects.equals(session.getUser(), user)) {
             throw new AccessForbiddenException("Iris Session", session.getId());
         }
     }
@@ -116,9 +129,8 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
      * @param session The session to check
      */
     @Override
-    public void checkIsIrisActivated(IrisSession session) {
-        var chatSession = castToSessionType(session, IrisChatSession.class);
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, chatSession.getExercise());
+    public void checkIsFeatureActivatedFor(IrisChatSession session) {
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, session.getExercise());
     }
 
     @Override
@@ -207,7 +219,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         }
         if (studentParticipations.isEmpty()) {
             try {
-                templateRepo = gitService.getOrCheckoutRepository(templateParticipation.get().getVcsRepositoryUrl(), true);
+                templateRepo = gitService.getOrCheckoutRepository(templateParticipation.get().getVcsRepositoryUri(), true);
             }
             catch (GitAPIException e) {
                 throw new InternalServerErrorException("Iris cannot function without template participation");
@@ -217,8 +229,8 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         }
 
         try {
-            templateRepo = gitService.getOrCheckoutRepository(templateParticipation.get().getVcsRepositoryUrl(), true);
-            studentRepo = gitService.getOrCheckoutRepository(studentParticipations.get(studentParticipations.size() - 1).getVcsRepositoryUrl(), true);
+            templateRepo = gitService.getOrCheckoutRepository(templateParticipation.get().getVcsRepositoryUri(), true);
+            studentRepo = gitService.getOrCheckoutRepository(studentParticipations.get(studentParticipations.size() - 1).getVcsRepositoryUri(), true);
         }
         catch (GitAPIException e) {
             throw new InternalServerErrorException("Could not fetch existing student or template participation");

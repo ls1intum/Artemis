@@ -483,8 +483,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         Long participationId = getParticipationIdByType(participationType, 0);
         final var programmingParticipation = (ProgrammingExerciseParticipation) participationRepository.findById(participationId).orElseThrow();
         bambooRequestMockProvider.mockTriggerBuild(programmingParticipation);
-        var repositoryUrl = (programmingParticipation).getVcsRepositoryUrl();
-        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(repositoryUrl);
+        var repositoryUri = (programmingParticipation).getVcsRepositoryUri();
+        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(repositoryUri);
         triggerBuild(participationType, 0);
 
         // Now a submission for the manual build should exist.
@@ -526,9 +526,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         Long participationId = getParticipationIdByType(participationType, 0);
         final var programmingParticipation = (ProgrammingExerciseParticipation) participationRepository.findById(participationId).orElseThrow();
         bambooRequestMockProvider.mockTriggerBuild(programmingParticipation);
-        var repositoryUrl = programmingParticipation.getVcsRepositoryUrl();
+        var repositoryUri = programmingParticipation.getVcsRepositoryUri();
         ObjectId objectId = COMMIT_HASH_OBJECT_ID;
-        doReturn(objectId).when(gitService).getLastCommitHash(repositoryUrl);
+        doReturn(objectId).when(gitService).getLastCommitHash(repositoryUri);
         triggerInstructorBuild(participationType, 0);
 
         // Now a submission for the manual build should exist.
@@ -562,8 +562,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCaseChanged() throws Exception {
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        Commit commit = new Commit();
-        commit.setCommitHash(dummyHash);
+        Commit commit = new Commit(dummyHash, null, null, null, null);
 
         setBuildAndTestAfterDueDateForProgrammingExercise(null);
 

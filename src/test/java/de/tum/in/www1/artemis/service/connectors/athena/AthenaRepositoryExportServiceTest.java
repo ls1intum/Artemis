@@ -67,7 +67,7 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationBambooB
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
 
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
-        participation.setRepositoryUrl("git://test");
+        participation.setRepositoryUri("git://test");
         participation.setProgrammingExercise(programmingExerciseWithId);
         ProgrammingSubmission submission = new ProgrammingSubmission();
         submission.setParticipation(participation);

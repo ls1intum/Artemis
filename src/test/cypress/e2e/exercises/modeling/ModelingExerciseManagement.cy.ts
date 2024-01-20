@@ -103,7 +103,7 @@ describe('Modeling Exercise Management', () => {
             courseManagementExercises.getModelingExerciseMaxPoints(modelingExercise.id!).contains(points.toString());
         });
 
-        after('Delete exericse', () => {
+        after('Delete exercise', () => {
             exerciseAPIRequest.deleteModelingExercise(modelingExercise.id!);
         });
     });
