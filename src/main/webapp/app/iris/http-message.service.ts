@@ -27,7 +27,6 @@ export abstract class IrisHttpMessageService {
      * @return {Observable<EntityArrayResponseType>}
      */
     getMessages(sessionId: number): Response<IrisMessage[]> {
-        // @formatter:off
         return this.httpClient.get<IrisMessage[]>(`${this.apiPrefix}/sessions/${sessionId}/messages`, { observe: 'response' }).pipe(
             map((response) => {
                 const messages = response.body;
@@ -44,7 +43,6 @@ export abstract class IrisHttpMessageService {
                 });
             }),
         );
-        // @formatter:on
     }
 
     /**
@@ -61,7 +59,6 @@ export abstract class IrisHttpMessageService {
             }),
             context: context ?? {},
         };
-        // @formatter:off
         return this.httpClient.post<IrisServerMessage>(`${this.apiPrefix}/sessions/${sessionId}/messages`, payload, { observe: 'response' }).pipe(
             tap((response) => {
                 if (response.body && response.body.id) {
@@ -69,7 +66,6 @@ export abstract class IrisHttpMessageService {
                 }
             }),
         );
-        // @formatter:on
     }
 
     /**
@@ -81,7 +77,6 @@ export abstract class IrisHttpMessageService {
      */
     resendMessage(sessionId: number, message: IrisUserMessage, context?: Record<string, unknown>): Response<IrisMessage> {
         message.messageDifferentiator = message.messageDifferentiator ?? this.randomInt();
-        // @formatter:off
         return this.httpClient.post<IrisServerMessage>(`${this.apiPrefix}/sessions/${sessionId}/messages/${message.id}/resend`, context ?? {}, { observe: 'response' }).pipe(
             tap((response) => {
                 if (response.body && response.body.id) {
@@ -89,7 +84,6 @@ export abstract class IrisHttpMessageService {
                 }
             }),
         );
-        // @formatter:on
     }
 
     /**
@@ -100,8 +94,6 @@ export abstract class IrisHttpMessageService {
      * @return {Observable<EntityResponseType>} an Observable of the HTTP responses
      */
     rateMessage(sessionId: number, messageId: number, helpful: boolean): Response<IrisMessage> {
-        // @formatter:off
         return this.httpClient.put<IrisMessage>(`${this.apiPrefix}/sessions/${sessionId}/messages/${messageId}/helpful/${helpful}`, null, { observe: 'response' });
-        // @formatter:on
     }
 }

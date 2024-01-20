@@ -98,13 +98,13 @@ public class IrisMessageResource {
      *
      * @param sessionId of the session
      * @param messageId of the message
-     * @param args      extra arguments from the client
+     * @param context   extra arguments from the client
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the existing message, or with status {@code 404 (Not Found)} if the session or message could
      *         not be found.
      */
     @PostMapping("sessions/{sessionId}/messages/{messageId}/resend")
     @EnforceAtLeastStudent
-    public ResponseEntity<IrisMessage> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @RequestBody JsonNode args) {
+    public ResponseEntity<IrisMessage> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @RequestBody JsonNode context) {
         var session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();
@@ -118,7 +118,7 @@ public class IrisMessageResource {
         if (message.getSender() != IrisMessageSender.USER) {
             throw new BadRequestException("Only user messages can be resent");
         }
-        irisSessionService.requestMessageFromIris(session, args);
+        irisSessionService.requestMessageFromIris(session, context);
 
         return ResponseEntity.ok(message);
     }

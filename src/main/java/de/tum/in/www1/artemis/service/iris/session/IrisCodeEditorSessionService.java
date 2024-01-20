@@ -197,10 +197,11 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
     }
 
     /**
-     * Converts a JsonNode into an IrisMessage. To do this, it checks the JsonNode for a field "response". If it is
-     * present, it creates an IrisTextMessageContent with the value of the field as the message content. If the JsonNode
-     * also has a field "components", it creates an IrisExercisePlanMessageContent with the parsed value of the field as
-     * the message content.
+     * Converts a JsonNode into an IrisMessage.
+     * To do this, it checks the JsonNode for a field "response".
+     * If it is present, it creates an IrisTextMessageContent with the value of the field as the message content.
+     * If the JsonNode also has a field "components", it creates an IrisExercisePlanMessageContent
+     * with the parsed value of the field as the message content.
      *
      * @param content The JsonNode to convert
      * @return The converted IrisMessage
@@ -225,8 +226,8 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
     }
 
     /**
-     * Converts a JsonNode into an IrisExercisePlanMessageContent. In order for this to succeed, the JsonNode must have
-     * the following structure:
+     * Converts a JsonNode into an IrisExercisePlanMessageContent.
+     * In order for this to succeed, the JsonNode must have the following structure:
      *
      * <pre>
      *     {
@@ -355,8 +356,8 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
 
     /**
      * Gets the solution repository for a given exercise. This method uses the
-     * SolutionProgrammingExerciseParticipationRepository to find the solution participation for the exercise. If the
-     * participation is not found, it will throw an exception.
+     * SolutionProgrammingExerciseParticipationRepository to find the solution participation for the exercise.
+     * If the participation is not found, it will throw an exception.
      *
      * @param exercise The exercise to get the solution repository for
      * @return The solution repository
@@ -367,8 +368,8 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
 
     /**
      * Fetches the template repository for a given exercise. This method uses the
-     * TemplateProgrammingExerciseParticipationRepository to find the template participation for the exercise. If the
-     * participation is not found, it will throw an exception.
+     * TemplateProgrammingExerciseParticipationRepository to find the template participation for the exercise.
+     * If the participation is not found, it will throw an exception.
      *
      * @param exercise The exercise to get the template repository for
      * @return The template repository
@@ -398,8 +399,8 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
     }
 
     /**
-     * Fetches the repository for a given participation. If the repository is already cached, it will be retrieved from
-     * the cache.
+     * Fetches the repository for a given participation.
+     * If the repository is already cached, it will be retrieved from the cache.
      *
      * @param participation The participation to fetch the repository for
      * @return The repository
@@ -467,8 +468,8 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
     }
 
     /**
-     * Extracts the problem statement changes from the response of the LLM. The response must have one of the following
-     * structures:
+     * Extracts the problem statement changes from the response of the LLM.
+     * The response must have one of the following structures:
      *
      * <pre>
      *     {
@@ -547,8 +548,8 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
     }
 
     /**
-     * Extracts the changes for a specific component from the response of the LLM. The response must have the following
-     * structure:
+     * Extracts the changes for a specific component from the response of the LLM.
+     * The response must have the following structure:
      *
      * <pre>
      *     {
@@ -639,8 +640,8 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
 
     /**
      * Injects the changes into the repository. This method replaces the first occurrence of each original string with
-     * the corresponding updated string in the file with the same name as the file in the change. Returned is a set of
-     * paths to the files that were actually modified.
+     * the corresponding updated string in the file with the same name as the file in the change.
+     * Returned is a set of paths to the files that were actually modified.
      *
      * @param repository The repository to inject the changes into
      * @param changes    The changes to inject
