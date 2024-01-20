@@ -26,11 +26,11 @@ public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long
     @Query("""
                  SELECT DISTINCT oneToOneChat
                  FROM OneToOneChat oneToOneChat
-                 LEFT JOIN oneToOneChat.conversationParticipants conversationParticipant
-                 LEFT JOIN FETCH oneToOneChat.conversationParticipants
-                 WHERE oneToOneChat.course.id = :#{#courseId}
-                 AND (oneToOneChat.lastMessageDate IS NOT NULL OR oneToOneChat.creator.id = :#{#userId})
-                 AND conversationParticipant.user.id = :#{#userId}
+                     LEFT JOIN oneToOneChat.conversationParticipants conversationParticipant
+                     LEFT JOIN FETCH oneToOneChat.conversationParticipants
+                 WHERE oneToOneChat.course.id = :courseId
+                     AND (oneToOneChat.lastMessageDate IS NOT NULL OR oneToOneChat.creator.id = :userId)
+                     AND conversationParticipant.user.id = :userId
                  ORDER BY oneToOneChat.lastMessageDate DESC
             """)
     List<OneToOneChat> findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(@Param("courseId") Long courseId, @Param("userId") Long userId);
@@ -38,13 +38,13 @@ public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long
     @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants.user.groups" })
     @Query("""
                  SELECT o FROM OneToOneChat o
-                 LEFT JOIN FETCH o.conversationParticipants p1
-                 LEFT JOIN FETCH o.conversationParticipants p2
+                     LEFT JOIN FETCH o.conversationParticipants p1
+                     LEFT JOIN FETCH o.conversationParticipants p2
                  WHERE o.course.id = :courseId
-                 AND p1.user.id = :userIdA
-                 AND p2.user.id = :userIdB
-                 AND p1.conversation = o
-                 AND p2.conversation = o
+                     AND p1.user.id = :userIdA
+                     AND p2.user.id = :userIdB
+                     AND p1.conversation = o
+                     AND p2.conversation = o
             """)
     Optional<OneToOneChat> findBetweenUsersWithParticipantsAndUserGroups(@Param("courseId") Long courseId, @Param("userIdA") Long userIdA, @Param("userIdB") Long userIdB);
 
@@ -52,8 +52,8 @@ public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long
     @Query("""
              SELECT DISTINCT oneToOneChat
              FROM OneToOneChat oneToOneChat
-             LEFT JOIN FETCH oneToOneChat.conversationParticipants p
-             WHERE oneToOneChat.id = :#{#oneToOneChatId}
+                 LEFT JOIN FETCH oneToOneChat.conversationParticipants p
+             WHERE oneToOneChat.id = :oneToOneChatId
             """)
     Optional<OneToOneChat> findByIdWithConversationParticipantsAndUserGroups(@Param("oneToOneChatId") Long oneToOneChatId) throws EntityNotFoundException;
 

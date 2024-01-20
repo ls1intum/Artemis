@@ -25,15 +25,15 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
     @Query("""
             SELECT DISTINCT conversationParticipant
             FROM ConversationParticipant conversationParticipant
-            WHERE conversationParticipant.conversation.id = :#{#conversationId}
-            AND conversationParticipant.user.id in :#{#userIds}
+            WHERE conversationParticipant.conversation.id = :conversationId
+                AND conversationParticipant.user.id in :userIds
             """)
     Set<ConversationParticipant> findConversationParticipantsByConversationIdAndUserIds(Long conversationId, Set<Long> userIds);
 
     @Query("""
             SELECT DISTINCT conversationParticipant
             FROM ConversationParticipant conversationParticipant
-            WHERE conversationParticipant.conversation.id = :#{#conversationId}
+            WHERE conversationParticipant.conversation.id = :conversationId
             """)
     Set<ConversationParticipant> findConversationParticipantByConversationId(@Param("conversationId") Long conversationId);
 
@@ -68,9 +68,9 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
     @Query("""
             SELECT DISTINCT conversationParticipant
             FROM ConversationParticipant conversationParticipant
-            WHERE conversationParticipant.conversation.id = :#{#conversationId}
-            AND conversationParticipant.user.id = :#{#userId}
-            AND conversationParticipant.isModerator = true
+            WHERE conversationParticipant.conversation.id = :conversationId
+                AND conversationParticipant.user.id = :userId
+                AND conversationParticipant.isModerator IS TRUE
             """)
     Optional<ConversationParticipant> findModeratorConversationParticipantByConversationIdAndUserId(Long conversationId, Long userId);
 
@@ -91,9 +91,9 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
     @Query("""
             UPDATE ConversationParticipant conversationParticipant
             SET conversationParticipant.unreadMessagesCount = conversationParticipant.unreadMessagesCount + 1
-            WHERE conversationParticipant.conversation.id = :#{#conversationId}
-            AND (conversationParticipant.user.id <> :#{#senderId})
-            AND conversationParticipant.unreadMessagesCount IS NOT null
+            WHERE conversationParticipant.conversation.id = :conversationId
+                AND conversationParticipant.user.id <> :senderId
+                AND conversationParticipant.unreadMessagesCount IS NOT NULL
             """)
     void incrementUnreadMessagesCountOfParticipants(@Param("conversationId") Long conversationId, @Param("senderId") Long senderId);
 
@@ -108,10 +108,10 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
     @Query("""
             UPDATE ConversationParticipant conversationParticipant
             SET conversationParticipant.unreadMessagesCount = conversationParticipant.unreadMessagesCount - 1
-            WHERE conversationParticipant.conversation.id = :#{#conversationId}
-            AND (conversationParticipant.user.id <> :#{#senderId})
-            AND conversationParticipant.unreadMessagesCount > 0
-            AND conversationParticipant.unreadMessagesCount IS NOT null
+            WHERE conversationParticipant.conversation.id = :conversationId
+                AND conversationParticipant.user.id <> :senderId
+                AND conversationParticipant.unreadMessagesCount > 0
+                AND conversationParticipant.unreadMessagesCount IS NOT NULL
             """)
     void decrementUnreadMessagesCountOfParticipants(@Param("conversationId") Long conversationId, @Param("senderId") Long senderId);
 }
