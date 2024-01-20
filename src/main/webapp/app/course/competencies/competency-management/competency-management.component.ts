@@ -238,7 +238,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Opens a modal for selecting a competency to import to the current course.
+     * Opens a modal for selecting a course to import all competencies from.
      */
     openImportAllModal() {
         const modalRef = this.modalService.open(CompetencyImportCourseComponent, { size: 'lg', backdrop: 'static' });
@@ -258,23 +258,32 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
                             this.alertService.success('artemisApp.competency.importAll.success', { noOfCompetencies: res.length, courseTitle: courseTitle });
                         } else {
                             this.alertService.warning('artemisApp.competency.importAll.warning', { courseTitle: courseTitle });
+                            this.updateDataAfterImportAll(res);
                         }
-                        const importedCompetencies = res.map((dto) => dto.competency).filter((element): element is Competency => !!element);
-                        const importedRelations = res
-                            .map((dto) => dto.tailRelations)
-                            .flat()
-                            .filter((element): element is CompetencyRelationDTO => !!element)
-                            .map((dto) => dtoToCompetencyRelation(dto));
-
-                        this.competencies = this.competencies.concat(importedCompetencies);
-                        this.updateNodes(importedCompetencies);
-                        this.updateEdges(importedRelations);
-                        this.updateClusterNodes(importedRelations);
-                        this.update$.next(true);
                     },
                     error: (res: HttpErrorResponse) => onError(this.alertService, res),
                 });
         });
+    }
+
+    /**
+     * Updates the component's data and graph with the new data from the importAll modal
+     * @param res Array of DTOs containing the new competencies and relations
+     * @private
+     */
+    private updateDataAfterImportAll(res: Array<CompetencyWithTailRelationDTO>) {
+        const importedCompetencies = res.map((dto) => dto.competency).filter((element): element is Competency => !!element);
+        const importedRelations = res
+            .map((dto) => dto.tailRelations)
+            .flat()
+            .filter((element): element is CompetencyRelationDTO => !!element)
+            .map((dto) => dtoToCompetencyRelation(dto));
+
+        this.competencies = this.competencies.concat(importedCompetencies);
+        this.updateNodes(importedCompetencies);
+        this.updateEdges(importedRelations);
+        this.updateClusterNodes(importedRelations);
+        this.update$.next(true);
     }
 
     /**

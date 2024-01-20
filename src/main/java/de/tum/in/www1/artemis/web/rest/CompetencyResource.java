@@ -599,5 +599,4 @@ public class CompetencyResource {
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
     }
-
 }
