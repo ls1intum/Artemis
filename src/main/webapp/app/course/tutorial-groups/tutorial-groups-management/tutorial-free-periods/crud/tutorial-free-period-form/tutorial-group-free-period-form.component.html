@@ -76,7 +76,7 @@
                         {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredEndDateError' | artemisTranslate }}
                     </div>
                 </div>
-                <div *ngIf="endDateControl?.dirty && isEndBeforeStart" class="alert alert-danger">
+                <div *ngIf="endDateControl?.dirty && !isStartBeforeEnd" class="alert alert-danger">
                     {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError' | artemisTranslate }}
                 </div>
             </div>
@@ -113,6 +113,9 @@
                         class="form-control"
                     />
                     <owl-date-time [pickerType]="'timer'" #endTime [pickerMode]="'dialog'"></owl-date-time>
+                </div>
+                <div *ngIf="endTimeControl?.dirty && startTimeControl?.dirty && !isStartBeforeEnd" class="alert alert-danger">
+                    {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError' | artemisTranslate }}
                 </div>
             </div>
 

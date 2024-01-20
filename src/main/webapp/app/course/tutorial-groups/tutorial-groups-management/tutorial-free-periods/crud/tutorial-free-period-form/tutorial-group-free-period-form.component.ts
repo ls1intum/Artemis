@@ -58,13 +58,14 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         this.timeFrame = timeFrame;
     }
 
-    isEndBeforeStart(endDate: Date, startDate: Date) {
-        if (endDate && startDate) {
-            return endDate <= startDate;
-        } else if (this.endDateControl && this.startDateControl) {
-            return this.endDateControl.value >= this.startDateControl.value;
+    get isStartBeforeEnd() {
+        if (this.timeFrame == TimeFrame.PeriodWithinDay && this.endTimeControl && this.startTimeControl) {
+            return this.endTimeControl.value > this.startTimeControl.value;
+        } else if (this.timeFrame == TimeFrame.Period && this.endDateControl && this.startDateControl) {
+            return this.endDateControl.value > this.startDateControl.value;
+        } else {
+            return true;
         }
-        return false;
     }
 
     get TimeFrameControl(): TimeFrame {
@@ -103,7 +104,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
             if (!this.endDateControl) {
                 return false;
             }
-            return !this.isStartDateInvalid && !this.isEndDateInvalid && !this.endDateControl.invalid && !this.isEndBeforeStart;
+            return !this.isStartDateInvalid && !this.isEndDateInvalid && !this.endDateControl.invalid && this.isStartBeforeEnd;
         } else if (this.timeFrame == TimeFrame.PeriodWithinDay) {
             if (!this.startTimeControl || !this.endTimeControl) {
                 return false;
@@ -114,7 +115,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
                 !this.isEndTimeInvalid &&
                 !this.startTimeControl.invalid &&
                 !this.endTimeControl.invalid &&
-                !this.isEndBeforeStart(this.endTimeControl.value, this.startTimeControl.value)
+                this.isStartBeforeEnd
             );
         }
         return false;
@@ -154,9 +155,9 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         this.formSubmitted.emit(tutorialGroupFreePeriodFormData);
     }
 
-    combineDateAndTime(datePart: Date, timePart: Date): Date {
-        const combinedDate = new Date(datePart);
-        combinedDate.setHours(timePart.getHours(), timePart.getMinutes());
+    combineDateAndTime(date: Date, time: Date): Date {
+        const combinedDate = new Date(date);
+        combinedDate.setHours(time.getHours(), time.getMinutes());
         return combinedDate;
     }
 
@@ -170,9 +171,9 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         }
         this.form = this.fb.group({
             startDate: [undefined, [Validators.required]],
-            endDate: [undefined, [Validators.required]],
-            startTime: [undefined, [Validators.required]],
-            endTime: [undefined, [Validators.required]],
+            endDate: [undefined],
+            startTime: [undefined],
+            endTime: [undefined],
             reason: [undefined],
         });
     }
