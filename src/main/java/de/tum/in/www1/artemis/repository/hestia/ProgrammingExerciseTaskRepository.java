@@ -45,8 +45,8 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
     @Query("""
             SELECT t
             FROM ProgrammingExerciseTask t
-            LEFT JOIN FETCH t.testCases tc
-            LEFT JOIN FETCH tc.solutionEntries
+                LEFT JOIN FETCH t.testCases tc
+                LEFT JOIN FETCH tc.solutionEntries
             WHERE t.id = :entryId
             """)
     Optional<ProgrammingExerciseTask> findByIdWithTestCaseAndSolutionEntries(@Param("entryId") long entryId);
@@ -61,9 +61,9 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
     @Query("""
             SELECT t
             FROM ProgrammingExerciseTask t
-            LEFT JOIN FETCH t.testCases tc
+                LEFT JOIN FETCH t.testCases tc
             WHERE t.taskName = :taskName
-            AND t.exercise.id = :exerciseId
+                AND t.exercise.id = :exerciseId
             """)
     Optional<ProgrammingExerciseTask> findByNameAndExerciseId(@Param("taskName") String taskName, @Param("exerciseId") long exerciseId);
 
@@ -88,10 +88,10 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
     @Query("""
             SELECT t
             FROM ProgrammingExerciseTask t
-            LEFT JOIN FETCH t.testCases tc
-            LEFT JOIN FETCH tc.solutionEntries
+                LEFT JOIN FETCH t.testCases tc
+                LEFT JOIN FETCH tc.solutionEntries
             WHERE t.exercise.id = :exerciseId
-            AND tc.exercise.id = :exerciseId
+                AND tc.exercise.id = :exerciseId
             """)
     Optional<Set<ProgrammingExerciseTask>> findByExerciseIdWithTestCaseAndSolutionEntries(@Param("exerciseId") long exerciseId);
 
@@ -104,8 +104,8 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
     @Query("""
             SELECT t
             FROM ProgrammingExerciseTask t
-            LEFT JOIN FETCH t.testCases tc
-            LEFT JOIN FETCH tc.solutionEntries
+                LEFT JOIN FETCH t.testCases tc
+                LEFT JOIN FETCH tc.solutionEntries
             WHERE t.exercise.id = :exerciseId
             """)
     Set<ProgrammingExerciseTask> findByExerciseIdWithTestCases(@Param("exerciseId") Long exerciseId);
@@ -118,15 +118,15 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
      */
     @Query("""
             SELECT t.taskName
-            FROM ProgrammingExerciseTask t
+                FROM ProgrammingExerciseTask t
             WHERE t.id = :taskId
             """)
     String getTaskName(@Param("taskId") Long taskId);
 
     @Query("""
             SELECT pt FROM ProgrammingExerciseTask  pt
-            LEFT JOIN FETCH pt.exerciseHints h
-            LEFT JOIN FETCH pt.testCases tc
+                LEFT JOIN FETCH pt.exerciseHints h
+                LEFT JOIN FETCH pt.testCases tc
             WHERE h.id = :codeHintId
             """)
     Optional<ProgrammingExerciseTask> findByCodeHintIdWithTestCases(@Param("codeHintId") Long codeHintId);
