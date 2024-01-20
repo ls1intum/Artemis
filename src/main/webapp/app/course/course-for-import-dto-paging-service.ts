@@ -18,6 +18,6 @@ export class CourseForImportDTOPagingService extends PagingService<CourseForImpo
 
     override search(pageable: PageableSearch): Observable<EntityResponseType> {
         const params = this.createHttpParams(pageable);
-        return this.http.get(`${this.resourceUrl}/paginated`, { params, observe: 'response' }).pipe(map((resp: HttpResponse<EntityResponseType>) => resp && resp.body!));
+        return this.http.get(`${this.resourceUrl}/for-import`, { params, observe: 'response' }).pipe(map((resp: HttpResponse<EntityResponseType>) => resp && resp.body!));
     }
 }
