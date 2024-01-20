@@ -109,8 +109,8 @@ public class TutorialGroupFreePeriodResource {
         updatedFreePeriod.setId(existingFreePeriod.getId());
         updatedFreePeriod.setTutorialGroupsConfiguration(configuration);
         updatedFreePeriod.setReason(tutorialGroupFreePeriod.reason);
-        updatedFreePeriod.setStart(interpretInTimeZone(tutorialGroupFreePeriod.startDate, configuration.getCourse().getTimeZone()));
-        updatedFreePeriod.setEnd(interpretInTimeZone(tutorialGroupFreePeriod.startDate, configuration.getCourse().getTimeZone()));
+        updatedFreePeriod.setStart(interpretInTimeZone(tutorialGroupFreePeriod.startDate, START_OF_DAY, configuration.getCourse().getTimeZone()));
+        updatedFreePeriod.setEnd(interpretInTimeZone(tutorialGroupFreePeriod.endDate, END_OF_DAY, configuration.getCourse().getTimeZone()));
         isValidTutorialGroupPeriod(updatedFreePeriod);
 
         // activate previously cancelled sessions
@@ -150,8 +150,8 @@ public class TutorialGroupFreePeriodResource {
         newTutorialGroupFreePeriod.setTutorialGroupsConfiguration(tutorialGroupsConfiguration);
         newTutorialGroupFreePeriod.setReason(tutorialGroupFreePeriod.reason);
 
-        newTutorialGroupFreePeriod.setStart(interpretInTimeZone(tutorialGroupFreePeriod.startDate, tutorialGroupsConfiguration.getCourse().getTimeZone()));
-        newTutorialGroupFreePeriod.setEnd(interpretInTimeZone(tutorialGroupFreePeriod.startDate, tutorialGroupsConfiguration.getCourse().getTimeZone()));
+        newTutorialGroupFreePeriod.setStart(interpretInTimeZone(tutorialGroupFreePeriod.startDate, START_OF_DAY, tutorialGroupsConfiguration.getCourse().getTimeZone()));
+        newTutorialGroupFreePeriod.setEnd(interpretInTimeZone(tutorialGroupFreePeriod.startDate, END_OF_DAY, tutorialGroupsConfiguration.getCourse().getTimeZone()));
 
         checkEntityIdMatchesPathIds(newTutorialGroupFreePeriod, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         isValidTutorialGroupPeriod(newTutorialGroupFreePeriod);
@@ -232,6 +232,6 @@ public class TutorialGroupFreePeriodResource {
      * @param endDate
      * @param reason
      */
-    public record TutorialGroupFreePeriodDTO(@NotNull LocalDateTime startDate, LocalDateTime endDate, String reason) {
+    public record TutorialGroupFreePeriodDTO(@NotNull LocalDate startDate, LocalDate endDate, String reason) {
     }
 }
