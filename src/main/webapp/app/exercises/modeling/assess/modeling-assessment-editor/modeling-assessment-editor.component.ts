@@ -6,7 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
-import { getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
+import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
 import dayjs from 'dayjs/esm';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -529,17 +529,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      * and instead set the score boundaries on the server.
      */
     calculateTotalScore() {
-        this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.feedback);
-        // Cap totalScore to maxPoints
-        const exercise = this.modelingExercise!;
-        const maxPoints = getTotalMaxPoints(exercise);
-        if (this.totalScore > maxPoints) {
-            this.totalScore = maxPoints;
-        }
-        // Do not allow negative score
-        if (this.totalScore < 0) {
-            this.totalScore = 0;
-        }
+        const maxPoints = getTotalMaxPoints(this.modelingExercise!);
+        const creditsTotalScore = this.structuredGradingCriterionService.computeTotalScore(this.feedback);
+        this.totalScore = getPositiveAndCappedTotalScore(creditsTotalScore, maxPoints);
     }
 
     /**

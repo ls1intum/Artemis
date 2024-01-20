@@ -20,7 +20,7 @@ import { Result } from 'app/entities/result.model';
 import { getLatestSubmissionResult, getSubmissionResultById } from 'app/entities/submission.model';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
-import { getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
+import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
@@ -403,18 +403,9 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
      * and instead set the score boundaries on the server.
      */
     private calculateTotalScore() {
-        this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.assessments);
-        // Cap totalScore to maxPoints
-        if (this.exercise) {
-            const maxPoints = getTotalMaxPoints(this.exercise);
-            if (this.totalScore > maxPoints) {
-                this.totalScore = maxPoints;
-            }
-            // Do not allow negative score
-            if (this.totalScore < 0) {
-                this.totalScore = 0;
-            }
-        }
+        const maxPoints = getTotalMaxPoints(this.exercise);
+        const creditsTotalScore = this.structuredGradingCriterionService.computeTotalScore(this.assessments);
+        this.totalScore = getPositiveAndCappedTotalScore(creditsTotalScore, maxPoints);
     }
 
     downloadFile(filePath: string) {
