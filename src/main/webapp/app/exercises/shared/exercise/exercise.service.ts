@@ -52,7 +52,6 @@ export class ExerciseService {
 
     constructor(
         private http: HttpClient,
-        private participationService: ParticipationService,
         private accountService: AccountService,
         private translateService: TranslateService,
         private entityTitleService: EntityTitleService,
@@ -99,13 +98,6 @@ export class ExerciseService {
     hasDueDateError(exercise: Exercise) {
         const relevantDateBefore = exercise.startDate ?? exercise.releaseDate;
         return relevantDateBefore && exercise.dueDate && dayjs(exercise.dueDate).isBefore(relevantDateBefore);
-    }
-
-    getTotalMaxPoints(exercise?: Exercise): number {
-        if (!exercise) {
-            return 0;
-        }
-        return exercise.maxPoints! + exercise.bonusPoints!;
     }
 
     private hasAssessmentDueDateError(exercise: Exercise) {

@@ -1,34 +1,34 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
-import dayjs from 'dayjs/esm';
 import { Location } from '@angular/common';
-import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
-import { filter, finalize } from 'rxjs/operators';
-import { AccountService } from 'app/core/auth/account.service';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
-import { FileService } from 'app/shared/http/file.service';
-import { Complaint, ComplaintType } from 'app/entities/complaint.model';
-import { Feedback } from 'app/entities/feedback.model';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { TranslateService } from '@ngx-translate/core';
+import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
+import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { AccountService } from 'app/core/auth/account.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { Complaint, ComplaintType } from 'app/entities/complaint.model';
+import { Course } from 'app/entities/course.model';
+import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
+import { Feedback } from 'app/entities/feedback.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
-import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { getLatestSubmissionResult, getSubmissionResultById } from 'app/entities/submission.model';
-import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
+import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
+import { getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
+import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
+import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { FileService } from 'app/shared/http/file.service';
 import { onError } from 'app/shared/util/global.utils';
-import { Course } from 'app/entities/course.model';
-import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
-import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import dayjs from 'dayjs/esm';
+import { filter, finalize } from 'rxjs/operators';
 
 @Component({
     providers: [FileUploadAssessmentService],
@@ -84,7 +84,6 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private complaintService: ComplaintService,
         private fileService: FileService,
-        private exerciseService: ExerciseService,
         public structuredGradingCriterionService: StructuredGradingCriterionService,
         public submissionService: SubmissionService,
         translateService: TranslateService,
@@ -389,9 +388,8 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.assessmentsAreValid = true;
         this.invalidError = undefined;
 
-        const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback);
         // When unreferenced feedback is set, it has to be valid (score + detailed text)
-        this.assessmentsAreValid = hasUnreferencedFeedback;
+        this.assessmentsAreValid = Feedback.haveCreditsAndComments(this.unreferencedFeedback);
 
         this.calculateTotalScore();
 
@@ -408,7 +406,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.assessments);
         // Cap totalScore to maxPoints
         if (this.exercise) {
-            const maxPoints = this.exerciseService.getTotalMaxPoints(this.exercise);
+            const maxPoints = getTotalMaxPoints(this.exercise);
             if (this.totalScore > maxPoints) {
                 this.totalScore = maxPoints;
             }

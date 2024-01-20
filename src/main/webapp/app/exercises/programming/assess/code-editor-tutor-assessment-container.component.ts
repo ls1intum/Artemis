@@ -28,7 +28,7 @@ import { CodeEditorRepositoryFileService } from 'app/exercises/programming/share
 import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise.utils';
+import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { SubmissionType, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
@@ -41,7 +41,6 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { AthenaService } from 'app/assessment/athena.service';
 import { FeedbackSuggestionsPendingConfirmationDialogComponent } from 'app/exercises/shared/feedback/feedback-suggestions-pending-confirmation-dialog/feedback-suggestions-pending-confirmation-dialog.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -136,7 +135,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         private profileService: ProfileService,
         private modalService: NgbModal,
         private athenaService: AthenaService,
-        private exerciseService: ExerciseService,
         translateService: TranslateService,
     ) {
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
@@ -668,7 +666,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private calculateTotalScoreOfFeedbacks(feedbacks: Feedback[]): number {
-        const maxPoints = this.exerciseService.getTotalMaxPoints(this.exercise);
+        const maxPoints = getTotalMaxPoints(this.exercise);
         let totalScore = 0.0;
         let scoreAutomaticTests = 0.0;
         const gradingInstructions = {}; // { instructionId: noOfEncounters }

@@ -6,6 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
+import { getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
 import dayjs from 'dayjs/esm';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -27,7 +28,6 @@ import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -83,7 +83,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         private structuredGradingCriterionService: StructuredGradingCriterionService,
         private submissionService: SubmissionService,
         private exampleSubmissionService: ExampleSubmissionService,
-        private exerciseService: ExerciseService,
     ) {
         translateService.get('artemisApp.modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
@@ -533,7 +532,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.feedback);
         // Cap totalScore to maxPoints
         const exercise = this.modelingExercise!;
-        const maxPoints = this.exerciseService.getTotalMaxPoints(exercise);
+        const maxPoints = getTotalMaxPoints(exercise);
         if (this.totalScore > maxPoints) {
             this.totalScore = maxPoints;
         }

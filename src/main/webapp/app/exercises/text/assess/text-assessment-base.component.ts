@@ -10,7 +10,7 @@ import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { Feedback } from 'app/entities/feedback.model';
-import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise.utils';
+import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
@@ -45,7 +45,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
     }
 
     protected computeTotalScore(assessments: Feedback[]): number {
-        const maxPoints = this.exerciseService.getTotalMaxPoints(this.exercise);
+        const maxPoints = getTotalMaxPoints(this.exercise);
         let totalScore = this.structuredGradingCriterionService.computeTotalScore(assessments);
 
         // Cap totalScore to maxPoints
