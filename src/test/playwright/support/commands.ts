@@ -1,9 +1,17 @@
 import { UserCredentials } from './users';
 import { BASE_API } from '../../cypress/support/constants';
 import { Page, expect } from '@playwright/test';
-import * as fs from 'fs';
 
+/**
+ * A class that encapsulates static helper command methods.
+ */
 export class Commands {
+    /**
+     * Logs in using API.
+     * @param page - Playwright page object.
+     * @param credentials - UserCredentials object containing username and password.
+     * @param url - Optional URL to navigate to after successful login.
+     */
     static login = async (page: Page, credentials: UserCredentials, url?: string): Promise<void> => {
         const { username, password } = credentials;
 
@@ -13,11 +21,6 @@ export class Commands {
             .then((cookies) => cookies.find((cookie) => cookie.name === 'jwt'));
         if (!jwtCookie) {
             const response = await page.request.post(BASE_API + 'public/authenticate', {
-                certificateOptions: {
-                    ca: fs.readFileSync('./certs/rootCA.pem'),
-                    cert: fs.readFileSync('./certs/artemis-nginx+4.pem'),
-                    key: fs.readFileSync('./certs/artemis-nginx+4-key.pem'),
-                },
                 data: {
                     username,
                     password,

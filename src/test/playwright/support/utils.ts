@@ -7,13 +7,13 @@ import { TIME_FORMAT } from './constants';
 // Add utc plugin to use the utc timezone
 dayjs.extend(utc);
 
-/**
- * This file contains all of the global utility functions not directly related to playwright.
+/*
+ * This file contains all the global utility functions not directly related to playwright.
  */
 
 /**
  * Generates a unique identifier.
- * */
+ */
 export function generateUUID() {
     const uuid = uuidv4().replace(/-/g, '');
     return uuid.substr(0, 9);
@@ -21,7 +21,7 @@ export function generateUUID() {
 
 /**
  * Allows to enter date into the UI
- * */
+ */
 export async function enterDate(page: Page, selector: string, date: dayjs.Dayjs) {
     const dateInputField = page.locator(selector).locator('#date-input-field');
     await expect(dateInputField).toBeEnabled();

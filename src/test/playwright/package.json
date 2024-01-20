@@ -4,12 +4,10 @@
     "private": true,
     "license": "MIT",
     "devDependencies": {
-        "@playwright/test": "file:playwright-test-1.40.0.tgz",
+        "@playwright/test": "1.40.0",
         "@types/request": "^2.48.12",
         "dayjs": "^1.11.10",
         "dotenv": "^16.3.1",
-        "playwright": "file:playwright-1.40.0.tgz",
-        "playwright-core": "file:playwright-core-1.40.0.tgz",
         "request": "^2.88.2",
         "uuid": "9.0.1"
     },

@@ -4,16 +4,14 @@ import { USER_ID, USER_ROLE, users } from '../support/users';
 import { expect } from '@playwright/test';
 
 test.describe('Setup users', async () => {
-    if (process.env.createUsers == 'true') {
+    if (process.env.CREATE_USERS == 'true') {
         test.beforeEach('Creates all required users', async ({ login, userManagementAPIRequests }) => {
             await login(admin);
             for (const userKey in USER_ID) {
                 const user = users.getUserWithId(USER_ID[userKey]);
                 const getUserResponse = await userManagementAPIRequests.getUser(user.username);
-                console.log('Status code: ' + getUserResponse.status());
                 if (!getUserResponse.ok()) {
-                    const createUserResponse = await userManagementAPIRequests.createUser(user.username, user.password, USER_ROLE[userKey]);
-                    console.log('Create user response: ' + (await createUserResponse.json()));
+                    await userManagementAPIRequests.createUser(user.username, user.password, USER_ROLE[userKey]);
                 }
             }
         });

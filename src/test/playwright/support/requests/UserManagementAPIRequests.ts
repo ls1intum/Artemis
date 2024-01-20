@@ -2,7 +2,6 @@ import { UserRole } from '../users';
 import { BASE_API } from '../constants';
 import { Page } from '@playwright/test';
 import { APIResponse } from 'playwright-core';
-import * as fs from 'fs';
 
 /**
  * A class which encapsulates all API requests related to user management.
@@ -22,11 +21,6 @@ export class UserManagementAPIRequests {
      */
     async createUser(username: string, password: string, role: UserRole): Promise<APIResponse> {
         return await this.page.request.post(`${BASE_API}admin/users`, {
-            certificateOptions: {
-                ca: fs.readFileSync('./certs/rootCA.pem'),
-                cert: fs.readFileSync('./certs/artemis-nginx+4.pem'),
-                key: fs.readFileSync('./certs/artemis-nginx+4-key.pem'),
-            },
             data: {
                 login: username,
                 password,
@@ -39,12 +33,6 @@ export class UserManagementAPIRequests {
     }
 
     async getUser(username: string): Promise<APIResponse> {
-        return await this.page.request.get(`${BASE_API}users/${username}`, {
-            certificateOptions: {
-                ca: fs.readFileSync('./certs/rootCA.pem'),
-                cert: fs.readFileSync('./certs/artemis-nginx+4.pem'),
-                key: fs.readFileSync('./certs/artemis-nginx+4-key.pem'),
-            },
-        });
+        return await this.page.request.get(`${BASE_API}users/${username}`);
     }
 }

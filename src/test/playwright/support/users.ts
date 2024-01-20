@@ -36,8 +36,8 @@ export class PlaywrightUserManagement {
      * @returns admin credentials.
      */
     public getAdmin(): UserCredentials {
-        const adminUsername = process.env.adminUsername ?? 'admin';
-        const adminPassword = process.env.adminPassword ?? 'admin';
+        const adminUsername = process.env.ADMIN_USERNAME ?? 'admin';
+        const adminPassword = process.env.ADMIN_PASSWORD ?? 'admin';
         return { username: adminUsername, password: adminPassword };
     }
 
@@ -93,14 +93,14 @@ export class PlaywrightUserManagement {
      * @returns the username template.
      */
     private getUsernameTemplate(): string {
-        return process.env.username ?? 'user_' + USER_ID_SELECTOR;
+        return process.env.USERNAME ?? 'user_' + USER_ID_SELECTOR;
     }
 
     /**
      * @returns the password template.
      */
     private getPasswordTemplate(): string {
-        return process.env.password ?? 'password_' + USER_ID_SELECTOR;
+        return process.env.PASSWORD ?? 'password_' + USER_ID_SELECTOR;
     }
 
     public async getUserInfo(username: string, page: Page): Promise<User> {
