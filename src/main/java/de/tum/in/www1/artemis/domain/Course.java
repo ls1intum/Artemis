@@ -28,9 +28,6 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.domain.view.QuizView;
-import de.tum.in.www1.artemis.service.EntityFileService;
-import de.tum.in.www1.artemis.service.FilePathService;
-import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -45,18 +42,6 @@ public class Course extends DomainObject {
     public static final String ENTITY_NAME = "course";
 
     private static final int DEFAULT_COMPLAINT_TEXT_LIMIT = 2000;
-
-    @Transient
-    private final transient FilePathService filePathService = new FilePathService();
-
-    @Transient
-    private final transient FileService fileService = new FileService();
-
-    @Transient
-    private final transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
-
-    @Transient
-    private String prevCourseIcon;
 
     @Column(name = "title")
     @JsonView(QuizView.Before.class)
