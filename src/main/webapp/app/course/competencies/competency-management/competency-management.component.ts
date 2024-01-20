@@ -245,7 +245,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         //unary operator is necessary as otherwise courseId is seen as a string and will not match.
         modalRef.componentInstance.disabledIds = [+this.courseId];
         modalRef.result.then((result: ImportAllFromCourseResult) => {
-            const courseTitle = result.courseForImportDTO.title;
+            const courseTitle = result.courseForImportDTO.title ?? '';
             this.competencyService
                 .importAll(this.courseId, result.courseForImportDTO.id!, result.importRelations)
                 .pipe(
@@ -267,11 +267,11 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Updates the component's data and graph with the new data from the importAll modal
+     * Updates the component and its relation chart with the new data from the importAll modal
      * @param res Array of DTOs containing the new competencies and relations
      * @private
      */
-    private updateDataAfterImportAll(res: Array<CompetencyWithTailRelationDTO>) {
+    updateDataAfterImportAll(res: Array<CompetencyWithTailRelationDTO>) {
         const importedCompetencies = res.map((dto) => dto.competency).filter((element): element is Competency => !!element);
         const importedRelations = res
             .map((dto) => dto.tailRelations)
