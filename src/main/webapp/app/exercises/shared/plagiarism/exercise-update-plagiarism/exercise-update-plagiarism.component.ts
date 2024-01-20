@@ -44,21 +44,11 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, Aft
     }
 
     ngOnDestroy() {
-        if (this.fieldCPCEnabledSubscription) {
-            this.fieldCPCEnabledSubscription.unsubscribe();
-        }
-        if (this.fieldTreshholdSubscription) {
-            this.fieldTreshholdSubscription.unsubscribe();
-        }
-        if (this.fieldMinScoreSubscription) {
-            this.fieldMinScoreSubscription.unsubscribe();
-        }
-        if (this.fieldMinSizeSubscription) {
-            this.fieldMinSizeSubscription.unsubscribe();
-        }
-        if (this.fieldResponsePeriodSubscription) {
-            this.fieldResponsePeriodSubscription.unsubscribe();
-        }
+        this.fieldCPCEnabledSubscription?.unsubscribe();
+        this.fieldTreshholdSubscription?.unsubscribe();
+        this.fieldMinScoreSubscription?.unsubscribe();
+        this.fieldMinSizeSubscription?.unsubscribe();
+        this.fieldResponsePeriodSubscription?.unsubscribe();
     }
 
     calculateFormValid(): void {

@@ -68,8 +68,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     formSectionStatus: FormSectionStatus[];
 
     // subcriptions
-    fieldTitleSubscription?: Subscription;
-    fieldChannelNameSubscription?: Subscription;
+    titleChannelNameComponentSubscription?: Subscription;
     pointsSubscription?: Subscription;
     bonusPointsSubscription?: Subscription;
     plagiarismSubscription?: Subscription;
@@ -101,7 +100,9 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     }
 
     ngAfterViewInit() {
-        this.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
+        this.titleChannelNameComponentSubscription = this.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValidChanges.subscribe(() =>
+            this.calculateFormSectionStatus(),
+        );
         this.pointsSubscription = this.points?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.bonusPointsSubscription = this.bonusPoints?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.plagiarismSubscription = this.exerciseUpdatePlagiarismComponent.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
@@ -182,8 +183,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     }
 
     ngOnDestroy() {
-        this.fieldTitleSubscription?.unsubscribe();
-        this.fieldChannelNameSubscription?.unsubscribe();
+        this.titleChannelNameComponentSubscription?.unsubscribe();
         this.pointsSubscription?.unsubscribe();
         this.bonusPointsSubscription?.unsubscribe();
         this.plagiarismSubscription?.unsubscribe();
