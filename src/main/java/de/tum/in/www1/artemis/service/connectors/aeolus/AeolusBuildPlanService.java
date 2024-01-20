@@ -50,6 +50,9 @@ public class AeolusBuildPlanService {
     @Value("${artemis.continuous-integration.token:#{null}}")
     private String ciToken;
 
+    @Value("${artemis.continuous-integration.password:#{null}}")
+    private String ciPassword;
+
     @Value("${artemis.continuous-integration.user:#{null}}")
     private String ciUsername;
 
@@ -93,6 +96,20 @@ public class AeolusBuildPlanService {
     }
 
     /**
+     * Returns the credentials for the CI server based on the target
+     *
+     * @param target the target to get the credentials for
+     * @return the credentials for the CI server based on the target
+     */
+    private String getCredentialsBasedOnTarget(AeolusTarget target) {
+        return switch (target) {
+            case BAMBOO -> ciToken != null ? ciToken : ciPassword;
+            case JENKINS -> ciPassword;
+            default -> null;
+        };
+    }
+
+    /**
      * Publishes a build plan using Aeolus
      *
      * @param windfile the build plan to publish
@@ -113,7 +130,7 @@ public class AeolusBuildPlanService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         if (token == null) {
             jsonObject.put("username", ciUsername);
-            jsonObject.put("token", ciToken);
+            jsonObject.put("token", getCredentialsBasedOnTarget(target));
         }
         else {
             jsonObject.put("username", null);

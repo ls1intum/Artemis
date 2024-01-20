@@ -51,6 +51,8 @@ class AeolusTest {
         platformAction.setWorkdir("workdir");
         platformAction.setRunAlways(true);
         platformAction.setPlatform("bamboo");
+        platformAction.setPlatform("bamboo");
+        platformAction.setKind("junit");
         AeolusResult result = new AeolusResult();
         result.setName("name");
         result.setPath("path");
