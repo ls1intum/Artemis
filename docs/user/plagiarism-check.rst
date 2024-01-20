@@ -13,9 +13,10 @@ Introduction
 Artemis allows tutors and exercise instructors to check assignment submissions from students for plagiarism.
 With this feature, different types of assignments can be checked in Artemis, including programming assignments, modeling assignments, and text assignments.
 Plagiarism checks are available for both course and exam exercises.
-To perform the plagiarism check, the responsible tutors must initiate the checking process for a specific exercise.
+To conduct a plagiarism check, a tutor or instructor must initiate one of two available procedures: manual plagiarism checks or continuous plagiarism control.
+These checks are always specific to a particular exercise.
 First, we give an overview of different available features of the plagiarism check.
-Next, we explain the plagiarism check workflows from the perspective of various Artemis users, using UML Activity Diagrams to visualize the process.
+Next, we explain both plagiarism check workflows from the perspective of various Artemis users, using UML Activity Diagrams to visualize the process.
 
 Plagiarism Check Overview
 --------------------------
@@ -42,7 +43,7 @@ Before starting the plagiarism check, the user can configure different settings 
 
 3. Minimum Size.
 
-  a. Default value: Consider only submissions whose size is greater or equal to this value.
+  a. Programming exercises: Consider only submissions that have at least as many `git diff` lines in comparison to the template as the specified value.
   b. Modeling exercises: Consider only submissions that have at least as many modeling elements as the specified value.
   c. Text exercises: Consider only submissions that have at least as many words as the specified value.
 
@@ -69,18 +70,18 @@ Results
 ^^^^^^^
 After the plagiarism check was executed, the results can be inspected in different views.
 
-1. Overview of the similarity distribution. This statistical overview shows the similarity distribution based on the percentage as a histogram chart. The user can analyze the distribution quickly and adjust the plagiarism check settings as needed accordingly.
+1. Overview of the similarity distribution. This statistical overview shows the similarity distribution based on the percentage as a histogram chart. Above the chart, additional metrics show various statistics about the latest check. The user can analyze the distribution quickly and adjust the plagiarism check settings accordingly.
 
  |run-results|
 
-2. Selected submission. When the user selects the submission from the submission list on the left side of the plagiarism run result view, new actions can be selected to initiate the plagiarism check workflow. We will provide further details to the workflow in the next section.
+2. Selected submission. When the user selects the submission from the submission list on the left side of the plagiarism run result view, new actions can be selected to initiate the plagiarism check workflow. We will provide further details on the workflow in the next section.
 
  |run-results-selected-submissions|
 
-Plagiarism Check Workflow
+Manual Plagiarism Checks
 -------------------------
 
-In this section, we explain the process of the plagiarism case detection process from different users' perspective.
+In this section, we explain the process of the manual plagiarism case detection process from different users' perspectives.
 
 Tutors
 ^^^^^^
@@ -172,6 +173,75 @@ The process is visualized in the following diagram.
 2. Reply to the message of the instructor.
 3. Wait for the final verdict.
 
+Continuous Plagiarism Control
+-----------------------------------------
+
+In this section, we explain the automated flow of the continuous plagiarism control (CPC) and present actions taken by different Artemis users.
+
+Automated Flow
+^^^^^^^^^^^^^^
+
+The CPC is an experimental feature designed to shorten the feedback loop for students and reduce the manual work required from tutors and instructors.
+Continuous feedback on potential plagiarism aims to encourage students to submit their original work and enhance their learning outcomes.
+The continuous plagiarism control **does not accuse students of plagiarism, nor does it affect their scores**.
+Instead, it **notifies students of significant similarities** detected between their submissions, allowing them to revise their solutions.
+
+The CPC initiates plagiarism checks every night for all onboarded exercises, processing all the latest submissions for each exercise.
+If a significant similarity is detected, the CPC creates or updates a significant similarity plagiarism case for that submission.
+It is a special form of plagiarism case, which is marked as a warning and presents a gentle message about detected similarity.
+If a submission does not include significant similarity, the CPC removes any associated existing significant similarity plagiarism case.
+Subsequently, the student analyzes the feedback received and, if the submission period is still open, can submit a new solution.
+If the submission period has ended, the student can either dispute the plagiarism case or choose to take no action.
+Eventually, the instructor makes a decision about accusing the student of plagiarism and about any further steps.
+
+The following activity diagram depicts the CPC flow described above.
+
+|cpc-activity-diagram|
+
+Instructors
+^^^^^^^^^^^
+
+Configuration of the CPC
+""""""""""""""""""""""""
+
+Instructors can configure various aspects of the CPC for each exercise. The following list describes all configuration options:
+
+* **Instructors can enable the CPC.** - Instructor can turn the CPC on and off for a particular exercise. Default: `OFF`.
+* **Instructors can enable the post-due date checks.** - Instructor can configure the CPC to test the exercise one more time the night after the exercise due date. This allows to test submissions posted shortly before the due date. Default: `OFF`.
+* **Instructors can set the response period for the significant similarity plagiarism case.** - Instructor can specify for how long after the exercise due date a student will be able to submit a complaint. Default: `7 days`. Min: `7 days`.
+* **Instructors can set the similarity threshold.** - Instructor can specify the similarity threshold for the plagiarism check performed by the CPC. Optimal value for this parameter depends on an individual exercise. Similarity above the threshold does not implicate plagiarism. Default: `90%`.
+* **Instructors can set the minimum score.** - Instructor can specify the minimum submission score for the plagiarism check performed by the CPC. Default: `0`.
+* **Instructors can set the minimum size.** - Instructor can specify the minimum submission size for the plagiarism check performed by the CPC. Default: `50`.
+
+Instructors can adjust the CPC configuration options on the exercise create and update page:
+
+|cpc-configuration|
+
+Post exercise due date steps and results verification
+"""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+After the exercise due date, instructors can manually review all of the significant similarity plagiarism cases and decide on their verdicts. Steps at this point are equivalent to the steps in manual checks flow.
+
+Instructors can check the plagiarism checks results CPC creates during and after the submission period using exactly the same steps and interface like with manual checks.
+
+Students
+^^^^^^^^
+
+When a student submits a work for which the CPC identifies significant similarity and creates a plagiarism case, the student receives a notification similar to what is sent when instructors create a classic plagiarism case.
+If the exercise due date has not passed, the student can submit updated work again.
+The CPC will check the submission the following night and will either remove or update the significant similarity plagiarism case based on the results of the check.
+Before the exercise due date, a student cannot see the submissions of other students involved in the significant similarity plagiarism case.
+
+When a significant similarity plagiarism case exists for the latest submission, the student sees a dedicated button redirecting to it:
+|significant-similarity-button|
+
+A significant similarity plagiarism case contains a short message and an overview of similarity in the submission:
+|significant-similarity-plagiarism-case|
+
+In case the exercise due date has passed and student does not agree with the significant similarity plagiarism case,
+the student can dispute the case within the period configured by the instructor.
+
+
 .. |plagiarism-actions1| image:: plagiarism-check/actions/plagiarism-actions1.png
     :width: 1000
 .. |clean-up-dialog| image:: plagiarism-check/actions/clean-up-dialog.png
@@ -204,3 +274,11 @@ The process is visualized in the following diagram.
     :width: 1000
 .. |run-results-selected-submissions| image:: plagiarism-check/results/run-results-selected-submission.png
     :width: 1000
+.. |cpc-activity-diagram| image:: plagiarism-check/instructor/cpc-activity-diagram.png
+    :width: 500
+.. |cpc-configuration| image:: plagiarism-check/instructor/cpc-configuration.png
+    :width: 1000
+.. |significant-similarity-plagiarism-case| image:: plagiarism-check/student/significant-similarity-plagiarism-case.png
+    :width: 700
+.. |significant-similarity-button| image:: plagiarism-check/student/significant-similarity-button.png
+    :width: 700

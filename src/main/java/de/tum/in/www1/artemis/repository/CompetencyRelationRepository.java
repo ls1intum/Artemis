@@ -42,7 +42,7 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
             WHERE relation.headCompetency.course.id = :courseId
                 AND relation.tailCompetency.course.id = :courseId
             """)
-    Set<CompetencyRelation> findAllByCourseId(@Param("courseId") Long courseId);
+    Set<CompetencyRelation> findAllWithHeadAndTailByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT count(cr)

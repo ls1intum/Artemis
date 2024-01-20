@@ -4,9 +4,10 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.HIG
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DataExport;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -19,28 +20,6 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 
 public class SingleUserNotificationFactory {
-
-    /**
-     * Creates an instance of SingleUserNotification.
-     *
-     * @param post             which is answered
-     * @param answerPost       that is replied with
-     * @param notificationType type of the notification that should be created
-     * @param course           that the post belongs to
-     * @return an instance of SingleUserNotification
-     */
-    public static SingleUserNotification createNotification(Post post, AnswerPost answerPost, NotificationType notificationType, Course course) {
-        User recipient = post.getAuthor();
-        return NotificationFactory.createNotificationImplementation(post, answerPost, notificationType, course, (title, placeholderValues) -> {
-            String text = "";
-            switch (notificationType) {
-                case NEW_REPLY_FOR_EXERCISE_POST -> text = NEW_REPLY_FOR_EXERCISE_POST_SINGLE_TEXT;
-                case NEW_REPLY_FOR_LECTURE_POST -> text = NEW_REPLY_FOR_LECTURE_POST_SINGLE_TEXT;
-                case NEW_REPLY_FOR_COURSE_POST -> text = NEW_REPLY_FOR_COURSE_POST_SINGLE_TEXT;
-            }
-            return new SingleUserNotification(recipient, title, text, true, placeholderValues);
-        });
-    }
 
     /**
      * Creates an instance of SingleUserNotification.
@@ -241,13 +220,24 @@ public class SingleUserNotificationFactory {
             throw new IllegalArgumentException("No users provided for notification");
         }
 
-        String conversationTitle = answerPost.getPost().getConversation().getHumanReadableNameForReceiver(answerPost.getAuthor());
+        Conversation conversation = answerPost.getPost().getConversation();
+        List<String> placeholders = new ArrayList<>();
+        placeholders.add(conversation.getCourse().getTitle());
+        placeholders.add(answerPost.getPost().getContent());
+        placeholders.add(answerPost.getPost().getCreationDate().toString());
+        placeholders.add(answerPost.getPost().getAuthor().getName());
+        placeholders.add(answerPost.getContent());
+        placeholders.add(answerPost.getCreationDate().toString());
+        placeholders.add(answerPost.getAuthor().getName());
+        String messageReplyTextType = MESSAGE_REPLY_IN_CONVERSATION_TEXT;
 
-        String[] placeholders = new String[] { answerPost.getPost().getConversation().getCourse().getTitle(), answerPost.getPost().getContent(),
-                answerPost.getPost().getCreationDate().toString(), answerPost.getPost().getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString(),
-                answerPost.getAuthor().getName(), conversationTitle };
-        SingleUserNotification notification = new SingleUserNotification(user, title, MESSAGE_REPLY_IN_CONVERSATION_TEXT, true, placeholders);
-        notification.setTransientAndStringTarget(createMessageReplyTarget(answerPost, answerPost.getPost().getConversation().getCourse().getId()));
+        if (conversation instanceof Channel channel) {
+            placeholders.add(channel.getName());
+            messageReplyTextType = MESSAGE_REPLY_IN_CHANNEL_TEXT;
+        }
+
+        SingleUserNotification notification = new SingleUserNotification(user, title, messageReplyTextType, true, placeholders.toArray(String[]::new));
+        notification.setTransientAndStringTarget(createMessageReplyTarget(answerPost, conversation.getCourse().getId()));
         notification.setAuthor(responsibleForAction);
         return notification;
     }

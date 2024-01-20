@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.time.ZonedDateTime;
 import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -14,23 +11,16 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ExerciseDateService;
-import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSendingService;
-import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
-import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 
 /**
  * REST controller for managing ProgrammingAssessment.
@@ -39,35 +29,23 @@ import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 @RequestMapping("/api")
 public class ProgrammingAssessmentResource extends AssessmentResource {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingAssessmentResource.class);
-
     private static final String ENTITY_NAME = "programmingAssessment";
+
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingAssessmentResource.class);
 
     private final ProgrammingAssessmentService programmingAssessmentService;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
-    private final Optional<LtiNewResultService> ltiNewResultService;
-
     private final StudentParticipationRepository studentParticipationRepository;
-
-    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
-
-    private final Optional<AthenaFeedbackSendingService> athenaFeedbackSendingService;
 
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingAssessmentService programmingAssessmentService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService,
-            ResultWebsocketService resultWebsocketService, Optional<LtiNewResultService> ltiNewResultService, StudentParticipationRepository studentParticipationRepository,
-            ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<AthenaFeedbackSendingService> athenaFeedbackSendingService) {
-        super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, examService, resultWebsocketService,
-                exampleSubmissionRepository, submissionRepository, singleUserNotificationService);
+            StudentParticipationRepository studentParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
+        super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, examService, exampleSubmissionRepository, submissionRepository);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
-        this.ltiNewResultService = ltiNewResultService;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
-        this.athenaFeedbackSendingService = athenaFeedbackSendingService;
     }
 
     /**
@@ -181,52 +159,10 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("In case feedback is present, a feedback must contain points.", ENTITY_NAME, "feedbackCreditsNull");
         }
 
-        // TODO: move this logic into a service
-
-        // make sure that the submission cannot be manipulated on the client side
-        var submission = (ProgrammingSubmission) existingManualResult.getSubmission();
-        newManualResult.setSubmission(submission);
-        newManualResult.setHasComplaint(existingManualResult.getHasComplaint().isPresent() && existingManualResult.getHasComplaint().get());
-        newManualResult = programmingAssessmentService.saveManualAssessment(newManualResult, user);
-
-        if (submission.getParticipation() == null) {
-            newManualResult.setParticipation(submission.getParticipation());
-        }
-        Result savedResult = resultRepository.save(newManualResult);
-        savedResult.setSubmission(submission);
-
-        // Re-load result to fetch the test cases
-        newManualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesElseThrow(newManualResult.getId());
-
-        if (submit) {
-            newManualResult = resultRepository.submitManualAssessment(newManualResult);
-
-            if (submission.getParticipation() instanceof StudentParticipation studentParticipation && studentParticipation.getStudent().isPresent()) {
-                singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(programmingExercise, studentParticipation.getStudent().get(), newManualResult);
-            }
-            sendFeedbackToAthena(programmingExercise, submission, newManualResult.getFeedbacks());
-        }
+        newManualResult = programmingAssessmentService.saveAndSubmitManualAssessment(participation, newManualResult, existingManualResult, user, submit);
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {
             newManualResult.getParticipation().filterSensitiveInformation();
-        }
-        // Note: we always need to report the result over LTI, otherwise it might never become visible in the external system
-        if (ltiNewResultService.isPresent()) {
-            ltiNewResultService.get().onNewResult((StudentParticipation) newManualResult.getParticipation());
-        }
-        if (submit && ExerciseDateService.isAfterAssessmentDueDate(programmingExercise)) {
-            resultWebsocketService.broadcastNewResult(newManualResult.getParticipation(), newManualResult);
-        }
-
-        var isManualFeedbackRequest = programmingExercise.getAllowManualFeedbackRequests() && participation.getIndividualDueDate() != null
-                && participation.getIndividualDueDate().isBefore(ZonedDateTime.now());
-        var isBeforeDueDate = programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isAfter(ZonedDateTime.now());
-        if (isManualFeedbackRequest && isBeforeDueDate) {
-            participation.setIndividualDueDate(null);
-            studentParticipationRepository.save(participation);
-            newManualResult.setParticipation(participation);
-
-            programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation((ProgrammingExerciseStudentParticipation) participation);
         }
 
         return ResponseEntity.ok(newManualResult);
@@ -244,15 +180,6 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteAssessment(@PathVariable Long participationId, @PathVariable Long submissionId, @PathVariable Long resultId) {
         return super.deleteAssessment(participationId, submissionId, resultId);
-    }
-
-    /**
-     * Send feedback to Athena (if enabled for both the Artemis instance and the exercise).
-     */
-    private void sendFeedbackToAthena(final ProgrammingExercise exercise, final ProgrammingSubmission programmingSubmission, final List<Feedback> feedbacks) {
-        if (athenaFeedbackSendingService.isPresent() && exercise.getFeedbackSuggestionsEnabled()) {
-            athenaFeedbackSendingService.get().sendFeedback(exercise, programmingSubmission, feedbacks);
-        }
     }
 
     @Override

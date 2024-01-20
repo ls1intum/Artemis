@@ -261,19 +261,6 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         request.get("/api/complaints/submissions/" + modelingSubmission.getId(), HttpStatus.FORBIDDEN, Complaint.class);
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1")
-    void getComplaintResponseByComplaintId_studentNotPartOfTeam_forbidden() throws Exception {
-        complaint.setParticipant(team);
-        complaintRepo.save(complaint);
-
-        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected")
-                .reviewer(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
-        complaintResponseRepo.save(complaintResponse);
-
-        request.get("/api/complaint-responses/complaint/" + complaint.getId(), HttpStatus.FORBIDDEN, ComplaintResponse.class);
-    }
-
     private void saveModelingSubmissionAndAssessment() throws Exception {
         modelingSubmission = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         modelingSubmission = modelingExerciseUtilService.addModelingTeamSubmission(modelingExercise, modelingSubmission, team);

@@ -122,7 +122,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         id: 1,
         templateParticipation: {
             id: 3,
-            repositoryUrl: 'test2',
+            repositoryUri: 'test2',
             results: [{ id: 9, submission: { id: 1, buildFailed: false } }],
         },
         maxPoints: 100,
@@ -135,7 +135,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     participation.exercise = exercise;
     participation.id = 1;
     participation.student = { login: 'student1' } as User;
-    participation.repositoryUrl = 'http://student1@bitbucket.ase.in.tum.de/scm/TEST/test-repo-student1.git';
+    participation.repositoryUri = 'http://student1@bitbucket.ase.in.tum.de/scm/TEST/test-repo-student1.git';
     result.submission!.participation = participation;
 
     const submission: ProgrammingSubmission = new ProgrammingSubmission();

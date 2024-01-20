@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.lti;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -46,7 +47,7 @@ public class Lti13Service {
 
     private static final String COURSE_PATH_PATTERN = "/lti/deep-linking/{courseId}";
 
-    private final Logger log = LoggerFactory.getLogger(Lti13Service.class);
+    private static final Logger log = LoggerFactory.getLogger(Lti13Service.class);
 
     private final UserRepository userRepository;
 
@@ -64,13 +65,15 @@ public class Lti13Service {
 
     private final OnlineCourseConfigurationService onlineCourseConfigurationService;
 
+    private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
+
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     private final RestTemplate restTemplate;
 
     public Lti13Service(UserRepository userRepository, ExerciseRepository exerciseRepository, CourseRepository courseRepository, Lti13ResourceLaunchRepository launchRepository,
             LtiService ltiService, ResultRepository resultRepository, Lti13TokenRetriever tokenRetriever, OnlineCourseConfigurationService onlineCourseConfigurationService,
-            RestTemplate restTemplate, ArtemisAuthenticationProvider artemisAuthenticationProvider) {
+            RestTemplate restTemplate, ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.courseRepository = courseRepository;
@@ -81,6 +84,7 @@ public class Lti13Service {
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.restTemplate = restTemplate;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
+        this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
     }
 
     /**
@@ -170,32 +174,37 @@ public class Lti13Service {
      */
     public void onNewResult(StudentParticipation participation) {
         Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
-        ClientRegistration clientRegistration = onlineCourseConfigurationService.getClientRegistration(course.getOnlineCourseConfiguration());
-        if (clientRegistration == null) {
-            log.error("Could not transmit score to external LMS for course {}: client registration not found", course.getTitle());
-            return;
+        // send new results to all platforms configured via lti 1.3
+        List<LtiPlatformConfiguration> ltiPlatformConfigurations = ltiPlatformConfigurationRepository.findAll();
+        for (LtiPlatformConfiguration ltiPlatformConfiguration : ltiPlatformConfigurations) {
+
+            ClientRegistration clientRegistration = onlineCourseConfigurationService.getClientRegistration(ltiPlatformConfiguration);
+            if (clientRegistration == null) {
+                log.error("Could not transmit score to external LMS for course {}: client registration not found", course.getTitle());
+                return;
+            }
+
+            participation.getStudents().forEach(student -> {
+                // there can be multiple launches for one exercise and student if the student has used more than one LTI 1.3 platform
+                // to launch the exercise (for example multiple lms)
+                Collection<LtiResourceLaunch> launches = launchRepository.findByUserAndExercise(student, participation.getExercise());
+
+                if (launches.isEmpty()) {
+                    return;
+                }
+
+                Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
+
+                if (result.isEmpty()) {
+                    log.error("onNewResult triggered for participation {} but no result could be found", participation.getId());
+                    return;
+                }
+
+                String concatenatedFeedbacks = result.get().getFeedbacks().stream().map(Feedback::getDetailText).collect(Collectors.joining(". "));
+
+                launches.forEach(launch -> submitScore(launch, clientRegistration, concatenatedFeedbacks, result.get().getScore()));
+            });
         }
-
-        participation.getStudents().forEach(student -> {
-            // there can be multiple launches for one exercise and student if the student has used more than one LTI 1.3 platform
-            // to launch the exercise (for example multiple lms)
-            Collection<LtiResourceLaunch> launches = launchRepository.findByUserAndExercise(student, participation.getExercise());
-
-            if (launches.isEmpty()) {
-                return;
-            }
-
-            Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
-
-            if (result.isEmpty()) {
-                log.error("onNewResult triggered for participation {} but no result could be found", participation.getId());
-                return;
-            }
-
-            String concatenatedFeedbacks = result.get().getFeedbacks().stream().map(Feedback::getDetailText).collect(Collectors.joining(". "));
-
-            launches.forEach(launch -> submitScore(launch, clientRegistration, concatenatedFeedbacks, result.get().getScore()));
-        });
     }
 
     protected void submitScore(LtiResourceLaunch launch, ClientRegistration clientRegistration, String comment, Double score) {

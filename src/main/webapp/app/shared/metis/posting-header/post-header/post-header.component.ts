@@ -3,7 +3,6 @@ import { Post } from 'app/entities/metis/post.model';
 import { PostingHeaderDirective } from 'app/shared/metis/posting-header/posting-header.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { CourseWideContext } from '../../metis.util';
 import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
@@ -21,7 +20,6 @@ export class PostHeaderComponent extends PostingHeaderDirective<Post> implements
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
     isAtLeastInstructorInCourse: boolean;
     mayEditOrDelete = false;
-    readonly CourseWideContext = CourseWideContext;
 
     // Icons
     faPencilAlt = faPencilAlt;
@@ -35,7 +33,8 @@ export class PostHeaderComponent extends PostingHeaderDirective<Post> implements
         this.isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
         const isCourseWideChannel = getAsChannelDto(this.posting.conversation)?.isCourseWide ?? false;
         const isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
-        const mayEditOrDeleteOtherUsersAnswer = (isCourseWideChannel && isAtLeastInstructorInCourse) || this.hasChannelModerationRights;
+        const mayEditOrDeleteOtherUsersAnswer =
+            (isCourseWideChannel && isAtLeastInstructorInCourse) || (getAsChannelDto(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
         this.mayEditOrDelete = !this.readOnlyMode && !this.previewMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
     }
 

@@ -208,7 +208,7 @@ describe('FeedbackComponent', () => {
                         id: 55,
                         type: ParticipationType.PROGRAMMING,
                         participantIdentifier: 'student42',
-                        repositoryUrl: 'https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42',
+                        repositoryUri: 'https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42',
                     },
                 } as Result;
 
