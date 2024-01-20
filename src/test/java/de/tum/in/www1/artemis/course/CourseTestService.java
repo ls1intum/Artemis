@@ -2,11 +2,9 @@ package de.tum.in.www1.artemis.course;
 
 import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 import static java.util.Collections.emptyList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.mockStatic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -145,9 +143,6 @@ public class CourseTestService {
 
     @Autowired
     private CourseExamExportService courseExamExportService;
-
-    @Autowired
-    private FilePathService filePathService;
 
     @Autowired
     private FileUploadExerciseRepository fileUploadExerciseRepository;
@@ -793,7 +788,11 @@ public class CourseTestService {
         // Test that the received course has two lectures
         assertThat(receivedCourse.getLectures()).as("Two lectures are returned").hasSize(2);
         // Test that the received course has two competencies
-        assertThat(receivedCourse.getCompetencies()).as("Two competencies are returned").hasSize(2);
+
+        assertThat(receivedCourse.getCompetencies()).isEmpty();
+        assertThat(receivedCourse.getPrerequisites()).isEmpty();
+        assertThat(receivedCourse.getTutorialGroups()).isEmpty();
+        assertThat(receivedCourse.getTutorialGroupsConfiguration()).isNull();
 
         // Iterate over all exercises of the remaining course
         for (Exercise exercise : courses.get(0).getExercises()) {
@@ -925,8 +924,8 @@ public class CourseTestService {
                 assertThat(receivedCourse.getExams()).containsExactlyInAnyOrder(examUnregistered, examRegistered, testExam);
             }
         }
-        List<CourseForDashboardDTO> receivedCoursesForDashboard = request.getList("/api/courses/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
-        List<Course> receivedCourses = receivedCoursesForDashboard.stream().map(CourseForDashboardDTO::course).toList();
+        var receivedCoursesForDashboard = request.get("/api/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
+        List<Course> receivedCourses = receivedCoursesForDashboard.courses().stream().map(CourseForDashboardDTO::course).toList();
         for (int i = 0; i < courses.length; i++) {
             Course receivedCourse = null;
             for (Course course : receivedCourses) {
@@ -939,10 +938,12 @@ public class CourseTestService {
                 assertThat(receivedCourse.getExams()).isEmpty();
             }
             else if (i == 1) {
-                assertThat(receivedCourse.getExams()).hasSize(2);
+                assertThat(receivedCourse.getExams()).hasSize(0);
+                assertThat(receivedCourse.getNumberOfExams()).isEqualTo(3);
             }
             else {
-                assertThat(receivedCourse.getExams()).hasSize(3);
+                assertThat(receivedCourse.getExams()).hasSize(0);
+                assertThat(receivedCourse.getNumberOfExams()).isEqualTo(3);
             }
         }
     }
@@ -975,9 +976,9 @@ public class CourseTestService {
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(practiceResult, practiceParticipation, "ghjk");
         participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, userPrefix + "student2");
 
-        List<CourseForDashboardDTO> receivedCoursesForDashboard = request.getList("/api/courses/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
+        var receivedCoursesForDashboard = request.get("/api/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
         CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
-        CourseForDashboardDTO receivedCourseForDashboardFromGeneralCall = receivedCoursesForDashboard.stream().filter(dto -> dto.course().getId().equals(course.getId()))
+        CourseForDashboardDTO receivedCourseForDashboardFromGeneralCall = receivedCoursesForDashboard.courses().stream().filter(dto -> dto.course().getId().equals(course.getId()))
                 .findFirst().orElseThrow();
 
         assertThat(receivedCourseForDashboardFromGeneralCall.participationResults()).hasSize(1);
@@ -1003,8 +1004,8 @@ public class CourseTestService {
         }
 
         // Perform the request that is being tested here
-        List<CourseForDashboardDTO> coursesForDashboard = request.getList("/api/courses/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
-        List<Course> courses = coursesForDashboard.stream().map(CourseForDashboardDTO::course).toList();
+        var coursesForDashboard = request.get("/api/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
+        List<Course> courses = coursesForDashboard.courses().stream().map(CourseForDashboardDTO::course).toList();
 
         Course activeCourse = coursesCreated.get(0);
         Course inactiveCourse = coursesCreated.get(1);
@@ -1041,7 +1042,7 @@ public class CourseTestService {
                             }
                             // Test that the correct modeling submission was filtered.
                             else if (submission instanceof ModelingSubmission modelingSubmission) {
-                                assertThat(modelingSubmission.getModel()).as("Correct modeling submission").isEqualTo("model1");
+                                assertThat(modelingSubmission.getModel()).as("Correct modeling submission").isIn("model1", "model2");
                             }
                         }
                     }
@@ -1057,8 +1058,8 @@ public class CourseTestService {
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix,
                 userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
         course = courseRepo.save(course);
-        List<CourseForDashboardDTO> coursesForDashboard = request.getList("/api/courses/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
-        List<Course> courses = coursesForDashboard.stream().map(CourseForDashboardDTO::course).toList();
+        var coursesForDashboard = request.get("/api/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
+        List<Course> courses = coursesForDashboard.courses().stream().map(CourseForDashboardDTO::course).toList();
         final var finalCourse = course;
         Course courseInList = courses.stream().filter(c -> c.getId().equals(finalCourse.getId())).findFirst().orElse(null);
         assertThat(courseInList).isNotNull();
@@ -1078,8 +1079,8 @@ public class CourseTestService {
         courseActive = courseRepo.save(courseActive);
         courseNotActivePast = courseRepo.save(courseNotActivePast);
         courseNotActiveFuture = courseRepo.save(courseNotActiveFuture);
-        List<CourseForDashboardDTO> coursesForDashboard = request.getList("/api/courses/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
-        List<Course> courses = coursesForDashboard.stream().map(CourseForDashboardDTO::course).toList();
+        var coursesForDashboard = request.get("/api/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
+        List<Course> courses = coursesForDashboard.courses().stream().map(CourseForDashboardDTO::course).toList();
 
         long courseNotActivePastId = courseNotActivePast.getId();
         long courseNotActiveFutureId = courseNotActiveFuture.getId();
@@ -2947,14 +2948,20 @@ public class CourseTestService {
 
         // Active Users
         int periodIndex = 0;
+        int periodSize = 8;
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("periodIndex", Integer.toString(periodIndex));
+        parameters.add("periodSize", Integer.toString(periodSize));
 
-        var activeStudents = request.get("/api/courses/" + course1.getId() + "/statistics", HttpStatus.OK, Integer[].class, parameters);
+        Integer[] activeStudents = request.get("/api/courses/" + course1.getId() + "/statistics", HttpStatus.OK, Integer[].class, parameters);
 
         assertThat(activeStudents).isNotNull();
         assertThat(activeStudents).hasSize(3);
 
+        course1.setStartDate(now.plusWeeks(10));
+        course1.setEndDate(now.plusWeeks(20));
+        activeStudents = request.get("/api/courses/" + course1.getId() + "/statistics", HttpStatus.OK, Integer[].class, parameters);
+        assertThat(activeStudents).isNotNull();
     }
 
     // Test
@@ -3002,7 +3009,6 @@ public class CourseTestService {
         assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration()).isNotNull();
         assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getLtiKey()).isNotNull();
         assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getLtiSecret()).isNotNull();
-        assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getRegistrationId()).isNotNull();
         assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getUserPrefix()).isEqualTo(courseWithOnlineConfiguration.getShortName());
     }
 
@@ -3018,7 +3024,6 @@ public class CourseTestService {
         assertThat(updatedCourse.getOnlineCourseConfiguration()).isNotNull();
         assertThat(updatedCourse.getOnlineCourseConfiguration().getLtiKey()).isNotNull();
         assertThat(updatedCourse.getOnlineCourseConfiguration().getLtiSecret()).isNotNull();
-        assertThat(updatedCourse.getOnlineCourseConfiguration().getRegistrationId()).isNotNull();
         assertThat(updatedCourse.getOnlineCourseConfiguration().getUserPrefix()).isEqualTo(updatedCourse.getShortName());
     }
 
@@ -3053,7 +3058,6 @@ public class CourseTestService {
         assertThat(ocConfiguration).isNotNull();
         assertThat(ocConfiguration.getLtiKey()).isNotNull();
         assertThat(ocConfiguration.getLtiSecret()).isNotNull();
-        assertThat(ocConfiguration.getRegistrationId()).isNotNull();
         assertThat(ocConfiguration.getUserPrefix()).isEqualTo(actualCourse.getShortName());
     }
 
@@ -3112,26 +3116,6 @@ public class CourseTestService {
         request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
     }
 
-    public void testInvalidOnlineCourseConfigurationNonUniqueRegistrationId() throws Exception {
-        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
-        course1.setOnlineCourse(true);
-        MvcResult result1 = request.getMvc().perform(buildCreateCourse(course1)).andExpect(status().isCreated()).andReturn();
-        Course createdCourse1 = objectMapper.readValue(result1.getResponse().getContentAsString(), Course.class);
-
-        Course course2 = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
-        course2.setOnlineCourse(true);
-        MvcResult result2 = request.getMvc().perform(buildCreateCourse(course2)).andExpect(status().isCreated()).andReturn();
-        Course createdCourse2 = objectMapper.readValue(result2.getResponse().getContentAsString(), Course.class);
-
-        Course createdCourse1WithOcConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationElseThrow(createdCourse1.getId());
-        Course createdCourse2WithOcConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationElseThrow(createdCourse2.getId());
-        String courseId = createdCourse2.getId().toString();
-
-        OnlineCourseConfiguration ocConfiguration = createdCourse2WithOcConfiguration.getOnlineCourseConfiguration();
-        ocConfiguration.setRegistrationId(createdCourse1WithOcConfiguration.getOnlineCourseConfiguration().getRegistrationId());
-        request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
-    }
-
     public void testUpdateValidOnlineCourseConfigurationAsStudent_forbidden() throws Exception {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
         course.setOnlineCourse(true);
@@ -3179,10 +3163,6 @@ public class CourseTestService {
         ocConfiguration.setLtiKey("key");
         ocConfiguration.setLtiSecret("secret");
         ocConfiguration.setUserPrefix("prefix");
-        ocConfiguration.setRegistrationId("random");
-        ocConfiguration.setAuthorizationUri("authUri");
-        ocConfiguration.setTokenUri("tokenUri");
-        ocConfiguration.setJwkSetUri("jwksUri");
 
         String courseId = course.getId().toString();
 
@@ -3254,7 +3234,7 @@ public class CourseTestService {
         byte[] iconBytes = "icon".getBytes();
         MockMultipartFile iconFile = new MockMultipartFile("file", "icon.png", MediaType.APPLICATION_JSON_VALUE, iconBytes);
         Course savedCourseWithFile = request.putWithMultipartFile("/api/courses/" + savedCourse.getId(), savedCourse, "course", iconFile, Course.class, HttpStatus.OK, null);
-        Path path = filePathService.actualPathForPublicPath(URI.create(savedCourseWithFile.getCourseIcon()));
+        Path path = FilePathService.actualPathForPublicPath(URI.create(savedCourseWithFile.getCourseIcon()));
 
         savedCourseWithFile.setCourseIcon(null);
         request.putWithMultipartFile("/api/courses/" + savedCourseWithFile.getId(), savedCourseWithFile, "course", null, Course.class, HttpStatus.OK, null);

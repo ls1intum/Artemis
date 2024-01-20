@@ -7,6 +7,7 @@ import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.User;
@@ -27,6 +28,7 @@ public class ConversationNotification extends Notification {
 
     @ManyToOne
     @JoinColumn(name = "conversation_id")
+    @JsonIgnore
     private Conversation conversation;
 
     public ConversationNotification() {
@@ -39,7 +41,7 @@ public class ConversationNotification extends Notification {
         this.setNotificationDate(ZonedDateTime.now());
         this.setTitle(title);
         this.setText(text);
-        this.setAuthor(author);
+        this.setAuthor(new User(author.getId(), null, author.getFirstName(), author.getLastName(), null, null));
         this.setPlaceholderValues(placeholderValues);
         this.setTextIsPlaceholder(textIsPlaceholder);
     }

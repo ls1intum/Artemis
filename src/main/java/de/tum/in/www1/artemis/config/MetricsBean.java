@@ -45,7 +45,7 @@ import io.micrometer.core.instrument.*;
 @Component
 public class MetricsBean {
 
-    private final Logger log = LoggerFactory.getLogger(MetricsBean.class);
+    private static final Logger log = LoggerFactory.getLogger(MetricsBean.class);
 
     private static final String ARTEMIS_HEALTH_NAME = "artemis.health";
 

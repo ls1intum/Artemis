@@ -13,7 +13,7 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { ReactionService } from 'app/shared/metis/reaction.service';
 import { MockReactionService } from '../../helpers/mocks/service/mock-reaction.service';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import { CourseWideContext, DisplayPriority, MetisPostAction, MetisWebsocketChannelPrefix, PageType, PostContextFilter } from 'app/shared/metis/metis.util';
+import { DisplayPriority, MetisPostAction, PageType, PostContextFilter } from 'app/shared/metis/metis.util';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
@@ -26,12 +26,10 @@ import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import { Subject, of } from 'rxjs';
 import {
     metisCourse,
-    metisCoursePostsWithCourseWideContext,
     metisExam,
     metisExercise,
-    metisExercisePosts,
     metisLecture,
-    metisLecturePosts,
+    metisLectureChannelDto,
     metisPostExerciseUser1,
     metisPostInChannel,
     metisReactionUser2,
@@ -44,6 +42,8 @@ import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/chan
 import { ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { NotificationService } from 'app/shared/notification/notification.service';
+import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 
 describe('Metis Service', () => {
     let metisService: MetisService;
@@ -68,6 +68,7 @@ describe('Metis Service', () => {
             providers: [
                 MockProvider(SessionStorageService),
                 MockProvider(ConversationService),
+                { provide: NotificationService, useClass: MockNotificationService },
                 { provide: MetisService, useClass: MetisService },
                 { provide: ReactionService, useClass: MockReactionService },
                 { provide: PostService, useClass: MockPostService },
@@ -182,62 +183,6 @@ describe('Metis Service', () => {
         it('should update post tags', () => {
             const postServiceSpy = jest.spyOn(postService, 'getAllPostTagsByCourseId');
             metisService.updateCoursePostTags();
-            expect(postServiceSpy).toHaveBeenCalledOnce();
-        });
-
-        it('should get posts for lecture filter', () => {
-            const postServiceSpy = jest.spyOn(postService, 'getPosts');
-            metisService.getFilteredPosts({ lectureIds: [metisLecture.id!] }, false);
-            expect(postServiceSpy).toHaveBeenCalledOnce();
-
-            // don't change filter
-            metisService.getFilteredPosts({ lectureIds: [metisLecture.id!] }, false);
-            expect(postServiceSpy).toHaveBeenCalledOnce();
-
-            // change filter
-            metisService.getFilteredPosts({ lectureIds: undefined, exerciseIds: [metisExercise.id!] }, false);
-            expect(postServiceSpy).toHaveBeenCalledTimes(2);
-
-            // change filter
-            metisService.getFilteredPosts(
-                {
-                    lectureIds: undefined,
-                    exerciseIds: undefined,
-                    courseId: metisCourse.id,
-                },
-                false,
-            );
-            expect(postServiceSpy).toHaveBeenCalledTimes(3);
-        });
-
-        it('should get posts for exercise filter', () => {
-            const postServiceSpy = jest.spyOn(postService, 'getPosts');
-            metisService.getFilteredPosts({ exerciseIds: [metisExercise.id!] }, false);
-            expect(postServiceSpy).toHaveBeenCalledOnce();
-
-            // don't change filter
-            metisService.getFilteredPosts({ exerciseIds: [metisExercise.id!] }, false);
-            expect(postServiceSpy).toHaveBeenCalledOnce();
-
-            // change filter
-            metisService.getFilteredPosts({ lectureIds: [metisLecture.id!], exerciseIds: undefined }, false);
-            expect(postServiceSpy).toHaveBeenCalledTimes(2);
-
-            // change filter
-            metisService.getFilteredPosts(
-                {
-                    lectureIds: undefined,
-                    exerciseIds: undefined,
-                    courseWideContexts: [CourseWideContext.RANDOM],
-                },
-                false,
-            );
-            expect(postServiceSpy).toHaveBeenCalledTimes(3);
-        });
-
-        it('should get posts for course-context filter', () => {
-            const postServiceSpy = jest.spyOn(postService, 'getPosts');
-            metisService.getFilteredPosts({ courseWideContexts: [CourseWideContext.RANDOM] });
             expect(postServiceSpy).toHaveBeenCalledOnce();
         });
 
@@ -360,14 +305,6 @@ describe('Metis Service', () => {
         expect(metisUserIsAuthorOfPostingReturn).toBeFalse();
     });
 
-    it('should set course information correctly and invoke an update of the post tags in this course', () => {
-        const updateCoursePostTagsSpy = jest.spyOn(metisService, 'updateCoursePostTags');
-        metisService.setCourse(course);
-        const getCourseReturn = metisService.getCourse();
-        expect(getCourseReturn).toEqual(course);
-        expect(updateCoursePostTagsSpy).toHaveBeenCalledOnce();
-    });
-
     it('should not fetch course post tags if communication is not enabled', () => {
         const updateCoursePostTagsSpy = jest.spyOn(metisService, 'updateCoursePostTags');
         course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.MESSAGING_ONLY;
@@ -386,47 +323,10 @@ describe('Metis Service', () => {
         expect(getCourseReturn).toEqual(newCourse);
     });
 
-    it('should create empty post for a course-wide context', () => {
-        const emptyPost = metisService.createEmptyPostForContext(CourseWideContext.ORGANIZATION, undefined, undefined);
-        expect(emptyPost.courseWideContext).toEqual(CourseWideContext.ORGANIZATION);
-        expect(emptyPost.exercise).toBeUndefined();
-        expect(emptyPost.lecture).toBeUndefined();
-    });
-
-    it('should create empty post for a exercise context', () => {
-        const emptyPost = metisService.createEmptyPostForContext(undefined, metisExercise, undefined);
-        expect(emptyPost.courseWideContext).toBeUndefined();
-        expect(emptyPost.exercise).toEqual({
-            id: metisExercise.id,
-            title: metisExercise.title,
-            type: metisExercise.type,
-        });
-        expect(emptyPost.lecture).toBeUndefined();
-    });
-
-    it('should create empty post for a lecture context', () => {
-        const emptyPost = metisService.createEmptyPostForContext(undefined, undefined, metisLecture);
-        expect(emptyPost.courseWideContext).toBeUndefined();
-        expect(emptyPost.exercise).toBeUndefined();
-        expect(emptyPost.lecture).toEqual({ ...metisLecture, attachments: undefined });
-    });
-
     it('should determine the link components for a reference to a post with course-wide context', () => {
         metisService.setCourse(course);
-        const referenceLinkComponents = metisService.getLinkForPost(metisCoursePostsWithCourseWideContext[0]);
+        const referenceLinkComponents = metisService.getLinkForPost();
         expect(referenceLinkComponents).toEqual(['/courses', metisCourse.id, 'discussion']);
-    });
-
-    it('should determine the link components for a reference to a post with exercise context', () => {
-        metisService.setCourse(course);
-        const referenceLinkComponents = metisService.getLinkForPost(metisExercisePosts[0]);
-        expect(referenceLinkComponents).toEqual(['/courses', metisCourse.id, 'exercises', metisExercise.id]);
-    });
-
-    it('should determine the link components for a reference to a post with lecture context', () => {
-        metisService.setCourse(course);
-        const referenceLinkComponents = metisService.getLinkForPost(metisLecturePosts[0]);
-        expect(referenceLinkComponents).toEqual(['/courses', metisCourse.id, 'lectures', metisLecture.id]);
     });
 
     it('should determine the router link required for referencing an exercise page within posting', () => {
@@ -470,49 +370,25 @@ describe('Metis Service', () => {
         expect(generalRouterLink).toBeUndefined();
     });
 
-    it('should determine the query param for a reference to a post with course-wide context', () => {
+    it('should determine the query param for a reference to a post in a conversation', () => {
         metisService.setCourse(course);
-        const referenceLinkComponents = metisService.getQueryParamsForPost(metisCoursePostsWithCourseWideContext[0]);
+        const referenceLinkComponents = metisService.getQueryParamsForPost(metisPostInChannel);
         expect(referenceLinkComponents).toEqual({
-            searchText: `#${metisCoursePostsWithCourseWideContext[0].id}`,
+            searchText: `#${metisPostInChannel.id}`,
         });
     });
 
-    it('should determine the query param for a reference to a post with exercise context', () => {
+    it('should determine the query param for a reference to conversation message', () => {
         metisService.setCourse(course);
-        const referenceLinkComponents = metisService.getQueryParamsForPost(metisExercisePosts[0]);
-        expect(referenceLinkComponents).toEqual({
-            postId: metisExercisePosts[0].id,
-        });
+        const referenceLinkComponents = metisService.getQueryParamsForPost({ id: 1 } as Post);
+        expect(referenceLinkComponents).toBeEmpty();
     });
 
-    it('should determine the query param for a reference to a post with lecture context', () => {
+    it('should determine context information for a conversation message', () => {
         metisService.setCourse(course);
-        const referenceLinkComponents = metisService.getQueryParamsForPost(metisLecturePosts[0]);
-        expect(referenceLinkComponents).toEqual({
-            postId: metisLecturePosts[0].id,
-        });
-    });
-
-    it('should determine context information for a post with course-wide context', () => {
-        metisService.setCourse(course);
-        const contextInformation = metisService.getContextInformation(metisCoursePostsWithCourseWideContext[0]);
-        expect(contextInformation.routerLinkComponents).toBeUndefined();
-        expect(contextInformation.displayName).toBeDefined();
-    });
-
-    it('should determine context information for a post with exercise context', () => {
-        metisService.setCourse(course);
-        const contextInformation = metisService.getContextInformation(metisExercisePosts[0]);
-        expect(contextInformation.routerLinkComponents).toEqual(['/courses', metisCourse.id, 'exercises', metisExercisePosts[0].exercise!.id]);
-        expect(contextInformation.displayName).toEqual(metisExercisePosts[0].exercise!.title);
-    });
-
-    it('should determine context information for a post with lecture context', () => {
-        metisService.setCourse(course);
-        const contextInformation = metisService.getContextInformation(metisLecturePosts[0]);
-        expect(contextInformation.routerLinkComponents).toEqual(['/courses', metisCourse.id, 'lectures', metisLecturePosts[0].lecture!.id]);
-        expect(contextInformation.displayName).toEqual(metisLecturePosts[0].lecture!.title);
+        const contextInformation = metisService.getContextInformation(metisPostInChannel);
+        expect(contextInformation.routerLinkComponents).toEqual(['/courses', metisCourse.id, 'messages']);
+        expect(contextInformation.displayName).not.toBeEmpty();
     });
 
     describe('Handle websocket related functionality', () => {
@@ -527,11 +403,12 @@ describe('Metis Service', () => {
             websocketServiceReceiveStub.mockReturnValue(of({ post: metisPostInChannel, action: MetisPostAction.CREATE } as MetisPostDTO));
             // setup subscription
             metisService.getFilteredPosts({ courseWideChannelIds: [metisPostInChannel.conversation!.id!] });
-            expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `courses/${metisCourse.id}`);
-            expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
+            metisServiceGetFilteredPostsSpy.mockReset();
+            expect(metisServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
+            expect(websocketServiceSubscribeSpy).not.toHaveBeenCalled();
             // receive message on channel
             tick();
-            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ courseWideChannelIds: [metisPostInChannel.conversation!.id!] }, false);
+            expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
         }));
 
         it('should create websocket subscription when posts with exercise context are initially retrieved from DB', fakeAsync(() => {
@@ -539,39 +416,37 @@ describe('Metis Service', () => {
             metisService.setPageType(PageType.OVERVIEW);
             // setup subscription
             metisService.getFilteredPosts({ courseWideChannelIds: [metisPostInChannel.conversation!.id!], page: 0, pageSize: ITEMS_PER_PAGE });
-            expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `courses/${metisCourse.id}`);
-            expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
+            metisServiceGetFilteredPostsSpy.mockReset();
+            expect(metisServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
+            expect(websocketServiceSubscribeSpy).not.toHaveBeenCalled();
             // receive message on channel
             tick();
-            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith(
-                { courseWideChannelIds: [metisPostInChannel.conversation!.id!], page: 0, pageSize: ITEMS_PER_PAGE },
-                false,
-                undefined,
-            );
+            expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
         }));
 
         it('should create websocket subscription when posts with course-wide context are initially retrieved from DB', fakeAsync(() => {
             websocketServiceReceiveStub.mockReturnValue(of({ post: metisPostInChannel, action: MetisPostAction.UPDATE } as MetisPostDTO));
             // setup subscription
             metisService.getFilteredPosts({ courseWideChannelIds: [metisPostInChannel.conversation!.id!] });
-            expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `courses/${metisCourse.id}`);
-            expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
+            metisServiceGetFilteredPostsSpy.mockReset();
+
+            expect(metisServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
+            expect(websocketServiceSubscribeSpy).not.toHaveBeenCalled();
             // receive message on channel
             tick();
-            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ courseWideChannelIds: [metisPostInChannel.conversation!.id!] }, false);
+            expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
         }));
 
         it('should not create new subscription if already exists', fakeAsync(() => {
             websocketServiceReceiveStub.mockReturnValue(of({ post: metisPostInChannel, action: MetisPostAction.DELETE } as MetisPostDTO));
             // setup subscription for the first time
             metisService.getFilteredPosts({ courseWideChannelIds: [metisPostInChannel.conversation!.id!] });
-            expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `courses/${metisCourse.id}`);
-            // trigger createWebsocketSubscription for the second time with the same context filter. i.e. same channel
-            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ courseWideChannelIds: [metisPostInChannel.conversation!.id!] }, false);
             metisServiceGetFilteredPostsSpy.mockReset();
+            expect(metisServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
+            expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             metisService.getFilteredPosts({ courseWideChannelIds: [metisPostInChannel.conversation!.id!] });
             expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledExactlyOnceWith({ courseWideChannelIds: [metisPostInChannel.conversation!.id!] });
-            expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
+            expect(websocketServiceSubscribeSpy).not.toHaveBeenCalled();
         }));
 
         it('subscribes to broadcast topic for course-wide channels', fakeAsync(() => {
@@ -583,8 +458,8 @@ describe('Metis Service', () => {
                 type: ConversationType.CHANNEL,
                 isCourseWide: true,
             } as ChannelDTO);
-            expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `courses/${metisCourse.id}`);
-            expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
+            expect(metisServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
+            expect(websocketServiceSubscribeSpy).not.toHaveBeenCalled();
             // receive message on channel
             tick();
             expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ conversationId: 1, page: 0, pageSize: ITEMS_PER_PAGE }, true, {
@@ -603,8 +478,8 @@ describe('Metis Service', () => {
                 type: ConversationType.CHANNEL,
                 isCourseWide: false,
             } as ChannelDTO);
-            expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(`/user${MetisWebsocketChannelPrefix}courses/${metisCourse.id}/conversations/1`);
-            expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
+            expect(metisServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
+            expect(websocketServiceSubscribeSpy).not.toHaveBeenCalled();
             // receive message on channel
             tick();
             expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ conversationId: 1, page: 0, pageSize: ITEMS_PER_PAGE }, true, {
@@ -627,21 +502,47 @@ describe('Metis Service', () => {
                 metisService.setPageType(PageType.OVERVIEW);
 
                 // set currentPostContextFilter appropriately
-                metisService.getFilteredPosts({ conversationId: mockPostDTO.post.conversation?.id } as PostContextFilter);
+                metisService.getFilteredPosts({ plagiarismCaseId: 1 } as PostContextFilter);
 
                 // Ensure subscribe to websocket was called
-                expect(websocketService.subscribe).toHaveBeenCalledOnce();
+                expect(websocketService.subscribe).toHaveBeenCalledExactlyOnceWith('/topic/metis/plagiarismCase/1');
 
                 // Emulate receiving a message
                 const getPostsSpy = jest.spyOn(postService, 'getPosts');
                 const markAsReadSpy = jest.spyOn(conversationService, 'markAsRead');
                 mockReceiveObservable.next(mockPostDTO);
 
-                if (action === MetisPostAction.CREATE) {
-                    expect(markAsReadSpy).toHaveBeenCalledOnce();
-                } else {
-                    expect(markAsReadSpy).not.toHaveBeenCalled();
-                }
+                expect(markAsReadSpy).not.toHaveBeenCalled();
+
+                // Ensure getPosts() was not called
+                expect(getPostsSpy).not.toHaveBeenCalled();
+            },
+        );
+
+        it.each([MetisPostAction.CREATE, MetisPostAction.UPDATE, MetisPostAction.DELETE])(
+            'should not call postService.getPosts() for new or updated plagiarism posts received over WebSocket',
+            (action: MetisPostAction) => {
+                // Setup
+                const mockPostDTO = {
+                    post: metisPostInChannel,
+                    action,
+                };
+                const mockReceiveObservable = new Subject();
+                websocketServiceReceiveStub.mockReturnValue(mockReceiveObservable.asObservable());
+                metisService.setPageType(PageType.OVERVIEW);
+
+                // set currentPostContextFilter appropriately
+                metisService.getFilteredPosts({ conversationId: mockPostDTO.post.conversation?.id } as PostContextFilter);
+
+                // Ensure subscribe to websocket was not called
+                expect(websocketService.subscribe).not.toHaveBeenCalled();
+
+                // Emulate receiving a message
+                const getPostsSpy = jest.spyOn(postService, 'getPosts');
+                const markAsReadSpy = jest.spyOn(conversationService, 'markAsRead');
+                mockReceiveObservable.next(mockPostDTO);
+
+                expect(markAsReadSpy).not.toHaveBeenCalled();
 
                 // Ensure getPosts() was not called
                 expect(getPostsSpy).not.toHaveBeenCalled();
@@ -688,5 +589,10 @@ describe('Metis Service', () => {
             });
             tick();
         }));
+
+        it('should return current conversation', () => {
+            metisService.getFilteredPosts({ conversationId: metisLectureChannelDto.id } as PostContextFilter, false, metisLectureChannelDto);
+            expect(metisService.getCurrentConversation()).toBe(metisLectureChannelDto);
+        });
     });
 });

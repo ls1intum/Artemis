@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 @RequestMapping("api/")
 public class CodeHintResource {
 
-    private final Logger log = LoggerFactory.getLogger(CodeHintResource.class);
+    private static final Logger log = LoggerFactory.getLogger(CodeHintResource.class);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -120,6 +120,10 @@ public class CodeHintResource {
         var codeHint = codeHintRepository.findByIdWithSolutionEntriesElseThrow(codeHintId);
         if (!Objects.equals(codeHint.getExercise().getId(), exercise.getId())) {
             throw new ConflictException("The code hint does not belong to the exercise", "CodeHint", "codeHintExerciseConflict");
+        }
+
+        if (codeHint.getSolutionEntries().isEmpty()) {
+            throw new ConflictException("The code hint does not have any solution entries", "CodeHint", "codeHintNoSolutionEntries");
         }
 
         codeHint = codeHintService.generateDescriptionWithIris(codeHint);

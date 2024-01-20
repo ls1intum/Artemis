@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.config.migration.entries;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -11,9 +12,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
-import com.google.common.collect.Lists;
-
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 
@@ -24,13 +24,11 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 @Component
 public class MigrationEntry20231206_163000 extends MigrationEntry {
 
-    private static final int BATCH_SIZE = 100;
-
     private static final int THREADS = 10;
 
     private static final List<String> MIGRATABLE_PROFILES = List.of("bamboo");
 
-    private final Logger log = LoggerFactory.getLogger(MigrationEntry20231206_163000.class);
+    private static final Logger log = LoggerFactory.getLogger(MigrationEntry20231206_163000.class);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -64,32 +62,26 @@ public class MigrationEntry20231206_163000 extends MigrationEntry {
         log.info("Migrating {} programming exercises. This might take a while.", exercisesToMigrate.size());
 
         ExecutorService executorService = Executors.newFixedThreadPool(THREADS);
+        List<CompletableFuture<?>> allFutures = new ArrayList<>();
 
-        var chunks = Lists.partition(exercisesToMigrate, BATCH_SIZE);
-
-        for (var chunk : chunks) {
-            CompletableFuture<?>[] allFutures = new CompletableFuture[Math.min(THREADS, chunk.size())];
-
-            for (int i = 0; i < chunk.size(); i++) {
-                var exercise = chunk.get(i);
-                allFutures[i] = CompletableFuture.runAsync(() -> {
-                    boolean checkoutSolutionRepository = false;
-                    try {
-                        checkoutSolutionRepository = ciMigrationService.get().hasSolutionRepository(exercise.getTemplateBuildPlanId());
-                    }
-                    catch (Exception e) {
-                        log.error("Error while checking if exercise {} needs to check out solution repository in build plan, setting checkoutSolutionRepository to false",
-                                exercise.getId(), e);
-                    }
-                    exercise.setCheckoutSolutionRepository(checkoutSolutionRepository);
-                    log.debug("Migrated exercise {}", exercise.getId());
-                    programmingExerciseRepository.save(exercise);
-                }, executorService);
-            }
-
-            // Wait until all currently loaded exercises are migrated to avoid loading too many exercises at the same time.
-            CompletableFuture.allOf(allFutures).join();
+        for (ProgrammingExercise exercise : exercisesToMigrate) {
+            allFutures.add(CompletableFuture.runAsync(() -> {
+                boolean checkoutSolutionRepository = false;
+                try {
+                    checkoutSolutionRepository = ciMigrationService.get().hasSolutionRepository(exercise.getTemplateBuildPlanId());
+                }
+                catch (Exception e) {
+                    log.error("Error while checking if exercise {} needs to check out solution repository in build plan, setting checkoutSolutionRepository to false",
+                            exercise.getId(), e);
+                }
+                exercise.setCheckoutSolutionRepository(checkoutSolutionRepository);
+                log.debug("Migrated exercise {}", exercise.getId());
+                programmingExerciseRepository.save(exercise);
+            }, executorService));
         }
+
+        // Wait until all currently loaded exercises are migrated to avoid loading too many exercises at the same time.
+        CompletableFuture.allOf(allFutures.toArray(new CompletableFuture[] {})).join();
 
         executorService.shutdown();
     }

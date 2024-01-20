@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.service.connectors.apollon.dto.ApollonModelDTO;
 @Profile("apollon")
 public class ApollonConversionResource {
 
-    private final Logger log = LoggerFactory.getLogger(ApollonConversionResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ApollonConversionResource.class);
 
     private final ApollonConversionService apollonConversionService;
 

@@ -17,7 +17,6 @@ import { isCommunicationEnabled } from 'app/entities/course.model';
 export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     @Input() content?: string;
     @Input() previewMode?: boolean;
-    @Input() isAnnouncement = false;
     @Input() author?: User;
     @Input() isEdited = false;
     @Input() posting?: Posting;
@@ -99,7 +98,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     const referencedPostInLoadedPosts = this.currentlyLoadedPosts.find((post: Post) => post.id! === +referencedId);
                     referenceStr = this.content.substring(patternMatch.startIndex, patternMatch.endIndex);
                     if (isCommunicationEnabled(this.metisService.getCourse())) {
-                        linkToReference = this.metisService.getLinkForPost(referencedPostInLoadedPosts);
+                        linkToReference = this.metisService.getLinkForPost();
                         queryParams = referencedPostInLoadedPosts ? this.metisService.getQueryParamsForPost(referencedPostInLoadedPosts) : ({ searchText: referenceStr } as Params);
                     }
                 } else if (

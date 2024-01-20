@@ -16,10 +16,11 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.CoursesForDashboardDTO;
 
 class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
 
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private static final Logger log = LoggerFactory.getLogger(DatabaseQueryCountTest.class);
 
     private static final String TEST_PREFIX = "databasequerycount";
 
@@ -47,23 +48,25 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
     void testGetAllCoursesForDashboardRealisticQueryCount() throws Exception {
         // Tests the amount of DB calls for a 'realistic' call to courses/for-dashboard. We should aim to maintain or lower the amount of DB calls, and be aware if they increase
         // TODO: add team exercises, do not make all quizzes active
+        // TODO: add 1. tutorial groups with a 2. tutorial group configuration, 3. competencies and 4. prerequisites and make sure those are not loaded in the database
         var courses = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, true, true, NUMBER_OF_TUTORS);
 
         assertThatDb(() -> {
             log.info("Start courses for dashboard call for multiple courses");
-            var userCourses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
+            var userCourses = request.get("/api/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
             log.info("Finish courses for dashboard call for multiple courses");
             return userCourses;
-        }).hasBeenCalledAtMostTimes(11);
+        }).hasBeenCalledAtMostTimes(10);
         // 1 DB call to get the user from the DB
-        // 1 DB call to get the course with exercise, lectures
+        // 1 DB call to get all active courses
         // 1 DB call to load all exercises
-        // 1 DB call to load all exams
-        // 2 DB calls to get the quiz batches for active quiz exercises
-        // 1 DB call to get all presentation configurations via grading scales
+        // 1 DB call to count the exams
+        // 1 DB call to count the lectures
         // 1 DB call to get all individual student participations with submissions and results
         // 1 DB call to get all team student participations with submissions and results
         // 1 DB call to get all plagiarism cases
+        // 1 DB call to get all grading scales
+        // 1 DB call to get the active exams
 
         var course = courses.get(0);
         assertThatDb(() -> {
@@ -71,20 +74,16 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
             var userCourse = request.get("/api/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, Course.class);
             log.info("Finish courses for dashboard call for one course");
             return userCourse;
-        }).hasBeenCalledAtMostTimes(15);
+        }).hasBeenCalledAtMostTimes(11);
         // 1 DB call to get the user from the DB
-        // 2 DB calls to get the course with exercise, lectures, exams
-        // 1 DB call to load all exercises
+        // 1 DB call to get the course with lectures
+        // 1 DB call to load all exercises with categories
         // 1 DB call to load all exams
-        // 1 DB call to load all competencies
-        // 1 DB call to load all prerequisite
-        // 1 DB call to load all tutorial groups
-        // 1 DB call to load the tutorial group configuration
-        // 1 DB call to get the presentation configuration via grading scale
+        // 3 DB calls to load the numbers of competencies, prerequisites and tutorial groups
         // 1 DB call to get all individual student participations with submissions and results
         // 1 DB call to get all team student participations with submissions and results
-        // 2 DB calls to get the quiz batches for active quiz exercises
         // 1 DB call to get all plagiarism cases
+        // 1 DB call to get the grading scale
     }
 
     @Test
@@ -92,8 +91,8 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
     void testExamQueryCount() throws Exception {
         StudentExam studentExam = examUtilService.addStudentExamForActiveExamWithUser(TEST_PREFIX + "student1");
 
-        assertThatDb(() -> startWorkingOnExam(studentExam)).hasBeenCalledAtMostTimes(getStartWorkingOnExamExpectedTotalQueryCount());
-        assertThatDb(() -> submitExam(studentExam)).hasBeenCalledAtMostTimes(getSubmitExamExpectedTotalQueryCount());
+        assertThatDb(() -> startWorkingOnExam(studentExam)).hasBeenCalledAtMostTimes(7);
+        assertThatDb(() -> submitExam(studentExam)).hasBeenCalledAtMostTimes(3);
     }
 
     private StudentExam startWorkingOnExam(StudentExam studentExam) throws Exception {
@@ -106,27 +105,5 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
         request.postWithoutLocation("/api/courses/" + studentExam.getExam().getCourse().getId() + "/exams/" + studentExam.getExam().getId() + "/student-exams/submit", studentExam,
                 HttpStatus.OK, null);
         return null;
-    }
-
-    private long getStartWorkingOnExamExpectedTotalQueryCount() {
-        final int findUserWithGroupsAndAuthoritiesQueryCount = 1;
-        final int findStudentExamByIdWithExercisesQueryCount = 1;
-        final int findExamByIdWithCourseQueryCount = 1;
-        final int updateStudentExamQueryCount = 1;
-        final int findStudentParticipationsByStudentExamWithSubmissionsResultQueryCount = 1;
-        final int createExamSessionQueryCount = 1;
-        final int findExamSessionCountByStudentExamIdQueryCount = 1;
-        return findUserWithGroupsAndAuthoritiesQueryCount + findStudentExamByIdWithExercisesQueryCount + findExamByIdWithCourseQueryCount + updateStudentExamQueryCount
-                + findStudentParticipationsByStudentExamWithSubmissionsResultQueryCount + createExamSessionQueryCount + findExamSessionCountByStudentExamIdQueryCount;
-    }
-
-    private long getSubmitExamExpectedTotalQueryCount() {
-        final int findUserWithGroupsAndAuthoritiesQueryCount = 1;
-        final int findStudentExamByIdWithExercisesQueryCount = 1;
-        final int findExamSessionByStudentExamIdQueryCount = 1;
-        final int updateStudentExamQueryCount = 1;
-        final int findStudentParticipationsByStudentExamWithSubmissionsResultQueryCount = 1;
-        return findUserWithGroupsAndAuthoritiesQueryCount + findStudentExamByIdWithExercisesQueryCount + findExamSessionByStudentExamIdQueryCount + updateStudentExamQueryCount
-                + findStudentParticipationsByStudentExamWithSubmissionsResultQueryCount;
     }
 }

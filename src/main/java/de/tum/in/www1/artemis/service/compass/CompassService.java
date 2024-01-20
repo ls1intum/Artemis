@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 @Service
 public class CompassService {
 
-    private final Logger log = LoggerFactory.getLogger(CompassService.class);
+    private static final Logger log = LoggerFactory.getLogger(CompassService.class);
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 

@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { sum } from 'lodash-es';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ExportToCsv } from 'export-to-csv';
+import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { Exercise, ExerciseType, IncludedInOverallScore, exerciseTypes } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../manage/course-management.service';
@@ -617,9 +617,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         rows.push(this.generateExportRowSuccessfulParticipation(customCsvOptions));
 
         if (customCsvOptions) {
-            // required because the currently used library for exporting to csv does not quote the header fields (keys)
-            const quotedKeys = keys.map((key) => customCsvOptions.quoteStrings + key + customCsvOptions.quoteStrings);
-            this.exportAsCsv(quotedKeys, rows, customCsvOptions);
+            this.exportAsCsv(keys, rows, customCsvOptions);
         } else {
             this.exportAsExcel(keys, rows);
         }
@@ -657,12 +655,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             filename: `${this.course.title} Scores`,
             useTextFile: false,
             useBom: true,
-            headers: keys,
+            columnHeaders: keys,
         };
-
-        const combinedOptions = Object.assign(generalExportOptions, customOptions);
-        const csvExporter = new ExportToCsv(combinedOptions);
-        csvExporter.generateCsv(rows); // includes download
+        const csvExportConfig = mkConfig(Object.assign(generalExportOptions, customOptions));
+        const csvData = generateCsv(csvExportConfig)(rows);
+        download(csvExportConfig)(csvData);
     }
 
     /**

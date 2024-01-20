@@ -20,26 +20,16 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import de.tum.in.www1.artemis.assessment.GradingScaleFactory;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.GradingScale;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.GraphType;
-import de.tum.in.www1.artemis.domain.enumeration.SpanType;
-import de.tum.in.www1.artemis.domain.enumeration.StatisticsView;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.GradingScaleRepository;
-import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -83,6 +73,9 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
     private Course course;
 
     private TextExercise exercise;
@@ -111,7 +104,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
         course.addExercises(exercise);
         textExerciseRepository.save(exercise);
         Post post = new Post();
-        post.setExercise(exercise);
+        post.setConversation(exerciseUtilService.addChannelToExercise(exercise));
         post.setContent("Test Student Question 1");
         post.setVisibleForStudents(true);
         post.setCreationDate(ZonedDateTime.now().minusSeconds(11));
@@ -262,7 +255,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
         participationUtilService.createParticipationSubmissionAndResult(firstTextExerciseId, student2, 10.0, 0.0, 100, true);
 
         Post post = new Post();
-        post.setExercise(textExercise);
+        post.setConversation(exerciseUtilService.addChannelToExercise(textExercise));
         post.setContent("Test Student Question 1");
         post.setVisibleForStudents(true);
         post.setCreationDate(ZonedDateTime.now().minusHours(2));

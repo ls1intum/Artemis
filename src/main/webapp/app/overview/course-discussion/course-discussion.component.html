@@ -35,23 +35,21 @@
                                 placeholder="{{ 'artemisApp.metis.overview.courseFilterExplanation' | artemisTranslate: { title: course.title } }}"
                                 multiple
                             >
-                                @if (formGroup.get('context')?.value?.length) {
-                                    <ng-container>
-                                        <mat-select-trigger>
-                                            {{ formGroup.get('context')?.value?.[0].title }}
-                                            @if ((formGroup.get('context')?.value?.length || 0) > 1) {
-                                                <span>
-                                                    (+{{ (formGroup.get('context')?.value?.length || 0) - 1 }}
-                                                    {{
-                                                        formGroup.get('context')?.value?.length === 2
-                                                            ? ('artemisApp.metis.overview.one_extra_context' | artemisTranslate)
-                                                            : ('artemisApp.metis.overview.multiple_extra_contexts' | artemisTranslate)
-                                                    }})
-                                                </span>
-                                            }
-                                        </mat-select-trigger>
-                                    </ng-container>
-                                }
+                                <mat-select-trigger>
+                                    @if (formGroup.get('context')?.value?.length) {
+                                        {{ formGroup.get('context')?.value?.[0].title }}
+                                        @if ((formGroup.get('context')?.value?.length || 0) > 1) {
+                                            <span>
+                                                (+{{ (formGroup.get('context')?.value?.length || 0) - 1 }}
+                                                {{
+                                                    formGroup.get('context')?.value?.length === 2
+                                                        ? ('artemisApp.metis.overview.one_extra_context' | artemisTranslate)
+                                                        : ('artemisApp.metis.overview.multiple_extra_contexts' | artemisTranslate)
+                                                }})
+                                            </span>
+                                        }
+                                    }
+                                </mat-select-trigger>
                                 @for (subType of availableChannelSubtypes; track subType) {
                                     <mat-optgroup [label]="'artemisApp.metis.overview.filterOptGroups.' + subType | artemisTranslate">
                                         <ng-container>
