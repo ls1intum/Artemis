@@ -160,21 +160,10 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
 
-        ProgrammingExercise exercise = chatSession.getExercise();
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        ProgrammingSubmission latestSubmission = getLatestSubmissionIfExists(exercise, chatSession.getUser());
-        boolean buildFailed = latestSubmission != null && latestSubmission.isBuildFailed();
-        List<BuildLogEntry> buildLog = latestSubmission != null ? latestSubmission.getBuildLogEntries() : List.of();
-        Repository templateRepository = templateRepository(exercise);
-        Optional<Repository> studentRepository = studentRepository(latestSubmission);
-        Map<String, String> templateRepositoryContents = repositoryService.getFilesWithContent(templateRepository);
-        Map<String, String> studentRepositoryContents = studentRepository.map(repositoryService::getFilesWithContent).orElse(Map.of());
-        String gitDiff = studentRepository.map(repo -> getGitDiff(templateRepository, repo)).orElse("");
-
-        var irisSettings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false);
+        var irisSettings = irisSettingsService.getCombinedIrisSettingsFor(chatSession.getExercise(), false);
         String template = irisSettings.irisChatSettings().getTemplate().getContent();
         String preferredModel = irisSettings.irisChatSettings().getPreferredModel();
-        var dto = new IrisChatRequestDTO(exercise, course, latestSubmission, buildFailed, buildLog, chatSession, gitDiff, templateRepositoryContents, studentRepositoryContents);
+        var dto = createRequestArgumentsDTO(chatSession);
         irisConnectorService.sendRequestV2(template, preferredModel, dto).handleAsync((response, throwable) -> {
             if (throwable != null) {
                 log.error("Error while getting response from Iris model", throwable);
@@ -193,6 +182,21 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
             }
             return null;
         });
+    }
+
+    private IrisChatRequestDTO createRequestArgumentsDTO(IrisChatSession session) {
+        final ProgrammingExercise exercise = session.getExercise();
+        final Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        final ProgrammingSubmission latestSubmission = getLatestSubmissionIfExists(exercise, session.getUser());
+        final boolean buildFailed = latestSubmission != null && latestSubmission.isBuildFailed();
+        final List<BuildLogEntry> buildLog = latestSubmission != null ? latestSubmission.getBuildLogEntries() : List.of();
+        final Repository templateRepository = templateRepository(exercise);
+        final Optional<Repository> studentRepository = studentRepository(latestSubmission);
+        final Map<String, String> templateRepositoryContents = repositoryService.getFilesWithContent(templateRepository);
+        final Map<String, String> studentRepositoryContents = studentRepository.map(repositoryService::getFilesWithContent).orElse(Map.of());
+        final String gitDiff = studentRepository.map(repo -> getGitDiff(templateRepository, repo)).orElse("");
+
+        return new IrisChatRequestDTO(exercise, course, latestSubmission, buildFailed, buildLog, session, gitDiff, templateRepositoryContents, studentRepositoryContents);
     }
 
     private ProgrammingSubmission getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {

@@ -21,8 +21,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
-import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.*;
 import de.tum.in.www1.artemis.service.iris.exception.*;
 
@@ -66,24 +64,6 @@ public class IrisConnectorService {
             log.error("Failed to fetch offered models from Pyris", e);
             throw new IrisConnectorException("Could not fetch offered models");
         }
-    }
-
-    /**
-     * Requests a response from an LLM
-     *
-     * @param template       The template that should be used with the respective parameters (e.g., for initial system
-     *                           message)
-     * @param preferredModel The LLM model to be used (e.g., GPT3.5-turbo). Note: The used model might not be the
-     *                           preferred model (e.g., if an error occurs or the preferredModel is not reachable)
-     * @param argumentsDTO   A dto of arguments to be included in the template through handlebars (if they are
-     *                           specified in the template)
-     * @return The message response to the request which includes the {@link IrisMessage} and the used IrisModel
-     */
-    @Async
-    public CompletableFuture<IrisMessageResponseDTO> sendRequest(IrisTemplate template, String preferredModel, Object argumentsDTO) {
-        var endpoint = "/api/v1/messages";
-        var request = new IrisRequestDTO(template, preferredModel, argumentsDTO);
-        return tryGetResponse(endpoint, request, preferredModel, IrisMessageResponseDTO.class);
     }
 
     /**
