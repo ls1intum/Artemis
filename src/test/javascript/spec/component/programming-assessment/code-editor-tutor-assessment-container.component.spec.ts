@@ -244,6 +244,13 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(assessmentLayout).toBeDefined();
     });
 
+    it('should load the grading criteria on initialisation', fakeAsync(() => {
+        comp.ngOnInit();
+        tick(100);
+
+        expect(findWithParticipationsStub).toHaveBeenCalledWith(exercise.id, false, true);
+    }));
+
     it('should show unreferenced feedback suggestions', () => {
         comp.feedbackSuggestions = [{ reference: 'file:src/Test.java_line:1' }, { reference: 'file:src/Test.java_line:2' }, { reference: undefined }];
         expect(comp.unreferencedFeedbackSuggestions).toHaveLength(1);

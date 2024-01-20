@@ -69,12 +69,19 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(Long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories", "gradingCriteria" })
+    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesAndGradingCriteriaById(Long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationById(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results",
             "auxiliaryRepositories" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesById(Long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results",
+            "auxiliaryRepositories", "gradingCriteria" })
+    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesAndGradingCriteriaById(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "testCases")
     Optional<ProgrammingExercise> findWithTestCasesById(Long exerciseId);
@@ -605,23 +612,43 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     }
 
     /**
-     * Find a programming exercise by its id, with eagerly loaded template and solution participation, submissions and results
+     * Finds a programming exercise by its id including the submissions for its solution and template participation.
      *
-     * @param programmingExerciseId of the programming exercise.
-     * @return The programming exercise related to the given id
-     * @throws EntityNotFoundException the programming exercise could not be found.
+     * @param exerciseId            The id of the programming exercise.
+     * @param withSubmissionResults True, if the results of the template and solution should be included as well.
+     * @param withGradingCriteria   True, if the grading instructions of the exercise should be included as well.
+     * @return A programming exercise that has the given id.
+     * @throws EntityNotFoundException In case no exercise with the given id exists.
      */
     @NotNull
-    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesElseThrow(long programmingExerciseId)
-            throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesById(programmingExerciseId);
-        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationSubmissionsAndAuxiliaryRepositoriesElseThrow(long exerciseId, boolean withSubmissionResults,
+            boolean withGradingCriteria) throws EntityNotFoundException {
+        final Optional<ProgrammingExercise> programmingExercise;
+
+        if (withGradingCriteria) {
+            if (withSubmissionResults) {
+                programmingExercise = findWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesAndGradingCriteriaById(exerciseId);
+            }
+            else {
+                programmingExercise = findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesAndGradingCriteriaById(exerciseId);
+            }
+        }
+        else {
+            if (withSubmissionResults) {
+                programmingExercise = findWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesById(exerciseId);
+            }
+            else {
+                programmingExercise = findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(exerciseId);
+            }
+        }
+
+        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
     }
 
     /**
      * Find a programming exercise by its id, with eagerly loaded template and solution participation,
      * including the latest result with feedback and test cases.
-     *
+     * <p>
      * NOTICE: this query is quite expensive because it loads all feedback and test cases,
      * and it includes sub queries to retrieve the latest result
      * IMPORTANT: you should generally avoid using this query except you really need all information!!

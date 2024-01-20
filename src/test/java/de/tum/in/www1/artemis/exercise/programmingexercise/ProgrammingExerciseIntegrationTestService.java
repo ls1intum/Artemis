@@ -195,6 +195,9 @@ class ProgrammingExerciseIntegrationTestService {
     // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private ContinuousIntegrationService continuousIntegrationService;
 
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
+
     void setup(String userPrefix, MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService)
             throws Exception {
         this.userPrefix = userPrefix;
@@ -727,13 +730,24 @@ class ProgrammingExerciseIntegrationTestService {
         assertThat(programmingExerciseServer.getStudentParticipations()).isEmpty();
     }
 
-    void testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(boolean withSubmissionResults) throws Exception {
+    void testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(boolean withSubmissionResults, boolean withGradingCriteria) throws Exception {
         AuxiliaryRepository auxiliaryRepository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(programmingExercise);
+        List<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(programmingExercise);
+        gradingCriteria = gradingCriterionRepository.saveAll(gradingCriteria);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
         var path = ROOT + PROGRAMMING_EXERCISE_WITH_TEMPLATE_AND_SOLUTION_PARTICIPATION.replace("{exerciseId}", String.valueOf(programmingExercise.getId()))
-                + "?withSubmissionResults=" + withSubmissionResults;
+                + "?withSubmissionResults=" + withSubmissionResults + "&withGradingCriteria=" + withGradingCriteria;
         var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
+
         checkTemplateAndSolutionParticipationsFromServer(programmingExerciseServer);
         assertThat(programmingExerciseServer.getAuxiliaryRepositories()).hasSize(1).containsExactly(auxiliaryRepository);
+        if (withGradingCriteria) {
+            assertThat(programmingExerciseServer.getGradingCriteria()).containsAll(gradingCriteria);
+        }
+        else {
+            assertThat(programmingExerciseServer.getGradingCriteria()).isEmpty();
+        }
     }
 
     private void checkTemplateAndSolutionParticipationsFromServer(ProgrammingExercise programmingExerciseServer) {
