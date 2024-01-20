@@ -207,7 +207,7 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
     private Repository templateRepository(ProgrammingExercise exercise) {
         return templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).map(participation -> {
             try {
-                return gitService.getOrCheckoutRepository(participation.getVcsRepositoryUrl(), true);
+                return gitService.getOrCheckoutRepository(participation.getVcsRepositoryUri(), true);
             }
             catch (GitAPIException e) {
                 return null;
@@ -218,7 +218,7 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
     private Optional<Repository> studentRepository(@Nullable ProgrammingSubmission latestSubmission) {
         return Optional.ofNullable(latestSubmission).map(sub -> (ProgrammingExerciseParticipation) sub.getParticipation()).map(participation -> {
             try {
-                return gitService.getOrCheckoutRepository(participation.getVcsRepositoryUrl(), true);
+                return gitService.getOrCheckoutRepository(participation.getVcsRepositoryUri(), true);
             }
             catch (GitAPIException e) {
                 log.error("Could not fetch existing student participation repository", e);
