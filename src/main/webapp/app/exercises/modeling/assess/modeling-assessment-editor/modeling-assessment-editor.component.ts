@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { AlertService } from 'app/core/util/alert.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { UMLModel } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
@@ -10,9 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
-import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
@@ -30,6 +27,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -74,12 +72,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     constructor(
         private alertService: AlertService,
-        private modalService: NgbModal,
         private router: Router,
         private route: ActivatedRoute,
         private modelingSubmissionService: ModelingSubmissionService,
-        private modelingExerciseService: ModelingExerciseService,
-        private resultService: ResultService,
         private modelingAssessmentService: ModelingAssessmentService,
         private accountService: AccountService,
         private location: Location,
@@ -88,6 +83,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         private structuredGradingCriterionService: StructuredGradingCriterionService,
         private submissionService: SubmissionService,
         private exampleSubmissionService: ExampleSubmissionService,
+        private exerciseService: ExerciseService,
     ) {
         translateService.get('artemisApp.modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
@@ -537,7 +533,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.feedback);
         // Cap totalScore to maxPoints
         const exercise = this.modelingExercise!;
-        const maxPoints = exercise.maxPoints! + exercise.bonusPoints!;
+        const maxPoints = this.exerciseService.getTotalMaxPoints(exercise);
         if (this.totalScore > maxPoints) {
             this.totalScore = maxPoints;
         }

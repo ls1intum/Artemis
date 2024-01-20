@@ -41,6 +41,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { AthenaService } from 'app/assessment/athena.service';
 import { FeedbackSuggestionsPendingConfirmationDialogComponent } from 'app/exercises/shared/feedback/feedback-suggestions-pending-confirmation-dialog/feedback-suggestions-pending-confirmation-dialog.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -127,7 +128,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         private programmingSubmissionService: ProgrammingSubmissionService,
         private domainService: DomainService,
         private complaintService: ComplaintService,
-        translateService: TranslateService,
         private route: ActivatedRoute,
         private alertService: AlertService,
         private structuredGradingCriterionService: StructuredGradingCriterionService,
@@ -136,6 +136,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         private profileService: ProfileService,
         private modalService: NgbModal,
         private athenaService: AthenaService,
+        private exerciseService: ExerciseService,
+        translateService: TranslateService,
     ) {
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
         translateService.get('artemisApp.assessment.messages.acceptComplaintWithoutMoreScore').subscribe((text) => (this.acceptComplaintWithoutMoreScoreText = text));
@@ -666,7 +668,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private calculateTotalScoreOfFeedbacks(feedbacks: Feedback[]): number {
-        const maxPoints = this.exercise.maxPoints! + (this.exercise.bonusPoints ?? 0.0);
+        const maxPoints = this.exerciseService.getTotalMaxPoints(this.exercise);
         let totalScore = 0.0;
         let scoreAutomaticTests = 0.0;
         const gradingInstructions = {}; // { instructionId: noOfEncounters }

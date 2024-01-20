@@ -101,6 +101,13 @@ export class ExerciseService {
         return relevantDateBefore && exercise.dueDate && dayjs(exercise.dueDate).isBefore(relevantDateBefore);
     }
 
+    getTotalMaxPoints(exercise?: Exercise): number {
+        if (!exercise) {
+            return 0;
+        }
+        return exercise.maxPoints! + exercise.bonusPoints!;
+    }
+
     private hasAssessmentDueDateError(exercise: Exercise) {
         if (exercise.releaseDate && exercise.assessmentDueDate) {
             if (exercise.dueDate) {

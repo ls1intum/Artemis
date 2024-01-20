@@ -414,7 +414,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             return;
         }
 
-        const maxPoints = this.exercise.maxPoints! + this.exercise.bonusPoints!;
+        const maxPoints = this.exerciseService.getTotalMaxPoints(this.exercise);
         const creditsTotalScore = credits.reduce((a, b) => a! + b!, 0)!;
         this.totalScore = getPositiveAndCappedTotalScore(creditsTotalScore, maxPoints);
         this.assessmentsAreValid = true;

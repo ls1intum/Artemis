@@ -12,6 +12,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { Feedback } from 'app/entities/feedback.model';
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise.utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     template: '',
@@ -34,6 +35,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
         protected accountService: AccountService,
         protected assessmentsService: TextAssessmentService,
         protected structuredGradingCriterionService: StructuredGradingCriterionService,
+        protected exerciseService: ExerciseService,
     ) {}
 
     async ngOnInit() {
@@ -43,8 +45,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
     }
 
     protected computeTotalScore(assessments: Feedback[]): number {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-        const maxPoints = this.exercise?.maxPoints! + (this.exercise?.bonusPoints ?? 0.0);
+        const maxPoints = this.exerciseService.getTotalMaxPoints(this.exercise);
         let totalScore = this.structuredGradingCriterionService.computeTotalScore(assessments);
 
         // Cap totalScore to maxPoints

@@ -7,6 +7,7 @@ import { getColor } from 'app/exercises/programming/manage/grading/charts/progra
 import { ProgrammingGradingChartsDirective } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.directive';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 enum TestCaseBarTitle {
     WEIGHT_EN = 'Weight',
@@ -45,6 +46,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
     constructor(
         private translateService: TranslateService,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private exerciseService: ExerciseService,
     ) {
         super();
 
@@ -68,7 +70,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
         // max points for the exercise
         const maxPoints = this.exercise.maxPoints!;
         // exercise max score with bonus in percent
-        const maxScoreInPercent = (maxPoints + (this.exercise.bonusPoints || 0)) / maxPoints;
+        const maxScoreInPercent = this.exerciseService.getTotalMaxPoints(this.exercise) / maxPoints;
 
         // total of achievable points for this exercise
         const totalPoints = maxPoints * (this.totalParticipations || 0);
