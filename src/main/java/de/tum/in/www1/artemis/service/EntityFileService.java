@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
  * Service for handling file operations for entities.
  */
 @Service
+@Deprecated(forRemoval = true)
 public class EntityFileService {
 
     private static final Logger log = LoggerFactory.getLogger(EntityFileService.class);
@@ -40,6 +41,7 @@ public class EntityFileService {
      * @return the new file path as string
      */
     @Nonnull
+    @Deprecated(forRemoval = true)
     public String moveTempFileBeforeEntityPersistence(@Nonnull String entityFilePath, @Nonnull Path targetFolder, boolean keepFilename) {
         return moveFileBeforeEntityPersistenceWithIdIfIsTemp(entityFilePath, targetFolder, keepFilename, null);
     }
@@ -54,6 +56,7 @@ public class EntityFileService {
      * @return the new file path as string
      */
     @Nonnull
+    @Deprecated(forRemoval = true)
     public String moveFileBeforeEntityPersistenceWithIdIfIsTemp(@Nonnull String entityFilePath, @Nonnull Path targetFolder, boolean keepFilename, @Nullable Long entityId) {
         URI filePath = URI.create(entityFilePath);
         String filename = Path.of(entityFilePath).getFileName().toString();
@@ -94,6 +97,7 @@ public class EntityFileService {
      * @return the new file path as string, null if no file exists
      */
     @Nullable
+    @Deprecated(forRemoval = true)
     public String handlePotentialFileUpdateBeforeEntityPersistence(@Nonnull Long entityId, @Nullable String oldEntityFilePath, @Nullable String newEntityFilePath,
             @Nonnull Path targetFolder, boolean keepFilename) {
         String resultingPath = newEntityFilePath;
