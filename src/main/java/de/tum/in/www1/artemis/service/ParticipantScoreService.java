@@ -32,13 +32,16 @@ public class ParticipantScoreService {
 
     private final PresentationPointsCalculationService presentationPointsCalculationService;
 
+    private final TeamRepository teamRepository;
+
     public ParticipantScoreService(UserRepository userRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
-            GradingScaleService gradingScaleService, PresentationPointsCalculationService presentationPointsCalculationService) {
+            GradingScaleService gradingScaleService, PresentationPointsCalculationService presentationPointsCalculationService, TeamRepository teamRepository) {
         this.userRepository = userRepository;
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
         this.gradingScaleService = gradingScaleService;
         this.presentationPointsCalculationService = presentationPointsCalculationService;
+        this.teamRepository = teamRepository;
     }
 
     /**
@@ -136,11 +139,14 @@ public class ParticipantScoreService {
         }
 
         // team exercises
-        // [0] -> Team
+        // [0] -> Team ID
         // [1] -> sum of achieved points in exercises
+        // We have to retrieve this separately because the students are not directly retrievable due to the taxonomy structure
         List<Object[]> teamAndAchievedPoints = teamScoreRepository.getAchievedPointsOfTeams(teamExercises);
+        List<Long> teamIds = teamAndAchievedPoints.stream().map(rawData -> ((Long) rawData[0])).toList();
+        Map<Long, Team> teamIdToTeam = teamRepository.findAllWithStudentsByIdIn(teamIds).stream().collect(Collectors.toMap(Team::getId, team -> team));
         for (Object[] rawData : teamAndAchievedPoints) {
-            Team team = (Team) rawData[0];
+            Team team = teamIdToTeam.get((Long) rawData[0]);
             double achievedPoints = rawData[1] != null ? ((Number) rawData[1]).doubleValue() : 0.0;
             for (User student : team.getStudents()) {
                 if (userIdToScores.containsKey(student.getId())) {

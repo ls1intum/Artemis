@@ -66,8 +66,8 @@ public class LocalCIQueueWebsocketService {
     @PostConstruct
     public void addListeners() {
         this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
-        this.processingJobs.addLocalEntryListener(new ProcessingBuildJobItemListener());
-        this.buildAgentInformation.addLocalEntryListener(new BuildAgentListener());
+        this.processingJobs.addEntryListener(new ProcessingBuildJobItemListener(), true);
+        this.buildAgentInformation.addEntryListener(new BuildAgentListener(), true);
     }
 
     private void sendQueuedJobsOverWebsocket(long courseId) {

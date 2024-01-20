@@ -11,9 +11,8 @@ import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.nio.file.Path;
+import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,7 +57,6 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         commitHash = localVCLocalCITestService.commitFile(studentAssignmentRepository.localRepoFile.toPath(), studentAssignmentRepository.localGit);
         studentAssignmentRepository.localGit.push().call();
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
-        localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, WORKING_DIRECTORY + RESULTS_DIRECTORY);
         localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, WORKING_DIRECTORY + RESULTS_DIRECTORY);
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commit hash for the tests repository.
         localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
@@ -215,7 +213,6 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
         localVCLocalCITestService.testLatestSubmission(participation.getId(), commitHash, 1, false);
-
     }
 
     @Test
@@ -294,6 +291,27 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         // Should notify the user.
         verifyUserNotification(studentParticipation, "de.tum.in.www1.artemis.exception.LocalCIException: Error while parsing test results");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testStaticCodeAnalysis() throws IOException {
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExerciseRepository.save(programmingExercise);
+
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        List<Path> resultPaths = new ArrayList<>();
+        resultPaths.add(SPOTBUGS_RESULTS_PATH);
+        resultPaths.add(CHECKSTYLE_RESULTS_PATH);
+        resultPaths.add(PMD_RESULTS_PATH);
+        resultPaths.add(PARTLY_SUCCESSFUL_TEST_RESULTS_PATH);
+
+        localVCLocalCITestService.mockTestResults(dockerClient, resultPaths, WORKING_DIRECTORY + RESULTS_DIRECTORY);
+
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+
+        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false, true, 15);
     }
 
     private void verifyUserNotification(Participation participation, String errorMessage) {
