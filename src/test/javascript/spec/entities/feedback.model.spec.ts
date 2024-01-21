@@ -177,5 +177,21 @@ describe('Feedback', () => {
             const feedback: Feedback = { detailText: detailText, gradingInstruction: gradingInstruction };
             expect(Feedback.getContent(feedback)).toBe('grading instruction feedback');
         });
+
+        it.each([undefined, ''])('should return an empty unquoted string when no text is available', (detailText) => {
+            const feedback: Feedback = { detailText: detailText };
+            expect(Feedback.getQuotedContent(feedback)).toBe('');
+        });
+
+        it('should quote the detail text if present', () => {
+            const gradingInstruction: GradingInstruction = {
+                credits: 0,
+                gradingScale: '',
+                instructionDescription: '',
+                feedback: 'grading instruction feedback',
+            };
+            const feedback: Feedback = { detailText: '', gradingInstruction: gradingInstruction };
+            expect(Feedback.getQuotedContent(feedback)).toBe('"grading instruction feedback"');
+        });
     });
 });

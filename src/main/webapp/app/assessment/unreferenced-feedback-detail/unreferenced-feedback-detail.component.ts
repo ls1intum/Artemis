@@ -62,4 +62,8 @@ export class UnreferencedFeedbackDetailComponent {
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.feedback, event);
         this.onFeedbackChange.emit(this.feedback);
     }
+
+    get quotedFeedbackText(): string {
+        return Feedback.getQuotedContent(this.feedback);
+    }
 }

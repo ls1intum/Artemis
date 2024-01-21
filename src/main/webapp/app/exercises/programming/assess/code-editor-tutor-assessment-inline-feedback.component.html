@@ -66,7 +66,7 @@
                     <button
                         jhiDeleteButton
                         [buttonSize]="ButtonSize.MEDIUM"
-                        [translateValues]="{ text: Feedback.hasContent(feedback) ? ' \'' + Feedback.getContent(feedback) + '\'' : '' }"
+                        [translateValues]="{ text: quotedFeedbackText }"
                         deleteQuestion="artemisApp.feedback.delete.question"
                         type="submit"
                         (delete)="deleteFeedback()"

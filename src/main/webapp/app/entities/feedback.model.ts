@@ -164,6 +164,20 @@ export class Feedback implements BaseEntity {
     }
 
     /**
+     * Can be used to show the text to the user as part of another sentence, e.g., in translation strings.
+     *
+     * @param that Some feedback.
+     */
+    public static getQuotedContent(that: Feedback): string {
+        const content = Feedback.getContent(that);
+        if (content) {
+            return `"${content}"`;
+        } else {
+            return '';
+        }
+    }
+
+    /**
      * Checks for equality of two feedbacks. Only checking the ids is not enough because they are undefined for inline
      * feedbacks before they are saved.
      * @param f1 The feedback that is compared to f2
