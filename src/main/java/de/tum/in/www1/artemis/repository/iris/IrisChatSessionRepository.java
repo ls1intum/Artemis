@@ -26,7 +26,7 @@ public interface IrisChatSessionRepository extends JpaRepository<IrisChatSession
      */
     @Query("""
                 SELECT s
-                    FROM IrisChatSession s
+                FROM IrisChatSession s
                 WHERE s.exercise.id = :exerciseId
                     AND s.user.id = :userId
                 ORDER BY s.creationDate DESC
