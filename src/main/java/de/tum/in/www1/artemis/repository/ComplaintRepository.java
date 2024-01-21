@@ -259,6 +259,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "result.participation", "result.submission", "result.assessor" })
     List<Complaint> getAllByResult_Assessor_IdAndResult_Participation_Exercise_Course_Id(Long assessorId, Long courseId);
 
+    // Valid JPQL syntax. Only SCA fails to properly detect the types.
     /**
      * Get the number of Complaints for all tutors of a course
      *
@@ -284,6 +285,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             """)
     List<TutorLeaderboardComplaints> findTutorLeaderboardComplaintsByCourseId(@Param("courseId") long courseId);
 
+    // Valid JPQL syntax. Only SCA fails to properly detect the types.
     /**
      * Get the number of Complaints for all tutors of an exercise
      *
@@ -309,6 +311,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             """)
     List<TutorLeaderboardComplaints> findTutorLeaderboardComplaintsByExerciseId(@Param("exerciseId") long exerciseId);
 
+    // Valid JPQL syntax. Only SCA fails to properly detect the types.
     /**
      * Get the number of Complaints for all tutors of an exam
      *
@@ -411,6 +414,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             """)
     List<TutorLeaderboardComplaintResponses> findTutorLeaderboardComplaintResponsesByExamId(@Param("examId") long examId);
 
+    // Valid JPQL syntax. Only SCA fails to properly detect the types.
     /**
      * Get the number of Feedback Requests for all tutors assessments of a course
      *
@@ -435,6 +439,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             """)
     List<TutorLeaderboardMoreFeedbackRequests> findTutorLeaderboardMoreFeedbackRequestsByCourseId(@Param("courseId") long courseId);
 
+    // Valid JPQL syntax. Only SCA fails to properly detect the types.
     /**
      * Get the number of Feedback Requests for all tutors assessments of an exercise
      *
