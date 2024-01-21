@@ -26,11 +26,7 @@ Course-wide Messages & Messaging Overview
 -----------------------------------------
 
 Artemis automatically creates course-wide channels for various elements of a course, namely course-wide topics, such as
-``Organization`` or ``Tech Support``, lectures, exercises, and exams. When creating a lecture, exercise, or exam, the creator can decide for a channel name, as well.
-
-|exercise-channel-creation|
-
-Messages can be created on the course messaging overview, which is shown in the screenshot below.
+``Organization`` or ``Tech Support``, lectures, exercises, and exams. Messages can be written within these channels on the course messaging overview, which is shown in the screenshot below.
 
 |messaging-page|
 
@@ -272,6 +268,13 @@ Features for Instructors
 ------------------------
 
 The following feature is only available for instructors that act as moderators.
+
+Creating Course-Wide Channels
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When creating a lecture, exercise, or exam, the creator can decide for a channel name, as well. The name is automatically generated based on the lecture's/exercise's/exam's title but can be adapted if needed.
+
+|exercise-channel-creation|
 
 Message Announcements
 ^^^^^^^^^^^^^^^^^^^^^
