@@ -10,7 +10,7 @@
             <button
                 jhiDeleteButton
                 [buttonSize]="ButtonSize.SMALL"
-                [translateValues]="{ text: this.feedback | feedbackContent | quoted }"
+                [translateValues]="{ text: this.feedback | feedbackContent | quoted: ' ' }"
                 deleteQuestion="artemisApp.feedback.delete.question"
                 (delete)="delete()"
                 [dialogError]="dialogError$"

@@ -21,4 +21,12 @@ describe('QuotePipe', () => {
     it('should wrap the text in quoted if non-empty', () => {
         expect(pipe.transform('input')).toBe('"input"');
     });
+
+    it('should not add the prefix in the empty case', () => {
+        expect(pipe.transform('', 'prefix')).toBe('');
+    });
+
+    it('should add a prefix if specified', () => {
+        expect(pipe.transform('content', 'prefix')).toBe('prefix"content"');
+    });
 });
