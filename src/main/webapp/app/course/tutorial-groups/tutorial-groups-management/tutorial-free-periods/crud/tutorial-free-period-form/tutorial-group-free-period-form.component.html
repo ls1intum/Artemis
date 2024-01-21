@@ -9,13 +9,15 @@
         <form class="row" *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
             <div class="btn-group" role="group">
                 <input type="radio" class="btn-check" name="timeFrame" id="FreePeriod" autocomplete="off" (click)="setTimeFrame(TimeFrame.Period)" />
-                <label class="btn btn-outline-primary" for="FreePeriod">Free Period</label>
+                <label class="btn btn-outline-primary" for="FreePeriod">{{ 'artemisApp.forms.tutorialFreePeriodForm.timeFrame.period' | artemisTranslate }}</label>
 
                 <input type="radio" class="btn-check" name="timeFrame" id="FreeDay" autocomplete="off" checked (click)="setTimeFrame(TimeFrame.Day)" />
-                <label class="btn btn-outline-primary" for="FreeDay">Free Day</label>
+                <label class="btn btn-outline-primary" for="FreeDay">{{ 'artemisApp.forms.tutorialFreePeriodForm.timeFrame.day' | artemisTranslate }}</label>
 
                 <input type="radio" class="btn-check" name="timeFrame" id="FreePeriodWithinDay" autocomplete="off" (click)="setTimeFrame(TimeFrame.PeriodWithinDay)" />
-                <label class="btn btn-outline-primary" for="FreePeriodWithinDay">Free Period within Day</label>
+                <label class="btn btn-outline-primary" for="FreePeriodWithinDay">{{
+                    'artemisApp.forms.tutorialFreePeriodForm.timeFrame.periodWithinDay' | artemisTranslate
+                }}</label>
             </div>
             <!-- Date -->
             <!--Todo: display correct labels for different timeframes-->

@@ -54,6 +54,31 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
         this.dialogErrorSource.unsubscribe();
     }
 
+    get freeDays(): TutorialGroupFreePeriod[] {
+        return this.tutorialGroupFreePeriods.filter((tutorialGroupFreePeriod) => this.isFreeDay(tutorialGroupFreePeriod));
+    }
+    private isFreeDay(tutorialGroupFreePeriod: TutorialGroupFreePeriod): boolean {
+        const isMidnight: boolean = tutorialGroupFreePeriod.start!.hour() === 0 && tutorialGroupFreePeriod.start!.minute() === 0;
+
+        return tutorialGroupFreePeriod.start!.isSame(tutorialGroupFreePeriod.end!, 'day') && isMidnight;
+    }
+
+    get freePeriods(): TutorialGroupFreePeriod[] {
+        return this.tutorialGroupFreePeriods.filter((tutorialGroupFreePeriod) => this.isFreePeriod(tutorialGroupFreePeriod));
+    }
+
+    private isFreePeriod(tutorialGroupFreePeriod: TutorialGroupFreePeriod): boolean {
+        return tutorialGroupFreePeriod.start!.day() !== tutorialGroupFreePeriod.end!.day();
+    }
+
+    get freePeriodsWithinDay(): TutorialGroupFreePeriod[] {
+        return this.tutorialGroupFreePeriods.filter((tutorialGroupFreePeriod) => this.isFreePeriodWithinDay(tutorialGroupFreePeriod));
+    }
+
+    private isFreePeriodWithinDay(tutorialGroupFreePeriod: TutorialGroupFreePeriod) {
+        return tutorialGroupFreePeriod.start!.day() === tutorialGroupFreePeriod.end!.day() && !this.isFreeDay(tutorialGroupFreePeriod);
+    }
+
     public isInThePast(tutorialGroupFreeDay: TutorialGroupFreePeriod): boolean {
         return tutorialGroupFreeDay.start!.isBefore(this.getCurrentDate());
     }

@@ -16,6 +16,9 @@
                 {{ 'artemisApp.pages.tutorialFreePeriodsManagement.timeZoneExplanation' | artemisTranslate: { timeZone: course.timeZone } }}
             </div>
         </div>
+
+        <!-- List of TutorialGroupFreeDays -->
+        <label class="form-label">{{ 'artemisApp.forms.tutorialFreePeriodForm.timeFrame.day' | artemisTranslate }}</label>
         <div class="table-responsive" *ngIf="tutorialGroupFreePeriods && tutorialGroupFreePeriods.length > 0">
             <table class="table table-sm table-hover">
                 <thead>
@@ -23,17 +26,110 @@
                         <th>{{ 'global.field.id' | artemisTranslate }}</th>
                         <th>{{ 'artemisApp.entities.tutorialFreePeriod.date' | artemisTranslate }}</th>
                         <th>{{ 'artemisApp.entities.tutorialFreePeriod.reason' | artemisTranslate }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let freeDay of freeDays" [ngClass]="{ 'opacity-50': isInThePast(freeDay) }" class="free-period-row">
+                        <td>
+                            {{ freeDay.id }}
+                        </td>
+                        <!-- Only support for one day right now, so only show "start" date -->
+
+                        <!-- Todo: Adjust UI To also show the endDate as it is supported now.-->
+                        <td>
+                            {{ freeDay.start | artemisDate: 'long-date' : false : course.timeZone : true }}
+                        </td>
+                        <td>
+                            <span class="d-inline-block text-truncate long-text"> {{ freeDay.reason }} </span>
+                        </td>
+                        <td>
+                            <div class="extra-buttons">
+                                <jhi-tutorial-group-free-period-row-buttons
+                                    [course]="course"
+                                    [tutorialGroupConfiguration]="tutorialGroupsConfiguration"
+                                    [tutorialFreePeriod]="freeDay"
+                                    (tutorialFreePeriodDeleted)="loadAll()"
+                                    (tutorialFreePeriodEdited)="loadAll()"
+                                >
+                                </jhi-tutorial-group-free-period-row-buttons>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Todo: Adjust UI To also show the endDate as it is supported now.-->
+
+        <label class="form-label">{{ 'artemisApp.forms.tutorialFreePeriodForm.timeFrame.period' | artemisTranslate }}</label>
+        <div class="table-responsive" *ngIf="tutorialGroupFreePeriods && tutorialGroupFreePeriods.length > 0">
+            <table class="table table-sm table-hover">
+                <thead>
+                    <tr>
+                        <th>{{ 'global.field.id' | artemisTranslate }}</th>
+                        <th>{{ 'artemisApp.entities.tutorialFreePeriod.startDate' | artemisTranslate }}</th>
+                        <th>{{ 'artemisApp.entities.tutorialFreePeriod.endDate' | artemisTranslate }}</th>
+                        <th>{{ 'artemisApp.entities.tutorialFreePeriod.reason' | artemisTranslate }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let freePeriod of freePeriods" [ngClass]="{ 'opacity-50': isInThePast(freePeriod) }" class="free-period-row">
+                        <td>
+                            {{ freePeriod.id }}
+                        </td>
+                        <td>
+                            {{ freePeriod.start | artemisDate: 'long-date' : false : course.timeZone : true }}
+                        </td>
+                        <td>
+                            {{ freePeriod.end | artemisDate: 'long-date' : false : course.timeZone : true }}
+                        </td>
+                        <td>
+                            <span class="d-inline-block text-truncate long-text"> {{ freePeriod.reason }} </span>
+                        </td>
+                        <td>
+                            <div class="extra-buttons">
+                                <jhi-tutorial-group-free-period-row-buttons
+                                    [course]="course"
+                                    [tutorialGroupConfiguration]="tutorialGroupsConfiguration"
+                                    [tutorialFreePeriod]="freePeriod"
+                                    (tutorialFreePeriodDeleted)="loadAll()"
+                                    (tutorialFreePeriodEdited)="loadAll()"
+                                >
+                                </jhi-tutorial-group-free-period-row-buttons>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- FreePeriodWithinDay -->
+        <label class="form-label">{{ 'artemisApp.forms.tutorialFreePeriodForm.timeFrame.periodWithinDay' | artemisTranslate }}</label>
+        <div class="table-responsive" *ngIf="tutorialGroupFreePeriods && tutorialGroupFreePeriods.length > 0">
+            <table class="table table-sm table-hover">
+                <thead>
+                    <tr>
+                        <th>{{ 'global.field.id' | artemisTranslate }}</th>
+                        <th>{{ 'artemisApp.entities.tutorialFreePeriod.date' | artemisTranslate }}</th>
+                        <th>{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStartTime' | artemisTranslate }}</th>
+                        <th>{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEndTime' | artemisTranslate }}</th>
+                        <th>{{ 'artemisApp.entities.tutorialFreePeriod.reason' | artemisTranslate }}</th>
                         <th></th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let freePeriod of tutorialGroupFreePeriods" [ngClass]="{ 'opacity-50': isInThePast(freePeriod) }" class="free-period-row">
+                    <tr *ngFor="let freePeriod of freePeriodsWithinDay" [ngClass]="{ 'opacity-50': isInThePast(freePeriod) }" class="free-period-row">
                         <td>
                             {{ freePeriod.id }}
                         </td>
-                        <!-- Only support for one day right now, so only show "start" date -->
                         <td>
                             {{ freePeriod.start | artemisDate: 'long-date' : false : course.timeZone : true }}
+                        </td>
+                        <td>
+                            {{ freePeriod.start | artemisDate: 'time' : false : course.timeZone : true }}
+                        </td>
+                        <td>
+                            {{ freePeriod.end | artemisDate: 'time' : false : course.timeZone : true }}
                         </td>
                         <td>
                             <span class="d-inline-block text-truncate long-text"> {{ freePeriod.reason }} </span>
