@@ -3,9 +3,7 @@ package de.tum.in.www1.artemis.tutorialgroups;
 import static de.tum.in.www1.artemis.tutorialgroups.AbstractTutorialGroupIntegrationTest.RandomTutorialGroupGenerator.generateRandomTitle;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -100,15 +98,15 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
 
     Integer defaultSessionEndHour = 12;
 
-    LocalDate firstAugustMonday = LocalDate.of(2022, 8, 1);
+    LocalDateTime firstAugustMonday = LocalDateTime.of(2022, 8, 1, 0, 0, 0);
 
-    LocalDate secondAugustMonday = LocalDate.of(2022, 8, 8);
+    LocalDateTime secondAugustMonday = LocalDateTime.of(2022, 8, 8, 0, 0, 0);
 
-    LocalDate thirdAugustMonday = LocalDate.of(2022, 8, 15);
+    LocalDateTime thirdAugustMonday = LocalDateTime.of(2022, 8, 15, 0, 0, 0);
 
-    LocalDate fourthAugustMonday = LocalDate.of(2022, 8, 22);
+    LocalDateTime fourthAugustMonday = LocalDateTime.of(2022, 8, 22, 0, 0, 0);
 
-    LocalDate firstSeptemberMonday = LocalDate.of(2022, 9, 5);
+    LocalDateTime firstSeptemberMonday = LocalDateTime.of(2022, 9, 5, 0, 0, 0);
 
     @BeforeEach
     void setupTestScenario() {
@@ -145,8 +143,9 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
     }
 
     // === UTILS ===
-    TutorialGroupSession buildAndSaveExampleIndividualTutorialGroupSession(Long tutorialGroupId, LocalDate localDate) {
-        return tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroupId, getExampleSessionStartOnDate(localDate), getExampleSessionEndOnDate(localDate), null);
+    TutorialGroupSession buildAndSaveExampleIndividualTutorialGroupSession(Long tutorialGroupId, LocalDateTime localDate) {
+        return tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroupId, getExampleSessionStartOnDate(localDate.toLocalDate()),
+                getExampleSessionEndOnDate(localDate.toLocalDate()), null);
     }
 
     TutorialGroupSession buildAndSaveExampleIndividualTutorialGroupSession(Long tutorialGroupId, LocalDate localDate, Integer attendanceCount) {
@@ -207,7 +206,7 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
     }
 
     TutorialGroup setUpTutorialGroupWithSchedule(Long courseId, String tutorLogin) throws Exception {
-        var newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(firstAugustMonday, secondAugustMonday, tutorLogin);
+        var newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(firstAugustMonday.toLocalDate(), secondAugustMonday.toLocalDate(), tutorLogin);
         var scheduleToCreate = newTutorialGroup.getTutorialGroupSchedule();
         var persistedTutorialGroupId = request.postWithResponseBody(getTutorialGroupsPath(courseId), newTutorialGroup, TutorialGroup.class, HttpStatus.CREATED).getId();
 
@@ -240,14 +239,14 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
 
     // === ASSERTIONS ===
 
-    void assertIndividualSessionIsActiveOnDate(TutorialGroupSession sessionToCheck, LocalDate date, Long tutorialGroupId) {
-        this.assertTutorialGroupSessionProperties(sessionToCheck, Optional.empty(), tutorialGroupId, getExampleSessionStartOnDate(date), getExampleSessionEndOnDate(date),
-                "LoremIpsum", TutorialGroupSessionStatus.ACTIVE, null);
+    void assertIndividualSessionIsActiveOnDate(TutorialGroupSession sessionToCheck, LocalDateTime date, Long tutorialGroupId) {
+        this.assertTutorialGroupSessionProperties(sessionToCheck, Optional.empty(), tutorialGroupId, getExampleSessionStartOnDate(date.toLocalDate()),
+                getExampleSessionEndOnDate(date.toLocalDate()), "LoremIpsum", TutorialGroupSessionStatus.ACTIVE, null);
     }
 
-    void assertIndividualSessionIsCancelledOnDate(TutorialGroupSession sessionToCheck, LocalDate date, Long tutorialGroupId, String statusExplanation) {
-        this.assertTutorialGroupSessionProperties(sessionToCheck, Optional.empty(), tutorialGroupId, getExampleSessionStartOnDate(date), getExampleSessionEndOnDate(date),
-                "LoremIpsum", TutorialGroupSessionStatus.CANCELLED, statusExplanation);
+    void assertIndividualSessionIsCancelledOnDate(TutorialGroupSession sessionToCheck, LocalDateTime date, Long tutorialGroupId, String statusExplanation) {
+        this.assertTutorialGroupSessionProperties(sessionToCheck, Optional.empty(), tutorialGroupId, getExampleSessionStartOnDate(date.toLocalDate()),
+                getExampleSessionEndOnDate(date.toLocalDate()), "LoremIpsum", TutorialGroupSessionStatus.CANCELLED, statusExplanation);
     }
 
     void assertScheduledSessionIsActiveOnDate(TutorialGroupSession sessionToCheck, LocalDate date, Long tutorialGroupId, TutorialGroupSchedule schedule) {

@@ -324,7 +324,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var sessionToSave = new ArrayList<TutorialGroupSession>();
         var date = firstAugustMonday;
         for (Integer att : attendance) {
-            var session = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroupId, getExampleSessionStartOnDate(date), getExampleSessionEndOnDate(date), att);
+            var session = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroupId, getExampleSessionStartOnDate(date.toLocalDate()),
+                    getExampleSessionEndOnDate(date.toLocalDate()), att);
             sessionToSave.add(session);
             date = date.plusDays(1);
         }
