@@ -12,6 +12,7 @@ import { CourseOverviewPage } from './pageobjects/course/CourseOverviewPage';
 import { CourseMessagesPage } from './pageobjects/course/CourseMessagesPage';
 import { ExamAPIRequests } from './requests/ExamAPIRequests';
 import { CommunicationAPIRequests } from './requests/CommunicationAPIRequests';
+import { CourseCommunicationPage } from './pageobjects/course/CourseCommunicationPage';
 
 /*
  * Define custom types for fixtures
@@ -28,6 +29,7 @@ type ArtemisPageObjects = {
     courseCreation: CourseCreationPage;
     courseOverview: CourseOverviewPage;
     courseMessages: CourseMessagesPage;
+    courseCommunication: CourseCommunicationPage;
 };
 
 type ArtemisRequests = {
@@ -64,6 +66,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     courseMessages: async ({ page }, use) => {
         await use(new CourseMessagesPage(page));
+    },
+    courseCommunication: async ({ page }, use) => {
+        await use(new CourseCommunicationPage(page));
     },
     courseManagementAPIRequests: async ({ page }, use) => {
         await use(new CourseManagementAPIRequests(page));
