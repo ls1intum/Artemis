@@ -47,11 +47,6 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
             ltiSecret: new FormControl(this.onlineCourseConfiguration.ltiSecret),
             userPrefix: new FormControl(this.onlineCourseConfiguration?.userPrefix, { validators: [regexValidator(LOGIN_PATTERN)] }),
             requireExistingUser: new FormControl(this.onlineCourseConfiguration.requireExistingUser),
-            registrationId: new FormControl(this.onlineCourseConfiguration.registrationId),
-            clientId: new FormControl(this.onlineCourseConfiguration?.clientId),
-            authorizationUri: new FormControl(this.onlineCourseConfiguration?.authorizationUri),
-            tokenUri: new FormControl(this.onlineCourseConfiguration?.tokenUri),
-            jwkSetUri: new FormControl(this.onlineCourseConfiguration?.jwkSetUri),
         });
     }
 

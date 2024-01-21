@@ -47,9 +47,6 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
     private SubmissionRepository submissionRepository;
 
     @Autowired
-    private ComplaintResponseRepository complaintResponseRepo;
-
-    @Autowired
     private UserUtilService userUtilService;
 
     @Autowired
