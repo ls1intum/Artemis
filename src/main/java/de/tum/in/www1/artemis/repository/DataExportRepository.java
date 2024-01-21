@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.DataExport;
@@ -24,9 +26,7 @@ public interface DataExportRepository extends JpaRepository<DataExport, Long> {
      * @throws EntityNotFoundException if the data export could not be found
      */
     default DataExport findByIdElseThrow(long dataExportId) {
-        return findById(dataExportId).orElseThrow(() -> {
-            throw new EntityNotFoundException("Could not find data export with id: " + dataExportId);
-        });
+        return findById(dataExportId).orElseThrow(() -> new EntityNotFoundException("Could not find data export with id: " + dataExportId));
     }
 
     /**
@@ -39,7 +39,8 @@ public interface DataExportRepository extends JpaRepository<DataExport, Long> {
     @Query("""
             SELECT dataExport
             FROM DataExport dataExport
-            WHERE dataExport.dataExportState = 0 OR dataExport.dataExportState = 1
+            WHERE dataExport.dataExportState = 0
+                OR dataExport.dataExportState = 1
             """)
     Set<DataExport> findAllToBeCreated();
 
@@ -52,9 +53,9 @@ public interface DataExportRepository extends JpaRepository<DataExport, Long> {
             SELECT dataExport
             FROM DataExport dataExport
             WHERE dataExport.creationFinishedDate is NOT NULL
-                  AND dataExport.creationFinishedDate < :#{T(java.time.ZonedDateTime).now().minusDays(7)}
+                AND dataExport.creationFinishedDate < :thresholdDate
             """)
-    Set<DataExport> findAllToBeDeleted();
+    Set<DataExport> findAllToBeDeleted(@Param("thresholdDate") ZonedDateTime thresholdDate);
 
     /**
      * Find all data exports for the given user ordered by their request date descending.
