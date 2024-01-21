@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewContainerRef } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewContainerRef } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
@@ -28,7 +28,7 @@ import { hasParticipationChanged } from 'app/exercises/shared/participation/part
     templateUrl: './programming-exercise-instruction.component.html',
     styleUrls: ['./programming-exercise-instruction.scss'],
 })
-export class ProgrammingExerciseInstructionComponent implements OnChanges, OnInit, OnDestroy {
+export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
     @Input() public exercise: ProgrammingExercise;
     @Input() public participation: Participation;
     @Input() generateHtmlEvents: Observable<void>;
@@ -96,6 +96,19 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnIni
      * @param changes
      */
     public ngOnChanges(changes: SimpleChanges) {
+        if (this.exercise?.isAtLeastTutor) {
+            if (this.testCasesSubscription) {
+                this.testCasesSubscription.unsubscribe();
+            }
+            this.testCasesSubscription = this.programmingExerciseGradingService
+                .getTestCases(this.exercise.id!)
+                .pipe(
+                    tap((testCases) => {
+                        this.testCases = testCases;
+                    }),
+                )
+                .subscribe();
+        }
         of(!!this.markdownExtensions)
             .pipe(
                 // Set up the markdown extensions if they are not set up yet so that tasks, UMLs, etc. can be parsed.
@@ -159,19 +172,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnIni
                 }),
             )
             .subscribe();
-    }
-
-    public ngOnInit(): void {
-        if (this.exercise?.isAtLeastTutor) {
-            this.testCasesSubscription = this.programmingExerciseGradingService
-                .getTestCases(this.exercise.id!)
-                .pipe(
-                    tap((testCases) => {
-                        this.testCases = testCases;
-                    }),
-                )
-                .subscribe();
-        }
     }
 
     /**

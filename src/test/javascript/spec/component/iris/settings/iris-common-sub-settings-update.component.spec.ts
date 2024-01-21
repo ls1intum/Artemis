@@ -101,12 +101,12 @@ describe('IrisCommonSubSettingsUpdateComponent Component', () => {
         comp.settingsType = IrisSettingsType.EXERCISE;
         fixture.detectChanges();
 
-        comp.enabled = false;
-        comp.onEnabledChange();
+        comp.onDisable();
+        expect(comp.enabled).toBeFalse();
         expect(comp.subSettings!.enabled).toBeFalse();
 
-        comp.enabled = true;
-        comp.onEnabledChange();
+        comp.onEnable();
+        expect(comp.enabled).toBeTrue();
         expect(comp.subSettings!.enabled).toBeTrue();
     });
 
