@@ -19,7 +19,6 @@ test.describe('Setup users', async () => {
 
     test('Logs in once with all required users', async ({ login }) => {
         // If Artemis hasn't imported the required users from Jira we have to force this by logging in with these users once
-        expect(true).toBe(true);
         await login(admin);
         await login(instructor);
         await login(tutor);
