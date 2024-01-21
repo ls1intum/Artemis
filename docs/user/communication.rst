@@ -22,7 +22,7 @@ respective checkbox (``Enable communication features``) - it can also be edited 
 
 |communication-toggle|
 
-Course-wide Messages & Messaging Overview
+Course-Wide Messages & Messaging Overview
 -----------------------------------------
 
 Artemis automatically creates course-wide channels for various elements of a course, namely course-wide topics, such as
