@@ -19,8 +19,7 @@ public interface ExerciseHintActivationRepository extends JpaRepository<Exercise
             SELECT hintActivation
             FROM ExerciseHintActivation hintActivation
                 LEFT JOIN FETCH hintActivation.exerciseHint hint
-                LEFT JOIN TREAT (hint AS CodeHint) codeHint
-                LEFT JOIN FETCH codeHint.solutionEntries
+                LEFT JOIN FETCH hint.solutionEntries
             WHERE hintActivation.exerciseHint.exercise.id = :exerciseId
                 AND hintActivation.user.id = :userId
             """)

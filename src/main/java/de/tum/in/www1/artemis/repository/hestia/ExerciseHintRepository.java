@@ -21,8 +21,7 @@ public interface ExerciseHintRepository extends JpaRepository<ExerciseHint, Long
     @Query("""
             SELECT h
             FROM ExerciseHint h
-                LEFT JOIN TREAT (h AS CodeHint) ch
-                LEFT JOIN FETCH ch.solutionEntries se
+                LEFT JOIN FETCH h.solutionEntries se
             WHERE h.id = :hintId
             """)
     Optional<ExerciseHint> findByIdWithRelations(Long hintId);
@@ -42,8 +41,7 @@ public interface ExerciseHintRepository extends JpaRepository<ExerciseHint, Long
     @Query("""
             SELECT h
             FROM ExerciseHint h
-                LEFT JOIN TREAT (h AS CodeHint) ch
-                LEFT JOIN FETCH ch.solutionEntries se
+                LEFT JOIN FETCH h.solutionEntries se
             WHERE h.exercise.id = :exerciseId
             """)
     Set<ExerciseHint> findByExerciseIdWithRelations(Long exerciseId);
