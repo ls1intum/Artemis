@@ -54,6 +54,7 @@ describe('Example Modeling Submission Component', () => {
         id: 22,
         diagramType: UMLDiagramType.ClassDiagram,
         course: { id: 2 },
+        maxPoints: 30,
     } as ModelingExercise;
 
     const mockFeedbackWithReference: Feedback = {
