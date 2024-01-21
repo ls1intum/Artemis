@@ -235,8 +235,6 @@ Reference other course members
 
 Users can mention other course members within a message, by either typing an `@` character or clicking the `@` button available on the posting markdown editor. By typing in the name of a user to mention, the author of the message can search for a certain user they want to mention as demonstrated in the video below.
 
-..TODO
-
 Reference channels
 """"""""""""""""""
 
