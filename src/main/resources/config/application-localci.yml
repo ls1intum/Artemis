@@ -28,3 +28,11 @@ artemis:
                 http-proxy: http://proxyserver:port
                 https-proxy: http://proxyserver:port
                 no-proxy: localhost,127.0.0.1
+        image-cleanup:
+            enabled: false
+            # The number of days after which a Docker image is considered outdated and can be removed.
+            expiry-days: 2
+            # Time of cleanup (cron expression)
+            cleanup-schedule-time: 0 0 3 * * *
+
+

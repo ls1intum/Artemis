@@ -5,6 +5,8 @@ import static java.time.ZonedDateTime.now;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.security.Principal;
 import java.time.ZonedDateTime;
@@ -111,13 +113,15 @@ public class CourseResource {
 
     private final ExamRepository examRepository;
 
+    private final FilePathService filePathService;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
             CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathService learningPathService,
-            ConductAgreementService conductAgreementService, ExamRepository examRepository) {
+            ConductAgreementService conductAgreementService, ExamRepository examRepository, FilePathService filePathService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -138,6 +142,7 @@ public class CourseResource {
         this.learningPathService = learningPathService;
         this.conductAgreementService = conductAgreementService;
         this.examRepository = examRepository;
+        this.filePathService = filePathService;
     }
 
     /**
@@ -150,7 +155,8 @@ public class CourseResource {
      */
     @PutMapping(value = "courses/{courseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastInstructor
-    public ResponseEntity<Course> updateCourse(@PathVariable Long courseId, @RequestPart("course") Course courseUpdate, @RequestPart(required = false) MultipartFile file) {
+    public ResponseEntity<Course> updateCourse(@PathVariable Long courseId, @RequestPart("course") Course courseUpdate, @RequestPart(required = false) MultipartFile file)
+            throws URISyntaxException {
         log.debug("REST request to update Course : {}", courseUpdate);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
@@ -222,8 +228,17 @@ public class CourseResource {
         courseUpdate.validateUnenrollmentEndDate();
 
         if (file != null) {
-            String pathString = fileService.handleSaveFile(file, false, false).toString();
-            courseUpdate.setCourseIcon(pathString);
+            Path basePath = FilePathService.getCourseIconFilePath();
+            Path savePath = fileService.saveFile(file, basePath);
+            courseUpdate.setCourseIcon(filePathService.publicPathForActualPathOrThrow(savePath, courseId).toString());
+            if (existingCourse.getCourseIcon() != null) {
+                // delete old course icon
+                fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
+            }
+        }
+        else if (courseUpdate.getCourseIcon() == null && existingCourse.getCourseIcon() != null) {
+            // delete old course icon
+            fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
         }
 
         if (courseUpdate.isOnlineCourse() != existingCourse.isOnlineCourse()) {
@@ -1212,9 +1227,8 @@ public class CourseResource {
         var chartEndDate = courseService.determineEndDateForActiveStudents(course);
         var spanEndDate = chartEndDate.plusWeeks(periodSize.orElse(17) * periodIndex);
         var returnedSpanSize = courseService.determineTimeSpanSizeForActiveStudents(course, spanEndDate, periodSize.orElse(17));
-        var activeStudents = courseService.getActiveStudents(exerciseIds, periodIndex, periodSize.orElse(17), chartEndDate);
-        // We omit data concerning the time before the start date
-        return ResponseEntity.ok(activeStudents.subList(activeStudents.size() - returnedSpanSize, activeStudents.size()));
+        var activeStudents = courseService.getActiveStudents(exerciseIds, periodIndex, Math.min(returnedSpanSize, periodSize.orElse(17)), chartEndDate);
+        return ResponseEntity.ok(activeStudents);
     }
 
     /**

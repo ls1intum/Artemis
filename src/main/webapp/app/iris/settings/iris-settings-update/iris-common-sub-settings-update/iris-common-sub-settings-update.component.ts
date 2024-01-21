@@ -90,6 +90,16 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
         this.subSettings!.enabled = this.enabled;
     }
 
+    onEnable() {
+        this.enabled = true;
+        this.onEnabledChange();
+    }
+
+    onDisable() {
+        this.enabled = false;
+        this.onEnabledChange();
+    }
+
     onInheritAllowedModelsChange() {
         if (this.inheritAllowedModels) {
             this.subSettings!.allowedModels = undefined;
