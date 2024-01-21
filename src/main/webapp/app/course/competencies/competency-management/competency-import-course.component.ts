@@ -43,7 +43,7 @@ export class CompetencyImportCourseComponent extends ImportComponent<CourseForIm
 
     constructor(router: Router, sortService: SortService, activeModal: NgbActiveModal, pagingService: CourseForImportDTOPagingService) {
         super(router, sortService, activeModal, pagingService);
-        super.columns = tableColumns;
+        this.columns = tableColumns;
     }
 
     /**
