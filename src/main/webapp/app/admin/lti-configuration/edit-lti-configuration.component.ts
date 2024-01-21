@@ -6,7 +6,6 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { faBan, faPlus, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-configuration.model';
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
-import { HttpClient } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-edit-lti-configuration',
@@ -27,7 +26,6 @@ export class EditLtiConfigurationComponent implements OnInit {
         private route: ActivatedRoute,
         private ltiConfigurationService: LtiConfigurationService,
         private router: Router,
-        private http: HttpClient,
         private alertService: AlertService,
     ) {}
 
