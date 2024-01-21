@@ -987,4 +987,17 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     void testUpdateCourseEnableLearningPaths() throws Exception {
         courseTestService.testUpdateCourseEnableLearningPaths();
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testGetCoursesForImportWithoutPermission() throws Exception {
+        courseTestService.testGetCoursesForImportWithoutPermission();
+    }
+
+    // TODO OTHER CLASS
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetCoursesForImport() throws Exception {
+        courseTestService.testGetCoursesForImport();
+    }
 }
