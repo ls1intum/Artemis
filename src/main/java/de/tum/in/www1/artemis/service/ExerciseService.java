@@ -298,7 +298,7 @@ public class ExerciseService {
         if (course.isOnlineCourse()) {
             // this case happens rarely, so we can reload the relevant exercises from the database
             // students in online courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
-            exercises = exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), user.getLogin());
+            exercises = exerciseRepository.findByCourseIdWhereLtiResourceLaunchExists(course.getId(), user.getLogin());
         }
 
         // students for this course might not have the right to see it, so we have to

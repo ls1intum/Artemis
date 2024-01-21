@@ -266,7 +266,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Set<Exercise> findAllExercisesWithCurrentOrUpcomingAssessmentDueDate(@Param("now") ZonedDateTime now);
 
     /**
-     * Select Exercise for Course ID WHERE there does exist an LtiOutcomeUrl for the current user (-> user has started exercise once using LTI)
+     * Select Exercise for Course ID WHERE there does exist an LtiResourceLaunch for the current user (-> user has started exercise once using LTI)
      *
      * @param courseId the id of the course
      * @param login    the login of the corresponding user
@@ -276,11 +276,11 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             SELECT e FROM Exercise e
             WHERE e.course.id = :#{#courseId}
             AND EXISTS (
-            	SELECT l FROM LtiOutcomeUrl l
+            	SELECT l FROM LtiResourceLaunch l
             	WHERE e = l.exercise
             	AND l.user.login = :#{#login})
             """)
-    Set<Exercise> findByCourseIdWhereLtiOutcomeUrlExists(@Param("courseId") Long courseId, @Param("login") String login);
+    Set<Exercise> findByCourseIdWhereLtiResourceLaunchExists(@Param("courseId") Long courseId, @Param("login") String login);
 
     @Query("""
              SELECT DISTINCT c FROM Exercise e JOIN e.categories c
