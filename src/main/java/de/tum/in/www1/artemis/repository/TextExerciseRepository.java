@@ -24,9 +24,10 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface TextExerciseRepository extends JpaRepository<TextExercise, Long>, JpaSpecificationExecutor<TextExercise> {
 
     @Query("""
-                SELECT DISTINCT e FROM TextExercise e
+            SELECT DISTINCT e
+            FROM TextExercise e
                 LEFT JOIN FETCH e.categories
-            WHERE e.course.id = :#{#courseId}
+            WHERE e.course.id = :courseId
             """)
     List<TextExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
@@ -36,7 +37,19 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
     @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencies", "plagiarismDetectionConfig" })
     Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(Long exerciseId);
 
-    @Query("select textExercise from TextExercise textExercise left join fetch textExercise.exampleSubmissions exampleSubmissions left join fetch exampleSubmissions.submission submission left join fetch submission.results result left join fetch result.feedbacks left join fetch submission.blocks left join fetch result.assessor left join fetch textExercise.teamAssignmentConfig where textExercise.id = :#{#exerciseId}")
+    @Query("""
+            SELECT textExercise
+            FROM TextExercise textExercise
+                LEFT JOIN FETCH textExercise.exampleSubmissions exampleSubmissions
+                LEFT JOIN TREAT (exampleSubmissions AS TextSubmission) textSubmission
+                LEFT JOIN FETCH exampleSubmissions.submission submission
+                LEFT JOIN FETCH submission.results result
+                LEFT JOIN FETCH result.feedbacks
+                LEFT JOIN FETCH textSubmission.blocks
+                LEFT JOIN FETCH result.assessor
+                LEFT JOIN FETCH textExercise.teamAssignmentConfig
+            WHERE textExercise.id = :exerciseId
+            """)
     Optional<TextExercise> findByIdWithExampleSubmissionsAndResults(@Param("exerciseId") Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
@@ -48,8 +61,9 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
     }
 
     @Query("""
-            SELECT DISTINCT e FROM TextExercise e
-            LEFT JOIN FETCH e.gradingCriteria
+            SELECT DISTINCT e
+            FROM TextExercise e
+                LEFT JOIN FETCH e.gradingCriteria
             WHERE e.id = :exerciseId
             """)
     Optional<TextExercise> findByIdWithGradingCriteria(long exerciseId);

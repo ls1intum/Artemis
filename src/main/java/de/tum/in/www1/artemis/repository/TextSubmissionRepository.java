@@ -23,7 +23,16 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface TextSubmissionRepository extends JpaRepository<TextSubmission, Long> {
 
-    @Query("select distinct submission from TextSubmission submission left join fetch submission.participation participation left join fetch participation.exercise left join fetch submission.results result left join fetch result.assessor left join fetch result.feedbacks where submission.id = :#{#submissionId}")
+    @Query("""
+            SELECT DISTINCT submission
+            FROM TextSubmission submission
+                LEFT JOIN FETCH submission.participation participation
+                LEFT JOIN FETCH participation.exercise
+                LEFT JOIN FETCH submission.results result
+                LEFT JOIN FETCH result.assessor
+                LEFT JOIN FETCH result.feedbacks
+            WHERE submission.id = :submissionId
+            """)
     Optional<TextSubmission> findByIdWithEagerParticipationExerciseResultAssessor(@Param("submissionId") long submissionId);
 
     /**
@@ -50,7 +59,15 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
      * @param submissionId the submission id we are interested in
      * @return the submission with its feedback and assessor
      */
-    @Query("select distinct s from TextSubmission s left join fetch s.results r left join fetch r.feedbacks left join fetch r.assessor left join fetch s.blocks where s.id = :#{#submissionId}")
+    @Query("""
+            SELECT DISTINCT s
+            FROM TextSubmission s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH r.assessor
+                LEFT JOIN FETCH s.blocks
+            WHERE s.id = :submissionId
+            """)
     Optional<TextSubmission> findWithEagerResultsAndFeedbackAndTextBlocksById(@Param("submissionId") long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.assessor", "blocks", "results.feedbacks" })

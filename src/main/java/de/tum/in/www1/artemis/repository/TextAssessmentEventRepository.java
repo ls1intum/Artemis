@@ -23,8 +23,8 @@ public interface TextAssessmentEventRepository extends JpaRepository<TextAssessm
     @Query("""
             SELECT COUNT(DISTINCT textAssessmentEvent.userId)
             FROM TextAssessmentEvent textAssessmentEvent
-            WHERE textAssessmentEvent.courseId = :#{#courseId} AND
-                textAssessmentEvent.textExerciseId = :#{#exerciseId}
+            WHERE textAssessmentEvent.courseId = :courseId
+                AND textAssessmentEvent.textExerciseId = :exerciseId
             """)
     Integer getNumberOfTutorsInvolvedInAssessingByExerciseAndCourseId(@Param("courseId") Long courseId, @Param("exerciseId") Long exerciseId);
 
@@ -39,12 +39,12 @@ public interface TextAssessmentEventRepository extends JpaRepository<TextAssessm
     @Query("""
             SELECT textAssessmentEvent
             FROM TextAssessmentEvent textAssessmentEvent
-            WHERE textAssessmentEvent.userId IS NOT NULL AND
-                textAssessmentEvent.submissionId IS NOT NULL AND
-                textAssessmentEvent.participationId IS NOT NULL AND
-                textAssessmentEvent.timestamp IS NOT NULL AND
-                textAssessmentEvent.courseId = :#{#courseId} AND
-                textAssessmentEvent.textExerciseId = :#{#textExerciseId}
+            WHERE textAssessmentEvent.userId IS NOT NULL
+                AND textAssessmentEvent.submissionId IS NOT NULL
+                AND textAssessmentEvent.participationId IS NOT NULL
+                AND textAssessmentEvent.timestamp IS NOT NULL
+                AND textAssessmentEvent.courseId = :courseId
+                AND textAssessmentEvent.textExerciseId = :textExerciseId
             """)
     List<TextAssessmentEvent> findAllNonEmptyEvents(@Param("courseId") Long courseId, @Param("textExerciseId") Long textExerciseId);
 
@@ -56,13 +56,14 @@ public interface TextAssessmentEventRepository extends JpaRepository<TextAssessm
      * @return a TutorAssessedSubmissionsCount interface representing user id and number of submissions involved
      */
     @Query("""
-            SELECT textAssessmentEvent.userId AS tutorId, COUNT(DISTINCT textAssessmentEvent.submissionId) AS submissionsInvolved
+            SELECT textAssessmentEvent.userId AS tutorId,
+                COUNT(DISTINCT textAssessmentEvent.submissionId) AS submissionsInvolved
             FROM TextAssessmentEvent textAssessmentEvent
-            WHERE textAssessmentEvent.userId IS NOT NULL AND
-             textAssessmentEvent.submissionId IS NOT NULL AND
-             textAssessmentEvent.participationId IS NOT NULL AND
-             textAssessmentEvent.courseId = :#{#courseId} AND
-             textAssessmentEvent.textExerciseId = :#{#textExerciseId}
+            WHERE textAssessmentEvent.userId IS NOT NULL
+                AND textAssessmentEvent.submissionId IS NOT NULL
+                AND textAssessmentEvent.participationId IS NOT NULL
+                AND textAssessmentEvent.courseId = :courseId
+                AND textAssessmentEvent.textExerciseId = :textExerciseId
             GROUP BY textAssessmentEvent.userId
             """)
     List<TutorAssessedSubmissionsCount> findNumberOfSubmissionsAssessedForTutor(@Param("courseId") Long courseId, @Param("textExerciseId") Long textExerciseId);
