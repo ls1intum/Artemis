@@ -104,15 +104,15 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         private router: Router,
         private location: Location,
         private route: ActivatedRoute,
-        protected alertService: AlertService,
-        protected accountService: AccountService,
-        protected assessmentsService: TextAssessmentService,
         private complaintService: ComplaintService,
-        translateService: TranslateService,
-        protected structuredGradingCriterionService: StructuredGradingCriterionService,
         private submissionService: SubmissionService,
         private exampleSubmissionService: ExampleSubmissionService,
         private athenaService: AthenaService,
+        alertService: AlertService,
+        accountService: AccountService,
+        assessmentsService: TextAssessmentService,
+        structuredGradingCriterionService: StructuredGradingCriterionService,
+        translateService: TranslateService,
     ) {
         super(alertService, accountService, assessmentsService, structuredGradingCriterionService);
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
