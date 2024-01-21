@@ -49,7 +49,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         job2 = new LocalCIBuildJobQueueItem("2", "job2", "address1", 2, "test", RepositoryType.USER, "commit2", ZonedDateTime.now(), 1, ZonedDateTime.now(),
                 ZonedDateTime.now().plusMinutes(1), 1, course.getId(), RepositoryType.USER, "image");
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
-        agent1 = new LocalCIBuildAgentInformation(memberAddress, 1, 0, null);
+        agent1 = new LocalCIBuildAgentInformation(memberAddress, 1, 0, null, false);
 
         queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
         processingJobs = hazelcastInstance.getMap("processingJobs");
