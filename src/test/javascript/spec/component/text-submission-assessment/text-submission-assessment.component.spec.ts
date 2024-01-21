@@ -79,6 +79,7 @@ describe('TextSubmissionAssessmentComponent', () => {
             assessmentType: AssessmentType.MANUAL,
             problemStatement: '',
             course: { id: 123, isAtLeastInstructor: true } as Course,
+            maxPoints: 42,
         } as TextExercise;
         participation = {
             type: ParticipationType.STUDENT,
