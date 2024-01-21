@@ -32,7 +32,7 @@ public interface IrisMessageRepository extends JpaRepository<IrisMessage, Long> 
             FROM IrisMessage m
                 JOIN TREAT (m.session as IrisChatSession) s
             WHERE s.user.id = :userId
-                AND m.sender = 'LLM'
+                AND m.sender = de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender.LLM
                 AND m.sentAt BETWEEN :start AND :end
             """)
     int countLlmResponsesOfUserWithinTimeframe(@Param("userId") Long userId, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);

@@ -25,11 +25,11 @@ public interface IrisChatSessionRepository extends JpaRepository<IrisChatSession
      * @return A list of chat sessions sorted by creation date in descending order.
      */
     @Query("""
-                SELECT s
-                FROM IrisChatSession s
-                WHERE s.exercise.id = :exerciseId
-                    AND s.user.id = :userId
-                ORDER BY s.creationDate DESC
+            SELECT s
+            FROM IrisChatSession s
+            WHERE s.exercise.id = :exerciseId
+                AND s.user.id = :userId
+            ORDER BY s.creationDate DESC
             """)
     List<IrisChatSession> findByExerciseIdAndUserId(Long exerciseId, Long userId);
 
