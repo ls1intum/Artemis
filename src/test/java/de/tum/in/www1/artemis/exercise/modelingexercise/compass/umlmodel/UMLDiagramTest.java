@@ -8,7 +8,6 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 
@@ -99,19 +98,6 @@ class UMLDiagramTest {
 
         assertThat(similarity).isEqualTo(expectedSimilarity);
         assertThat(symmetricSimilarity).isEqualTo(similarity);
-    }
-
-    private void verifyNoElementInteraction() {
-        verify(umlElement1, Mockito.never()).similarity(any());
-        verify(umlElement1, Mockito.never()).overallSimilarity(any());
-        verify(umlElement2, Mockito.never()).similarity(any());
-        verify(umlElement2, Mockito.never()).overallSimilarity(any());
-        verify(umlElement3, Mockito.never()).similarity(any());
-        verify(umlElement3, Mockito.never()).overallSimilarity(any());
-        verify(referenceElement1, Mockito.never()).similarity(any());
-        verify(referenceElement1, Mockito.never()).overallSimilarity(any());
-        verify(referenceElement2, Mockito.never()).similarity(any());
-        verify(referenceElement2, Mockito.never()).overallSimilarity(any());
     }
 
     private void mockOverallSimilarity(Similarity<UMLElement> element1, Similarity<UMLElement> element2, double similarityValue) {
