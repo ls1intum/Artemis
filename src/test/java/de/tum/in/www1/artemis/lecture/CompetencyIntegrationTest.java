@@ -801,7 +801,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importingCompetencies_intoSameCourse_shouldReturnConflict() throws Exception {
-        request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-all/" + course2.getId(), null, CompetencyWithTailRelationDTO.class,
+        request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-all/" + course.getId(), null, CompetencyWithTailRelationDTO.class,
                 HttpStatus.CONFLICT);
     }
 }

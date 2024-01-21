@@ -282,7 +282,7 @@ public class CompetencyResource {
      */
     @PostMapping("/courses/{courseId}/competencies/import-all/{sourceCourseId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<CompetencyWithTailRelationDTO>> importAllCompeteniesFromCourse(@PathVariable long courseId, @PathVariable long sourceCourseId,
+    public ResponseEntity<List<CompetencyWithTailRelationDTO>> importAllCompetenciesFromCourse(@PathVariable long courseId, @PathVariable long sourceCourseId,
             @RequestParam(defaultValue = "false") boolean importRelations) throws URISyntaxException {
         log.info("REST request to all competencies from course {} into course {}", sourceCourseId, courseId);
 
@@ -294,7 +294,7 @@ public class CompetencyResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, sourceCourse, null);
 
-        List<CompetencyWithTailRelationDTO> importedCompetencies = competencyService.importAllCompeteniesFromCourse(course, sourceCourse, importRelations);
+        List<CompetencyWithTailRelationDTO> importedCompetencies = competencyService.importAllCompetenciesFromCourse(course, sourceCourse, importRelations);
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(importedCompetencies);
     }

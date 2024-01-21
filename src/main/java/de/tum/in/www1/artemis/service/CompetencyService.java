@@ -75,7 +75,7 @@ public class CompetencyService {
      * @param importRelations if competency relations should get imported aswell
      * @return A list of competencies, each also containing the relations it is the tail competency for.
      */
-    public List<CompetencyWithTailRelationDTO> importAllCompeteniesFromCourse(Course targetCourse, Course sourceCourse, boolean importRelations) {
+    public List<CompetencyWithTailRelationDTO> importAllCompetenciesFromCourse(Course targetCourse, Course sourceCourse, boolean importRelations) {
         var competencies = competencyRepository.findAllForCourse(sourceCourse.getId());
         if (competencies.isEmpty()) {
             return List.of();
