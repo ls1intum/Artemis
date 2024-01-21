@@ -272,14 +272,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             // This method is called for every subscription request, so it should be as fast as possible.
             // If you need to do a database call, make sure to first check if the destination is valid for your specific use case.
 
-            if (isBuildQueueAdminDestination(destination)) {
+            if (isBuildQueueAdminDestination(destination) || isBuildAgentDestination(destination)) {
                 return authorizationCheckService.isAdmin(principal.getName());
-            }
-
-            if (isBuildAgentDestination(destination)) {
-                log.debug("Allowing subscription to build agent destination: {}", destination);
-                var user = userRepository.getUserWithAuthorities(principal.getName());
-                return authorizationCheckService.isAdmin(user);
             }
 
             Optional<Long> courseId = isBuildQueueCourseDestination(destination);
