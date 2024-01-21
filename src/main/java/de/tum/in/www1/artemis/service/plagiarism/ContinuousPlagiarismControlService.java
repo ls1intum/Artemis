@@ -18,17 +18,12 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmissionElement;
+import de.tum.in.www1.artemis.domain.plagiarism.*;
 import de.tum.in.www1.artemis.exception.ArtemisMailException;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
-import de.tum.in.www1.artemis.service.metis.PostService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 /**
@@ -54,19 +49,19 @@ public class ContinuousPlagiarismControlService {
 
     private final PlagiarismCaseRepository plagiarismCaseRepository;
 
-    private final PostService postService;
+    private final PlagiarismPostService plagiarismPostService;
 
     private final PlagiarismResultRepository plagiarismResultRepository;
 
     public ContinuousPlagiarismControlService(ExerciseRepository exerciseRepository, PlagiarismDetectionService plagiarismDetectionService,
             PlagiarismComparisonRepository plagiarismComparisonRepository, PlagiarismCaseService plagiarismCaseService, PlagiarismCaseRepository plagiarismCaseRepository,
-            PostService postService, PlagiarismResultRepository plagiarismResultRepository) {
+            PlagiarismPostService plagiarismPostService, PlagiarismResultRepository plagiarismResultRepository) {
         this.exerciseRepository = exerciseRepository;
         this.plagiarismDetectionService = plagiarismDetectionService;
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
         this.plagiarismCaseService = plagiarismCaseService;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
-        this.postService = postService;
+        this.plagiarismPostService = plagiarismPostService;
         this.plagiarismResultRepository = plagiarismResultRepository;
     }
 
@@ -152,7 +147,7 @@ public class ContinuousPlagiarismControlService {
         plagiarismCases.stream().filter(plagiarismCase -> plagiarismCase.getPost() == null && plagiarismCase.getStudent() != null)
                 .map(ContinuousPlagiarismControlService::buildCpcPost).forEach(post -> {
                     try {
-                        postService.createContinuousPlagiarismControlPlagiarismCasePost(post);
+                        plagiarismPostService.createContinuousPlagiarismControlPlagiarismCasePost(post);
                     }
                     catch (ArtemisMailException e) {
                         // Catch mail exceptions to so that notification for the second student will be delivered

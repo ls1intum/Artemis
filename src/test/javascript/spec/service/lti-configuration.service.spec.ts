@@ -38,6 +38,22 @@ describe('LtiConfigurationService', () => {
                 jwkSetUri: 'http://lms.com/api/lti_consumer/v1/public_keysets',
                 tokenUri: 'http://lms.com/api/lti_consumer/v1/token/4d4faae2-65e4-400f-91d7-9cc22d0489a9',
             },
+            {
+                id: 1,
+                customName: 'Platform A',
+                clientId: 'client-id-a',
+                authorizationUri: 'platformA.com/auth-login',
+                jwkSetUri: 'platformA.com/jwk',
+                tokenUri: 'platformA.com/token',
+            },
+            {
+                id: 2,
+                customName: 'Platform B',
+                clientId: 'client-id-b',
+                authorizationUri: 'platformB.com/auth-login',
+                jwkSetUri: 'platformB.com/jwk',
+                tokenUri: 'platformB.com/token',
+            },
         ];
 
         service.findAll().subscribe((platforms) => {
@@ -56,9 +72,9 @@ describe('LtiConfigurationService', () => {
             id: 1,
             customName: 'Updated Platform',
             clientId: 'updated-client-id',
-            authorizationUri: 'http://lms.com/api/lti_consumer/v1/auth-login',
-            jwkSetUri: 'http://lms.com/api/lti_consumer/v1/public_keysets',
-            tokenUri: 'http://lms.com/api/lti_consumer/v1/token/4d4faae2-65e4-400f-91d7-9cc22d0489a9',
+            authorizationUri: 'platformA.com/auth-login',
+            jwkSetUri: 'platformA.com/jwk',
+            tokenUri: 'platformA.com/token',
         };
 
         service.updateLtiPlatformConfiguration(dummyConfig).subscribe((response) => {
