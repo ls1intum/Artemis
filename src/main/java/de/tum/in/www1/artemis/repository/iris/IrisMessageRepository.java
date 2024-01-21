@@ -30,7 +30,7 @@ public interface IrisMessageRepository extends JpaRepository<IrisMessage, Long> 
     @Query("""
             SELECT COUNT(DISTINCT m)
             FROM IrisMessage m
-                FULL JOIN TREAT (m.session as IrisChatSession) s
+                JOIN TREAT (m.session as IrisChatSession) s
             WHERE s.user.id = :userId
                 AND m.sender = 'LLM'
                 AND m.sentAt BETWEEN :start AND :end
