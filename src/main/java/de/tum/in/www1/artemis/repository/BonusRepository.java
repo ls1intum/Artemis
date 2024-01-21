@@ -23,7 +23,7 @@ public interface BonusRepository extends JpaRepository<Bonus, Long> {
     @Query("""
             SELECT gs.bonusFrom
             FROM GradingScale gs
-            WHERE gs.exam.id = :#{#examId}
+            WHERE gs.exam.id = :examId
             """)
     Set<Bonus> findAllByBonusToExamId(@Param("examId") Long examId);
 
