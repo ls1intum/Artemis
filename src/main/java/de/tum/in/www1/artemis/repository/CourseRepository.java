@@ -218,18 +218,17 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("""
             SELECT DISTINCT c
             FROM Course c
-                JOIN TREAT (c.exercises AS QuizExercise) e
-                JOIN FETCH e
-            WHERE c.instructorGroupName IN :userGroups
-                OR c.editorGroupName IN :userGroups
+                LEFT JOIN FETCH c.exercises e
+            WHERE TYPE(e) = QuizExercise
+                AND (c.instructorGroupName IN :userGroups OR c.editorGroupName IN :userGroups)
             """)
     List<Course> getCoursesWithQuizExercisesForWhichUserHasAtLeastEditorAccess(@Param("userGroups") List<String> userGroups);
 
     @Query("""
             SELECT DISTINCT c
             FROM Course c
-                JOIN TREAT (c.exercises AS QuizExercise) e
-                JOIN FETCH e
+                LEFT JOIN FETCH c.exercises e
+            WHERE TYPE(e) = QuizExercise
             """)
     List<Course> findAllWithQuizExercisesWithEagerExercises();
 
@@ -249,8 +248,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             FROM StudentParticipation p
                 JOIN p.submissions s
             WHERE p.exercise.id IN :exerciseIds
-                AND s.submissionDate >= CAST(:startDate as TIMESTAMP)
-                AND s.submissionDate <= CAST(:endDate as TIMESTAMP)
+                AND s.submissionDate >= :startDate
+                AND s.submissionDate <= :endDate
             GROUP BY SUBSTRING(CAST(s.submissionDate as string), 1, 10), p.student.login
             """)
     List<StatisticsEntry> getActiveStudents(@Param("exerciseIds") Set<Long> exerciseIds, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
