@@ -766,7 +766,7 @@ public class UserTestService {
         user.setPassword(password);
         user.setInternal(false);
         user.setActivated(false);
-        user = userRepository.save(user);
+        userRepository.save(user);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
 
