@@ -160,38 +160,4 @@ describe('Feedback', () => {
             expect(Feedback.isTestCaseFeedback(feedback)).toBeTrue();
         });
     });
-
-    describe('content functions', () => {
-        it('should return the detail text if present', () => {
-            const feedback: Feedback = { detailText: 'content' };
-            expect(Feedback.getContent(feedback)).toBe('content');
-        });
-
-        it.each([undefined, ''])('should return the grading instruction feedback if no direct detail text is present', (detailText) => {
-            const gradingInstruction: GradingInstruction = {
-                credits: 0,
-                gradingScale: '',
-                instructionDescription: '',
-                feedback: 'grading instruction feedback',
-            };
-            const feedback: Feedback = { detailText: detailText, gradingInstruction: gradingInstruction };
-            expect(Feedback.getContent(feedback)).toBe('grading instruction feedback');
-        });
-
-        it.each([undefined, ''])('should return an empty unquoted string when no text is available', (detailText) => {
-            const feedback: Feedback = { detailText: detailText };
-            expect(Feedback.getQuotedContent(feedback)).toBe('');
-        });
-
-        it('should quote the detail text if present', () => {
-            const gradingInstruction: GradingInstruction = {
-                credits: 0,
-                gradingScale: '',
-                instructionDescription: '',
-                feedback: 'grading instruction feedback',
-            };
-            const feedback: Feedback = { detailText: '', gradingInstruction: gradingInstruction };
-            expect(Feedback.getQuotedContent(feedback)).toBe('"grading instruction feedback"');
-        });
-    });
 });

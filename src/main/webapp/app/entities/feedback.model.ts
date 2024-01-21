@@ -150,34 +150,6 @@ export class Feedback implements BaseEntity {
     }
 
     /**
-     * Returns either the feedback detail text directly stored in the feedback,
-     * or the one stored in the connected grading instruction.
-     *
-     * @param that Some feedback.
-     */
-    public static getContent(that: Feedback): string | undefined {
-        if (that.detailText) {
-            return that.detailText;
-        } else {
-            return that.gradingInstruction?.feedback;
-        }
-    }
-
-    /**
-     * Can be used to show the text to the user as part of another sentence, e.g., in translation strings.
-     *
-     * @param that Some feedback.
-     */
-    public static getQuotedContent(that: Feedback): string {
-        const content = Feedback.getContent(that);
-        if (content) {
-            return `"${content}"`;
-        } else {
-            return '';
-        }
-    }
-
-    /**
      * Checks for equality of two feedbacks. Only checking the ids is not enough because they are undefined for inline
      * feedbacks before they are saved.
      * @param f1 The feedback that is compared to f2

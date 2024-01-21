@@ -142,8 +142,4 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     public buildFeedbackTextForCodeEditor(feedback: Feedback): string {
         return buildFeedbackTextForReview(feedback, false);
     }
-
-    get quotedFeedbackText(): string {
-        return Feedback.getQuotedContent(this.feedback);
-    }
 }
