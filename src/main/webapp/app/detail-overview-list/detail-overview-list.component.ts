@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { faExclamationTriangle, faEye } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUpRightFromSquare, faExclamationTriangle, faEye } from '@fortawesome/free-solid-svg-icons';
 import { isEmpty } from 'lodash-es';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize } from 'app/shared/components/button.component';
@@ -66,6 +66,7 @@ export class DetailOverviewListComponent implements OnInit {
     // icons
     faExclamationTriangle = faExclamationTriangle;
     faEye = faEye;
+    faArrowUpRightFromSquare = faArrowUpRightFromSquare;
 
     constructor(
         private modalService: NgbModal,

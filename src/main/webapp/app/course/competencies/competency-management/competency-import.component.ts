@@ -34,7 +34,7 @@ const tableColumns: Column<Competency>[] = [
 export class CompetencyImportComponent extends ImportComponent<Competency> {
     constructor(router: Router, sortService: SortService, activeModal: NgbActiveModal, pagingService: CompetencyPagingService) {
         super(router, sortService, activeModal, pagingService);
-        super.columns = tableColumns;
-        super.entityName = 'competency';
+        this.columns = tableColumns;
+        this.entityName = 'competency';
     }
 }
