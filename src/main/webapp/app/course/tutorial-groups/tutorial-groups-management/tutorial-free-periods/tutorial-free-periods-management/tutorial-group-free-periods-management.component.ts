@@ -68,7 +68,7 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
     }
 
     private isFreePeriod(tutorialGroupFreePeriod: TutorialGroupFreePeriod): boolean {
-        return tutorialGroupFreePeriod.start!.day() !== tutorialGroupFreePeriod.end!.day();
+        return !tutorialGroupFreePeriod.start!.isSame(tutorialGroupFreePeriod.end!, 'day');
     }
 
     get freePeriodsWithinDay(): TutorialGroupFreePeriod[] {

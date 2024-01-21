@@ -154,7 +154,7 @@ public class TutorialGroupFreePeriodResource {
 
         newTutorialGroupFreePeriod.setStart(interpretInTimeZone(tutorialGroupFreePeriod.startDate.toLocalDate(), tutorialGroupFreePeriod.startDate.toLocalTime(),
                 tutorialGroupsConfiguration.getCourse().getTimeZone()));
-        newTutorialGroupFreePeriod.setEnd(interpretInTimeZone(tutorialGroupFreePeriod.startDate.toLocalDate(), tutorialGroupFreePeriod.endDate.toLocalTime(),
+        newTutorialGroupFreePeriod.setEnd(interpretInTimeZone(tutorialGroupFreePeriod.endDate.toLocalDate(), tutorialGroupFreePeriod.endDate.toLocalTime(),
                 tutorialGroupsConfiguration.getCourse().getTimeZone()));
 
         checkEntityIdMatchesPathIds(newTutorialGroupFreePeriod, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));

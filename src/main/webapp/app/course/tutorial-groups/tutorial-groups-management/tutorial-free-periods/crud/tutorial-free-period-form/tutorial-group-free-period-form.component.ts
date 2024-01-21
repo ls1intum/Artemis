@@ -105,7 +105,6 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         return this.form.get('reason');
     }
 
-    // ToDo: How can I validate the form for the three different timeFrames? This does not work.
     get isSubmitPossible() {
         if (this.form.get('startDate') == undefined || !this.form.get('startDate')?.touched) {
             return false;
