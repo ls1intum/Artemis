@@ -118,13 +118,14 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
      */
     @Query("""
             SELECT t.taskName
-                FROM ProgrammingExerciseTask t
+            FROM ProgrammingExerciseTask t
             WHERE t.id = :taskId
             """)
     String getTaskName(@Param("taskId") Long taskId);
 
     @Query("""
-            SELECT pt FROM ProgrammingExerciseTask  pt
+            SELECT pt
+            FROM ProgrammingExerciseTask  pt
                 LEFT JOIN FETCH pt.exerciseHints h
                 LEFT JOIN FETCH pt.testCases tc
             WHERE h.id = :codeHintId
