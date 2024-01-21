@@ -256,9 +256,9 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
                     next: (res: Array<CompetencyWithTailRelationDTO>) => {
                         if (res.length > 0) {
                             this.alertService.success('artemisApp.competency.importAll.success', { noOfCompetencies: res.length, courseTitle: courseTitle });
+                            this.updateDataAfterImportAll(res);
                         } else {
                             this.alertService.warning('artemisApp.competency.importAll.warning', { courseTitle: courseTitle });
-                            this.updateDataAfterImportAll(res);
                         }
                     },
                     error: (res: HttpErrorResponse) => onError(this.alertService, res),

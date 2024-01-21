@@ -771,11 +771,15 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importingCompetencies_asInstructor_shouldImportCompetencies() throws Exception {
+        var competencyDTOList = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-all/" + course2.getId(), null,
+                CompetencyWithTailRelationDTO.class, HttpStatus.CREATED);
+        assertThat(competencyDTOList).isEmpty();
+
         Competency head = createCompetency(course2);
         Competency tail = createCompetency(course2);
         createRelation(head, tail, CompetencyRelation.RelationType.RELATES);
 
-        var competencyDTOList = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-all/" + course2.getId() + "?importRelations=true", null,
+        competencyDTOList = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-all/" + course2.getId() + "?importRelations=true", null,
                 CompetencyWithTailRelationDTO.class, HttpStatus.CREATED);
 
         assertThat(competencyDTOList).hasSize(2);
