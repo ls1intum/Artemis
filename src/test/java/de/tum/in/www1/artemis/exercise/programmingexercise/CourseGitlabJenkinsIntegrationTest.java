@@ -1062,7 +1062,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetCoursesForImport_asAdmin() throws Exception {
         courseTestService.testGetCoursesForImport();
     }
