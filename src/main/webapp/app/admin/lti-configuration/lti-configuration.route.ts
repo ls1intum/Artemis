@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { LtiConfigurationComponent } from 'app/admin/lti-configuration/lti-configuration.component';
-import { LtiConfigurationUpdateComponent } from 'app/admin/lti-configuration/lti-configuration-update.component';
+import { EditLtiConfigurationComponent } from 'app/admin/lti-configuration/edit-lti-configuration.component';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
@@ -20,7 +20,7 @@ export const ltiConfigurationRoute: Routes = [
         children: [
             {
                 path: 'new',
-                component: LtiConfigurationUpdateComponent,
+                component: EditLtiConfigurationComponent,
                 data: {
                     authorities: [Authority.ADMIN],
                     pageTitle: 'artemisApp.lti.addOrEditLtiPlatform',
@@ -35,7 +35,7 @@ export const ltiConfigurationRoute: Routes = [
                 children: [
                     {
                         path: 'edit',
-                        component: LtiConfigurationUpdateComponent,
+                        component: EditLtiConfigurationComponent,
                         data: {
                             authorities: [Authority.ADMIN],
                             pageTitle: 'artemisApp.lti.addOrEditLtiPlatform',

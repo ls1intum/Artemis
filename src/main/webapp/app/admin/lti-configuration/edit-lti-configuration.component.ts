@@ -10,9 +10,9 @@ import { HttpClient } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-edit-lti-configuration',
-    templateUrl: './lti-configuration-update.component.html',
+    templateUrl: './edit-lti-configuration.component.html',
 })
-export class LtiConfigurationUpdateComponent implements OnInit {
+export class EditLtiConfigurationComponent implements OnInit {
     platform: LtiPlatformConfiguration;
     platformConfigurationForm: FormGroup;
 

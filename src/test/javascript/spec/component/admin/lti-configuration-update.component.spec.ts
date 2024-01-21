@@ -8,7 +8,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { LtiConfigurationUpdateComponent } from 'app/admin/lti-configuration/lti-configuration-update.component';
+import { EditLtiConfigurationComponent } from 'app/admin/lti-configuration/edit-lti-configuration.component';
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-configuration.model';
@@ -17,8 +17,8 @@ import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/htt
 import { AlertService } from 'app/core/util/alert.service';
 
 describe('Edit LTI Configuration Component', () => {
-    let comp: LtiConfigurationUpdateComponent;
-    let fixture: ComponentFixture<LtiConfigurationUpdateComponent>;
+    let comp: EditLtiConfigurationComponent;
+    let fixture: ComponentFixture<EditLtiConfigurationComponent>;
     let ltiConfigurationService: LtiConfigurationService;
 
     const router = new MockRouter();
@@ -46,7 +46,7 @@ describe('Edit LTI Configuration Component', () => {
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgbNavModule, MockModule(NgbTooltipModule), MockModule(ReactiveFormsModule)],
-            declarations: [LtiConfigurationUpdateComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent)],
+            declarations: [EditLtiConfigurationComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent)],
             providers: [
                 MockProvider(LtiConfigurationService),
                 { provide: Router, useValue: router },
@@ -57,7 +57,7 @@ describe('Edit LTI Configuration Component', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(LtiConfigurationUpdateComponent);
+                fixture = TestBed.createComponent(EditLtiConfigurationComponent);
                 comp = fixture.componentInstance;
                 ltiConfigurationService = TestBed.inject(LtiConfigurationService);
             });

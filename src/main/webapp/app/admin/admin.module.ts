@@ -33,7 +33,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ReactiveFormsModule } from '@angular/forms';
 import { LtiConfigurationComponent } from 'app/admin/lti-configuration/lti-configuration.component';
 import { BuildAgentsComponent } from 'app/localci/build-agents/build-agents.component';
-import { LtiConfigurationUpdateComponent } from 'app/admin/lti-configuration/lti-configuration-update.component';
+import { EditLtiConfigurationComponent } from 'app/admin/lti-configuration/edit-lti-configuration.component';
 
 const ENTITY_STATES = [...adminState];
 
@@ -74,7 +74,7 @@ const ENTITY_STATES = [...adminState];
         OrganizationManagementUpdateComponent,
         LtiConfigurationComponent,
         BuildAgentsComponent,
-        LtiConfigurationUpdateComponent,
+        EditLtiConfigurationComponent,
     ],
 })
 export class ArtemisAdminModule {}
