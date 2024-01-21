@@ -142,7 +142,7 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
             FROM PlagiarismCase plagiarismCase
                 LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
             WHERE plagiarismCase.exercise.id = :exerciseId
-                AND plagiarismCase.createdByContinuousPlagiarismControl = true
+                AND plagiarismCase.createdByContinuousPlagiarismControl IS TRUE
             """)
     List<PlagiarismCase> findAllCreatedByContinuousPlagiarismControlByExerciseIdWithPlagiarismSubmissions(@Param("exerciseId") long exerciseId);
 
@@ -167,7 +167,7 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
     @Query("""
             SELECT COUNT(plagiarismCase)
             FROM PlagiarismCase plagiarismCase
-            WHERE plagiarismCase.student.isDeleted = false
+            WHERE plagiarismCase.student.isDeleted IS FALSE
                 AND plagiarismCase.exercise.id = :exerciseId
             """)
     long countByExerciseId(long exerciseId);

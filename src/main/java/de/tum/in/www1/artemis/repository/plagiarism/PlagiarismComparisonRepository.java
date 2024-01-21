@@ -23,8 +23,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface PlagiarismComparisonRepository extends JpaRepository<PlagiarismComparison<?>, Long> {
 
-    // Please note: due to issues in the data model which can lead to out of memory errors and even kill production systems,
-    // we decided to implement a custom query here, even if this could be realized with the built-in findById method
     @Query("""
             SELECT DISTINCT comparison
             FROM PlagiarismComparison comparison
