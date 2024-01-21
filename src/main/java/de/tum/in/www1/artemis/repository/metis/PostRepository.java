@@ -31,7 +31,7 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
             SELECT p
             FROM Post p
             WHERE p.author.id =:authorId
-                  AND p.conversation.course.id = :courseId
+                AND p.conversation.course.id = :courseId
             """)
     List<Post> findPostsByAuthorIdAndCourseId(long authorId, long courseId);
 
