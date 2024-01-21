@@ -8,8 +8,10 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 
 import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
 import quizExerciseTemplate from '../../fixtures/exercise/quiz/template.json';
-import { QUIZ_EXERCISE_BASE, TEXT_EXERCISE_BASE } from '../constants';
+import modelingExerciseTemplate from '../../fixtures/exercise/modeling/template.json';
+import { MODELING_EXERCISE_BASE, QUIZ_EXERCISE_BASE, TEXT_EXERCISE_BASE } from '../constants';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 
 export class ExerciseAPIRequests {
     private readonly page: Page;
@@ -96,5 +98,43 @@ export class ExerciseAPIRequests {
      */
     async deleteQuizExercise(exerciseId: number) {
         await this.page.request.delete(QUIZ_EXERCISE_BASE + exerciseId);
+    }
+
+    /**
+     * Creates a modeling exercise.
+     *
+     * @param body - An object containing either the course or exercise group the exercise will be added to.
+     * @param title - The title for the exercise (optional, default: auto-generated).
+     * @param releaseDate - The release date of the exercise (optional, default: current date).
+     * @param dueDate - The due date of the exercise (optional, default: current date + 1 day).
+     * @param assessmentDueDate - The assessment due date of the exercise (optional, default: current date + 2 days).
+     * @returns A Cypress.Chainable<Cypress.Response<ModelingExercise>> representing the API request response.
+     */
+    async createModelingExercise(
+        body: { course: Course } | { exerciseGroup: ExerciseGroup },
+        title = 'Modeling ' + generateUUID(),
+        releaseDate = dayjs(),
+        dueDate = dayjs().add(1, 'days'),
+        assessmentDueDate = dayjs().add(2, 'days'),
+    ): Promise<ModelingExercise> {
+        const templateCopy = {
+            ...modelingExerciseTemplate,
+            title,
+            channelName: 'exercise-' + titleLowercase(title),
+        };
+        const dates = {
+            releaseDate: dayjsToString(releaseDate),
+            dueDate: dayjsToString(dueDate),
+            assessmentDueDate: dayjsToString(assessmentDueDate),
+        };
+        let newModelingExercise;
+        // eslint-disable-next-line no-prototype-builtins
+        if (body.hasOwnProperty('course')) {
+            newModelingExercise = Object.assign({}, templateCopy, dates, body);
+        } else {
+            newModelingExercise = Object.assign({}, templateCopy, body);
+        }
+        const response = await this.page.request.post(MODELING_EXERCISE_BASE, { data: newModelingExercise });
+        return response.json();
     }
 }
