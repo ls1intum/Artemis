@@ -45,7 +45,7 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
     Set<CompetencyRelation> findAllWithHeadAndTailByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
-            SELECT count(cr)
+            SELECT COUNT(cr)
             FROM CompetencyRelation cr
             WHERE cr.headCompetency.course.id = :courseId
                 OR cr.tailCompetency.course.id = :courseId
@@ -58,7 +58,7 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
                 LEFT JOIN relation.headCompetency
                 LEFT JOIN relation.tailCompetency
             WHERE relation.tailCompetency.id IN :competencyIds
-                AND relation.type <> 'MATCHES'
+                AND relation.type <> de.tum.in.www1.artemis.domain.competency.CompetencyRelation.RelationType.MATCHES
             """)
     Set<Long> getPriorCompetenciesByCompetencyIds(@Param("competencyIds") Set<Long> competencyIds);
 
@@ -83,21 +83,21 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
      * @return set of all competency ids that are (transitively) connected via a matching relation
      */
     @Query(value = """
-                    WITH RECURSIVE transitive_closure(id) AS
-                    (
-                        (SELECT competency.id FROM learning_goal as competency WHERE competency.id = :competencyId)
-                        UNION
-                        (
-                            SELECT CASE
-                                WHEN relation.tail_learning_goal_id = tc.id THEN relation.head_learning_goal_id
-                                WHEN relation.head_learning_goal_id = tc.id THEN relation.tail_learning_goal_id
-                                END
-                            FROM learning_goal_relation as relation
-                            JOIN transitive_closure AS tc ON relation.tail_learning_goal_id = tc.id OR relation.head_learning_goal_id = tc.id
-                            WHERE relation.type = 'M'
-                        )
-                    )
-                    SELECT * FROM transitive_closure
+            WITH RECURSIVE transitive_closure(id) AS
+            (
+                (SELECT competency.id FROM learning_goal as competency WHERE competency.id = :competencyId)
+                UNION
+                (
+                    SELECT CASE
+                        WHEN relation.tail_learning_goal_id = tc.id THEN relation.head_learning_goal_id
+                        WHEN relation.head_learning_goal_id = tc.id THEN relation.tail_learning_goal_id
+                        END
+                    FROM learning_goal_relation as relation
+                    JOIN transitive_closure AS tc ON relation.tail_learning_goal_id = tc.id OR relation.head_learning_goal_id = tc.id
+                    WHERE relation.type = 'M'
+                )
+            )
+            SELECT * FROM transitive_closure
             """, nativeQuery = true)
     Set<Long> getMatchingCompetenciesByCompetencyId(@Param("competencyId") long competencyId);
 }

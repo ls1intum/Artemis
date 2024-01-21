@@ -17,7 +17,10 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
 
     @Transactional // ok because of delete
     @Modifying
-    @Query("DELETE FROM CompetencyProgress cp WHERE cp.learningGoal.id = :learningGoalId")
+    @Query("""
+            DELETE FROM CompetencyProgress cp
+            WHERE cp.learningGoal.id = :learningGoalId
+            """)
     void deleteAllByCompetencyId(Long learningGoalId);
 
     @Transactional // ok because of delete
@@ -74,14 +77,14 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
     Optional<Double> findAverageConfidenceByCompetencyId(@Param("competencyId") Long competencyId);
 
     @Query("""
-            SELECT count(cp)
+            SELECT COUNT(cp)
             FROM CompetencyProgress cp
             WHERE cp.learningGoal.id = :competencyId
             """)
     Long countByCompetency(@Param("competencyId") Long competencyId);
 
     @Query("""
-            SELECT count(cp)
+            SELECT COUNT(cp)
             FROM CompetencyProgress cp
             WHERE cp.learningGoal.id = :competencyId
                 AND cp.progress >= :progress

@@ -44,7 +44,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
             SELECT c
             FROM Competency c
                 LEFT JOIN FETCH c.lectureUnits lu
-            WHERE c.id = :#{#competencyId}
+            WHERE c.id = :competencyId
             """)
     Optional<Competency> findByIdWithLectureUnits(@Param("competencyId") long competencyId);
 
