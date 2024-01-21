@@ -13,6 +13,7 @@ export class Commands {
      * @param url - Optional URL to navigate to after successful login.
      */
     static login = async (page: Page, credentials: UserCredentials, url?: string): Promise<void> => {
+        await Commands.logout(page);
         const { username, password } = credentials;
 
         const jwtCookie = await page
@@ -41,5 +42,9 @@ export class Commands {
         if (url) {
             await page.goto(url);
         }
+    };
+
+    static logout = async (page: Page): Promise<void> => {
+        await page.request.post(BASE_API + 'public/logout');
     };
 }

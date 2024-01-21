@@ -89,10 +89,7 @@ export class CourseManagementPage {
      */
     private async confirmUserIntoGroup(credentials: UserCredentials) {
         await this.page.locator('#typeahead-basic').fill(credentials.username);
-        await this.page.keyboard.press('Enter');
-        const userResults = this.page.locator('.ngb-highlight', { hasText: credentials.username });
-        await userResults.first().click();
-        await this.page.locator('#bread-crumb-2').click();
+        await this.page.locator('.dropdown-item', { hasText: `(${credentials.username})` }).click();
     }
 
     /*

@@ -9,7 +9,7 @@ import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
 test.describe('Course messages', () => {
     let course: Course;
 
-    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
+    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests, courseMessages }) => {
         await login(admin);
         course = await courseManagementAPIRequests.createCourse();
 
@@ -17,9 +17,7 @@ test.describe('Course messages', () => {
         await courseManagementAPIRequests.addTutorToCourse(course, tutor);
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
         await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
-    });
 
-    test('Accepts code of conduct', async ({ login, courseMessages }) => {
         await login(instructor, `/courses/${course.id}/messages`);
         await courseMessages.acceptCodeOfConductButton();
         await login(studentOne, `/courses/${course.id}/messages`);
@@ -41,7 +39,7 @@ test.describe('Course messages', () => {
                 await courseMessages.checkChannelsExists('announcement');
             });
 
-            test('Instructors should be able to create a public announcement channel', async ({ login, courseMessages }) => {
+            test('Instructor should be able to create a public announcement channel', async ({ login, courseMessages }) => {
                 await login(instructor, `/courses/${course.id}/messages`);
                 const name = 'public-ancmnt-ch';
                 await courseMessages.createChannelButton();
@@ -53,7 +51,7 @@ test.describe('Course messages', () => {
                 await expect(courseMessages.getName()).toContainText(name);
             });
 
-            test('Instructors should be able to create a private announcement channel', async ({ login, courseMessages }) => {
+            test('Instructor should be able to create a private announcement channel', async ({ login, courseMessages }) => {
                 await login(instructor, `/courses/${course.id}/messages`);
                 const name = 'private-ancmnt-ch';
                 await courseMessages.createChannelButton();
@@ -65,7 +63,7 @@ test.describe('Course messages', () => {
                 await expect(courseMessages.getName()).toContainText(name);
             });
 
-            test('Instructors should be able to create a public unrestricted channel', async ({ login, courseMessages }) => {
+            test('Instructor should be able to create a public unrestricted channel', async ({ login, courseMessages }) => {
                 await login(instructor, `/courses/${course.id}/messages`);
                 const name = 'public-unrstct-ch';
                 await courseMessages.createChannelButton();
@@ -77,7 +75,7 @@ test.describe('Course messages', () => {
                 await expect(courseMessages.getName()).toContainText(name);
             });
 
-            test('Instructors should be able to create a private unrestricted channel', async ({ login, courseMessages }) => {
+            test('Instructor should be able to create a private unrestricted channel', async ({ login, courseMessages }) => {
                 await login(instructor, `/courses/${course.id}/messages`);
                 const name = 'private-unrstct-ch';
                 await courseMessages.createChannelButton();
@@ -89,7 +87,7 @@ test.describe('Course messages', () => {
                 await expect(courseMessages.getName()).toContainText(name);
             });
 
-            test('Instructors should not be able to create a channel with uppercase name', async ({ login, courseMessages }) => {
+            test('Instructor should not be able to create a channel with uppercase name', async ({ login, courseMessages }) => {
                 await login(instructor, `/courses/${course.id}/messages`);
                 const name = 'Forbidden Name';
                 await courseMessages.createChannelButton();
@@ -97,7 +95,7 @@ test.describe('Course messages', () => {
                 await expect(courseMessages.getError()).toContainText('Names can only contain lowercase letters');
             });
 
-            test('Instructors should not be able to create a channel with name longer than 30 chars', async ({ login, courseMessages }) => {
+            test('Instructor should not be able to create a channel with name longer than 30 chars', async ({ login, courseMessages }) => {
                 await login(instructor, `/courses/${course.id}/messages`);
                 const name = 'way-way-way-too-long-channel-title';
                 await courseMessages.createChannelButton();
@@ -140,7 +138,7 @@ test.describe('Course messages', () => {
                 await communicationAPIRequests.joinUserIntoChannel(course, channel.id!, instructor);
             });
 
-            test('Instructors should be able to edit a channel', async ({ login, courseMessages, page }) => {
+            test('Instructor should be able to edit a channel', async ({ login, courseMessages, page }) => {
                 await login(instructor, `/courses/${course.id}/messages?conversationId=${channel.id}`);
                 const newName = 'new-test-name';
                 const topic = 'test-topic';
@@ -186,8 +184,9 @@ test.describe('Course messages', () => {
                 await expect(courseMessages.checkBadgeJoined(channel.id!)).toContainText('Joined');
             });
 
-            test('Student should be able to leave a public channel', async ({ login, courseMessages }) => {
+            test('Student should be able to leave a public channel', async ({ login, courseMessages, communicationAPIRequests }) => {
                 await login(studentOne, `/courses/${course.id}/messages`);
+                await communicationAPIRequests.joinUserIntoChannel(course, channel.id!, studentOne);
                 await courseMessages.browseChannelsButton();
                 await courseMessages.leaveChannel(channel.id!);
                 await expect(courseMessages.checkBadgeJoined(channel.id!)).toHaveCount(0);
@@ -199,19 +198,19 @@ test.describe('Course messages', () => {
 
             test.beforeEach('Create channel', async ({ login, communicationAPIRequests }) => {
                 await login(admin);
-                channel = await communicationAPIRequests.createCourseMessageChannel(course, 'test-channel', 'Test Channel', true, true);
-                await communicationAPIRequests.joinUserIntoChannel(course, channel.id!, instructor);
+                channel = await communicationAPIRequests.createCourseMessageChannel(course, 'test-channel', 'Test Channel', false, true);
+                await communicationAPIRequests.joinUserIntoChannel(course, channel.id!, studentOne);
             });
 
-            test('student should be able to write message in channel', async ({ login, courseMessages, communicationAPIRequests }) => {
+            test('Student should be able to write message in channel', async ({ login, courseMessages }) => {
                 await login(studentOne, `/courses/${course.id}/messages?conversationId=${channel.id}`);
                 const messageText = 'Student Test Message';
                 await courseMessages.writeMessage(messageText);
-                const message = await communicationAPIRequests.createCourseMessage(course, channel.id!, 'channel', messageText);
+                const message = await courseMessages.save();
                 await courseMessages.checkMessage(message.id!, messageText);
             });
 
-            test('student should be able to edit message in channel', async ({ login, courseMessages, communicationAPIRequests }) => {
+            test('Student should be able to edit message in channel', async ({ login, courseMessages, communicationAPIRequests }) => {
                 await login(studentOne, `/courses/${course.id}/messages?conversationId=${channel.id!}`);
                 const messageText = 'Student Edit Test Message';
                 const message = await communicationAPIRequests.createCourseMessage(course, channel.id!, 'channel', messageText);
@@ -221,7 +220,7 @@ test.describe('Course messages', () => {
                 await expect(courseMessages.getSinglePost(message.id!).locator('.edited-text')).toBeVisible();
             });
 
-            test('student should be able to delete message in channel', async ({ login, courseMessages, communicationAPIRequests }) => {
+            test('Student should be able to delete message in channel', async ({ login, courseMessages, communicationAPIRequests }) => {
                 await login(studentOne, `/courses/${course.id}/messages?conversationId=${channel.id}`);
                 const messageText = 'Student Edit Test Message';
                 const message = await communicationAPIRequests.createCourseMessage(course, channel.id!, 'channel', messageText);

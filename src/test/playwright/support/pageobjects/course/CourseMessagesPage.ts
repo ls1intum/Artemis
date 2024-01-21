@@ -40,11 +40,11 @@ export class CourseMessagesPage {
     }
 
     async checkChannelsExists(name: string) {
-        await expect(this.page.locator('.channels-overview .list-group-item')).toContainText(name);
+        await expect(this.page.locator('.channels-overview .list-group-item').getByText(name)).toBeVisible();
     }
 
     async getChannelIdByName(name: string) {
-        const channelElement = this.page.locator('.channels-overview .list-group-item').getByText(name);
+        const channelElement = this.page.locator('.channels-overview .list-group-item', { hasText: name });
         const id = await channelElement.getAttribute('id');
         return id?.replace('channel-', '');
     }
@@ -98,7 +98,7 @@ export class CourseMessagesPage {
         await this.page.locator('.modal-content #submitButton').click();
         const response = await responsePromise;
         const channel: ChannelDTO = await response.json();
-        expect(this.page.url()).toContain(`messages?conversationId=${channel.id}`);
+        await this.page.waitForURL(`**/messages?conversationId=${channel.id}`);
         expect(channel.isAnnouncementChannel).toBe(isAnnouncementChannel);
         expect(channel.isPublic).toBe(isPublic);
     }
@@ -146,12 +146,12 @@ export class CourseMessagesPage {
     async writeMessage(message: string) {
         const messageField = this.page.locator('.markdown-editor .ace_editor');
         await messageField.click();
-        await messageField.fill(message);
+        await messageField.pressSequentially(message);
     }
 
     async checkMessage(messageId: number, message: string) {
-        const messagePreview = this.getSinglePost(messageId).locator('.markdown-preview');
-        await expect(messagePreview).toContainText(message);
+        const messagePreview = this.getSinglePost(messageId).locator('.markdown-preview').getByText(message);
+        await expect(messagePreview).toBeVisible();
     }
 
     async editMessage(messageId: number, message: string) {
@@ -159,7 +159,7 @@ export class CourseMessagesPage {
         await postLocator.locator('.editIcon').click();
         const editorLocator = postLocator.locator('.markdown-editor .ace_editor');
         await editorLocator.click();
-        await editorLocator.fill(message);
+        await editorLocator.pressSequentially(message);
         const responsePromise = this.page.waitForResponse(`${BASE_API}courses/*/messages/*`);
         await postLocator.locator('#save').click();
         await responsePromise;
@@ -203,7 +203,7 @@ export class CourseMessagesPage {
 
     async addUserToGroupChat(user: string) {
         await this.page.locator('#users-selector0-user-input').fill(user);
-        await this.page.locator('#ngb-typeahead-0').getByText(user).click();
+        await this.page.locator('.dropdown-item', { hasText: `(${user})` }).click();
     }
 
     async addUserToGroupChatButton() {
