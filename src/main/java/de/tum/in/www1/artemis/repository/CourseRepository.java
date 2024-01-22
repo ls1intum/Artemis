@@ -127,7 +127,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             FROM Course c
                 LEFT JOIN FETCH c.organizations organizations
                 LEFT JOIN FETCH c.prerequisites prerequisites
-            WHERE c.enrollmentEnabled IS FALSE
+            WHERE c.enrollmentEnabled IS TRUE
                 AND c.enrollmentStartDate <= :now
                 AND c.enrollmentEndDate >= :now
             """)
