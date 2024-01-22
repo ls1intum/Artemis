@@ -12,6 +12,8 @@ import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 @Service
@@ -19,14 +21,14 @@ public class CompetencyService {
 
     private final CompetencyRepository competencyRepository;
 
+    private final CompetencyRelationRepository competencyRelationRepository;
+
     private final AuthorizationCheckService authCheckService;
 
-    private final CompetencyProgressService competencyProgressService;
-
-    public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService, CompetencyProgressService competencyProgressService) {
+    public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService, CompetencyRelationRepository competencyRelationRepository) {
         this.competencyRepository = competencyRepository;
         this.authCheckService = authCheckService;
-        this.competencyProgressService = competencyProgressService;
+        this.competencyRelationRepository = competencyRelationRepository;
     }
 
     /**
@@ -63,6 +65,60 @@ public class CompetencyService {
             competencyPage = competencyRepository.findByTitleInLectureOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
         }
         return new SearchResultPageDTO<>(competencyPage.getContent(), competencyPage.getTotalPages());
+    }
+
+    /**
+     * Imports all competencies from a course (and optionally their relations) into another.
+     *
+     * @param targetCourse    the course to import into
+     * @param sourceCourse    the course to import from
+     * @param importRelations if competency relations should get imported aswell
+     * @return A list of competencies, each also containing the relations it is the tail competency for.
+     */
+    public List<CompetencyWithTailRelationDTO> importAllCompetenciesFromCourse(Course targetCourse, Course sourceCourse, boolean importRelations) {
+        var competencies = competencyRepository.findAllForCourse(sourceCourse.getId());
+        if (competencies.isEmpty()) {
+            return List.of();
+        }
+        // map the id of the old competency to the new one
+        // used for importing relations and assigning relations to the CompetencyDTO.
+        var idToImportedCompetency = new HashMap<Long, CompetencyWithTailRelationDTO>();
+
+        for (var competency : competencies) {
+            Competency competencyToImport = getCompetencyToCreate(competency);
+            competencyToImport.setCourse(targetCourse);
+
+            competencyToImport = competencyRepository.save(competencyToImport);
+            idToImportedCompetency.put(competency.getId(), new CompetencyWithTailRelationDTO(competencyToImport, new ArrayList<>()));
+        }
+
+        if (importRelations) {
+            var relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(sourceCourse.getId());
+            for (var relation : relations) {
+                var tailCompetencyDTO = idToImportedCompetency.get(relation.getTailCompetency().getId());
+                var headCompetencyDTO = idToImportedCompetency.get(relation.getHeadCompetency().getId());
+
+                CompetencyRelation relationToImport = new CompetencyRelation();
+                relationToImport.setType(relation.getType());
+                relationToImport.setTailCompetency(tailCompetencyDTO.competency());
+                relationToImport.setHeadCompetency(headCompetencyDTO.competency());
+
+                relationToImport = competencyRelationRepository.save(relationToImport);
+                tailCompetencyDTO.tailRelations().add(new CompetencyRelationDTO(relationToImport));
+            }
+        }
+        return idToImportedCompetency.values().stream().toList();
+    }
+
+    /**
+     * Creates a new Competency from an existing one (without relations)
+     *
+     * @param competency the existing competency
+     * @return the new Competency
+     */
+    public Competency getCompetencyToCreate(Competency competency) {
+        return new Competency(competency.getTitle().trim(), competency.getDescription(), competency.getSoftDueDate(), competency.getMasteryThreshold(), competency.getTaxonomy(),
+                competency.isOptional());
     }
 
     /**

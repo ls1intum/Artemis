@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;

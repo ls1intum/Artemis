@@ -43,10 +43,14 @@ export class CompetencyImportCourseComponent extends ImportComponent<CourseForIm
 
     constructor(router: Router, sortService: SortService, activeModal: NgbActiveModal, pagingService: CourseForImportDTOPagingService) {
         super(router, sortService, activeModal, pagingService);
-        super.columns = tableColumns;
-        super.entityName = 'courseForImportDTO';
+        this.columns = tableColumns;
     }
 
+    /**
+     * Closes the modal in which the import component is opened. Returns the selected item **and if relations should be imported**
+     *
+     * @param item The item which was selected by the user for the import.
+     */
     override selectImport(item: CourseForImportDTO) {
         this.activeModal.close({ courseForImportDTO: item, importRelations: this.importRelations } as ImportAllFromCourseResult);
     }

@@ -5,7 +5,6 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.*;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.mockStatic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -92,9 +91,7 @@ import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.team.TeamUtilService;
 import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.FileUtils;
-import de.tum.in.www1.artemis.util.RequestUtilService;
-import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
+import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.dto.user.UserNameAndLoginDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -144,9 +141,6 @@ public class CourseTestService {
 
     @Autowired
     private CourseExamExportService courseExamExportService;
-
-    @Autowired
-    private FilePathService filePathService;
 
     @Autowired
     private FileUploadExerciseRepository fileUploadExerciseRepository;
@@ -231,6 +225,9 @@ public class CourseTestService {
 
     @Autowired
     private QuizExerciseUtilService quizExerciseUtilService;
+
+    @Autowired
+    private PageableSearchUtilService pageableSearchUtilService;
 
     private static final int numberOfStudents = 8;
 
@@ -2952,14 +2949,20 @@ public class CourseTestService {
 
         // Active Users
         int periodIndex = 0;
+        int periodSize = 8;
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("periodIndex", Integer.toString(periodIndex));
+        parameters.add("periodSize", Integer.toString(periodSize));
 
-        var activeStudents = request.get("/api/courses/" + course1.getId() + "/statistics", HttpStatus.OK, Integer[].class, parameters);
+        Integer[] activeStudents = request.get("/api/courses/" + course1.getId() + "/statistics", HttpStatus.OK, Integer[].class, parameters);
 
         assertThat(activeStudents).isNotNull();
         assertThat(activeStudents).hasSize(3);
 
+        course1.setStartDate(now.plusWeeks(10));
+        course1.setEndDate(now.plusWeeks(20));
+        activeStudents = request.get("/api/courses/" + course1.getId() + "/statistics", HttpStatus.OK, Integer[].class, parameters);
+        assertThat(activeStudents).isNotNull();
     }
 
     // Test
@@ -3263,5 +3266,30 @@ public class CourseTestService {
         assertThat(updatedCourse.getLearningPathsEnabled()).isTrue();
         final var learningPath = learningPathRepository.findByCourseIdAndUserId(course.getId(), student.getId());
         assertThat(learningPath).as("enable learning paths triggers generation").isPresent();
+    }
+
+    // Test
+    public void testGetCoursesForImportWithoutPermission() throws Exception {
+        request.getList("/api/courses/for-import", HttpStatus.FORBIDDEN, CourseForImportDTO.class);
+    }
+
+    // Test
+    public void testGetCoursesForImport() throws Exception {
+        List<Course> coursesExpected = new ArrayList<>();
+        for (int i = 1; i < 3; i++) {
+            coursesExpected.add(courseUtilService.createCourse((long) i));
+        }
+        var searchTerm = pageableSearchUtilService.configureSearch("");
+
+        SearchResultPageDTO<CourseForImportDTO> result = request.getSearchResult("/api/courses/for-import", HttpStatus.OK, CourseForImportDTO.class,
+                pageableSearchUtilService.searchMapping(searchTerm));
+
+        List<CourseForImportDTO> courses = result.getResultsOnPage();
+
+        for (Course course : coursesExpected) {
+            Optional<CourseForImportDTO> found = courses.stream().filter(c -> Objects.equals(c.id(), course.getId())).findFirst();
+            assertThat(found).as("Course is available").isPresent();
+            CourseForImportDTO courseFound = found.orElseThrow();
+        }
     }
 }

@@ -167,10 +167,10 @@ export class Course implements BaseEntity {
 }
 
 export class CourseForImportDTO {
-    id: number;
-    title: string;
-    shortName: string;
-    semester: string;
+    id?: number;
+    title?: string;
+    shortName?: string;
+    semester?: string;
 
     constructor() {}
 }

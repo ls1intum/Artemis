@@ -2,7 +2,17 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { Competency, CompetencyRelation, CompetencyRelationError, CourseCompetencyProgress, getIcon, getIconTooltip } from 'app/entities/competency.model';
+import {
+    Competency,
+    CompetencyRelation,
+    CompetencyRelationDTO,
+    CompetencyRelationError,
+    CompetencyWithTailRelationDTO,
+    CourseCompetencyProgress,
+    dtoToCompetencyRelation,
+    getIcon,
+    getIconTooltip,
+} from 'app/entities/competency.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, finalize, map, switchMap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
@@ -142,13 +152,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             .pipe(
                 switchMap((res) => {
                     this.competencies = res.body!;
-
-                    this.nodes = this.competencies.map(
-                        (competency): Node => ({
-                            id: `${competency.id}`,
-                            label: competency.title,
-                        }),
-                    );
+                    this.updateNodes(this.competencies);
 
                     const relationsObservable = this.competencies.map((lg) => {
                         return this.competencyService.getCompetencyRelations(lg.id!, this.courseId);
@@ -177,29 +181,8 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
                             }, new Map())
                             .values(),
                     ];
-                    this.edges = relations.map(
-                        (relation): Edge => ({
-                            id: `edge${relation.id}`,
-                            source: `${relation.tailCompetency?.id}`,
-                            target: `${relation.headCompetency?.id}`,
-                            label: relation.type,
-                            data: {
-                                id: relation.id,
-                            },
-                        }),
-                    );
-                    this.clusters = relations
-                        .filter((relation) => relation.type === 'CONSECUTIVE')
-                        .map(
-                            (relation): ClusterNode => ({
-                                id: `cluster${relation.id}`,
-                                label: relation.type,
-                                childNodeIds: [`${relation.tailCompetency?.id}`, `${relation.headCompetency?.id}`],
-                                data: {
-                                    id: relation.id,
-                                },
-                            }),
-                        );
+                    this.updateEdges(relations);
+                    this.updateClusterNodes(relations);
 
                     for (const competencyProgressResponse of competencyProgressResponses) {
                         const courseCompetencyProgress: CourseCompetencyProgress = competencyProgressResponse.body!;
@@ -255,30 +238,111 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Opens a modal for selecting a competency to import to the current course.
+     * Opens a modal for selecting a course to import all competencies from.
      */
     openImportAllModal() {
-        //TODO: want some message that import has been successful & reload
         const modalRef = this.modalService.open(CompetencyImportCourseComponent, { size: 'lg', backdrop: 'static' });
         //unary operator is necessary as otherwise courseId is seen as a string and will not match.
         modalRef.componentInstance.disabledIds = [+this.courseId];
         modalRef.result.then((result: ImportAllFromCourseResult) => {
-            console.log(result);
+            const courseTitle = result.courseForImportDTO.title ?? '';
             this.competencyService
                 .importAll(this.courseId, result.courseForImportDTO.id!, result.importRelations)
                 .pipe(
-                    filter((res: HttpResponse<Array<Competency>>) => res.ok),
-                    map((res: HttpResponse<Array<Competency>>) => res.body),
+                    filter((res: HttpResponse<Array<CompetencyWithTailRelationDTO>>) => res.ok),
+                    map((res: HttpResponse<Array<CompetencyWithTailRelationDTO>>) => res.body),
                 )
                 .subscribe({
-                    next: (res: Competency[]) => {
-                        this.competencies = this.competencies.concat(res);
-                        //TODO: push relations aswell + show competencies in graph OR reload.
-                        console.log('Imported ' + res?.length + 'competencies');
+                    next: (res: Array<CompetencyWithTailRelationDTO>) => {
+                        if (res.length > 0) {
+                            this.alertService.success('artemisApp.competency.importAll.success', { noOfCompetencies: res.length, courseTitle: courseTitle });
+                            this.updateDataAfterImportAll(res);
+                        } else {
+                            this.alertService.warning('artemisApp.competency.importAll.warning', { courseTitle: courseTitle });
+                        }
                     },
                     error: (res: HttpErrorResponse) => onError(this.alertService, res),
                 });
         });
+    }
+
+    /**
+     * Updates the component and its relation chart with the new data from the importAll modal
+     * @param res Array of DTOs containing the new competencies and relations
+     * @private
+     */
+    updateDataAfterImportAll(res: Array<CompetencyWithTailRelationDTO>) {
+        const importedCompetencies = res.map((dto) => dto.competency).filter((element): element is Competency => !!element);
+        const importedRelations = res
+            .map((dto) => dto.tailRelations)
+            .flat()
+            .filter((element): element is CompetencyRelationDTO => !!element)
+            .map((dto) => dtoToCompetencyRelation(dto));
+
+        this.competencies = this.competencies.concat(importedCompetencies);
+        this.updateNodes(importedCompetencies);
+        this.updateEdges(importedRelations);
+        this.updateClusterNodes(importedRelations);
+        this.update$.next(true);
+    }
+
+    /**
+     * Adds new competencies (as nodes) to the relation chart
+     * @param competencies the new competencies
+     * @private
+     */
+    private updateNodes(competencies: Competency[]) {
+        this.nodes = this.nodes.concat(
+            competencies.map((competency): Node => {
+                return {
+                    id: `${competency.id}`,
+                    label: competency.title,
+                };
+            }),
+        );
+    }
+
+    /**
+     * Adds new relations (as edges) to the relation chart
+     * @param relations the new relations
+     * @private
+     */
+    private updateEdges(relations: CompetencyRelation[]) {
+        this.edges = this.edges.concat(
+            relations.map(
+                (relation): Edge => ({
+                    id: `edge${relation.id}`,
+                    source: `${relation.tailCompetency?.id}`,
+                    target: `${relation.headCompetency?.id}`,
+                    label: relation.type,
+                    data: {
+                        id: relation.id,
+                    },
+                }),
+            ),
+        );
+    }
+
+    /**
+     * Adds new cluster nodes to the relation chart for the relations having the type "consecutive"
+     * @param relations the new relations
+     * @private
+     */
+    private updateClusterNodes(relations: CompetencyRelation[]) {
+        this.clusters = this.clusters.concat(
+            relations
+                .filter((relation) => relation.type === 'CONSECUTIVE')
+                .map(
+                    (relation): ClusterNode => ({
+                        id: `cluster${relation.id}`,
+                        label: relation.type,
+                        childNodeIds: [`${relation.tailCompetency?.id}`, `${relation.headCompetency?.id}`],
+                        data: {
+                            id: relation.id,
+                        },
+                    }),
+                ),
+        );
     }
 
     createRelation() {
@@ -304,15 +368,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: (relation) => {
                     if (relation) {
-                        this.edges.push({
-                            id: `edge${relation.id}`,
-                            source: `${relation.tailCompetency?.id}`,
-                            target: `${relation.headCompetency?.id}`,
-                            label: relation.type,
-                            data: {
-                                id: relation.id,
-                            },
-                        });
+                        this.updateEdges([relation]);
                         this.update$.next(true);
                     }
                 },

@@ -14,6 +14,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
+import com.hazelcast.map.listener.EntryUpdatedListener;
 
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
@@ -66,8 +67,8 @@ public class LocalCIQueueWebsocketService {
     @PostConstruct
     public void addListeners() {
         this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
-        this.processingJobs.addLocalEntryListener(new ProcessingBuildJobItemListener());
-        this.buildAgentInformation.addLocalEntryListener(new BuildAgentListener());
+        this.processingJobs.addEntryListener(new ProcessingBuildJobItemListener(), true);
+        this.buildAgentInformation.addEntryListener(new BuildAgentListener(), true);
     }
 
     private void sendQueuedJobsOverWebsocket(long courseId) {
@@ -112,7 +113,8 @@ public class LocalCIQueueWebsocketService {
         }
     }
 
-    private class BuildAgentListener implements EntryAddedListener<String, LocalCIBuildAgentInformation>, EntryRemovedListener<String, LocalCIBuildAgentInformation> {
+    private class BuildAgentListener implements EntryAddedListener<String, LocalCIBuildAgentInformation>, EntryRemovedListener<String, LocalCIBuildAgentInformation>,
+            EntryUpdatedListener<String, LocalCIBuildAgentInformation> {
 
         @Override
         public void entryAdded(com.hazelcast.core.EntryEvent<String, LocalCIBuildAgentInformation> event) {
@@ -123,6 +125,12 @@ public class LocalCIQueueWebsocketService {
         @Override
         public void entryRemoved(com.hazelcast.core.EntryEvent<String, LocalCIBuildAgentInformation> event) {
             log.debug("Build agent removed: {}", event.getOldValue());
+            sendBuildAgentInformationOverWebsocket();
+        }
+
+        @Override
+        public void entryUpdated(com.hazelcast.core.EntryEvent<String, LocalCIBuildAgentInformation> event) {
+            log.debug("Build agent updated: {}", event.getValue());
             sendBuildAgentInformationOverWebsocket();
         }
     }

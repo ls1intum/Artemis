@@ -61,13 +61,15 @@
             "importAll": {
                 "title": "Alle Kompetenzen eines Kurses importieren",
                 "search": "Suche nach einem Kurs:",
-                "importRelations": "Relationen importieren:",
+                "importRelations": "Relationen importieren?",
                 "table": {
                     "TITLE": "Titel",
                     "SEMESTER": "Semester",
                     "SHORT_NAME": "Kurzname",
                     "doImport": "Auswählen"
-                }
+                },
+                "success": "{{ noOfCompetencies }} Kompetezen aus dem Kurs \"{{ courseTitle }}\" importiert.",
+                "warning": "Es wurden keine Kompetenzen für den Kurs \"{{ courseTitle }}\" gefunden."
             },
             "createCompetency": {
                 "title": "Erstelle eine neue Kompetenz",
