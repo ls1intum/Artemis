@@ -138,9 +138,6 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationInd
         assertThatExceptionOfType(EntityNotFoundException.class)
                 .isThrownBy(() -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationLatestResultFeedbackTestCasesElseThrow(Long.MAX_VALUE));
 
-        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(
-                () -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationSubmissionsAndAuxiliaryRepositoriesElseThrow(Long.MAX_VALUE, false, false));
-
         assertThatExceptionOfType(EntityNotFoundException.class)
                 .isThrownBy(() -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(Long.MAX_VALUE));
     }

@@ -11,9 +11,12 @@ import java.util.Set;
 import java.util.regex.Matcher;
 
 import javax.annotation.Nullable;
+import javax.persistence.criteria.Fetch;
+import javax.persistence.criteria.JoinType;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -24,7 +27,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -33,6 +36,11 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Repository
 public interface ProgrammingExerciseRepository extends JpaRepository<ProgrammingExercise, Long>, JpaSpecificationExecutor<ProgrammingExercise> {
+
+    default ProgrammingExercise findOneByIdElseThrow(final Specification<ProgrammingExercise> specification, long exerciseId) {
+        final Specification<ProgrammingExercise> hasIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(DomainObject_.ID), exerciseId);
+        return findOne(specification.and(hasIdSpec)).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
+    }
 
     /**
      * Does a max join on the result table for each participation by result id (the newer the result id, the newer the result).
@@ -69,19 +77,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories", "gradingCriteria" })
-    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesAndGradingCriteriaById(Long exerciseId);
-
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationById(Long exerciseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results",
-            "auxiliaryRepositories" })
-    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesById(Long exerciseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results",
-            "auxiliaryRepositories", "gradingCriteria" })
-    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesAndGradingCriteriaById(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "testCases")
     Optional<ProgrammingExercise> findWithTestCasesById(Long exerciseId);
@@ -623,26 +620,31 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @NotNull
     default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationSubmissionsAndAuxiliaryRepositoriesElseThrow(long exerciseId, boolean withSubmissionResults,
             boolean withGradingCriteria) throws EntityNotFoundException {
-        final Optional<ProgrammingExercise> programmingExercise;
+        final Specification<ProgrammingExercise> specification = (root, query, criteriaBuilder) -> {
+            root.fetch(Exercise_.CATEGORIES, JoinType.LEFT);
+            root.fetch(Exercise_.TEAM_ASSIGNMENT_CONFIG, JoinType.LEFT);
+            root.fetch(ProgrammingExercise_.AUXILIARY_REPOSITORIES, JoinType.LEFT);
 
-        if (withGradingCriteria) {
-            if (withSubmissionResults) {
-                programmingExercise = findWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesAndGradingCriteriaById(exerciseId);
+            if (withGradingCriteria) {
+                root.fetch(Exercise_.GRADING_CRITERIA, JoinType.LEFT);
             }
-            else {
-                programmingExercise = findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesAndGradingCriteriaById(exerciseId);
-            }
-        }
-        else {
-            if (withSubmissionResults) {
-                programmingExercise = findWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesById(exerciseId);
-            }
-            else {
-                programmingExercise = findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(exerciseId);
-            }
-        }
 
-        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
+            final Fetch<ProgrammingExercise, TemplateProgrammingExerciseParticipation> joinTemplateParticipation = root.fetch(ProgrammingExercise_.TEMPLATE_PARTICIPATION,
+                    JoinType.LEFT);
+            final Fetch<TemplateProgrammingExerciseParticipation, Submission> joinTemplateSubmissions = joinTemplateParticipation.fetch(Participation_.SUBMISSIONS, JoinType.LEFT);
+            final Fetch<ProgrammingExercise, SolutionProgrammingExerciseParticipation> joinSolutionParticipation = root.fetch(ProgrammingExercise_.SOLUTION_PARTICIPATION,
+                    JoinType.LEFT);
+            final Fetch<TemplateProgrammingExerciseParticipation, Submission> joinSolutionSubmissions = joinSolutionParticipation.fetch(Participation_.SUBMISSIONS, JoinType.LEFT);
+
+            if (withSubmissionResults) {
+                joinTemplateSubmissions.fetch(Submission_.RESULTS, JoinType.LEFT);
+                joinSolutionSubmissions.fetch(Submission_.RESULTS, JoinType.LEFT);
+            }
+
+            return null;
+        };
+
+        return findOneByIdElseThrow(specification, exerciseId);
     }
 
     /**
