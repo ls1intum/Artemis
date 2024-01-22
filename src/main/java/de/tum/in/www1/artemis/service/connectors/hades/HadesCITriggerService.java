@@ -103,10 +103,12 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
         cloneMetadata.put("HADES_TEST_PASSWORD", gitPassword);
         cloneMetadata.put("HADES_TEST_URL", participation.getProgrammingExercise().getTestRepositoryUri());
         cloneMetadata.put("HADES_TEST_PATH", "./");
+        cloneMetadata.put("HADES_TEST_ORDER", "1");
         cloneMetadata.put("HADES_ASSIGNMENT_USERNAME", gitUsername);
         cloneMetadata.put("HADES_ASSIGNMENT_PASSWORD", gitPassword);
         cloneMetadata.put("HADES_ASSIGNMENT_URL", participation.getVcsRepositoryUri().toString());
         cloneMetadata.put("HADES_ASSIGNMENT_PATH", "./assignment");
+        cloneMetadata.put("HADES_ASSIGNMENT_ORDER", "2");
 
         steps.add(new HadesBuildStepDTO(1, "Clone", cloneDockerIamge, cloneMetadata));
 
@@ -122,6 +124,9 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
         resultMetadata.put("INGEST_DIR", "/shared/build/test-results/test");
         resultMetadata.put("API_ENDPOINT", artemisServerUrl.toString() + "/api/public/programming-exercises/new-result");
         resultMetadata.put("JOB_NAME", participation.getBuildPlanId());
+        resultMetadata.put("HADES_TEST_PATH", "./");
+        resultMetadata.put("HADES_ASSIGNMENT_PATH", "./assignment");
+        resultMetadata.put("DEBUG", "true"); // TODO: Remove
         steps.add(new HadesBuildStepDTO(3, "Result", resultDockerIamge, resultMetadata));
 
         // Create Hades Job

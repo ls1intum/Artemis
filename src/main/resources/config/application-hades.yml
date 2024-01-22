@@ -4,5 +4,5 @@ artemis:
         url: "http://localhost:8081"
 
         images:
-            clone-image: ghcr.io/mtze/hades/hades-clone-container:latest
+            clone-image: ghcr.io/mtze/hades/hades-clone-container:pr-40
             result-image: ghcr.io/mtze/hades-junit-result-parser:latest

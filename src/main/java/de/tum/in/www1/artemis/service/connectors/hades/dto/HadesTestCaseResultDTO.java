@@ -38,7 +38,7 @@ public class HadesTestCaseResultDTO implements TestCaseDTOInterface {
 
     public boolean isSuccessful() {
         switch (status) {
-            case "SUCCESS": // TODO check if this is correct
+            case "passed":
                 return true;
             case "failed":
                 return false;

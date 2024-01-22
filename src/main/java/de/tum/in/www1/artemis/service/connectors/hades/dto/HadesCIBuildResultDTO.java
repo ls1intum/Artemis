@@ -21,12 +21,16 @@ public class HadesCIBuildResultDTO extends AbstractBuildResultNotificationDTO {
 
     private String jobName;
 
+    @JsonProperty("assignmentRepoBranchName")
     private String assignmentRepoBranchName;
 
+    @JsonProperty("assignmentRepoCommitHash")
     private String assignmentRepoCommitHash;
 
+    @JsonProperty("testsRepoCommitHash")
     private String testsRepoCommitHash;
 
+    @JsonProperty("isBuildSuccessful") // For some reason this annotation is necessary for jackson to work
     private boolean isBuildSuccessful;
 
     // TODO: custom deserializer for ZonedDateTime
@@ -53,9 +57,7 @@ public class HadesCIBuildResultDTO extends AbstractBuildResultNotificationDTO {
     public static HadesCIBuildResultDTO convert(Object someResult) {
         var mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        // This is not working at the moment :(
         var dto = mapper.convertValue(someResult, HadesCIBuildResultDTO.class);
-        log.debug("Converted {} to {}", someResult, dto);
         return dto;
     }
 
@@ -66,17 +68,17 @@ public class HadesCIBuildResultDTO extends AbstractBuildResultNotificationDTO {
 
     @Override
     public Optional<String> getCommitHashFromAssignmentRepo() {
-        return Optional.empty();
+        return Optional.ofNullable(assignmentRepoCommitHash);
     }
 
     @Override
     public Optional<String> getCommitHashFromTestsRepo() {
-        return Optional.empty();
+        return Optional.ofNullable(testsRepoCommitHash);
     }
 
     @Override
     public Optional<String> getBranchNameFromAssignmentRepo() {
-        return Optional.empty();
+        return Optional.ofNullable(assignmentRepoBranchName);
     }
 
     @Override
@@ -86,7 +88,7 @@ public class HadesCIBuildResultDTO extends AbstractBuildResultNotificationDTO {
 
     @Override
     public Double getBuildScore() {
-        return null;
+        return 0D;
     }
 
     @Override

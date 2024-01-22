@@ -29,7 +29,7 @@ public class HadesResultJobDTO implements BuildJobDTOInterface {
 
     @Override
     public List<? extends TestCaseDTOInterface> getSuccessfulTests() {
-        return tests.stream().filter(HadesTestCaseResultDTO::isSuccessful).toList();
+        return tests.stream().filter(test -> test.isSuccessful()).toList();
     }
 
 }
