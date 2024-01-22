@@ -10,14 +10,13 @@
         [hideLabelMobile]="false"
         [ngbPopover]="popover"
         [autoClose]="'outside'"
-        (click)="onClick()"
         placement="right auto"
         container="body"
     ></button>
 
     <ng-template #popover>
         @if (versionControlAccessTokenRequired && !user.vcsAccessToken) {
-            {{ (ableToLoadVCSAccessToken ? 'artemisApp.exerciseActions.waitForData' : 'artemisApp.exerciseActions.fetchVCSAccessTokenError') | artemisTranslate }}
+            {{ (currentlyLoadingToken ? 'artemisApp.exerciseActions.waitForData' : 'artemisApp.exerciseActions.fetchVCSAccessTokenError') | artemisTranslate }}
         } @else {
             <ng-container *ngTemplateOutlet="fullPopover"></ng-container>
         }

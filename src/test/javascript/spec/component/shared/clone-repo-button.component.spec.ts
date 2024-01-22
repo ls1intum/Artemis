@@ -346,10 +346,20 @@ describe('CloneRepoButtonComponent', () => {
         expect(component.activeParticipation?.id).toBe(expected);
     });
 
+    it('should correctly update the token loading flag', fakeAsync(() => {
+        component.user.vcsAccessToken = undefined;
+        component.versionControlAccessTokenRequired = true;
+        expect(component.currentlyLoadingToken).toBeFalse();
+        component.getVSCTokenIfNotPresent();
+        expect(component.currentlyLoadingToken).toBeTrue();
+        tick();
+        expect(component.currentlyLoadingToken).toBeFalse();
+    }));
+
     it('should retrieve user from the server when VCS access token is missing', fakeAsync(() => {
         component.user.vcsAccessToken = undefined;
         component.versionControlAccessTokenRequired = true;
-        component.onClick();
+        component.getVSCTokenIfNotPresent();
         expect(accountServiceIdentityStub).toHaveBeenCalledWith(true);
     }));
 
@@ -357,9 +367,8 @@ describe('CloneRepoButtonComponent', () => {
         component.user.vcsAccessToken = undefined;
         component.versionControlAccessTokenRequired = true;
         accountServiceIdentityStub.mockReturnValue(Promise.resolve(undefined));
-        component.onClick();
+        component.getVSCTokenIfNotPresent();
         tick();
-        expect(component.ableToLoadVCSAccessToken).toBeFalse();
         expect(alertServiceErrorStub).toHaveBeenCalledWith('artemisApp.exerciseActions.fetchVCSAccessTokenError');
     }));
 
@@ -369,24 +378,9 @@ describe('CloneRepoButtonComponent', () => {
 
         // new User() doesn't contain access token
         accountServiceIdentityStub.mockReturnValue(Promise.resolve(new User()));
-        component.onClick();
+        component.getVSCTokenIfNotPresent();
         tick();
-        expect(component.ableToLoadVCSAccessToken).toBeFalse();
         expect(alertServiceErrorStub).toHaveBeenCalledWith('artemisApp.exerciseActions.fetchVCSAccessTokenError');
-    }));
-
-    it('should not display the error more than once', fakeAsync(() => {
-        component.user.vcsAccessToken = undefined;
-        component.versionControlAccessTokenRequired = true;
-
-        accountServiceIdentityStub.mockReturnValue(Promise.resolve(undefined));
-
-        // click 5 times
-        for (let i = 0; i < 5; i++) {
-            component.onClick();
-            tick();
-        }
-        expect(alertServiceErrorStub).toHaveBeenCalledOnce();
     }));
 
     function stubServices() {

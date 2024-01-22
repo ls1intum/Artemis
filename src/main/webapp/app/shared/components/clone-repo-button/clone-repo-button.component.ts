@@ -47,7 +47,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     isTeamParticipation: boolean;
     activeParticipation?: ProgrammingExerciseStudentParticipation;
     isPracticeMode: boolean | undefined;
-    ableToLoadVCSAccessToken: boolean = true;
+    currentlyLoadingToken: boolean = false;
 
     // Icons
     faDownload = faDownload;
@@ -82,6 +82,8 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
 
         this.useSsh = this.localStorage.retrieve('useSsh') || false;
         this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
+
+        this.getVSCTokenIfNotPresent();
     }
 
     public setUseSSH(useSsh: boolean) {
@@ -103,40 +105,30 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Called when the user clicks on the clone repo button. Sometimes the VCS access token is not present in the user
-     * object, so the resulting repo url is wrong. This method tries to retrieve the token from the server by requesting
-     * the user object again.
+     * Sometimes the VCS access token is not present in the user object, so the resulting repo url is wrong. This method
+     * tries to retrieve the token from the server by requesting the user object again.
      * This case only happens when a user is created before VCS access tokens are enabled. For those users, a token is
      * created the first time they start participating in a programming exercise. In that case, however, they do not
      * have an access token yet, because during login, there was no token available.
      *
-     * In case the token could not be retrieved, this method is not called again and the student
-     * is prompted to reload the page. Otherwise, the error would be displayed every time the button is clicked,
-     * including the clicks that make the popover go away (every second click).
+     * In case the token could not be retrieved, we prompt the student to reload the page.
      */
-    onClick() {
-        if (this.versionControlAccessTokenRequired && !this.user.vcsAccessToken && this.ableToLoadVCSAccessToken) {
+    getVSCTokenIfNotPresent() {
+        if (this.versionControlAccessTokenRequired && !this.user.vcsAccessToken) {
+            this.currentlyLoadingToken = true;
             this.accountService
                 .identity(true)
                 .then((user) => {
                     this.user = user ?? this.user;
+                    this.currentlyLoadingToken = false;
                     if (!this.user.vcsAccessToken) {
-                        this.onTokenRetrievalFail();
+                        this.alertService.error('artemisApp.exerciseActions.fetchVCSAccessTokenError');
                     }
                 })
                 .catch(() => {
-                    this.onTokenRetrievalFail();
+                    this.alertService.error('artemisApp.exerciseActions.fetchVCSAccessTokenError');
                 });
         }
-    }
-
-    /**
-     * Called if still no access token exists after fetching the user object from the server. This informs the student
-     * that something is wrong and that they should try again after reloading the page.
-     */
-    onTokenRetrievalFail() {
-        this.ableToLoadVCSAccessToken = false;
-        this.alertService.error('artemisApp.exerciseActions.fetchVCSAccessTokenError');
     }
 
     private getRepositoryUri() {
