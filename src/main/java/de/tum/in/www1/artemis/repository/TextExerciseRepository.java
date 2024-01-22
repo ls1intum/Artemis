@@ -41,11 +41,10 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
             SELECT textExercise
             FROM TextExercise textExercise
                 LEFT JOIN FETCH textExercise.exampleSubmissions exampleSubmissions
-                LEFT JOIN TREAT (exampleSubmissions AS TextSubmission) textSubmission
                 LEFT JOIN FETCH exampleSubmissions.submission submission
                 LEFT JOIN FETCH submission.results result
                 LEFT JOIN FETCH result.feedbacks
-                LEFT JOIN FETCH textSubmission.blocks
+                LEFT JOIN FETCH submission.blocks
                 LEFT JOIN FETCH result.assessor
                 LEFT JOIN FETCH textExercise.teamAssignmentConfig
             WHERE textExercise.id = :exerciseId
