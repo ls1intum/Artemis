@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
-import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 import de.tum.in.www1.artemis.util.IrisUtilTestService;
@@ -35,9 +34,6 @@ import de.tum.in.www1.artemis.util.LocalRepository;
 class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "irismessageintegration";
-
-    @Autowired
-    private IrisSessionService irisSessionService;
 
     @Autowired
     private IrisChatSessionService irisChatSessionService;
