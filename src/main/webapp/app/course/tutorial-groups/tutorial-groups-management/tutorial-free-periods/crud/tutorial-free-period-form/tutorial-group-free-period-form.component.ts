@@ -106,7 +106,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     }
 
     get isSubmitPossible() {
-        if (this.form.get('startDate') == undefined || !this.form.get('startDate')?.touched) {
+        if (this.form.get('startDate') == undefined) {
             return false;
         }
 

@@ -44,8 +44,8 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
     createTutorialGroupFreePeriod(formData: TutorialGroupFreePeriodFormData) {
         const { startDate, endDate, startTime, endTime, reason } = formData;
 
-        this.tutorialGroupFreePeriodToCreate.startDate = this.combineDateAndTimeWithAlternativeDate(startDate, startTime, undefined);
-        this.tutorialGroupFreePeriodToCreate.endDate = this.combineDateAndTimeWithAlternativeDate(endDate, endTime, startDate);
+        this.tutorialGroupFreePeriodToCreate.startDate = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(startDate, startTime, undefined);
+        this.tutorialGroupFreePeriodToCreate.endDate = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(endDate, endTime, startDate);
         this.tutorialGroupFreePeriodToCreate.reason = reason;
 
         this.isLoading = true;
@@ -68,7 +68,7 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
             });
     }
 
-    combineDateAndTimeWithAlternativeDate(date?: Date, time?: Date, alternativeDate?: Date): Date {
+    public static combineDateAndTimeWithAlternativeDate(date?: Date, time?: Date, alternativeDate?: Date): Date {
         if (date == undefined) {
             if (alternativeDate == undefined) {
                 throw new Error('date and time are undefined');

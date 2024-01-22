@@ -10,6 +10,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { takeUntil } from 'rxjs/operators';
+import { CreateTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/create-tutorial-group-free-period/create-tutorial-group-free-period.component';
 
 @Component({
     selector: 'jhi-edit-tutorial-group-free-period',
@@ -51,10 +52,11 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
     }
 
     updateTutorialGroupFreePeriod(formData: TutorialGroupFreePeriodFormData) {
-        const { startDate, reason } = formData;
+        const { startDate, endDate, startTime, endTime, reason } = formData;
 
         const tutorialGroupFreePeriodDto = new TutorialGroupFreePeriodDTO();
-        tutorialGroupFreePeriodDto.startDate = startDate;
+        tutorialGroupFreePeriodDto.startDate = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(startDate, startTime, undefined);
+        tutorialGroupFreePeriodDto.endDate = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(endDate, endTime, startDate);
         tutorialGroupFreePeriodDto.reason = reason;
 
         this.isLoading = true;
