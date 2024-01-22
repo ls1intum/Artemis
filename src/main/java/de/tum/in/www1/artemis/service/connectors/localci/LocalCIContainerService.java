@@ -419,6 +419,7 @@ public class LocalCIContainerService {
         buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir\n");
 
         String customScript = programmingExercise.getBuildScript();
+        // Todo: get default script if custom script is null before trying to get actions from windfile
         if (customScript != null) {
             buildScript.append(customScript);
         }

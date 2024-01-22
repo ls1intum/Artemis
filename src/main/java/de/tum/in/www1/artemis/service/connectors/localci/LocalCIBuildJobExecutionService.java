@@ -217,6 +217,7 @@ public class LocalCIBuildJobExecutionService {
                     ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get()
                             .getProgrammingLanguageFeatures(participation.getProgrammingExercise().getProgrammingLanguage());
                     if (programmingLanguageFeature.checkoutSolutionRepositoryAllowed()) {
+                        // Todo: should be able to get the solution repo uri from the exercise
                         var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(participation.getProgrammingExercise().getId());
                         if (solutionParticipation.isPresent()) {
                             solutionRepositoryPath = new LocalVCRepositoryUri(solutionParticipation.get().getRepositoryUri(), localVCBaseUrl).getRepoClonePath(repoClonePath)
@@ -247,6 +248,8 @@ public class LocalCIBuildJobExecutionService {
             // Clone the assignment repository into a temporary directory with the name of the commit hash and then checkout the commit hash.
             assignmentRepositoryPath = cloneAndCheckoutRepository(participation, commitHash);
         }
+
+        // git checkout tests and solution
 
         // Create the container from the "ls1tum/artemis-maven-template" image with the local paths to the Git repositories and the shell script bound to it.
         // This does not start the container yet.
