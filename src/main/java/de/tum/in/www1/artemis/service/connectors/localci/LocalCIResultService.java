@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseFeedbackCreationService;
 
 /**
- * Service implementation for Local CI.
+ * Service implementation for integrated CI.
  */
 @Service
 @Primary // only needed for the bamboo to local ci migration

@@ -15,3 +15,6 @@ actions:
         path: target/pmd.xml
       - name: pmd_cpd
         path: target/cpd.xml
+      - name: junit
+        path: '**/target/surefire-reports/*.xml'
+        type: junit
