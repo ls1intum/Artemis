@@ -214,27 +214,32 @@ public class ProgrammingExerciseService {
         final User exerciseCreator = userRepository.getUser();
         VersionControlService versionControl = versionControlService.orElseThrow();
 
+        // The client sends a solution and template participation object (filled with null values) when creating a programming exercise.
+        // When saving the object leads to an exception at runtime.
+        // As the participations objects are just dummy values representing the data structure in the client, we set this to null.
+        // See https://github.com/ls1intum/Artemis/pull/7451/files#r1459228917
         programmingExercise.setSolutionParticipation(null);
         programmingExercise.setTemplateParticipation(null);
-        programmingExerciseRepository.saveAndFlush(programmingExercise);
+
+        // We save once in order to generate an id for the programming exercise
+        var savedProgrammingExercise = programmingExerciseRepository.saveForCreation(programmingExercise);
 
         // Step 1: Setting constant facts for a programming exercise
-        programmingExercise.generateAndSetProjectKey();
-        programmingExercise.setBranch(versionControl.getDefaultBranchOfArtemis());
+        savedProgrammingExercise.generateAndSetProjectKey();
+        savedProgrammingExercise.setBranch(versionControl.getDefaultBranchOfArtemis());
 
         // Step 2: Creating repositories for new exercise
-        programmingExerciseRepositoryService.createRepositoriesForNewExercise(programmingExercise);
+        programmingExerciseRepositoryService.createRepositoriesForNewExercise(savedProgrammingExercise);
         // Step 3: Initializing solution and template participation
-        initParticipations(programmingExercise);
+        initParticipations(savedProgrammingExercise);
 
         // Step 4a: Setting build plan IDs and URLs for template and solution participation
-        setURLsAndBuildPlanIDsForNewExercise(programmingExercise);
+        setURLsAndBuildPlanIDsForNewExercise(savedProgrammingExercise);
 
         // Step 4b: Connecting base participations with the exercise
-        connectBaseParticipationsToExerciseAndSave(programmingExercise);
+        connectBaseParticipationsToExerciseAndSave(savedProgrammingExercise);
 
-        programmingExerciseRepository.saveAndFlush(programmingExercise);
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.findForCreationByIdElseThrow(programmingExercise.getId());
+        savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
 
         // Step 4c: Connect auxiliary repositories
         connectAuxiliaryRepositoriesToExercise(savedProgrammingExercise);
@@ -276,8 +281,7 @@ public class ProgrammingExerciseService {
         // Step 12c: Check notifications for new exercise
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(savedProgrammingExercise);
 
-        programmingExerciseRepository.saveAndFlush(savedProgrammingExercise);
-        return programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(savedProgrammingExercise.getId());
+        return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
     }
 
     public void scheduleOperations(Long programmingExerciseId) {
@@ -416,7 +420,7 @@ public class ProgrammingExerciseService {
             String script = buildScriptGenerationService.get().getScript(programmingExercise);
             programmingExercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
             programmingExercise.setBuildScript(script);
-            programmingExercise = programmingExerciseRepository.save(programmingExercise);
+            programmingExercise = programmingExerciseRepository.saveForCreation(programmingExercise);
         }
 
         // if the exercise is imported from a file, the changes fixing the project name will trigger a first build anyway, so

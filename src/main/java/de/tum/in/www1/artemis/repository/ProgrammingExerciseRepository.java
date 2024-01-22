@@ -636,6 +636,19 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     }
 
     /**
+     * Saves the given programming exercise to the database.
+     * When saving a programming exercise Hibernates returns an exercise with references to proxy objects.
+     * Thus, we need to load the objects referenced by the programming exercise again.
+     *
+     * @param exercise The programming exercise that should be saved.
+     * @return The saved programming exercise.
+     */
+    default ProgrammingExercise saveForCreation(ProgrammingExercise exercise) {
+        this.saveAndFlush(exercise);
+        return this.findForCreationByIdElseThrow(exercise.getId());
+    }
+
+    /**
      * Find a programming exercise by its id, with eagerly loaded template and solution participation,
      * including the latest result with feedback and test cases.
      *
