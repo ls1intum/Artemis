@@ -23,7 +23,7 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
                 LEFT JOIN FETCH p.results
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results
-            WHERE p.id = :#{#participationId}
+            WHERE p.id = :participationId
             """)
     Optional<Participation> findByIdWithResultsAndSubmissionsResults(@Param("participationId") Long participationId);
 
@@ -33,7 +33,7 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
             WHERE p.id = :participationId
-                AND (s.id = (SELECT max(s2.id) FROM p.submissions s2) OR s.id = NULL)
+                AND (s.id = (SELECT MAX(s2.id) FROM p.submissions s2) OR s.id IS NULL)
             """)
     Optional<Participation> findByIdWithLatestSubmissionAndResult(@Param("participationId") Long participationId);
 
@@ -42,7 +42,7 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             FROM Participation p
                 LEFT JOIN FETCH p.submissions s
             WHERE p.id = :participationId
-                AND (s.id = (SELECT max(s2.id) FROM p.submissions s2) OR s.id = NULL)
+                AND (s.id = (SELECT MAX(s2.id) FROM p.submissions s2) OR s.id IS NULL)
             """)
     Optional<Participation> findByIdWithLatestSubmission(@Param("participationId") Long participationId);
 
@@ -55,7 +55,7 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             FROM Participation p
                 LEFT JOIN FETCH p.submissions s
             WHERE p.id = :participationId
-                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+                AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
     Optional<Participation> findWithEagerLegalSubmissionsById(@Param("participationId") Long participationId);
 
@@ -85,18 +85,18 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
     }
 
     @Query("""
-            SELECT max(p.individualDueDate)
+            SELECT MAX(p.individualDueDate)
             FROM Participation p
             WHERE p.exercise.id = :exerciseId
-                AND p.individualDueDate IS NOT null
+                AND p.individualDueDate IS NOT NULL
             """)
     Optional<ZonedDateTime> findLatestIndividualDueDate(@Param("exerciseId") Long exerciseId);
 
     @Query("""
-            SELECT min(p.individualDueDate)
+            SELECT MIN(p.individualDueDate)
             FROM Participation p
             WHERE p.exercise.id = :exerciseId
-                AND p.individualDueDate IS NOT null
+                AND p.individualDueDate IS NOT NULL
             """)
     Optional<ZonedDateTime> findEarliestIndividualDueDate(@Param("exerciseId") Long exerciseId);
 
@@ -104,7 +104,7 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             SELECT p
             FROM Participation p
             WHERE p.exercise.id = :exerciseId
-                AND p.individualDueDate IS NOT null
+                AND p.individualDueDate IS NOT NULL
             """)
     Set<Participation> findWithIndividualDueDateByExerciseId(@Param("exerciseId") Long exerciseId);
 
