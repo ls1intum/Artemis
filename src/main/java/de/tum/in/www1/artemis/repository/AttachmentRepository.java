@@ -19,7 +19,7 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
     @Query("""
             SELECT a
             FROM Attachment a
-            WHERE a.lecture.id =  :lectureId
+            WHERE a.lecture.id = :lectureId
             """)
     List<Attachment> findAllByLectureId(@Param("lectureId") Long lectureId);
 
