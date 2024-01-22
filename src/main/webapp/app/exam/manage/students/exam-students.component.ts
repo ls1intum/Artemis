@@ -18,6 +18,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { faCheck, faInfoCircle, faPlus, faTimes, faUpload, faUserSlash, faUserTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
+import { ColumnMode } from '@flaviosantoro92/ngx-datatable';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -56,6 +57,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     searchNoResults = false;
     isTransitioning = false;
     rowClass: string | undefined = undefined;
+    columnMode = ColumnMode.flex;
 
     isAdmin = false;
 

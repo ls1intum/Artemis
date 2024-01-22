@@ -58,5 +58,26 @@ jhi-exam-students {
             animation-duration: map-get($vars, animation-duration);
             animation-timing-function: ease-out;
         }
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    .datatable-header-inner {
+        width: 100% !important;
+    }
+
+    .datatable-row-center {
+        flex: 1;
+    }
+
+    .datatable-body-cell {
+        flex: 1;
+        .img-fluid {
+            max-height: 100%;
+        }
+    }
+
+    .datatable-header-cell {
+        flex: 1;
     }
 }
