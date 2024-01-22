@@ -20,7 +20,9 @@ export class LectureCreationPage {
     }
 
     async typeDescription(description: string) {
-        await this.page.fill('.ace_content', description);
+        const descriptionField = this.page.locator('.ace_content');
+        await descriptionField.click();
+        await descriptionField.pressSequentially(description);
     }
 
     async setVisibleDate(date: dayjs.Dayjs) {

@@ -1,4 +1,4 @@
-import dayjs from 'dayjs/esm';
+import dayjs from 'dayjs';
 
 import { Course } from 'app/entities/course.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -67,11 +67,11 @@ test.describe('Lecture management', () => {
             const exercise = await exerciseAPIRequests.createModelingExercise({ course });
             await lectureManagement.openUnitsPage(lecture.id!);
             await lectureManagement.addExerciseUnit(exercise.id!);
-            await expect(page.getByText(exercise.title!)).toBeVisible();
+            await expect(page.locator('.exercise-title', { hasText: new RegExp(`^${exercise.title!}$`) })).toBeVisible();
         });
     });
 
-    test.afterAll(async ({ courseManagementAPIRequests }) => {
+    test.afterEach(async ({ courseManagementAPIRequests }) => {
         await courseManagementAPIRequests.deleteCourse(course, admin);
     });
 });

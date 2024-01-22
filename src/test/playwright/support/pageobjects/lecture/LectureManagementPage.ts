@@ -1,5 +1,5 @@
 import { Page } from 'playwright';
-import dayjs from 'dayjs/esm';
+import dayjs from 'dayjs';
 import { Lecture } from 'app/entities/lecture.model';
 import { expect } from '@playwright/test';
 import { BASE_API } from '../../constants';
@@ -52,7 +52,9 @@ export class LectureManagementPage {
         await this.openCreateUnit(UnitType.TEXT);
         await this.page.fill('#name', name);
         await this.page.fill('#pick-releaseDate #date-input-field', releaseDate.toString());
-        await this.page.fill('.ace_content', text);
+        const contentField = this.page.locator('.ace_content');
+        await contentField.click();
+        await contentField.pressSequentially(text);
         return this.submitUnit();
     }
 
