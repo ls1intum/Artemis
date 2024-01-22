@@ -269,6 +269,7 @@ public class ProgrammingExerciseService {
 
         // Step 10: Setup build plans for template and solution participation
         setupBuildPlansForNewExercise(savedProgrammingExercise, isImportedFromFile);
+        savedProgrammingExercise = programmingExerciseRepository.findForCreationByIdElseThrow(savedProgrammingExercise.getId());
 
         // Step 11: Update task from problem statement
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);

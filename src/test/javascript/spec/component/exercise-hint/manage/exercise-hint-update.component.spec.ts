@@ -23,6 +23,7 @@ import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.
 import { IrisSettingsService } from '../../../../../../main/webapp/app/iris/settings/shared/iris-settings.service';
 import { IrisSettings } from '../../../../../../main/webapp/app/entities/iris/settings/iris-settings.model';
 import { ProfileInfo } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile-info.model';
+import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 
 describe('ExerciseHint Management Update Component', () => {
     let comp: ExerciseHintUpdateComponent;
@@ -123,6 +124,7 @@ describe('ExerciseHint Management Update Component', () => {
         const codeHint1 = new CodeHint();
         codeHint1.id = 123;
         codeHint1.programmingExerciseTask = task2;
+        codeHint1.solutionEntries = [new ProgrammingExerciseSolutionEntry()];
         const codeHint2 = new CodeHint();
         codeHint2.id = 123;
         codeHint2.programmingExerciseTask = task2;
@@ -181,6 +183,7 @@ describe('ExerciseHint Management Update Component', () => {
         const codeHint = new CodeHint();
         codeHint.id = 123;
         codeHint.programmingExerciseTask = task2;
+        codeHint.solutionEntries = [new ProgrammingExerciseSolutionEntry()];
 
         comp.exerciseHint = codeHint;
         comp.courseId = 1;

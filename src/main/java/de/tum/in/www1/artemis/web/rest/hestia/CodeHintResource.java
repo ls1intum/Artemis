@@ -122,6 +122,10 @@ public class CodeHintResource {
             throw new ConflictException("The code hint does not belong to the exercise", "CodeHint", "codeHintExerciseConflict");
         }
 
+        if (codeHint.getSolutionEntries().isEmpty()) {
+            throw new ConflictException("The code hint does not have any solution entries", "CodeHint", "codeHintNoSolutionEntries");
+        }
+
         codeHint = codeHintService.generateDescriptionWithIris(codeHint);
         return ResponseEntity.ok(codeHint);
     }
