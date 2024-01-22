@@ -283,8 +283,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     title: 'artemisApp.exercise.categories',
                     data: { text: exercise.categories?.map((category) => category.category?.toUpperCase()).join(', ') },
                 },
-            ].filter(Boolean),
-        } as DetailOverviewSection;
+            ],
+        };
     }
 
     getExerciseDetailsModeSection(exercise: ProgrammingExercise): DetailOverviewSection {
@@ -321,8 +321,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     title: 'artemisApp.programmingExercise.publishBuildPlanUrl',
                     data: { boolean: exercise.publishBuildPlanUrl },
                 },
-            ].filter(Boolean),
-        } as DetailOverviewSection;
+            ],
+        };
     }
 
     getExerciseDetailsLanguageSection(exercise: ProgrammingExercise): DetailOverviewSection {
@@ -409,6 +409,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         participation: exercise.solutionParticipation,
                         loading: this.loadingSolutionParticipationResults,
                         submissionRouterLink: exercise.solutionParticipation && this.getParticipationSubmissionLink(exercise.solutionParticipation.id!),
+                        onParticipationChange: this.onParticipationChange,
                         type: ProgrammingExerciseParticipationType.SOLUTION,
                     },
                 },
@@ -438,8 +439,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     title: 'artemisApp.programmingExercise.packageName',
                     data: { text: exercise.packageName },
                 },
-            ].filter(Boolean),
-        } as DetailOverviewSection;
+            ],
+        };
     }
 
     getExerciseDetailsProblemSection(exercise: ProgrammingExercise): DetailOverviewSection {
@@ -448,9 +449,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             details: [
                 {
                     type: DetailType.ProgrammingProblemStatement,
-                    data: { exercise },
+                    data: { exercise: exercise },
                 },
-            ].filter(Boolean),
+            ],
         };
     }
 
