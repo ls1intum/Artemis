@@ -27,7 +27,7 @@ public class BuildPlan extends DomainObject {
     @OneToMany
     @JoinColumn(name = "build_plan_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<ProgrammingExercise> programmingExercises = new HashSet<>();
+    private final Set<ProgrammingExercise> programmingExercises = new HashSet<>();
 
     @Nullable
     public String getBuildPlan() {

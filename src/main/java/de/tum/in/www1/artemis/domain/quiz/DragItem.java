@@ -59,7 +59,7 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "dragItem")
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<DragAndDropMapping> mappings = new HashSet<>();
+    private final Set<DragAndDropMapping> mappings = new HashSet<>();
 
     public String getPictureFilePath() {
         return pictureFilePath;

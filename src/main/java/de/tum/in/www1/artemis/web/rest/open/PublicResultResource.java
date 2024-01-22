@@ -39,7 +39,7 @@ public class PublicResultResource {
     private static final Logger log = LoggerFactory.getLogger(PublicResultResource.class);
 
     @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
-    private String artemisAuthenticationTokenValue = "";
+    private final String artemisAuthenticationTokenValue = "";
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 

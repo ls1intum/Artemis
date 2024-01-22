@@ -43,7 +43,7 @@ public class ShortAnswerSpot extends TempIdObject implements QuizQuestionCompone
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "spot")
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<ShortAnswerMapping> mappings = new HashSet<>();
+    private final Set<ShortAnswerMapping> mappings = new HashSet<>();
 
     public Integer getSpotNr() {
         return spotNr;

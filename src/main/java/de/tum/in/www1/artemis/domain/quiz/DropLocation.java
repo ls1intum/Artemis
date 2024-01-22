@@ -51,7 +51,7 @@ public class DropLocation extends TempIdObject implements QuizQuestionComponent<
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "dropLocation")
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<DragAndDropMapping> mappings = new HashSet<>();
+    private final Set<DragAndDropMapping> mappings = new HashSet<>();
 
     public Double getPosX() {
         return posX;

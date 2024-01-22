@@ -40,7 +40,7 @@ public class ShortAnswerSolution extends TempIdObject implements QuizQuestionCom
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "solution")
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<ShortAnswerMapping> mappings = new HashSet<>();
+    private final Set<ShortAnswerMapping> mappings = new HashSet<>();
 
     public String getText() {
         return text;

@@ -183,7 +183,7 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     @Nullable
     @Column(name = "iris_accepted")
-    private ZonedDateTime irisAccepted = null;
+    private final ZonedDateTime irisAccepted = null;
 
     public User() {
     }

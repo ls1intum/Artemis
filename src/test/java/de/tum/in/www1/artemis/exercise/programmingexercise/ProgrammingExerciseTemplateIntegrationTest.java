@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -99,7 +100,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
             if (!finished) {
                 throw new TimeoutException("Maven version command timed out.");
             }
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(mvn.getInputStream()))) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(mvn.getInputStream(), StandardCharsets.UTF_8))) {
                 String prefix = "maven home:";
                 Optional<String> home = reader.lines().filter(line -> line.toLowerCase().startsWith(prefix)).findFirst();
                 if (home.isPresent()) {

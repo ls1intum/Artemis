@@ -24,7 +24,7 @@ public class LectureUnitCompletion {
      */
     @EmbeddedId
     @JsonIgnore
-    private LectureUnitUserId id = new LectureUnitUserId();
+    private final LectureUnitUserId id = new LectureUnitUserId();
 
     @ManyToOne
     @MapsId("userId")

@@ -34,7 +34,7 @@ public abstract class IrisSession extends DomainObject {
     @OrderColumn(name = "iris_message_order")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @OneToMany(mappedBy = "session", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<IrisMessage> messages = new ArrayList<>();
+    private final List<IrisMessage> messages = new ArrayList<>();
 
     @Column(name = "creation_date")
     private ZonedDateTime creationDate = ZonedDateTime.now();

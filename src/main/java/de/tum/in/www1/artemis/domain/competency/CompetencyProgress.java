@@ -32,7 +32,7 @@ public class CompetencyProgress implements Serializable {
      */
     @EmbeddedId
     @JsonIgnore
-    private CompetencyUserId id = new CompetencyUserId();
+    private final CompetencyUserId id = new CompetencyUserId();
 
     @ManyToOne
     @MapsId("userId")
