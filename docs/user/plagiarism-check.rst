@@ -199,7 +199,12 @@ The following activity diagram depicts the CPC flow described above.
 |cpc-activity-diagram|
 
 
-This video below shows the full CPC process, including creation of a new exercise with the CPC enabled, viewing checks results and post due date steps:
+The video below shows the full CPC process from student's and instructor's perspective. It includes:
+
+#. Creating a new exercise with the CPC enabled.
+#. Reviewing check's results by a student and by an instructor.
+#. Fixing submissions marked as a significant similarity.
+#. Responding to a significant similarity plagiarism case that persisted after the exercise due date.
 
 .. raw:: html
 
