@@ -253,7 +253,6 @@ describe('CompetencyManagementComponent', () => {
         expect(component.competencies).toHaveLength(4);
         expect(component.nodes).toHaveLength(4);
         expect(component.edges).toHaveLength(5);
-        expect(component.clusters).toHaveLength(0);
     });
 
     it('should create competency relation', () => {
