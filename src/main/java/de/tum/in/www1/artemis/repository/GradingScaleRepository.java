@@ -36,9 +36,9 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @return an Optional with the grading scale if such scale exists and an empty Optional otherwise
      */
     @Query("""
-                SELECT gradingScale
-                FROM GradingScale gradingScale
-                WHERE gradingScale.course.id = :#{#courseId}
+            SELECT gradingScale
+            FROM GradingScale gradingScale
+            WHERE gradingScale.course.id = :courseId
             """)
     Optional<GradingScale> findByCourseId(@Param("courseId") Long courseId);
 
@@ -49,9 +49,9 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @return an Optional with the grading scale if such scale exists and an empty Optional otherwise
      */
     @Query("""
-                SELECT gradingScale
-                FROM GradingScale gradingScale
-                WHERE gradingScale.exam.id = :#{#examId}
+            SELECT gradingScale
+            FROM GradingScale gradingScale
+            WHERE gradingScale.exam.id = :examId
             """)
     Optional<GradingScale> findByExamId(@Param("examId") Long examId);
 
@@ -62,10 +62,10 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @return an Optional with the grading scale if such scale exists and an empty Optional otherwise
      */
     @Query("""
-                SELECT gradingScale
-                FROM GradingScale gradingScale
+            SELECT gradingScale
+            FROM GradingScale gradingScale
                 LEFT JOIN FETCH gradingScale.bonusFrom
-                WHERE gradingScale.exam.id = :#{#examId}
+            WHERE gradingScale.exam.id = :examId
             """)
     Optional<GradingScale> findByExamIdWithBonusFrom(@Param("examId") Long examId);
 
@@ -132,13 +132,16 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @return Page with search results
      */
     @Query("""
-                SELECT gs
-                FROM GradingScale gs
+            SELECT gs
+            FROM GradingScale gs
                 LEFT JOIN gs.course
                 LEFT JOIN gs.exam
                 LEFT JOIN gs.exam.course
-                WHERE gs.gradeType = 'BONUS' AND ((gs.course.instructorGroupName IN :groups AND gs.course.title LIKE %:partialTitle%)
-                    OR (gs.exam.course.instructorGroupName IN :groups AND gs.exam.title LIKE %:partialTitle%))
+            WHERE gs.gradeType = de.tum.in.www1.artemis.domain.GradeType.BONUS
+                AND (
+                    (gs.course.instructorGroupName IN :groups AND gs.course.title LIKE %:partialTitle%)
+                    OR (gs.exam.course.instructorGroupName IN :groups AND gs.exam.title LIKE %:partialTitle%)
+                )
             """)
     // Note: Removing "LEFT JOIN gs.exam.course" part from the query above would cause the query to exclude GradingScales for Courses and just return the
     // GradingScales for Exams. (It will do so by generating a CROSS JOIN and a WHERE clause which checks for exam.course_id = course.id)
@@ -159,8 +162,8 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
             FROM GradingScale gs
             LEFT JOIN gs.course
             LEFT JOIN gs.exam
-            WHERE gs.gradeType = 'BONUS' AND (gs.course.title LIKE %:partialTitle%
-                OR gs.exam.title LIKE %:partialTitle%)
+            WHERE gs.gradeType = de.tum.in.www1.artemis.domain.GradeType.BONUS
+                AND (gs.course.title LIKE %:partialTitle% OR gs.exam.title LIKE %:partialTitle%)
             """)
     Page<GradingScale> findWithBonusGradeTypeByTitleInCourseOrExamForAdmin(@Param("partialTitle") String partialTitle, Pageable pageable);
 
@@ -171,9 +174,9 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @return a set of grading scales for the courses
      */
     @Query("""
-                SELECT gs
-                FROM GradingScale gs
-                WHERE gs.course.id IN :courseIds
+            SELECT gs
+            FROM GradingScale gs
+            WHERE gs.course.id IN :courseIds
             """)
     Set<GradingScale> findAllByCourseIds(@Param("courseIds") Set<Long> courseIds);
 

@@ -32,16 +32,18 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
 
     List<Rating> findAllByResult_Participation_Exercise_Course_Id(Long courseId);
 
+    // Valid JPQL syntax, only SCA is not able to parse it
     @Query("""
                 SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseRatingCount(
-                    cast(sum(ra.rating) as double) / sum(case when ra.rating is not null then 1 else 0 end),
-                    sum(case when ra.rating is not null then 1 else 0 end))
-                FROM
-                    Result r JOIN r.participation p JOIN p.exercise e
-                    LEFT JOIN FETCH Rating ra ON ra.result = r.id
+                    CAST(SUM(ra.rating) as double) / SUM(CASE WHEN ra.rating IS NOT NULL THEN 1 ELSE 0 END),
+                    SUM(CASE WHEN ra.rating IS NOT NULL THEN 1 ELSE 0 END))
+                FROM Result r
+                    JOIN r.participation p
+                    JOIN p.exercise e
+                    LEFT JOIN FETCH Rating ra ON ra.result = r
                 WHERE
-                    r.completionDate is not null AND
-                    e.id = :#{#exerciseId}
+                    r.completionDate IS NOT NULL
+                    AND e.id = :exerciseId
             """)
     ExerciseRatingCount averageRatingByExerciseId(@Param("exerciseId") Long exerciseId);
 
