@@ -198,6 +198,15 @@ The following activity diagram depicts the CPC flow described above.
 
 |cpc-activity-diagram|
 
+
+This video below shows the full CPC process, including creation of a new exercise with the CPC enabled, viewing checks results and post due date steps:
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/42026?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
 Instructors
 ^^^^^^^^^^^
 
