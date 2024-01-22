@@ -272,11 +272,11 @@
                     <jhi-exercise-details [exercise]="programmingExercise"></jhi-exercise-details>
                     <dt><span jhiTranslate="artemisApp.exercise.feedbackSuggestionsEnabled">Enable feedback suggestions from Athena</span></dt>
                     <dd>
-                        <span>{{
-                            !!programmingExercise.feedbackSuggestionModule
-                                ? ('global.generic.yes' | artemisTranslate) + ' - ' + programmingExercise.feedbackSuggestionModule
-                                : ('global.generic.no' | artemisTranslate)
-                        }}</span>
+                        @if (!!programmingExercise.feedbackSuggestionModule) {
+                            <span>{{ ('global.generic.yes' | artemisTranslate) + ' - ' + programmingExercise.feedbackSuggestionModule }}</span>
+                        } @else {
+                            <span jhiTranslate="global.generic.no"></span>
+                        }
                     </dd>
                     @if (programmingExercise.dueDate) {
                         <dt><span jhiTranslate="artemisApp.programmingExercise.timeline.afterDueDate">Automatic Submission Run After Due Date</span></dt>

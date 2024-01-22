@@ -41,11 +41,11 @@
                     <jhi-exercise-details [exercise]="textExercise"></jhi-exercise-details>
                     <dt><span jhiTranslate="artemisApp.exercise.feedbackSuggestionsEnabled">Enable feedback suggestions from Athena</span></dt>
                     <dd>
-                        <span>{{
-                            !!textExercise.feedbackSuggestionModule
-                                ? ('global.generic.yes' | artemisTranslate) + ' - ' + textExercise.feedbackSuggestionModule
-                                : ('global.generic.no' | artemisTranslate)
-                        }}</span>
+                        @if (!!textExercise.feedbackSuggestionModule) {
+                            <span>{{ ('global.generic.yes' | artemisTranslate) + ' - ' + textExercise.feedbackSuggestionModule }}</span>
+                        } @else {
+                            <span jhiTranslate="global.generic.no"></span>
+                        }
                     </dd>
                     <dt><span jhiTranslate="artemisApp.exercise.exampleSolution">Example Solution</span></dt>
                     <dd class="editor-outline-background" [innerHTML]="formattedExampleSolution"></dd>

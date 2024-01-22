@@ -273,8 +273,7 @@
                     <dd id="course-restricted-athena-module-access">
                         @if (this.course.restrictedAthenaModulesAccess) {
                             <span>{{ 'global.generic.yes' | artemisTranslate }}</span>
-                        }
-                        @if (!this.course.restrictedAthenaModulesAccess) {
+                        } @else {
                             <span>{{ 'global.generic.no' | artemisTranslate }}</span>
                         }
                     </dd>
