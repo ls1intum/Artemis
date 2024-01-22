@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ServiceUnavailableException;
 @Profile("athena")
 public class AthenaRepositoryExportService {
 
-    private final Logger log = LoggerFactory.getLogger(AthenaRepositoryExportService.class);
+    private static final Logger log = LoggerFactory.getLogger(AthenaRepositoryExportService.class);
 
     // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
     // We reuse the same directory as the programming exercise export service for this.

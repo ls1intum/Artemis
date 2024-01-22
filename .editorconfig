@@ -21,3 +21,6 @@ trim_trailing_whitespace = false
 
 [*.java]
 ij_java_class_count_to_use_import_on_demand = 4
+
+[{*.yml,*.yaml}]
+indent_size = 2

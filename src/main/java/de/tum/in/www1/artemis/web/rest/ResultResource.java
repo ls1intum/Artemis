@@ -41,7 +41,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("/api")
 public class ResultResource {
 
-    private final Logger log = LoggerFactory.getLogger(ResultResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ResultResource.class);
 
     private static final String ENTITY_NAME = "result";
 

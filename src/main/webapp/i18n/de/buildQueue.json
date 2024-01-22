@@ -3,7 +3,6 @@
         "buildQueue": {
             "title": "Build Warteschlange",
             "pageTitle": "Build Job Informationen",
-            "refreshLabel": "Aktualisieren",
             "queuedBuildJobs": "Wartende Build Jobs",
             "runningBuildJobs": "Laufende Build Jobs",
             "buildJob": {
@@ -15,7 +14,8 @@
                 "buildStartDate": "Build Start Datum",
                 "courseId": "Kurs ID",
                 "priority": "Priorität"
-            }
+            },
+            "cancelAll": "Alle abbrechen"
         }
     }
 }

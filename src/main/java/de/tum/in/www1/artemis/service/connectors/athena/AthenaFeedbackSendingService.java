@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.service.dto.athena.SubmissionDTO;
 @Profile("athena")
 public class AthenaFeedbackSendingService {
 
-    private final Logger log = LoggerFactory.getLogger(AthenaFeedbackSendingService.class);
+    private static final Logger log = LoggerFactory.getLogger(AthenaFeedbackSendingService.class);
 
     private final AthenaConnector<RequestDTO, ResponseDTO> connector;
 

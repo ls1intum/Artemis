@@ -48,8 +48,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(@Param("participationId") Long participationId,
             @Param("dateTime") ZonedDateTime dateTime);
 
-    @EntityGraph(type = LOAD, attributePaths = { "results", "exercise" })
-    List<ProgrammingExerciseStudentParticipation> findByBuildPlanId(String buildPlanId);
+    @EntityGraph(type = LOAD, attributePaths = { "results", "exercise", "team.students" })
+    List<ProgrammingExerciseStudentParticipation> findWithResultsAndExerciseAndTeamStudentsByBuildPlanId(String buildPlanId);
 
     @Query("""
                 SELECT DISTINCT p
@@ -77,6 +77,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
 
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLoginAndTestRun(Long exerciseId, String username, boolean testRun);
 
+    @EntityGraph(type = LOAD, attributePaths = { "team" })
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(Long exerciseId, Long teamId);
 
     @Query("""
@@ -109,6 +110,9 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseId(Long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "submissions", "team.students" })
+    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndTeamStudentsByExerciseId(Long exerciseId);
 
     /**
      * Will return the participations matching the provided participation ids, but only if they belong to the given exercise.
@@ -151,6 +155,9 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     @EntityGraph(type = LOAD, attributePaths = "student")
     Optional<ProgrammingExerciseStudentParticipation> findWithStudentById(Long participationId);
 
+    @EntityGraph(type = LOAD, attributePaths = "team.students")
+    Optional<ProgrammingExerciseStudentParticipation> findWithTeamStudentsById(Long participationId);
+
     @NotNull
     default ProgrammingExerciseStudentParticipation findByIdElseThrow(Long participationId) {
         return findById(participationId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", participationId));
@@ -158,6 +165,10 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
 
     default Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(Long participationId) {
         return findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId, ZonedDateTime.now());
+    }
+
+    default ProgrammingExerciseStudentParticipation findWithTeamStudentsByIdElseThrow(Long participationId) {
+        return findWithTeamStudentsById(participationId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", participationId));
     }
 
     @Transactional // ok because of modifying query
@@ -179,7 +190,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     @Query("""
             SELECT DISTINCT p
             FROM ProgrammingExerciseStudentParticipation p
-                WHERE p.buildPlanId IS NOT NULL or p.repositoryUrl IS NOT NULL
+                WHERE p.buildPlanId IS NOT NULL or p.repositoryUri IS NOT NULL
             """)
-    Page<ProgrammingExerciseStudentParticipation> findAllWithRepositoryUrlOrBuildPlanId(Pageable pageable);
+    Page<ProgrammingExerciseStudentParticipation> findAllWithRepositoryUriOrBuildPlanId(Pageable pageable);
 }

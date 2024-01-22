@@ -276,16 +276,17 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         request.getMvc().perform(buildUpdateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isOk());
 
         SecurityUtils.setAuthorizationObject();
-        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow().getLectureUnits();
+        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits();
         assertThat(updatedOrderedUnits).containsExactlyElementsOf(orderedUnits);
     }
 
     private void persistAttachmentUnitWithLecture() {
         this.attachmentUnit = attachmentUnitRepository.saveAndFlush(this.attachmentUnit);
-        lecture1 = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow();
+        lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow();
         lecture1.addLectureUnit(this.attachmentUnit);
         lecture1 = lectureRepository.saveAndFlush(lecture1);
-        this.attachmentUnit = (AttachmentUnit) lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
+        this.attachmentUnit = (AttachmentUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst()
+                .orElseThrow();
     }
 
     @Test
@@ -330,6 +331,6 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(persistedAttachmentUnit.getId()).isNotNull();
         assertThat(slideRepository.findAllByAttachmentUnitId(persistedAttachmentUnit.getId())).hasSize(0);
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + persistedAttachmentUnit.getId(), HttpStatus.OK);
-        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId(), HttpStatus.NOT_FOUND, Attachment.class);
+        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId(), HttpStatus.NOT_FOUND, AttachmentUnit.class);
     }
 }

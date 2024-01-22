@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.service.connectors.apollon.dto.ApollonModelDTO;
 @Profile("apollon")
 public class ApollonConversionService {
 
-    private final Logger log = LoggerFactory.getLogger(ApollonConversionService.class);
+    private static final Logger log = LoggerFactory.getLogger(ApollonConversionService.class);
 
     @Value("${artemis.apollon.conversion-service-url}")
     private String apollonConversionUrl;

@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 @Profile("athena")
 public class AthenaFeedbackSuggestionsService {
 
-    private final Logger log = LoggerFactory.getLogger(AthenaFeedbackSuggestionsService.class);
+    private static final Logger log = LoggerFactory.getLogger(AthenaFeedbackSuggestionsService.class);
 
     private final AthenaConnector<RequestDTO, ResponseDTOText> textAthenaConnector;
 

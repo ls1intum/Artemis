@@ -20,7 +20,7 @@ public class AppleAppSiteAssociationResource {
     @Value("${artemis.iosAppId: #{null}}")
     private String appId;
 
-    private final Logger log = LoggerFactory.getLogger(AppleAppSiteAssociationResource.class);
+    private static final Logger log = LoggerFactory.getLogger(AppleAppSiteAssociationResource.class);
 
     /**
      * Provides the apple-app-site-association json content for the iOS client universal link feature.

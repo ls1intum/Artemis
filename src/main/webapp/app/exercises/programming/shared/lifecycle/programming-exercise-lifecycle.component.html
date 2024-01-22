@@ -117,79 +117,81 @@
             }
         </div>
     </div>
-    <h6 jhiTranslate="artemisApp.assessment.assessment"></h6>
-    @if (isExamMode || exercise.course?.complaintsEnabled) {
+    @if (!readOnly) {
+        <h6 jhiTranslate="artemisApp.assessment.assessment"></h6>
+        @if (isExamMode || exercise.course?.complaintsEnabled) {
+            <div class="form-check">
+                <input
+                    type="checkbox"
+                    class="form-check-input"
+                    name="allowComplaintsForAutomaticAssessment"
+                    [checked]="exercise.allowComplaintsForAutomaticAssessments"
+                    [disabled]="exercise.assessmentType !== assessmentType.AUTOMATIC || (!isExamMode && !exercise.dueDate)"
+                    id="allowComplaintsForAutomaticAssessment"
+                    (change)="toggleComplaintsType()"
+                />
+                <label
+                    [ngStyle]="exercise.assessmentType !== assessmentType.AUTOMATIC || (!isExamMode && !exercise.dueDate) ? { color: 'grey' } : {}"
+                    class="form-control-label"
+                    for="allowComplaintsForAutomaticAssessment"
+                    jhiTranslate="artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment"
+                ></label>
+                <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessmentTooltip'"></jhi-help-icon>
+            </div>
+        }
+        @if (!isExamMode) {
+            <div class="form-check">
+                <input
+                    type="checkbox"
+                    class="form-check-input"
+                    name="allowManualFeedbackRequests"
+                    [checked]="exercise.allowManualFeedbackRequests"
+                    [disabled]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC"
+                    id="allowManualFeedbackRequests"
+                    (change)="toggleManualFeedbackRequests()"
+                />
+                <label
+                    [ngStyle]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC ? { color: 'grey' } : {}"
+                    class="form-control-label"
+                    for="allowManualFeedbackRequests"
+                    jhiTranslate="artemisApp.programmingExercise.timeline.manualFeedbackRequests"
+                ></label>
+                <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.manualFeedbackRequestsTooltip'"></jhi-help-icon>
+            </div>
+        }
+        <div class="form-check">
+            <input
+                class="form-check-input"
+                type="checkbox"
+                name="showTestNamesToStudents"
+                id="field_showTestNamesToStudents"
+                [disabled]="readOnly"
+                [(ngModel)]="exercise.showTestNamesToStudents"
+                checked
+            />
+            <label class="form-control-label" for="field_showTestNamesToStudents" jhiTranslate="artemisApp.programmingExercise.showTestNamesToStudents"></label>
+            <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.showTestNamesToStudentsTooltip'"></jhi-help-icon>
+        </div>
         <div class="form-check">
             <input
                 type="checkbox"
                 class="form-check-input"
-                name="allowComplaintsForAutomaticAssessment"
-                [checked]="exercise.allowComplaintsForAutomaticAssessments"
-                [disabled]="exercise.assessmentType !== assessmentType.AUTOMATIC || (!isExamMode && !exercise.dueDate) || readOnly"
-                id="allowComplaintsForAutomaticAssessment"
-                (change)="toggleComplaintsType()"
+                name="releaseTestsWithExampleSolution"
+                [checked]="exercise.releaseTestsWithExampleSolution"
+                [disabled]="!exercise.exampleSolutionPublicationDate && !exercise.exerciseGroup?.exam?.exampleSolutionPublicationDate"
+                id="releaseTestsWithExampleSolution"
+                (change)="toggleReleaseTests()"
             />
             <label
-                [ngStyle]="exercise.assessmentType !== assessmentType.AUTOMATIC || (!isExamMode && !exercise.dueDate) ? { color: 'grey' } : {}"
+                [ngStyle]="!exercise.exampleSolutionPublicationDate && !exercise.exerciseGroup?.exam?.exampleSolutionPublicationDate ? { color: 'grey' } : {}"
                 class="form-control-label"
-                for="allowComplaintsForAutomaticAssessment"
-                jhiTranslate="artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment"
+                for="releaseTestsWithExampleSolution"
+                jhiTranslate="artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolution"
             ></label>
-            <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessmentTooltip'"></jhi-help-icon>
+            <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolutionTooltip'"></jhi-help-icon>
         </div>
-    }
-    @if (!isExamMode) {
-        <div class="form-check">
-            <input
-                type="checkbox"
-                class="form-check-input"
-                name="allowManualFeedbackRequests"
-                [checked]="exercise.allowManualFeedbackRequests"
-                [disabled]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC || readOnly"
-                id="allowManualFeedbackRequests"
-                (change)="toggleManualFeedbackRequests()"
-            />
-            <label
-                [ngStyle]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC && !readOnly ? { color: 'grey' } : {}"
-                class="form-control-label"
-                for="allowManualFeedbackRequests"
-                jhiTranslate="artemisApp.programmingExercise.timeline.manualFeedbackRequests"
-            ></label>
-            <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.manualFeedbackRequestsTooltip'"></jhi-help-icon>
-        </div>
-    }
-    <div class="form-check">
-        <input
-            class="form-check-input"
-            type="checkbox"
-            name="showTestNamesToStudents"
-            id="field_showTestNamesToStudents"
-            [disabled]="readOnly"
-            [(ngModel)]="exercise.showTestNamesToStudents"
-            checked
-        />
-        <label class="form-control-label" for="field_showTestNamesToStudents" jhiTranslate="artemisApp.programmingExercise.showTestNamesToStudents"></label>
-        <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.showTestNamesToStudentsTooltip'"></jhi-help-icon>
-    </div>
-    <div class="form-check">
-        <input
-            type="checkbox"
-            class="form-check-input"
-            name="releaseTestsWithExampleSolution"
-            [checked]="exercise.releaseTestsWithExampleSolution"
-            [disabled]="(!exercise.exampleSolutionPublicationDate && !exercise.exerciseGroup?.exam?.exampleSolutionPublicationDate) || readOnly"
-            id="releaseTestsWithExampleSolution"
-            (change)="toggleReleaseTests()"
-        />
-        <label
-            [ngStyle]="!exercise.exampleSolutionPublicationDate && !exercise.exerciseGroup?.exam?.exampleSolutionPublicationDate && !readOnly ? { color: 'grey' } : {}"
-            class="form-control-label"
-            for="releaseTestsWithExampleSolution"
-            jhiTranslate="artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolution"
-        ></label>
-        <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolutionTooltip'"></jhi-help-icon>
-    </div>
-    @if (!isExamMode) {
-        <jhi-exercise-feedback-suggestion-options [exercise]="exercise" [dueDate]="exercise.dueDate" [readOnly]="readOnly" />
+        @if (!isExamMode) {
+            <jhi-exercise-feedback-suggestion-options [exercise]="exercise" [dueDate]="exercise.dueDate" [readOnly]="readOnly" />
+        }
     }
 </div>

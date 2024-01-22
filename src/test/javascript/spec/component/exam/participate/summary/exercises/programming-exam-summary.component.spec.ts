@@ -52,7 +52,7 @@ const programmingParticipation = {
     submissions: [programmingSubmission],
     type: ParticipationType.PROGRAMMING,
     participantIdentifier: 'student1',
-    repositoryUrl: 'https://bitbucket.ase.in.tum.de/projects/TEST/repos/test-exercise',
+    repositoryUri: 'https://bitbucket.ase.in.tum.de/projects/TEST/repos/test-exercise',
 } as ProgrammingExerciseStudentParticipation;
 
 const programmingExercise = {
@@ -85,7 +85,7 @@ const result = {
         id: 55,
         type: ParticipationType.PROGRAMMING,
         participantIdentifier: 'student42',
-        repositoryUrl: 'https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42',
+        repositoryUri: 'https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42',
     },
     feedbacks: [feedback],
     assessmentType: AssessmentType.MANUAL,

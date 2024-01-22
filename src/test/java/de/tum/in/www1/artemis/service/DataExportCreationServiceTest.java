@@ -10,15 +10,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.lib.Repository;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -250,7 +249,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         createPlagiarismData(userLogin, programmingExercise, modelingExercises);
         // Mock student repo
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.localRepoFile.toPath(), null);
-        doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), anyString(), anyBoolean());
+        doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUri()), anyString(), anyBoolean());
         return course1;
     }
 
@@ -584,7 +583,6 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExport.setDataExportState(DataExportState.REQUESTED);
         dataExport.setFilePath("path");
-        dataExport = dataExportRepository.save(dataExport);
-        return dataExport;
+        return dataExportRepository.save(dataExport);
     }
 }

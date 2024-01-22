@@ -802,7 +802,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             const auxiliaryRepository = new AuxiliaryRepository();
             auxiliaryRepository.checkoutDirectory = 'aux';
             auxiliaryRepository.name = 'aux';
-            auxiliaryRepository.repositoryUrl = 'auxurl';
+            auxiliaryRepository.repositoryUri = 'auxurl';
             comp.programmingExercise.auxiliaryRepositories = [auxiliaryRepository];
             const returned = comp.updateCheckoutDirectory(auxiliaryRepository)('new-value');
             expect(auxiliaryRepository.checkoutDirectory).toBe('new-value');
@@ -813,7 +813,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             const auxiliaryRepository = new AuxiliaryRepository();
             auxiliaryRepository.checkoutDirectory = 'aux';
             auxiliaryRepository.name = 'aux';
-            auxiliaryRepository.repositoryUrl = 'auxurl';
+            auxiliaryRepository.repositoryUri = 'auxurl';
             comp.programmingExercise.auxiliaryRepositories = [auxiliaryRepository];
             const returned = comp.updateRepositoryName(auxiliaryRepository)('new-value');
             expect(auxiliaryRepository.name).toBe('new-value');

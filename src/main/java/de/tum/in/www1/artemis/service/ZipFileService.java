@@ -25,7 +25,7 @@ import net.lingala.zip4j.ZipFile;
 @Service
 public class ZipFileService {
 
-    private final Logger log = LoggerFactory.getLogger(ZipFileService.class);
+    private static final Logger log = LoggerFactory.getLogger(ZipFileService.class);
 
     private final FileService fileService;
 

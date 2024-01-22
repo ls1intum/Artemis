@@ -20,8 +20,8 @@ public class ArtemisGitServlet extends GitServlet {
      * @param localVCServletService the service for authenticating and authorizing users and retrieving the repository from disk
      */
     public ArtemisGitServlet(LocalVCServletService localVCServletService) {
-        this.setRepositoryResolver((req, name) -> {
-            // req – the current request, may be used to inspect session state including cookies or user authentication.
+        this.setRepositoryResolver((request, name) -> {
+            // request – the current request, may be used to inspect session state including cookies or user authentication.
             // name – name of the repository, as parsed out of the URL (everything after /git/).
 
             // Return the opened repository instance.
@@ -32,8 +32,8 @@ public class ArtemisGitServlet extends GitServlet {
         this.addUploadPackFilter(new LocalVCFetchFilter(localVCServletService));
         this.addReceivePackFilter(new LocalVCPushFilter(localVCServletService));
 
-        this.setReceivePackFactory((req, db) -> {
-            ReceivePack receivePack = new ReceivePack(db);
+        this.setReceivePackFactory((request, repository) -> {
+            ReceivePack receivePack = new ReceivePack(repository);
             // Add a hook that prevents illegal actions on push (delete branch, rename branch, force push).
             receivePack.setPreReceiveHook(new LocalVCPrePushHook());
             // Add a hook that triggers the creation of a new submission after the push went through successfully.

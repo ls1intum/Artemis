@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 @Service
 public class TextExerciseImportService extends ExerciseImportService {
 
-    private final Logger log = LoggerFactory.getLogger(TextExerciseImportService.class);
+    private static final Logger log = LoggerFactory.getLogger(TextExerciseImportService.class);
 
     private final TextExerciseRepository textExerciseRepository;
 
