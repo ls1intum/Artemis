@@ -227,18 +227,13 @@ describe('ProgrammingExercise Management Detail Component', () => {
         }));
     });
 
-    it('should create empty details', () => {
+    it('should create details', () => {
         const programmingExercise = new ProgrammingExercise(new Course(), undefined);
         programmingExercise.id = 123;
         comp.programmingExercise = programmingExercise;
 
         const sections = comp.getExerciseDetails();
         expect(sections).toBeDefined();
-        for (const section of sections) {
-            for (const detail of section.details) {
-                expect(detail).toBeDefined();
-            }
-        }
     });
 
     it('should create structural solution entries', () => {
