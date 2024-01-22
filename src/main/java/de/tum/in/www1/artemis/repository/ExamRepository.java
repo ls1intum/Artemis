@@ -78,7 +78,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             SELECT new de.tum.in.www1.artemis.web.rest.dto.CourseContentCount(
                 COUNT(e.id),
                 e.course.id
-                )
+            )
             FROM Exam e
             WHERE e.course.id IN :courseIds
                 AND e.visibleDate <= :now
@@ -123,7 +123,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @Query("""
             SELECT COUNT(exam)
             FROM Exam exam
-            WHERE exam.course.testCourse = false
+            WHERE exam.course.testCourse IS FALSE
                 AND exam.visibleDate >= :now
                 AND exam.endDate <= :now
             """)
@@ -234,8 +234,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             SELECT DISTINCT e
             FROM Exam e
                 LEFT JOIN FETCH e.exerciseGroups eg
-                JOIN TREAT (eg.exercises AS QuizExercise) ex
-                JOIN FETCH ex
+                LEFT JOIN FETCH eg.exercises ex
             WHERE e.course.instructorGroupName IN :userGroups
             """)
     List<Exam> getExamsWithQuizExercisesForWhichUserHasInstructorAccess(@Param("userGroups") List<String> userGroups);
@@ -244,8 +243,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             SELECT DISTINCT e
             FROM Exam e
                 LEFT JOIN FETCH e.exerciseGroups eg
-                JOIN TREAT (eg.exercises AS QuizExercise) ex
-                JOIN FETCH ex
+                LEFT JOIN FETCH eg.exercises ex
             """)
     List<Exam> findAllWithQuizExercisesWithEagerExerciseGroupsAndExercises();
 
