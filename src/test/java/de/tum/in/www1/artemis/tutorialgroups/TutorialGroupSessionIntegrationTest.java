@@ -99,7 +99,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createNewSession_onTutorialGroupFreeDay_shouldCreateAsCancelled() throws Exception {
         // given
-        tutorialGroupUtilService.addTutorialGroupFreeDay(exampleConfigurationId, firstAugustMonday.toLocalDate(), "Holiday");
+        tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, firstAugustMonday, firstAugustMonday, "Holiday");
         var dto = createSessionDTO(firstAugustMonday.toLocalDate());
         // when
         var sessionId = request.postWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId), dto, TutorialGroupSession.class, HttpStatus.CREATED).getId();
@@ -303,7 +303,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateSession_nowOnTutorialGroupFreeDay_shouldUpdateAsCancelled() throws Exception {
         // given
-        var freeDay = tutorialGroupUtilService.addTutorialGroupFreeDay(exampleConfigurationId, thirdAugustMonday.toLocalDate(), "Holiday");
+        var freeDay = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, thirdAugustMonday, thirdAugustMonday, "Holiday");
         var firstAugustMondaySession = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, firstAugustMonday);
 
         var dto = createSessionDTO(thirdAugustMonday.toLocalDate());
