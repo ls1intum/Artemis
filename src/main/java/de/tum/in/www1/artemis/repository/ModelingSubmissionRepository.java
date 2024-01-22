@@ -30,7 +30,7 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
     Optional<ModelingSubmission> findByIdWithEagerResult(@Param("submissionId") Long submissionId);
 
     @Query("""
-             SELECT DISTINCT submission
+            SELECT DISTINCT submission
             FROM ModelingSubmission submission
                 LEFT JOIN FETCH submission.results r
                 LEFT JOIN FETCH r.feedbacks
