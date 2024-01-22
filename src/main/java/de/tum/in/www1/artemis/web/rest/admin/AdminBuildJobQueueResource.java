@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.admin;
 
 import java.util.List;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,19 +50,6 @@ public class AdminBuildJobQueueResource {
         log.debug("REST request to get the running build jobs");
         List<LocalCIBuildJobQueueItem> runningBuildJobs = localCIBuildJobQueueService.getProcessingJobs();
         return ResponseEntity.ok(runningBuildJobs);
-    }
-
-    /**
-     * Returns the recent build jobs.
-     *
-     * @return the recent build jobs
-     */
-    @GetMapping("/recent-jobs")
-    @EnforceAdmin
-    public ResponseEntity<Map<String, List<LocalCIBuildJobQueueItem>>> getRecentBuildJobs() {
-        log.debug("REST request to get the recent build jobs");
-        Map<String, List<LocalCIBuildJobQueueItem>> recentBuildJobs = localCIBuildJobQueueService.getRecentBuildJobs();
-        return ResponseEntity.ok(recentBuildJobs);
     }
 
     /**

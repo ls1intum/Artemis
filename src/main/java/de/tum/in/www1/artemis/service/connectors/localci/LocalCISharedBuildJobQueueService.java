@@ -71,7 +71,7 @@ public class LocalCISharedBuildJobQueueService {
 
     private final IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
 
-    private final IMap<String, List<LocalCIBuildJobQueueItem>> recentBuildJobs;
+    private final List<LocalCIBuildJobQueueItem> recentBuildJobs = new ArrayList<>();
 
     private final AtomicInteger localProcessingJobs = new AtomicInteger(0);
 
@@ -104,7 +104,6 @@ public class LocalCISharedBuildJobQueueService {
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
         this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
-        this.recentBuildJobs = this.hazelcastInstance.getMap("recentBuildJobs");
     }
 
     /**
@@ -135,7 +134,7 @@ public class LocalCISharedBuildJobQueueService {
     public void addBuildJob(String name, long participationId, String repositoryName, RepositoryType repositoryType, String commitHash, ZonedDateTime submissionDate, int priority,
             long courseId, RepositoryType triggeredByPushTo) {
         LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem((String.valueOf(participationId) + submissionDate.toInstant().toEpochMilli()), name, null,
-                participationId, repositoryName, repositoryType, commitHash, submissionDate, 0, null, null, priority, courseId, triggeredByPushTo, null);
+                participationId, repositoryName, repositoryType, commitHash, submissionDate, 0, null, null, priority, courseId, triggeredByPushTo, null, null);
         queue.add(buildJobQueueItem);
     }
 
@@ -159,10 +158,6 @@ public class LocalCISharedBuildJobQueueService {
         // Remove build agent information of offline nodes
         removeOfflineNodes();
         return buildAgentInformation.values().stream().toList();
-    }
-
-    public Map<String, List<LocalCIBuildJobQueueItem>> getRecentBuildJobs() {
-        return recentBuildJobs;
     }
 
     /**
@@ -191,21 +186,14 @@ public class LocalCISharedBuildJobQueueService {
             buildJob.setTriggeredByPushTo(queueItem.triggeredByPushTo());
             buildJob.setBuildJobResult(result);
             buildJob.setDockerImage(queueItem.dockerImage());
-
             buildJobRepository.save(buildJob);
         }
         catch (Exception e) {
             log.error("Could not save build job to database", e);
         }
-
-        recentBuildJobs.computeIfAbsent(hazelcastInstance.getCluster().getLocalMember().getAddress().toString(), k -> new ArrayList<>());
-        recentBuildJobs.computeIfPresent(hazelcastInstance.getCluster().getLocalMember().getAddress().toString(), (k, v) -> {
-            if (v.size() > 5) {
-                v.remove(0);
-            }
-            v.add(queueItem);
-            return v;
-        });
+        addToRecentBuildJobs(new LocalCIBuildJobQueueItem(queueItem.id(), queueItem.name(), queueItem.buildAgentAddress(), queueItem.participationId(), queueItem.repositoryName(),
+                queueItem.repositoryType(), queueItem.commitHash(), queueItem.submissionDate(), queueItem.retryCount(), queueItem.buildStartDate(), buildCompletionDate,
+                queueItem.priority(), queueItem.courseId(), queueItem.triggeredByPushTo(), queueItem.dockerImage(), result.name()));
     }
 
     /**
@@ -305,7 +293,7 @@ public class LocalCISharedBuildJobQueueService {
             String hazelcastMemberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
             LocalCIBuildJobQueueItem processingJob = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), hazelcastMemberAddress, buildJob.participationId(),
                     buildJob.repositoryName(), buildJob.repositoryType(), buildJob.commitHash(), buildJob.submissionDate(), buildJob.retryCount(), ZonedDateTime.now(), null,
-                    buildJob.priority(), buildJob.courseId(), buildJob.triggeredByPushTo(), null);
+                    buildJob.priority(), buildJob.courseId(), buildJob.triggeredByPushTo(), null, null);
             processingJobs.put(processingJob.id(), processingJob);
             localProcessingJobs.incrementAndGet();
 
@@ -322,7 +310,8 @@ public class LocalCISharedBuildJobQueueService {
         int numberOfCurrentBuildJobs = processingJobsOfMember.size();
         int maxNumberOfConcurrentBuilds = localCIBuildExecutorService.getMaximumPoolSize();
         boolean active = numberOfCurrentBuildJobs > 0;
-        LocalCIBuildAgentInformation info = new LocalCIBuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, active);
+        LocalCIBuildAgentInformation info = new LocalCIBuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, active,
+                recentBuildJobs);
         buildAgentInformation.put(memberAddress, info);
     }
 
@@ -396,7 +385,7 @@ public class LocalCISharedBuildJobQueueService {
         }
         LocalCIBuildJobQueueItem updatedJob = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(), buildJob.participationId(),
                 buildJob.repositoryName(), buildJob.repositoryType(), buildJob.commitHash(), buildJob.submissionDate(), buildJob.retryCount(), buildJob.buildStartDate(), null,
-                buildJob.priority(), buildJob.courseId(), buildJob.triggeredByPushTo(), dockerImage);
+                buildJob.priority(), buildJob.courseId(), buildJob.triggeredByPushTo(), dockerImage, null);
 
         processingJobs.put(buildJob.id(), updatedJob);
 
@@ -431,6 +420,7 @@ public class LocalCISharedBuildJobQueueService {
             // after processing a build job, remove it from the processing jobs
             processingJobs.remove(updatedJob.id());
             localProcessingJobs.decrementAndGet();
+            // Add build job to recent build jobs
             updateLocalBuildAgentInformation();
 
             // process next build job if node is available
@@ -463,7 +453,7 @@ public class LocalCISharedBuildJobQueueService {
                     log.warn("Requeueing failed build job: {}", updatedJob);
                     LocalCIBuildJobQueueItem requeuedBuildJob = new LocalCIBuildJobQueueItem(updatedJob.id(), updatedJob.name(), null, updatedJob.participationId(),
                             updatedJob.repositoryName(), updatedJob.repositoryType(), updatedJob.commitHash(), updatedJob.submissionDate(), updatedJob.retryCount() + 1, null, null,
-                            updatedJob.priority(), updatedJob.courseId(), updatedJob.triggeredByPushTo(), null);
+                            updatedJob.priority(), updatedJob.courseId(), updatedJob.triggeredByPushTo(), null, null);
                     queue.add(requeuedBuildJob);
                 }
                 else {
@@ -474,6 +464,14 @@ public class LocalCISharedBuildJobQueueService {
             checkAvailabilityAndProcessNextBuild();
             return null;
         });
+    }
+
+    private void addToRecentBuildJobs(LocalCIBuildJobQueueItem updatedJob) {
+        if (recentBuildJobs.size() >= 5) {
+            recentBuildJobs.remove(0);
+        }
+        recentBuildJobs.add(updatedJob);
+        updateLocalBuildAgentInformation();
     }
 
     /**

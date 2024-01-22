@@ -13,7 +13,9 @@
                 "submissionDate": "Abgabe Datum",
                 "buildStartDate": "Build Start Datum",
                 "courseId": "Kurs ID",
-                "priority": "Priorität"
+                "priority": "Priorität",
+                "buildCompletionDate": "Build Fertigstellungsdatum",
+                "result": "Ergebnis"
             },
             "cancelAll": "Alle abbrechen"
         }

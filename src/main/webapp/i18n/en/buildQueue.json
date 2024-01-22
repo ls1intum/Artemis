@@ -13,7 +13,9 @@
                 "submissionDate": "Submission Date",
                 "buildStartDate": "Build Start Date",
                 "courseId": "Course ID",
-                "priority": "Priority"
+                "priority": "Priority",
+                "buildCompletionDate": "Build Completion Date",
+                "result": "Result"
             },
             "cancelAll": "Cancel All"
         }

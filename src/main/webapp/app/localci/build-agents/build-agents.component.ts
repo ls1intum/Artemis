@@ -69,4 +69,8 @@ export class BuildAgentsComponent implements OnInit, OnDestroy {
             }
         }
     }
+
+    getBuildJobNameColor(result: string): string {
+        return result === 'SUCCESSFUL' ? 'green' : 'red';
+    }
 }
