@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain.competency;
 import javax.persistence.*;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.enumeration.RelationType;
 
 /**
  * This class models the relation between two competencies. Imagine a graph: (tail) --- type --> (head)
@@ -46,25 +47,6 @@ public class CompetencyRelation extends DomainObject {
 
     public void setType(RelationType type) {
         this.type = type;
-    }
-
-    public enum RelationType {
-        /**
-         * A generic relation between two competencies.
-         */
-        RELATES,
-        /**
-         * The tail competency assumes that the student already achieved the head competency.
-         */
-        ASSUMES,
-        /**
-         * The tail competency extends the head competency on the same topic in more detail.
-         */
-        EXTENDS,
-        /**
-         * The tail competency matches the head competency (e.g., a duplicate).
-         */
-        MATCHES
     }
 
     @Converter

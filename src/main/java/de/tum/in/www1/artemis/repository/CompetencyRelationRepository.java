@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
+import de.tum.in.www1.artemis.domain.enumeration.RelationType;
 
 /**
  * Spring Data JPA repository for the Competency Relation entity.
@@ -58,7 +59,7 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
                 LEFT JOIN relation.headCompetency
                 LEFT JOIN relation.tailCompetency
             WHERE relation.tailCompetency.id IN :competencyIds
-                AND relation.type <> de.tum.in.www1.artemis.domain.competency.CompetencyRelation.RelationType.MATCHES
+                AND relation.type <> de.tum.in.www1.artemis.domain.enumeration.RelationType.MATCHES
             """)
     Set<Long> getPriorCompetenciesByCompetencyIds(@Param("competencyIds") Set<Long> competencyIds);
 
@@ -71,7 +72,7 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
                 AND relation.headCompetency.id IN :competencyHeadIds
                 AND relation.type = :type
             """)
-    long countRelationsOfTypeBetweenCompetencyGroups(@Param("competencyTailIds") Set<Long> competencyTailIds, @Param("type") CompetencyRelation.RelationType type,
+    long countRelationsOfTypeBetweenCompetencyGroups(@Param("competencyTailIds") Set<Long> competencyTailIds, @Param("type") RelationType type,
             @Param("competencyHeadIds") Set<Long> competencyHeadIds);
 
     /**

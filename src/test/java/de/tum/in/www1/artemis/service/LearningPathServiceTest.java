@@ -22,9 +22,9 @@ import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.competency.Competency;
-import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
+import de.tum.in.www1.artemis.domain.enumeration.RelationType;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
@@ -117,7 +117,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
         void testHealthStatusOK() {
             final var competency1 = competencyUtilService.createCompetency(course);
             final var competency2 = competencyUtilService.createCompetency(course);
-            competencyUtilService.addRelation(competency1, CompetencyRelation.RelationType.MATCHES, competency2);
+            competencyUtilService.addRelation(competency1, RelationType.MATCHES, competency2);
             course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
             var healthStatus = learningPathService.getHealthStatusForCourse(course);
             assertThat(healthStatus.status()).containsExactly(LearningPathHealthDTO.HealthStatus.OK);
@@ -128,7 +128,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
         void testHealthStatusMissing() {
             final var competency1 = competencyUtilService.createCompetency(course);
             final var competency2 = competencyUtilService.createCompetency(course);
-            competencyUtilService.addRelation(competency1, CompetencyRelation.RelationType.MATCHES, competency2);
+            competencyUtilService.addRelation(competency1, RelationType.MATCHES, competency2);
             course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
             userUtilService.addStudent(TEST_PREFIX + "tumuser", TEST_PREFIX + "student1337");
             var healthStatus = learningPathService.getHealthStatusForCourse(course);
@@ -239,7 +239,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
             addExpectedComponentsForEmptyCompetencies(expectedNodes, expectedEdges, competency1, competency2);
         }
 
-        void testSimpleRelation(CompetencyRelation.RelationType type) {
+        void testSimpleRelation(RelationType type) {
             competencyUtilService.addRelation(competency1, type, competency2);
             final var sourceNodeId = LearningPathNgxService.getCompetencyEndNodeId(competency2.getId());
             final var targetNodeId = LearningPathNgxService.getCompetencyStartNodeId(competency1.getId());
@@ -250,22 +250,22 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         @Test
         void testSingleRelates() {
-            testSimpleRelation(CompetencyRelation.RelationType.RELATES);
+            testSimpleRelation(RelationType.RELATES);
         }
 
         @Test
         void testSingleAssumes() {
-            testSimpleRelation(CompetencyRelation.RelationType.ASSUMES);
+            testSimpleRelation(RelationType.ASSUMES);
         }
 
         @Test
         void testSingleExtends() {
-            testSimpleRelation(CompetencyRelation.RelationType.EXTENDS);
+            testSimpleRelation(RelationType.EXTENDS);
         }
 
         @Test
         void testSingleMatches() {
-            competencyUtilService.addRelation(competency1, CompetencyRelation.RelationType.MATCHES, competency2);
+            competencyUtilService.addRelation(competency1, RelationType.MATCHES, competency2);
             expectedNodes.add(new NgxLearningPathDTO.Node(LearningPathNgxService.getMatchingClusterStartNodeId(0), NgxLearningPathDTO.NodeType.MATCH_START, null, ""));
             expectedNodes.add(new NgxLearningPathDTO.Node(LearningPathNgxService.getMatchingClusterEndNodeId(0), NgxLearningPathDTO.NodeType.MATCH_END, null, ""));
             expectedEdges.add(new NgxLearningPathDTO.Edge(LearningPathNgxService.getInEdgeId(competency1.getId()), LearningPathNgxService.getMatchingClusterStartNodeId(0),
@@ -285,8 +285,8 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
             var competency3 = competencyUtilService.createCompetency(course);
             addExpectedComponentsForEmptyCompetencies(expectedNodes, expectedEdges, competency3);
 
-            competencyUtilService.addRelation(competency1, CompetencyRelation.RelationType.MATCHES, competency2);
-            competencyUtilService.addRelation(competency2, CompetencyRelation.RelationType.MATCHES, competency3);
+            competencyUtilService.addRelation(competency1, RelationType.MATCHES, competency2);
+            competencyUtilService.addRelation(competency2, RelationType.MATCHES, competency3);
             expectedNodes.add(new NgxLearningPathDTO.Node(LearningPathNgxService.getMatchingClusterStartNodeId(0), NgxLearningPathDTO.NodeType.MATCH_START, null, ""));
             expectedNodes.add(new NgxLearningPathDTO.Node(LearningPathNgxService.getMatchingClusterEndNodeId(0), NgxLearningPathDTO.NodeType.MATCH_END, null, ""));
             expectedEdges.add(new NgxLearningPathDTO.Edge(LearningPathNgxService.getInEdgeId(competency1.getId()), LearningPathNgxService.getMatchingClusterStartNodeId(0),
@@ -411,10 +411,10 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
             Competency[] priors2 = competencyUtilService.createCompetencies(course, future(111), future(113), future(115));
             ;
             for (var competency : priors1) {
-                competencyUtilService.addRelation(competency1, CompetencyRelation.RelationType.RELATES, competency);
+                competencyUtilService.addRelation(competency1, RelationType.RELATES, competency);
             }
             for (var competency : priors2) {
-                competencyUtilService.addRelation(competency2, CompetencyRelation.RelationType.RELATES, competency);
+                competencyUtilService.addRelation(competency2, RelationType.RELATES, competency);
             }
             masterCompetencies(priors1);
             masterCompetencies(priors2[0]);
@@ -439,12 +439,12 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
             Competency[] priors1 = competencyUtilService.createCompetencies(course, future(110), future(112), future(114));
             Competency[] priors2 = competencyUtilService.createCompetencies(course, future(111), future(113), future(115));
             ;
-            competencyUtilService.addRelation(competency1, CompetencyRelation.RelationType.EXTENDS, priors1[0]);
-            competencyUtilService.addRelation(competency1, CompetencyRelation.RelationType.EXTENDS, priors1[1]);
-            competencyUtilService.addRelation(competency1, CompetencyRelation.RelationType.ASSUMES, priors1[2]);
-            competencyUtilService.addRelation(competency2, CompetencyRelation.RelationType.EXTENDS, priors2[0]);
-            competencyUtilService.addRelation(competency2, CompetencyRelation.RelationType.ASSUMES, priors2[1]);
-            competencyUtilService.addRelation(competency2, CompetencyRelation.RelationType.ASSUMES, priors2[2]);
+            competencyUtilService.addRelation(competency1, RelationType.EXTENDS, priors1[0]);
+            competencyUtilService.addRelation(competency1, RelationType.EXTENDS, priors1[1]);
+            competencyUtilService.addRelation(competency1, RelationType.ASSUMES, priors1[2]);
+            competencyUtilService.addRelation(competency2, RelationType.EXTENDS, priors2[0]);
+            competencyUtilService.addRelation(competency2, RelationType.ASSUMES, priors2[1]);
+            competencyUtilService.addRelation(competency2, RelationType.ASSUMES, priors2[2]);
 
             Competency[] expectedOrder = new Competency[] { priors1[0], priors2[0], priors1[1], priors2[1], priors1[2], priors2[2], competency1, competency2 };
             for (int i = 0; i < expectedOrder.length - 1; i++) {

@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
+import de.tum.in.www1.artemis.domain.enumeration.RelationType;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.*;
@@ -429,7 +430,7 @@ public class CompetencyResource {
         checkAuthorizationForCompetency(Role.INSTRUCTOR, course, headCompetency);
 
         try {
-            var relationType = CompetencyRelation.RelationType.valueOf(type);
+            var relationType = RelationType.valueOf(type);
 
             var relation = new CompetencyRelation();
             relation.setTailCompetency(tailCompetency);
