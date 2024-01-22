@@ -40,16 +40,16 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
     Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigById(@Param("exerciseId") Long exerciseId);
 
     @Query("""
-           SELECT modelingExercise
-           FROM ModelingExercise modelingExercise
-               LEFT JOIN FETCH modelingExercise.exampleSubmissions exampleSubmissions
-               LEFT JOIN FETCH exampleSubmissions.submission submission
-               LEFT JOIN FETCH submission.results results
-               LEFT JOIN FETCH results.feedbacks
-               LEFT JOIN FETCH results.assessor
-               LEFT JOIN FETCH modelingExercise.teamAssignmentConfig
-               LEFT JOIN FETCH modelingExercise.plagiarismDetectionConfig
-           WHERE modelingExercise.id = :exerciseId
+            SELECT modelingExercise
+            FROM ModelingExercise modelingExercise
+                LEFT JOIN FETCH modelingExercise.exampleSubmissions exampleSubmissions
+                LEFT JOIN FETCH exampleSubmissions.submission submission
+                LEFT JOIN FETCH submission.results results
+                LEFT JOIN FETCH results.feedbacks
+                LEFT JOIN FETCH results.assessor
+                LEFT JOIN FETCH modelingExercise.teamAssignmentConfig
+                LEFT JOIN FETCH modelingExercise.plagiarismDetectionConfig
+            WHERE modelingExercise.id = :exerciseId
             """)
     Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfig(@Param("exerciseId") Long exerciseId);
 
