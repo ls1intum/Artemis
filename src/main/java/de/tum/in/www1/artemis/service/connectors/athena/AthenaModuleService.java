@@ -38,7 +38,7 @@ public class AthenaModuleService {
     @Value("#{'${artemis.athena.restricted-modules:}'}")
     private List<String> restrictedModules;
 
-    private final Logger log = LoggerFactory.getLogger(AthenaModuleService.class);
+    private static final Logger log = LoggerFactory.getLogger(AthenaModuleService.class);
 
     private final RestTemplate shortTimeoutRestTemplate;
 
