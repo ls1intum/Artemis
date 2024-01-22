@@ -510,6 +510,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testGetFileAsDifferentStudentWithRelevantPlagiarismCase() throws Exception {
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(programmingExercise);
 
         addPlagiarismCaseToProgrammingExercise(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
@@ -522,6 +523,19 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testCannotGetFileAsDifferentStudentWithRelevantPlagiarismCaseBeforeExerciseDueDate() throws Exception {
+        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
+
+        addPlagiarismCaseToProgrammingExercise(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("file", currentLocalFileName);
+        request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.FORBIDDEN, byte[].class, params);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetFileWithRelevantPlagiarismCaseAfterExam() throws Exception {
         programmingExercise = createProgrammingExerciseForExam();
@@ -529,7 +543,8 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         // The calculated exam end date (startDate of exam + workingTime of studentExam (7200 seconds))
         // should be in the past for this test.
-        exam.setStartDate(ZonedDateTime.now().minusHours(3));
+        exam.setStartDate(ZonedDateTime.now().minusHours(4));
+        exam.setEndDate(ZonedDateTime.now().minusHours(1));
         examRepository.save(exam);
 
         addPlagiarismCaseToProgrammingExercise(TEST_PREFIX + "student2", TEST_PREFIX + "student1");
@@ -566,7 +581,8 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         // The calculated exam end date (startDate of exam + workingTime of studentExam (7200 seconds))
         // should be in the past for this test.
-        exam.setStartDate(ZonedDateTime.now().minusHours(3));
+        exam.setStartDate(ZonedDateTime.now().minusHours(4));
+        exam.setEndDate(ZonedDateTime.now().minusHours(1));
         examRepository.save(exam);
 
         // student1 is notified.

@@ -25,7 +25,7 @@ import { CourseManagementTabBarComponent } from 'app/course/manage/course-manage
 import { LearningPathManagementComponent } from 'app/course/learning-paths/learning-path-management/learning-path-management.component';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
-import { BuildQueueGuard } from 'app/localci/build-queue/build-queue.guard';
+import { LocalCIGuard } from 'app/localci/build-queue/localci-guard.service';
 
 export const courseManagementState: Routes = [
     {
@@ -254,7 +254,7 @@ export const courseManagementState: Routes = [
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'artemisApp.buildQueue.title',
                         },
-                        canActivate: [UserRouteAccessService, BuildQueueGuard],
+                        canActivate: [UserRouteAccessService, LocalCIGuard],
                     },
                 ],
             },

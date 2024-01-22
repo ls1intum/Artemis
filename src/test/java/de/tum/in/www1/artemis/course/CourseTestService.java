@@ -5,7 +5,6 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.*;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.mockStatic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -144,9 +143,6 @@ public class CourseTestService {
 
     @Autowired
     private CourseExamExportService courseExamExportService;
-
-    @Autowired
-    private FilePathService filePathService;
 
     @Autowired
     private FileUploadExerciseRepository fileUploadExerciseRepository;
@@ -940,10 +936,6 @@ public class CourseTestService {
             assertThat(receivedCourse).isNotNull();
             if (i == 0) {
                 assertThat(receivedCourse.getExams()).isEmpty();
-            }
-            else if (i == 1) {
-                assertThat(receivedCourse.getExams()).hasSize(0);
-                assertThat(receivedCourse.getNumberOfExams()).isEqualTo(3);
             }
             else {
                 assertThat(receivedCourse.getExams()).hasSize(0);
@@ -2952,14 +2944,20 @@ public class CourseTestService {
 
         // Active Users
         int periodIndex = 0;
+        int periodSize = 8;
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("periodIndex", Integer.toString(periodIndex));
+        parameters.add("periodSize", Integer.toString(periodSize));
 
-        var activeStudents = request.get("/api/courses/" + course1.getId() + "/statistics", HttpStatus.OK, Integer[].class, parameters);
+        Integer[] activeStudents = request.get("/api/courses/" + course1.getId() + "/statistics", HttpStatus.OK, Integer[].class, parameters);
 
         assertThat(activeStudents).isNotNull();
         assertThat(activeStudents).hasSize(3);
 
+        course1.setStartDate(now.plusWeeks(10));
+        course1.setEndDate(now.plusWeeks(20));
+        activeStudents = request.get("/api/courses/" + course1.getId() + "/statistics", HttpStatus.OK, Integer[].class, parameters);
+        assertThat(activeStudents).isNotNull();
     }
 
     // Test
@@ -3007,7 +3005,6 @@ public class CourseTestService {
         assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration()).isNotNull();
         assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getLtiKey()).isNotNull();
         assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getLtiSecret()).isNotNull();
-        assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getRegistrationId()).isNotNull();
         assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getUserPrefix()).isEqualTo(courseWithOnlineConfiguration.getShortName());
     }
 
@@ -3023,7 +3020,6 @@ public class CourseTestService {
         assertThat(updatedCourse.getOnlineCourseConfiguration()).isNotNull();
         assertThat(updatedCourse.getOnlineCourseConfiguration().getLtiKey()).isNotNull();
         assertThat(updatedCourse.getOnlineCourseConfiguration().getLtiSecret()).isNotNull();
-        assertThat(updatedCourse.getOnlineCourseConfiguration().getRegistrationId()).isNotNull();
         assertThat(updatedCourse.getOnlineCourseConfiguration().getUserPrefix()).isEqualTo(updatedCourse.getShortName());
     }
 
@@ -3058,7 +3054,6 @@ public class CourseTestService {
         assertThat(ocConfiguration).isNotNull();
         assertThat(ocConfiguration.getLtiKey()).isNotNull();
         assertThat(ocConfiguration.getLtiSecret()).isNotNull();
-        assertThat(ocConfiguration.getRegistrationId()).isNotNull();
         assertThat(ocConfiguration.getUserPrefix()).isEqualTo(actualCourse.getShortName());
     }
 
@@ -3117,26 +3112,6 @@ public class CourseTestService {
         request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
     }
 
-    public void testInvalidOnlineCourseConfigurationNonUniqueRegistrationId() throws Exception {
-        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
-        course1.setOnlineCourse(true);
-        MvcResult result1 = request.getMvc().perform(buildCreateCourse(course1)).andExpect(status().isCreated()).andReturn();
-        Course createdCourse1 = objectMapper.readValue(result1.getResponse().getContentAsString(), Course.class);
-
-        Course course2 = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
-        course2.setOnlineCourse(true);
-        MvcResult result2 = request.getMvc().perform(buildCreateCourse(course2)).andExpect(status().isCreated()).andReturn();
-        Course createdCourse2 = objectMapper.readValue(result2.getResponse().getContentAsString(), Course.class);
-
-        Course createdCourse1WithOcConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationElseThrow(createdCourse1.getId());
-        Course createdCourse2WithOcConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationElseThrow(createdCourse2.getId());
-        String courseId = createdCourse2.getId().toString();
-
-        OnlineCourseConfiguration ocConfiguration = createdCourse2WithOcConfiguration.getOnlineCourseConfiguration();
-        ocConfiguration.setRegistrationId(createdCourse1WithOcConfiguration.getOnlineCourseConfiguration().getRegistrationId());
-        request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
-    }
-
     public void testUpdateValidOnlineCourseConfigurationAsStudent_forbidden() throws Exception {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
         course.setOnlineCourse(true);
@@ -3184,10 +3159,6 @@ public class CourseTestService {
         ocConfiguration.setLtiKey("key");
         ocConfiguration.setLtiSecret("secret");
         ocConfiguration.setUserPrefix("prefix");
-        ocConfiguration.setRegistrationId("random");
-        ocConfiguration.setAuthorizationUri("authUri");
-        ocConfiguration.setTokenUri("tokenUri");
-        ocConfiguration.setJwkSetUri("jwksUri");
 
         String courseId = course.getId().toString();
 
@@ -3259,7 +3230,7 @@ public class CourseTestService {
         byte[] iconBytes = "icon".getBytes();
         MockMultipartFile iconFile = new MockMultipartFile("file", "icon.png", MediaType.APPLICATION_JSON_VALUE, iconBytes);
         Course savedCourseWithFile = request.putWithMultipartFile("/api/courses/" + savedCourse.getId(), savedCourse, "course", iconFile, Course.class, HttpStatus.OK, null);
-        Path path = filePathService.actualPathForPublicPath(URI.create(savedCourseWithFile.getCourseIcon()));
+        Path path = FilePathService.actualPathForPublicPath(URI.create(savedCourseWithFile.getCourseIcon()));
 
         savedCourseWithFile.setCourseIcon(null);
         request.putWithMultipartFile("/api/courses/" + savedCourseWithFile.getId(), savedCourseWithFile, "course", null, Course.class, HttpStatus.OK, null);

@@ -18,9 +18,20 @@ import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
 import { ParseCourseDescriptionComponent } from 'app/course/competencies/parse-description/parse-course-description.component';
 import { CompetencyRecommendationDetailComponent } from 'app/course/competencies/parse-description/competency-recommendation-detail.component';
 import { CourseDescriptionComponent } from 'app/course/competencies/parse-description/course-description.component';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, FormsModule, ReactiveFormsModule, NgxGraphModule, ArtemisSharedComponentModule, RouterModule, FormDateTimePickerModule, NgbAccordionModule],
+    imports: [
+        ArtemisSharedModule,
+        FormsModule,
+        ReactiveFormsModule,
+        NgxGraphModule,
+        ArtemisSharedComponentModule,
+        RouterModule,
+        FormDateTimePickerModule,
+        NgbAccordionModule,
+        ArtemisMarkdownModule,
+    ],
     declarations: [
         CompetencyFormComponent,
         CompetencyRingsComponent,

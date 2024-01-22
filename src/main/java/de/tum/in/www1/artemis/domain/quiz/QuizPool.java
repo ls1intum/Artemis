@@ -74,7 +74,7 @@ public class QuizPool extends DomainObject implements QuizConfiguration {
 
     @Override
     public void setQuestionParent(QuizQuestion quizQuestion) {
-        // Do nothing since the relationship between QuizPool and QuizQuestion is defined in QuizPool.
+        // Do nothing since the relationship between QuizPool and QuizQuestion is already defined above.
     }
 
     @Override

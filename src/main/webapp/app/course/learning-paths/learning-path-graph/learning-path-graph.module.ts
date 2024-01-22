@@ -9,9 +9,10 @@ import { LectureUnitNodeDetailsComponent } from 'app/course/learning-paths/learn
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { LearningPathComponent } from 'app/course/learning-paths/learning-path-graph/learning-path.component';
 import { LearningPathLegendComponent } from 'app/course/learning-paths/learning-path-graph/learning-path-legend.component';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, NgxGraphModule, ArtemisCompetenciesModule],
+    imports: [ArtemisSharedModule, NgxGraphModule, ArtemisCompetenciesModule, ArtemisMarkdownModule],
     declarations: [
         LearningPathGraphComponent,
         LearningPathNodeComponent,

@@ -39,7 +39,7 @@ public class Lti13TokenRetriever {
 
     private final RestTemplate restTemplate;
 
-    private final Logger log = LoggerFactory.getLogger(Lti13TokenRetriever.class);
+    private static final Logger log = LoggerFactory.getLogger(Lti13TokenRetriever.class);
 
     private static final int JWT_LIFETIME = 60;
 

@@ -50,7 +50,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
     private static final String TEST_PREFIX = "quizsubmissiontest";
 
-    private final Logger log = LoggerFactory.getLogger(getClass());
+    private static final Logger log = LoggerFactory.getLogger(QuizSubmissionIntegrationTest.class);
 
     private static final int NUMBER_OF_STUDENTS = 4;
 
@@ -663,10 +663,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(result.getSubmission().getId());
         for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
             // MC submitted answers 0 points as one correct and one false -> ALL_OR_NOTHING
-            if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
-                assertThat(submittedAnswer.getScoreInPoints()).isZero();
-            } // DND submitted answers 0 points as one correct and two false -> PROPORTIONAL_WITH_PENALTY
-            else if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
+            // or
+            // DND submitted answers 0 points as one correct and two false -> PROPORTIONAL_WITH_PENALTY
+            if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer || submittedAnswer instanceof DragAndDropSubmittedAnswer) {
                 assertThat(submittedAnswer.getScoreInPoints()).isZero();
             } // SA submitted answers 1 points as one correct and one false -> PROPORTIONAL_WITHOUT_PENALTY
             else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
@@ -692,17 +691,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         quizSubmission.submitted(true);
         participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student3");
         participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
-
-        List<MultipartFile> files = quizExercise.getQuizQuestions().stream().filter(quizQuestion -> quizQuestion instanceof DragAndDropQuestion)
-                .map(quizQuestion -> (DragAndDropQuestion) quizQuestion).flatMap(quizQuestion -> {
-                    var list = new ArrayList<MultipartFile>();
-                    if (quizQuestion.getBackgroundFilePath() != null) {
-                        list.add(new MockMultipartFile("files", quizQuestion.getBackgroundFilePath(), MediaType.IMAGE_PNG_VALUE, "test".getBytes()));
-                    }
-                    list.addAll(quizQuestion.getDragItems().stream().filter(dragItem -> dragItem.getPictureFilePath() != null)
-                            .map(dragItem -> new MockMultipartFile("files", dragItem.getPictureFilePath(), MediaType.IMAGE_PNG_VALUE, "test".getBytes())).toList());
-                    return list.stream();
-                }).toList();
 
         quizExerciseService.reEvaluate(quizExercise, quizExercise, generateMultipartFilesFromQuizExercise(quizExercise));
         assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isEqualTo(1);
