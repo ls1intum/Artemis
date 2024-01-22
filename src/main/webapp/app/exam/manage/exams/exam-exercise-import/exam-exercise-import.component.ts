@@ -314,8 +314,4 @@ export class ExamExerciseImportComponent implements OnInit {
         });
         return validConfiguration;
     }
-
-    public isAtLeastOneExerciseSelected(): boolean {
-        return [...this.selectedExercises.values()].some((set) => set.size > 0);
-    }
 }

@@ -99,7 +99,7 @@
             <jhi-button
                 (onClick)="performImportOfExerciseGroups()"
                 [title]="'artemisApp.exercise.import.table.doImport'"
-                [disabled]="isImportingExercises || !this.examExerciseImportComponent?.isAtLeastOneExerciseSelected()"
+                [disabled]="isImportingExercises"
                 [isLoading]="isImportingExercises"
             ></jhi-button>
         </div>
