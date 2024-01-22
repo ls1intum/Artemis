@@ -83,8 +83,8 @@ export class CompetencyRelationDTO implements BaseEntity {
 export function dtoToCompetencyRelation(competencyRelationDTO: CompetencyRelationDTO): CompetencyRelation {
     return {
         id: competencyRelationDTO.id,
-        tailCompetency: { id: competencyRelationDTO.headCompetencyId },
-        headCompetency: { id: competencyRelationDTO.tailCompetencyId },
+        tailCompetency: { id: competencyRelationDTO.tailCompetencyId },
+        headCompetency: { id: competencyRelationDTO.headCompetencyId },
         type: competencyRelationDTO.relationType,
     };
 }

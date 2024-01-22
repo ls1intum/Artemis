@@ -20,7 +20,7 @@ import { Subject, forkJoin } from 'rxjs';
 import { faPencilAlt, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PrerequisiteImportComponent } from 'app/course/competencies/competency-management/prerequisite-import.component';
-import { ClusterNode, Edge, Node } from '@swimlane/ngx-graph';
+import { Edge, Node } from '@swimlane/ngx-graph';
 import { CompetencyImportComponent } from 'app/course/competencies/competency-management/competency-import.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { CompetencyImportCourseComponent, ImportAllFromCourseResult } from 'app/course/competencies/competency-management/competency-import-course.component';
@@ -41,7 +41,6 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     relationType?: string;
     nodes: Node[] = [];
     edges: Edge[] = [];
-    clusters: ClusterNode[] = [];
     competencyRelationError = CompetencyRelationError;
     relationError: CompetencyRelationError = CompetencyRelationError.NONE;
 
@@ -152,7 +151,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             .pipe(
                 switchMap((res) => {
                     this.competencies = res.body!;
-                    this.updateNodes(this.competencies);
+                    this.nodes = this.toNodes(this.competencies);
 
                     const relationsObservable = this.competencies.map((lg) => {
                         return this.competencyService.getCompetencyRelations(lg.id!, this.courseId);
@@ -181,8 +180,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
                             }, new Map())
                             .values(),
                     ];
-                    this.updateEdges(relations);
-                    this.updateClusterNodes(relations);
+                    this.edges = this.toEdges(relations);
 
                     for (const competencyProgressResponse of competencyProgressResponses) {
                         const courseCompetencyProgress: CourseCompetencyProgress = competencyProgressResponse.body!;
@@ -280,68 +278,45 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             .map((dto) => dtoToCompetencyRelation(dto));
 
         this.competencies = this.competencies.concat(importedCompetencies);
-        this.updateNodes(importedCompetencies);
-        this.updateEdges(importedRelations);
-        this.updateClusterNodes(importedRelations);
+        this.nodes = this.nodes.concat(this.toNodes(importedCompetencies));
+        this.edges = this.edges.concat(this.toEdges(importedRelations));
         this.update$.next(true);
     }
 
     /**
-     * Adds new competencies (as nodes) to the relation chart
-     * @param competencies the new competencies
+     * Parses competencies into nodes
+     *
+     * @param competencies the competencies
+     * @return the list of nodes
      * @private
      */
-    private updateNodes(competencies: Competency[]) {
-        this.nodes = this.nodes.concat(
-            competencies.map((competency): Node => {
-                return {
-                    id: `${competency.id}`,
-                    label: competency.title,
-                };
+    private toNodes(competencies: Competency[]) {
+        return competencies.map((competency): Node => {
+            return {
+                id: `${competency.id}`,
+                label: competency.title,
+            };
+        });
+    }
+
+    /**
+     * Parses relations into edges
+     *
+     * @param relations the list of relations
+     * @return the list of edges
+     * @private
+     */
+    private toEdges(relations: CompetencyRelation[]) {
+        return relations.map(
+            (relation): Edge => ({
+                id: `edge${relation.id}`,
+                source: `${relation.tailCompetency?.id}`,
+                target: `${relation.headCompetency?.id}`,
+                label: relation.type,
+                data: {
+                    id: relation.id,
+                },
             }),
-        );
-    }
-
-    /**
-     * Adds new relations (as edges) to the relation chart
-     * @param relations the new relations
-     * @private
-     */
-    private updateEdges(relations: CompetencyRelation[]) {
-        this.edges = this.edges.concat(
-            relations.map(
-                (relation): Edge => ({
-                    id: `edge${relation.id}`,
-                    source: `${relation.tailCompetency?.id}`,
-                    target: `${relation.headCompetency?.id}`,
-                    label: relation.type,
-                    data: {
-                        id: relation.id,
-                    },
-                }),
-            ),
-        );
-    }
-
-    /**
-     * Adds new cluster nodes to the relation chart for the relations having the type "consecutive"
-     * @param relations the new relations
-     * @private
-     */
-    private updateClusterNodes(relations: CompetencyRelation[]) {
-        this.clusters = this.clusters.concat(
-            relations
-                .filter((relation) => relation.type === 'CONSECUTIVE')
-                .map(
-                    (relation): ClusterNode => ({
-                        id: `cluster${relation.id}`,
-                        label: relation.type,
-                        childNodeIds: [`${relation.tailCompetency?.id}`, `${relation.headCompetency?.id}`],
-                        data: {
-                            id: relation.id,
-                        },
-                    }),
-                ),
         );
     }
 
@@ -368,7 +343,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: (relation) => {
                     if (relation) {
-                        this.updateEdges([relation]);
+                        this.edges = this.edges.concat(this.toEdges([relation]));
                         this.update$.next(true);
                     }
                 },
