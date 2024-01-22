@@ -23,7 +23,11 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface ExerciseGroupRepository extends JpaRepository<ExerciseGroup, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises" })
-    @Query("SELECT e FROM ExerciseGroup e WHERE e.id = :exerciseGroupId")
+    @Query("""
+            SELECT e
+            FROM ExerciseGroup e
+            WHERE e.id = :exerciseGroupId
+            """)
     Optional<ExerciseGroup> findWithExercisesById(@Param("exerciseGroupId") Long exerciseGroupId);
 
     @Query("""
