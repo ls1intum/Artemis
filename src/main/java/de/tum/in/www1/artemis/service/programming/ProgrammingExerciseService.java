@@ -40,9 +40,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.in.www1.artemis.service.ExerciseSpecificationService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.SubmissionPolicyService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.BuildScriptGenerationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
@@ -147,6 +145,8 @@ public class ProgrammingExerciseService {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
+    private final ProfileService profileService;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -160,7 +160,7 @@ public class ProgrammingExerciseService {
             SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, ChannelService channelService,
             ProgrammingSubmissionService programmingSubmissionService, Optional<IrisSettingsService> irisSettingsService, Optional<AeolusTemplateService> aeolusTemplateService,
             Optional<BuildScriptGenerationService> buildScriptGenerationService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -191,6 +191,7 @@ public class ProgrammingExerciseService {
         this.aeolusTemplateService = aeolusTemplateService;
         this.buildScriptGenerationService = buildScriptGenerationService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.profileService = profileService;
     }
 
     /**
@@ -228,6 +229,7 @@ public class ProgrammingExerciseService {
         programmingExerciseRepositoryService.createRepositoriesForNewExercise(programmingExercise);
         initParticipations(programmingExercise);
         setURLsAndBuildPlanIDsForNewExercise(programmingExercise);
+        setURLsAndBuildPlanIDsForNewExercise(programmingExercise);
 
         // Save participations to get the ids required for the webhooks
         connectBaseParticipationsToExerciseAndSave(programmingExercise);
@@ -240,8 +242,8 @@ public class ProgrammingExerciseService {
         // make sure that plagiarism detection config does not use existing id
         Optional.ofNullable(programmingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
 
-        // for LocalCI and Aeolus, we store the build plan definition in the database as a windfile
-        if (aeolusTemplateService.isPresent() && programmingExercise.getBuildPlanConfiguration() == null) {
+        // for LocalCI and Aeolus, we store the build plan definition in the database as a windfile, we don't do that for Jenkins
+        if (aeolusTemplateService.isPresent() && programmingExercise.getBuildPlanConfiguration() == null && !profileService.isJenkins()) {
             Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(programmingExercise);
             if (windfile != null) {
                 programmingExercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
@@ -492,10 +494,17 @@ public class ProgrammingExerciseService {
 
         if (continuousIntegrationService.isPresent()) {
             if (!Objects.equals(programmingExerciseBeforeUpdate.getBuildPlanConfiguration(), updatedProgrammingExercise.getBuildPlanConfiguration())) {
-                continuousIntegrationService.get().deleteProject(updatedProgrammingExercise.getProjectKey());
-                continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
-                continuousIntegrationService.get().recreateBuildPlansForExercise(updatedProgrammingExercise);
-                resetAllStudentBuildPlanIdsForExercise(updatedProgrammingExercise);
+                if (updatedProgrammingExercise.getBuildPlanConfiguration() != null) {
+                    // we only update the build plan configuration if it has changed and is not null, otherwise we
+                    // do not have a valid exercise anymore
+                    continuousIntegrationService.get().deleteProject(updatedProgrammingExercise.getProjectKey());
+                    continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
+                    continuousIntegrationService.get().recreateBuildPlansForExercise(updatedProgrammingExercise);
+                    resetAllStudentBuildPlanIdsForExercise(updatedProgrammingExercise);
+                }
+                else {
+                    updatedProgrammingExercise.setBuildPlanConfiguration(programmingExerciseBeforeUpdate.getBuildPlanConfiguration());
+                }
             }
         }
 

@@ -133,7 +133,7 @@ public class JenkinsBuildPlanService {
         String job = jobFolder + "-" + planKey;
         boolean couldCreateBuildPlan = false;
 
-        if (aeolusBuildPlanService.isPresent()) {
+        if (aeolusBuildPlanService.isPresent() && exercise.getBuildPlanConfiguration() != null) {
             var createdJob = createCustomAeolusBuildPlanForExercise(exercise, jobFolder + "/" + job, internalRepositoryUris.assignmentRepositoryUri(),
                     internalRepositoryUris.testRepositoryUri(), internalRepositoryUris.solutionRepositoryUri());
             couldCreateBuildPlan = createdJob != null;
