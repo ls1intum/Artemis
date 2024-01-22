@@ -212,6 +212,10 @@ export const getPositiveAndCappedTotalScore = (totalScore: number, maxPoints: nu
     return +totalScore.toFixed(2);
 };
 
+export const getTotalMaxPoints = (exercise?: Exercise): number => {
+    return (exercise?.maxPoints ?? 0) + (exercise?.bonusPoints ?? 0);
+};
+
 const programmingSetupNotFinished = (participation: StudentParticipation): boolean => {
     return (
         !!participation.initializationState &&
