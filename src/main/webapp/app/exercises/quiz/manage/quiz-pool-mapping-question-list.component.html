@@ -5,29 +5,37 @@
     [cdkDropListData]="quizQuestions"
     (cdkDropListDropped)="handleOnDropQuestion($event)"
 >
-    <div class="text-center mx-1 my-1" *ngFor="let question of quizQuestions" cdkDrag [cdkDragDisabled]="disabled">
-        <container-element [ngSwitch]="question.type">
-            <div *ngSwitchCase="MULTIPLE_CHOICE" class="d-flex flex-wrap">
-                <div class="question px-2 my-0 border-info">
-                    {{ question.title }}
-                </div>
-                <div class="question-type bg-info text-white">MC</div>
-                <div class="question-points border-info">{{ question.points }}</div>
-            </div>
-            <div *ngSwitchCase="DRAG_AND_DROP" class="d-flex flex-wrap">
-                <div class="question px-2 my-0 border-warning">
-                    {{ question.title }}
-                </div>
-                <div class="question-type bg-warning text-white">DnD</div>
-                <div class="question-points border-warning">{{ question.points }}</div>
-            </div>
-            <div *ngSwitchCase="SHORT_ANSWER" class="d-flex flex-wrap">
-                <div class="question px-2 my-0 border-success">
-                    {{ question.title }}
-                </div>
-                <div class="question-type bg-success text-white">SA</div>
-                <div class="question-points border-success">{{ question.points }}</div>
-            </div>
-        </container-element>
-    </div>
+    @for (question of quizQuestions; track question) {
+        <div class="text-center mx-1 my-1" cdkDrag [cdkDragDisabled]="disabled">
+            @switch (question.type) {
+                @case (MULTIPLE_CHOICE) {
+                    <div class="d-flex flex-wrap">
+                        <div class="question px-2 my-0 border-info">
+                            {{ question.title }}
+                        </div>
+                        <div class="question-type bg-info text-white">MC</div>
+                        <div class="question-points border-info">{{ question.points }}</div>
+                    </div>
+                }
+                @case (DRAG_AND_DROP) {
+                    <div class="d-flex flex-wrap">
+                        <div class="question px-2 my-0 border-warning">
+                            {{ question.title }}
+                        </div>
+                        <div class="question-type bg-warning text-white">DnD</div>
+                        <div class="question-points border-warning">{{ question.points }}</div>
+                    </div>
+                }
+                @case (SHORT_ANSWER) {
+                    <div class="d-flex flex-wrap">
+                        <div class="question px-2 my-0 border-success">
+                            {{ question.title }}
+                        </div>
+                        <div class="question-type bg-success text-white">SA</div>
+                        <div class="question-points border-success">{{ question.points }}</div>
+                    </div>
+                }
+            }
+        </div>
+    }
 </div>

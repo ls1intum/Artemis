@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { SafeHtml } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
@@ -14,6 +15,16 @@ import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DetailOverviewSection } from 'app/detail-overview-list/detail-overview-list.component';
+import {
+    getExerciseGeneralDetailsSection,
+    getExerciseGradingDefaultDetails,
+    getExerciseGradingInstructionsCriteriaDetails,
+    getExerciseMarkdownSolution,
+    getExerciseModeDetailSection,
+    getExerciseProblemDetailSection,
+} from 'app/exercises/shared/utils';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 
 @Component({
     selector: 'jhi-file-upload-exercise-detail',
@@ -21,16 +32,20 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 })
 export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     readonly documentationType: DocumentationType = 'FileUpload';
-
+    readonly ExerciseType = ExerciseType;
     readonly dayjs = dayjs;
-    fileUploadExercise: FileUploadExercise;
-    isExamExercise: boolean;
-    course: Course | undefined;
+
     private subscription: Subscription;
     private eventSubscriber: Subscription;
 
-    readonly ExerciseType = ExerciseType;
+    fileUploadExercise: FileUploadExercise;
+    isExamExercise: boolean;
+    course?: Course;
     doughnutStats: ExerciseManagementStatisticsDto;
+    exerciseDetailSections: DetailOverviewSection[];
+    formattedProblemStatement: SafeHtml | null;
+    formattedExampleSolution: SafeHtml | null;
+    formattedGradingInstructions: SafeHtml | null;
 
     constructor(
         private eventManager: EventManager,
@@ -38,6 +53,7 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private alertService: AlertService,
         private statisticsService: StatisticsService,
+        private artemisMarkdown: ArtemisMarkdownService,
     ) {}
 
     /**
@@ -65,12 +81,36 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
                     this.fileUploadExercise = fileUploadExerciseResponse.body!;
                     this.isExamExercise = this.fileUploadExercise.exerciseGroup !== undefined;
                     this.course = this.isExamExercise ? this.fileUploadExercise.exerciseGroup?.exam?.course : this.fileUploadExercise.course;
+                    this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.fileUploadExercise.gradingInstructions);
+                    this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.fileUploadExercise.problemStatement);
+                    this.formattedExampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.fileUploadExercise.exampleSolution);
+                    this.exerciseDetailSections = this.getExerciseDetailSections();
                 },
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
         this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
             this.doughnutStats = statistics;
         });
+    }
+
+    getExerciseDetailSections(): DetailOverviewSection[] {
+        const exercise = this.fileUploadExercise;
+        const generalSection = getExerciseGeneralDetailsSection(exercise);
+        const modeSection = getExerciseModeDetailSection(exercise);
+        const problemSection = getExerciseProblemDetailSection(this.formattedProblemStatement);
+        const solutionSection = getExerciseMarkdownSolution(exercise, this.formattedExampleSolution);
+        const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise);
+        const gradingInstructionsCriteriaDetails = getExerciseGradingInstructionsCriteriaDetails(exercise, this.formattedGradingInstructions);
+        return [
+            generalSection,
+            modeSection,
+            problemSection,
+            solutionSection,
+            {
+                headline: 'artemisApp.exercise.sections.grading',
+                details: [...defaultGradingDetails, ...gradingInstructionsCriteriaDetails].filter(Boolean),
+            },
+        ] as DetailOverviewSection[];
     }
 
     /**

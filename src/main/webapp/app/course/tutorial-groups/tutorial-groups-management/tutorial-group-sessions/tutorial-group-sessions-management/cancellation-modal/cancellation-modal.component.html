@@ -18,17 +18,25 @@
             ) | artemisTranslate: { label: generateSessionLabel(tutorialGroupSession) }
         }}
     </p>
-    <form *ngIf="tutorialGroupSession.status === tutorialGroupSessionStatus.ACTIVE" [formGroup]="form">
-        <div class="form-group">
-            <label for="reason">{{ 'artemisApp.pages.tutorialGroupSessionManagement.cancelActivateModal.cancelSession.explanation' | artemisTranslate }}</label>
-            <textarea class="form-control" id="reason" rows="2" formControlName="reason"></textarea>
-            <div *ngIf="reasonControl?.invalid && (reasonControl?.dirty || reasonControl?.touched)" class="alert alert-danger">
-                <div *ngIf="reasonControl?.errors?.maxlength">
-                    {{ 'artemisApp.pages.tutorialGroupSessionManagement.cancelActivateModal.cancelSession.maxLengthValidationError' | artemisTranslate: { max: '256' } }}
-                </div>
+    @if (tutorialGroupSession.status === tutorialGroupSessionStatus.ACTIVE) {
+        <form [formGroup]="form">
+            <div class="form-group">
+                <label for="reason">{{ 'artemisApp.pages.tutorialGroupSessionManagement.cancelActivateModal.cancelSession.explanation' | artemisTranslate }}</label>
+                <textarea class="form-control" id="reason" rows="2" formControlName="reason"></textarea>
+                @if (reasonControl?.invalid && (reasonControl?.dirty || reasonControl?.touched)) {
+                    <div class="alert alert-danger">
+                        @if (reasonControl?.errors?.maxlength) {
+                            <div>
+                                {{
+                                    'artemisApp.pages.tutorialGroupSessionManagement.cancelActivateModal.cancelSession.maxLengthValidationError' | artemisTranslate: { max: '256' }
+                                }}
+                            </div>
+                        }
+                    </div>
+                }
             </div>
-        </div>
-    </form>
+        </form>
+    }
 </div>
 <div class="modal-footer">
     <button id="dismiss-button" type="button" class="btn btn-outline-secondary" (click)="activeModal.dismiss()">{{ 'global.form.cancel' | artemisTranslate }}</button>

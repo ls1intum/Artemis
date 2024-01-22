@@ -5,81 +5,93 @@
         </h4>
     </div>
     <div class="row mt-1">
-        <div class="question card" *ngFor="let quizQuestion of quizQuestions; let i = index">
-            <div *ngIf="quizQuestion.type === MULTIPLE_CHOICE">
-                <jhi-multiple-choice-question-edit
-                    #editMultipleChoice
-                    [question]="quizQuestion"
-                    [questionIndex]="i + 1"
-                    (questionUpdated)="handleQuestionUpdated()"
-                    (questionDeleted)="handleQuestionDeleted(i)"
-                >
-                </jhi-multiple-choice-question-edit>
+        @for (quizQuestion of quizQuestions; track quizQuestion; let i = $index) {
+            <div class="question card">
+                @if (quizQuestion.type === MULTIPLE_CHOICE) {
+                    <div>
+                        <jhi-multiple-choice-question-edit
+                            #editMultipleChoice
+                            [question]="quizQuestion"
+                            [questionIndex]="i + 1"
+                            (questionUpdated)="handleQuestionUpdated()"
+                            (questionDeleted)="handleQuestionDeleted(i)"
+                        >
+                        </jhi-multiple-choice-question-edit>
+                    </div>
+                }
+                @if (quizQuestion.type === DRAG_AND_DROP) {
+                    <div>
+                        <jhi-drag-and-drop-question-edit
+                            #editDragAndDrop
+                            [question]="quizQuestion"
+                            [questionIndex]="i + 1"
+                            [filePool]="fileMap"
+                            (questionUpdated)="handleQuestionUpdated()"
+                            (questionDeleted)="handleQuestionDeleted(i)"
+                            (addNewFile)="handleFileAdded($event)"
+                            (removeFile)="handleFileRemoved($event)"
+                        >
+                        </jhi-drag-and-drop-question-edit>
+                    </div>
+                }
+                @if (quizQuestion.type === SHORT_ANSWER) {
+                    <div>
+                        <jhi-short-answer-question-edit
+                            #editShortAnswer
+                            [question]="quizQuestion"
+                            [questionIndex]="i + 1"
+                            (questionUpdated)="handleQuestionUpdated()"
+                            (questionDeleted)="handleQuestionDeleted(i)"
+                        >
+                        </jhi-short-answer-question-edit>
+                    </div>
+                }
             </div>
-            <div *ngIf="quizQuestion.type === DRAG_AND_DROP">
-                <jhi-drag-and-drop-question-edit
-                    #editDragAndDrop
-                    [question]="quizQuestion"
-                    [questionIndex]="i + 1"
-                    [filePool]="fileMap"
-                    (questionUpdated)="handleQuestionUpdated()"
-                    (questionDeleted)="handleQuestionDeleted(i)"
-                    (addNewFile)="handleFileAdded($event)"
-                    (removeFile)="handleFileRemoved($event)"
-                >
-                </jhi-drag-and-drop-question-edit>
+        }
+    </div>
+    @if (!disabled) {
+        <div class="row mt-2">
+            <div class="col-12 col-sm-6 col-xl mb-1">
+                <button id="quiz-add-mc-question" class="btn btn-block btn-success" (click)="addMultipleChoiceQuestion()">
+                    <fa-icon [icon]="faPlus"></fa-icon>
+                    <span jhiTranslate="artemisApp.quizExercise.addMultipleChoiceQuestion"></span>
+                </button>
             </div>
-            <div *ngIf="quizQuestion.type === SHORT_ANSWER">
-                <jhi-short-answer-question-edit
-                    #editShortAnswer
-                    [question]="quizQuestion"
-                    [questionIndex]="i + 1"
-                    (questionUpdated)="handleQuestionUpdated()"
-                    (questionDeleted)="handleQuestionDeleted(i)"
-                >
-                </jhi-short-answer-question-edit>
+            <div class="col-12 col-sm-6 col-xl mb-1">
+                <button id="quiz-add-dnd-question" class="btn btn-block btn-success" (click)="addDragAndDropQuestion()">
+                    <fa-icon [icon]="faPlus"></fa-icon>
+                    <span jhiTranslate="artemisApp.quizExercise.addDragAndDropQuestion"></span>
+                </button>
+            </div>
+            <div class="col-12 col-sm-6 col-xl mb-1">
+                <button id="quiz-import-apollon-dnd-question" class="btn btn-block btn-success" (click)="importApollonDragAndDropQuestion()">
+                    <fa-icon [icon]="faPlus"></fa-icon>
+                    <span jhiTranslate="artemisApp.quizExercise.addApollonDragAndDropQuestion"></span>
+                </button>
+            </div>
+            <div class="col-12 col-sm-6 col-xl mb-1">
+                <button id="quiz-add-short-answer-question" class="btn btn-block btn-success" (click)="addShortAnswerQuestion()">
+                    <fa-icon [icon]="faPlus"></fa-icon>
+                    <span jhiTranslate="artemisApp.quizExercise.addShortAnswerQuestion"></span>
+                </button>
+            </div>
+            <div class="col-12 col-sm-6 col-xl mb-1">
+                <button class="btn btn-block" (click)="showHideExistingQuestions()" [ngClass]="{ 'btn-primary': showExistingQuestions, 'btn-success': !showExistingQuestions }">
+                    <fa-icon [icon]="faPlus"></fa-icon>
+                    <span jhiTranslate="artemisApp.quizExercise.addExistingQuestions"></span>
+                </button>
             </div>
         </div>
-    </div>
-    <div class="row mt-2" *ngIf="!disabled">
-        <div class="col-12 col-sm-6 col-xl mb-1">
-            <button id="quiz-add-mc-question" class="btn btn-block btn-success" (click)="addMultipleChoiceQuestion()">
-                <fa-icon [icon]="faPlus"></fa-icon>
-                <span jhiTranslate="artemisApp.quizExercise.addMultipleChoiceQuestion"></span>
-            </button>
+    }
+    @if (!disabled) {
+        <div class="row mt-2 mb-5">
+            <jhi-quiz-question-list-edit-existing
+                [show]="showExistingQuestions"
+                [courseId]="courseId"
+                [filePool]="fileMap"
+                (onQuestionsAdded)="handleExistingQuestionsAdded($event)"
+                (onFilesAdded)="handleFilesAdded($event)"
+            ></jhi-quiz-question-list-edit-existing>
         </div>
-        <div class="col-12 col-sm-6 col-xl mb-1">
-            <button id="quiz-add-dnd-question" class="btn btn-block btn-success" (click)="addDragAndDropQuestion()">
-                <fa-icon [icon]="faPlus"></fa-icon>
-                <span jhiTranslate="artemisApp.quizExercise.addDragAndDropQuestion"></span>
-            </button>
-        </div>
-        <div class="col-12 col-sm-6 col-xl mb-1">
-            <button id="quiz-import-apollon-dnd-question" class="btn btn-block btn-success" (click)="importApollonDragAndDropQuestion()">
-                <fa-icon [icon]="faPlus"></fa-icon>
-                <span jhiTranslate="artemisApp.quizExercise.addApollonDragAndDropQuestion"></span>
-            </button>
-        </div>
-        <div class="col-12 col-sm-6 col-xl mb-1">
-            <button id="quiz-add-short-answer-question" class="btn btn-block btn-success" (click)="addShortAnswerQuestion()">
-                <fa-icon [icon]="faPlus"></fa-icon>
-                <span jhiTranslate="artemisApp.quizExercise.addShortAnswerQuestion"></span>
-            </button>
-        </div>
-        <div class="col-12 col-sm-6 col-xl mb-1">
-            <button class="btn btn-block" (click)="showHideExistingQuestions()" [ngClass]="{ 'btn-primary': showExistingQuestions, 'btn-success': !showExistingQuestions }">
-                <fa-icon [icon]="faPlus"></fa-icon>
-                <span jhiTranslate="artemisApp.quizExercise.addExistingQuestions"></span>
-            </button>
-        </div>
-    </div>
-    <div class="row mt-2 mb-5" *ngIf="!disabled">
-        <jhi-quiz-question-list-edit-existing
-            [show]="showExistingQuestions"
-            [courseId]="courseId"
-            [filePool]="fileMap"
-            (onQuestionsAdded)="handleExistingQuestionsAdded($event)"
-            (onFilesAdded)="handleFilesAdded($event)"
-        ></jhi-quiz-question-list-edit-existing>
-    </div>
+    }
 </div>

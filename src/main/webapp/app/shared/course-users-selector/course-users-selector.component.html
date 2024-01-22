@@ -1,6 +1,8 @@
 <div (focusout)="onTouched()">
     <div class="form-group">
-        <label *ngIf="label" [for]="id + '-user-input'">{{ label }}</label>
+        @if (label) {
+            <label [for]="id + '-user-input'">{{ label }}</label>
+        }
         <input
             #searchInput
             [disabled]="disabled"
@@ -17,36 +19,56 @@
             placement="bottom-start"
             #instance="ngbTypeahead"
         />
-        <ng-container *ngIf="isSearching">
+        @if (isSearching) {
             <small class="form-text text-body-secondary">{{ 'artemisApp.userSelector.searchingText' | artemisTranslate }}</small>
             <br />
-        </ng-container>
-        <ng-container *ngIf="searchFailed">
+        }
+        @if (searchFailed) {
             <small>{{ 'artemisApp.userSelector.searchFailedText' | artemisTranslate }}</small>
             <br />
-        </ng-container>
-        <small *ngIf="searchStudents" class="form-text text-body-secondary">{{ 'artemisApp.userSelector.helpText' | artemisTranslate }}</small>
+        }
+        @if (searchStudents) {
+            <small class="form-text text-body-secondary">{{ 'artemisApp.userSelector.helpText' | artemisTranslate }}</small>
+        }
     </div>
     <div class="text-end">
-        <div class="form-check form-check-inline" *ngIf="rolesToAllowSearchingIn.includes('students')">
-            <input type="checkbox" class="form-check-input" id="students" [checked]="searchStudents" (change)="searchStudents = !searchStudents; onFilterChange()" />
-            <label class="form-check-label" for="students">{{ 'artemisApp.course.students' | artemisTranslate }}</label>
-        </div>
-        <div class="form-check form-check-inline" *ngIf="rolesToAllowSearchingIn.includes('tutors')">
-            <input type="checkbox" class="form-check-input" id="tutors" [checked]="searchTutors" (change)="searchTutors = !searchTutors; onFilterChange()" />
-            <label class="form-check-label" for="tutors">{{ 'artemisApp.course.tutors' | artemisTranslate }}</label>
-        </div>
-        <div class="form-check form-check-inline" *ngIf="rolesToAllowSearchingIn.includes('instructors')">
-            <input type="checkbox" class="form-check-input" id="instructors" [checked]="searchInstructors" (change)="searchInstructors = !searchInstructors; onFilterChange()" />
-            <label class="form-check-label" for="instructors">{{ 'artemisApp.course.instructors' | artemisTranslate }}</label>
-        </div>
+        @if (rolesToAllowSearchingIn.includes('students')) {
+            <div class="form-check form-check-inline">
+                <input type="checkbox" class="form-check-input" id="students" [checked]="searchStudents" (change)="searchStudents = !searchStudents; onFilterChange()" />
+                <label class="form-check-label" for="students">{{ 'artemisApp.course.students' | artemisTranslate }}</label>
+            </div>
+        }
+        @if (rolesToAllowSearchingIn.includes('tutors')) {
+            <div class="form-check form-check-inline">
+                <input type="checkbox" class="form-check-input" id="tutors" [checked]="searchTutors" (change)="searchTutors = !searchTutors; onFilterChange()" />
+                <label class="form-check-label" for="tutors">{{ 'artemisApp.course.tutors' | artemisTranslate }}</label>
+            </div>
+        }
+        @if (rolesToAllowSearchingIn.includes('instructors')) {
+            <div class="form-check form-check-inline">
+                <input
+                    type="checkbox"
+                    class="form-check-input"
+                    id="instructors"
+                    [checked]="searchInstructors"
+                    (change)="searchInstructors = !searchInstructors; onFilterChange()"
+                />
+                <label class="form-check-label" for="instructors">{{ 'artemisApp.course.instructors' | artemisTranslate }}</label>
+            </div>
+        }
     </div>
-    <ul class="list-group" *ngIf="showUserList">
-        <li *ngFor="let user of selectedUsers; let i = index; trackBy: trackIdentity" class="selected-user list-group-item d-flex justify-content-between align-items-center">
-            <span class="d-inline-block">{{ getUserLabel(user) }}</span>
-            <button *ngIf="!disabled" class="delete-user btn btn-outline-secondary d-inline-block" type="button" (click)="onDelete(i)">
-                <fa-icon [icon]="faX"></fa-icon>
-            </button>
-        </li>
-    </ul>
+    @if (showUserList) {
+        <ul class="list-group">
+            @for (user of selectedUsers; track trackIdentity(i, user); let i = $index) {
+                <li class="selected-user list-group-item d-flex justify-content-between align-items-center">
+                    <span class="d-inline-block">{{ getUserLabel(user) }}</span>
+                    @if (!disabled) {
+                        <button class="delete-user btn btn-outline-secondary d-inline-block" type="button" (click)="onDelete(i)">
+                            <fa-icon [icon]="faX"></fa-icon>
+                        </button>
+                    }
+                </li>
+            }
+        </ul>
+    }
 </div>

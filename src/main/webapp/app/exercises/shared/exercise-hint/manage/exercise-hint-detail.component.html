@@ -1,37 +1,44 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <div *ngIf="exerciseHint">
-            <h2><span jhiTranslate="artemisApp.exerciseHint.detail.title">Exercise Hint</span> {{ exerciseHint.id }}</h2>
-            <hr />
-            <dl class="row-md jh-entity-details">
-                <dt><span jhiTranslate="artemisApp.exerciseHint.title">Title</span></dt>
-                <dd>
-                    <span>{{ exerciseHint.title }}</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.exerciseHint.description">Description</span></dt>
-                <dd>
-                    <span>{{ exerciseHint.description }}</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.exerciseHint.task">Content</span></dt>
-                <dd>
-                    <span>{{ exerciseHint?.programmingExerciseTask?.taskName ?? '-' }}</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.exerciseHint.content">Content</span></dt>
-                <dd>
-                    <span *ngIf="exerciseHint.content" [innerHTML]="exerciseHint.content | htmlForMarkdown"></span>
-                </dd>
-                <dd *ngIf="exerciseHint.type === HintType.CODE">
-                    <jhi-code-hint-container [codeHint]="exerciseHint | castToCodeHint"></jhi-code-hint-container>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.exerciseHint.exercise">Exercise</span></dt>
-                <dd>
-                    <div *ngIf="exerciseHint.exercise">
-                        <a [routerLink]="['/course-management', courseId, exerciseHint.exercise.type + '-exercises', exerciseId]">{{ exerciseHint.exercise?.id }}</a>
-                    </div>
-                </dd>
-            </dl>
-
-            <a [routerLink]="['edit']" class="btn btn-warning"> <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span> </a>
-        </div>
+        @if (exerciseHint) {
+            <div>
+                <h2><span jhiTranslate="artemisApp.exerciseHint.detail.title">Exercise Hint</span> {{ exerciseHint.id }}</h2>
+                <hr />
+                <dl class="row-md jh-entity-details">
+                    <dt><span jhiTranslate="artemisApp.exerciseHint.title">Title</span></dt>
+                    <dd>
+                        <span>{{ exerciseHint.title }}</span>
+                    </dd>
+                    <dt><span jhiTranslate="artemisApp.exerciseHint.description">Description</span></dt>
+                    <dd>
+                        <span>{{ exerciseHint.description }}</span>
+                    </dd>
+                    <dt><span jhiTranslate="artemisApp.exerciseHint.task">Content</span></dt>
+                    <dd>
+                        <span>{{ exerciseHint?.programmingExerciseTask?.taskName ?? '-' }}</span>
+                    </dd>
+                    <dt><span jhiTranslate="artemisApp.exerciseHint.content">Content</span></dt>
+                    <dd>
+                        @if (exerciseHint.content) {
+                            <span [innerHTML]="exerciseHint.content | htmlForMarkdown"></span>
+                        }
+                    </dd>
+                    @if (exerciseHint.type === HintType.CODE) {
+                        <dd>
+                            <jhi-code-hint-container [codeHint]="exerciseHint | castToCodeHint"></jhi-code-hint-container>
+                        </dd>
+                    }
+                    <dt><span jhiTranslate="artemisApp.exerciseHint.exercise">Exercise</span></dt>
+                    <dd>
+                        @if (exerciseHint.exercise) {
+                            <div>
+                                <a [routerLink]="['/course-management', courseId, exerciseHint.exercise.type + '-exercises', exerciseId]">{{ exerciseHint.exercise?.id }}</a>
+                            </div>
+                        }
+                    </dd>
+                </dl>
+                <a [routerLink]="['edit']" class="btn btn-warning"> <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span> </a>
+            </div>
+        }
     </div>
 </div>

@@ -48,19 +48,21 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let exercise of exercises" id="exercise-{{ exercise.id }}">
-                        <td class="d-md-table-cell">
-                            <input class="form-check-input" type="checkbox" (change)="toggleExercise(exercise)" [ngModel]="isExerciseSelected(exercise)" />
-                        </td>
-                        <td>{{ exercise.id ? exercise.id : '' }}</td>
-                        <td>{{ exercise.type ? exercise.type : '' }}</td>
-                        <td>{{ exercise.title ? exercise.title : '' }}</td>
-                        <td>{{ course.title ? course.title : '' }}</td>
-                        <td>{{ course.semester ? course.semester : '' }}</td>
-                        <td>{{ exercise.releaseDate | artemisDate }}</td>
-                        <td>{{ exercise.dueDate | artemisDate }}</td>
-                        <td>{{ exercise.assessmentDueDate | artemisDate }}</td>
-                    </tr>
+                    @for (exercise of exercises; track exercise) {
+                        <tr id="exercise-{{ exercise.id }}">
+                            <td class="d-md-table-cell">
+                                <input class="form-check-input" type="checkbox" (change)="toggleExercise(exercise)" [ngModel]="isExerciseSelected(exercise)" />
+                            </td>
+                            <td>{{ exercise.id ? exercise.id : '' }}</td>
+                            <td>{{ exercise.type ? exercise.type : '' }}</td>
+                            <td>{{ exercise.title ? exercise.title : '' }}</td>
+                            <td>{{ course.title ? course.title : '' }}</td>
+                            <td>{{ course.semester ? course.semester : '' }}</td>
+                            <td>{{ exercise.releaseDate | artemisDate }}</td>
+                            <td>{{ exercise.dueDate | artemisDate }}</td>
+                            <td>{{ exercise.assessmentDueDate | artemisDate }}</td>
+                        </tr>
+                    }
                 </tbody>
             </table>
         </div>

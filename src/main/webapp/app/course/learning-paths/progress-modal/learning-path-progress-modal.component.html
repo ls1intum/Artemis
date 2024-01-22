@@ -8,17 +8,18 @@
         ></jhi-learning-path-progress-nav>
     </div>
     <div class="row">
-        <jhi-learning-path-graph
-            #learningPathGraphComponent
-            class="graph"
-            *ngIf="courseId && learningPath"
-            [courseId]="courseId"
-            [learningPathId]="learningPath.id!"
-            [panningEnabled]="true"
-            [zoomEnabled]="true"
-            [panOnZoom]="true"
-            [showMiniMap]="true"
-            (nodeClicked)="onNodeClicked($event)"
-        ></jhi-learning-path-graph>
+        @if (courseId && learningPath) {
+            <jhi-learning-path-graph
+                #learningPathGraphComponent
+                class="graph"
+                [courseId]="courseId"
+                [learningPathId]="learningPath.id!"
+                [panningEnabled]="true"
+                [zoomEnabled]="true"
+                [panOnZoom]="true"
+                [showMiniMap]="true"
+                (nodeClicked)="onNodeClicked($event)"
+            ></jhi-learning-path-graph>
+        }
     </div>
 </div>

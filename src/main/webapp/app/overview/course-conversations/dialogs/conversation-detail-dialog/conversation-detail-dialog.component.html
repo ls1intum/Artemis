@@ -1,69 +1,73 @@
-<div *ngIf="isInitialized" class="conversation-detail-dialog">
-    <div class="modal-header">
-        <h4 class="modal-title">
-            <span>
-                <ng-container *ngIf="getAsChannel(activeConversation) as channel">
-                    <jhi-channel-icon [isPublic]="channel.isPublic!" [isArchived]="channel.isArchived!" [isAnnouncementChannel]="channel.isAnnouncementChannel!"></jhi-channel-icon>
-                </ng-container>
-                <ng-container *ngIf="getAsGroupChat(activeConversation) as groupChat">
-                    <jhi-group-chat-icon></jhi-group-chat-icon>
-                </ng-container>
-                {{ conversationService.getConversationName(activeConversation, true) }}
-            </span>
-            <ng-container *ngIf="getAsChannel(activeConversation) as channel">
-                <a
-                    (click)="clear()"
-                    *ngIf="channel.tutorialGroupId && channel.tutorialGroupTitle"
-                    class="btn btn-info btn-sm ms-2"
-                    [routerLink]="['/courses', course.id, 'tutorial-groups', channel.tutorialGroupId]"
-                    role="button"
-                    >{{ 'artemisApp.entities.tutorialGroup.channelReverse' | artemisTranslate: { title: channel.tutorialGroupTitle } }}</a
-                >
-            </ng-container>
-        </h4>
-        <button type="button" class="btn-close" (click)="clear()"></button>
+@if (isInitialized) {
+    <div class="conversation-detail-dialog">
+        <div class="modal-header">
+            <h4 class="modal-title">
+                <span>
+                    @if (getAsChannel(activeConversation); as channel) {
+                        <jhi-channel-icon
+                            [isPublic]="channel.isPublic!"
+                            [isArchived]="channel.isArchived!"
+                            [isAnnouncementChannel]="channel.isAnnouncementChannel!"
+                        ></jhi-channel-icon>
+                    }
+                    @if (getAsGroupChat(activeConversation); as groupChat) {
+                        <jhi-group-chat-icon></jhi-group-chat-icon>
+                    }
+                    {{ conversationService.getConversationName(activeConversation, true) }}
+                </span>
+                @if (getAsChannel(activeConversation); as channel) {
+                    @if (channel.tutorialGroupId && channel.tutorialGroupTitle) {
+                        <a (click)="clear()" class="btn btn-info btn-sm ms-2" [routerLink]="['/courses', course.id, 'tutorial-groups', channel.tutorialGroupId]" role="button">{{
+                            'artemisApp.entities.tutorialGroup.channelReverse' | artemisTranslate: { title: channel.tutorialGroupTitle }
+                        }}</a>
+                    }
+                }
+            </h4>
+            <button type="button" class="btn-close" (click)="clear()"></button>
+        </div>
+        <div>
+            <ul class="nav nav-tabs">
+                <li class="nav-item">
+                    <a class="nav-link info-tab" [class.active]="selectedTab === Tabs.INFO" role="button" (click)="selectedTab = Tabs.INFO">
+                        {{ 'artemisApp.dialogs.conversationDetail.tabs.info' | artemisTranslate }}
+                    </a>
+                </li>
+                <li class="nav-item members-tab">
+                    <a class="nav-link" [class.active]="selectedTab === Tabs.MEMBERS" role="button" (click)="selectedTab = Tabs.MEMBERS">
+                        {{ 'artemisApp.dialogs.conversationDetail.tabs.members' | artemisTranslate }}
+                    </a>
+                </li>
+                @if (!isOneToOneChat(activeConversation)) {
+                    <li class="nav-item settings-tab">
+                        <a class="nav-link" [class.active]="selectedTab === Tabs.SETTINGS" role="button" (click)="selectedTab = Tabs.SETTINGS">
+                            {{ 'artemisApp.dialogs.conversationDetail.tabs.settings' | artemisTranslate }}
+                        </a>
+                    </li>
+                }
+            </ul>
+        </div>
+        <div class="modal-body">
+            @switch (selectedTab) {
+                @case (Tabs.MEMBERS) {
+                    <jhi-conversation-members
+                        [course]="course"
+                        [activeConversation]="activeConversation"
+                        (changesPerformed)="changesWerePerformed = true"
+                    ></jhi-conversation-members>
+                }
+                @case (Tabs.INFO) {
+                    <jhi-conversation-info [activeConversation]="activeConversation" [course]="course" (changesPerformed)="changesWerePerformed = true"></jhi-conversation-info>
+                }
+                @case (Tabs.SETTINGS) {
+                    <jhi-conversation-settings
+                        [activeConversation]="activeConversation"
+                        [course]="course"
+                        (channelArchivalChange)="onArchivalChange()"
+                        (channelDeleted)="onChannelDeleted()"
+                        (conversationLeave)="onConversationLeave()"
+                    ></jhi-conversation-settings>
+                }
+            }
+        </div>
     </div>
-    <div>
-        <ul class="nav nav-tabs">
-            <li class="nav-item">
-                <a class="nav-link info-tab" [class.active]="selectedTab === Tabs.INFO" role="button" (click)="selectedTab = Tabs.INFO">
-                    {{ 'artemisApp.dialogs.conversationDetail.tabs.info' | artemisTranslate }}
-                </a>
-            </li>
-            <li class="nav-item members-tab">
-                <a class="nav-link" [class.active]="selectedTab === Tabs.MEMBERS" role="button" (click)="selectedTab = Tabs.MEMBERS">
-                    {{ 'artemisApp.dialogs.conversationDetail.tabs.members' | artemisTranslate }}
-                </a>
-            </li>
-            <li class="nav-item settings-tab" *ngIf="!isOneToOneChat(activeConversation)">
-                <a class="nav-link" [class.active]="selectedTab === Tabs.SETTINGS" role="button" (click)="selectedTab = Tabs.SETTINGS">
-                    {{ 'artemisApp.dialogs.conversationDetail.tabs.settings' | artemisTranslate }}
-                </a>
-            </li>
-        </ul>
-    </div>
-    <div class="modal-body">
-        <ng-container [ngSwitch]="selectedTab">
-            <jhi-conversation-members
-                [course]="course"
-                [activeConversation]="activeConversation"
-                *ngSwitchCase="Tabs.MEMBERS"
-                (changesPerformed)="changesWerePerformed = true"
-            ></jhi-conversation-members>
-            <jhi-conversation-info
-                [activeConversation]="activeConversation"
-                [course]="course"
-                *ngSwitchCase="Tabs.INFO"
-                (changesPerformed)="changesWerePerformed = true"
-            ></jhi-conversation-info>
-            <jhi-conversation-settings
-                [activeConversation]="activeConversation"
-                [course]="course"
-                *ngSwitchCase="Tabs.SETTINGS"
-                (channelArchivalChange)="onArchivalChange()"
-                (channelDeleted)="onChannelDeleted()"
-                (conversationLeave)="onConversationLeave()"
-            ></jhi-conversation-settings>
-        </ng-container>
-    </div>
-</div>
+}

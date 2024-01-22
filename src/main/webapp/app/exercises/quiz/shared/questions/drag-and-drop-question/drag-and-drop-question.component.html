@@ -3,268 +3,316 @@
     [ngClass]="{ disabled: clickDisabled && !showResult, result: showResult && !forceSampleSolution, incorrect: (score || 0) < question.points! && !forceSampleSolution }"
 >
     <div [hidden]="loadingState === 'success'">
-        <h2 *ngIf="loadingState !== 'error'">
-            <span style="color: grey"
-                ><fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>&nbsp;<span>{{ 'artemisApp.quizQuestion.loading' | artemisTranslate }}</span></span
-            >
-        </h2>
-        <div *ngIf="loadingState === 'error'">
+        @if (loadingState !== 'error') {
             <h2>
                 <span style="color: grey"
-                    ><fa-icon [icon]="faExclamationCircle"></fa-icon>&nbsp;<span>{{ 'artemisApp.quizQuestion.failed' | artemisTranslate }}</span></span
+                    ><fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>&nbsp;<span>{{ 'artemisApp.quizQuestion.loading' | artemisTranslate }}</span></span
                 >
             </h2>
-            <p>
-                <button class="btn btn-default" (click)="secureImageComponent.retryLoadImage()">
-                    {{ 'artemisApp.quizQuestion.retry' | artemisTranslate }}
-                </button>
-            </p>
-        </div>
+        }
+        @if (loadingState === 'error') {
+            <div>
+                <h2>
+                    <span style="color: grey"
+                        ><fa-icon [icon]="faExclamationCircle"></fa-icon>&nbsp;<span>{{ 'artemisApp.quizQuestion.failed' | artemisTranslate }}</span></span
+                    >
+                </h2>
+                <p>
+                    <button class="btn btn-default" (click)="secureImageComponent.retryLoadImage()">
+                        {{ 'artemisApp.quizQuestion.retry' | artemisTranslate }}
+                    </button>
+                </p>
+            </div>
+        }
     </div>
     <div [hidden]="loadingState !== 'success'">
         <h4 class="question-title-display">
             <span>{{ questionIndex }})</span> {{ question.title }}
         </h4>
         <p [innerHTML]="renderedQuestion.text"></p>
-        <span style="color: red" *ngIf="question.invalid" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
-        <div class="hint" *ngIf="question.hint || (question.explanation && showResult)">
-            <span class="label label-info" [ngbPopover]="renderedHint" triggers="mouseenter:mouseleave" *ngIf="question.hint">
-                <fa-icon [icon]="faQuestionCircle"></fa-icon>
-                <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
-            </span>
-            <ng-template #renderedHint>
-                <div [innerHTML]="renderedQuestion.hint"></div>
-            </ng-template>
-            <br />
-            <span class="label label-primary" [ngbPopover]="renderedExplanation" triggers="mouseenter:mouseleave" *ngIf="question.explanation && showResult">
-                <fa-icon [icon]="faExclamationCircle"></fa-icon>
-                <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
-            </span>
-            <ng-template #renderedExplanation>
-                <div [innerHTML]="renderedQuestion.explanation"></div>
-            </ng-template>
-        </div>
-        <div class="question-score" *ngIf="!showResult || forceSampleSolution">
-            <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-            <span>{{ question.points }}</span>
-        </div>
-        <div class="question-score result" *ngIf="showResult && !forceSampleSolution" [ngClass]="{ incorrect: (score || 0) < question.points! }">
-            <span jhiTranslate="artemisApp.quizQuestion.yourScore" class="colon-suffix"></span>
-            <span class="show-explanation">{{ score || 0 }}/{{ question.points }}</span>
-            <span class="show-explanation">
-                <jhi-quiz-scoring-infostudent-modal
-                    [score]="score"
-                    [question]="question"
-                    [dragAndDropMapping]="mappings"
-                    [correctlyMappedDragAndDropItems]="correctAnswer"
-                    [incorrectlyMappedDragAndDropItems]="incorrectLocationMappings"
-                    [mappedLocations]="mappedLocations"
-                    [questionIndex]="questionIndex"
-                ></jhi-quiz-scoring-infostudent-modal>
-            </span>
-        </div>
-        <div class="dnd-instructions" *ngIf="showResult">
-            <span jhiTranslate="artemisApp.dragAndDropQuestion.showingSampleSolution" *ngIf="showingSampleSolution"></span>
-            <span jhiTranslate="artemisApp.dragAndDropQuestion.showingYourAnswer" *ngIf="!showingSampleSolution"></span>
-            <div *ngIf="showResult && !forceSampleSolution">
-                <div class="btn btn-outline-primary" *ngIf="!showingSampleSolution" (click)="showSampleSolution()">
-                    {{ 'artemisApp.quizQuestion.showSampleSolution' | artemisTranslate }}
-                </div>
-                <div class="btn btn-outline-primary" *ngIf="showingSampleSolution" (click)="hideSampleSolution()">
-                    {{ 'artemisApp.quizQuestion.hideSampleSolution' | artemisTranslate }}
-                </div>
+        @if (question.invalid) {
+            <span style="color: red" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
+        }
+        @if (question.hint || (question.explanation && showResult)) {
+            <div class="hint">
+                @if (question.hint) {
+                    <span class="label label-info" [ngbPopover]="renderedHint" triggers="mouseenter:mouseleave">
+                        <fa-icon [icon]="faQuestionCircle"></fa-icon>
+                        <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
+                    </span>
+                }
+                <ng-template #renderedHint>
+                    <div [innerHTML]="renderedQuestion.hint"></div>
+                </ng-template>
+                <br />
+                @if (question.explanation && showResult) {
+                    <span class="label label-primary" [ngbPopover]="renderedExplanation" triggers="mouseenter:mouseleave">
+                        <fa-icon [icon]="faExclamationCircle"></fa-icon>
+                        <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
+                    </span>
+                }
+                <ng-template #renderedExplanation>
+                    <div [innerHTML]="renderedQuestion.explanation"></div>
+                </ng-template>
             </div>
-        </div>
+        }
+        @if (!showResult || forceSampleSolution) {
+            <div class="question-score">
+                <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
+                <span>{{ question.points }}</span>
+            </div>
+        }
+        @if (showResult && !forceSampleSolution) {
+            <div class="question-score result" [ngClass]="{ incorrect: (score || 0) < question.points! }">
+                <span jhiTranslate="artemisApp.quizQuestion.yourScore" class="colon-suffix"></span>
+                <span class="show-explanation">{{ score || 0 }}/{{ question.points }}</span>
+                <span class="show-explanation">
+                    <jhi-quiz-scoring-infostudent-modal
+                        [score]="score"
+                        [question]="question"
+                        [dragAndDropMapping]="mappings"
+                        [correctlyMappedDragAndDropItems]="correctAnswer"
+                        [incorrectlyMappedDragAndDropItems]="incorrectLocationMappings"
+                        [mappedLocations]="mappedLocations"
+                        [questionIndex]="questionIndex"
+                    ></jhi-quiz-scoring-infostudent-modal>
+                </span>
+            </div>
+        }
+        @if (showResult) {
+            <div class="dnd-instructions">
+                @if (showingSampleSolution) {
+                    <span jhiTranslate="artemisApp.dragAndDropQuestion.showingSampleSolution"></span>
+                }
+                @if (!showingSampleSolution) {
+                    <span jhiTranslate="artemisApp.dragAndDropQuestion.showingYourAnswer"></span>
+                }
+                @if (showResult && !forceSampleSolution) {
+                    <div>
+                        @if (!showingSampleSolution) {
+                            <div class="btn btn-outline-primary" (click)="showSampleSolution()">
+                                {{ 'artemisApp.quizQuestion.showSampleSolution' | artemisTranslate }}
+                            </div>
+                        }
+                        @if (showingSampleSolution) {
+                            <div class="btn btn-outline-primary" (click)="hideSampleSolution()">
+                                {{ 'artemisApp.quizQuestion.hideSampleSolution' | artemisTranslate }}
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
         <div cdkDropListGroup class="drag-and-drop-area">
             <div class="background-area">
-                <jhi-secured-image
-                    *ngIf="question.backgroundFilePath"
-                    [src]="filePreviewPaths.get(question.backgroundFilePath!) || question.backgroundFilePath!"
-                    (endLoadingProcess)="changeLoading($event)"
-                ></jhi-secured-image>
+                @if (question.backgroundFilePath) {
+                    <jhi-secured-image
+                        [src]="filePreviewPaths.get(question.backgroundFilePath!) || question.backgroundFilePath!"
+                        (endLoadingProcess)="changeLoading($event)"
+                    ></jhi-secured-image>
+                }
                 <div class="click-layer">
-                    <div *ngIf="!showResult">
-                        <div
-                            id="drop-location"
-                            class="drop-location"
-                            *ngFor="let dropLocation of question.dropLocations"
-                            [ngClass]="dropAllowed ? 'drop-allowed' : ''"
-                            [ngStyle]="{
-                                top: dropLocation.posY! / 2 + '%',
-                                left: dropLocation.posX! / 2 + '%',
-                                width: dropLocation.width! / 2 + '%',
-                                height: dropLocation.height! / 2 + '%'
-                            }"
-                            (cdkDropListDropped)="onDragDrop(dropLocation, $event)"
-                            (onDragEnter)="preventDefault($event)"
-                            (onDragOver)="preventDefault($event)"
-                            (onDragLeave)="preventDefault($event)"
-                            cdkDropList
-                            [cdkDropListAutoScrollStep]="60"
-                        >
-                            <jhi-drag-item
-                                (dragenter)="drag()"
-                                (dragend)="drop()"
-                                *ngIf="dragItemForDropLocation(dropLocation)"
-                                [dragItem]="dragItemForDropLocation(dropLocation)!"
-                                [clickDisabled]="clickDisabled"
-                                [minWidth]="100 + '%'"
-                                [filePreviewPaths]="filePreviewPaths"
-                            ></jhi-drag-item>
-                        </div>
-                    </div>
-                    <div *ngIf="showResult && !showingSampleSolution && question.dropLocations">
-                        <div *ngFor="let dropLocation of question.dropLocations">
-                            <div
-                                class="drop-location results"
-                                [ngClass]="{
-                                    incorrect:
-                                        isLocationCorrect(dropLocation) === MappingResult.MAPPED_INCORRECT &&
-                                        !dropLocation.invalid &&
-                                        !invalidDragItemForDropLocation(dropLocation) &&
-                                        !question.invalid
-                                }"
-                                [ngStyle]="{
-                                    top: dropLocation.posY! / 2 + '%',
-                                    left: dropLocation.posX! / 2 + '%',
-                                    width: dropLocation.width! / 2 + '%',
-                                    height: dropLocation.height! / 2 + '%'
-                                }"
-                            >
+                    @if (!showResult) {
+                        <div>
+                            @for (dropLocation of question.dropLocations; track dropLocation) {
                                 <div
-                                    class="result-symbol"
-                                    *ngIf="
-                                        isLocationCorrect(dropLocation) === MappingResult.MAPPED_INCORRECT &&
-                                        !dropLocation.invalid &&
-                                        !invalidDragItemForDropLocation(dropLocation) &&
-                                        !question.invalid
-                                    "
+                                    id="drop-location"
+                                    class="drop-location"
+                                    [ngClass]="dropAllowed ? 'drop-allowed' : ''"
+                                    [ngStyle]="{
+                                        top: dropLocation.posY! / 2 + '%',
+                                        left: dropLocation.posX! / 2 + '%',
+                                        width: dropLocation.width! / 2 + '%',
+                                        height: dropLocation.height! / 2 + '%'
+                                    }"
+                                    (cdkDropListDropped)="onDragDrop(dropLocation, $event)"
+                                    (onDragEnter)="preventDefault($event)"
+                                    (onDragOver)="preventDefault($event)"
+                                    (onDragLeave)="preventDefault($event)"
+                                    cdkDropList
+                                    [cdkDropListAutoScrollStep]="60"
                                 >
-                                    <fa-icon [icon]="faExclamationTriangle" size="2x" class="warning"></fa-icon>
+                                    @if (dragItemForDropLocation(dropLocation)) {
+                                        <jhi-drag-item
+                                            (dragenter)="drag()"
+                                            (dragend)="drop()"
+                                            [dragItem]="dragItemForDropLocation(dropLocation)!"
+                                            [clickDisabled]="clickDisabled"
+                                            [minWidth]="100 + '%'"
+                                            [filePreviewPaths]="filePreviewPaths"
+                                        ></jhi-drag-item>
+                                    }
                                 </div>
-                                <div class="invalid">
-                                    <span
-                                        *ngIf="dropLocation.invalid && !invalidDragItemForDropLocation(dropLocation) && !question.invalid"
-                                        jhiTranslate="artemisApp.dragAndDropQuestion.invalid.dropLocation"
-                                    ></span>
-                                    <span
-                                        *ngIf="!dropLocation.invalid && invalidDragItemForDropLocation(dropLocation) && !question.invalid"
-                                        jhiTranslate="artemisApp.dragAndDropQuestion.invalid.dragItem"
-                                    ></span>
-                                    <span
-                                        *ngIf="(dropLocation.invalid && invalidDragItemForDropLocation(dropLocation)) || question.invalid"
-                                        jhiTranslate="artemisApp.quizQuestion.invalid"
-                                    ></span>
-                                    <fa-icon
-                                        ngbTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct."
-                                        style="color: black"
-                                        [icon]="faQuestionCircle"
-                                        *ngIf="dropLocation.invalid || question.invalid || invalidDragItemForDropLocation(dropLocation)"
-                                    ></fa-icon>
-                                </div>
-                                <jhi-drag-item
-                                    *ngIf="dragItemForDropLocation(dropLocation)"
-                                    [dragItem]="dragItemForDropLocation(dropLocation)!"
-                                    [clickDisabled]="true"
-                                    [minWidth]="100 + '%'"
-                                    [filePreviewPaths]="filePreviewPaths"
-                                >
-                                </jhi-drag-item>
-                                <div class="drag-item no-click" *ngIf="!dragItemForDropLocation(dropLocation)">
-                                    <div></div>
-                                </div>
-                            </div>
+                            }
                         </div>
-                    </div>
-                    <div *ngIf="showResult && showingSampleSolution">
-                        <div *ngFor="let dropLocation of question.dropLocations">
-                            <div
-                                class="drop-location sampleSolution"
-                                [ngClass]="{
-                                    incorrect:
-                                        isLocationCorrect(dropLocation) === MappingResult.MAPPED_INCORRECT &&
-                                        !dropLocation.invalid &&
-                                        !invalidDragItemForDropLocation(dropLocation) &&
-                                        !question.invalid
-                                }"
-                                [ngStyle]="{
-                                    top: dropLocation.posY! / 2 + '%',
-                                    left: dropLocation.posX! / 2 + '%',
-                                    width: dropLocation.width! / 2 + '%',
-                                    height: dropLocation.height! / 2 + '%'
-                                }"
-                            >
-                                <div
-                                    class="result-symbol"
-                                    *ngIf="
-                                        isLocationCorrect(dropLocation) === MappingResult.MAPPED_INCORRECT &&
-                                        !dropLocation.invalid &&
-                                        !invalidDragItemForDropLocation(dropLocation) &&
-                                        !question.invalid &&
-                                        !forceSampleSolution
-                                    "
-                                >
-                                    <fa-icon [icon]="faExclamationTriangle" size="2x" class="warning"></fa-icon>
+                    }
+                    @if (showResult && !showingSampleSolution && question.dropLocations) {
+                        <div>
+                            @for (dropLocation of question.dropLocations; track dropLocation) {
+                                <div>
+                                    <div
+                                        class="drop-location results"
+                                        [ngClass]="{
+                                            incorrect:
+                                                isLocationCorrect(dropLocation) === MappingResult.MAPPED_INCORRECT &&
+                                                !dropLocation.invalid &&
+                                                !invalidDragItemForDropLocation(dropLocation) &&
+                                                !question.invalid
+                                        }"
+                                        [ngStyle]="{
+                                            top: dropLocation.posY! / 2 + '%',
+                                            left: dropLocation.posX! / 2 + '%',
+                                            width: dropLocation.width! / 2 + '%',
+                                            height: dropLocation.height! / 2 + '%'
+                                        }"
+                                    >
+                                        @if (
+                                            isLocationCorrect(dropLocation) === MappingResult.MAPPED_INCORRECT &&
+                                            !dropLocation.invalid &&
+                                            !invalidDragItemForDropLocation(dropLocation) &&
+                                            !question.invalid
+                                        ) {
+                                            <div class="result-symbol">
+                                                <fa-icon [icon]="faExclamationTriangle" size="2x" class="warning"></fa-icon>
+                                            </div>
+                                        }
+                                        <div class="invalid">
+                                            @if (dropLocation.invalid && !invalidDragItemForDropLocation(dropLocation) && !question.invalid) {
+                                                <span jhiTranslate="artemisApp.dragAndDropQuestion.invalid.dropLocation"></span>
+                                            }
+                                            @if (!dropLocation.invalid && invalidDragItemForDropLocation(dropLocation) && !question.invalid) {
+                                                <span jhiTranslate="artemisApp.dragAndDropQuestion.invalid.dragItem"></span>
+                                            }
+                                            @if ((dropLocation.invalid && invalidDragItemForDropLocation(dropLocation)) || question.invalid) {
+                                                <span jhiTranslate="artemisApp.quizQuestion.invalid"></span>
+                                            }
+                                            @if (dropLocation.invalid || question.invalid || invalidDragItemForDropLocation(dropLocation)) {
+                                                <fa-icon
+                                                    ngbTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct."
+                                                    style="color: black"
+                                                    [icon]="faQuestionCircle"
+                                                ></fa-icon>
+                                            }
+                                        </div>
+                                        @if (dragItemForDropLocation(dropLocation)) {
+                                            <jhi-drag-item
+                                                [dragItem]="dragItemForDropLocation(dropLocation)!"
+                                                [clickDisabled]="true"
+                                                [minWidth]="100 + '%'"
+                                                [filePreviewPaths]="filePreviewPaths"
+                                            >
+                                            </jhi-drag-item>
+                                        }
+                                        @if (!dragItemForDropLocation(dropLocation)) {
+                                            <div class="drag-item no-click">
+                                                <div></div>
+                                            </div>
+                                        }
+                                    </div>
                                 </div>
-                                <div class="invalid">
-                                    <span
-                                        *ngIf="dropLocation.invalid && !invalidDragItemForDropLocation(dropLocation) && !question.invalid"
-                                        jhiTranslate="artemisApp.dragAndDropQuestion.invalid.dropLocation"
-                                    ></span>
-                                    <span
-                                        *ngIf="(dropLocation.invalid && invalidDragItemForDropLocation(dropLocation)) || question.invalid"
-                                        jhiTranslate="artemisApp.quizQuestion.invalid"
-                                    ></span>
-                                    <fa-icon
-                                        ngbTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct."
-                                        style="color: black"
-                                        [icon]="faQuestionCircle"
-                                        *ngIf="dropLocation.invalid || question.invalid"
-                                    ></fa-icon>
-                                </div>
-                                <jhi-drag-item
-                                    *ngIf="dropLocation && correctDragItemForDropLocation(dropLocation) && !dropLocation.invalid && !question.invalid"
-                                    [dragItem]="correctDragItemForDropLocation(dropLocation)!"
-                                    [clickDisabled]="true"
-                                    [minWidth]="100 + '%'"
-                                    [filePreviewPaths]="filePreviewPaths"
-                                ></jhi-drag-item>
-                                <div class="drag-item no-click" *ngIf="!dropLocation || !correctDragItemForDropLocation(dropLocation)">
-                                    <div></div>
-                                </div>
-                            </div>
+                            }
                         </div>
-                    </div>
+                    }
+                    @if (showResult && showingSampleSolution) {
+                        <div>
+                            @for (dropLocation of question.dropLocations; track dropLocation) {
+                                <div>
+                                    <div
+                                        class="drop-location sampleSolution"
+                                        [ngClass]="{
+                                            incorrect:
+                                                isLocationCorrect(dropLocation) === MappingResult.MAPPED_INCORRECT &&
+                                                !dropLocation.invalid &&
+                                                !invalidDragItemForDropLocation(dropLocation) &&
+                                                !question.invalid
+                                        }"
+                                        [ngStyle]="{
+                                            top: dropLocation.posY! / 2 + '%',
+                                            left: dropLocation.posX! / 2 + '%',
+                                            width: dropLocation.width! / 2 + '%',
+                                            height: dropLocation.height! / 2 + '%'
+                                        }"
+                                    >
+                                        @if (
+                                            isLocationCorrect(dropLocation) === MappingResult.MAPPED_INCORRECT &&
+                                            !dropLocation.invalid &&
+                                            !invalidDragItemForDropLocation(dropLocation) &&
+                                            !question.invalid &&
+                                            !forceSampleSolution
+                                        ) {
+                                            <div class="result-symbol">
+                                                <fa-icon [icon]="faExclamationTriangle" size="2x" class="warning"></fa-icon>
+                                            </div>
+                                        }
+                                        <div class="invalid">
+                                            @if (dropLocation.invalid && !invalidDragItemForDropLocation(dropLocation) && !question.invalid) {
+                                                <span jhiTranslate="artemisApp.dragAndDropQuestion.invalid.dropLocation"></span>
+                                            }
+                                            @if ((dropLocation.invalid && invalidDragItemForDropLocation(dropLocation)) || question.invalid) {
+                                                <span jhiTranslate="artemisApp.quizQuestion.invalid"></span>
+                                            }
+                                            @if (dropLocation.invalid || question.invalid) {
+                                                <fa-icon
+                                                    ngbTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct."
+                                                    style="color: black"
+                                                    [icon]="faQuestionCircle"
+                                                ></fa-icon>
+                                            }
+                                        </div>
+                                        @if (dropLocation && correctDragItemForDropLocation(dropLocation) && !dropLocation.invalid && !question.invalid) {
+                                            <jhi-drag-item
+                                                [dragItem]="correctDragItemForDropLocation(dropLocation)!"
+                                                [clickDisabled]="true"
+                                                [minWidth]="100 + '%'"
+                                                [filePreviewPaths]="filePreviewPaths"
+                                            ></jhi-drag-item>
+                                        }
+                                        @if (!dropLocation || !correctDragItemForDropLocation(dropLocation)) {
+                                            <div class="drag-item no-click">
+                                                <div></div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
                 </div>
             </div>
             <div class="drag-and-drop-items">
-                <div class="dnd-instructions" *ngIf="!showResult">
-                    <span jhiTranslate="artemisApp.dragAndDropQuestion.studentInstructions"></span>
-                </div>
-                <div *ngIf="showResult"></div>
-                <div
-                    *ngIf="!showResult"
-                    class="drag-items"
-                    id="drag-items"
-                    [ngClass]="dropAllowed ? 'drop-allowed' : ''"
-                    (cdkDropListDropped)="onDragDrop(undefined, $event)"
-                    (onDragEnter)="preventDefault($event)"
-                    (onDragOver)="preventDefault($event)"
-                    (onDragLeave)="preventDefault($event)"
-                    cdkDropList
-                    [cdkDropListAutoScrollStep]="60"
-                >
-                    <jhi-drag-item
-                        id="drag-item-{{ i }}"
-                        (dragenter)="drag()"
-                        (dragend)="drop()"
-                        *ngFor="let dragItem of getUnassignedDragItems(); let i = index"
-                        [dragItem]="dragItem"
-                        [clickDisabled]="clickDisabled"
-                        [minWidth]="'160'"
-                        [filePreviewPaths]="filePreviewPaths"
-                    ></jhi-drag-item>
-                </div>
+                @if (!showResult) {
+                    <div class="dnd-instructions">
+                        <span jhiTranslate="artemisApp.dragAndDropQuestion.studentInstructions"></span>
+                    </div>
+                }
+                @if (showResult) {
+                    <div></div>
+                }
+                @if (!showResult) {
+                    <div
+                        class="drag-items"
+                        id="drag-items"
+                        [ngClass]="dropAllowed ? 'drop-allowed' : ''"
+                        (cdkDropListDropped)="onDragDrop(undefined, $event)"
+                        (onDragEnter)="preventDefault($event)"
+                        (onDragOver)="preventDefault($event)"
+                        (onDragLeave)="preventDefault($event)"
+                        cdkDropList
+                        [cdkDropListAutoScrollStep]="60"
+                    >
+                        @for (dragItem of getUnassignedDragItems(); track dragItem; let i = $index) {
+                            <jhi-drag-item
+                                id="drag-item-{{ i }}"
+                                (dragenter)="drag()"
+                                (dragend)="drop()"
+                                [dragItem]="dragItem"
+                                [clickDisabled]="clickDisabled"
+                                [minWidth]="'160'"
+                                [filePreviewPaths]="filePreviewPaths"
+                            ></jhi-drag-item>
+                        }
+                    </div>
+                }
             </div>
         </div>
     </div>

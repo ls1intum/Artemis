@@ -1,55 +1,65 @@
-<div class="row" *ngIf="quizExercise">
-    <div class="col-md-8 offset-md-2 text-center">
-        <h3>{{ quizExercise.title }}</h3>
-
-        <button *ngIf="quizExercise.isAtLeastTutor" class="btn btn-primary btn-sm float-end" (click)="recalculate()">
-            <fa-icon [icon]="faSync" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.showStatistic.recalculateStatistics' | artemisTranslate }}
-        </button>
-
-        <div #containerRef class="text-center">
-            <p class="text-start" class="chart-title-text">
-                <span jhiTranslate="artemisApp.showStatistic.quizPointStatistic.maxScore"></span><span>{{ maxScore }}</span>
-            </p>
-            <div class="row">
-                <div class="col-md-7 text-start">
-                    <p class="chart-title-text">
-                        <span *ngIf="rated" jhiTranslate="artemisApp.showStatistic.quizPointStatistic.titleRated"></span>
-                        <span *ngIf="!rated" jhiTranslate="artemisApp.showStatistic.quizPointStatistic.titleUnrated"></span>
-                    </p>
-                </div>
-                <div class="col-md-5 text-end">
-                    <p class="chart-title-text">
-                        <span>{{ participants }} </span><span jhiTranslate="artemisApp.showStatistic.participants"></span>
-                    </p>
-                </div>
-            </div>
-            <ngx-charts-bar-vertical
-                [view]="[containerRef.offsetWidth, height]"
-                [results]="ngxData"
-                [scheme]="ngxColor"
-                [xAxisLabel]="xAxisLabel"
-                [yAxisLabel]="yAxisLabel"
-                [legend]="false"
-                [showXAxisLabel]="true"
-                [showYAxisLabel]="true"
-                [xAxis]="true"
-                [yAxis]="true"
-                [yScaleMax]="maxScale"
-                [roundEdges]="false"
-                [showDataLabel]="true"
-                [dataLabelFormatting]="bindFormatting"
-                [tooltipDisabled]="true"
-            >
-            </ngx-charts-bar-vertical>
-            <div class="text-center button-row">
-                <button (click)="switchRated()" type="button" class="btn btn-primary">
-                    <fa-icon [icon]="faSync"></fa-icon>&nbsp;
-                    <span *ngIf="rated" jhiTranslate="artemisApp.showStatistic.switchToUnrated"></span>
-                    <span *ngIf="!rated" jhiTranslate="artemisApp.showStatistic.switchToRated"></span>
+@if (quizExercise) {
+    <div class="row">
+        <div class="col-md-8 offset-md-2 text-center">
+            <h3>{{ quizExercise.title }}</h3>
+            @if (quizExercise.isAtLeastTutor) {
+                <button class="btn btn-primary btn-sm float-end" (click)="recalculate()">
+                    <fa-icon [icon]="faSync" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.showStatistic.recalculateStatistics' | artemisTranslate }}
                 </button>
-                <p>&nbsp;</p>
+            }
+            <div #containerRef class="text-center">
+                <p class="text-start" class="chart-title-text">
+                    <span jhiTranslate="artemisApp.showStatistic.quizPointStatistic.maxScore"></span><span>{{ maxScore }}</span>
+                </p>
+                <div class="row">
+                    <div class="col-md-7 text-start">
+                        <p class="chart-title-text">
+                            @if (rated) {
+                                <span jhiTranslate="artemisApp.showStatistic.quizPointStatistic.titleRated"></span>
+                            }
+                            @if (!rated) {
+                                <span jhiTranslate="artemisApp.showStatistic.quizPointStatistic.titleUnrated"></span>
+                            }
+                        </p>
+                    </div>
+                    <div class="col-md-5 text-end">
+                        <p class="chart-title-text">
+                            <span>{{ participants }} </span><span jhiTranslate="artemisApp.showStatistic.participants"></span>
+                        </p>
+                    </div>
+                </div>
+                <ngx-charts-bar-vertical
+                    [view]="[containerRef.offsetWidth, height]"
+                    [results]="ngxData"
+                    [scheme]="ngxColor"
+                    [xAxisLabel]="xAxisLabel"
+                    [yAxisLabel]="yAxisLabel"
+                    [legend]="false"
+                    [showXAxisLabel]="true"
+                    [showYAxisLabel]="true"
+                    [xAxis]="true"
+                    [yAxis]="true"
+                    [yScaleMax]="maxScale"
+                    [roundEdges]="false"
+                    [showDataLabel]="true"
+                    [dataLabelFormatting]="bindFormatting"
+                    [tooltipDisabled]="true"
+                >
+                </ngx-charts-bar-vertical>
+                <div class="text-center button-row">
+                    <button (click)="switchRated()" type="button" class="btn btn-primary">
+                        <fa-icon [icon]="faSync"></fa-icon>&nbsp;
+                        @if (rated) {
+                            <span jhiTranslate="artemisApp.showStatistic.switchToUnrated"></span>
+                        }
+                        @if (!rated) {
+                            <span jhiTranslate="artemisApp.showStatistic.switchToRated"></span>
+                        }
+                    </button>
+                    <p>&nbsp;</p>
+                </div>
             </div>
         </div>
+        <jhi-quiz-statistics-footer [isQuizPointStatistic]="true"></jhi-quiz-statistics-footer>
     </div>
-    <jhi-quiz-statistics-footer [isQuizPointStatistic]="true"></jhi-quiz-statistics-footer>
-</div>
+}

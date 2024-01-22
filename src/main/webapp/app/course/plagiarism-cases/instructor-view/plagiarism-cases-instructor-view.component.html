@@ -3,76 +3,92 @@
     <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
 </div>
 <h4 jhiTranslate="artemisApp.plagiarism.cases.pageSubtitle"></h4>
-
-<div *ngIf="plagiarismCases && plagiarismCases.length > 0; else noPlagiarismCases">
-    <div class="plagiarism-cases--toolbar row mb-3">
-        <div class="col-auto">
-            <button class="btn btn-primary" (click)="exportPlagiarismCases()">{{ 'artemisApp.plagiarism.cases.exportCsv' | artemisTranslate }}</button>
-        </div>
-    </div>
-    <div *ngFor="let exercise of exercisesWithPlagiarismCases; let i = index" class="card mb-2">
-        <div class="card-header">
-            <div class="row">
-                <div class="col-3">
-                    <h5 class="mb-0">
-                        <fa-icon *ngIf="exercise.type" [icon]="getIcon(exercise.type)"></fa-icon>
-                        {{ exercise.title }}
-                    </h5>
-                </div>
-                <div class="col-3">
-                    <jhi-progress-bar
-                        [denominator]="numberOfCases(groupedPlagiarismCases[exercise!.id!])"
-                        [numerator]="numberOfCasesWithPost(groupedPlagiarismCases[exercise!.id!])"
-                        [percentage]="percentageOfCasesWithPost(groupedPlagiarismCases[exercise!.id!])"
-                        [tooltip]="'artemisApp.plagiarism.plagiarismCases.casesWithPost' | artemisTranslate"
-                    >
-                    </jhi-progress-bar>
-                </div>
-                <div class="col-3">
-                    <jhi-progress-bar
-                        [denominator]="numberOfCasesWithPost(groupedPlagiarismCases[exercise!.id!])"
-                        [numerator]="numberOfCasesWithStudentAnswer(groupedPlagiarismCases[exercise!.id!])"
-                        [percentage]="percentageOfCasesWithStudentAnswer(groupedPlagiarismCases[exercise!.id!])"
-                        [tooltip]="'artemisApp.plagiarism.plagiarismCases.casesWithStudentAnswer' | artemisTranslate"
-                    >
-                    </jhi-progress-bar>
-                </div>
-                <div class="col-3">
-                    <jhi-progress-bar
-                        [denominator]="numberOfCases(groupedPlagiarismCases[exercise!.id!])"
-                        [numerator]="numberOfCasesWithVerdict(groupedPlagiarismCases[exercise!.id!])"
-                        [percentage]="percentageOfCasesWithVerdict(groupedPlagiarismCases[exercise!.id!])"
-                        [tooltip]="'artemisApp.plagiarism.plagiarismCases.casesWithVerdict' | artemisTranslate"
-                    >
-                    </jhi-progress-bar>
-                </div>
+@if (plagiarismCases && plagiarismCases.length > 0) {
+    <div>
+        <div class="plagiarism-cases--toolbar row mb-3">
+            <div class="col-auto">
+                <button class="btn btn-primary" (click)="exportPlagiarismCases()">{{ 'artemisApp.plagiarism.cases.exportCsv' | artemisTranslate }}</button>
             </div>
         </div>
-        <div class="card-body">
-            <ng-container *ngFor="let plagiarismCase of groupedPlagiarismCases[exercise!.id!]">
-                <div class="row mb-3">
-                    <div class="col-1 text-center">
-                        <a [routerLink]="['/course-management', courseId, 'plagiarism-cases', plagiarismCase.id]">
-                            {{ plagiarismCase.student.name }} ({{ plagiarismCase.student.login }})
-                        </a>
-                    </div>
-                    <div *ngIf="plagiarismCase.plagiarismSubmissions" class="col-2 text-center">
-                        {{ 'artemisApp.plagiarism.plagiarismCases.appearsInComparisons' | artemisTranslate: { count: plagiarismCase.plagiarismSubmissions.length } }}
-                    </div>
-                    <div *ngIf="plagiarismCase.post" class="col-3 text-center">
-                        {{ 'artemisApp.plagiarism.plagiarismCases.notifiedAt' | artemisTranslate }} {{ plagiarismCase.post.creationDate | artemisDate }}
-                    </div>
-                    <div *ngIf="!plagiarismCase.post" class="col-3 text-center">{{ 'artemisApp.plagiarism.plagiarismCases.notNotified' | artemisTranslate }}</div>
-                    <div *ngIf="hasStudentAnswer(plagiarismCase)" class="col-3 text-center">
-                        {{ 'artemisApp.plagiarism.plagiarismCases.respondedByStudent' | artemisTranslate }}
-                    </div>
-                    <div *ngIf="!hasStudentAnswer(plagiarismCase)" class="col-3 text-center">{{ 'artemisApp.plagiarism.plagiarismCases.notResponded' | artemisTranslate }}</div>
-                    <div class="col-3">
-                        <jhi-plagiarism-case-verdict [plagiarismCase]="plagiarismCase" [hideDetails]="true"></jhi-plagiarism-case-verdict>
+        @for (exercise of exercisesWithPlagiarismCases; track exercise; let i = $index) {
+            <div class="card mb-2">
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col-3">
+                            <h5 class="mb-0">
+                                @if (exercise.type) {
+                                    <fa-icon [icon]="getIcon(exercise.type)"></fa-icon>
+                                }
+                                {{ exercise.title }}
+                            </h5>
+                        </div>
+                        <div class="col-3">
+                            <jhi-progress-bar
+                                [denominator]="numberOfCases(groupedPlagiarismCases[exercise!.id!])"
+                                [numerator]="numberOfCasesWithPost(groupedPlagiarismCases[exercise!.id!])"
+                                [percentage]="percentageOfCasesWithPost(groupedPlagiarismCases[exercise!.id!])"
+                                [tooltip]="'artemisApp.plagiarism.plagiarismCases.casesWithPost' | artemisTranslate"
+                            >
+                            </jhi-progress-bar>
+                        </div>
+                        <div class="col-3">
+                            <jhi-progress-bar
+                                [denominator]="numberOfCasesWithPost(groupedPlagiarismCases[exercise!.id!])"
+                                [numerator]="numberOfCasesWithStudentAnswer(groupedPlagiarismCases[exercise!.id!])"
+                                [percentage]="percentageOfCasesWithStudentAnswer(groupedPlagiarismCases[exercise!.id!])"
+                                [tooltip]="'artemisApp.plagiarism.plagiarismCases.casesWithStudentAnswer' | artemisTranslate"
+                            >
+                            </jhi-progress-bar>
+                        </div>
+                        <div class="col-3">
+                            <jhi-progress-bar
+                                [denominator]="numberOfCases(groupedPlagiarismCases[exercise!.id!])"
+                                [numerator]="numberOfCasesWithVerdict(groupedPlagiarismCases[exercise!.id!])"
+                                [percentage]="percentageOfCasesWithVerdict(groupedPlagiarismCases[exercise!.id!])"
+                                [tooltip]="'artemisApp.plagiarism.plagiarismCases.casesWithVerdict' | artemisTranslate"
+                            >
+                            </jhi-progress-bar>
+                        </div>
                     </div>
                 </div>
-            </ng-container>
-        </div>
+                <div class="card-body">
+                    @for (plagiarismCase of groupedPlagiarismCases[exercise!.id!]; track plagiarismCase) {
+                        <div class="row mb-3">
+                            <div class="col-1 text-center">
+                                <a [routerLink]="['/course-management', courseId, 'plagiarism-cases', plagiarismCase.id]">
+                                    {{ plagiarismCase.student.name }} ({{ plagiarismCase.student.login }})
+                                </a>
+                            </div>
+                            @if (plagiarismCase.plagiarismSubmissions) {
+                                <div class="col-2 text-center">
+                                    {{ 'artemisApp.plagiarism.plagiarismCases.appearsInComparisons' | artemisTranslate: { count: plagiarismCase.plagiarismSubmissions.length } }}
+                                </div>
+                            }
+                            @if (plagiarismCase.post) {
+                                <div class="col-3 text-center">
+                                    {{ 'artemisApp.plagiarism.plagiarismCases.notifiedAt' | artemisTranslate }} {{ plagiarismCase.post.creationDate | artemisDate }}
+                                </div>
+                            }
+                            @if (!plagiarismCase.post) {
+                                <div class="col-3 text-center">{{ 'artemisApp.plagiarism.plagiarismCases.notNotified' | artemisTranslate }}</div>
+                            }
+                            @if (hasStudentAnswer(plagiarismCase)) {
+                                <div class="col-3 text-center">
+                                    {{ 'artemisApp.plagiarism.plagiarismCases.respondedByStudent' | artemisTranslate }}
+                                </div>
+                            }
+                            @if (!hasStudentAnswer(plagiarismCase)) {
+                                <div class="col-3 text-center">{{ 'artemisApp.plagiarism.plagiarismCases.notResponded' | artemisTranslate }}</div>
+                            }
+                            <div class="col-3">
+                                <jhi-plagiarism-case-verdict [plagiarismCase]="plagiarismCase" [hideDetails]="true"></jhi-plagiarism-case-verdict>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
     </div>
-</div>
-<ng-template #noPlagiarismCases>{{ 'artemisApp.plagiarism.plagiarismCases.' + (this.examId ? 'noExamCases' : 'noCourseCases') | artemisTranslate }}</ng-template>
+} @else {
+    {{ 'artemisApp.plagiarism.plagiarismCases.' + (this.examId ? 'noExamCases' : 'noCourseCases') | artemisTranslate }}
+}

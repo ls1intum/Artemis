@@ -1,45 +1,53 @@
-<div *ngIf="user">
-    <h2>
-        <span jhiTranslate="artemisApp.userManagement.detail.title">User </span>[<b>{{ user.login }}</b
-        >]
-    </h2>
-    <dl class="row-md jh-entity-details">
-        <dt><span jhiTranslate="artemisApp.userManagement.login">Login</span></dt>
-        <dd>
-            <span>{{ user.login }}</span>
-            <span *ngIf="user.activated" class="badge badge-success" jhiTranslate="artemisApp.userManagement.activated">Activated</span>
-            <span *ngIf="!user.activated" class="badge badge-danger" jhiTranslate="artemisApp.userManagement.deactivated">Deactivated</span>
-        </dd>
-        <dt><span jhiTranslate="artemisApp.userManagement.firstName">First Name</span></dt>
-        <dd>{{ user.firstName }}</dd>
-        <dt><span jhiTranslate="artemisApp.userManagement.lastName">Last Name</span></dt>
-        <dd>{{ user.lastName }}</dd>
-        <dt><span jhiTranslate="artemisApp.userManagement.email">Email</span></dt>
-        <dd>{{ user.email }}</dd>
-        <dt><span jhiTranslate="artemisApp.userManagement.registrationNumber">Registration Number</span></dt>
-        <dd>{{ user.visibleRegistrationNumber }}</dd>
-        <dt><span jhiTranslate="artemisApp.userManagement.langKey">Lang Key</span></dt>
-        <dd>{{ user.langKey }}</dd>
-        <dt><span jhiTranslate="artemisApp.userManagement.createdBy">Created By</span></dt>
-        <dd>{{ user.createdBy }}</dd>
-        <dt><span jhiTranslate="artemisApp.userManagement.createdDate">Created Date</span></dt>
-        <dd>{{ user.createdDate | artemisDate }}</dd>
-        <dt><span jhiTranslate="artemisApp.userManagement.lastModifiedBy">Last Modified By</span></dt>
-        <dd>{{ user.lastModifiedBy }}</dd>
-        <dt><span jhiTranslate="artemisApp.userManagement.lastModifiedDate">Last Modified Date</span></dt>
-        <dd>{{ user.lastModifiedDate | artemisDate }}</dd>
-        <dt><span jhiTranslate="artemisApp.userManagement.profiles">Profiles</span></dt>
-        <dd>
-            <ul class="list-unstyled">
-                <li *ngFor="let authority of user.authorities">
-                    <span class="badge bg-info">{{ authority }}</span>
-                </li>
-            </ul>
-        </dd>
-        <a [routerLink]="['edit']" class="btn btn-warning">
-            <fa-icon [icon]="faWrench"></fa-icon>
-            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
-        </a>
-    </dl>
-</div>
+@if (user) {
+    <div>
+        <h2>
+            <span jhiTranslate="artemisApp.userManagement.detail.title">User </span>[<b>{{ user.login }}</b
+            >]
+        </h2>
+        <dl class="row-md jh-entity-details">
+            <dt><span jhiTranslate="artemisApp.userManagement.login">Login</span></dt>
+            <dd>
+                <span>{{ user.login }}</span>
+                @if (user.activated) {
+                    <span class="badge badge-success" jhiTranslate="artemisApp.userManagement.activated">Activated</span>
+                }
+                @if (!user.activated) {
+                    <span class="badge badge-danger" jhiTranslate="artemisApp.userManagement.deactivated">Deactivated</span>
+                }
+            </dd>
+            <dt><span jhiTranslate="artemisApp.userManagement.firstName">First Name</span></dt>
+            <dd>{{ user.firstName }}</dd>
+            <dt><span jhiTranslate="artemisApp.userManagement.lastName">Last Name</span></dt>
+            <dd>{{ user.lastName }}</dd>
+            <dt><span jhiTranslate="artemisApp.userManagement.email">Email</span></dt>
+            <dd>{{ user.email }}</dd>
+            <dt><span jhiTranslate="artemisApp.userManagement.registrationNumber">Registration Number</span></dt>
+            <dd>{{ user.visibleRegistrationNumber }}</dd>
+            <dt><span jhiTranslate="artemisApp.userManagement.langKey">Lang Key</span></dt>
+            <dd>{{ user.langKey }}</dd>
+            <dt><span jhiTranslate="artemisApp.userManagement.createdBy">Created By</span></dt>
+            <dd>{{ user.createdBy }}</dd>
+            <dt><span jhiTranslate="artemisApp.userManagement.createdDate">Created Date</span></dt>
+            <dd>{{ user.createdDate | artemisDate }}</dd>
+            <dt><span jhiTranslate="artemisApp.userManagement.lastModifiedBy">Last Modified By</span></dt>
+            <dd>{{ user.lastModifiedBy }}</dd>
+            <dt><span jhiTranslate="artemisApp.userManagement.lastModifiedDate">Last Modified Date</span></dt>
+            <dd>{{ user.lastModifiedDate | artemisDate }}</dd>
+            <dt><span jhiTranslate="artemisApp.userManagement.profiles">Profiles</span></dt>
+            <dd>
+                <ul class="list-unstyled">
+                    @for (authority of user.authorities; track authority) {
+                        <li>
+                            <span class="badge bg-info">{{ authority }}</span>
+                        </li>
+                    }
+                </ul>
+            </dd>
+            <a [routerLink]="['edit']" class="btn btn-warning">
+                <fa-icon [icon]="faWrench"></fa-icon>
+                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+            </a>
+        </dl>
+    </div>
+}
 <router-outlet></router-outlet>

@@ -134,7 +134,7 @@ examples.forEach((activeConversation) => {
             const createEmptyPostForContextSpy = jest.spyOn(metisService, 'createEmptyPostForContext').mockReturnValue(new Post());
             component.createEmptyPost();
             expect(createEmptyPostForContextSpy).toHaveBeenCalledOnce();
-            const conversation = createEmptyPostForContextSpy.mock.calls[0][4];
+            const conversation = createEmptyPostForContextSpy.mock.calls[0][0];
             expect(conversation!.type).toEqual(activeConversation.type);
             expect(conversation!.id).toEqual(activeConversation.id);
         }));

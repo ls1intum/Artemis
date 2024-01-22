@@ -1,10 +1,6 @@
-<fa-icon *ngIf="!showConfirm" [icon]="initialIcon" [ngbTooltip]="initialTooltip" [size]="iconSize" (click)="toggle()"></fa-icon>
-<fa-icon
-    *ngIf="showConfirm"
-    [ngClass]="'text-danger'"
-    [icon]="confirmIcon"
-    [ngbTooltip]="confirmTooltip"
-    [size]="iconSize"
-    (mouseleave)="toggle()"
-    (click)="confirmAction()"
-></fa-icon>
+@if (!showConfirm) {
+    <fa-icon [icon]="initialIcon" [ngbTooltip]="initialTooltip" [size]="iconSize" (click)="toggle()"></fa-icon>
+}
+@if (showConfirm) {
+    <fa-icon [ngClass]="'text-danger'" [icon]="confirmIcon" [ngbTooltip]="confirmTooltip" [size]="iconSize" (mouseleave)="toggle()" (click)="confirmAction()"></fa-icon>
+}

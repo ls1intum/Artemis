@@ -58,7 +58,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping(ROOT)
 public class ProgrammingExerciseExportImportResource {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseExportImportResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseExportImportResource.class);
 
     private static final String ENTITY_NAME = "programmingExercise";
 
@@ -387,7 +387,7 @@ public class ProgrammingExerciseExportImportResource {
         List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations = new ArrayList<>();
         for (StudentParticipation studentParticipation : programmingExercise.getStudentParticipations()) {
             ProgrammingExerciseStudentParticipation programmingStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
-            if (repositoryExportOptions.isExportAllParticipants() || (programmingStudentParticipation.getRepositoryUrl() != null && studentParticipation.getParticipant() != null
+            if (repositoryExportOptions.isExportAllParticipants() || (programmingStudentParticipation.getRepositoryUri() != null && studentParticipation.getParticipant() != null
                     && participantIdentifierList.contains(studentParticipation.getParticipantIdentifier()))) {
                 exportedStudentParticipations.add(programmingStudentParticipation);
             }

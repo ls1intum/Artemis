@@ -1,147 +1,158 @@
 <ng-template #controls>
-    <div class="course-overview-controls" *ngIf="course && course!.exercises && course!.exercises.length > 0">
-        <div class="d-flex align-items-center">
-            <div class="btn-group me-2" ngbDropdown role="group">
-                <button class="btn btn-light dropdown-toggle" ngbDropdownToggle type="button">
-                    {{ 'artemisApp.courseOverview.exerciseList.view' | artemisTranslate }}
-                </button>
-                <div class="dropdown-menu" ngbDropdownMenu>
-                    <a (click)="setShowExercisesGroupedByDueDateCategory(true)" class="dropdown-item {{ showExercisesGroupedByTimeframe ? 'active' : '' }}">
-                        {{ 'artemisApp.courseOverview.exerciseList.timeframeView' | artemisTranslate }}
-                    </a>
-                    <a (click)="setShowExercisesGroupedByDueDateCategory(false)" class="dropdown-item {{ !showExercisesGroupedByTimeframe ? 'active' : '' }}">
-                        {{ 'artemisApp.courseOverview.exerciseList.weeklyView' | artemisTranslate }}
-                    </a>
-                </div>
-            </div>
-
-            <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
-                <button class="btn" [ngClass]="{ 'btn-secondary': activeFilters.size === 0, 'btn-success': activeFilters.size > 0 }" ngbDropdownToggle id="filter-dropdown-button">
-                    <fa-icon [icon]="faFilter"></fa-icon>
-                    <span class="d-s-none d-md-inline">{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: activeFilters.size } }}</span>
-                </button>
-                <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
-                    <li *ngIf="course.isAtLeastTutor">
-                        <label>
-                            <input
-                                class="ms-2 form-check-input"
-                                (change)="toggleFilters([filterType.UNRELEASED])"
-                                [checked]="activeFilters.has(filterType.UNRELEASED)"
-                                type="checkbox"
-                            />
-                            <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.unreleased">Hide unreleased</span>
-                        </label>
-                    </li>
-                    <li>
-                        <label>
-                            <input class="ms-2 form-check-input" (change)="toggleFilters([filterType.OVERDUE])" [checked]="activeFilters.has(filterType.OVERDUE)" type="checkbox" />
-                            <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.overdue">Hide overdue</span>
-                        </label>
-                    </li>
-                    <li>
-                        <label>
-                            <input
-                                class="ms-2 form-check-input"
-                                (change)="toggleFilters([filterType.NEEDS_WORK])"
-                                [checked]="activeFilters.has(filterType.NEEDS_WORK)"
-                                type="checkbox"
-                            />
-                            <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.fullScore">Hide full score</span>
-                        </label>
-                    </li>
-                    <li>
-                        <label>
-                            <input
-                                class="ms-2 form-check-input"
-                                (change)="toggleFilters([filterType.OPTIONAL])"
-                                [checked]="activeFilters.has(filterType.OPTIONAL)"
-                                type="checkbox"
-                            />
-                            <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.optional">Hide optional</span>
-                        </label>
-                    </li>
-                </ul>
-            </div>
-            <div aria-label="Button group with nested dropdown" class="btn-group" role="group">
-                <button id="flip" (click)="flipOrder()" class="btn btn-primary">
-                    <fa-icon [icon]="sortingOrder === ASC ? faSortNumericUp : faSortNumericDown"></fa-icon>
-                    <span class="ms-1">{{ 'artemisApp.courseOverview.exerciseList.' + (sortingOrder === ASC ? 'oldFirst' : 'newFirst') | artemisTranslate }}</span>
-                </button>
-                <div aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group">
-                    <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button"></button>
+    @if (course && course!.exercises && course!.exercises.length > 0) {
+        <div class="course-overview-controls">
+            <div class="d-flex align-items-center">
+                <div class="btn-group me-2" ngbDropdown role="group">
+                    <button class="btn btn-light dropdown-toggle" ngbDropdownToggle type="button">
+                        {{ 'artemisApp.courseOverview.exerciseList.view' | artemisTranslate }}
+                    </button>
                     <div class="dropdown-menu" ngbDropdownMenu>
-                        <a
-                            id="dueDateSorting"
-                            (click)="setSortingAttribute(DUE_DATE)"
-                            class="dropdown-item {{ sortingAttribute === DUE_DATE ? 'active' : '' }}"
-                            jhiTranslate="artemisApp.courseOverview.exerciseList.dueDate"
-                            >Due date</a
-                        >
-                        <a
-                            (click)="setSortingAttribute(RELEASE_DATE)"
-                            class="dropdown-item {{ sortingAttribute === RELEASE_DATE ? 'active' : '' }}"
-                            jhiTranslate="artemisApp.courseOverview.exerciseList.releaseDate"
-                            >Release date</a
-                        >
+                        <a (click)="setShowExercisesGroupedByDueDateCategory(true)" class="dropdown-item {{ showExercisesGroupedByTimeframe ? 'active' : '' }}">
+                            {{ 'artemisApp.courseOverview.exerciseList.timeframeView' | artemisTranslate }}
+                        </a>
+                        <a (click)="setShowExercisesGroupedByDueDateCategory(false)" class="dropdown-item {{ !showExercisesGroupedByTimeframe ? 'active' : '' }}">
+                            {{ 'artemisApp.courseOverview.exerciseList.weeklyView' | artemisTranslate }}
+                        </a>
+                    </div>
+                </div>
+                <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
+                    <button
+                        class="btn"
+                        [ngClass]="{ 'btn-secondary': activeFilters.size === 0, 'btn-success': activeFilters.size > 0 }"
+                        ngbDropdownToggle
+                        id="filter-dropdown-button"
+                    >
+                        <fa-icon [icon]="faFilter"></fa-icon>
+                        <span class="d-s-none d-md-inline">{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: activeFilters.size } }}</span>
+                    </button>
+                    <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
+                        @if (course.isAtLeastTutor) {
+                            <li>
+                                <label>
+                                    <input
+                                        class="ms-2 form-check-input"
+                                        (change)="toggleFilters([filterType.UNRELEASED])"
+                                        [checked]="activeFilters.has(filterType.UNRELEASED)"
+                                        type="checkbox"
+                                    />
+                                    <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.unreleased">Hide unreleased</span>
+                                </label>
+                            </li>
+                        }
+                        <li>
+                            <label>
+                                <input
+                                    class="ms-2 form-check-input"
+                                    (change)="toggleFilters([filterType.OVERDUE])"
+                                    [checked]="activeFilters.has(filterType.OVERDUE)"
+                                    type="checkbox"
+                                />
+                                <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.overdue">Hide overdue</span>
+                            </label>
+                        </li>
+                        <li>
+                            <label>
+                                <input
+                                    class="ms-2 form-check-input"
+                                    (change)="toggleFilters([filterType.NEEDS_WORK])"
+                                    [checked]="activeFilters.has(filterType.NEEDS_WORK)"
+                                    type="checkbox"
+                                />
+                                <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.fullScore">Hide full score</span>
+                            </label>
+                        </li>
+                        <li>
+                            <label>
+                                <input
+                                    class="ms-2 form-check-input"
+                                    (change)="toggleFilters([filterType.OPTIONAL])"
+                                    [checked]="activeFilters.has(filterType.OPTIONAL)"
+                                    type="checkbox"
+                                />
+                                <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.optional">Hide optional</span>
+                            </label>
+                        </li>
+                    </ul>
+                </div>
+                <div aria-label="Button group with nested dropdown" class="btn-group" role="group">
+                    <button id="flip" (click)="flipOrder()" class="btn btn-primary">
+                        <fa-icon [icon]="sortingOrder === ASC ? faSortNumericUp : faSortNumericDown"></fa-icon>
+                        <span class="ms-1">{{ 'artemisApp.courseOverview.exerciseList.' + (sortingOrder === ASC ? 'oldFirst' : 'newFirst') | artemisTranslate }}</span>
+                    </button>
+                    <div aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group">
+                        <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button"></button>
+                        <div class="dropdown-menu" ngbDropdownMenu>
+                            <a
+                                id="dueDateSorting"
+                                (click)="setSortingAttribute(DUE_DATE)"
+                                class="dropdown-item {{ sortingAttribute === DUE_DATE ? 'active' : '' }}"
+                                jhiTranslate="artemisApp.courseOverview.exerciseList.dueDate"
+                                >Due date</a
+                            >
+                            <a
+                                (click)="setSortingAttribute(RELEASE_DATE)"
+                                class="dropdown-item {{ sortingAttribute === RELEASE_DATE ? 'active' : '' }}"
+                                jhiTranslate="artemisApp.courseOverview.exerciseList.releaseDate"
+                                >Release date</a
+                            >
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    }
 </ng-template>
-
 <div class="row">
     <div class="col-12 col-lg-8 course-exercises">
-        <div class="position-relative" *ngIf="course">
-            <div class="mt-3 mb-3">
-                <label for="exercise-search-input" class="mb-2">
-                    {{ 'artemisApp.course.exercise.search.labelExerciseName' | artemisTranslate }}
-                </label>
-                <div class="d-flex gap-2">
-                    <input
-                        id="exercise-search-input"
-                        type="text"
-                        class="form-control"
-                        [placeholder]="'artemisApp.course.exercise.search.fieldExerciseName' | artemisTranslate"
-                        [(ngModel)]="searchExercisesInput"
-                        (keydown.enter)="onSearch()"
-                    />
-
-                    <button class="btn btn-primary btn-md" id="exercise-search-button" (click)="onSearch()">
-                        <fa-icon [icon]="faMagnifyingGlass"></fa-icon>
-                        <span class="d-none d-sm-inline">
-                            {{ 'artemisApp.course.exercise.search.searchButton' | artemisTranslate }}
-                        </span>
-                    </button>
-                </div>
-            </div>
-
-            <ng-container *ngIf="course?.exercises?.length !== 0; else noExercisesAvailableForCourse">
-                <jhi-course-exercises-grouped-by-timeframe
-                    *ngIf="showExercisesGroupedByTimeframe; else exercisesGroupedByWeek"
-                    [filteredAndSortedExercises]="filteredAndSortedExercises"
-                    [course]="course"
-                    [exerciseForGuidedTour]="exerciseForGuidedTour"
-                    [appliedSearchString]="lastAppliedSearchString"
-                />
-                <ng-template #exercisesGroupedByWeek>
-                    <jhi-course-exercises-grouped-by-week
-                        [filteredAndSortedExercises]="filteredAndSortedExercises"
-                        [course]="course!"
-                        [exerciseForGuidedTour]="exerciseForGuidedTour"
-                        [activeFilters]="activeFilters"
-                        [sortingAttribute]="sortingAttribute"
-                    />
-                </ng-template>
-            </ng-container>
-            <ng-template #noExercisesAvailableForCourse>
-                <div class="row">
-                    <div class="col">
-                        {{ 'artemisApp.courseOverview.exerciseList.noExercises' | artemisTranslate }}
+        @if (course) {
+            <div class="position-relative">
+                <div class="mt-3 mb-3">
+                    <label for="exercise-search-input" class="mb-2">
+                        {{ 'artemisApp.course.exercise.search.labelExerciseName' | artemisTranslate }}
+                    </label>
+                    <div class="d-flex gap-2">
+                        <input
+                            id="exercise-search-input"
+                            type="text"
+                            class="form-control"
+                            [placeholder]="'artemisApp.course.exercise.search.fieldExerciseName' | artemisTranslate"
+                            [(ngModel)]="searchExercisesInput"
+                            (keydown.enter)="onSearch()"
+                        />
+                        <button class="btn btn-primary btn-md" id="exercise-search-button" (click)="onSearch()">
+                            <fa-icon [icon]="faMagnifyingGlass"></fa-icon>
+                            <span class="d-none d-sm-inline">
+                                {{ 'artemisApp.course.exercise.search.searchButton' | artemisTranslate }}
+                            </span>
+                        </button>
                     </div>
                 </div>
-            </ng-template>
-        </div>
+                @if (course?.exercises?.length !== 0) {
+                    @if (showExercisesGroupedByTimeframe) {
+                        <jhi-course-exercises-grouped-by-timeframe
+                            [filteredAndSortedExercises]="filteredAndSortedExercises"
+                            [course]="course"
+                            [exerciseForGuidedTour]="exerciseForGuidedTour"
+                            [appliedSearchString]="lastAppliedSearchString"
+                        />
+                    } @else {
+                        <jhi-course-exercises-grouped-by-week
+                            [filteredAndSortedExercises]="filteredAndSortedExercises"
+                            [course]="course!"
+                            [exerciseForGuidedTour]="exerciseForGuidedTour"
+                            [activeFilters]="activeFilters"
+                            [sortingAttribute]="sortingAttribute"
+                        />
+                    }
+                } @else {
+                    <div class="row">
+                        <div class="col">
+                            {{ 'artemisApp.courseOverview.exerciseList.noExercises' | artemisTranslate }}
+                        </div>
+                    </div>
+                }
+            </div>
+        }
     </div>
     <div class="col-12 col-md-4 guided-tour course-information">
         <jhi-side-panel [panelHeader]="'artemisApp.courseOverview.exerciseList.details.courseInformation' | artemisTranslate">
@@ -149,53 +160,71 @@
                 <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.totalExercises' | artemisTranslate }}</div>
                 <div class="col-4 text-end">{{ numberOfExercises }}</div>
             </div>
-            <div class="row mb-1" *ngFor="let exerciseCount of exerciseCountMap | keyvalue">
-                <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.' + exerciseCount.key + 'Total' | artemisTranslate }}</div>
-                <div class="col-4 text-end">{{ exerciseCount.value }}</div>
-            </div>
-            <div class="row mb-1" *ngIf="course?.startDate">
-                <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.startDate' | artemisTranslate }}</div>
-                <div class="col-4 text-end">{{ course?.startDate | artemisDate }}</div>
-            </div>
-            <div class="row mb-1" *ngIf="course?.endDate">
-                <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.endDate' | artemisTranslate }}</div>
-                <div class="col-4 text-end">{{ course?.endDate | artemisDate }}</div>
-            </div>
-            <div class="row mb-1" *ngIf="course?.enrollmentEnabled && course?.enrollmentStartDate">
-                <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.enrollmentStartDate' | artemisTranslate }}</div>
-                <div class="col-4 text-end">{{ course?.enrollmentStartDate | artemisDate }}</div>
-            </div>
-            <div class="row mb-1" *ngIf="course?.enrollmentEnabled && course?.enrollmentEndDate">
-                <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.enrollmentEndDate' | artemisTranslate }}</div>
-                <div class="col-4 text-end">{{ course?.enrollmentEndDate | artemisDate }}</div>
-            </div>
-            <div class="row mb-1" *ngIf="course?.unenrollmentEnabled && course?.unenrollmentEndDate">
-                <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentEndDate' | artemisTranslate }}</div>
-                <div class="col-4 text-end">{{ course?.unenrollmentEndDate | artemisDate }}</div>
-            </div>
-            <div class="row" *ngIf="canUnenroll">
-                <div class="col text-end">
-                    <button class="btn btn-danger" id="course-unenrollment-button" (click)="onUnenroll()">
-                        <fa-icon [icon]="faXmark"></fa-icon>
-                        <span class="d-sm-inline">
-                            {{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentButton' | artemisTranslate }}
-                        </span>
-                    </button>
+            @for (exerciseCount of exerciseCountMap | keyvalue; track exerciseCount) {
+                <div class="row mb-1">
+                    <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.' + exerciseCount.key + 'Total' | artemisTranslate }}</div>
+                    <div class="col-4 text-end">{{ exerciseCount.value }}</div>
                 </div>
-            </div>
+            }
+            @if (course?.startDate) {
+                <div class="row mb-1">
+                    <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.startDate' | artemisTranslate }}</div>
+                    <div class="col-4 text-end">{{ course?.startDate | artemisDate }}</div>
+                </div>
+            }
+            @if (course?.endDate) {
+                <div class="row mb-1">
+                    <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.endDate' | artemisTranslate }}</div>
+                    <div class="col-4 text-end">{{ course?.endDate | artemisDate }}</div>
+                </div>
+            }
+            @if (course?.enrollmentEnabled && course?.enrollmentStartDate) {
+                <div class="row mb-1">
+                    <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.enrollmentStartDate' | artemisTranslate }}</div>
+                    <div class="col-4 text-end">{{ course?.enrollmentStartDate | artemisDate }}</div>
+                </div>
+            }
+            @if (course?.enrollmentEnabled && course?.enrollmentEndDate) {
+                <div class="row mb-1">
+                    <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.enrollmentEndDate' | artemisTranslate }}</div>
+                    <div class="col-4 text-end">{{ course?.enrollmentEndDate | artemisDate }}</div>
+                </div>
+            }
+            @if (course?.unenrollmentEnabled && course?.unenrollmentEndDate) {
+                <div class="row mb-1">
+                    <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentEndDate' | artemisTranslate }}</div>
+                    <div class="col-4 text-end">{{ course?.unenrollmentEndDate | artemisDate }}</div>
+                </div>
+            }
+            @if (canUnenroll) {
+                <div class="row">
+                    <div class="col text-end">
+                        <button class="btn btn-danger" id="course-unenrollment-button" (click)="onUnenroll()">
+                            <fa-icon [icon]="faXmark"></fa-icon>
+                            <span class="d-sm-inline">
+                                {{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentButton' | artemisTranslate }}
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            }
         </jhi-side-panel>
         <div class="guided-tour exercise-panel mt-3">
             <jhi-side-panel [panelHeader]="'artemisApp.courseOverview.exerciseList.details.upcomingDueDates' | artemisTranslate">
-                <div class="row mb-1 has-exercises align-items-center" *ngFor="let exercise of upcomingExercises" [routerLink]="[exercise.exercise.id]">
-                    <div class="col-5">{{ exercise.dueDate | artemisDate }}</div>
-                    <div class="col-5">{{ exercise.exercise.title }}</div>
-                    <div class="col-2 icon">
-                        <fa-icon [icon]="faPlayCircle"></fa-icon>
+                @for (exercise of upcomingExercises; track exercise) {
+                    <div class="row mb-1 has-exercises align-items-center" [routerLink]="[exercise.exercise.id]">
+                        <div class="col-5">{{ exercise.dueDate | artemisDate }}</div>
+                        <div class="col-5">{{ exercise.exercise.title }}</div>
+                        <div class="col-2 icon">
+                            <fa-icon [icon]="faPlayCircle"></fa-icon>
+                        </div>
                     </div>
-                </div>
-                <div class="row mb-1 align-items-center" *ngIf="upcomingExercises.length === 0">
-                    <div class="col">{{ 'artemisApp.courseOverview.exerciseList.details.noUpcomingExercises' | artemisTranslate }}</div>
-                </div>
+                }
+                @if (upcomingExercises.length === 0) {
+                    <div class="row mb-1 align-items-center">
+                        <div class="col">{{ 'artemisApp.courseOverview.exerciseList.details.noUpcomingExercises' | artemisTranslate }}</div>
+                    </div>
+                }
             </jhi-side-panel>
         </div>
     </div>

@@ -1,77 +1,96 @@
-<ng-container *ngIf="programmingExercise">
-    <div *ngIf="displayShortName">
-        {{ programmingExercise.shortName || '' }}
-    </div>
-    <div *ngIf="displayRepositoryUrl">
+@if (programmingExercise) {
+    @if (displayShortName) {
         <div>
-            <ng-container *ngIf="programmingExercise.templateParticipation?.repositoryUrl">
-                <!--Checks if the programming exercise has a setup with VCS and CI, if this not the case
+            {{ programmingExercise.shortName || '' }}
+        </div>
+    }
+    @if (displayRepositoryUri) {
+        <div>
+            <div>
+                @if (programmingExercise.templateParticipation?.repositoryUri) {
+                    <!--Checks if the programming exercise has a setup with VCS and CI, if this not the case
                                             the links/clone-buttons are disabled--->
-                <span *ngIf="!localVCEnabled; else downloadRepoLink">
-                    <a href="{{ programmingExercise.templateParticipation?.repositoryUrl || '' }}" target="_blank">Template</a>
-                </span>
-                <ng-template #downloadRepoLink>
-                    <a [routerLink]="" (click)="downloadRepository('TEMPLATE')"> <fa-icon [icon]="faDownload"></fa-icon> Template </a>
-                </ng-template>
-            </ng-container>
-            <jhi-programming-exercise-instructor-status
-                *ngIf="programmingExercise.templateParticipation?.results?.length"
-                [participationType]="participationType.TEMPLATE"
-                [participation]="programmingExercise.templateParticipation!"
-                [exercise]="programmingExercise"
-            ></jhi-programming-exercise-instructor-status>
+                    @if (!localVCEnabled) {
+                        <span>
+                            <a href="{{ programmingExercise.templateParticipation?.repositoryUri || '' }}" target="_blank">Template</a>
+                        </span>
+                    } @else {
+                        <a [routerLink]="" (click)="downloadRepository('TEMPLATE')"> <fa-icon [icon]="faDownload"></fa-icon> Template </a>
+                    }
+                }
+                @if (programmingExercise.templateParticipation?.results?.length) {
+                    <jhi-programming-exercise-instructor-status
+                        [participationType]="participationType.TEMPLATE"
+                        [participation]="programmingExercise.templateParticipation!"
+                        [exercise]="programmingExercise"
+                    ></jhi-programming-exercise-instructor-status>
+                }
+            </div>
+            <div>
+                @if (programmingExercise.solutionParticipation?.repositoryUri) {
+                    @if (!localVCEnabled) {
+                        <span>
+                            <a href="{{ programmingExercise.solutionParticipation?.repositoryUri || '' }}" target="_blank">Solution</a>
+                        </span>
+                    } @else {
+                        <a [routerLink]="" (click)="downloadRepository('SOLUTION')"> <fa-icon [icon]="faDownload"></fa-icon> Solution </a>
+                    }
+                }
+                @if (programmingExercise.solutionParticipation?.results?.length) {
+                    <jhi-programming-exercise-instructor-status
+                        [participationType]="participationType.SOLUTION"
+                        [participation]="programmingExercise.solutionParticipation!"
+                        [exercise]="programmingExercise"
+                    ></jhi-programming-exercise-instructor-status>
+                }
+            </div>
+            <div>
+                @if (programmingExercise.testRepositoryUri) {
+                    @if (!localVCEnabled) {
+                        <span>
+                            <a href="{{ programmingExercise.testRepositoryUri }}" target="_blank">Test</a>
+                        </span>
+                    } @else {
+                        <a [routerLink]="" (click)="downloadRepository('TESTS')"> <fa-icon [icon]="faDownload"></fa-icon> Test </a>
+                    }
+                }
+            </div>
         </div>
+    }
+    @if (displayTemplateUrls) {
         <div>
-            <ng-container *ngIf="programmingExercise.solutionParticipation?.repositoryUrl">
-                <span *ngIf="!localVCEnabled; else downloadRepoLink">
-                    <a href="{{ programmingExercise.solutionParticipation?.repositoryUrl || '' }}" target="_blank">Solution</a>
+            @if (programmingExercise.templateParticipation?.buildPlanId) {
+                <span>
+                    @if (!localVCEnabled) {
+                        <a target="_blank" rel="noreferrer" href="{{ programmingExercise.templateParticipation!.buildPlanUrl }}">Template</a>
+                    } @else {
+                        {{ programmingExercise.templateParticipation!.buildPlanId }}
+                    }
                 </span>
-                <ng-template #downloadRepoLink>
-                    <a [routerLink]="" (click)="downloadRepository('SOLUTION')"> <fa-icon [icon]="faDownload"></fa-icon> Solution </a>
-                </ng-template>
-            </ng-container>
-            <jhi-programming-exercise-instructor-status
-                *ngIf="programmingExercise.solutionParticipation?.results?.length"
-                [participationType]="participationType.SOLUTION"
-                [participation]="programmingExercise.solutionParticipation!"
-                [exercise]="programmingExercise"
-            ></jhi-programming-exercise-instructor-status>
+            }
+            <br />
+            @if (programmingExercise.solutionParticipation?.buildPlanId) {
+                <span>
+                    @if (!localVCEnabled) {
+                        <a target="_blank" rel="noreferrer" href="{{ programmingExercise.solutionParticipation!.buildPlanUrl }}">Solution</a>
+                    } @else {
+                        {{ programmingExercise.solutionParticipation!.buildPlanId }}
+                    }
+                </span>
+            }
+            <br />
         </div>
+    }
+    @if (displayEditorModus) {
         <div>
-            <ng-container *ngIf="programmingExercise.testRepositoryUrl">
-                <span *ngIf="!localVCEnabled; else downloadRepoLink">
-                    <a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank">Test</a>
-                </span>
-                <ng-template #downloadRepoLink>
-                    <a [routerLink]="" (click)="downloadRepository('TESTS')"> <fa-icon [icon]="faDownload"></fa-icon> Test </a>
-                </ng-template>
-            </ng-container>
+            <div class="d-flex justify-content-between">
+                {{ 'artemisApp.programmingExercise.offlineIde' | artemisTranslate }}
+                : {{ programmingExercise.allowOfflineIde || false }}
+            </div>
+            <div class="d-flex justify-content-between">
+                {{ 'artemisApp.programmingExercise.onlineEditor' | artemisTranslate }}
+                : {{ programmingExercise.allowOnlineEditor || false }}
+            </div>
         </div>
-    </div>
-    <div *ngIf="displayTemplateUrls">
-        <span *ngIf="programmingExercise.templateParticipation?.buildPlanId">
-            <a *ngIf="!localVCEnabled; else plainBuildPlanId" target="_blank" rel="noreferrer" href="{{ programmingExercise.templateParticipation!.buildPlanUrl }}">Template</a>
-            <ng-template #plainBuildPlanId>
-                {{ programmingExercise.templateParticipation!.buildPlanId }}
-            </ng-template>
-        </span>
-        <br />
-        <span *ngIf="programmingExercise.solutionParticipation?.buildPlanId">
-            <a *ngIf="!localVCEnabled; else plainBuildPlanId" target="_blank" rel="noreferrer" href="{{ programmingExercise.solutionParticipation!.buildPlanUrl }}">Solution</a>
-            <ng-template #plainBuildPlanId>
-                {{ programmingExercise.solutionParticipation!.buildPlanId }}
-            </ng-template>
-        </span>
-        <br />
-    </div>
-    <div *ngIf="displayEditorModus">
-        <div class="d-flex justify-content-between">
-            {{ 'artemisApp.programmingExercise.offlineIde' | artemisTranslate }}
-            : {{ programmingExercise.allowOfflineIde || false }}
-        </div>
-        <div class="d-flex justify-content-between">
-            {{ 'artemisApp.programmingExercise.onlineEditor' | artemisTranslate }}
-            : {{ programmingExercise.allowOnlineEditor || false }}
-        </div>
-    </div>
-</ng-container>
+    }
+}

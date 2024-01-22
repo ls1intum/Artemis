@@ -4,12 +4,13 @@
             <h4 class="me-auto"><ng-container *ngTemplateOutlet="title"></ng-container></h4>
             <ng-container *ngTemplateOutlet="toolbar"></ng-container>
         </div>
-        <jhi-orion-assessment-instructions
-            *ngIf="exercise"
-            class="card-body markdown-preview instructions-wrapper__content overflow-auto"
-            [exercise]="exercise!"
-            [programmingParticipation]="participation"
-        ></jhi-orion-assessment-instructions>
+        @if (exercise) {
+            <jhi-orion-assessment-instructions
+                class="card-body markdown-preview instructions-wrapper__content overflow-auto"
+                [exercise]="exercise!"
+                [programmingParticipation]="participation"
+            ></jhi-orion-assessment-instructions>
+        }
         <ng-container *ngTemplateOutlet="feedback"></ng-container>
     </ng-template>
     <ng-template #overrideExportGoToRepository>

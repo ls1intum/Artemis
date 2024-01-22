@@ -4,7 +4,7 @@
             <fa-icon [icon]="faExclamationCircle"></fa-icon>
             <span jhiTranslate="artemisApp.quizPool.groupExplanation"></span>
         </div>
-        <ng-container *ngIf="!disabled">
+        @if (!disabled) {
             <div class="col-12 col-lg-10">
                 <label for="groupName" jhiTranslate="artemisApp.quizPool.groupName">Group Name</label>
                 <input required #groupName id="groupName" name="groupName" class="form-control" />
@@ -15,54 +15,60 @@
                     <span jhiTranslate="artemisApp.quizPool.addGroup">Add Group</span>
                 </a>
             </div>
-        </ng-container>
+        }
     </div>
-    <div class="table-wrapper table-responsive" *ngIf="quizGroups.length > 0">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>
-                        <span jhiTranslate="artemisApp.quizPool.group">Group</span>
-                    </th>
-                    <th class="w-75">
-                        <span jhiTranslate="artemisApp.quizExercise.questions">Questions</span>
-                    </th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let quizGroup of quizGroups; let i = index">
-                    <td>{{ quizGroup.name }}</td>
-                    <td>
-                        <jhi-quiz-pool-mapping-question-list
-                            [disabled]="disabled"
-                            [quizQuestions]="quizGroupNameQuestionsMap.get(quizGroup.name)!"
-                            (onQuizQuestionDropped)="handleOnQuizQuestionDropped($event, quizGroup)"
-                        ></jhi-quiz-pool-mapping-question-list>
-                    </td>
-                    <td>
-                        <ng-container *ngIf="!disabled">
-                            <button
-                                jhiDeleteButton
-                                [entityTitle]="quizGroup.name"
-                                deleteQuestion="artemisApp.quizPool.delete.question"
-                                (delete)="deleteGroup(i)"
-                                [dialogError]="dialogError$"
-                                class="delete-group mb-0"
-                            >
-                                <fa-icon [icon]="faTimes"></fa-icon>
-                            </button>
-                        </ng-container>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    <div class="mt-3 mb-5" [ngStyle]="{ display: quizQuestions.length > 0 ? 'block' : 'none' }">
-        <div *ngIf="!disabled">
-            <fa-icon [icon]="faExclamationCircle"></fa-icon>
-            <span jhiTranslate="artemisApp.quizPool.dragExplanation"></span>
+    @if (quizGroups.length > 0) {
+        <div class="table-wrapper table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>
+                            <span jhiTranslate="artemisApp.quizPool.group">Group</span>
+                        </th>
+                        <th class="w-75">
+                            <span jhiTranslate="artemisApp.quizExercise.questions">Questions</span>
+                        </th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (quizGroup of quizGroups; track quizGroup; let i = $index) {
+                        <tr>
+                            <td>{{ quizGroup.name }}</td>
+                            <td>
+                                <jhi-quiz-pool-mapping-question-list
+                                    [disabled]="disabled"
+                                    [quizQuestions]="quizGroupNameQuestionsMap.get(quizGroup.name)!"
+                                    (onQuizQuestionDropped)="handleOnQuizQuestionDropped($event, quizGroup)"
+                                ></jhi-quiz-pool-mapping-question-list>
+                            </td>
+                            <td>
+                                @if (!disabled) {
+                                    <button
+                                        jhiDeleteButton
+                                        [entityTitle]="quizGroup.name"
+                                        deleteQuestion="artemisApp.quizPool.delete.question"
+                                        (delete)="deleteGroup(i)"
+                                        [dialogError]="dialogError$"
+                                        class="delete-group mb-0"
+                                    >
+                                        <fa-icon [icon]="faTimes"></fa-icon>
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
+    }
+    <div class="mt-3 mb-5" [ngStyle]="{ display: quizQuestions.length > 0 ? 'block' : 'none' }">
+        @if (!disabled) {
+            <div>
+                <fa-icon [icon]="faExclamationCircle"></fa-icon>
+                <span jhiTranslate="artemisApp.quizPool.dragExplanation"></span>
+            </div>
+        }
         <div class="question-list-container px-3 py-3">
             <jhi-quiz-pool-mapping-question-list [disabled]="disabled" [quizQuestions]="unmappedQuizQuestions" (onQuizQuestionDropped)="handleOnQuizQuestionDropped($event)">
             </jhi-quiz-pool-mapping-question-list>

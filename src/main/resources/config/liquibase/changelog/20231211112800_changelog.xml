@@ -1,0 +1,21 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.18.xsd">
+    <changeSet author="rriyaldhi" id="20231211112800">
+        <createTable tableName="student_exam_quiz_question">
+            <column name="student_exam_id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="quiz_question_id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="student_exam_id" baseTableName="student_exam_quiz_question" constraintName="h3Vyx1OiRTSjJQqMmDqx7BRZtvn"
+                                 deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id"
+                                 referencedTableName="student_exam" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="quiz_question_id" baseTableName="student_exam_quiz_question" constraintName="nVl82Q7a8WevNKlJYqKcqN0LrX0"
+                                 deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id"
+                                 referencedTableName="quiz_question" validate="true"/>
+    </changeSet>
+</databaseChangeLog>

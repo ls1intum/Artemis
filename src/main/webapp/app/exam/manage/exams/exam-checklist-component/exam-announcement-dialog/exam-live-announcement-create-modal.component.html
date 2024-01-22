@@ -1,54 +1,63 @@
 <form name="makeLiveExamAnnouncementForm">
     <div class="modal-header">
         <h4 class="modal-title" jhiTranslate="artemisApp.examManagement.announcementCreate.title">Make Live Exam Announcement</h4>
-        <button *ngIf="status !== 'submitting'" type="button" class="btn-close" aria-label="Close" (click)="clear()"></button>
+        @if (status !== 'submitting') {
+            <button type="button" class="btn-close" aria-label="Close" (click)="clear()"></button>
+        }
     </div>
-    <div class="modal-body" *ngIf="status === 'not_submitted'">
-        <div class="form-group">
-            <div class="mb-4" jhiTranslate="artemisApp.examManagement.announcementCreate.task">Enter your announcement below. You can use Markdown text formatting.</div>
-            <jhi-markdown-editor
-                #markdownEditor
-                class="markdown-editor"
-                [markdown]="textContent"
-                [showPreviewButton]="false"
-                [showEditButton]="false"
-                [enableFileUpload]="false"
-                [colorCommands]="[]"
-                [defaultCommands]="COMMANDS"
-                (markdownChange)="textContentChanged($event)"
-            ></jhi-markdown-editor>
+    @if (status === 'not_submitted') {
+        <div class="modal-body">
+            <div class="form-group">
+                <div class="mb-4" jhiTranslate="artemisApp.examManagement.announcementCreate.task">Enter your announcement below. You can use Markdown text formatting.</div>
+                <jhi-markdown-editor
+                    #markdownEditor
+                    class="markdown-editor"
+                    [markdown]="textContent"
+                    [showPreviewButton]="false"
+                    [showEditButton]="false"
+                    [enableFileUpload]="false"
+                    [colorCommands]="[]"
+                    [defaultCommands]="COMMANDS"
+                    (markdownChange)="textContentChanged($event)"
+                ></jhi-markdown-editor>
+            </div>
+            @if (announcement) {
+                <h3 class="p-2" jhiTranslate="artemisApp.examManagement.announcementCreate.preview">Preview</h3>
+                <jhi-exam-live-event [event]="announcement!"></jhi-exam-live-event>
+            }
         </div>
-        <ng-container *ngIf="announcement">
-            <h3 class="p-2" jhiTranslate="artemisApp.examManagement.announcementCreate.preview">Preview</h3>
-            <jhi-exam-live-event [event]="announcement!"></jhi-exam-live-event>
-        </ng-container>
-    </div>
-
-    <div class="modal-body" *ngIf="status === 'submitting'">
-        <h2 class="mb-0">
-            <fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>
-            <span jhiTranslate="artemisApp.examManagement.announcementCreate.sending">Sending announcement...</span>
-        </h2>
-    </div>
-
-    <div class="modal-body" *ngIf="status === 'submitted'">
-        <h2 class="mb-4">
-            <fa-icon [icon]="faCheckCircle" class="success-color"></fa-icon>
-            <span jhiTranslate="artemisApp.examManagement.announcementCreate.sent">Announcement sent!</span>
-        </h2>
-        <jhi-exam-live-event [event]="announcement!" *ngIf="announcement"></jhi-exam-live-event>
-    </div>
+    }
+    @if (status === 'submitting') {
+        <div class="modal-body">
+            <h2 class="mb-0">
+                <fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>
+                <span jhiTranslate="artemisApp.examManagement.announcementCreate.sending">Sending announcement...</span>
+            </h2>
+        </div>
+    }
+    @if (status === 'submitted') {
+        <div class="modal-body">
+            <h2 class="mb-4">
+                <fa-icon [icon]="faCheckCircle" class="success-color"></fa-icon>
+                <span jhiTranslate="artemisApp.examManagement.announcementCreate.sent">Announcement sent!</span>
+            </h2>
+            @if (announcement) {
+                <jhi-exam-live-event [event]="announcement!"></jhi-exam-live-event>
+            }
+        </div>
+    }
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" [class.btn-primary]="status === 'submitted'" (click)="clear()" jhiTranslate="entity.action.close">Close</button>
-        <button
-            *ngIf="status !== 'submitted'"
-            [disabled]="status === 'submitting' || !textContent"
-            type="button"
-            class="btn btn-primary"
-            (click)="submitAnnouncement()"
-            jhiTranslate="artemisApp.examManagement.announcementCreate.sendButton"
-        >
-            Make announcement
-        </button>
+        @if (status !== 'submitted') {
+            <button
+                [disabled]="status === 'submitting' || !textContent"
+                type="button"
+                class="btn btn-primary"
+                (click)="submitAnnouncement()"
+                jhiTranslate="artemisApp.examManagement.announcementCreate.sendButton"
+            >
+                Make announcement
+            </button>
+        }
     </div>
 </form>

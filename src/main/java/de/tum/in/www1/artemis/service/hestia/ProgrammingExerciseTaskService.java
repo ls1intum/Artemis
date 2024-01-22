@@ -157,7 +157,7 @@ public class ProgrammingExerciseTaskService {
                 .map(extractedTask -> unsortedTasks.stream()
                         .filter(task -> task.getTaskName().equals(extractedTask.getTaskName()) && task.getTestCases().equals(extractedTask.getTestCases())).findFirst()
                         .orElse(null))
-                .filter(Objects::nonNull).toList();
+                .distinct().filter(Objects::nonNull).toList();
     }
 
     /**

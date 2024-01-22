@@ -2,9 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, ReplaySubject, Subject, Subscription } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { map } from 'rxjs/operators';
+import { filter, map } from 'rxjs/operators';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
@@ -19,6 +19,7 @@ import {
     DATA_EXPORT_CREATED_TITLE,
     DATA_EXPORT_FAILED_TITLE,
     MENTIONED_IN_MESSAGE_TITLE,
+    MESSAGE_REPLY_IN_CHANNEL_TEXT,
     MESSAGE_REPLY_IN_CONVERSATION_TEXT,
     NEW_ANNOUNCEMENT_POST_TITLE,
     NEW_COURSE_POST_TITLE,
@@ -38,21 +39,29 @@ import {
     QUIZ_EXERCISE_STARTED_TEXT,
     QUIZ_EXERCISE_STARTED_TITLE,
 } from 'app/entities/notification.model';
-import { Course } from 'app/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { RouteComponents } from 'app/shared/metis/metis.util';
+import { MetisPostAction, MetisWebsocketChannelPrefix, RouteComponents } from 'app/shared/metis/metis.util';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
+import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 
 const notificationsPerPage = 25;
 
 const NOTIFICATION_TITLES_TO_EXCLUDE_FROM_HISTORY = [NEW_MESSAGE_TITLE, NEW_EXERCISE_POST_TITLE, NEW_LECTURE_POST_TITLE, NEW_EXAM_POST_TITLE, NEW_COURSE_POST_TITLE];
-const MESSAGING_NOTIFICATION_TEXTS = [NEW_MESSAGE_CHANNEL_TEXT, NEW_MESSAGE_GROUP_CHAT_TEXT, NEW_MESSAGE_DIRECT_TEXT, MESSAGE_REPLY_IN_CONVERSATION_TEXT];
+const MESSAGING_NOTIFICATION_TEXTS = [
+    NEW_MESSAGE_CHANNEL_TEXT,
+    NEW_MESSAGE_GROUP_CHAT_TEXT,
+    NEW_MESSAGE_DIRECT_TEXT,
+    MESSAGE_REPLY_IN_CONVERSATION_TEXT,
+    MESSAGE_REPLY_IN_CHANNEL_TEXT,
+];
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -69,6 +78,12 @@ export class NotificationService {
     loadTimeout: ReturnType<typeof setTimeout>;
     subscribedTopics: string[] = [];
     wsSubscriptions: Subscription[] = [];
+
+    private subscribedCourseWideChannelTopic?: string;
+    private courseWideChannelSubscription?: Subscription;
+    private _singlePostSubject$: Subject<MetisPostDTO>;
+    private mutedConversations: number[] = [];
+    private loadedMutedConversations = false;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -87,6 +102,23 @@ export class NotificationService {
         });
 
         this.accountService.getAuthenticationState().subscribe((user) => this.onUserIdentityChange(user));
+
+        this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((event: NavigationEnd) => {
+            const url = event.urlAfterRedirects;
+            if (url.startsWith('/courses') || url.startsWith('/course-management')) {
+                const courseIdParam = url.split('/', 3).last();
+                if (!courseIdParam) {
+                    return;
+                }
+
+                const courseId = parseInt(courseIdParam);
+                if (!isNaN(courseId)) {
+                    this.subscribeToCourseWideChannelTopic(courseId);
+                } else {
+                    this.clearCourseWideChannelSubscription();
+                }
+            }
+        });
     }
 
     private onUserIdentityChange(user: User | undefined) {
@@ -101,6 +133,10 @@ export class NotificationService {
                     if (courses && this.initialized) {
                         this.subscribeToGroupNotificationUpdates(courses);
                         this.subscribeToQuizUpdates(courses);
+                        if (!this.loadedMutedConversations) {
+                            this.loadedMutedConversations = true;
+                            this.getMutedConversations(courses);
+                        }
                     }
                 });
                 this.notificationSettingsService.refreshNotificationSettings();
@@ -120,8 +156,14 @@ export class NotificationService {
             this.subscribedTopics = [];
             this.wsSubscriptions = [];
 
+            this.clearCourseWideChannelSubscription();
+
             this.initialized = false;
         }
+    }
+
+    get newOrUpdatedMessage(): Observable<MetisPostDTO> {
+        return this._singlePostSubject$.asObservable();
     }
 
     private setTotalNotificationCount(newCount: number): void {
@@ -173,7 +215,7 @@ export class NotificationService {
             this.addNotifications([notification]);
         }
 
-        // Single notifications should also be sent through the single notification subject for the notifcation popup
+        // Single notifications should also be sent through the single notification subject for the notification popup
         this.singleNotificationSubject.next(notification);
     }
 
@@ -186,7 +228,7 @@ export class NotificationService {
 
                 if (
                     this.notificationSettingsService.isNotificationAllowedBySettings(notification) &&
-                    !this.notifications.some(({ id }) => id === notification.id) &&
+                    !this.notifications.some(({ id }) => notification.id && id === notification.id) &&
                     notification.notificationDate
                 ) {
                     this.notifications.push(notification);
@@ -429,21 +471,109 @@ export class NotificationService {
         if (!this.subscribedTopics.includes(conversationTopic)) {
             this.subscribedTopics.push(conversationTopic);
             this.jhiWebsocketService.subscribe(conversationTopic);
-            const subscription = this.jhiWebsocketService.receive(conversationTopic).subscribe((notification: Notification) => {
-                if (notification.target) {
-                    const target = JSON.parse(notification.target);
-                    const targetCourseId = target.course;
-                    // Only add notification if it is not from the current user and the user is not already in the messages tab
-                    if (
-                        notification.author?.id !== this.accountService.userIdentity?.id &&
-                        !this.isUnderMessagesTabOfSpecificCourse(targetCourseId) &&
-                        this.notificationSettingsService.isNotificationAllowedBySettings(notification)
-                    ) {
-                        this.addNotification(notification);
-                    }
-                }
-            });
+            const subscription = this.jhiWebsocketService.receive(conversationTopic).subscribe(this.handleNewPostDTO);
             this.wsSubscriptions.push(subscription);
+        }
+    }
+
+    private subscribeToCourseWideChannelTopic(courseId: number): void {
+        const courseWideTopic = MetisWebsocketChannelPrefix + `courses/${courseId}`;
+
+        if (this.subscribedCourseWideChannelTopic === courseWideTopic) {
+            return;
+        }
+
+        if (this.subscribedCourseWideChannelTopic) {
+            this.clearCourseWideChannelSubscription();
+        }
+
+        this.jhiWebsocketService.subscribe(courseWideTopic);
+        this.subscribedCourseWideChannelTopic = courseWideTopic;
+
+        this.courseWideChannelSubscription = this.jhiWebsocketService.receive(courseWideTopic).subscribe(this.handleNewPostDTO);
+    }
+
+    private handleNewPostDTO = (postDTO: MetisPostDTO): void => {
+        if (postDTO.post?.answers) {
+            postDTO.post.answers.forEach((answer) => {
+                answer.post = { ...postDTO.post, answers: [], reactions: [] };
+                answer.creationDate = dayjs(answer.creationDate);
+            });
+        }
+
+        postDTO.post.creationDate = dayjs(postDTO.post.creationDate);
+
+        if (postDTO.post.conversation?.lastMessageDate) {
+            postDTO.post.conversation.lastMessageDate = convertDateFromServer(postDTO.post.conversation?.lastMessageDate);
+        }
+
+        const user = this.accountService.userIdentity;
+        user && postDTO.notification && this.changeTitleIfMentioned(user, postDTO, postDTO.notification);
+
+        this._singlePostSubject$.next(postDTO);
+        if (
+            postDTO.action === MetisPostAction.CREATE &&
+            this.mutedConversations.find((id) => id === postDTO.post.conversation?.id) &&
+            postDTO.notification?.title !== MENTIONED_IN_MESSAGE_TITLE
+        ) {
+            return;
+        }
+        this.handleNotification(postDTO);
+    };
+
+    public handleNotification(postDTO: MetisPostDTO) {
+        const notification = postDTO.notification;
+        if (notification?.target) {
+            // Only add notification if it is not from the current user and allowed by settings
+            const user = this.accountService.userIdentity;
+            if (notification.author?.id !== user?.id && this.notificationSettingsService.isNotificationAllowedBySettings(notification)) {
+                if (this.shouldNotify(postDTO, user?.id)) {
+                    this.addNotification(notification);
+                }
+            }
+        }
+    }
+
+    /**
+     * Adds the conversation id to the list of muted conversations if not already contained
+     *
+     * @param conversationId conversation id
+     */
+    public muteNotificationsForConversation(conversationId: number) {
+        if (this.mutedConversations.indexOf(conversationId) === -1) {
+            this.mutedConversations.push(conversationId);
+        }
+    }
+
+    /**
+     * Removes the conversation id from the list of muted conversations if contained
+     *
+     * @param conversationId conversation id
+     */
+    public unmuteNotificationsForConversation(conversationId: number) {
+        this.mutedConversations.splice(this.mutedConversations.indexOf(conversationId), 1);
+    }
+
+    private shouldNotify(postDTO: MetisPostDTO, userId: number | undefined) {
+        if (
+            !getAsChannelDto(postDTO.post.conversation)?.isCourseWide ||
+            postDTO.action !== MetisPostAction.UPDATE ||
+            !userId ||
+            postDTO.notification?.title === MENTIONED_IN_MESSAGE_TITLE
+        ) {
+            return true;
+        }
+
+        // True if the author is involved
+        return postDTO.post.author?.id === userId || postDTO.post.answers?.map((answer) => answer.author?.id).includes(userId);
+    }
+
+    private changeTitleIfMentioned(user: User, postDTO: MetisPostDTO, notification: Notification) {
+        const mentionMatch = `[user]${user?.name}(${user?.login})[/user]`;
+        if (postDTO.action === MetisPostAction.CREATE && postDTO.post.content?.includes(mentionMatch)) {
+            notification.title = MENTIONED_IN_MESSAGE_TITLE;
+        } else if (postDTO.action === MetisPostAction.UPDATE && postDTO.post.answers?.last()?.content?.includes(mentionMatch)) {
+            notification.title = MENTIONED_IN_MESSAGE_TITLE;
         }
     }
 
@@ -500,5 +630,25 @@ export class NotificationService {
         this.notificationSubject = new ReplaySubject<Notification[]>(1);
         this.totalNotificationsSubject = new ReplaySubject<number>(1);
         this.singleNotificationSubject = new Subject<Notification>();
+        this._singlePostSubject$ = new Subject<MetisPostDTO>();
+    }
+
+    private clearCourseWideChannelSubscription() {
+        if (this.subscribedCourseWideChannelTopic) {
+            this.jhiWebsocketService.unsubscribe(this.subscribedCourseWideChannelTopic);
+        }
+        this.subscribedCourseWideChannelTopic = undefined;
+        this.courseWideChannelSubscription?.unsubscribe();
+        this.courseWideChannelSubscription = undefined;
+    }
+
+    private getMutedConversations(courses: Course[]) {
+        if (courses.find((course) => course.courseInformationSharingConfiguration !== CourseInformationSharingConfiguration.DISABLED)) {
+            this.http.get<number[]>('api/muted-conversations', { observe: 'response' }).subscribe({
+                next: (res: HttpResponse<number[]>) => {
+                    this.mutedConversations.push(...res.body!);
+                },
+            });
+        }
     }
 }

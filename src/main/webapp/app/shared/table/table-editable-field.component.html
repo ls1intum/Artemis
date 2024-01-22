@@ -12,9 +12,11 @@
         type="text"
         #editingInput="ngModel"
     />
-    <ng-container *ngFor="let error of editingInput.errors! | keyvalue | removekeys: ['required']">
-        <div *ngIf="editingInput.invalid && (editingInput.dirty || editingInput.touched)" class="alert alert-danger">
-            <div [jhiTranslate]="translationBase + '.' + error.key"></div>
-        </div>
-    </ng-container>
+    @for (error of editingInput.errors! | keyvalue | removekeys: ['required']; track error) {
+        @if (editingInput.invalid && (editingInput.dirty || editingInput.touched)) {
+            <div class="alert alert-danger">
+                <div [jhiTranslate]="translationBase + '.' + error.key"></div>
+            </div>
+        }
+    }
 </div>

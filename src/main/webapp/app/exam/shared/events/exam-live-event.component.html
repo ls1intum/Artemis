@@ -10,45 +10,61 @@
     </div>
     <div class="date">
         <span><fa-icon [icon]="faPaperPlane"></fa-icon> {{ event.createdDate | artemisDate }}</span>
-        <span *ngIf="event.acknowledgeTimestamps?.user">| <fa-icon [icon]="faEye"></fa-icon> {{ event.acknowledgeTimestamps!.user! | artemisDate: 'time' }}</span>
+        @if (event.acknowledgeTimestamps?.user) {
+            <span>| <fa-icon [icon]="faEye"></fa-icon> {{ event.acknowledgeTimestamps!.user! | artemisDate: 'time' }}</span>
+        }
     </div>
-    <div class="content" [ngSwitch]="event.eventType">
-        <div *ngSwitchCase="ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT" [innerHTML]="examWideAnnouncementEvent.text | htmlForMarkdown"></div>
-        <div *ngSwitchCase="ExamLiveEventType.WORKING_TIME_UPDATE">
-            <div *ngIf="workingTimeUpdateEvent.courseWide" jhiTranslate="artemisApp.exam.events.messages.workingTimeUpdate.titleEveryone" class="wt-title">
-                The working time of the exam has been changed.
-            </div>
-            <div *ngIf="!workingTimeUpdateEvent.courseWide" jhiTranslate="artemisApp.exam.events.messages.workingTimeUpdate.titlePersonal" class="wt-title">
-                The working time of your exam has been changed.
-            </div>
-            <jhi-working-time-change [oldWorkingTime]="workingTimeUpdateEvent.oldWorkingTime" [newWorkingTime]="workingTimeUpdateEvent.newWorkingTime" />
-        </div>
-        <div *ngSwitchCase="ExamLiveEventType.EXAM_ATTENDANCE_CHECK">
-            <div jhiTranslate="artemisApp.exam.events.messages.examAttendanceCheck.description" class="wt-title"></div>
-            <table *ngIf="event.user" class="table table-borderless mx-auto">
-                <tbody>
-                    <tr>
-                        <th>{{ 'artemisApp.studentExamDetail.name' | artemisTranslate }}</th>
-                        <td>{{ event.user?.firstName }} {{ event.user?.lastName }}</td>
-                    </tr>
-                    <tr>
-                        <th>{{ 'artemisApp.studentExamDetail.login' | artemisTranslate }}</th>
-                        <td>{{ event.user?.login }}</td>
-                    </tr>
-                    <tr>
-                        <th>{{ 'artemisApp.studentExamDetail.email' | artemisTranslate }}</th>
-                        <td>{{ event.user?.email }}</td>
-                    </tr>
-                    <tr *ngIf="event.user?.visibleRegistrationNumber">
-                        <th>{{ 'artemisApp.studentExamDetail.matriculationNumber' | artemisTranslate }}</th>
-                        <td>{{ event.user?.visibleRegistrationNumber }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+    <div class="content">
+        @switch (event.eventType) {
+            @case (ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT) {
+                <div [innerHTML]="examWideAnnouncementEvent.text | htmlForMarkdown"></div>
+            }
+            @case (ExamLiveEventType.WORKING_TIME_UPDATE) {
+                <div>
+                    @if (workingTimeUpdateEvent.courseWide) {
+                        <div jhiTranslate="artemisApp.exam.events.messages.workingTimeUpdate.titleEveryone" class="wt-title">The working time of the exam has been changed.</div>
+                    }
+                    @if (!workingTimeUpdateEvent.courseWide) {
+                        <div jhiTranslate="artemisApp.exam.events.messages.workingTimeUpdate.titlePersonal" class="wt-title">The working time of your exam has been changed.</div>
+                    }
+                    <jhi-working-time-change [oldWorkingTime]="workingTimeUpdateEvent.oldWorkingTime" [newWorkingTime]="workingTimeUpdateEvent.newWorkingTime" />
+                </div>
+            }
+            @case (ExamLiveEventType.EXAM_ATTENDANCE_CHECK) {
+                <div>
+                    <div jhiTranslate="artemisApp.exam.events.messages.examAttendanceCheck.description" class="wt-title"></div>
+                    @if (event.user) {
+                        <table class="table table-borderless mx-auto">
+                            <tbody>
+                                <tr>
+                                    <th>{{ 'artemisApp.studentExamDetail.name' | artemisTranslate }}</th>
+                                    <td>{{ event.user?.firstName }} {{ event.user?.lastName }}</td>
+                                </tr>
+                                <tr>
+                                    <th>{{ 'artemisApp.studentExamDetail.login' | artemisTranslate }}</th>
+                                    <td>{{ event.user?.login }}</td>
+                                </tr>
+                                <tr>
+                                    <th>{{ 'artemisApp.studentExamDetail.email' | artemisTranslate }}</th>
+                                    <td>{{ event.user?.email }}</td>
+                                </tr>
+                                @if (event.user?.visibleRegistrationNumber) {
+                                    <tr>
+                                        <th>{{ 'artemisApp.studentExamDetail.matriculationNumber' | artemisTranslate }}</th>
+                                        <td>{{ event.user?.visibleRegistrationNumber }}</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            }
+        }
     </div>
-    <button *ngIf="showAcknowledge" class="btn btn-primary w-100 mt-2" (click)="acknowledgeEvent()">
-        <fa-icon [icon]="faCheck"></fa-icon>
-        <span jhiTranslate="artemisApp.exam.events.acknowledge">Acknowledge</span>
-    </button>
+    @if (showAcknowledge) {
+        <button class="btn btn-primary w-100 mt-2" (click)="acknowledgeEvent()">
+            <fa-icon [icon]="faCheck"></fa-icon>
+            <span jhiTranslate="artemisApp.exam.events.acknowledge">Acknowledge</span>
+        </button>
+    }
 </div>

@@ -1,43 +1,49 @@
-<div *ngIf="buildingSummary; else loadingState" class="d-flex">
-    <div id="result-eta" *ngIf="hasBuildingSubmissions" class="badge bg-secondary d-flex flex-column justify-content-between me-3">
-        <fa-icon [icon]="faClock"></fa-icon>
-        <span
-            [ngbTooltip]="'artemisApp.programmingExercise.resultETATooltip' | artemisTranslate"
-            [innerHTML]="'artemisApp.programmingExercise.resultETA' | artemisTranslate: { eta: resultEtaInMs | duration }"
-            >Result ETA: {{ resultEtaInMs | duration }}</span
-        >
+@if (buildingSummary) {
+    <div class="d-flex">
+        @if (hasBuildingSubmissions) {
+            <div id="result-eta" class="badge bg-secondary d-flex flex-column justify-content-between me-3">
+                <fa-icon [icon]="faClock"></fa-icon>
+                <span
+                    [ngbTooltip]="'artemisApp.programmingExercise.resultETATooltip' | artemisTranslate"
+                    [innerHTML]="'artemisApp.programmingExercise.resultETA' | artemisTranslate: { eta: resultEtaInMs | duration }"
+                    >Result ETA: {{ resultEtaInMs | duration }}</span
+                >
+            </div>
+        }
+        <div id="build-state" class="d-flex flex-column justify-content-between">
+            <span
+                id="build-state-building"
+                class="badge bg-primary flex-grow-0"
+                [innerHTML]="
+                    'artemisApp.programmingExercise.buildingSubmissions'
+                        | artemisTranslate: { number: buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] || 0 }
+                "
+            >
+                Building submissions: {{ buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] || 0 }}
+            </span>
+            <span
+                id="build-state-failed"
+                [ngClass]="['badge', buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] > 0 ? 'bg-danger' : 'bg-success', 'flex-grow-0']"
+                [innerHTML]="
+                    'artemisApp.programmingExercise.failedSubmissions' | artemisTranslate: { number: buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }
+                "
+            >
+                Failed submissions: {{ buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }}
+            </span>
+        </div>
+        <jhi-programming-exercise-trigger-all-button [exercise]="exercise"></jhi-programming-exercise-trigger-all-button>
+        <jhi-button
+            id="trigger-failed-button"
+            class="ms-3"
+            [disabled]="!hasFailedSubmissions"
+            [isLoading]="isBuildingFailedSubmissions"
+            [icon]="faRedo"
+            [title]="'artemisApp.programmingExercise.resubmitFailed'"
+            [tooltip]="'artemisApp.programmingExercise.resubmitFailedTooltip'"
+            [featureToggle]="FeatureToggle.ProgrammingExercises"
+            (onClick)="triggerBuildOfFailedSubmissions()"
+        ></jhi-button>
     </div>
-    <div id="build-state" class="d-flex flex-column justify-content-between">
-        <span
-            id="build-state-building"
-            class="badge bg-primary flex-grow-0"
-            [innerHTML]="
-                'artemisApp.programmingExercise.buildingSubmissions' | artemisTranslate: { number: buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] || 0 }
-            "
-        >
-            Building submissions: {{ buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] || 0 }}
-        </span>
-        <span
-            id="build-state-failed"
-            [ngClass]="['badge', buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] > 0 ? 'bg-danger' : 'bg-success', 'flex-grow-0']"
-            [innerHTML]="'artemisApp.programmingExercise.failedSubmissions' | artemisTranslate: { number: buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }"
-        >
-            Failed submissions: {{ buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }}
-        </span>
-    </div>
-    <jhi-programming-exercise-trigger-all-button [exercise]="exercise"></jhi-programming-exercise-trigger-all-button>
-    <jhi-button
-        id="trigger-failed-button"
-        class="ms-3"
-        [disabled]="!hasFailedSubmissions"
-        [isLoading]="isBuildingFailedSubmissions"
-        [icon]="faRedo"
-        [title]="'artemisApp.programmingExercise.resubmitFailed'"
-        [tooltip]="'artemisApp.programmingExercise.resubmitFailedTooltip'"
-        [featureToggle]="FeatureToggle.ProgrammingExercises"
-        (onClick)="triggerBuildOfFailedSubmissions()"
-    ></jhi-button>
-</div>
-<ng-template #loadingState>
+} @else {
     <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
-</ng-template>
+}

@@ -19,13 +19,9 @@
                 <fa-icon [icon]="faChevronUp"></fa-icon>
             </button>
             <div class="path my-2">
-                <jhi-learning-path
-                    #learningPathComponent
-                    *ngIf="learningPathId"
-                    [courseId]="courseId"
-                    [learningPathId]="learningPathId"
-                    (nodeClicked)="onNodeClicked($event)"
-                ></jhi-learning-path>
+                @if (learningPathId) {
+                    <jhi-learning-path #learningPathComponent [courseId]="courseId" [learningPathId]="learningPathId" (nodeClicked)="onNodeClicked($event)"></jhi-learning-path>
+                }
             </div>
             <button
                 type="button"
@@ -40,10 +36,14 @@
     </div>
     <div class="col pe-0 flex-grow-1">
         <div class="card learning-object-wrapper" [class.exercise-wrapper]="exercise">
-            <div *ngIf="!lectureUnit && !exercise">
-                <span jhiTranslate="artemisApp.learningPath.participate.noTaskSelected">No task selected</span>
-            </div>
-            <router-outlet *ngIf="lectureUnit || exercise" (activate)="onChildActivate($event)"></router-outlet>
+            @if (!lectureUnit && !exercise) {
+                <div>
+                    <span jhiTranslate="artemisApp.learningPath.participate.noTaskSelected">No task selected</span>
+                </div>
+            }
+            @if (lectureUnit || exercise) {
+                <router-outlet (activate)="onChildActivate($event)"></router-outlet>
+            }
         </div>
     </div>
 </div>

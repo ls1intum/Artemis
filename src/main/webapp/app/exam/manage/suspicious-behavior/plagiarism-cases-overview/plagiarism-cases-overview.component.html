@@ -1,5 +1,4 @@
 <h5>{{ 'artemisApp.examManagement.plagiarismCasesOverview.title' | artemisTranslate }}</h5>
-
 <table class="table">
     <thead>
         <tr>
@@ -11,7 +10,7 @@
         </tr>
     </thead>
     <tbody>
-        <ng-container *ngFor="let exercise of exercises; let i = index">
+        @for (exercise of exercises; track exercise; let i = $index) {
             <tr>
                 <th scope="row">{{ i + 1 }}</th>
                 <td>{{ exercise.title }}</td>
@@ -23,9 +22,11 @@
                     </button>
                 </td>
             </tr>
-        </ng-container>
+        }
     </tbody>
 </table>
-<button *ngIf="anyPlagiarismCases" class="btn btn-primary" id="view-plagiarism-cases-btn" (click)="goToPlagiarismCases()">
-    {{ 'artemisApp.examManagement.plagiarismCasesOverview.viewCases' | artemisTranslate }}
-</button>
+@if (anyPlagiarismCases) {
+    <button class="btn btn-primary" id="view-plagiarism-cases-btn" (click)="goToPlagiarismCases()">
+        {{ 'artemisApp.examManagement.plagiarismCasesOverview.viewCases' | artemisTranslate }}
+    </button>
+}

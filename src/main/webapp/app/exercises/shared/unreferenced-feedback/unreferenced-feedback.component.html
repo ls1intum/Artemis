@@ -5,31 +5,37 @@
         </button>
         <div class="row mt-4">
             <h4 class="col-12" jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</h4>
-            <div *ngIf="unreferencedFeedback.length + feedbackSuggestions.length === 0" class="col-12 col-lg-8 col-xl-6">
-                <div class="alert alert-secondary text-center" role="alert">
-                    <p>{{ 'artemisApp.fileUploadAssessment.assessInstructionWithDropOption' | artemisTranslate }}</p>
+            @if (unreferencedFeedback.length + feedbackSuggestions.length === 0) {
+                <div class="col-12 col-lg-8 col-xl-6">
+                    <div class="alert alert-secondary text-center" role="alert">
+                        <p>{{ 'artemisApp.fileUploadAssessment.assessInstructionWithDropOption' | artemisTranslate }}</p>
+                    </div>
                 </div>
-            </div>
-            <div *ngFor="let feedback of unreferencedFeedback" class="col-12 col-lg-6 col-xl-6">
-                <jhi-unreferenced-feedback-detail
-                    [feedback]="feedback"
-                    (onFeedbackChange)="updateFeedback(feedback)"
-                    (onFeedbackDelete)="deleteFeedback(feedback)"
-                    [readOnly]="readOnly"
-                    [highlightDifferences]="highlightDifferences"
-                    [useDefaultFeedbackSuggestionBadgeText]="useDefaultFeedbackSuggestionBadgeText"
-                ></jhi-unreferenced-feedback-detail>
-            </div>
-            <div *ngFor="let suggestion of feedbackSuggestions" class="col-12 col-lg-6 col-xl-6">
-                <jhi-unreferenced-feedback-detail
-                    [feedback]="suggestion"
-                    [isSuggestion]="true"
-                    [readOnly]="true"
-                    (onAcceptSuggestion)="acceptSuggestion($event)"
-                    (onDiscardSuggestion)="discardSuggestion($event)"
-                    [useDefaultFeedbackSuggestionBadgeText]="useDefaultFeedbackSuggestionBadgeText"
-                ></jhi-unreferenced-feedback-detail>
-            </div>
+            }
+            @for (feedback of unreferencedFeedback; track feedback) {
+                <div class="col-12 col-lg-6 col-xl-6">
+                    <jhi-unreferenced-feedback-detail
+                        [feedback]="feedback"
+                        (onFeedbackChange)="updateFeedback(feedback)"
+                        (onFeedbackDelete)="deleteFeedback(feedback)"
+                        [readOnly]="readOnly"
+                        [highlightDifferences]="highlightDifferences"
+                        [useDefaultFeedbackSuggestionBadgeText]="useDefaultFeedbackSuggestionBadgeText"
+                    ></jhi-unreferenced-feedback-detail>
+                </div>
+            }
+            @for (suggestion of feedbackSuggestions; track suggestion) {
+                <div class="col-12 col-lg-6 col-xl-6">
+                    <jhi-unreferenced-feedback-detail
+                        [feedback]="suggestion"
+                        [isSuggestion]="true"
+                        [readOnly]="true"
+                        (onAcceptSuggestion)="acceptSuggestion($event)"
+                        (onDiscardSuggestion)="discardSuggestion($event)"
+                        [useDefaultFeedbackSuggestionBadgeText]="useDefaultFeedbackSuggestionBadgeText"
+                    ></jhi-unreferenced-feedback-detail>
+                </div>
+            }
         </div>
     </div>
 </div>

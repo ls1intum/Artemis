@@ -14,17 +14,18 @@
     [class.highlighted]="textBlockRef.highlighted"
 ></span>
 <!-- Display Feedback Editor -->
-<jhi-textblock-feedback-editor
-    *ngIf="textBlockRef.feedback || selected"
-    [textBlock]="textBlockRef.block!"
-    [feedback]="textBlockRef.feedback!"
-    [class.active]="selected"
-    class="guided-tour-text-assessment"
-    (click)="select(false)"
-    (onFocus)="select(false)"
-    (close)="unselect()"
-    (feedbackChange)="feedbackDidChange()"
-    [readOnly]="readOnly"
-    [highlightDifferences]="highlightDifferences"
-    [criteria]="criteria"
-></jhi-textblock-feedback-editor>
+@if (textBlockRef.feedback || selected) {
+    <jhi-textblock-feedback-editor
+        [textBlock]="textBlockRef.block!"
+        [feedback]="textBlockRef.feedback!"
+        [class.active]="selected"
+        class="guided-tour-text-assessment"
+        (click)="select(false)"
+        (onFocus)="select(false)"
+        (close)="unselect()"
+        (feedbackChange)="feedbackDidChange()"
+        [readOnly]="readOnly"
+        [highlightDifferences]="highlightDifferences"
+        [criteria]="criteria"
+    ></jhi-textblock-feedback-editor>
+}

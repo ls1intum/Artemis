@@ -6,7 +6,8 @@
     </div>
     <!-- Todo: ButtonRadio timeframe selector -->
     <div class="col-12">
-        <form class="row" *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
+        &#64; if (form) &#123;
+        <form class="row" [formGroup]="form" (ngSubmit)="submitForm()">
             <div class="btn-group" role="group">
                 <input type="radio" class="btn-check" name="timeFrame" id="FreePeriod" autocomplete="off" (click)="setTimeFrame(TimeFrame.Period)" />
                 <label class="btn btn-outline-primary" for="FreePeriod">{{ 'artemisApp.forms.tutorialFreePeriodForm.timeFrame.period' | artemisTranslate }}</label>
@@ -19,107 +20,97 @@
                     'artemisApp.forms.tutorialFreePeriodForm.timeFrame.periodWithinDay' | artemisTranslate
                 }}</label>
             </div>
+
             <!-- Date -->
             <!--Todo: display correct labels for different timeframes-->
-            <div *ngIf="TimeFrameControl != TimeFrame.Period">
+            <div>
+                &#64; if (TimeFrameControl != TimeFrame.Period) &#123;
                 <label class="form-label" for="startDate">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.label' | artemisTranslate }}</label>
-            </div>
-            <div *ngIf="TimeFrameControl == TimeFrame.Period">
+                &#125; &#64; else &#123;
                 <label class="form-label" for="startDate">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStart' | artemisTranslate }}</label>
+                &#125;
+                <div class="input-group">
+                    <input formControlName="startDate" required [owlDateTime]="startDate" class="d-none" />
+                    <input
+                        name="startDate"
+                        id="startDate"
+                        required
+                        [class.is-invalid]="isStartDateInvalid"
+                        (focus)="markStartDateAsTouched()"
+                        [value]="startDateControl?.value | artemisDate: 'long-date' : false : undefined : true"
+                        [owlDateTimeTrigger]="startDate"
+                        readonly
+                        class="form-control"
+                    />
+                    <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="startDate"><fa-icon [icon]="faCalendarAlt"></fa-icon></button>
+                    <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #startDate [pickerMode]="'dialog'"></owl-date-time>
+                </div>
+                &#64; if (startDateControl?.invalid && (startDateControl?.dirty || startDateControl?.touched) && startDateControl?.errors?.required) &#123;
+                <div class="alert alert-danger">
+                    {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredDateError' | artemisTranslate }}
+                </div>
+                &#125;
             </div>
-
+            <!--Todo: EndDate selector and lables. Where is the endDate saved before submitting the form?-->
+            &#64; if (TimeFrameControl == TimeFrame.Period) &#123;
+            <label class="form-label" for="endDate">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEnd' | artemisTranslate }}</label>
             <div class="input-group">
-                <input formControlName="startDate" required [owlDateTime]="startDate" class="d-none" />
+                <input formControlName="endDate" [(ngModel)]="formData.endDate" required [owlDateTime]="endDate" class="d-none" />
                 <input
-                    name="startDate"
-                    id="startDate"
+                    name="endDate"
+                    id="endDate"
                     required
-                    [class.is-invalid]="isStartDateInvalid"
-                    (focus)="markStartDateAsTouched()"
-                    [value]="startDateControl?.value | artemisDate: 'long-date' : false : undefined : true"
-                    [owlDateTimeTrigger]="startDate"
+                    [class.is-invalid]="isEndDateInvalid"
+                    (focus)="markEndDateAsTouched()"
+                    [value]="endDateControl?.value | artemisDate: 'long-date' : false : undefined : true"
+                    [owlDateTimeTrigger]="endDate"
                     readonly
                     class="form-control"
                 />
-                <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="startDate">
+                <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="endDate">
                     <fa-icon [icon]="faCalendarAlt"></fa-icon>
                 </button>
-                <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #startDate [pickerMode]="'dialog'"></owl-date-time>
+                <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #endDate [pickerMode]="'dialog'"></owl-date-time>
             </div>
-            <div *ngIf="startDateControl?.invalid && (startDateControl?.dirty || startDateControl?.touched)" class="alert alert-danger">
-                <div *ngIf="startDateControl?.errors?.required">
-                    {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredDateError' | artemisTranslate }}
-                </div>
+            &#64; if(endDateControl?.invalid && (endDateControl?.dirty || endDateControl?.touched) && endDateControl?.errors?.required) &#123;
+            <div class="alert alert-danger">
+                {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredEndDateError' | artemisTranslate }}
             </div>
-
-            <!--            Todo: EndDate selector and lables. Where is the endDate saved before submitting the form?-->
-            <div *ngIf="TimeFrameControl == TimeFrame.Period">
-                <label class="form-label" for="endDate">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEnd' | artemisTranslate }}</label>
-                <div class="input-group">
-                    <input formControlName="endDate" [(ngModel)]="formData.endDate" required [owlDateTime]="endDate" class="d-none" />
-                    <input
-                        name="endDate"
-                        id="endDate"
-                        required
-                        [class.is-invalid]="isEndDateInvalid"
-                        (focus)="markEndDateAsTouched()"
-                        [value]="endDateControl?.value | artemisDate: 'long-date' : false : undefined : true"
-                        [owlDateTimeTrigger]="endDate"
-                        readonly
-                        class="form-control"
-                    />
-                    <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="endDate">
-                        <fa-icon [icon]="faCalendarAlt"></fa-icon>
-                    </button>
-                    <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #endDate [pickerMode]="'dialog'"></owl-date-time>
-                </div>
-                <div *ngIf="endDateControl?.invalid && (endDateControl?.dirty || endDateControl?.touched)" class="alert alert-danger">
-                    <div *ngIf="endDateControl?.errors?.required">
-                        {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredEndDateError' | artemisTranslate }}
-                    </div>
-                </div>
-                <div *ngIf="endDateControl?.dirty && !isStartBeforeEnd" class="alert alert-danger">
-                    {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError' | artemisTranslate }}
-                </div>
+            &#125; else if (endDateControl?.dirty && !isStartBeforeEnd) &#123;
+            <div class="alert alert-danger">
+                {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError' | artemisTranslate }}
             </div>
+            &#125;
 
             <!--Todo: Hour selectors for PeriodWithinDay-->
-            <div *ngIf="TimeFrameControl == TimeFrame.PeriodWithinDay">
-                <label class="form-label" for="startTime">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStartTime' | artemisTranslate }}</label>
-                <div class="input-group">
-                    <input formControlName="startTime" [(ngModel)]="formData.startTime" required [owlDateTime]="startTime" class="d-none" />
-                    <input
-                        name="startTime"
-                        id="startTime"
-                        required
-                        (focus)="markStartTimeAsTouched()"
-                        [owlDateTimeTrigger]="startTime"
-                        [owlDateTime]="startTime"
-                        readonly
-                        class="form-control"
-                    />
-                    <owl-date-time [pickerType]="'timer'" #startTime [pickerMode]="'dialog'"></owl-date-time>
-                </div>
-
-                <label class="form-label" for="endTime">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEndTime' | artemisTranslate }}</label>
-                <div class="input-group">
-                    <input formControlName="endTime" [(ngModel)]="formData.endTime" required [owlDateTime]="endTime" class="d-none" />
-                    <input
-                        name="endTime"
-                        id="endTime"
-                        required
-                        (focus)="markEndTimeAsTouched()"
-                        [owlDateTimeTrigger]="endTime"
-                        [owlDateTime]="endTime"
-                        readonly
-                        class="form-control"
-                    />
-                    <owl-date-time [pickerType]="'timer'" #endTime [pickerMode]="'dialog'"></owl-date-time>
-                </div>
-                <div *ngIf="endTimeControl?.dirty && startTimeControl?.dirty && !isStartBeforeEnd" class="alert alert-danger">
-                    {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError' | artemisTranslate }}
-                </div>
+            &#64; if (TimeFrameControl == TimeFrame.PeriodWithinDay) &#123;
+            <label class="form-label" for="startTime">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStartTime' | artemisTranslate }}</label>
+            <div class="input-group">
+                <input formControlName="startTime" [(ngModel)]="formData.startTime" required [owlDateTime]="startTime" class="d-none" />
+                <input
+                    name="startTime"
+                    id="startTime"
+                    required
+                    (focus)="markStartTimeAsTouched()"
+                    [owlDateTimeTrigger]="startTime"
+                    [owlDateTime]="startTime"
+                    readonly
+                    class="form-control"
+                />
+                <owl-date-time [pickerType]="'timer'" #startTime [pickerMode]="'dialog'"></owl-date-time>
             </div>
+
+            <label class="form-label" for="endTime">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEndTime' | artemisTranslate }}</label>
+            <div class="input-group">
+                <input formControlName="endTime" [(ngModel)]="formData.endTime" required [owlDateTime]="endTime" class="d-none" />
+                <input name="endTime" id="endTime" required (focus)="markEndTimeAsTouched()" [owlDateTimeTrigger]="endTime" [owlDateTime]="endTime" readonly class="form-control" />
+                <owl-date-time [pickerType]="'timer'" #endTime [pickerMode]="'dialog'"></owl-date-time>
+            </div>
+            &#64; if (endTimeControl?.dirty && startTimeControl?.dirty && !isStartBeforeEnd) &#123;
+            <div class="alert alert-danger">
+                {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError' | artemisTranslate }}
+            </div>
+            &#125;
 
             <!-- Reason -->
             <div class="form-group">
@@ -131,11 +122,11 @@
                     formControlName="reason"
                     [placeholder]="'artemisApp.forms.tutorialFreePeriodForm.reasonInput.placeholder' | artemisTranslate"
                 ></textarea>
-                <div *ngIf="reasonControl?.invalid && (reasonControl?.dirty || reasonControl?.touched)" class="alert alert-danger">
-                    <div *ngIf="reasonControl?.errors?.maxlength">
-                        {{ 'artemisApp.forms.tutorialFreePeriodForm.reasonInput.maxLengthValidationError' | artemisTranslate: { max: '256' } }}
-                    </div>
+                &#64; if (reasonControl?.invalid && (reasonControl?.dirty || reasonControl?.touched && reasonControl?.errors?.maxlength)) &#123;
+                <div class="alert alert-danger">
+                    {{ 'artemisApp.forms.tutorialFreePeriodForm.reasonInput.maxLengthValidationError' | artemisTranslate: { max: '256' } }}
                 </div>
+                &#125;
             </div>
             <div class="row mt-2">
                 <div class="col-12">
@@ -145,5 +136,6 @@
                 </div>
             </div>
         </form>
+        &#125;
     </div>
 </div>

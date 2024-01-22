@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.repository.metis;
 
 import static de.tum.in.www1.artemis.repository.specs.MessageSpecs.*;
-import static de.tum.in.www1.artemis.repository.specs.PostSpecs.*;
 
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.data.domain.Page;
@@ -16,7 +16,6 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.repository.specs.MessageSpecs;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -36,7 +35,7 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
      */
     default Page<Post> findMessages(PostContextFilter postContextFilter, Pageable pageable, long userId) {
         Specification<Post> specification = Specification.where(getConversationSpecification(postContextFilter.getConversationId()))
-                .and(MessageSpecs.getSearchTextSpecification(postContextFilter.getSearchText())).and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId))
+                .and(getSearchTextSpecification(postContextFilter.getSearchText())).and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId))
                 .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId))
                 .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved()))
                 .and(getSortSpecification(true, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder()));
@@ -54,7 +53,7 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
      */
     default Page<Post> findCourseWideMessages(PostContextFilter postContextFilter, Pageable pageable, long userId) {
         Specification<Post> specification = Specification.where(getCourseWideChannelsSpecification(postContextFilter.getCourseId()))
-                .and(getConversationsSpecification(postContextFilter.getCourseWideChannelIds())).and(MessageSpecs.getSearchTextSpecification(postContextFilter.getSearchText()))
+                .and(getConversationsSpecification(postContextFilter.getCourseWideChannelIds())).and(getSearchTextSpecification(postContextFilter.getSearchText()))
                 .and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId))
                 .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId))
                 .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved()))
@@ -78,4 +77,17 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
             WHERE p.id = :postId AND answer.author = cp.user
             """)
     Set<User> findUsersWhoRepliedInMessage(@Param("postId") Long postId);
+
+    /**
+     * Finds tags of course-wide messages
+     *
+     * @param courseId the course
+     * @return list of tags
+     */
+    @Query("""
+            SELECT DISTINCT tag FROM Post post
+            LEFT JOIN post.tags tag LEFT JOIN Channel channel ON channel.id = post.conversation.id
+            WHERE channel.course.id = :courseId and channel.isCourseWide = true
+            """)
+    List<String> findPostTagsForCourse(@Param("courseId") Long courseId);
 }

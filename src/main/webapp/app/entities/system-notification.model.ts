@@ -1,5 +1,6 @@
 import dayjs from 'dayjs/esm';
 import { Notification, NotificationType } from 'app/entities/notification.model';
+import { Post } from 'app/entities/metis/post.model';
 
 export const enum SystemNotificationType {
     WARNING = 'WARNING',
@@ -12,5 +13,13 @@ export class SystemNotification extends Notification {
 
     constructor() {
         super(NotificationType.SYSTEM);
+    }
+}
+
+export class ConversationNotification extends Notification {
+    public message: Post;
+
+    constructor() {
+        super(NotificationType.CONVERSATION);
     }
 }

@@ -1,5 +1,7 @@
 <div [hidden]="buttonLoading">
-    <fa-icon *ngIf="buttonIcon" [icon]="buttonIcon"></fa-icon>
+    @if (buttonIcon) {
+        <fa-icon [icon]="buttonIcon"></fa-icon>
+    }
     &nbsp;
     <span [ngClass]="{ 'd-none': hideLabelMobile, 'd-md-inline': hideLabelMobile }">{{ buttonLabel }}</span>
 </div>

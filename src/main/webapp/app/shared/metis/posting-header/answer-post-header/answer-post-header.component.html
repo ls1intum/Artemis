@@ -7,52 +7,59 @@
             <span class="posting-author">
                 {{ posting.author!.name }}
             </span>
-            <span class="today-flag" *ngIf="postingIsOfToday">{{ todayFlag | artemisTranslate }}</span>
+            @if (postingIsOfToday) {
+                <span class="today-flag">{{ todayFlag | artemisTranslate }}</span>
+            }
             <span [disableTooltip]="postingIsOfToday" [ngbTooltip]="posting.creationDate | artemisDate: 'time'">
                 {{ postingIsOfToday ? (posting.creationDate | artemisDate: 'time') : (posting.creationDate | artemisDate: 'short-date') }}
             </span>
         </span>
-        <fa-icon
-            *ngIf="mayEditOrDelete"
-            size="xs"
-            class="ms-1 editIcon clickable icon"
-            [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
-            [icon]="faPencilAlt"
-            (click)="openPostingCreateEditModal.emit()"
-        ></fa-icon>
-        <jhi-confirm-icon
-            *ngIf="mayEditOrDelete"
-            iconSize="xs"
-            (confirmEvent)="deletePosting()"
-            [ngClass]="'deleteIcon clickable icon'"
-            [initialTooltip]="'artemisApp.metis.deleteAnswer' | artemisTranslate"
-            [confirmTooltip]="'artemisApp.metis.confirmDeleteAnswer' | artemisTranslate"
-        ></jhi-confirm-icon>
-        <span
-            *ngIf="!!isCourseMessagesPage && (!lastReadDate || (lastReadDate && posting.creationDate && posting.creationDate.isAfter(lastReadDate))) && !isAuthorOfPosting"
-            class="badge bg-secondary hideAfter5Seconds"
-            >{{ 'global.generic.new' | artemisTranslate }}</span
-        >
+        @if (mayEditOrDelete) {
+            <fa-icon
+                size="xs"
+                class="ms-1 editIcon clickable icon"
+                [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
+                [icon]="faPencilAlt"
+                (click)="openPostingCreateEditModal.emit()"
+            ></fa-icon>
+        }
+        @if (mayEditOrDelete) {
+            <jhi-confirm-icon
+                iconSize="xs"
+                (confirmEvent)="deletePosting()"
+                [ngClass]="'deleteIcon clickable icon'"
+                [initialTooltip]="'artemisApp.metis.deleteAnswer' | artemisTranslate"
+                [confirmTooltip]="'artemisApp.metis.confirmDeleteAnswer' | artemisTranslate"
+            ></jhi-confirm-icon>
+        }
+        @if (!!isCourseMessagesPage && (!lastReadDate || (lastReadDate && posting.creationDate && posting.creationDate.isAfter(lastReadDate))) && !isAuthorOfPosting) {
+            <span class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</span>
+        }
     </div>
-    <ng-template #notResolved>
-        <div *ngIf="isAtLeastTutorInCourse || isAuthorOfOriginalPost">
-            <fa-icon class="icon notResolved" [icon]="faCheck" [ngbTooltip]="'artemisApp.metis.markAsResolvingAnswerTooltip' | artemisTranslate"> </fa-icon>
-        </div>
-    </ng-template>
-    <div *ngIf="!isAnswerOfAnnouncement" class="col-auto ps-0">
-        <div id="toggleElement" class="resolve" [ngClass]="isAtLeastTutorInCourse || isAuthorOfOriginalPost ? 'clickable' : ''" (click)="toggleResolvesPost()">
-            <div *ngIf="posting.resolvesPost; else notResolved">
-                <fa-icon
-                    class="resolved"
-                    [icon]="faCheck"
-                    [ngbTooltip]="
-                        isAtLeastTutorInCourse || isAuthorOfOriginalPost
-                            ? ('artemisApp.metis.unmarkAsResolvingAnswerTooltip' | artemisTranslate)
-                            : ('artemisApp.metis.resolvingAnswerTooltip' | artemisTranslate)
-                    "
-                >
-                </fa-icon>
+    @if (!isAnswerOfAnnouncement) {
+        <div class="col-auto ps-0">
+            <div id="toggleElement" class="resolve" [ngClass]="isAtLeastTutorInCourse || isAuthorOfOriginalPost ? 'clickable' : ''" (click)="toggleResolvesPost()">
+                @if (posting.resolvesPost) {
+                    <div>
+                        <fa-icon
+                            class="resolved"
+                            [icon]="faCheck"
+                            [ngbTooltip]="
+                                isAtLeastTutorInCourse || isAuthorOfOriginalPost
+                                    ? ('artemisApp.metis.unmarkAsResolvingAnswerTooltip' | artemisTranslate)
+                                    : ('artemisApp.metis.resolvingAnswerTooltip' | artemisTranslate)
+                            "
+                        >
+                        </fa-icon>
+                    </div>
+                } @else {
+                    @if (isAtLeastTutorInCourse || isAuthorOfOriginalPost) {
+                        <div>
+                            <fa-icon class="icon notResolved" [icon]="faCheck" [ngbTooltip]="'artemisApp.metis.markAsResolvingAnswerTooltip' | artemisTranslate"> </fa-icon>
+                        </div>
+                    }
+                }
             </div>
         </div>
-    </div>
+    }
 </div>

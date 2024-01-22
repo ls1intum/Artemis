@@ -13,4 +13,6 @@
         </jhi-post>
     </div>
 </div>
-<div *ngIf="!isCourseMessagesPage" class="post-separation-line"></div>
+@if (!isCourseMessagesPage) {
+    <div class="post-separation-line"></div>
+}

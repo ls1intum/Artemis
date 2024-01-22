@@ -2,10 +2,11 @@
     <div ngbAccordionItem #fileDiffPanel="ngbAccordionItem" [collapsed]="false">
         <div ngbAccordionHeader class="d-flex align-items-center justify-content-between">
             <div class="my-2 ps-1">
-                <div *ngIf="filePath && previousFilePath && filePath !== previousFilePath; else oneFileName">{{ previousFilePath }} → {{ filePath }}</div>
-                <ng-template #oneFileName>
+                @if (filePath && previousFilePath && filePath !== previousFilePath) {
+                    <div>{{ previousFilePath }} → {{ filePath }}</div>
+                } @else {
                     {{ filePath || previousFilePath }}
-                </ng-template>
+                }
             </div>
             <div>
                 <jhi-git-diff-line-stat

@@ -1,49 +1,56 @@
 <!--resizable container-->
-<jhi-resizeable-container class="col-12" *ngIf="exercise" [examTimeline]="examTimeline">
-    <!--region Left Panel-->
-    <span class="exercise-title" left-header>{{ examTimeline ? exercise.title : exercise?.exerciseGroup?.title ?? '-' }}</span>
-    <!-- prettier-ignore -->
-    <span left-header>&nbsp;[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}<span
-        *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>] <jhi-included-in-score-badge
-        *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-        [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge></span>
-
-    <div left-body class="text-editor-grid mt-4 ps-2 pb-2 w-100">
-        <div class="grid-area-main">
-            <div>
-                <span class="badge bg-primary mb-2">
-                    {{ 'artemisApp.textExercise.wordCount' | artemisTranslate: { count: wordCount } }}
-                </span>
-                <span class="badge bg-primary mb-2">
-                    {{ 'artemisApp.textExercise.characterCount' | artemisTranslate: { count: characterCount } }}
-                </span>
+@if (exercise) {
+    <jhi-resizeable-container class="col-12" [examTimeline]="examTimeline">
+        <!--region Left Panel-->
+        <span class="exercise-title" left-header>{{ examTimeline ? exercise.title : exercise?.exerciseGroup?.title ?? '-' }}</span>
+        <!-- prettier-ignore -->
+        <span left-header>&nbsp;[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}@if (exercise.bonusPoints) {
+      <span
+      >, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>
+      }] @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+      <jhi-included-in-score-badge
+      [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
+    }</span>
+        <div left-body class="text-editor-grid mt-4 ps-2 pb-2 w-100">
+            <div class="grid-area-main">
+                <div>
+                    <span class="badge bg-primary mb-2">
+                        {{ 'artemisApp.textExercise.wordCount' | artemisTranslate: { count: wordCount } }}
+                    </span>
+                    <span class="badge bg-primary mb-2">
+                        {{ 'artemisApp.textExercise.characterCount' | artemisTranslate: { count: characterCount } }}
+                    </span>
+                </div>
+                <ng-container>
+                    <textarea
+                        #textEditor
+                        id="text-editor"
+                        class="text-editor-textarea"
+                        [maxLength]="maxCharacterCount"
+                        [(ngModel)]="answer"
+                        [readonly]="readonly || !studentSubmission"
+                        [disabled]="!studentSubmission"
+                        (keydown.tab)="onTextEditorTab(textEditor, $event)"
+                        (input)="onTextEditorInput($event)"
+                    ></textarea>
+                </ng-container>
             </div>
-            <ng-container>
-                <textarea
-                    #textEditor
-                    id="text-editor"
-                    class="text-editor-textarea"
-                    [maxLength]="maxCharacterCount"
-                    [(ngModel)]="answer"
-                    [readonly]="readonly || !studentSubmission"
-                    [disabled]="!studentSubmission"
-                    (keydown.tab)="onTextEditorTab(textEditor, $event)"
-                    (input)="onTextEditorInput($event)"
-                ></textarea>
-            </ng-container>
         </div>
-    </div>
-    <!--endregion-->
-    <!--region Right Panel-->
-    <fa-icon right-header [icon]="farListAlt"></fa-icon>&nbsp;
-    <span right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
-
-    <!-- problem statement update & difference highlighter -->
-    <jhi-exam-exercise-update-highlighter *ngIf="exercise" [exercise]="exercise" (problemStatementUpdateEvent)="updateProblemStatement($event)">
-    </jhi-exam-exercise-update-highlighter>
-
-    <p right-body class="markdown-preview mb-3" *ngIf="exercise.problemStatement">
-        <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>
-    </p>
-    <!--endregion-->
-</jhi-resizeable-container>
+        <!--endregion-->
+        <!--region Right Panel-->
+        <fa-icon right-header [icon]="farListAlt"></fa-icon>&nbsp;
+        <span right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
+        <!-- problem statement update & difference highlighter -->
+        <ng-container right-body>
+            @if (exercise) {
+                <jhi-exam-exercise-update-highlighter [exercise]="exercise" (problemStatementUpdateEvent)="updateProblemStatement($event)"> </jhi-exam-exercise-update-highlighter>
+            }
+            @if (exercise.problemStatement) {
+                <p class="markdown-preview mb-3">
+                    <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>
+                </p>
+            }
+        </ng-container>
+        <!--endregion-->
+    </jhi-resizeable-container>
+}

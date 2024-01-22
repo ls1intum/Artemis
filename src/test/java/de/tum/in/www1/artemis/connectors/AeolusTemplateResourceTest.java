@@ -39,10 +39,14 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAeolusTemplateFile() throws Exception {
         Map<String, Integer> templatesWithExpectedScriptActions = new HashMap<>();
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE", 1);
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?sequentialRuns=true", 1);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE", 2);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?sequentialRuns=true", 3);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?staticAnalysis=true", 3);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?staticAnalysis=true&testCoverage=true", 3);
         templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN", 1);
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?sequentialRuns=true", 1);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?sequentialRuns=true", 2);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?staticAnalysis=true", 2);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?staticAnalysis=true&testCoverage=true", 3);
         templatesWithExpectedScriptActions.put("ASSEMBLER", 4);
         templatesWithExpectedScriptActions.put("C/FACT", 3);
         templatesWithExpectedScriptActions.put("C/GCC", 4);
@@ -78,10 +82,22 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     @Test()
     void testValidWindfileDeserializationWithClass() {
-        String invalidWindfile = "{\n\"api\": \"v0.0.1\",\n\"metadata\": {\n\"name\": \"example windfile\",\n\"description\": \"example windfile\",\n\"id\": \"example-windfile\"\n},\n\"actions\": [\n{\n\"name\": \"valid-action\",\n\"class\": \"script-action\",\n\"script\": \"echo $PATH\",\n\"runAlways\": true\n}\n]\n}";
-        Windfile windfile = Windfile.deserialize(invalidWindfile);
+        String validWindfile = "{\n\"api\": \"v0.0.1\",\n\"metadata\": {\n\"name\": \"example windfile\",\n\"description\": \"example windfile\",\n\"id\": \"example-windfile\"\n},\n\"actions\": [\n{\n\"name\": \"valid-action\",\n\"class\": \"script-action\",\n\"script\": \"echo $PATH\",\n\"runAlways\": true\n},{\n\"name\": \"valid-action1\",\n\"platform\": \"bamboo\",\n\"runAlways\": true\n},{\n\"name\": \"valid-action2\",\n\"script\": \"bash script\",\n\"runAlways\": true\n}\n]\n}";
+        Windfile windfile = Windfile.deserialize(validWindfile);
         assertThat(windfile).isNotNull();
         assertThat(windfile.getActions().get(0)).isInstanceOf(ScriptAction.class);
+    }
+
+    @Test()
+    void testValidWindfileWithInvalidAction() {
+        String invalidWindfile = "{\n\"api\": \"v0.0.1\",\n\"metadata\": {\n\"name\": \"example windfile\",\n\"description\": \"example windfile\",\n\"id\": \"example-windfile\"\n},\n\"actions\": [\n{\n\"name\": \"valid-action\",\n\"clsas\": \"script-action\",\n\"scri\": \"echo $PATH\",\n\"runAlways\": true\n}\n]\n}";
+        try {
+            Windfile.deserialize(invalidWindfile);
+            fail("Should have thrown an exception as there is no script or platform in the actions object");
+        }
+        catch (JsonParseException exception) {
+            assertThat(exception.getMessage()).isEqualTo("Cannot determine type");
+        }
     }
 
     @Test

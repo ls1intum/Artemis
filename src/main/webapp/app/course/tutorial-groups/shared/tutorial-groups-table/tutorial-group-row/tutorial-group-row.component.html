@@ -1,7 +1,9 @@
 <ng-container>
-    <td *ngIf="showIdColumn">
-        <a [id]="'id-' + tutorialGroup.id" [routerLink]="['./', tutorialGroup.id!]" class="link-primary">{{ tutorialGroup.id }}</a>
-    </td>
+    @if (showIdColumn) {
+        <td>
+            <a [id]="'id-' + tutorialGroup.id" [routerLink]="['./', tutorialGroup.id!]" class="link-primary">{{ tutorialGroup.id }}</a>
+        </td>
+    }
     <td>
         <a [routerLink]="['./', tutorialGroup.id!]" class="link-primary">
             <span class="d-inline-block text-truncate title"> {{ tutorialGroup.title }} </span>
@@ -13,43 +15,52 @@
     <td>{{ (tutorialGroup.capacity ?? '') + ' / ' + (tutorialGroup.numberOfRegisteredUsers ?? '') }}</td>
     <td>{{ tutorialGroup.isUserTutor ? ('global.generic.you' | artemisTranslate) : tutorialGroup.teachingAssistantName }}</td>
     <td>
-        <span *ngIf="tutorialGroup.tutorialGroupSchedule; else no_schedule">
-            <!-- Only include repetition frequency if not the default of once per week -->
-            {{ tutorialGroup.tutorialGroupSchedule | meetingPattern: tutorialGroup.tutorialGroupSchedule.repetitionFrequency !== 1 }}
-        </span>
-        <ng-template #no_schedule></ng-template>
+        @if (tutorialGroup.tutorialGroupSchedule) {
+            <span>
+                <!-- Only include repetition frequency if not the default of once per week -->
+                {{ tutorialGroup.tutorialGroupSchedule | meetingPattern: tutorialGroup.tutorialGroupSchedule.repetitionFrequency !== 1 }}
+            </span>
+        } @else {}
     </td>
-    <td *ngIf="mixOfOfflineAndOfflineTutorialGroups">
-        {{ (tutorialGroup.isOnline ? 'artemisApp.generic.online' : 'artemisApp.generic.offline') | artemisTranslate }}
-    </td>
-    <td *ngIf="mifOfDifferentLanguages">
-        {{ tutorialGroup.language ? tutorialGroup.language : '' }}
-    </td>
-    <td *ngIf="tutorialGroupsSplitAcrossMultipleCampuses">
-        <span class="d-inline-block text-truncate long-text"> {{ tutorialGroup.campus }} </span>
-    </td>
+    @if (mixOfOfflineAndOfflineTutorialGroups) {
+        <td>
+            {{ (tutorialGroup.isOnline ? 'artemisApp.generic.online' : 'artemisApp.generic.offline') | artemisTranslate }}
+        </td>
+    }
+    @if (mifOfDifferentLanguages) {
+        <td>
+            {{ tutorialGroup.language ? tutorialGroup.language : '' }}
+        </td>
+    }
+    @if (tutorialGroupsSplitAcrossMultipleCampuses) {
+        <td>
+            <span class="d-inline-block text-truncate long-text"> {{ tutorialGroup.campus }} </span>
+        </td>
+    }
     <td>
-        <span *ngIf="tutorialGroup.nextSession; else no_session">
-            {{ tutorialGroup.nextSession.start | artemisDate: 'short-date' : false : timeZone! : true }}
-            {{ tutorialGroup.nextSession.start | artemisDate: 'time' : false : timeZone! }} -
-            {{ tutorialGroup.nextSession.end | artemisDate: 'time' : false : timeZone! }}
-        </span>
-        <ng-template #no_session></ng-template>
+        @if (tutorialGroup.nextSession) {
+            <span>
+                {{ tutorialGroup.nextSession.start | artemisDate: 'short-date' : false : timeZone! : true }}
+                {{ tutorialGroup.nextSession.start | artemisDate: 'time' : false : timeZone! }} -
+                {{ tutorialGroup.nextSession.end | artemisDate: 'time' : false : timeZone! }}
+            </span>
+        } @else {}
     </td>
-    <td *ngIf="showChannelColumn && tutorialGroup.channel">
-        <ng-container *ngIf="tutorialGroup.channel.isMember; else notChannelMember">
-            <a
-                [id]="'channel-' + tutorialGroup.id + '-' + tutorialGroup.channel.id"
-                [routerLink]="['/courses', course.id!, 'messages']"
-                [queryParams]="{ conversationId: tutorialGroup.channel.id }"
-                class="link-primary"
-                >{{ tutorialGroup.channel.name }}</a
-            >
-        </ng-container>
-        <ng-template #notChannelMember>
-            <span>{{ tutorialGroup.channel.name }}</span>
-        </ng-template>
-    </td>
+    @if (showChannelColumn && tutorialGroup.channel) {
+        <td>
+            @if (tutorialGroup.channel.isMember) {
+                <a
+                    [id]="'channel-' + tutorialGroup.id + '-' + tutorialGroup.channel.id"
+                    [routerLink]="['/courses', course.id!, 'messages']"
+                    [queryParams]="{ conversationId: tutorialGroup.channel.id }"
+                    class="link-primary"
+                    >{{ tutorialGroup.channel.name }}</a
+                >
+            } @else {
+                <span>{{ tutorialGroup.channel.name }}</span>
+            }
+        </td>
+    }
     <td>
         <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"></ng-template>
     </td>

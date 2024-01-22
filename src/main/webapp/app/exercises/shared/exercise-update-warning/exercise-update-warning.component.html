@@ -1,25 +1,34 @@
 <div style="padding: 20px">
     <div class="warning">
         <div><span jhiTranslate="artemisApp.exercise.update.warning.warning"></span></div>
-
         <ul class="warning-problem">
-            <li *ngIf="creditChanged" class="warning-problem-element"><span jhiTranslate="artemisApp.exercise.update.warning.creditChanged"></span></li>
-            <li *ngIf="usageCountChanged" class="warning-problem-element"><span jhiTranslate="artemisApp.exercise.update.warning.usageCountChanged"></span></li>
-            <li *ngIf="instructionDeleted" class="warning-problem-element"><span jhiTranslate="artemisApp.exercise.update.warning.instructionDeleted"></span></li>
-            <li *ngIf="immediateReleaseWarning" class="warning-problem-element"><span jhiTranslate="{{ immediateReleaseWarning }}"></span></li>
+            @if (creditChanged) {
+                <li class="warning-problem-element"><span jhiTranslate="artemisApp.exercise.update.warning.creditChanged"></span></li>
+            }
+            @if (usageCountChanged) {
+                <li class="warning-problem-element"><span jhiTranslate="artemisApp.exercise.update.warning.usageCountChanged"></span></li>
+            }
+            @if (instructionDeleted) {
+                <li class="warning-problem-element"><span jhiTranslate="artemisApp.exercise.update.warning.instructionDeleted"></span></li>
+            }
+            @if (immediateReleaseWarning) {
+                <li class="warning-problem-element"><span jhiTranslate="{{ immediateReleaseWarning }}"></span></li>
+            }
         </ul>
-
-        <div class="warning-info" *ngIf="instructionDeleted">
-            <input class="form-check-input" type="checkbox" name="deleteFeedback" id="deleteFeedback" [ngModel]="deleteFeedback" (ngModelChange)="toggleDeleteFeedback()" />
-            <label class="form-check-label text-danger" for="deleteFeedback">
-                {{ 'artemisApp.exercise.update.warning.deleteFeedback' | artemisTranslate }}
-            </label>
-        </div>
-
-        <ul class="warning-info" *ngIf="creditChanged || usageCountChanged || instructionDeleted">
-            <li class="warning-info"><span jhiTranslate="artemisApp.exercise.update.warning.problems"></span></li>
-            <li class="warning-info"><span jhiTranslate="artemisApp.exercise.update.warning.information"></span></li>
-        </ul>
+        @if (instructionDeleted) {
+            <div class="warning-info">
+                <input class="form-check-input" type="checkbox" name="deleteFeedback" id="deleteFeedback" [ngModel]="deleteFeedback" (ngModelChange)="toggleDeleteFeedback()" />
+                <label class="form-check-label text-danger" for="deleteFeedback">
+                    {{ 'artemisApp.exercise.update.warning.deleteFeedback' | artemisTranslate }}
+                </label>
+            </div>
+        }
+        @if (creditChanged || usageCountChanged || instructionDeleted) {
+            <ul class="warning-info">
+                <li class="warning-info"><span jhiTranslate="artemisApp.exercise.update.warning.problems"></span></li>
+                <li class="warning-info"><span jhiTranslate="artemisApp.exercise.update.warning.information"></span></li>
+            </ul>
+        }
     </div>
     <div class="edit-modal-footer-content">
         <div class="warning"><span jhiTranslate="artemisApp.exercise.update.warning.confirmText"></span></div>
@@ -28,35 +37,31 @@
                 <fa-icon [icon]="faBan"></fa-icon>
                 <span jhiTranslate="entity.action.cancel"></span>
             </button>
-            <ng-container *ngIf="creditChanged || usageCountChanged || instructionDeleted; else noReevaluation">
-                <button
-                    type="submit"
-                    id="no-reevaluate-button"
-                    (click)="saveExerciseWithoutReevaluation()"
-                    *ngIf="creditChanged || usageCountChanged || instructionDeleted"
-                    [disabled]="instructionDeleted && deleteFeedback"
-                    class="btn btn-warning"
-                >
-                    <fa-icon [icon]="faExclamationTriangle"></fa-icon>
-                    <span jhiTranslate="artemisApp.exercise.update.warning.saveExerciseWithoutReevaluation">Do not re-evaluate</span>
-                </button>
-                <button
-                    type="submit"
-                    id="reevaluate-button"
-                    (click)="reEvaluateExercise()"
-                    *ngIf="creditChanged || usageCountChanged || instructionDeleted"
-                    class="btn btn-success"
-                >
-                    <fa-icon [icon]="faCheck"></fa-icon>
-                    <span jhiTranslate="artemisApp.exercise.update.warning.reevaluateExercise">Re-evaluate</span>
-                </button>
-            </ng-container>
-            <ng-template #noReevaluation>
+            @if (creditChanged || usageCountChanged || instructionDeleted) {
+                @if (creditChanged || usageCountChanged || instructionDeleted) {
+                    <button
+                        type="submit"
+                        id="no-reevaluate-button"
+                        (click)="saveExerciseWithoutReevaluation()"
+                        [disabled]="instructionDeleted && deleteFeedback"
+                        class="btn btn-warning"
+                    >
+                        <fa-icon [icon]="faExclamationTriangle"></fa-icon>
+                        <span jhiTranslate="artemisApp.exercise.update.warning.saveExerciseWithoutReevaluation">Do not re-evaluate</span>
+                    </button>
+                }
+                @if (creditChanged || usageCountChanged || instructionDeleted) {
+                    <button type="submit" id="reevaluate-button" (click)="reEvaluateExercise()" class="btn btn-success">
+                        <fa-icon [icon]="faCheck"></fa-icon>
+                        <span jhiTranslate="artemisApp.exercise.update.warning.reevaluateExercise">Re-evaluate</span>
+                    </button>
+                }
+            } @else {
                 <button type="submit" id="save-button" (click)="saveExerciseWithoutReevaluation()" class="btn btn-primary">
                     <fa-icon [icon]="faCheck"></fa-icon>
                     <span jhiTranslate="entity.action.save">Save</span>
                 </button>
-            </ng-template>
+            }
         </div>
     </div>
 </div>

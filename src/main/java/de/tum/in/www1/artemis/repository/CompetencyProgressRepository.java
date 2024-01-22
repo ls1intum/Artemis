@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -11,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 
 @Repository
@@ -39,6 +38,15 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
                 AND cp.user.id = :userId
             """)
     Optional<CompetencyProgress> findByCompetencyIdAndUserId(@Param("competencyId") Long competencyId, @Param("userId") Long userId);
+
+    @Query("""
+            SELECT cp
+            FROM CompetencyProgress cp
+                LEFT JOIN cp.learningGoal
+            WHERE cp.learningGoal in :competencies
+                AND cp.user.id = :userId
+            """)
+    Set<CompetencyProgress> findByCompetenciesAndUser(@Param("competencies") Collection<Competency> competencies, @Param("userId") Long userId);
 
     @Query("""
             SELECT cp

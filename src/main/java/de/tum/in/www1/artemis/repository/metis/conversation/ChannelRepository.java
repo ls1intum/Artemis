@@ -17,7 +17,7 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
     @Query("""
              SELECT DISTINCT channel
              FROM Channel channel
-             WHERE channel.course.id = :#{#courseId}
+             WHERE channel.course.id = :courseId
              ORDER BY channel.name
             """)
     List<Channel> findChannelsByCourseId(@Param("courseId") Long courseId);
@@ -65,18 +65,20 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
     @Query("""
              SELECT DISTINCT channel
              FROM Channel channel
-             WHERE channel.course.id = :#{#courseId}
-             AND channel.name = :#{#name}
+             WHERE channel.course.id = :courseId
+                 AND channel.name = :name
              ORDER BY channel.name
             """)
     Set<Channel> findChannelByCourseIdAndName(@Param("courseId") Long courseId, @Param("name") String name);
 
+    boolean existsChannelByNameAndCourseId(String name, Long courseId);
+
     @Query("""
              SELECT DISTINCT channel
              FROM Channel channel
-             WHERE channel.course.id = :#{#courseId}
-             AND channel.name = :#{#name}
-             AND channel.id <> :#{#channelId}
+             WHERE channel.course.id = :courseId
+                 AND channel.name = :name
+                 AND channel.id <> :channelId
              ORDER BY channel.name
             """)
     Set<Channel> findChannelByCourseIdAndNameAndIdNot(@Param("courseId") Long courseId, @Param("name") String name, @Param("channelId") Long channelId);

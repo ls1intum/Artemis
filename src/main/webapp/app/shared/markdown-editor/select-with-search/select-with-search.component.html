@@ -4,6 +4,8 @@
     </button>
     <div ngbDropdownAnchor id="anchor" class="invisible-anchor" [style.top]="offsetY" [style.left]="offsetX"></div>
     <div ngbDropdownMenu>
-        <button ngbDropdownItem type="button" *ngFor="let value of values" (click)="setSelection(value)">{{ value.name }}</button>
+        @for (value of values; track value) {
+            <button ngbDropdownItem type="button" (click)="setSelection(value)">{{ value.name }}</button>
+        }
     </div>
 </div>

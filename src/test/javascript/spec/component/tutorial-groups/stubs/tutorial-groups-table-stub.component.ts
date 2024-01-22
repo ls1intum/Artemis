@@ -6,9 +6,11 @@ import { Course } from 'app/entities/course.model';
     selector: 'jhi-tutorial-groups-table',
     template: `
         <div>
-            <div *ngFor="let tutorialGroup of tutorialGroups">
-                <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"></ng-template>
-            </div>
+            @for (tutorialGroup of tutorialGroups; track tutorialGroup) {
+                <div>
+                    <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"></ng-template>
+                </div>
+            }
         </div>
     `,
 })
@@ -43,15 +45,21 @@ export class TutorialGroupsTableStubComponent {
     selector: '[jhi-tutorial-group-row]',
     template: `
         <div>
-            <div *ngIf="showIdColumn">
-                <span>{{ tutorialGroup.id }}</span>
-            </div>
-            <div *ngIf="showChannelColumn">
-                <span>{{ tutorialGroup?.channel?.name || '' }}</span>
-            </div>
-            <div *ngIf="extraColumn">
-                <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"></ng-template>
-            </div>
+            @if (showIdColumn) {
+                <div>
+                    <span>{{ tutorialGroup.id }}</span>
+                </div>
+            }
+            @if (showChannelColumn) {
+                <div>
+                    <span>{{ tutorialGroup?.channel?.name || '' }}</span>
+                </div>
+            }
+            @if (extraColumn) {
+                <div>
+                    <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"></ng-template>
+                </div>
+            }
         </div>
     `,
 })

@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.w3c.dom.Document;
 
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
@@ -32,7 +33,7 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
@@ -45,11 +46,16 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
+import de.tum.in.www1.artemis.service.connectors.localci.scaparser.exception.UnsupportedToolException;
+import de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy.ParserPolicy;
+import de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy.ParserStrategy;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
+import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
+import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -61,7 +67,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Profile("localci")
 public class LocalCIBuildJobExecutionService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIBuildJobExecutionService.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalCIBuildJobExecutionService.class);
 
     private final LocalCIBuildPlanService localCIBuildPlanService;
 
@@ -134,16 +140,16 @@ public class LocalCIBuildJobExecutionService {
      * execute the
      * job.
      *
-     * @param participation          The participation of the repository for which the build job should be executed.
-     * @param commitHash             The commit hash of the commit that should be built. If it is null, the latest commit of the default branch will be built.
-     * @param isPushToTestRepository Defines if the build job is triggered by a push to a test repository
-     * @param containerName          The name of the Docker container that will be used to run the build job.
-     *                                   It needs to be prepared beforehand to stop and remove the container if something goes wrong here.
-     * @param dockerImage            The Docker image that will be used to run the build job.
+     * @param participation               The participation of the repository for which the build job should be executed.
+     * @param commitHash                  The commit hash of the commit that should be built. If it is null, the latest commit of the default branch will be built.
+     * @param isPushToTestOrAuxRepository Defines if the build job is triggered by a push to a test or auxiliary repository
+     * @param containerName               The name of the Docker container that will be used to run the build job.
+     *                                        It needs to be prepared beforehand to stop and remove the container if something goes wrong here.
+     * @param dockerImage                 The Docker image that will be used to run the build job.
      * @return The build result.
      * @throws LocalCIException If some error occurs while preparing or running the build job.
      */
-    public LocalCIBuildResult runBuildJob(ProgrammingExerciseParticipation participation, String commitHash, boolean isPushToTestRepository, String containerName,
+    public LocalCIBuildResult runBuildJob(ProgrammingExerciseParticipation participation, String commitHash, boolean isPushToTestOrAuxRepository, String containerName,
             String dockerImage) {
         // Check if participation has been deleted to cancel the job
         try {
@@ -172,24 +178,24 @@ public class LocalCIBuildJobExecutionService {
         // Retrieve the paths to the repositories that the build job needs.
         // This includes the assignment repository (the one to be tested, e.g. the student's repository, or the template repository), and the tests repository which includes
         // the tests to be executed.
-        LocalVCRepositoryUrl assignmentRepositoryUrl;
-        LocalVCRepositoryUrl testsRepositoryUrl;
-        LocalVCRepositoryUrl[] auxiliaryRepositoriesUrls;
+        LocalVCRepositoryUri assignmentRepositoryUri;
+        LocalVCRepositoryUri testsRepositoryUri;
+        LocalVCRepositoryUri[] auxiliaryRepositoriesUris;
         Path[] auxiliaryRepositoriesPaths;
         String[] auxiliaryRepositoryCheckoutDirectories;
 
         try {
-            assignmentRepositoryUrl = new LocalVCRepositoryUrl(participation.getRepositoryUrl(), localVCBaseUrl);
-            testsRepositoryUrl = new LocalVCRepositoryUrl(participation.getProgrammingExercise().getTestRepositoryUrl(), localVCBaseUrl);
+            assignmentRepositoryUri = new LocalVCRepositoryUri(participation.getRepositoryUri(), localVCBaseUrl);
+            testsRepositoryUri = new LocalVCRepositoryUri(participation.getProgrammingExercise().getTestRepositoryUri(), localVCBaseUrl);
 
             if (!auxiliaryRepositories.isEmpty()) {
-                auxiliaryRepositoriesUrls = new LocalVCRepositoryUrl[auxiliaryRepositories.size()];
+                auxiliaryRepositoriesUris = new LocalVCRepositoryUri[auxiliaryRepositories.size()];
                 auxiliaryRepositoriesPaths = new Path[auxiliaryRepositories.size()];
                 auxiliaryRepositoryCheckoutDirectories = new String[auxiliaryRepositories.size()];
 
                 for (int i = 0; i < auxiliaryRepositories.size(); i++) {
-                    auxiliaryRepositoriesUrls[i] = new LocalVCRepositoryUrl(auxiliaryRepositories.get(i).getRepositoryUrl(), localVCBaseUrl);
-                    auxiliaryRepositoriesPaths[i] = auxiliaryRepositoriesUrls[i].getRepoClonePath(repoClonePath).toAbsolutePath();
+                    auxiliaryRepositoriesUris[i] = new LocalVCRepositoryUri(auxiliaryRepositories.get(i).getRepositoryUri(), localVCBaseUrl);
+                    auxiliaryRepositoriesPaths[i] = auxiliaryRepositoriesUris[i].getRepoClonePath(repoClonePath).toAbsolutePath();
                     auxiliaryRepositoryCheckoutDirectories[i] = auxiliaryRepositories.get(i).getCheckoutDirectory();
                 }
             }
@@ -199,10 +205,11 @@ public class LocalCIBuildJobExecutionService {
             }
         }
         catch (LocalVCInternalException e) {
-            throw new LocalCIException("Error while creating LocalVCRepositoryUrl", e);
+            throw new LocalCIException("Error while creating LocalVCRepositoryUri", e);
         }
-        Path assignmentRepositoryPath = assignmentRepositoryUrl.getRepoClonePath(repoClonePath).toAbsolutePath();
-        Path testsRepositoryPath = testsRepositoryUrl.getRepoClonePath(repoClonePath).toAbsolutePath();
+
+        Path assignmentRepositoryPath = assignmentRepositoryUri.getRepoClonePath(repoClonePath).toAbsolutePath();
+        Path testsRepositoryPath = testsRepositoryUri.getRepoClonePath(repoClonePath).toAbsolutePath();
         Path solutionRepositoryPath = null;
         if (participation.getProgrammingExercise().getCheckoutSolutionRepository()) {
             try {
@@ -212,14 +219,14 @@ public class LocalCIBuildJobExecutionService {
                     if (programmingLanguageFeature.checkoutSolutionRepositoryAllowed()) {
                         var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(participation.getProgrammingExercise().getId());
                         if (solutionParticipation.isPresent()) {
-                            solutionRepositoryPath = new LocalVCRepositoryUrl(solutionParticipation.get().getRepositoryUrl(), localVCBaseUrl).getRepoClonePath(repoClonePath)
+                            solutionRepositoryPath = new LocalVCRepositoryUri(solutionParticipation.get().getRepositoryUri(), localVCBaseUrl).getRepoClonePath(repoClonePath)
                                     .toAbsolutePath();
                         }
                     }
                 }
             }
             catch (Exception e) {
-                throw new LocalCIException("Error while creating solution LocalVCRepositoryUrl", e);
+                throw new LocalCIException("Error while creating solution LocalVCRepositoryUri", e);
             }
         }
 
@@ -230,23 +237,23 @@ public class LocalCIBuildJobExecutionService {
         catch (LocalVCInternalException e) {
             throw new LocalCIException("Error while getting branch of participation", e);
         }
+
         /*
          * If the commit hash is null, this means that the latest commit of the default branch should be built.
          * If this build job is triggered by a push to the test repository, the commit hash reflects changes to the test repository.
          * Thus, we do not checkout the commit hash of the test repository in the assignment repository.
          */
-        if (commitHash != null && !isPushToTestRepository) {
+        if (commitHash != null && !isPushToTestOrAuxRepository) {
             // Clone the assignment repository into a temporary directory with the name of the commit hash and then checkout the commit hash.
             assignmentRepositoryPath = cloneAndCheckoutRepository(participation, commitHash);
         }
 
-        // Create the container from the "ls1tum/artemis-maven-template" image with the local paths to the Git repositories and the shell script bound to it. Also give the
-        // container information about the branch and commit hash to be used.
+        // Create the container from the "ls1tum/artemis-maven-template" image with the local paths to the Git repositories and the shell script bound to it.
         // This does not start the container yet.
-        CreateContainerResponse container = localCIContainerService.configureContainer(containerName, branch, commitHash, dockerImage);
+        CreateContainerResponse container = localCIContainerService.configureContainer(containerName, dockerImage);
 
         return runScriptAndParseResults(participation, containerName, container.getId(), branch, commitHash, assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath,
-                auxiliaryRepositoriesPaths, auxiliaryRepositoryCheckoutDirectories, buildScriptPath, isPushToTestRepository);
+                auxiliaryRepositoriesPaths, auxiliaryRepositoryCheckoutDirectories, buildScriptPath, isPushToTestOrAuxRepository);
     }
 
     /**
@@ -267,6 +274,16 @@ public class LocalCIBuildJobExecutionService {
 
         ProgrammingLanguage programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
 
+        List<String> resultPaths;
+
+        try {
+            resultPaths = getTestResultPaths(participation.getProgrammingExercise());
+        }
+        catch (IllegalArgumentException e) {
+            localCIContainerService.deleteScriptFile(containerName);
+            throw new LocalCIException("Error while getting test result paths", e);
+        }
+
         long timeNanoStart = System.nanoTime();
 
         localCIContainerService.startContainer(containerId);
@@ -281,6 +298,8 @@ public class LocalCIBuildJobExecutionService {
         log.info("Finished running the build script in container {}", containerName);
 
         ZonedDateTime buildCompletedDate = ZonedDateTime.now();
+
+        localCIContainerService.moveResultsToSpecifiedDirectory(containerId, resultPaths, LocalCIContainerService.WORKING_DIRECTORY + LocalCIContainerService.RESULTS_DIRECTORY);
 
         String assignmentRepoCommitHash = commitHash;
         String testRepoCommitHash = "";
@@ -302,14 +321,13 @@ public class LocalCIBuildJobExecutionService {
             return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
 
-        List<String> testResultsPaths = getTestResultPaths(participation.getProgrammingExercise());
-
         // Get an input stream of the test result files.
-        List<TarArchiveInputStream> testResultsTarInputStreams = new ArrayList<>();
+
+        TarArchiveInputStream testResultsTarInputStream;
+
         try {
-            for (String testResultsPath : testResultsPaths) {
-                testResultsTarInputStreams.add(localCIContainerService.getArchiveFromContainer(containerId, testResultsPath));
-            }
+            testResultsTarInputStream = localCIContainerService.getArchiveFromContainer(containerId,
+                    LocalCIContainerService.WORKING_DIRECTORY + LocalCIContainerService.RESULTS_DIRECTORY);
         }
         catch (NotFoundException e) {
             // If the test results are not found, this means that something went wrong during the build and testing of the submission.
@@ -329,7 +347,7 @@ public class LocalCIBuildJobExecutionService {
 
         LocalCIBuildResult buildResult;
         try {
-            buildResult = parseTestResults(testResultsTarInputStreams, branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
+            buildResult = parseTestResults(testResultsTarInputStream, branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
             buildResult.setBuildLogEntries(buildLogEntries);
         }
         catch (IOException | XMLStreamException | IllegalStateException e) {
@@ -339,7 +357,7 @@ public class LocalCIBuildJobExecutionService {
         // Set the build status to "INACTIVE" to indicate that the build is not running anymore.
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);
 
-        log.info("Building and testing submission for repository {} and commit hash {} took {}", participation.getRepositoryUrl(), commitHash,
+        log.info("Building and testing submission for repository {} and commit hash {} took {}", participation.getRepositoryUri(), commitHash,
                 TimeLogUtil.formatDurationFrom(timeNanoStart));
 
         return buildResult;
@@ -347,51 +365,7 @@ public class LocalCIBuildJobExecutionService {
 
     // --- Helper methods ----
 
-    private List<String> getTestResultPaths(ProgrammingExercise programmingExercise) {
-        switch (programmingExercise.getProgrammingLanguage()) {
-            case JAVA, KOTLIN -> {
-                return getJavaKotlinTestResultPaths(programmingExercise);
-            }
-            case PYTHON -> {
-                return getPythonTestResultPaths();
-            }
-            case ASSEMBLER, C, VHDL, HASKELL, OCAML, SWIFT -> {
-                return getCustomTestResultPaths(programmingExercise);
-            }
-            default -> throw new IllegalArgumentException("Programming language " + programmingExercise.getProgrammingLanguage() + " is not supported");
-        }
-    }
-
-    private List<String> getJavaKotlinTestResultPaths(ProgrammingExercise programmingExercise) {
-        List<String> testResultPaths = new ArrayList<>();
-        if (ProjectType.isMavenProject(programmingExercise.getProjectType())) {
-            if (programmingExercise.hasSequentialTestRuns()) {
-                testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/structural/target/surefire-reports");
-                testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/behavior/target/surefire-reports");
-            }
-            else {
-                testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/target/surefire-reports");
-            }
-        }
-        else {
-            if (programmingExercise.hasSequentialTestRuns()) {
-                testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/build/test-results/behaviorTests");
-                testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/build/test-results/structuralTests");
-            }
-            else {
-                testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/build/test-results/test");
-            }
-        }
-        return testResultPaths;
-    }
-
-    private List<String> getPythonTestResultPaths() {
-        List<String> testResultPaths = new ArrayList<>();
-        testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/test-reports");
-        return testResultPaths;
-    }
-
-    private List<String> getCustomTestResultPaths(ProgrammingExercise programmingExercise) {
+    private List<String> getTestResultPaths(ProgrammingExercise programmingExercise) throws IllegalArgumentException {
         List<String> testResultPaths = new ArrayList<>();
         Windfile windfile = programmingExercise.getWindfile();
         if (windfile == null) {
@@ -406,32 +380,37 @@ public class LocalCIBuildJobExecutionService {
         return testResultPaths;
     }
 
-    private LocalCIBuildResult parseTestResults(List<TarArchiveInputStream> testResultsTarInputStreams, String assignmentRepoBranchName, String assignmentRepoCommitHash,
+    private LocalCIBuildResult parseTestResults(TarArchiveInputStream testResultsTarInputStream, String assignmentRepoBranchName, String assignmentRepoCommitHash,
             String testsRepoCommitHash, ZonedDateTime buildCompletedDate) throws IOException, XMLStreamException {
 
         List<LocalCIBuildResult.LocalCITestJobDTO> failedTests = new ArrayList<>();
         List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
+        List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports = new ArrayList<>();
 
         TarArchiveEntry tarEntry;
-        for (TarArchiveInputStream testResultsTarInputStream : testResultsTarInputStreams) {
-            if (testResultsTarInputStream == null) {
+        while ((tarEntry = testResultsTarInputStream.getNextTarEntry()) != null) {
+            // Go through all tar entries that are test result files.
+            if (!isValidTestResultFile(tarEntry)) {
                 continue;
             }
-            while ((tarEntry = testResultsTarInputStream.getNextTarEntry()) != null) {
-                // Go through all tar entries that are test result files.
-                if (!isValidTestResultFile(tarEntry)) {
-                    continue;
-                }
 
-                // Read the contents of the tar entry as a string.
-                String xmlString = readTarEntryContent(testResultsTarInputStream);
+            // Read the contents of the tar entry as a string.
+            String xmlString = readTarEntryContent(testResultsTarInputStream);
+            // Get the file name of the tar entry.
+            String fileName = getFileName(tarEntry);
 
+            // Check if the file is a static code analysis report file
+            if (StaticCodeAnalysisTool.getToolByFilePattern(fileName).isPresent()) {
+                processStaticCodeAnalysisReportFile(fileName, xmlString, staticCodeAnalysisReports);
+            }
+            else {
+                // ugly workaround because in swift result files \n\t breaks the parsing
                 processTestResultFile(xmlString.replace("\n\t", ""), failedTests, successfulTests);
             }
         }
 
         return constructBuildResult(failedTests, successfulTests, assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, !failedTests.isEmpty(),
-                buildCompletedDate);
+                buildCompletedDate, staticCodeAnalysisReports);
     }
 
     private boolean isValidTestResultFile(TarArchiveEntry tarArchiveEntry) {
@@ -441,6 +420,45 @@ public class LocalCIBuildJobExecutionService {
 
         // Java test result files are named "TEST-*.xml", Python test result files are named "*results.xml".
         return !tarArchiveEntry.isDirectory() && ((result.endsWith(".xml") && !result.equals("pom.xml")));
+    }
+
+    /**
+     * Get the file name of the tar entry.
+     *
+     * @param tarEntry the tar entry
+     * @return the file name of the tar entry
+     */
+    private String getFileName(TarArchiveEntry tarEntry) {
+        String filePath = tarEntry.getName();
+        // Find the index of the last '/'
+        int lastIndex = filePath.lastIndexOf('/');
+        // If '/' is found, extract the substring after it; otherwise, keep the original string
+        if (lastIndex != -1) {
+            return filePath.substring(lastIndex + 1);
+        }
+        else {
+            return filePath;
+        }
+    }
+
+    /**
+     * Processes a static code analysis report file and adds the report to the corresponding list.
+     *
+     * @param fileName                  the file name of the static code analysis report file
+     * @param xmlString                 the content of the static code analysis report file
+     * @param staticCodeAnalysisReports the list of static code analysis reports
+     */
+    private void processStaticCodeAnalysisReportFile(String fileName, String xmlString, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports) {
+        Document document = XmlFileUtils.readFromString(xmlString);
+        document.setDocumentURI(fileName);
+        try {
+            ParserPolicy parserPolicy = new ParserPolicy();
+            ParserStrategy parserStrategy = parserPolicy.configure(document);
+            staticCodeAnalysisReports.add(parserStrategy.parse(document));
+        }
+        catch (UnsupportedToolException e) {
+            throw new IllegalStateException("Failed to parse static code analysis report for " + fileName, e);
+        }
     }
 
     private String readTarEntryContent(TarArchiveInputStream tarArchiveInputStream) throws IOException {
@@ -511,7 +529,7 @@ public class LocalCIBuildJobExecutionService {
             List<String> errors = error != null ? List.of(error) : List.of();
             failedTests.add(new LocalCIBuildResult.LocalCITestJobDTO(name, errors));
         }
-        else {
+        else if (!"skipped".equals(xmlStreamReader.getLocalName())) {
             // Add the successful test to the list of successful tests.
             successfulTests.add(new LocalCIBuildResult.LocalCITestJobDTO(name, List.of()));
         }
@@ -529,32 +547,35 @@ public class LocalCIBuildJobExecutionService {
      */
     private LocalCIBuildResult constructFailedBuildResult(String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash,
             ZonedDateTime buildRunDate) {
-        return constructBuildResult(List.of(), List.of(), assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, false, buildRunDate);
+        return constructBuildResult(List.of(), List.of(), assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, false, buildRunDate, List.of());
     }
 
     /**
      * Constructs a {@link LocalCIBuildResult} from the given parameters.
      *
-     * @param failedTests              The list of failed tests.
-     * @param successfulTests          The list of successful tests.
-     * @param assignmentRepoBranchName The name of the branch of the assignment repository that was checked out for the build.
-     * @param assignmentRepoCommitHash The commit hash of the assignment repository that was checked out for the build.
-     * @param testsRepoCommitHash      The commit hash of the tests repository that was checked out for the build.
-     * @param isBuildSuccessful        Whether the build was successful or not.
-     * @param buildRunDate             The date when the build was completed.
+     * @param failedTests               The list of failed tests.
+     * @param successfulTests           The list of successful tests.
+     * @param assignmentRepoBranchName  The name of the branch of the assignment repository that was checked out for the build.
+     * @param assignmentRepoCommitHash  The commit hash of the assignment repository that was checked out for the build.
+     * @param testsRepoCommitHash       The commit hash of the tests repository that was checked out for the build.
+     * @param isBuildSuccessful         Whether the build was successful or not.
+     * @param buildRunDate              The date when the build was completed.
+     * @param staticCodeAnalysisReports The static code analysis reports
      * @return a {@link LocalCIBuildResult}
      */
     private LocalCIBuildResult constructBuildResult(List<LocalCIBuildResult.LocalCITestJobDTO> failedTests, List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests,
-            String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate) {
+            String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
+            List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports) {
         LocalCIBuildResult.LocalCIJobDTO job = new LocalCIBuildResult.LocalCIJobDTO(failedTests, successfulTests);
 
-        return new LocalCIBuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job));
+        return new LocalCIBuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job),
+                staticCodeAnalysisReports);
     }
 
     private Path cloneAndCheckoutRepository(ProgrammingExerciseParticipation participation, String commitHash) {
         try {
             // Clone the assignment repository into a temporary directory with the name of the commit hash and then checkout the commit hash.
-            Repository repository = gitService.getOrCheckoutRepository(participation.getVcsRepositoryUrl(), Paths.get("checked-out-repos", commitHash), false);
+            Repository repository = gitService.getOrCheckoutRepository(participation.getVcsRepositoryUri(), Paths.get("checked-out-repos", commitHash), false);
             gitService.checkoutRepositoryAtCommit(repository, commitHash);
             return repository.getLocalPath();
         }
@@ -565,7 +586,7 @@ public class LocalCIBuildJobExecutionService {
 
     private void deleteCloneRepo(ProgrammingExerciseParticipation participation, String commitHash) {
         try {
-            Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(Paths.get("checked-out-repos", commitHash), participation.getVcsRepositoryUrl(),
+            Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(Paths.get("checked-out-repos", commitHash), participation.getVcsRepositoryUri(),
                     defaultBranch);
             if (repository == null) {
                 throw new EntityNotFoundException("Repository with commit hash " + commitHash + " not found");

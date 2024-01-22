@@ -1,25 +1,28 @@
 <div id="additional-feedback">
     <b>
         <fa-icon [icon]="faCommentDots"></fa-icon>&nbsp;
-        <span *ngIf="additional" jhiTranslate="artemisApp.assessment.additionalFeedback"> Additional Feedback</span>
-        <span *ngIf="!additional" jhiTranslate="artemisApp.assessment.feedback"> Feedback</span>:</b
+        @if (additional) {
+            <span jhiTranslate="artemisApp.assessment.additionalFeedback"> Additional Feedback</span>
+        }
+        @if (!additional) {
+            <span jhiTranslate="artemisApp.assessment.feedback"> Feedback</span>
+        }
+        :</b
     >
     <br />
     <br />
-    <div
-        class="alert"
-        *ngFor="let singleFeedback of feedback"
-        [class.positive-feedback]="singleFeedback?.credits && singleFeedback.credits! > 0"
-        [class.negative-feedback]="singleFeedback?.credits && singleFeedback.credits! < 0"
-        [class.neutral-feedback]="singleFeedback?.credits === 0 || singleFeedback?.isSubsequent"
-    >
-        <span class="feedback-points">{{ pointTranslation(singleFeedback?.credits ?? 0) }}:</span>
-        <span [innerHTML]="buildFeedbackTextForReview(singleFeedback)"></span>
-        <fa-icon
-            *ngIf="singleFeedback.isSubsequent"
-            class="float-end"
-            [icon]="faExclamationTriangle"
-            [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"
-        ></fa-icon>
-    </div>
+    @for (singleFeedback of feedback; track singleFeedback) {
+        <div
+            class="alert"
+            [class.positive-feedback]="singleFeedback?.credits && singleFeedback.credits! > 0"
+            [class.negative-feedback]="singleFeedback?.credits && singleFeedback.credits! < 0"
+            [class.neutral-feedback]="singleFeedback?.credits === 0 || singleFeedback?.isSubsequent"
+        >
+            <span class="feedback-points">{{ pointTranslation(singleFeedback?.credits ?? 0) }}:</span>
+            <span [innerHTML]="buildFeedbackTextForReview(singleFeedback)"></span>
+            @if (singleFeedback.isSubsequent) {
+                <fa-icon class="float-end" [icon]="faExclamationTriangle" [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"></fa-icon>
+            }
+        </div>
+    }
 </div>

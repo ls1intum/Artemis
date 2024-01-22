@@ -616,7 +616,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         allUserLogins.addAll(allTutorLogins);
         allUserLogins.addAll(allEditorLogins);
         allUserLogins.addAll(allInstructorLogins);
-        String[] allUserLoginsArray = allUserLogins.toArray(new String[0]);
+        String[] allUserLoginsArray = allUserLogins.toArray(String[]::new);
 
         allUserLoginsArray = Arrays.stream(allUserLoginsArray).filter(login -> login.startsWith(testPrefix)).map(login -> login.substring(testPrefix.length()))
                 .toArray(String[]::new);

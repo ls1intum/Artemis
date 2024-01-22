@@ -7,7 +7,6 @@
                     <label for="id" jhiTranslate="global.field.id">ID</label>
                     <input id="id" type="text" class="form-control" name="id" formControlName="idInput" [(ngModel)]="user.id" readonly />
                 </div>
-
                 <div class="form-group">
                     <label for="login" class="form-control-label" jhiTranslate="artemisApp.userManagement.login">Login</label>
                     <input
@@ -21,34 +20,36 @@
                         pattern="^[_.@A-Za-z0-9-]*$"
                         formControlName="loginInput"
                     />
-
-                    <div *ngIf="editForm.get('loginInput')!.dirty && editForm.get('loginInput')!.invalid">
-                        <small class="form-text text-danger" *ngIf="editForm.get('loginInput')!.errors?.required" jhiTranslate="entity.validation.required">
-                            This field is required.
-                        </small>
-
-                        <small
-                            class="form-text text-danger"
-                            *ngIf="editForm.get('loginInput')!.errors?.maxlength"
-                            jhiTranslate="artemisApp.userManagement.inputConstraints"
-                            [translateValues]="{ min: USERNAME_MIN_LENGTH, max: USERNAME_MAX_LENGTH }"
-                        >
-                            This field has to contain 4-50 characters!
-                        </small>
-
-                        <small class="form-text text-danger" *ngIf="editForm.get('loginInput')!.errors?.pattern" jhiTranslate="entity.validation.patternLogin">
-                            This field can only contain letters, digits and e-mail addresses.
-                        </small>
-
-                        <small
-                            class="form-text text-danger"
-                            *ngIf="editForm.get('loginInput')!.errors?.minlength"
-                            jhiTranslate="artemisApp.userManagement.inputConstraints"
-                            [translateValues]="{ min: USERNAME_MIN_LENGTH, max: USERNAME_MAX_LENGTH }"
-                        >
-                            This field has to contain 4-50 characters!
-                        </small>
-                    </div>
+                    @if (editForm.get('loginInput')!.dirty && editForm.get('loginInput')!.invalid) {
+                        <div>
+                            @if (editForm.get('loginInput')!.errors?.required) {
+                                <small class="form-text text-danger" jhiTranslate="entity.validation.required"> This field is required. </small>
+                            }
+                            @if (editForm.get('loginInput')!.errors?.maxlength) {
+                                <small
+                                    class="form-text text-danger"
+                                    jhiTranslate="artemisApp.userManagement.inputConstraints"
+                                    [translateValues]="{ min: USERNAME_MIN_LENGTH, max: USERNAME_MAX_LENGTH }"
+                                >
+                                    This field has to contain 4-50 characters!
+                                </small>
+                            }
+                            @if (editForm.get('loginInput')!.errors?.pattern) {
+                                <small class="form-text text-danger" jhiTranslate="entity.validation.patternLogin">
+                                    This field can only contain letters, digits and e-mail addresses.
+                                </small>
+                            }
+                            @if (editForm.get('loginInput')!.errors?.minlength) {
+                                <small
+                                    class="form-text text-danger"
+                                    jhiTranslate="artemisApp.userManagement.inputConstraints"
+                                    [translateValues]="{ min: USERNAME_MIN_LENGTH, max: USERNAME_MAX_LENGTH }"
+                                >
+                                    This field has to contain 4-50 characters!
+                                </small>
+                            }
+                        </div>
+                    }
                 </div>
                 <div class="form-group">
                     <label for="firstName" class="form-control-label" jhiTranslate="artemisApp.userManagement.firstName">First Name</label>
@@ -62,17 +63,15 @@
                         [maxlength]="USERNAME_MAX_LENGTH"
                         required
                     />
-
-                    <div *ngIf="editForm.get('firstNameInput')!.dirty && editForm.get('firstNameInput')!.invalid">
-                        <small
-                            class="form-text text-danger"
-                            *ngIf="editForm.get('firstNameInput')!.errors?.maxlength"
-                            jhiTranslate="entity.validation.maxlength"
-                            [translateValues]="{ max: USERNAME_MAX_LENGTH }"
-                        >
-                            This field cannot be longer than 50 characters.
-                        </small>
-                    </div>
+                    @if (editForm.get('firstNameInput')!.dirty && editForm.get('firstNameInput')!.invalid) {
+                        <div>
+                            @if (editForm.get('firstNameInput')!.errors?.maxlength) {
+                                <small class="form-text text-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: USERNAME_MAX_LENGTH }">
+                                    This field cannot be longer than 50 characters.
+                                </small>
+                            }
+                        </div>
+                    }
                 </div>
                 <div class="form-group">
                     <label for="lastName" jhiTranslate="artemisApp.userManagement.lastName">Last Name</label>
@@ -86,17 +85,15 @@
                         [maxlength]="USERNAME_MAX_LENGTH"
                         required
                     />
-
-                    <div *ngIf="editForm.get('lastNameInput')!.dirty && editForm.get('lastNameInput')!.invalid">
-                        <small
-                            class="form-text text-danger"
-                            *ngIf="editForm.get('lastNameInput')!.errors?.maxlength"
-                            jhiTranslate="entity.validation.maxlength"
-                            [translateValues]="{ max: USERNAME_MAX_LENGTH }"
-                        >
-                            This field cannot be longer than 50 characters.
-                        </small>
-                    </div>
+                    @if (editForm.get('lastNameInput')!.dirty && editForm.get('lastNameInput')!.invalid) {
+                        <div>
+                            @if (editForm.get('lastNameInput')!.errors?.maxlength) {
+                                <small class="form-text text-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: USERNAME_MAX_LENGTH }">
+                                    This field cannot be longer than 50 characters.
+                                </small>
+                            }
+                        </div>
+                    }
                 </div>
                 <div class="form-check mb-2">
                     <input type="checkbox" class="form-check-input" name="randomPassword" id="randomPassword" (change)="shouldRandomizePassword($event)" checked #editPassword />
@@ -120,37 +117,43 @@
                         formControlName="passwordInput"
                         [required]="!editPassword.checked"
                     />
-                    <div *ngIf="editForm.get('passwordInput')!.dirty && editForm.get('passwordInput')!.invalid">
-                        <small
-                            class="form-text text-danger"
-                            *ngIf="editForm.get('passwordInput')!.errors?.maxlength"
-                            jhiTranslate="artemisApp.userManagement.inputConstraints"
-                            [translateValues]="{ min: PASSWORD_MIN_LENGTH, max: PASSWORD_MAX_LENGTH }"
-                        >
-                            This field has to contain 8-50 characters!
-                        </small>
-                        <small
-                            class="form-text text-danger"
-                            *ngIf="editForm.get('passwordInput')!.errors?.minlength"
-                            jhiTranslate="artemisApp.userManagement.inputConstraints"
-                            [translateValues]="{ min: PASSWORD_MIN_LENGTH, max: PASSWORD_MAX_LENGTH }"
-                        >
-                            This field has to contain 8-50 characters!
-                        </small>
-                    </div>
+                    @if (editForm.get('passwordInput')!.dirty && editForm.get('passwordInput')!.invalid) {
+                        <div>
+                            @if (editForm.get('passwordInput')!.errors?.maxlength) {
+                                <small
+                                    class="form-text text-danger"
+                                    jhiTranslate="artemisApp.userManagement.inputConstraints"
+                                    [translateValues]="{ min: PASSWORD_MIN_LENGTH, max: PASSWORD_MAX_LENGTH }"
+                                >
+                                    This field has to contain 8-50 characters!
+                                </small>
+                            }
+                            @if (editForm.get('passwordInput')!.errors?.minlength) {
+                                <small
+                                    class="form-text text-danger"
+                                    jhiTranslate="artemisApp.userManagement.inputConstraints"
+                                    [translateValues]="{ min: PASSWORD_MIN_LENGTH, max: PASSWORD_MAX_LENGTH }"
+                                >
+                                    This field has to contain 8-50 characters!
+                                </small>
+                            }
+                        </div>
+                    }
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.userManagement.groups">Groups</label>
                     <mat-form-field appearance="outline" class="group-tag-list">
                         <mat-chip-grid #groupList aria-label="Group selection">
-                            <mat-chip-row (removed)="onGroupRemove(user, group)" *ngFor="let group of user.groups" class="group-tag">
-                                <div class="custom-tag">
-                                    {{ group }}
-                                    <button matChipRemove>
-                                        <fa-icon [icon]="faTimes" class="group-tag-remove"></fa-icon>
-                                    </button>
-                                </div>
-                            </mat-chip-row>
+                            @for (group of user.groups; track group) {
+                                <mat-chip-row (removed)="onGroupRemove(user, group)" class="group-tag">
+                                    <div class="custom-tag">
+                                        {{ group }}
+                                        <button matChipRemove>
+                                            <fa-icon [icon]="faTimes" class="group-tag-remove"></fa-icon>
+                                        </button>
+                                    </div>
+                                </mat-chip-row>
+                            }
                             <input
                                 #groupInput
                                 (matChipInputTokenEnd)="onGroupAdd(user, $event)"
@@ -163,26 +166,30 @@
                             />
                         </mat-chip-grid>
                         <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSelected($event); groupInput.value = ''" class="group-panel" classlist="group-panel">
-                            <ng-container *ngFor="let group of filteredGroups | async">
-                                <mat-option *ngIf="!user.groups?.includes(group)" [value]="group">
-                                    {{ group }}
-                                </mat-option>
-                            </ng-container>
+                            @for (group of filteredGroups | async; track group) {
+                                @if (!user.groups?.includes(group)) {
+                                    <mat-option [value]="group">
+                                        {{ group }}
+                                    </mat-option>
+                                }
+                            }
                         </mat-autocomplete>
                     </mat-form-field>
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.userManagement.organizations">User organizations</label>
                     <div class="btn-group d-flex flex-wrap">
-                        <div *ngFor="let organization of user.organizations">
-                            <h5>
-                                <span class="badge bg-primary font-weight-normal m-1 ps-3"
-                                    >{{ organization.name
-                                    }}<button type="button" class="btn text-light" (click)="removeOrganizationFromUser(organization)">
-                                        <fa-icon [icon]="faTimes"></fa-icon></button
-                                ></span>
-                            </h5>
-                        </div>
+                        @for (organization of user.organizations; track organization) {
+                            <div>
+                                <h5>
+                                    <span class="badge bg-primary font-weight-normal m-1 ps-3"
+                                        >{{ organization.name
+                                        }}<button type="button" class="btn text-light" (click)="removeOrganizationFromUser(organization)">
+                                            <fa-icon [icon]="faTimes"></fa-icon></button
+                                    ></span>
+                                </h5>
+                            </div>
+                        }
                     </div>
                     <button type="button" class="btn btn-outline-primary" (click)="openOrganizationsModal()">Add</button>
                 </div>
@@ -200,35 +207,35 @@
                         [maxlength]="EMAIL_MAX_LENGTH"
                         email
                     />
-
-                    <div *ngIf="editForm.get('emailInput')!.dirty && editForm.get('emailInput')!.invalid">
-                        <small class="form-text text-danger" *ngIf="editForm.get('emailInput')!.errors?.required" jhiTranslate="entity.validation.required">
-                            This field is required.
-                        </small>
-
-                        <small
-                            class="form-text text-danger"
-                            *ngIf="editForm.get('emailInput')!.errors?.maxlength"
-                            jhiTranslate="artemisApp.userManagement.inputConstraints"
-                            [translateValues]="{ min: EMAIL_MIN_LENGTH, max: EMAIL_MAX_LENGTH }"
-                        >
-                            This field has to contain 5-100 characters!
-                        </small>
-
-                        <small
-                            class="form-text text-danger"
-                            *ngIf="editForm.get('emailInput')!.errors?.minlength"
-                            jhiTranslate="entity.validation.minlength"
-                            jhiTranslate="artemisApp.userManagement.inputConstraints"
-                            [translateValues]="{ min: EMAIL_MIN_LENGTH, max: EMAIL_MAX_LENGTH }"
-                        >
-                            This field has to contain 5-100 characters!
-                        </small>
-
-                        <small class="form-text text-danger" *ngIf="editForm.get('emailInput')!.errors?.email" jhiTranslate="global.messages.validate.email.invalid">
-                            Your email is invalid.
-                        </small>
-                    </div>
+                    @if (editForm.get('emailInput')!.dirty && editForm.get('emailInput')!.invalid) {
+                        <div>
+                            @if (editForm.get('emailInput')!.errors?.required) {
+                                <small class="form-text text-danger" jhiTranslate="entity.validation.required"> This field is required. </small>
+                            }
+                            @if (editForm.get('emailInput')!.errors?.maxlength) {
+                                <small
+                                    class="form-text text-danger"
+                                    jhiTranslate="artemisApp.userManagement.inputConstraints"
+                                    [translateValues]="{ min: EMAIL_MIN_LENGTH, max: EMAIL_MAX_LENGTH }"
+                                >
+                                    This field has to contain 5-100 characters!
+                                </small>
+                            }
+                            @if (editForm.get('emailInput')!.errors?.minlength) {
+                                <small
+                                    class="form-text text-danger"
+                                    jhiTranslate="entity.validation.minlength"
+                                    jhiTranslate="artemisApp.userManagement.inputConstraints"
+                                    [translateValues]="{ min: EMAIL_MIN_LENGTH, max: EMAIL_MAX_LENGTH }"
+                                >
+                                    This field has to contain 5-100 characters!
+                                </small>
+                            }
+                            @if (editForm.get('emailInput')!.errors?.email) {
+                                <small class="form-text text-danger" jhiTranslate="global.messages.validate.email.invalid"> Your email is invalid. </small>
+                            }
+                        </div>
+                    }
                 </div>
                 <div class="form-group">
                     <label for="registrationNumber" class="form-control-label" jhiTranslate="artemisApp.userManagement.registrationNumber">Registration Number</label>
@@ -242,17 +249,15 @@
                         maxlength="20"
                         registrationNumber
                     />
-
-                    <div *ngIf="editForm.get('registrationNumberInput')!.invalid">
-                        <small
-                            class="form-text text-danger"
-                            *ngIf="editForm.get('registrationNumberInput')!.errors?.maxlength"
-                            jhiTranslate="entity.validation.maxlength"
-                            [translateValues]="{ max: REGISTRATION_NUMBER_MAX_LENGTH }"
-                        >
-                            This field cannot be longer than 20 characters.
-                        </small>
-                    </div>
+                    @if (editForm.get('registrationNumberInput')!.invalid) {
+                        <div>
+                            @if (editForm.get('registrationNumberInput')!.errors?.maxlength) {
+                                <small class="form-text text-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: REGISTRATION_NUMBER_MAX_LENGTH }">
+                                    This field cannot be longer than 20 characters.
+                                </small>
+                            }
+                        </div>
+                    }
                 </div>
                 <div class="form-check">
                     <label for="activated" class="form-check-label">
@@ -268,17 +273,22 @@
                         <span jhiTranslate="artemisApp.userManagement.activated">Activated</span>
                     </label>
                 </div>
-
-                <div class="form-group" *ngIf="languages && languages.length > 0">
-                    <label for="langKey" jhiTranslate="artemisApp.userManagement.langKey">Lang Key</label>
-                    <select class="form-select" id="langKey" name="langKey" formControlName="langKeyInput" [(ngModel)]="user.langKey">
-                        <option *ngFor="let language of languages" [value]="language">{{ language | findLanguageFromKey }}</option>
-                    </select>
-                </div>
+                @if (languages && languages.length > 0) {
+                    <div class="form-group">
+                        <label for="langKey" jhiTranslate="artemisApp.userManagement.langKey">Lang Key</label>
+                        <select class="form-select" id="langKey" name="langKey" formControlName="langKeyInput" [(ngModel)]="user.langKey">
+                            @for (language of languages; track language) {
+                                <option [value]="language">{{ language | findLanguageFromKey }}</option>
+                            }
+                        </select>
+                    </div>
+                }
                 <div class="form-group">
                     <label for="authority" jhiTranslate="artemisApp.userManagement.profiles">Profiles</label>
                     <select id="authority" class="form-select" multiple name="authority" formControlName="authorityInput" [(ngModel)]="user.authorities">
-                        <option *ngFor="let authority of authorities" [value]="authority">{{ authority }}</option>
+                        @for (authority of authorities; track authority) {
+                            <option [value]="authority">{{ authority }}</option>
+                        }
                     </select>
                 </div>
             </div>

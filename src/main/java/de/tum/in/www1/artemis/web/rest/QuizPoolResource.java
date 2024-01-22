@@ -30,7 +30,7 @@ public class QuizPoolResource {
 
     private static final String ENTITY_NAME = "quizPool";
 
-    private final Logger log = LoggerFactory.getLogger(QuizPoolResource.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizPoolResource.class);
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -82,8 +82,7 @@ public class QuizPoolResource {
         log.info("REST request to get QuizPool given examId : {}", examId);
 
         validateCourseRole(courseId);
-        QuizPool quizPool = quizPoolService.findByExamId(examId);
-
+        QuizPool quizPool = quizPoolService.findWithQuizGroupsAndQuestionsByExamId(examId).orElse(null);
         return ResponseEntity.ok().body(quizPool);
     }
 

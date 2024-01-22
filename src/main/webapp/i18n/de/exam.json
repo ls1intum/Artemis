@@ -42,6 +42,8 @@
                 "reviewExplanation": "Die Einsicht findet statt bis ",
                 "realExamsHeading": "Klausuren",
                 "testExamsHeading": "Testklausuren",
+                "noExams": "Keine Klausuren vorhanden",
+                "goToExercises": "Gehe zu Aufgaben",
                 "testExam": {
                     "upcoming": "Demnächst stattfindende Testklausur",
                     "imminent": "Die Testklausur beginnt in ",
@@ -65,6 +67,7 @@
                 "backToOverview": "Zurück zur Übersicht",
                 "examResults": "Prüfungsergebnisse",
                 "generalInformation": "Allgemeine Informationen",
+                "youAreViewingAnUnsubmittedExam": "Du betrachtest eine nicht eingereichte Klausur",
                 "exportPDF": "Als PDF exportieren",
                 "noSubmissionFound": "Du hast keine Lösung für diese Aufgabe abgegeben.",
                 "submissionLinkedToCommit": "Die abgegebene Lösung ist mit folgendem Commit verknüpft: ",
@@ -101,8 +104,10 @@
                 "interval": "Intervall (%)",
                 "intervalPoints": "Intervall (Punkte)",
                 "gradeKeyButton": "Notenschlüssel ansehen",
+                "gradeKey": "Notenschlüssel",
                 "gradeKeyButtonBonus": "Bonusregeln ansehen",
-                "bonusGradeKeyButton": "Bonusnotenschlüssel ansehen"
+                "bonusGradeKey": "Bonusnotenschlüssel",
+                "resultTable": "Ergebnistabelle"
             },
             "title": "Klausur",
             "startExam": "Starten",

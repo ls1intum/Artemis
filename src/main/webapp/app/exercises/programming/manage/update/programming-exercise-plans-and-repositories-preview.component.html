@@ -1,4 +1,4 @@
-<ng-container *ngIf="programmingExercise && programmingExercise.shortName">
+@if (programmingExercise && programmingExercise.shortName) {
     <div id="preview" class="row ms-2 mt-1 mb-1 pt-1 pb-1">
         <div class="col-auto rounded pt-1 pb-1 preview-box">
             <div>
@@ -25,16 +25,22 @@
                         </code>
                         <jhi-help-icon text="artemisApp.programmingExercise.preview.testRepoTooltip"></jhi-help-icon>
                     </li>
-                    <div *ngIf="programmingExercise.auxiliaryRepositories?.length">
-                        <div *ngFor="let auxiliaryRepository of programmingExercise.auxiliaryRepositories">
-                            <li>
-                                <code class="text-white badge bg-success label-preview">
-                                    {{ getCourseShortName()?.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-{{ auxiliaryRepository.name?.toLowerCase() }}
-                                </code>
-                                <jhi-help-icon-without-translation text="{{ auxiliaryRepository.description || 'Auxiliary Repository' }}"></jhi-help-icon-without-translation>
-                            </li>
+                    @if (programmingExercise.auxiliaryRepositories?.length) {
+                        <div>
+                            @for (auxiliaryRepository of programmingExercise.auxiliaryRepositories; track auxiliaryRepository) {
+                                <div>
+                                    <li>
+                                        <code class="text-white badge bg-success label-preview">
+                                            {{ getCourseShortName()?.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-{{ auxiliaryRepository.name?.toLowerCase() }}
+                                        </code>
+                                        <jhi-help-icon-without-translation
+                                            text="{{ auxiliaryRepository.description || 'Auxiliary Repository' }}"
+                                        ></jhi-help-icon-without-translation>
+                                    </li>
+                                </div>
+                            }
                         </div>
-                    </div>
+                    }
                 </ul>
             </div>
         </div>
@@ -57,4 +63,4 @@
             </ul>
         </div>
     </div>
-</ng-container>
+}

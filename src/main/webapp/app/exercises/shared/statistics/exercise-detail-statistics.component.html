@@ -21,16 +21,17 @@
         [currentMax]="doughnutStats?.numberOfStudentsOrTeamsInCourse"
     >
     </jhi-doughnut-chart>
-    <jhi-doughnut-chart
-        *ngIf="isCommunicationEnabled(course)"
-        class="col-md-4"
-        [course]="course"
-        [contentType]="DoughnutChartType.QUESTIONS"
-        [exerciseId]="exercise.id!"
-        [exerciseType]="exerciseType"
-        [currentPercentage]="doughnutStats?.resolvedPostsInPercent"
-        [currentAbsolute]="doughnutStats?.numberOfResolvedPosts"
-        [currentMax]="doughnutStats?.numberOfPosts"
-    >
-    </jhi-doughnut-chart>
+    @if (isCommunicationEnabled(course)) {
+        <jhi-doughnut-chart
+            class="col-md-4"
+            [course]="course"
+            [contentType]="DoughnutChartType.QUESTIONS"
+            [exerciseId]="exercise.id!"
+            [exerciseType]="exerciseType"
+            [currentPercentage]="doughnutStats?.resolvedPostsInPercent"
+            [currentAbsolute]="doughnutStats?.numberOfResolvedPosts"
+            [currentMax]="doughnutStats?.numberOfPosts"
+        >
+        </jhi-doughnut-chart>
+    }
 </div>

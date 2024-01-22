@@ -1,97 +1,111 @@
 <div [id]="'exercise-' + exercise?.id">
-    <nav *ngIf="loadingParticipation || participationCouldNotBeFetched" class="card">
-        <div class="card-body">
-            <span *ngIf="loadingParticipation">
-                <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
-                <p class="d-inline" jhiTranslate="artemisApp.editor.fetchingParticipation">Your participation is being loaded...</p>
-            </span>
-            <span *ngIf="participationCouldNotBeFetched">
-                <fa-icon [icon]="faTimesCircle" class="text-danger"></fa-icon>
-                <p class="d-inline" jhiTranslate="artemisApp.editor.errors.participationNotFound">Your participation could not be found.</p>
-            </span>
+    @if (loadingParticipation || participationCouldNotBeFetched) {
+        <nav class="card">
+            <div class="card-body">
+                @if (loadingParticipation) {
+                    <span>
+                        <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
+                        <p class="d-inline" jhiTranslate="artemisApp.editor.fetchingParticipation">Your participation is being loaded...</p>
+                    </span>
+                }
+                @if (participationCouldNotBeFetched) {
+                    <span>
+                        <fa-icon [icon]="faTimesCircle" class="text-danger"></fa-icon>
+                        <p class="d-inline" jhiTranslate="artemisApp.editor.errors.participationNotFound">Your participation could not be found.</p>
+                    </span>
+                }
+            </div>
+        </nav>
+    }
+    @if (isIllegalSubmission) {
+        <div class="row-container">
+            <span class="badge bg-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"> Warning: You are viewing an illegal submission. </span>
         </div>
-    </nav>
-    <div *ngIf="isIllegalSubmission" class="row-container">
-        <span class="badge bg-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"> Warning: You are viewing an illegal submission. </span>
-    </div>
-    <jhi-code-editor-container
-        *ngIf="!loadingParticipation && !participationCouldNotBeFetched"
-        [editable]="!repositoryIsLocked"
-        [participation]="participation"
-        [showEditorInstructions]="showEditorInstructions"
-        [isTutorAssessment]="hasTutorAssessment"
-        [readOnlyManualFeedback]="true"
-        [course]="course"
-    >
-        <div editorTitle>
-            <span>{{ exercise?.title }}</span>
-            <span
-                >&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate
-                }}<span *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span
-                >]
-                <jhi-included-in-score-badge
-                    *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-                    [includedInOverallScore]="exercise.includedInOverallScore"
-                ></jhi-included-in-score-badge
-            ></span>
-        </div>
-        <div submissionPolicy *ngIf="exercise.submissionPolicy && exercise.submissionPolicy.active && numberOfSubmissionsForSubmissionPolicy !== undefined">
-            <br />
-            <span>
-                {{
-                    'artemisApp.programmingExercise.submissionPolicy.submissionsAllowed'
-                        | artemisTranslate: { submissionCount: numberOfSubmissionsForSubmissionPolicy, totalSubmissions: exercise.submissionPolicy.submissionLimit }
-                }}
-            </span>
-            <span *ngIf="exercise.submissionPolicy.type === SubmissionPolicyType.SUBMISSION_PENALTY">
-                {{
-                    'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel' | artemisTranslate: { points: exercise.submissionPolicy.exceedingPenalty }
-                }}
-            </span>
-        </div>
-        <!-- prettier-ignore -->
-        <div editorToolbar class="d-inline-flex align-items-center">
-            <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked" class="me-3">
-            </jhi-code-editor-repository-is-locked>
-            <jhi-exercise-hint-button-overlay
+    }
+    @if (!loadingParticipation && !participationCouldNotBeFetched) {
+        <jhi-code-editor-container
+            [editable]="!repositoryIsLocked"
+            [participation]="participation"
+            [showEditorInstructions]="showEditorInstructions"
+            [isTutorAssessment]="hasTutorAssessment"
+            [readOnlyManualFeedback]="true"
+            [course]="course"
+        >
+            <div editorTitle>
+                <span>{{ exercise?.title }}</span>
+                <span
+                    >&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}
+                    @if (exercise.bonusPoints) {
+                        <span>, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>
+                    }
+                    ]
+                    @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                        <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
+                    }
+                </span>
+            </div>
+            <div submissionPolicy>
+                @if (exercise.submissionPolicy && exercise.submissionPolicy.active && numberOfSubmissionsForSubmissionPolicy !== undefined) {
+                    <br />
+                    <span>
+                        {{
+                            'artemisApp.programmingExercise.submissionPolicy.submissionsAllowed'
+                                | artemisTranslate: { submissionCount: numberOfSubmissionsForSubmissionPolicy, totalSubmissions: exercise.submissionPolicy.submissionLimit }
+                        }}
+                    </span>
+                    @if (exercise.submissionPolicy.type === SubmissionPolicyType.SUBMISSION_PENALTY) {
+                        <span>
+                            {{
+                                'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel'
+                                    | artemisTranslate: { points: exercise.submissionPolicy.exceedingPenalty }
+                            }}
+                        </span>
+                    }
+                }
+            </div>
+            <!-- prettier-ignore -->
+            <div editorToolbar class="d-inline-flex align-items-center">
+              @if (repositoryIsLocked) {
+                <jhi-code-editor-repository-is-locked class="me-3">
+                </jhi-code-editor-repository-is-locked>
+              }
+              <jhi-exercise-hint-button-overlay
                 [availableExerciseHints]="availableExerciseHints"
                 [activatedExerciseHints]="activatedExerciseHints"
                 (onHintActivated)="onHintActivated($event)"
-            ></jhi-exercise-hint-button-overlay>
-            <jhi-updating-result
-                *ngIf="participation"
-                [exercise]="exercise"
-                [showUngradedResults]="true"
-                [showBadge]="true"
-                [participation]="participation"
-                [personalParticipation]="true"
-                (onParticipationChange)="receivedNewResult()"
-                class="me-2"
-            ></jhi-updating-result>
-            <jhi-programming-exercise-student-trigger-build-button
+              ></jhi-exercise-hint-button-overlay>
+              @if (participation) {
+                <jhi-updating-result
+                  [exercise]="exercise"
+                  [showUngradedResults]="true"
+                  [showBadge]="true"
+                  [participation]="participation"
+                  [personalParticipation]="true"
+                  (onParticipationChange)="receivedNewResult()"
+                  class="me-2"
+                ></jhi-updating-result>
+              }
+              <jhi-programming-exercise-student-trigger-build-button
                 class="me-2"
                 [exercise]="exercise"
                 [participation]="participation"
                 [btnSize]="ButtonSize.MEDIUM"
-            ></jhi-programming-exercise-student-trigger-build-button>
-        </div>
-        <jhi-programming-exercise-instructions
-            editorSidebar
-            (onNoInstructionsAvailable)="showEditorInstructions = false"
-            [exercise]="exercise"
-            [participation]="participation"
-            [personalParticipation]="true"
-            class="instructions-wrapper__content card-body p-0"
-        ></jhi-programming-exercise-instructions>
-    </jhi-code-editor-container>
+              ></jhi-programming-exercise-student-trigger-build-button>
+            </div>
+            <jhi-programming-exercise-instructions
+                editorSidebar
+                (onNoInstructionsAvailable)="showEditorInstructions = false"
+                [exercise]="exercise"
+                [participation]="participation"
+                [personalParticipation]="true"
+                class="instructions-wrapper__content card-body p-0"
+            ></jhi-programming-exercise-instructions>
+        </jhi-code-editor-container>
+    }
     <div class="row ms-0">
-        <jhi-additional-feedback
-            *ngIf="unreferencedFeedback.length > 0"
-            class="col-xl-8 mt-3 alert unreferencedFeedback"
-            [feedback]="unreferencedFeedback"
-            [additional]="true"
-            [course]="course"
-        >
-        </jhi-additional-feedback>
+        @if (unreferencedFeedback.length > 0) {
+            <jhi-additional-feedback class="col-xl-8 mt-3 alert unreferencedFeedback" [feedback]="unreferencedFeedback" [additional]="true" [course]="course">
+            </jhi-additional-feedback>
+        }
     </div>
 </div>

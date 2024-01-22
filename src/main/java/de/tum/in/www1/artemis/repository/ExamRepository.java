@@ -21,6 +21,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.web.rest.dto.CourseContentCount;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -70,6 +71,19 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             """)
     Set<Exam> findByCourseIdsForUser(@Param("courseIds") Set<Long> courseIds, @Param("userId") Long userId, @Param("groupNames") Set<String> groupNames,
             @Param("now") ZonedDateTime now);
+
+    @Query("""
+            select
+            new de.tum.in.www1.artemis.web.rest.dto.CourseContentCount(
+                COUNT(e.id),
+                e.course.id
+                )
+            FROM Exam e
+            WHERE e.course.id IN :courseIds
+                AND e.visibleDate <= :now
+            GROUP BY e.course.id
+            """)
+    Set<CourseContentCount> countVisibleExams(@Param("courseIds") Set<Long> courseIds, @Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT exam
@@ -197,6 +211,22 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "studentExams", "studentExams.exercises" })
     Optional<Exam> findWithStudentExamsExercisesById(long id);
+
+    @Query("""
+                SELECT e
+                FROM Exam e
+                    LEFT JOIN FETCH e.exerciseGroups exg
+                    LEFT JOIN FETCH exg.exercises ex
+                    LEFT JOIN FETCH ex.quizQuestions
+                    LEFT JOIN FETCH ex.templateParticipation tp
+                    LEFT JOIN FETCH ex.solutionParticipation sp
+                    LEFT JOIN FETCH tp.results tpr
+                    LEFT JOIN FETCH sp.results spr
+                WHERE e.id = :examId
+                    AND (tpr.id = (SELECT MAX(re1.id) FROM tp.results re1) OR tpr.id IS NULL)
+                    AND (spr.id = (SELECT MAX(re2.id) FROM sp.results re2) OR spr.id IS NULL)
+            """)
+    Optional<Exam> findWithExerciseGroupsAndExercisesAndDetailsById(@Param("examId") long examId);
 
     @Query("""
             SELECT DISTINCT e
@@ -405,6 +435,11 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
         return findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
     }
 
+    @NotNull
+    default Exam findWithExerciseGroupsAndExercisesAndDetailsByIdOrElseThrow(long examId) {
+        return findWithExerciseGroupsAndExercisesAndDetailsById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+    }
+
     /**
      * Filters the visible exams (excluding the ones that are not visible yet)
      *
@@ -438,4 +473,16 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
                 examIdAndRegisteredUsersCountPair -> Math.toIntExact(examIdAndRegisteredUsersCountPair[1]) // registeredUsersCount
         ));
     }
+
+    @Query("""
+            SELECT e
+            FROM Exam e
+                LEFT JOIN e.examUsers registeredUsers
+            WHERE e.course.id IN :courseIds
+                AND e.visibleDate <= :visible
+                AND e.endDate >= :end
+                AND e.testExam = false
+                AND registeredUsers.user.id = :userId
+            """)
+    Set<Exam> findActiveExams(@Param("courseIds") Set<Long> courseIds, @Param("userId") Long userId, @Param("visible") ZonedDateTime visible, @Param("end") ZonedDateTime end);
 }

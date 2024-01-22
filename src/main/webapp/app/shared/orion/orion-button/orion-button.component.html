@@ -8,6 +8,8 @@
     (click)="handleClick()"
 >
     <fa-icon [hidden]="!buttonLoading" [spin]="true" [icon]="faCircleNotch"></fa-icon>
-    <span *ngIf="!buttonLoading" class="intellij-logo"></span>
+    @if (!buttonLoading) {
+        <span class="intellij-logo"></span>
+    }
     <span>{{ buttonLabel }}</span>
 </button>

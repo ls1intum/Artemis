@@ -2,11 +2,10 @@
     {{ exercise.title }}
     <span
         >[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]
-        <jhi-included-in-score-badge
-            *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-            [includedInOverallScore]="exercise.includedInOverallScore"
-        ></jhi-included-in-score-badge
-    ></span>
+        @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+            <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
+        }
+    </span>
 </h4>
 <jhi-commits-info
     class="mb-2"
@@ -16,40 +15,42 @@
     [submissions]="submissions"
     [exerciseProjectKey]="exercise?.projectKey"
 />
-<div *ngIf="exercise?.gitDiffReport">
-    <dt>
-        <span
-            jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsCurrentSubmissionLabel"
-            [translateValues]="{ currentCommitHash: currentSubmission?.commitHash }"
-        ></span>
-        <ng-container *ngIf="previousSubmission; else noPreviousSubmission">
+@if (exercise?.gitDiffReport) {
+    <div>
+        <dt>
             <span
-                jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsPreviousSubmissionLabel"
-                [translateValues]="{ previousCommitHash: previousSubmission?.commitHash }"
+                jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsCurrentSubmissionLabel"
+                [translateValues]="{ currentCommitHash: currentSubmission?.commitHash }"
             ></span>
-        </ng-container>
-        <ng-template #noPreviousSubmission>
-            <span jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsTemplateLabel"></span>
-        </ng-template>
-    </dt>
-    <dd>
-        <div class="fw-bold">
-            <jhi-git-diff-line-stat
-                [addedLineCount]="addedLineCount"
-                [removedLineCount]="removedLineCount"
-                ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipExamTimeline' | artemisTranslate }}"
-            ></jhi-git-diff-line-stat>
-            <jhi-button
-                *ngIf="addedLineCount > 0 || removedLineCount > 0"
-                [featureToggle]="FeatureToggle.ProgrammingExercises"
-                [isLoading]="isLoadingDiffReport"
-                [btnSize]="ButtonSize.SMALL"
-                [icon]="faEye"
-                [title]="'artemisApp.programmingExercise.diffReport.button'"
-                [tooltip]="'artemisApp.programmingExercise.diffReport.tooltipBetweenSubmissions'"
-                (onClick)="showGitDiff()"
-                class="ms-2"
-            ></jhi-button>
-        </div>
-    </dd>
-</div>
+            @if (previousSubmission) {
+                <span
+                    jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsPreviousSubmissionLabel"
+                    [translateValues]="{ previousCommitHash: previousSubmission?.commitHash }"
+                ></span>
+            } @else {
+                <span jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsTemplateLabel"></span>
+            }
+        </dt>
+        <dd>
+            <div class="fw-bold">
+                <jhi-git-diff-line-stat
+                    [addedLineCount]="addedLineCount"
+                    [removedLineCount]="removedLineCount"
+                    ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipExamTimeline' | artemisTranslate }}"
+                ></jhi-git-diff-line-stat>
+                @if (addedLineCount > 0 || removedLineCount > 0) {
+                    <jhi-button
+                        [featureToggle]="FeatureToggle.ProgrammingExercises"
+                        [isLoading]="isLoadingDiffReport"
+                        [btnSize]="ButtonSize.SMALL"
+                        [icon]="faEye"
+                        [title]="'artemisApp.programmingExercise.diffReport.button'"
+                        [tooltip]="'artemisApp.programmingExercise.diffReport.tooltipBetweenSubmissions'"
+                        (onClick)="showGitDiff()"
+                        class="ms-2"
+                    ></jhi-button>
+                }
+            </div>
+        </dd>
+    </div>
+}

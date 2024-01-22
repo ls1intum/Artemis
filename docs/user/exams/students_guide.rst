@@ -301,7 +301,7 @@ If your instructor updates the problem statement for an exercise during the exam
 
     - **None** You can submit as many times as you want without any consequences.
     - **Lock Repository** There's a limit on the number of allowed submissions. Once you exceed the limit, your repository will be locked and further submissions will not be allowed.
-    
+
         .. figure:: student/submission_policy_lock.png
             :alt: Effect of the Lock Repository Policy
             :align: center
@@ -341,7 +341,7 @@ Summary
 - After you hand in, you can view the summary of your exam.
 - You always have access to the summary. You can find it by following the steps displayed in: `Accessing the Exam`_.
 - Further you have the opportunity to export the summary as a PDF file by clicking on |export_pdf|.
-- The summary contains an aggregated view of all your submissions. For programming exercises, it also contains the latest commit hash and repository URL so you can review your code.
+- The summary contains an aggregated view of all your submissions. For programming exercises, it also contains the latest commit hash and repository URI so you can review your code.
 
 .. figure:: student/summary.png
    :alt: Summary

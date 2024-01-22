@@ -50,7 +50,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
     private static final String TEST_PREFIX = "quizsubmissiontest";
 
-    private final Logger log = LoggerFactory.getLogger(getClass());
+    private static final Logger log = LoggerFactory.getLogger(QuizSubmissionIntegrationTest.class);
 
     private static final int NUMBER_OF_STUDENTS = 4;
 
@@ -692,17 +692,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         quizSubmission.submitted(true);
         participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student3");
         participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
-
-        List<MultipartFile> files = quizExercise.getQuizQuestions().stream().filter(quizQuestion -> quizQuestion instanceof DragAndDropQuestion)
-                .map(quizQuestion -> (DragAndDropQuestion) quizQuestion).flatMap(quizQuestion -> {
-                    var list = new ArrayList<MultipartFile>();
-                    if (quizQuestion.getBackgroundFilePath() != null) {
-                        list.add(new MockMultipartFile("files", quizQuestion.getBackgroundFilePath(), MediaType.IMAGE_PNG_VALUE, "test".getBytes()));
-                    }
-                    list.addAll(quizQuestion.getDragItems().stream().filter(dragItem -> dragItem.getPictureFilePath() != null)
-                            .map(dragItem -> new MockMultipartFile("files", dragItem.getPictureFilePath(), MediaType.IMAGE_PNG_VALUE, "test".getBytes())).toList());
-                    return list.stream();
-                }).toList();
 
         quizExerciseService.reEvaluate(quizExercise, quizExercise, generateMultipartFilesFromQuizExercise(quizExercise));
         assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isEqualTo(1);

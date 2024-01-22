@@ -2,7 +2,7 @@
     <div class="d-flex justify-content-center flex-wrap gap-1 align-items-center">
         <div class="text-center text-primary me-2">{{ 'artemisApp.lectureUnit.unitCreationCard.title' | artemisTranslate }}:</div>
         <div class="d-flex justify-content-center flex-wrap gap-1 align-items-center">
-            <ng-container *ngIf="!this.emitEvents; else createButtons">
+            @if (!this.emitEvents) {
                 <a type="button" id="createTextUnitButton" class="btn btn-sm btn-primary ms-1" [routerLink]="['./', 'text-units', 'create']">
                     <fa-icon [icon]="faScroll"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.text">text</span>
                 </a>
@@ -18,8 +18,7 @@
                 <a type="button" id="createAttachmentUnitButton" class="btn btn-sm btn-primary ms-1" [routerLink]="['./', 'attachment-units', 'create']">
                     <fa-icon [icon]="faFileUpload"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.attachment">File</span>
                 </a>
-            </ng-container>
-            <ng-template #createButtons>
+            } @else {
                 <button type="button" id="createTextUnitButton" class="btn btn-sm btn-primary ms-1" (click)="onButtonClicked(unitType.TEXT)">
                     <fa-icon [icon]="faScroll"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.text">text</span>
                 </button>
@@ -35,7 +34,7 @@
                 <button type="button" id="createAttachmentUnitButton" class="btn btn-sm btn-primary ms-1" (click)="onButtonClicked(unitType.ATTACHMENT)">
                     <fa-icon [icon]="faFileUpload"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.attachment">File</span>
                 </button>
-            </ng-template>
+            }
         </div>
         <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
     </div>

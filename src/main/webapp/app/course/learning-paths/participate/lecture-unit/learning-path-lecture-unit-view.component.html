@@ -1,17 +1,27 @@
 <div class="row">
-    <div *ngIf="lectureUnit" class="col pe-0 flex-grow-1">
-        <div [ngSwitch]="lectureUnit.type">
-            <jhi-attachment-unit *ngSwitchCase="LectureUnitType.ATTACHMENT" [attachmentUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-attachment-unit>
-            <jhi-video-unit *ngSwitchCase="LectureUnitType.VIDEO" [videoUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-video-unit>
-            <jhi-text-unit *ngSwitchCase="LectureUnitType.TEXT" [textUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-text-unit>
-            <jhi-online-unit *ngSwitchCase="LectureUnitType.ONLINE" [onlineUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-online-unit>
+    @if (lectureUnit) {
+        <div class="col pe-0 flex-grow-1">
+            <div>
+                @switch (lectureUnit.type) {
+                    @case (LectureUnitType.ATTACHMENT) {
+                        <jhi-attachment-unit [attachmentUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-attachment-unit>
+                    }
+                    @case (LectureUnitType.VIDEO) {
+                        <jhi-video-unit [videoUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-video-unit>
+                    }
+                    @case (LectureUnitType.TEXT) {
+                        <jhi-text-unit [textUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-text-unit>
+                    }
+                    @case (LectureUnitType.ONLINE) {
+                        <jhi-online-unit [onlineUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-online-unit>
+                    }
+                }
+            </div>
         </div>
-    </div>
+    }
     <div class="communication-wrapper col d-flex flex-grow-1 justify-end">
-        <router-outlet
-            *ngIf="lecture && (isCommunicationEnabled(lecture.course) || isMessagingEnabled(lecture.course))"
-            class="ms-3"
-            (activate)="onChildActivate($event)"
-        ></router-outlet>
+        @if (lecture && (isCommunicationEnabled(lecture.course) || isMessagingEnabled(lecture.course))) {
+            <router-outlet class="ms-3" (activate)="onChildActivate($event)"></router-outlet>
+        }
     </div>
 </div>

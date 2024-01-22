@@ -13,21 +13,26 @@
                 </h3>
                 <div>
                     <div class="button-container">
-                        <span
-                            *ngIf="rateLimit >= 0"
-                            class="rate-limit"
-                            [ngbTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate: { hours: rateLimitTimeframeHours }"
-                            >{{ currentMessageCount }}/{{ rateLimit }}</span
-                        >
-                        <button *ngIf="isClearChatButtonEnabled()" id="clear-chat-button" (click)="onClearSession(clearConfirmModal)" class="header-icon">
-                            <fa-icon [icon]="faTrash"></fa-icon>
-                        </button>
-                        <button *ngIf="!fullSize" (click)="maximizeScreen()" class="header-icon">
-                            <fa-icon [icon]="faExpand"></fa-icon>
-                        </button>
-                        <button *ngIf="fullSize" (click)="minimizeScreen()" class="header-icon">
-                            <fa-icon [icon]="faCompress"></fa-icon>
-                        </button>
+                        @if (rateLimit >= 0) {
+                            <span class="rate-limit" [ngbTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate: { hours: rateLimitTimeframeHours }"
+                                >{{ currentMessageCount }}/{{ rateLimit }}</span
+                            >
+                        }
+                        @if (isClearChatButtonEnabled()) {
+                            <button id="clear-chat-button" (click)="onClearSession(clearConfirmModal)" class="header-icon">
+                                <fa-icon [icon]="faTrash"></fa-icon>
+                            </button>
+                        }
+                        @if (!fullSize) {
+                            <button (click)="maximizeScreen()" class="header-icon">
+                                <fa-icon [icon]="faExpand"></fa-icon>
+                            </button>
+                        }
+                        @if (fullSize) {
+                            <button (click)="minimizeScreen()" class="header-icon">
+                                <fa-icon [icon]="faCompress"></fa-icon>
+                            </button>
+                        }
                         <button (click)="closeChat()" class="header-icon">
                             <fa-icon [icon]="faXmark"></fa-icon>
                         </button>
@@ -35,7 +40,6 @@
                 </div>
             </div>
         </div>
-
         <ng-template #clearConfirmModal let-modal>
             <div class="modal-header">
                 <h4 class="modal-title">
@@ -52,121 +56,162 @@
                 </button>
             </div>
         </ng-template>
-
         <!-- main chat section -->
         <div class="chat-body" #chatBody (scroll)="checkChatScroll()">
-            <div *ngFor="let message of messages; let i = index">
-                <span *ngIf="i === unreadMessageIndex" class="unread-message" #unreadMessage>{{ 'artemisApp.exerciseChatbot.unreadMessages' | artemisTranslate }}</span>
-                <div *ngFor="let content of message.content">
-                    <div *ngIf="isStudentSentMessage(message)" style="display: flex">
-                        <div style="display: flex; margin-left: auto; margin-right: 0; padding-right: 5px">
-                            <button
-                                id="resendButton"
-                                style="all: unset; display: flex; align-items: flex-start; justify-content: space-between; cursor: pointer"
-                                (click)="resendMessage(message)"
-                                [disabled]="resendAnimationActive"
-                                *ngIf="i === messages.length - 1 && message.sender === IrisSender.USER && !this.isLoading && !(rateLimit >= 0 && currentMessageCount >= rateLimit)"
-                            >
-                                <fa-icon [icon]="faRedo" size="sm" [ngClass]="resendAnimationActive ? 'fa-pulse' : ''"></fa-icon>
-                            </button>
-                        </div>
-                        <div *ngIf="isTextContent(content)" style="display: flex">
-                            <pre><span [innerHTML]="getTextContent(content)! | htmlForMarkdown"
-                                       class="bubble-right"></span></pre>
-                        </div>
-                    </div>
-                    <div *ngIf="isServerSentMessage(message)" style="width: fit-content">
-                        <div class="bubble-left" *ngIf="isTextContent(content)">
-                            <span [innerHTML]="getTextContent(content)! | htmlForMarkdown"></span>
-                        </div>
-                        <div class="rate-message-buttons" *ngIf="isTextContent(content)">
-                            <button style="all: unset" (click)="rateMessage(message.id, i, true)" [disabled]="message.helpful">
-                                <fa-icon
-                                    [class]="message.helpful ? 'thumbs-up-clicked' : 'clickable rate-button-not-clicked'"
-                                    style="margin-right: 15px"
-                                    [icon]="faThumbsUp"
-                                    size="sm"
-                                ></fa-icon>
-                            </button>
-                            <button style="all: unset" (click)="rateMessage(message.id, i, false)" [disabled]="!message.helpful">
-                                <fa-icon
-                                    [class]="message.helpful === false ? 'thumbs-down-clicked' : 'clickable rate-button-not-clicked'"
-                                    [icon]="faThumbsDown"
-                                    size="sm"
-                                ></fa-icon>
-                            </button>
-                        </div>
-                        <div class="bubble-left" *ngIf="isExercisePlan(content)">
-                            <div *ngFor="let step of content.steps; let i = index">
-                                <!-- step component with show/hide button -->
-                                <div [ngStyle]="{ 'background-color': getStepColor(step) }" [ngClass]="isHidden(step) ? 'show-details' : 'hide-details'">
-                                    <div class="step-component">
-                                        <span [innerHTML]="getStepName(step) | htmlForMarkdown"></span>
-                                        <button (click)="hideOrUnhide(step)" class="detail-btn step-title">{{ isHidden(step) ? 'Show Details' : 'Hide Details' }}</button>
+            @for (message of messages; track message; let i = $index) {
+                <div>
+                    @if (i === unreadMessageIndex) {
+                        <span class="unread-message" #unreadMessage>{{ 'artemisApp.exerciseChatbot.unreadMessages' | artemisTranslate }}</span>
+                    }
+                    @for (content of message.content; track content) {
+                        <div>
+                            @if (isStudentSentMessage(message)) {
+                                <div style="display: flex">
+                                    <div style="display: flex; margin-left: auto; margin-right: 0; padding-right: 5px">
+                                        @if (
+                                            i === messages.length - 1 &&
+                                            message.sender === IrisSender.USER &&
+                                            !this.isLoading &&
+                                            !(rateLimit >= 0 && currentMessageCount >= rateLimit)
+                                        ) {
+                                            <button
+                                                id="resendButton"
+                                                style="all: unset; display: flex; align-items: flex-start; justify-content: space-between; cursor: pointer"
+                                                (click)="resendMessage(message)"
+                                                [disabled]="resendAnimationActive"
+                                            >
+                                                <fa-icon [icon]="faRedo" size="sm" [ngClass]="resendAnimationActive ? 'fa-pulse' : ''"></fa-icon>
+                                            </button>
+                                        }
                                     </div>
-                                    <span class="step-status" [innerHTML]="getStepStatus(step) | htmlForMarkdown"></span>
+                                    @if (isTextContent(content)) {
+                                        <div style="display: flex">
+                                            <pre><span [innerHTML]="getTextContent(content)! | htmlForMarkdown"
+                        class="bubble-right"></span></pre>
+                                        </div>
+                                    }
                                 </div>
-                                <!-- step instructions (editable) in a text box -->
-                                <div *ngIf="!isHidden(step)" [attr.contenteditable]="isNotExecuted(step)" class="step-detail">
-                                    <span [innerHTML]="step.instructions! | htmlForMarkdown"></span>
+                            }
+                            @if (isServerSentMessage(message)) {
+                                <div style="width: fit-content">
+                                    @if (isTextContent(content)) {
+                                        <div class="bubble-left">
+                                            <span [innerHTML]="getTextContent(content)! | htmlForMarkdown"></span>
+                                        </div>
+                                    }
+                                    @if (isTextContent(content)) {
+                                        <div class="rate-message-buttons">
+                                            <button style="all: unset" (click)="rateMessage(message.id, i, true)" [disabled]="message.helpful">
+                                                <fa-icon
+                                                    [class]="message.helpful ? 'thumbs-up-clicked' : 'clickable rate-button-not-clicked'"
+                                                    style="margin-right: 15px"
+                                                    [icon]="faThumbsUp"
+                                                    size="sm"
+                                                ></fa-icon>
+                                            </button>
+                                            <button style="all: unset" (click)="rateMessage(message.id, i, false)" [disabled]="!message.helpful">
+                                                <fa-icon
+                                                    [class]="message.helpful === false ? 'thumbs-down-clicked' : 'clickable rate-button-not-clicked'"
+                                                    [icon]="faThumbsDown"
+                                                    size="sm"
+                                                ></fa-icon>
+                                            </button>
+                                        </div>
+                                    }
+                                    @if (isExercisePlan(content)) {
+                                        <div class="bubble-left">
+                                            @for (step of content.steps; track step; let i = $index) {
+                                                <div>
+                                                    <!-- step component with show/hide button -->
+                                                    <div [ngStyle]="{ 'background-color': getStepColor(step) }" [ngClass]="isHidden(step) ? 'show-details' : 'hide-details'">
+                                                        <div class="step-component">
+                                                            <span [innerHTML]="getStepName(step) | htmlForMarkdown"></span>
+                                                            <button (click)="hideOrUnhide(step)" class="detail-btn step-title">
+                                                                {{ isHidden(step) ? 'Show Details' : 'Hide Details' }}
+                                                            </button>
+                                                        </div>
+                                                        <span class="step-status" [innerHTML]="getStepStatus(step) | htmlForMarkdown"></span>
+                                                    </div>
+                                                    <!-- step instructions (editable) in a text box -->
+                                                    @if (!isHidden(step)) {
+                                                        <div [attr.contenteditable]="isNotExecuted(step)" class="step-detail">
+                                                            <span [innerHTML]="step.instructions! | htmlForMarkdown"></span>
+                                                        </div>
+                                                    }
+                                                    <!-- loading icon -->
+                                                    @if (isInProgress(step)) {
+                                                        <div>
+                                                            <i class="fa fa-spinner fa-spin"></i>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                            <!-- execute/pause button -->
+                                            <div class="execute-button">
+                                                @if (!content.executing) {
+                                                    <div>
+                                                        <button class="btn btn-primary" (click)="setExecuting(message.id, content)" [disabled]="!canExecute(content)">
+                                                            {{ getPlanButtonTitle(content) }}
+                                                        </button>
+                                                    </div>
+                                                }
+                                                @if (content.executing) {
+                                                    <div>
+                                                        <button (click)="pausePlan(content)" class="btn btn-danger">Pause</button>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
                                 </div>
-
-                                <!-- loading icon -->
-                                <div *ngIf="isInProgress(step)">
-                                    <i class="fa fa-spinner fa-spin"></i>
+                            }
+                            @if (isArtemisClientSentMessage(message)) {
+                                <div style="width: fit-content">
+                                    @if (isTextContent(content)) {
+                                        <div class="bubble-left">
+                                            <span [innerHTML]="getTextContent(content)!"></span>
+                                        </div>
+                                    }
                                 </div>
-                            </div>
-
-                            <!-- execute/pause button -->
-                            <div class="execute-button">
-                                <div *ngIf="!content.executing">
-                                    <button class="btn btn-primary" (click)="setExecuting(message.id, content)" [disabled]="!canExecute(content)">
-                                        {{ getPlanButtonTitle(content) }}
-                                    </button>
-                                </div>
-                                <div *ngIf="content.executing">
-                                    <button (click)="pausePlan(content)" class="btn btn-danger">Pause</button>
-                                </div>
-                            </div>
+                            }
                         </div>
-                    </div>
-                    <div *ngIf="isArtemisClientSentMessage(message)" style="width: fit-content">
-                        <div class="bubble-left" *ngIf="isTextContent(content)">
-                            <span [innerHTML]="getTextContent(content)!"></span>
-                        </div>
+                    }
+                </div>
+            }
+            @if (isLoading) {
+                <div class="bubble-left">
+                    <div class="blinking-dots">
+                        @for (_ of [].constructor(dots); track _) {
+                            <div class="d-inline">
+                                <fa-icon [icon]="faCircle" size="xs"></fa-icon>
+                            </div>
+                        }
                     </div>
                 </div>
-            </div>
-            <div class="bubble-left" *ngIf="isLoading">
-                <div class="blinking-dots">
-                    <div *ngFor="let _ of [].constructor(dots)" class="d-inline">
-                        <fa-icon [icon]="faCircle" size="xs"></fa-icon>
+            }
+            @if (!userAccepted) {
+                <div class="p-chat">
+                    <div class="message-text">{{ 'artemisApp.exerciseChatbot.popUpMessage' | artemisTranslate }}</div>
+                    <div class="button-container">
+                        <button class="button" (click)="acceptPermission()">{{ 'artemisApp.exerciseChatbot.accept' | artemisTranslate }}</button>
+                        <button class="button" (click)="closeChat()">{{ 'artemisApp.exerciseChatbot.decline' | artemisTranslate }}</button>
                     </div>
                 </div>
-            </div>
-            <div class="p-chat" *ngIf="!userAccepted">
-                <div class="message-text">{{ 'artemisApp.exerciseChatbot.popUpMessage' | artemisTranslate }}</div>
-                <div class="button-container">
-                    <button class="button" (click)="acceptPermission()">{{ 'artemisApp.exerciseChatbot.accept' | artemisTranslate }}</button>
-                    <button class="button" (click)="closeChat()">{{ 'artemisApp.exerciseChatbot.decline' | artemisTranslate }}</button>
-                </div>
-            </div>
+            }
             <div class="scroll-to-bottom" [hidden]="isScrolledToBottom" (click)="scrollToBottom('smooth')" #scrollArrow>
                 <fa-icon [icon]="faArrowDown"></fa-icon>
             </div>
-            <div
-                class="client-chat-error"
-                *ngIf="shouldShowEmptyMessageError && error && isEmptyMessageError()"
-                [@fadeAnimation]="fadeState"
-                (@fadeAnimation.done)="onFadeAnimationPhaseEnd($event)"
-            >
-                {{ error.key | artemisTranslate }}
-            </div>
-            <div class="client-chat-error" *ngIf="error && !isEmptyMessageError()">
-                {{ error.key | artemisTranslate: getConvertedErrorMap() }}
-            </div>
+            @if (shouldShowEmptyMessageError && error && isEmptyMessageError()) {
+                <div class="client-chat-error" [@fadeAnimation]="fadeState" (@fadeAnimation.done)="onFadeAnimationPhaseEnd($event)">
+                    {{ error.key | artemisTranslate }}
+                </div>
+            }
+            @if (error && !isEmptyMessageError()) {
+                <div class="client-chat-error">
+                    {{ error.key | artemisTranslate: getConvertedErrorMap() }}
+                </div>
+            }
         </div>
-
         <!-- input field section -->
         <div class="chat-input">
             <textarea

@@ -10,26 +10,24 @@
     </ng-template>
     <ng-template #overrideButtons let-exercise="exercise">
         <td class="align-middle">
-            <jhi-ide-button
-                *ngIf="
-                    orionState.view === ExerciseView.INSTRUCTOR && orionState.opened === exercise.id && exercise.isAtLeastEditor && exercise.templateParticipation;
-                    else importAsInstructor
-                "
-                buttonLabel="{{ 'artemisApp.programmingExercise.intellij.openEditor' | artemisTranslate }}"
-                [smallButton]="false"
-                (clickHandler)="openOrionEditor(exercise)"
-            >
-            </jhi-ide-button>
-            <ng-template #importAsInstructor>
+            @if (orionState.view === ExerciseView.INSTRUCTOR && orionState.opened === exercise.id && exercise.isAtLeastEditor && exercise.templateParticipation) {
                 <jhi-ide-button
-                    *ngIf="exercise.isAtLeastEditor && exercise.templateParticipation"
-                    [buttonLabel]="'entity.action.editInIntelliJ' | artemisTranslate"
-                    [buttonLoading]="orionState.cloning"
+                    buttonLabel="{{ 'artemisApp.programmingExercise.intellij.openEditor' | artemisTranslate }}"
                     [smallButton]="false"
-                    (clickHandler)="editInIDE(exercise)"
+                    (clickHandler)="openOrionEditor(exercise)"
                 >
                 </jhi-ide-button>
-            </ng-template>
+            } @else {
+                @if (exercise.isAtLeastEditor && exercise.templateParticipation) {
+                    <jhi-ide-button
+                        [buttonLabel]="'entity.action.editInIntelliJ' | artemisTranslate"
+                        [buttonLoading]="orionState.cloning"
+                        [smallButton]="false"
+                        (clickHandler)="editInIDE(exercise)"
+                    >
+                    </jhi-ide-button>
+                }
+            }
         </td>
     </ng-template>
 </jhi-programming-exercise>

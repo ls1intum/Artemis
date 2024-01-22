@@ -1,24 +1,30 @@
-<div *ngFor="let solutionEntry of sortedSolutionEntries">
-    <div class="d-flex flex-row mb-3">
-        <jhi-solution-entry
-            class="flex-grow-1"
-            [solutionEntry]="solutionEntry"
-            [enableEditing]="enableEditing"
-            (onRemoveEntry)="removeEntryFromCodeHint(solutionEntry.id!)"
-        ></jhi-solution-entry>
-        <div *ngIf="enableEditing" class="ps-2 flex-grow-0">
-            <button
-                jhiDeleteButton
-                [entityTitle]="solutionEntry.id!.toString()"
-                deleteQuestion="artemisApp.codeHint.removeEntryQuestion"
-                (delete)="removeEntryFromCodeHint(solutionEntry.id!)"
-                [dialogError]="dialogError$"
-            >
-                <fa-icon [icon]="faTimes"></fa-icon>
-            </button>
+@for (solutionEntry of sortedSolutionEntries; track solutionEntry) {
+    <div>
+        <div class="d-flex flex-row mb-3">
+            <jhi-solution-entry
+                class="flex-grow-1"
+                [solutionEntry]="solutionEntry"
+                [enableEditing]="enableEditing"
+                (onRemoveEntry)="removeEntryFromCodeHint(solutionEntry.id!)"
+            ></jhi-solution-entry>
+            @if (enableEditing) {
+                <div class="ps-2 flex-grow-0">
+                    <button
+                        jhiDeleteButton
+                        [entityTitle]="solutionEntry.id!.toString()"
+                        deleteQuestion="artemisApp.codeHint.removeEntryQuestion"
+                        (delete)="removeEntryFromCodeHint(solutionEntry.id!)"
+                        [dialogError]="dialogError$"
+                    >
+                        <fa-icon [icon]="faTimes"></fa-icon>
+                    </button>
+                </div>
+            }
         </div>
     </div>
-</div>
-<div *ngIf="!sortedSolutionEntries.length">
-    <span jhiTranslate="artemisApp.codeHint.noEntries">This code hint has no Solution Code Snippets.</span>
-</div>
+}
+@if (!sortedSolutionEntries.length) {
+    <div>
+        <span jhiTranslate="artemisApp.codeHint.noEntries">This code hint has no Solution Code Snippets.</span>
+    </div>
+}
