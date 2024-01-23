@@ -47,7 +47,7 @@ export class BuildQueueService {
      * @param courseId the id of the course
      * @param buildJobId the id of the build job to cancel
      */
-    cancelBuildJobInCourse(courseId: number, buildJobId: number): Observable<void> {
+    cancelBuildJobInCourse(courseId: number, buildJobId: string): Observable<void> {
         return this.http.delete<void>(`${this.resourceUrl}/courses/${courseId}/cancel-job/${buildJobId}`).pipe(
             catchError((err) => {
                 return throwError(() => new Error(`Failed to cancel build job ${buildJobId} in course ${courseId}\n${err.message}`));
@@ -59,32 +59,10 @@ export class BuildQueueService {
      * Cancel a specific build job associated with the build job id
      * @param buildJobId the id of the build job to cancel
      */
-    cancelBuildJob(buildJobId: number): Observable<void> {
+    cancelBuildJob(buildJobId: string): Observable<void> {
         return this.http.delete<void>(`${this.adminResourceUrl}/cancel-job/${buildJobId}`).pipe(
             catchError((err) => {
                 return throwError(() => new Error(`Failed to cancel build job ${buildJobId}\n${err.message}`));
-            }),
-        );
-    }
-
-    /**
-     * Cancel all running build jobs
-     */
-    cancelAllRunningBuildJobs(): Observable<void> {
-        return this.http.delete<void>(`${this.adminResourceUrl}/cancel-all-running-jobs`).pipe(
-            catchError((err) => {
-                return throwError(() => new Error(`Failed to cancel all running build jobs\n${err.message}`));
-            }),
-        );
-    }
-
-    /**
-     * Cancel all running build jobs associated with a course
-     */
-    cancelAllRunningBuildJobsInCourse(courseId: number): Observable<void> {
-        return this.http.delete<void>(`${this.resourceUrl}/courses/${courseId}/cancel-all-running-jobs`).pipe(
-            catchError((err) => {
-                return throwError(() => new Error(`Failed to cancel all running build jobs in course ${courseId}\n${err.message}`));
             }),
         );
     }
@@ -107,6 +85,28 @@ export class BuildQueueService {
         return this.http.delete<void>(`${this.resourceUrl}/courses/${courseId}/cancel-all-queued-jobs`).pipe(
             catchError((err) => {
                 return throwError(() => new Error(`Failed to cancel all queued build jobs in course ${courseId}\n${err.message}`));
+            }),
+        );
+    }
+
+    /**
+     * Cancel all running build jobs
+     */
+    cancelAllRunningBuildJobs(): Observable<void> {
+        return this.http.delete<void>(`${this.adminResourceUrl}/cancel-all-running-jobs`).pipe(
+            catchError((err) => {
+                return throwError(() => new Error(`Failed to cancel all running build jobs\n${err.message}`));
+            }),
+        );
+    }
+
+    /**
+     * Cancel all running build jobs associated with a course
+     */
+    cancelAllRunningBuildJobsInCourse(courseId: number): Observable<void> {
+        return this.http.delete<void>(`${this.resourceUrl}/courses/${courseId}/cancel-all-running-jobs`).pipe(
+            catchError((err) => {
+                return throwError(() => new Error(`Failed to cancel all running build jobs in course ${courseId}\n${err.message}`));
             }),
         );
     }

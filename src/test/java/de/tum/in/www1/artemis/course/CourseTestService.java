@@ -5,7 +5,6 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.*;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.mockStatic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -144,9 +143,6 @@ public class CourseTestService {
 
     @Autowired
     private CourseExamExportService courseExamExportService;
-
-    @Autowired
-    private FilePathService filePathService;
 
     @Autowired
     private FileUploadExerciseRepository fileUploadExerciseRepository;
@@ -940,10 +936,6 @@ public class CourseTestService {
             assertThat(receivedCourse).isNotNull();
             if (i == 0) {
                 assertThat(receivedCourse.getExams()).isEmpty();
-            }
-            else if (i == 1) {
-                assertThat(receivedCourse.getExams()).hasSize(0);
-                assertThat(receivedCourse.getNumberOfExams()).isEqualTo(3);
             }
             else {
                 assertThat(receivedCourse.getExams()).hasSize(0);
@@ -2952,14 +2944,20 @@ public class CourseTestService {
 
         // Active Users
         int periodIndex = 0;
+        int periodSize = 8;
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("periodIndex", Integer.toString(periodIndex));
+        parameters.add("periodSize", Integer.toString(periodSize));
 
-        var activeStudents = request.get("/api/courses/" + course1.getId() + "/statistics", HttpStatus.OK, Integer[].class, parameters);
+        Integer[] activeStudents = request.get("/api/courses/" + course1.getId() + "/statistics", HttpStatus.OK, Integer[].class, parameters);
 
         assertThat(activeStudents).isNotNull();
         assertThat(activeStudents).hasSize(3);
 
+        course1.setStartDate(now.plusWeeks(10));
+        course1.setEndDate(now.plusWeeks(20));
+        activeStudents = request.get("/api/courses/" + course1.getId() + "/statistics", HttpStatus.OK, Integer[].class, parameters);
+        assertThat(activeStudents).isNotNull();
     }
 
     // Test

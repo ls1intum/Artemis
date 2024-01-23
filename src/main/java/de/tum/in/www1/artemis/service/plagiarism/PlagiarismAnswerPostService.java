@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.metis;
+package de.tum.in.www1.artemis.service.plagiarism;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
@@ -16,13 +16,14 @@ import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.metis.PostingService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 @Service
-public class AnswerPostService extends PostingService {
+public class PlagiarismAnswerPostService extends PostingService {
 
     private static final String METIS_ANSWER_POST_ENTITY_NAME = "metis.answerPost";
 
@@ -30,7 +31,7 @@ public class AnswerPostService extends PostingService {
 
     private final PostRepository postRepository;
 
-    protected AnswerPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
+    protected PlagiarismAnswerPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             AnswerPostRepository answerPostRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository);
