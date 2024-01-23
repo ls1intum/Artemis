@@ -170,5 +170,5 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
             WHERE plagiarismCase.student.isDeleted IS FALSE
                 AND plagiarismCase.exercise.id = :exerciseId
             """)
-    long countByExerciseId(long exerciseId);
+    long countByExerciseId(@Param("exerciseId") long exerciseId);
 }
