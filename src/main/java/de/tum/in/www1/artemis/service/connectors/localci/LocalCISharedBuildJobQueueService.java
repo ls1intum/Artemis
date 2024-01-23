@@ -192,9 +192,7 @@ public class LocalCISharedBuildJobQueueService {
         catch (Exception e) {
             log.error("Could not save build job to database", e);
         }
-        addToRecentBuildJobs(new LocalCIBuildJobQueueItem(queueItem.id(), queueItem.name(), queueItem.buildAgentAddress(), queueItem.participationId(), queueItem.repositoryName(),
-                queueItem.repositoryType(), queueItem.commitHash(), queueItem.submissionDate(), queueItem.retryCount(), queueItem.buildStartDate(), buildCompletionDate,
-                queueItem.priority(), queueItem.courseId(), queueItem.triggeredByPushTo(), queueItem.dockerImage(), result.name()));
+        addToRecentBuildJobs(new LocalCIBuildJobQueueItem(queueItem, buildCompletionDate, result));
     }
 
     /**
@@ -292,9 +290,7 @@ public class LocalCISharedBuildJobQueueService {
         LocalCIBuildJobQueueItem buildJob = queue.poll();
         if (buildJob != null) {
             String hazelcastMemberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
-            LocalCIBuildJobQueueItem processingJob = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), hazelcastMemberAddress, buildJob.participationId(),
-                    buildJob.repositoryName(), buildJob.repositoryType(), buildJob.commitHash(), buildJob.submissionDate(), buildJob.retryCount(), ZonedDateTime.now(), null,
-                    buildJob.priority(), buildJob.courseId(), buildJob.triggeredByPushTo(), null, null);
+            LocalCIBuildJobQueueItem processingJob = new LocalCIBuildJobQueueItem(buildJob, hazelcastMemberAddress);
             processingJobs.put(processingJob.id(), processingJob);
             localProcessingJobs.incrementAndGet();
 
@@ -467,11 +463,16 @@ public class LocalCISharedBuildJobQueueService {
         });
     }
 
-    private void addToRecentBuildJobs(LocalCIBuildJobQueueItem updatedJob) {
+    /**
+     * Add a build job to the list of recent build jobs. Only the last 5 build jobs are needed.
+     *
+     * @param buildJob The build job to add to the list of recent build jobs
+     */
+    private void addToRecentBuildJobs(LocalCIBuildJobQueueItem buildJob) {
         if (recentBuildJobs.size() >= 5) {
             recentBuildJobs.remove(0);
         }
-        recentBuildJobs.add(updatedJob);
+        recentBuildJobs.add(buildJob);
         updateLocalBuildAgentInformation();
     }
 

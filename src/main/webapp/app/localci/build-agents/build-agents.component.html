@@ -95,6 +95,22 @@
                     [rowClass]="settings.rowClass"
                     [scrollbarH]="settings.scrollbarH"
                 >
+                    <ngx-datatable-column [minWidth]="30" [width]="30">
+                        <ng-template ngx-datatable-header-template>
+                            <!-- This is an empty header for the icon column -->
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-row="row">
+                            <span
+                                [ngClass]="{
+                                    'text-success': row.status === 'SUCCESSFUL',
+                                    'text-warning': row.status === 'CANCELLED',
+                                    'text-danger': row.status !== 'SUCCESSFUL' && row.status !== 'CANCELLED'
+                                }"
+                            >
+                                <fa-icon [icon]="row.status === 'SUCCESSFUL' ? faCircleCheck : row.status === 'CANCELLED' ? faExclamationTriangle : faExclamationCircle"></fa-icon>
+                            </span>
+                        </ng-template>
+                    </ngx-datatable-column>
                     <ngx-datatable-column prop="name" [minWidth]="150" [width]="200">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
@@ -103,7 +119,32 @@
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                            <span [ngClass]="row.result === 'SUCCESSFUL' ? 'text-success' : 'text-danger'">{{ value }}</span>
+                            <span
+                                [ngClass]="{
+                                    'text-success': row.status === 'SUCCESSFUL',
+                                    'text-warning': row.status === 'CANCELLED',
+                                    'text-danger': row.status !== 'SUCCESSFUL' && row.status !== 'CANCELLED'
+                                }"
+                                >{{ value }}</span
+                            >
+                        </ng-template>
+                    </ngx-datatable-column>
+                    <ngx-datatable-column prop="status" [minWidth]="150" [width]="200">
+                        <ng-template ngx-datatable-header-template>
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('status')">
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.status"> Status </span>
+                                <fa-icon [icon]="controls.iconForSortPropField('status')"></fa-icon>
+                            </span>
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                            <span
+                                [ngClass]="{
+                                    'text-success': row.status === 'SUCCESSFUL',
+                                    'text-warning': row.status === 'CANCELLED',
+                                    'text-danger': row.status !== 'SUCCESSFUL' && row.status !== 'CANCELLED'
+                                }"
+                                >{{ value }}</span
+                            >
                         </ng-template>
                     </ngx-datatable-column>
                     <ngx-datatable-column prop="participationId" [minWidth]="150" [width]="150">
@@ -194,17 +235,6 @@
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value">
                             <span>{{ value | artemisDate: 'long' : true }}</span>
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column prop="result" [minWidth]="150" [width]="200">
-                        <ng-template ngx-datatable-header-template>
-                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('result')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.result"> Result </span>
-                                <fa-icon [icon]="controls.iconForSortPropField('result')"></fa-icon>
-                            </span>
-                        </ng-template>
-                        <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                            <span [ngClass]="row.result === 'SUCCESSFUL' ? 'text-success' : 'text-danger'">{{ value }}</span>
                         </ng-template>
                     </ngx-datatable-column>
                 </ngx-datatable>

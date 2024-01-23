@@ -14,5 +14,5 @@ export class BuildJob implements StringBaseEntity {
     public courseId?: number;
     public isPushToTestRepository?: boolean;
     public buildCompletionDate?: dayjs.Dayjs;
-    public result?: string;
+    public status?: string;
 }
