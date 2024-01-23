@@ -75,6 +75,15 @@ export class CompetencyRecommendationDetailComponent implements OnInit {
     }
 
     /**
+     * Updates description form on markdown change
+     * @param content markdown content
+     */
+    updateDescriptionControl(content: string) {
+        this.descriptionControl?.setValue(content);
+        this.descriptionControl?.markAsDirty();
+    }
+
+    /**
      * Keeps order of elements as-is in the keyvalue pipe
      */
     keepOrder = () => {
