@@ -155,7 +155,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("""
             SELECT DISTINCT pe
             FROM ProgrammingExercise pe
-            LEFT JOIN pe.studentParticipations participation
+                LEFT JOIN pe.studentParticipations participation
             WHERE pe.releaseDate > :now
                 OR pe.buildAndTestStudentSubmissionsAfterDueDate > :now
                 OR pe.dueDate > :now
@@ -341,7 +341,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
                 count(DISTINCT p)
             )
             FROM ProgrammingExerciseStudentParticipation p
-            JOIN p.submissions s
+                JOIN p.submissions s
             WHERE p.exercise.id IN :exerciseIds
                 AND p.testRun IS FALSE
                 AND s.submitted IS TRUE

@@ -53,11 +53,17 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     }
 
     @Query("""
-            SELECT s FROM ProgrammingSubmission s
-            LEFT JOIN FETCH s.results
-            WHERE (s.type <> 'ILLEGAL' or s.type is null)
-            AND s.participation.id = :#{#participationId}
-            AND s.id = (SELECT max(s2.id) FROM ProgrammingSubmission s2 WHERE s2.participation.id = :#{#participationId} AND (s2.type <> 'ILLEGAL' or s2.type is null))
+            SELECT s
+            FROM ProgrammingSubmission s
+                LEFT JOIN FETCH s.results
+            WHERE (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND s.participation.id = :participationId
+                AND s.id = (
+                    SELECT MAX(s2.id)
+                    FROM ProgrammingSubmission s2
+                    WHERE s2.participation.id = :participationId
+                        AND (s2.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s2.type IS NULL)
+                )
             """)
     Optional<ProgrammingSubmission> findFirstByParticipationIdOrderByLegalSubmissionDateDesc(@Param("participationId") Long participationId);
 
@@ -74,8 +80,21 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
      * @param pageable        Pageable
      * @return ProgrammingSubmission list (can be empty!)
      */
-    @EntityGraph(type = LOAD, attributePaths = "results")
-    @Query("select s from ProgrammingSubmission s left join s.participation p left join p.exercise e where p.id = :#{#participationId} and (s.type = 'INSTRUCTOR' or s.type = 'TEST' or e.dueDate is null or s.submissionDate <= e.dueDate) order by s.submissionDate desc")
+    @Query("""
+            SELECT s
+            FROM ProgrammingSubmission s
+                LEFT JOIN s.participation p
+                LEFT JOIN p.exercise e
+                LEFT JOIN FETCH s.results r
+            WHERE p.id = :participationId
+                AND (
+                    s.type = de.tum.in.www1.artemis.domain.enumeration.SubmissionType.INSTRUCTOR
+                    OR s.type = de.tum.in.www1.artemis.domain.enumeration.SubmissionType.TEST
+                    OR e.dueDate IS NULL
+                    OR s.submissionDate <= e.dueDate
+                )
+            ORDER BY s.submissionDate DESC
+            """)
     List<ProgrammingSubmission> findGradedByParticipationIdOrderBySubmissionDateDesc(@Param("participationId") Long participationId, Pageable pageable);
 
     @EntityGraph(type = LOAD, attributePaths = "results")
@@ -90,11 +109,20 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     @EntityGraph(type = LOAD, attributePaths = { "buildLogEntries" })
     Optional<ProgrammingSubmission> findWithEagerBuildLogEntriesById(Long submissionId);
 
-    @Query("select s from ProgrammingSubmission s left join fetch s.results r where r.id = :#{#resultId}")
+    @Query("""
+            SELECT s
+            FROM ProgrammingSubmission s
+                LEFT JOIN FETCH s.results r
+            WHERE r.id = :resultId
+            """)
     Optional<ProgrammingSubmission> findByResultId(@Param("resultId") Long resultId);
 
-    @EntityGraph(type = LOAD, attributePaths = "results")
-    @Query("select s from ProgrammingSubmission s where s.participation.id = :#{#participationId}")
+    @Query("""
+            SELECT s
+            FROM ProgrammingSubmission s
+                LEFT JOIN FETCH s.results r
+            WHERE s.participation.id = :participationId
+            """)
     List<ProgrammingSubmission> findAllByParticipationIdWithResults(@Param("participationId") Long participationId);
 
     /**

@@ -37,13 +37,14 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
                 LEFT JOIN FETCH pr.submission
             WHERE p.id = :participationId
                 AND (pr.id = (
-                    SELECT max(prr.id)
+                    SELECT MAX(prr.id)
                     FROM p.results prr
-                    WHERE (prr.assessmentType = 'AUTOMATIC'
+                    WHERE (prr.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
                         OR (prr.completionDate IS NOT NULL
-                            AND (p.exercise.assessmentDueDate IS NULL
-                                OR p.exercise.assessmentDueDate < :#{#dateTime}))))
-                    OR pr.id IS NULL)
+                            AND (p.exercise.assessmentDueDate IS NULL OR p.exercise.assessmentDueDate < :dateTime)
+                        )
+                    )
+                ) OR pr.id IS NULL)
             """)
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(@Param("participationId") Long participationId,
             @Param("dateTime") ZonedDateTime dateTime);
@@ -52,12 +53,11 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     List<ProgrammingExerciseStudentParticipation> findWithResultsAndExerciseAndTeamStudentsByBuildPlanId(String buildPlanId);
 
     @Query("""
-                SELECT DISTINCT p
-                FROM ProgrammingExerciseStudentParticipation p
-                    LEFT JOIN FETCH p.results
-                    WHERE p.buildPlanId IS NOT NULL
-                        AND (p.student IS NOT NULL
-                            OR p.team IS NOT NULL)
+            SELECT DISTINCT p
+            FROM ProgrammingExerciseStudentParticipation p
+                LEFT JOIN FETCH p.results
+            WHERE p.buildPlanId IS NOT NULL
+                AND (p.student IS NOT NULL OR p.team IS NOT NULL)
             """)
     List<ProgrammingExerciseStudentParticipation> findAllWithBuildPlanIdWithResults();
 
@@ -85,8 +85,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             FROM ProgrammingExerciseStudentParticipation participation
                 LEFT JOIN FETCH participation.team team
                 LEFT JOIN FETCH team.students
-            WHERE participation.exercise.id = :#{#exerciseId}
-                AND participation.team.shortName = :#{#teamShortName}
+            WHERE participation.exercise.id = :exerciseId
+                AND participation.team.shortName = :teamShortName
             """)
     Optional<ProgrammingExerciseStudentParticipation> findWithEagerStudentsByExerciseIdAndTeamShortName(@Param("exerciseId") Long exerciseId,
             @Param("teamShortName") String teamShortName);
@@ -97,8 +97,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
                 LEFT JOIN FETCH participation.submissions
                 LEFT JOIN FETCH participation.team team
                 LEFT JOIN FETCH team.students
-            WHERE participation.exercise.id = :#{#exerciseId}
-                AND participation.team.shortName = :#{#teamShortName}
+            WHERE participation.exercise.id = :exerciseId
+                AND participation.team.shortName = :teamShortName
             """)
     Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndEagerStudentsByExerciseIdAndTeamShortName(@Param("exerciseId") Long exerciseId,
             @Param("teamShortName") String teamShortName);
@@ -125,8 +125,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             SELECT participation
             FROM ProgrammingExerciseStudentParticipation participation
                 LEFT JOIN FETCH participation.submissions
-            WHERE participation.exercise.id = :#{#exerciseId}
-                AND participation.id IN :#{#participationIds}
+            WHERE participation.exercise.id = :exerciseId
+                AND participation.id IN :participationIds
             """)
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndParticipationIds(@Param("exerciseId") Long exerciseId,
             @Param("participationIds") Collection<Long> participationIds);
@@ -135,9 +135,9 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             SELECT participation
             FROM ProgrammingExerciseStudentParticipation participation
                 LEFT JOIN FETCH participation.submissions
-            WHERE participation.exercise.id = :#{#exerciseId}
-                AND participation.student.login = :#{#username}
-                AND participation.testRun = :#{#testRun}
+            WHERE participation.exercise.id = :exerciseId
+                AND participation.student.login = :username
+                AND participation.testRun = :testRun
             """)
     Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") Long exerciseId,
             @Param("username") String username, @Param("testRun") boolean testRun);
@@ -146,8 +146,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             SELECT participation
             FROM ProgrammingExerciseStudentParticipation participation
                 LEFT JOIN FETCH participation.submissions
-            WHERE participation.exercise.id = :#{#exerciseId}
-                AND participation.student.login = :#{#username}
+            WHERE participation.exercise.id = :exerciseId
+                AND participation.student.login = :username
             ORDER BY participation.testRun ASC
             """)
     List<ProgrammingExerciseStudentParticipation> findAllWithSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") Long exerciseId, @Param("username") String username);
@@ -175,22 +175,23 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     @Modifying
     @Query("""
             UPDATE ProgrammingExerciseStudentParticipation p
-            SET p.locked = :#{#locked}
-            WHERE p.id = :#{#participationId}
+            SET p.locked = :locked
+            WHERE p.id = :participationId
             """)
     void updateLockedById(@Param("participationId") Long participationId, @Param("locked") boolean locked);
 
     @Query("""
             SELECT DISTINCT p
             FROM ProgrammingExerciseStudentParticipation p
-                WHERE p.buildPlanId IS NOT NULL
+            WHERE p.buildPlanId IS NOT NULL
             """)
     Page<ProgrammingExerciseStudentParticipation> findAllWithBuildPlanId(Pageable pageable);
 
     @Query("""
             SELECT DISTINCT p
             FROM ProgrammingExerciseStudentParticipation p
-                WHERE p.buildPlanId IS NOT NULL or p.repositoryUri IS NOT NULL
+            WHERE p.buildPlanId IS NOT NULL
+                OR p.repositoryUri IS NOT NULL
             """)
     Page<ProgrammingExerciseStudentParticipation> findAllWithRepositoryUriOrBuildPlanId(Pageable pageable);
 }

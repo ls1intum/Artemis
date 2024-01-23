@@ -33,10 +33,10 @@ public interface StaticCodeAnalysisCategoryRepository extends JpaRepository<Stat
     Set<StaticCodeAnalysisCategory> findByExerciseId(Long exerciseId);
 
     @Query("""
-             SELECT s
-             FROM StaticCodeAnalysisCategory s
-                 LEFT JOIN FETCH s.exercise
-             WHERE s.exercise.id = :exerciseId
+            SELECT s
+            FROM StaticCodeAnalysisCategory s
+                LEFT JOIN FETCH s.exercise
+            WHERE s.exercise.id = :exerciseId
             """)
     Set<StaticCodeAnalysisCategory> findWithExerciseByExerciseId(@Param("exerciseId") Long exerciseId);
 

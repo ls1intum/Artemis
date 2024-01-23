@@ -21,21 +21,21 @@ import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
 public interface BuildLogStatisticsEntryRepository extends JpaRepository<BuildLogStatisticsEntry, Long> {
 
     @Query("""
-                SELECT new de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO(
-                    COUNT(b.id),
-                    AVG(b.agentSetupDuration),
-                    AVG(b.testDuration),
-                    AVG(b.scaDuration),
-                    AVG(b.totalJobDuration),
-                    AVG(b.dependenciesDownloadedCount)
-                )
-                FROM BuildLogStatisticsEntry b
-                    LEFT JOIN b.programmingSubmission s
-                    LEFT JOIN s.participation p
-                    LEFT JOIN TREAT (p.exercise as ProgrammingExercise ) e
-                WHERE e = :exercise
-                    OR e.solutionParticipation = p
-                    OR e.templateParticipation = p
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO(
+                COUNT(b.id),
+                AVG(b.agentSetupDuration),
+                AVG(b.testDuration),
+                AVG(b.scaDuration),
+                AVG(b.totalJobDuration),
+                AVG(b.dependenciesDownloadedCount)
+            )
+            FROM BuildLogStatisticsEntry b
+                LEFT JOIN b.programmingSubmission s
+                LEFT JOIN s.participation p
+                LEFT JOIN TREAT (p.exercise as ProgrammingExercise ) e
+            WHERE e = :exercise
+                OR e.solutionParticipation = p
+                OR e.templateParticipation = p
             """)
     BuildLogStatisticsDTO findAverageBuildLogStatisticsEntryForExercise(@Param("exercise") ProgrammingExercise exercise);
 
