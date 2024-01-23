@@ -103,7 +103,7 @@
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                            <span [ngStyle]="{ color: getBuildJobNameColor(row.result) }">{{ value }}</span>
+                            <span [ngClass]="row.result === 'SUCCESSFUL' ? 'text-success' : 'text-danger'">{{ value }}</span>
                         </ng-template>
                     </ngx-datatable-column>
                     <ngx-datatable-column prop="participationId" [minWidth]="150" [width]="150">
@@ -204,7 +204,7 @@
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                            <span [ngStyle]="{ color: getBuildJobNameColor(row.result) }">{{ value }}</span>
+                            <span [ngClass]="row.result === 'SUCCESSFUL' ? 'text-success' : 'text-danger'">{{ value }}</span>
                         </ng-template>
                     </ngx-datatable-column>
                 </ngx-datatable>
