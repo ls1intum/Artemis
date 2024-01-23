@@ -33,7 +33,7 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
             WHERE p.author.id =:authorId
                 AND p.conversation.course.id = :courseId
             """)
-    List<Post> findPostsByAuthorIdAndCourseId(long authorId, long courseId);
+    List<Post> findPostsByAuthorIdAndCourseId(@Param("authorId") long authorId, @Param("courseid") long courseId);
 
     @Transactional // ok because of delete
     @Modifying

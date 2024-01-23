@@ -28,7 +28,7 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
             WHERE conversationParticipant.conversation.id = :conversationId
                 AND conversationParticipant.user.id in :userIds
             """)
-    Set<ConversationParticipant> findConversationParticipantsByConversationIdAndUserIds(Long conversationId, Set<Long> userIds);
+    Set<ConversationParticipant> findConversationParticipantsByConversationIdAndUserIds(@Param("conversationId") Long conversationId, @Param("userIds") Set<Long> userIds);
 
     @Query("""
             SELECT DISTINCT conversationParticipant
@@ -72,7 +72,7 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
                 AND conversationParticipant.user.id = :userId
                 AND conversationParticipant.isModerator IS TRUE
             """)
-    Optional<ConversationParticipant> findModeratorConversationParticipantByConversationIdAndUserId(Long conversationId, Long userId);
+    Optional<ConversationParticipant> findModeratorConversationParticipantByConversationIdAndUserId(@Param("conversationId") Long conversationId, @Param("userId") Long userId);
 
     Integer countByConversationId(Long conversationId);
 
