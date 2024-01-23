@@ -47,20 +47,23 @@
 
         <dropColumn tableName="competency_relation" columnName="type_old"/>
 
-        <createIndex indexName="UQymvhyta1mtg5mmu2n2fjmjc4m2y0mtniymy4odjh" tableName="competency_relation" unique="true">
+        <createIndex indexName="idx_head_tail_type" tableName="competency_relation" unique="true">
             <column name="head_competency_id"/>
             <column name="tail_competency_id"/>
             <column name="type"/>
         </createIndex>
 
-        <createIndex indexName="FKd84cd79d225d13687cfe9c1395fb1cc69e09f553" tableName="competency_relation">
+        <createIndex indexName="idx_head_competency_id" tableName="competency_relation">
+            <column name="head_competency_id"/>
+        </createIndex>
+        <createIndex indexName="idx_tail_competency_id" tableName="competency_relation">
             <column name="tail_competency_id"/>
         </createIndex>
 
-        <addForeignKeyConstraint baseColumnNames="head_competency_id" baseTableName="competency_relation" constraintName="FKbeaa051892e67ac2783f413bbf882a547db27e60"
+        <addForeignKeyConstraint baseColumnNames="head_competency_id" baseTableName="competency_relation" constraintName="FK_head_competency_id"
                                  deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="competency"
                                  validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="tail_competency_id" baseTableName="competency_relation" constraintName="FKd84cd79d225d13687cfe9c1395fb1cc69e09f553"
+        <addForeignKeyConstraint baseColumnNames="tail_competency_id" baseTableName="competency_relation" constraintName="FK_tail_competency_id"
                                  deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="competency"
                                  validate="true"/>
     </changeSet>
