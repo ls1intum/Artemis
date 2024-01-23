@@ -29,11 +29,11 @@
         </addColumn>
 
         <sql>
-            UPDATE competency_relation r
+            UPDATE competency_relation
             SET type = CASE
-                    WHEN r.type_old = 'A' THEN 1
-                    WHEN r.type_old = 'E' THEN 2
-                    WHEN r.type_old = 'M' THEN 3
+                    WHEN type_old = 'A' THEN 1
+                    WHEN type_old = 'E' THEN 2
+                    WHEN type_old = 'M' THEN 3
                     ELSE 0
                 END
         </sql>
