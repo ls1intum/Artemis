@@ -26,7 +26,7 @@ public class HadesTestCaseResultDTO implements TestCaseDTOInterface {
 
     @Override
     public String getName() {
-        return null;
+        return name;
     }
 
     @Override
@@ -37,14 +37,11 @@ public class HadesTestCaseResultDTO implements TestCaseDTOInterface {
     }
 
     public boolean isSuccessful() {
-        switch (status) {
-            case "passed":
-                return true;
-            case "failed":
-                return false;
-            default:
-                throw new IllegalStateException("Unexpected value: " + status);
-        }
+        return switch (status) {
+            case "passed" -> true;
+            case "failed" -> false;
+            default -> throw new IllegalStateException("Unexpected value: " + status);
+        };
 
     }
 
