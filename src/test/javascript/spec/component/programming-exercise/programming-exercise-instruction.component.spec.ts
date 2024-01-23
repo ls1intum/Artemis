@@ -42,6 +42,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockModule } from 'ng-mocks';
+import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 
 describe('ProgrammingExerciseInstructionComponent', () => {
     let comp: ProgrammingExerciseInstructionComponent;
@@ -50,6 +51,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     let participationWebsocketService: ParticipationWebsocketService;
     let repositoryFileService: RepositoryFileService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
+    let programmingExerciseGradingService: ProgrammingExerciseGradingService;
     let modalService: NgbModal;
     let themeService: ThemeService;
 
@@ -80,6 +82,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: RepositoryFileService, useClass: MockRepositoryFileService },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: ProgrammingExerciseGradingService, useValue: { getTestCases: () => of() } },
             ],
         })
             .overrideModule(BrowserDynamicTestingModule, { set: {} })
@@ -90,6 +93,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 debugElement = fixture.debugElement;
                 participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
                 programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
+                programmingExerciseGradingService = debugElement.injector.get(ProgrammingExerciseGradingService);
                 repositoryFileService = debugElement.injector.get(RepositoryFileService);
                 modalService = debugElement.injector.get(NgbModal);
                 themeService = debugElement.injector.get(ThemeService);
@@ -108,11 +112,18 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     });
 
     it('should on participation change clear old subscription for participation results set up new one', () => {
-        const exercise: ProgrammingExercise = { id: 1, numberOfAssessmentsOfCorrectionRounds: [], secondCorrectionEnabled: false, studentAssignedTeamIdComputed: false };
+        const exercise: ProgrammingExercise = {
+            id: 1,
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+            isAtLeastTutor: true,
+        };
         const oldParticipation: Participation = { id: 1 };
         const result: Result = { id: 1 };
         const participation: Participation = { id: 2, results: [result] };
         const oldSubscription = new Subscription();
+        const getTestCasesSpy = jest.spyOn(programmingExerciseGradingService, 'getTestCases');
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
         comp.exercise = exercise;
         comp.participation = participation;
@@ -121,6 +132,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         triggerChanges(comp, { property: 'participation', currentValue: participation, previousValue: oldParticipation, firstChange: false });
         fixture.detectChanges();
 
+        expect(getTestCasesSpy).toHaveBeenCalledOnce();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(participation.id, true, exercise.id);
         expect(comp.participationSubscription).not.toEqual(oldSubscription);
