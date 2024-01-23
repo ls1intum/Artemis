@@ -140,9 +140,7 @@ public class LearningPathService {
         }
         var course = courseRepository.findWithEagerLearningPathsAndCompetenciesByIdElseThrow(courseId);
         var learningPaths = course.getLearningPaths();
-        for (var competency : competencies) {
-            learningPaths.forEach(learningPath -> learningPath.addCompetency(competency));
-        }
+        learningPaths.forEach(learningPath -> learningPath.addCompetencies(new HashSet<>(competencies)));
         learningPathRepository.saveAll(learningPaths);
         log.debug("Linked {} competencies to learning paths", competencies.size());
     }
