@@ -104,7 +104,7 @@
                                 [ngClass]="{
                                     'text-success': row.status === 'SUCCESSFUL',
                                     'text-warning': row.status === 'CANCELLED',
-                                    'text-danger': row.status !== 'SUCCESSFUL' && row.status !== 'CANCELLED'
+                                    'text-danger': row.status === 'FAILED' || row.status === 'ERROR'
                                 }"
                             >
                                 <fa-icon [icon]="row.status === 'SUCCESSFUL' ? faCircleCheck : row.status === 'CANCELLED' ? faExclamationTriangle : faExclamationCircle"></fa-icon>
@@ -123,7 +123,7 @@
                                 [ngClass]="{
                                     'text-success': row.status === 'SUCCESSFUL',
                                     'text-warning': row.status === 'CANCELLED',
-                                    'text-danger': row.status !== 'SUCCESSFUL' && row.status !== 'CANCELLED'
+                                    'text-danger': row.status === 'FAILED' || row.status === 'ERROR'
                                 }"
                                 >{{ value }}</span
                             >
@@ -141,10 +141,10 @@
                                 [ngClass]="{
                                     'text-success': row.status === 'SUCCESSFUL',
                                     'text-warning': row.status === 'CANCELLED',
-                                    'text-danger': row.status !== 'SUCCESSFUL' && row.status !== 'CANCELLED'
+                                    'text-danger': row.status === 'FAILED' || row.status === 'ERROR'
                                 }"
-                                >{{ value }}</span
-                            >
+                                >{{ value }}
+                            </span>
                         </ng-template>
                     </ngx-datatable-column>
                     <ngx-datatable-column prop="participationId" [minWidth]="150" [width]="150">
