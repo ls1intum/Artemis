@@ -18,6 +18,7 @@
         <renameColumn tableName="competency_course" oldColumnName="learning_goal_id" newColumnName="competency_id" columnDataType="bigint" />
         <renameColumn tableName="competency_exercise" oldColumnName="learning_goal_id" newColumnName="competency_id" columnDataType="bigint" />
         <renameColumn tableName="competency_lecture_unit" oldColumnName="learning_goal_id" newColumnName="competency_id" columnDataType="bigint" />
+        <renameColumn tableName="competency_user" oldColumnName="learning_goal_id" newColumnName="competency_id" columnDataType="bigint" />
 
         <!-- migrate competency relation type-column -->
         <renameColumn tableName="competency_relation" oldColumnName="type" newColumnName="type_old" columnDataType="varchar(31)" />
