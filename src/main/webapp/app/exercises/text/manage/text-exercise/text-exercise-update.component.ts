@@ -280,6 +280,4 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         }
         this.isSaving = false;
     }
-
-    protected readonly Boolean = Boolean;
 }
