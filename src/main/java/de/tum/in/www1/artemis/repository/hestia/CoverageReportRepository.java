@@ -24,7 +24,7 @@ public interface CoverageReportRepository extends JpaRepository<CoverageReport, 
         return optionalReport.orElseThrow(() -> new EntityNotFoundException("Coverage Report", coverageReportId));
     }
 
-    Boolean existsBySubmissionId(@Param("submissionId") Long submissionId);
+    Boolean existsBySubmissionId(Long submissionId);
 
     @Transactional // ok because of delete
     @Modifying
