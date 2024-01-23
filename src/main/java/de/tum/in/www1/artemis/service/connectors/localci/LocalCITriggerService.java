@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import java.net.URL;
+import static de.tum.in.www1.artemis.config.Constants.WORKING_DIRECTORY;
+
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -8,13 +10,11 @@ import java.util.Optional;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.cp.lock.FencedLock;
 
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
@@ -26,12 +26,12 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusResult;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.*;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 
@@ -41,8 +41,6 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 @Service
 @Profile("localci")
 public class LocalCITriggerService implements ContinuousIntegrationTriggerService {
-
-    private final LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService;
 
     private final HazelcastInstance hazelcastInstance;
 
@@ -56,31 +54,28 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final Optional<VersionControlService> versionControlService;
 
-    private final IQueue<LocalCIBuildJobQueueItem> queue;
+    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
-    /**
-     * Lock to prevent multiple nodes from processing the same build job.
-     */
-    private final FencedLock sharedLock;
+    private final LocalCIBuildConfigurationService localCIBuildConfigurationService;
+
+    private final IQueue<LocalCIBuildJobQueueItem> queue;
 
     private static final Logger log = LoggerFactory.getLogger(LocalCITriggerService.class);
 
-    @Value("${artemis.version-control.url}")
-    private URL localVCBaseUrl;
-
-    public LocalCITriggerService(HazelcastInstance hazelcastInstance, LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService,
-            AeolusTemplateService aeolusTemplateService, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService,
-            Optional<VersionControlService> versionControlService) {
+    public LocalCITriggerService(HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
+            ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
+            LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, Optional<VersionControlService> versionControlService,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+            LocalCIBuildConfigurationService localCIBuildConfigurationService) {
         this.hazelcastInstance = hazelcastInstance;
-        this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
         this.aeolusTemplateService = aeolusTemplateService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.versionControlService = versionControlService;
+        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
+        this.localCIBuildConfigurationService = localCIBuildConfigurationService;
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
-        this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
     }
 
     /**
@@ -116,9 +111,9 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
         ProjectType projectType = programmingExercise.getProjectType();
-        Boolean staticCodeAnalysisEnabled = programmingExercise.isStaticCodeAnalysisEnabled();
-        Boolean sequentialTestRuns = programmingExercise.hasSequentialTestRuns();
-        Boolean testwiseCoverageEnabled = programmingExercise.isTestwiseCoverageEnabled();
+        boolean staticCodeAnalysisEnabled = programmingExercise.isStaticCodeAnalysisEnabled();
+        boolean sequentialTestRunsEnabled = programmingExercise.hasSequentialTestRuns();
+        boolean testwiseCoverageEnabled = programmingExercise.isTestwiseCoverageEnabled();
 
         Windfile windfile;
         String dockerImage;
@@ -144,34 +139,20 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(participation.getProgrammingExercise().getId());
         }
 
-        LocalVCRepositoryUri assignmentRepositoryUri;
-        LocalVCRepositoryUri testRepositoryUri;
-        LocalVCRepositoryUri solutionRepositoryUri;
-        LocalVCRepositoryUri[] auxiliaryRepositoryUris;
-        String[] auxiliaryRepositoryCheckoutDirectories;
+        String assignmentRepositoryUri = participation.getRepositoryUri();
+        String testRepositoryUri = programmingExercise.getTestRepositoryUri();
+        String solutionRepositoryUri = null;
+        String[] auxiliaryRepositoryUris = auxiliaryRepositories.stream().map(AuxiliaryRepository::getRepositoryUri).toArray(String[]::new);
+        String[] auxiliaryRepositoryCheckoutDirectories1 = auxiliaryRepositories.stream().map(AuxiliaryRepository::getCheckoutDirectory).toArray(String[]::new);
 
-        try {
-            assignmentRepositoryUri = new LocalVCRepositoryUri(participation.getRepositoryUri(), localVCBaseUrl);
-            testRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTestRepositoryUri(), localVCBaseUrl);
-            if (programmingExercise.getCheckoutSolutionRepository()) {
-                ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingLanguage);
-                if (programmingLanguageFeature.checkoutSolutionRepositoryAllowed()) {
-                    solutionRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getSolutionRepositoryUri(), localVCBaseUrl);
+        if (programmingExercise.getCheckoutSolutionRepository()) {
+            ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingLanguage);
+            if (programmingLanguageFeature.checkoutSolutionRepositoryAllowed()) {
+                var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(participation.getProgrammingExercise().getId());
+                if (solutionParticipation.isPresent()) {
+                    solutionRepositoryUri = solutionParticipation.get().getRepositoryUri();
                 }
             }
-
-            if (!auxiliaryRepositories.isEmpty()) {
-                auxiliaryRepositoryUris = new LocalVCRepositoryUri[auxiliaryRepositories.size()];
-                auxiliaryRepositoryCheckoutDirectories = new String[auxiliaryRepositories.size()];
-
-                for (int i = 0; i < auxiliaryRepositories.size(); i++) {
-                    auxiliaryRepositoryUris[i] = new LocalVCRepositoryUri(auxiliaryRepositories.get(i).getRepositoryUri(), localVCBaseUrl);
-                    auxiliaryRepositoryCheckoutDirectories[i] = auxiliaryRepositories.get(i).getCheckoutDirectory();
-                }
-            }
-        }
-        catch (LocalVCInternalException e) {
-            throw new LocalCIException("Error while creating LocalVCRepositoryUri", e);
         }
 
         long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
@@ -200,14 +181,30 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         // Exam exercises have a higher priority than normal exercises
         int priority = programmingExercise.isExamExercise() ? 1 : 2;
 
-        // localCISharedBuildJobQueueService.addBuildJob(participation.getBuildPlanId(), participation.getId(), repositoryName, repositoryType, commitHash, ZonedDateTime.now(),
-        // priority, courseId, triggeredByPushTo);
+        ZonedDateTime submissionDate = ZonedDateTime.now();
+
+        RepositoryInfo repositoryInfo = new RepositoryInfo(repositoryName, repositoryType, triggeredByPushTo, assignmentRepositoryUri, testRepositoryUri, solutionRepositoryUri,
+                auxiliaryRepositoryUris, auxiliaryRepositoryCheckoutDirectories1);
+
+        BuildConfig buildConfig = new BuildConfig(dockerImage, commitHash, branch, programmingLanguage, projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled,
+                testwiseCoverageEnabled, resultPaths);
+
+        JobTimingInfo jobTimingInfo = new JobTimingInfo(submissionDate, null, null);
+
+        String buildJobId = String.valueOf(participation.getId()) + submissionDate.toInstant().toEpochMilli();
+
+        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(buildJobId, repositoryName, null, participation.getId(), courseId, programmingExercise.getId(), 0,
+                priority, repositoryInfo, jobTimingInfo, buildConfig);
+
+        localCIBuildConfigurationService.createBuildScript(participation, buildJobId);
+
+        queue.add(buildJobQueueItem);
     }
 
     private List<String> getTestResultPaths(Windfile windfile) throws IllegalArgumentException {
         List<String> testResultPaths = new ArrayList<>();
         for (AeolusResult testResultPath : windfile.getResults()) {
-            testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/" + testResultPath.getPath());
+            testResultPaths.add(WORKING_DIRECTORY + "/testing-dir/" + testResultPath.getPath());
         }
         return testResultPaths;
     }

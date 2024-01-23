@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.localvcci;
 
-import static de.tum.in.www1.artemis.service.connectors.localci.LocalCIContainerService.RESULTS_DIRECTORY;
-import static de.tum.in.www1.artemis.service.connectors.localci.LocalCIContainerService.WORKING_DIRECTORY;
+import static de.tum.in.www1.artemis.config.Constants.RESULTS_DIRECTORY;
+import static de.tum.in.www1.artemis.config.Constants.WORKING_DIRECTORY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;

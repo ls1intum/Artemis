@@ -746,7 +746,7 @@ public class ParticipationService {
         }
 
         // If local CI is active, remove all queued jobs for participation
-        localCISharedBuildJobQueueService.ifPresent(service -> service.removeQueuedJobsForParticipation(participationId));
+        localCISharedBuildJobQueueService.ifPresent(service -> service.cancelAllJobsForParticipation(participationId));
 
         deleteResultsAndSubmissionsOfParticipation(participationId, deleteParticipantScores);
         studentParticipationRepository.delete(participation);

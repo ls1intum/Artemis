@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
-import static de.tum.in.www1.artemis.service.connectors.localci.LocalCIContainerService.RESULTS_DIRECTORY;
-import static de.tum.in.www1.artemis.service.connectors.localci.LocalCIContainerService.WORKING_DIRECTORY;
+import static de.tum.in.www1.artemis.config.Constants.RESULTS_DIRECTORY;
+import static de.tum.in.www1.artemis.config.Constants.WORKING_DIRECTORY;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.IMPORT;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.PROGRAMMING_EXERCISES;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.ROOT;

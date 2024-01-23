@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.localvcci;
 
-import static de.tum.in.www1.artemis.service.connectors.localci.LocalCIContainerService.RESULTS_DIRECTORY;
-import static de.tum.in.www1.artemis.service.connectors.localci.LocalCIContainerService.WORKING_DIRECTORY;
+import static de.tum.in.www1.artemis.config.Constants.RESULTS_DIRECTORY;
+import static de.tum.in.www1.artemis.config.Constants.WORKING_DIRECTORY;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
