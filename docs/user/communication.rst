@@ -22,18 +22,18 @@ respective checkbox (``Enable communication features``) - it can also be edited 
 
 |communication-toggle|
 
-Course-Wide Messages & Messaging Overview
------------------------------------------
+Course-Wide Messages
+--------------------
 
-Artemis automatically creates course-wide channels for various elements of a course, namely course-wide topics, such as
-``Organization`` or ``Tech Support``, lectures, exercises, and exams. Messages can be written within these channels on the course messaging overview, which is shown in the screenshot below.
+Artemis automatically creates course-wide channels for course-wide topics, such as
+``Organization`` or ``Tech Support``, and various elements of a course, namely lectures, exercises, and exams. Messages can be written within these channels on the course messaging overview, which is shown in the screenshot below.
 
 |messaging-page|
 
 Lecture Messages
-----------------
+^^^^^^^^^^^^^^^^
 
-*Messages, that are specifically related to a certain lecture.*
+*Messages that are specifically related to a certain lecture.*
 
 These messages can also be created on the detail page of the lecture they belong to.
 
@@ -42,9 +42,9 @@ Exemplary lecture detail page with messages:
 |lecture-messages|
 
 Exercise Messages
------------------
+^^^^^^^^^^^^^^^^^
 
-*Messages, that are specifically related to a certain exercise.*
+*Messages that are specifically related to a certain exercise.*
 
 These messages can also be created on the detail page of the exercise they belong to.
 
@@ -53,7 +53,7 @@ Exemplary exercise detail page with messages:
 |exercise-messages|
 
 Course Communication Overview
------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The ``Communication`` space of an Artemis course serves as overview for *all* course-wide messages in a course.
 Here, users can easily query, sort, and filter existing messages.
@@ -160,7 +160,7 @@ React on Messages
 
 To foster interaction between users, we integrate the well-known emoji reaction bar.
 Each user in the course can react on any message by making use of the emoji selection button.
-The ``+`` emoji serves as the up-voting reaction, which influences the display order of messages.
+The ➕ emoji serves as the up-voting reaction, which influences the display order of messages.
 
 Reference Course Entities
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -169,6 +169,7 @@ Users can reference to different course entities within their messages, such as 
 and attachments of these lectures. All references are then prepended with icons which are unique to the reference's type,
 to help users distinguish them conveniently. In the image below, we see all possible types of references that can be created
 in an Artemis message.
+
 |message-with-references|
 
 Reference Messages
@@ -245,7 +246,7 @@ Mark Your Message As Resolved
 
 Marking a message as resolved will indicate to other users that the posted question is resolved and does not need any further input.
 This can be done by clicking the check mark next to the answer message. (see image below)
-Note, that only the author of the message as well as a moderator can perform this action.
+Note that only the author of the message as well as a moderator can perform this action.
 This is helpful for moderators to identify open questions, e.g., by applying the according filter in the course overview.
 It also highlights the correct answer for other students that have a similar problem and search for a suitable solution.
 
@@ -270,7 +271,7 @@ The following feature is only available for instructors that act as moderators.
 Creating Course-Wide Channels
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-When creating a lecture, exercise, or exam, the creator can decide for a channel name, as well. The name is automatically generated based on the lecture's/exercise's/exam's title but can be adapted if needed.
+When creating a lecture, exercise, or exam, the creator can decide on a channel name as well. The name is automatically generated based on the lecture's/exercise's/exam's title but can be adapted if needed.
 
 |exercise-channel-creation|
 
@@ -280,7 +281,7 @@ Message Announcements
 Instructors can create course-wide messages that serve as *Announcements*.
 They target every course participant and have higher relevance than normal messages.
 Announcements can be created in the course messaging overview by selecting the ``Announcement`` channel.
-As soon as the announcement is created, all participants, that did not actively refrain from being notified, will receive an email containing the announcement's content.
+As soon as the announcement is created, all participants who did not actively refrain from being notified will receive an email containing the announcement's content.
 
 .. |communication-toggle| image:: communication/communication-checkbox.png
     :width: 1000
@@ -294,7 +295,7 @@ As soon as the announcement is created, all participants, that did not actively 
     :width: 1000
 .. |communication-page| image:: communication/communication-page.png
     :width: 1000
-.. |message-with-references| image:: communication/message-with-references.png
+.. |message-with-references| image:: communication/message-with-all-references.png
     :width: 750
 .. |resolved-post| image:: communication/resolved-post.png
     :width: 300
