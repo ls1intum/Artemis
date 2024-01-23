@@ -32,5 +32,5 @@ public interface TutorialGroupsConfigurationRepository extends JpaRepository<Tut
                 LEFT JOIN FETCH t.tutorialGroupFreePeriods
             WHERE t.course.id = :courseId
             """)
-    Optional<TutorialGroupsConfiguration> findByCourseIdWithEagerTutorialGroupFreePeriods(Long courseId);
+    Optional<TutorialGroupsConfiguration> findByCourseIdWithEagerTutorialGroupFreePeriods(@Param("courseId") Long courseId);
 }

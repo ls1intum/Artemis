@@ -128,7 +128,7 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
             WHERE tutorialGroup.title = :title
                 AND tutorialGroup.course.id = :courseId
             """)
-    Optional<TutorialGroup> findByTitleAndCourseIdWithTeachingAssistantAndRegistrations(String title, Long courseId);
+    Optional<TutorialGroup> findByTitleAndCourseIdWithTeachingAssistantAndRegistrations(@Param("title") String title, @Param("courseId") Long courseId);
 
     Optional<TutorialGroup> findByTutorialGroupChannelId(Long channelId);
 
