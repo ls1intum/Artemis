@@ -11,6 +11,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
@@ -25,10 +26,14 @@ public class CompetencyService {
 
     private final AuthorizationCheckService authCheckService;
 
-    public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService, CompetencyRelationRepository competencyRelationRepository) {
+    private final LearningPathService learningPathService;
+
+    public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService, CompetencyRelationRepository competencyRelationRepository,
+            LearningPathService learningPathService) {
         this.competencyRepository = competencyRepository;
         this.authCheckService = authCheckService;
         this.competencyRelationRepository = competencyRelationRepository;
+        this.learningPathService = learningPathService;
     }
 
     /**
@@ -80,16 +85,21 @@ public class CompetencyService {
         if (competencies.isEmpty()) {
             return Collections.emptyList();
         }
-        // map the id of the old competency to the new one
-        // used for importing relations and assigning relations to the CompetencyDTO.
+        // map the id of the old competency to the new competency
+        // used for assigning imported relations to the new competency
         var idToImportedCompetency = new HashMap<Long, CompetencyWithTailRelationDTO>();
 
         for (var competency : competencies) {
-            Competency competencyToImport = getCompetencyToCreate(competency);
-            competencyToImport.setCourse(targetCourse);
+            Competency importedCompetency = getCompetencyToCreate(competency);
+            importedCompetency.setCourse(targetCourse);
 
-            competencyToImport = competencyRepository.save(competencyToImport);
-            idToImportedCompetency.put(competency.getId(), new CompetencyWithTailRelationDTO(competencyToImport, new ArrayList<>()));
+            importedCompetency = competencyRepository.save(importedCompetency);
+            idToImportedCompetency.put(competency.getId(), new CompetencyWithTailRelationDTO(importedCompetency, new ArrayList<>()));
+        }
+
+        if (targetCourse.getLearningPathsEnabled()) {
+            var importedCompetencies = idToImportedCompetency.values().stream().map(CompetencyWithTailRelationDTO::competency).toList();
+            learningPathService.linkCompetenciesToLearningPathsOfCourse(importedCompetencies, targetCourse.getId());
         }
 
         if (importRelations) {

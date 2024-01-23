@@ -129,6 +129,25 @@ public class LearningPathService {
     }
 
     /**
+     * Links a list of competencies to all learning paths of the course.
+     *
+     * @param competencies The list of competencies that should be added
+     * @param courseId     course id that the learning paths belong to
+     */
+    public void linkCompetenciesToLearningPathsOfCourse(@NotNull List<Competency> competencies, long courseId) {
+        if (competencies.isEmpty()) {
+            return;
+        }
+        var course = courseRepository.findWithEagerLearningPathsAndCompetenciesByIdElseThrow(courseId);
+        var learningPaths = course.getLearningPaths();
+        for (var competency : competencies) {
+            learningPaths.forEach(learningPath -> learningPath.addCompetency(competency));
+        }
+        learningPathRepository.saveAll(learningPaths);
+        log.debug("Linked {} competencies to learning paths", competencies.size());
+    }
+
+    /**
      * Remove linked competency from all learning paths of the course.
      *
      * @param competency Competency that should be removed from each learning path
