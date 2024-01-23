@@ -149,7 +149,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 user.lastName,
                 user.langKey,
                 user.email,
-                CASE WHEN cp.isHidden IS TRUE THEN TRUE ELSE FALSE END,
+                cp.isHidden,
                 CASE WHEN ug.group = :teachingAssistantGroupName
                     OR ug.group = :editorGroupName
                     OR ug.group = :instructorGroupName
