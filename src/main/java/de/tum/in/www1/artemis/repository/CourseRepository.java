@@ -98,7 +98,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     List<Course> findCoursesByStudentGroupName(@Param("name") String name);
 
     @Query("""
-            SELECT CASE WHEN (COUNT(c) > 0) THEN TRUE ELSE FALSE END
+            SELECT COUNT(c) > 0
             FROM Course c
             WHERE c.id = :courseId
                 AND c.courseInformationSharingConfiguration IN :values
