@@ -205,6 +205,7 @@ The video below shows the full CPC process from student's and instructor's persp
 #. Reviewing check's results by a student and by an instructor.
 #. Fixing submissions marked as a significant similarity.
 #. Responding to a significant similarity plagiarism case that persisted after the exercise due date.
+#. Adding a verdict to a significant similarity plagiarism case that persisted after the exercise due date.
 
 .. raw:: html
 
