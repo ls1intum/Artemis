@@ -33,11 +33,11 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
     List<ModelingExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories", "competencies", "exampleSubmissions.submission.results" })
-    Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesById(@Param("exerciseId") Long exerciseId);
+    Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesById(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories", "competencies", "exampleSubmissions.submission.results",
             "plagiarismDetectionConfig" })
-    Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigById(@Param("exerciseId") Long exerciseId);
+    Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigById(Long exerciseId);
 
     @Query("""
             SELECT modelingExercise
