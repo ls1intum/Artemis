@@ -4,6 +4,9 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <changeSet id="20240122000000" author="anzinger">
+
+        <dropIndex tableName="learning_goal_relation" indexName="UQymvhyta1mtg5mmu2n2fjmjc4m2y0mtniymy4odjh"/>
+
         <!-- rename tables from learning goal to competency -->
         <renameTable oldTableName="learning_goal" newTableName="competency"/>
         <renameTable oldTableName="learning_goal_relation" newTableName="competency_relation"/>
@@ -39,5 +42,11 @@
         </sql>
 
         <dropColumn tableName="competency_relation" columnName="type_old"/>
+
+        <createIndex indexName="UQymvhyta1mtg5mmu2n2fjmjc4m2y0mtniymy4odjh" tableName="competency_relation" unique="true">
+            <column name="head_competency_id"/>
+            <column name="tail_competency_id"/>
+            <column name="type"/>
+        </createIndex>
     </changeSet>
 </databaseChangeLog>
