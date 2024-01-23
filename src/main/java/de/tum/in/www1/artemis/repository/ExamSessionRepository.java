@@ -31,13 +31,13 @@ public interface ExamSessionRepository extends JpaRepository<ExamSession, Long> 
                 AND (:ipAddress IS NULL OR es.ipAddress = :ipAddress)
                 AND (:browserFingerprintHash IS NULL OR es.browserFingerprintHash = :browserFingerprintHash)
             """)
-    Set<ExamSession> findAllExamSessionsWithTheSameIpAddressAndBrowserFingerprintByExamIdAndExamSession(Long examId, Long sessionId, Long studentExamId, String ipAddress,
-            String browserFingerprintHash);
+    Set<ExamSession> findAllExamSessionsWithTheSameIpAddressAndBrowserFingerprintByExamIdAndExamSession(@Param("examId") Long examId, @Param("sessionId") Long sessionId,
+            @Param("studentExamId") Long studentExamId, @Param("ipAddress") String ipAddress, @Param("browserFingerprintHash") String browserFingerprintHash);
 
     @Query("""
                 SELECT es
                 FROM ExamSession es
                 WHERE es.studentExam.exam.id = :examId
             """)
-    Set<ExamSession> findAllExamSessionsByExamId(long examId);
+    Set<ExamSession> findAllExamSessionsByExamId(@Param("examId") long examId);
 }

@@ -207,7 +207,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
      * @param userId   the id of the user (student) who may or may not have a StudentExam
      * @return True if the given user id has a matching StudentExam in the given exam and course, else false.
      */
-    boolean existsByExam_CourseIdAndExamIdAndUserId(@Param("courseId") long courseId, @Param("examId") long examId, @Param("userId") long userId);
+    boolean existsByExam_CourseIdAndExamIdAndUserId(long courseId, long examId, long userId);
 
     @Query("""
             SELECT DISTINCT se
@@ -252,9 +252,9 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             	AND se.submitted IS FALSE
             	AND se.testRun IS FALSE
             """)
-    Set<StudentExam> findAllUnsubmittedWithExercisesByExamId(Long examId);
+    Set<StudentExam> findAllUnsubmittedWithExercisesByExamId(@Param("examId") Long examId);
 
-    List<StudentExam> findAllByExamId_AndTestRunIsTrue(@Param("examId") Long examId);
+    List<StudentExam> findAllByExamId_AndTestRunIsTrue(Long examId);
 
     @Query("""
             SELECT DISTINCT se
@@ -485,7 +485,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
                 LEFT JOIN FETCH se.quizQuestions qq
             WHERE se.id IN :ids
             """)
-    List<StudentExam> findAllWithEagerQuizQuestionsById(List<Long> ids);
+    List<StudentExam> findAllWithEagerQuizQuestionsById(@Param("ids") List<Long> ids);
 
     /**
      * Get all student exams for the given exam id with exercises.
@@ -499,5 +499,5 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
                 LEFT JOIN FETCH se.exercises e
             WHERE se.id IN :ids
             """)
-    List<StudentExam> findAllWithEagerExercisesById(List<Long> ids);
+    List<StudentExam> findAllWithEagerExercisesById(@Param("ids") List<Long> ids);
 }
