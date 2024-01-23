@@ -941,10 +941,6 @@ public class CourseTestService {
             if (i == 0) {
                 assertThat(receivedCourse.getExams()).isEmpty();
             }
-            else if (i == 1) {
-                assertThat(receivedCourse.getExams()).hasSize(0);
-                assertThat(receivedCourse.getNumberOfExams()).isEqualTo(3);
-            }
             else {
                 assertThat(receivedCourse.getExams()).hasSize(0);
                 assertThat(receivedCourse.getNumberOfExams()).isEqualTo(3);
