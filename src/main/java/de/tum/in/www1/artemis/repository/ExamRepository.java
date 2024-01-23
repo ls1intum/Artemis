@@ -348,7 +348,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @return true if the user is registered for the exam
      */
     @Query("""
-            SELECT CASE WHEN COUNT(exam) > 0 THEN TRUE ELSE FALSE END
+            SELECT COUNT(exam) > 0
             FROM Exam exam
                 LEFT JOIN exam.examUsers examUsers
             WHERE exam.id = :examId
