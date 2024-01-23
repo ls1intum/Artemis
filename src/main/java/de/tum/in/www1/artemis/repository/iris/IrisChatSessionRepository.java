@@ -6,6 +6,7 @@ import javax.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -31,7 +32,7 @@ public interface IrisChatSessionRepository extends JpaRepository<IrisChatSession
                 AND s.user.id = :userId
             ORDER BY s.creationDate DESC
             """)
-    List<IrisChatSession> findByExerciseIdAndUserId(Long exerciseId, Long userId);
+    List<IrisChatSession> findByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
 
     /**
      * Finds a list of chat sessions or throws an exception if none are found.
