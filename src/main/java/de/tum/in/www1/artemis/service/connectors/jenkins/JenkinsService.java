@@ -168,11 +168,8 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     public String checkIfProjectExists(String projectKey, String projectName) {
         try {
             final var job = jenkinsServer.getJob(projectKey);
-            if (job == null) {
+            if (job == null || job.getUrl() == null || job.getUrl().isEmpty()) {
                 // means the project does not exist
-                return null;
-            }
-            else if (job.getUrl() == null || job.getUrl().isEmpty()) {
                 return null;
             }
             else {
