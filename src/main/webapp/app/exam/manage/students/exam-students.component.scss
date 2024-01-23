@@ -58,8 +58,11 @@ jhi-exam-students {
             animation-duration: map-get($vars, animation-duration);
             animation-timing-function: ease-out;
         }
-        overflow-x: auto;
-        overflow-y: hidden;
+    }
+
+    .datatable-header {
+        width: 100% !important;
+        flex: 1;
     }
 
     .datatable-header-inner {
@@ -68,6 +71,7 @@ jhi-exam-students {
 
     .datatable-row-center {
         flex: 1;
+        min-width: 400px;
     }
 
     .datatable-body-cell {
