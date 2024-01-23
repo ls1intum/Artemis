@@ -236,6 +236,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
                 LEFT JOIN FETCH e.exerciseGroups eg
                 LEFT JOIN FETCH eg.exercises ex
             WHERE e.course.instructorGroupName IN :userGroups
+                AND TYPE(ex) = QuizExercise
             """)
     List<Exam> getExamsWithQuizExercisesForWhichUserHasInstructorAccess(@Param("userGroups") List<String> userGroups);
 
