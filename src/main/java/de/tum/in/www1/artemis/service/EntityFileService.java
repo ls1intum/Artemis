@@ -68,7 +68,8 @@ public class EntityFileService {
                 target = targetFolder.resolve(filename);
             }
             else {
-                target = fileService.generateFilePath(fileService.generateTargetFilenameBase(targetFolder), extension, targetFolder);
+                String generatedFilename = fileService.generateFilename(fileService.generateTargetFilenameBase(targetFolder), extension);
+                target = targetFolder.resolve(generatedFilename);
             }
             // remove target file before copying, because moveFile() ignores CopyOptions
             if (target.toFile().exists()) {

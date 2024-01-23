@@ -156,8 +156,8 @@ public class RestTemplateConfiguration {
 
     @Bean
     @Profile("iris")
-    public RestTemplate shortTimeoutIrisRestTemplate() {
-        return createShortTimeoutRestTemplate();
+    public RestTemplate shortTimeoutIrisRestTemplate(IrisAuthorizationInterceptor irisAuthorizationInterceptor) {
+        return initializeRestTemplateWithInterceptors(irisAuthorizationInterceptor, createShortTimeoutRestTemplate());
     }
 
     /**
