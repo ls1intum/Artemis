@@ -377,7 +377,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             SELECT CASE WHEN exerciseGroup IS NOT NULL
                 THEN exerciseGroup.title
                 ELSE exercise.title
-                END AS title
+            END AS title
             FROM Exercise exercise
                 LEFT JOIN exercise.exerciseGroup exerciseGroup
             WHERE exercise.id = :exerciseId
