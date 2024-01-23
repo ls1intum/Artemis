@@ -52,7 +52,7 @@ public interface DataExportRepository extends JpaRepository<DataExport, Long> {
     @Query("""
             SELECT dataExport
             FROM DataExport dataExport
-            WHERE dataExport.creationFinishedDate is NOT NULL
+            WHERE dataExport.creationFinishedDate IS NOT NULL
                 AND dataExport.creationFinishedDate < :thresholdDate
             """)
     Set<DataExport> findAllToBeDeleted(@Param("thresholdDate") ZonedDateTime thresholdDate);
