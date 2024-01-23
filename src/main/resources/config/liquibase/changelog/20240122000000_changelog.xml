@@ -5,7 +5,11 @@
 
     <changeSet id="20240122000000" author="anzinger">
 
+        <dropForeignKeyConstraint baseTableName="learning_goal_relation" constraintName="FKbeaa051892e67ac2783f413bbf882a547db27e60" />
+        <dropForeignKeyConstraint baseTableName="learning_goal_relation" constraintName="FKd84cd79d225d13687cfe9c1395fb1cc69e09f553" />
+
         <dropIndex tableName="learning_goal_relation" indexName="UQymvhyta1mtg5mmu2n2fjmjc4m2y0mtniymy4odjh"/>
+        <dropIndex tableName="learning_goal_relation" indexName="FKd84cd79d225d13687cfe9c1395fb1cc69e09f553"/>
 
         <!-- rename tables from learning goal to competency -->
         <renameTable oldTableName="learning_goal" newTableName="competency"/>
@@ -48,5 +52,16 @@
             <column name="tail_competency_id"/>
             <column name="type"/>
         </createIndex>
+
+        <createIndex indexName="FKd84cd79d225d13687cfe9c1395fb1cc69e09f553" tableName="competency_relation">
+            <column name="tail_competency_id"/>
+        </createIndex>
+
+        <addForeignKeyConstraint baseColumnNames="head_competency_id" baseTableName="competency_relation" constraintName="FKbeaa051892e67ac2783f413bbf882a547db27e60"
+                                 deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="competency"
+                                 validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="tail_competency_id" baseTableName="competency_relation" constraintName="FKd84cd79d225d13687cfe9c1395fb1cc69e09f553"
+                                 deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="competency"
+                                 validate="true"/>
     </changeSet>
 </databaseChangeLog>
