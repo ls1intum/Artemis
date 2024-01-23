@@ -4,7 +4,11 @@ import java.util.Comparator;
 
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 
-public class LocalCIPriorityQueueComparator implements Comparator<LocalCIBuildJobQueueItem> {
+/**
+ * This comparator allows to prioritize build jobs in the shared build queue
+ */
+@SuppressWarnings("unused")
+public final class LocalCIPriorityQueueComparator implements Comparator<LocalCIBuildJobQueueItem> {
 
     @Override
     public int compare(LocalCIBuildJobQueueItem o1, LocalCIBuildJobQueueItem o2) {
