@@ -78,7 +78,7 @@ public class CompetencyService {
     public List<CompetencyWithTailRelationDTO> importAllCompetenciesFromCourse(Course targetCourse, Course sourceCourse, boolean importRelations) {
         var competencies = competencyRepository.findAllForCourse(sourceCourse.getId());
         if (competencies.isEmpty()) {
-            return List.of();
+            return Collections.emptyList();
         }
         // map the id of the old competency to the new one
         // used for importing relations and assigning relations to the CompetencyDTO.

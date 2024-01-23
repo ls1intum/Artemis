@@ -409,7 +409,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
         return findWithEagerLearningPathsAndCompetenciesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
-    Page<Course> findByTitleIgnoreCaseContaining(@Param("partialTitle") String partialTitle, Pageable pageable);
+    Page<Course> findByTitleIgnoreCaseContaining(String partialTitle, Pageable pageable);
 
     /**
      * Checks if the messaging feature is enabled for a course.
