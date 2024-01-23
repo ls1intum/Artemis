@@ -102,7 +102,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                 AND c.result.participation.exercise.course.id = :courseId
                 AND (c.accepted IS FALSE OR c.accepted IS NULL)
             """)
-    long countUnacceptedComplaintsByComplaintTypeStudentIdAndCourseId(@Param("studentId") Long studentId, @Param("courseId") Long courseId);
+    long countUnacceptedComplaintsByStudentIdAndCourseId(@Param("studentId") Long studentId, @Param("courseId") Long courseId);
 
     /**
      * Count the number of unaccepted complaints of a team in a given course. Unaccepted means that they are either open/unhandled or rejected. We use this to limit the number
