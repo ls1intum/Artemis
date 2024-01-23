@@ -17,8 +17,56 @@
             </div>
         </div>
 
+        <!-- List of free Periods -->
+        @if (freePeriods && freePeriods.length > 0) {
+            <label class="form-label">{{ 'artemisApp.forms.tutorialFreePeriodForm.timeFrame.period' | artemisTranslate }}</label>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead>
+                        <tr>
+                            <th>{{ 'global.field.id' | artemisTranslate }}</th>
+                            <th>{{ 'artemisApp.entities.tutorialFreePeriod.startDate' | artemisTranslate }}</th>
+                            <th>{{ 'artemisApp.entities.tutorialFreePeriod.endDate' | artemisTranslate }}</th>
+                            <th>{{ 'artemisApp.entities.tutorialFreePeriod.reason' | artemisTranslate }}</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (freePeriod of freePeriods; track freePeriod) {
+                            <tr [ngClass]="{ 'opacity-50': isInThePast(freePeriod) }" class="free-period-row">
+                                <td>
+                                    {{ freePeriod.id }}
+                                </td>
+                                <td>
+                                    {{ freePeriod.start | artemisDate: 'long-date' : false : course.timeZone : true }}
+                                </td>
+                                <td>
+                                    {{ freePeriod.end | artemisDate: 'long-date' : false : course.timeZone : true }}
+                                </td>
+                                <td>
+                                    <span class="d-inline-block text-truncate long-text"> {{ freePeriod.reason }} </span>
+                                </td>
+                                <td>
+                                    <div class="extra-buttons">
+                                        <jhi-tutorial-group-free-period-row-buttons
+                                            [course]="course"
+                                            [tutorialGroupConfiguration]="tutorialGroupsConfiguration"
+                                            [tutorialFreePeriod]="freePeriod"
+                                            (tutorialFreePeriodDeleted)="loadAll()"
+                                            (tutorialFreePeriodEdited)="loadAll()"
+                                        >
+                                        </jhi-tutorial-group-free-period-row-buttons>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
         <!-- List of TutorialGroupFreeDays -->
-        @if (tutorialGroupFreePeriods && tutorialGroupFreePeriods.length > 0) {
+        @if (freeDays && freeDays.length > 0) {
             <label class="form-label">{{ 'artemisApp.forms.tutorialFreePeriodForm.timeFrame.day' | artemisTranslate }}</label>
             <div class="table-responsive">
                 <table class="table table-sm table-hover">
@@ -27,6 +75,7 @@
                             <th>{{ 'global.field.id' | artemisTranslate }}</th>
                             <th>{{ 'artemisApp.entities.tutorialFreePeriod.date' | artemisTranslate }}</th>
                             <th>{{ 'artemisApp.entities.tutorialFreePeriod.reason' | artemisTranslate }}</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -64,53 +113,6 @@
         }
 
         <!-- Todo: Adjust UI To also show the endDate as it is supported now.-->
-
-        @if (freePeriods && freePeriods.length > 0) {
-            <label class="form-label">{{ 'artemisApp.forms.tutorialFreePeriodForm.timeFrame.period' | artemisTranslate }}</label>
-            <div class="table-responsive">
-                <table class="table table-sm table-hover">
-                    <thead>
-                        <tr>
-                            <th>{{ 'global.field.id' | artemisTranslate }}</th>
-                            <th>{{ 'artemisApp.entities.tutorialFreePeriod.startDate' | artemisTranslate }}</th>
-                            <th>{{ 'artemisApp.entities.tutorialFreePeriod.endDate' | artemisTranslate }}</th>
-                            <th>{{ 'artemisApp.entities.tutorialFreePeriod.reason' | artemisTranslate }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @for (freePeriod of freePeriods; track freePeriod) {
-                            <tr [ngClass]="{ 'opacity-50': isInThePast(freePeriod) }" class="free-period-row">
-                                <td>
-                                    {{ freePeriod.id }}
-                                </td>
-                                <td>
-                                    {{ freePeriod.start | artemisDate: 'long-date' : false : course.timeZone : true }}
-                                </td>
-                                <td>
-                                    {{ freePeriod.end | artemisDate: 'long-date' : false : course.timeZone : true }}
-                                </td>
-                                <td>
-                                    <span class="d-inline-block text-truncate long-text"> {{ freePeriod.reason }} </span>
-                                </td>
-                                <td>
-                                    <div class="extra-buttons">
-                                        <jhi-tutorial-group-free-period-row-buttons
-                                            [course]="course"
-                                            [tutorialGroupConfiguration]="tutorialGroupsConfiguration"
-                                            [tutorialFreePeriod]="freePeriod"
-                                            (tutorialFreePeriodDeleted)="loadAll()"
-                                            (tutorialFreePeriodEdited)="loadAll()"
-                                        >
-                                        </jhi-tutorial-group-free-period-row-buttons>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-
         <!-- FreePeriodWithinDay -->
         @if (freePeriodsWithinDay && freePeriodsWithinDay.length > 0) {
             <label class="form-label">{{ 'artemisApp.forms.tutorialFreePeriodForm.timeFrame.periodWithinDay' | artemisTranslate }}</label>

@@ -1,7 +1,7 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { convertDateFromServer, toISO8601DateString } from 'app/utils/date.utils';
+import { convertDateFromServer, toISO8601DateTimeString } from 'app/utils/date.utils';
 import { map } from 'rxjs/operators';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 
@@ -79,8 +79,8 @@ export class TutorialGroupFreePeriodService {
     private convertTutorialGroupFreePeriodDatesFromClient(tutorialGroupFreePeriodDTO: TutorialGroupFreePeriodDTO): TutorialGroupFreePeriodDTO {
         if (tutorialGroupFreePeriodDTO) {
             return Object.assign({}, tutorialGroupFreePeriodDTO, {
-                startDate: toISO8601DateString(tutorialGroupFreePeriodDTO.startDate),
-                endDate: toISO8601DateString(tutorialGroupFreePeriodDTO.endDate),
+                startDate: toISO8601DateTimeString(tutorialGroupFreePeriodDTO.startDate),
+                endDate: toISO8601DateTimeString(tutorialGroupFreePeriodDTO.endDate),
             });
         } else {
             return tutorialGroupFreePeriodDTO;
