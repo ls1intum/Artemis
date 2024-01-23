@@ -114,6 +114,7 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
         cloneMetadata.put("HADES_ASSIGNMENT_URL", participation.getVcsRepositoryUri().toString());
         cloneMetadata.put("HADES_ASSIGNMENT_PATH", "./assignment");
         cloneMetadata.put("HADES_ASSIGNMENT_ORDER", "2");
+        // TODO: Auxillary Repository clone is not supported yet
 
         steps.add(new HadesBuildStepDTO(1, "Clone", cloneDockerIamge, cloneMetadata));
 
