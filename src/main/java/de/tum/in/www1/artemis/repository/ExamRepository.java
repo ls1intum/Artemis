@@ -244,6 +244,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             FROM Exam e
                 LEFT JOIN FETCH e.exerciseGroups eg
                 LEFT JOIN FETCH eg.exercises ex
+            WHERE TYPE(ex) = QuizExercise
             """)
     List<Exam> findAllWithQuizExercisesWithEagerExerciseGroupsAndExercises();
 
