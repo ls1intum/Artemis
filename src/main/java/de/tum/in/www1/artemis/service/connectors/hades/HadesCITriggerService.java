@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
+import de.tum.in.www1.artemis.service.connectors.BuildScriptGenerationService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.in.www1.artemis.service.connectors.hades.dto.HadesBuildJobDTO;
 import de.tum.in.www1.artemis.service.connectors.hades.dto.HadesBuildStepDTO;
@@ -50,12 +51,16 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
+    private final BuildScriptGenerationService buildScriptGenerationService;
+
     @Value("${artemis.hades.url}")
     private String hadesServerUrl;
 
-    public HadesCITriggerService(RestTemplate restTemplate, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
+    public HadesCITriggerService(RestTemplate restTemplate, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
+            BuildScriptGenerationService buildScriptGenerationService) {
         this.restTemplate = restTemplate;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
+        this.buildScriptGenerationService = buildScriptGenerationService;
     }
 
     @Override
@@ -115,8 +120,7 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
         // Create Execute Step
         var image = programmingLanguageConfiguration.getImage(participation.getProgrammingExercise().getProgrammingLanguage(),
                 Optional.ofNullable(participation.getProgrammingExercise().getProjectType()));
-        // TODO: Get script from template
-        var script = " ls -lah && ./gradlew clean test && ls -lah";
+        var script = buildScriptGenerationService.getScript(participation.getProgrammingExercise());
         steps.add(new HadesBuildStepDTO(2, "Execute", image, script));
 
         var resultMetadata = new HashMap<String, String>();
