@@ -570,7 +570,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             WHERE p.student.id = :userId
                 OR students.id = :userId
              """)
-    Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksTestCasesByUserId(long userId);
+    Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksTestCasesByUserId(@Param("userId") long userId);
 
     /**
      * Finds all exercises filtered by feedback suggestions and due date.
@@ -604,5 +604,5 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 AND eg.exam.id = :examId
                 AND TYPE (e) IN (ModelingExercise, TextExercise, ProgrammingExercise)
             """)
-    Set<Exercise> findAllExercisesWithPotentialPlagiarismByExamId(long examId);
+    Set<Exercise> findAllExercisesWithPotentialPlagiarismByExamId(@Param("examId") long examId);
 }
