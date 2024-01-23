@@ -78,14 +78,13 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
                 submission.submissionDate,
-                student.login
+                p.student.login
             )
             FROM StudentParticipation p
-                LEFT JOIN FETCH p.student student
-                LEFT JOIN FETCH p.submissions submission
+                LEFT JOIN p.submissions submission
             WHERE submission.submissionDate >= :startDate
                 AND submission.submissionDate <= :endDate
-                AND student.login NOT LIKE '%test%'
+                AND p.student.login NOT LIKE '%test%'
                 AND (submission.participation.exercise.exerciseGroup IS NOT NULL
                     OR EXISTS (SELECT c FROM Course c WHERE submission.participation.exercise.course.testCourse IS FALSE)
                 )
@@ -94,13 +93,12 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     List<StatisticsEntry> getActiveUsers(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            SELECT DISTINCT student.login
+            SELECT DISTINCT p.student.login
             FROM StudentParticipation p
-                LEFT JOIN FETCH p.student student
-                LEFT JOIN FETCH p.submissions submission
+                LEFT JOIN p.submissions submission
             WHERE submission.submissionDate >= :startDate
                 AND submission.submissionDate <= :endDate
-                AND student.login NOT LIKE '%test%'
+                AND p.student.login NOT LIKE '%test%'
             """)
     List<String> getActiveUserNames(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
@@ -113,13 +111,12 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
      * @return a list of active users
      */
     @Query("""
-            SELECT COUNT (DISTINCT student.id)
+            SELECT COUNT(DISTINCT p.student.id)
             FROM StudentParticipation p
-                LEFT JOIN FETCH p.student student
-                LEFT JOIN FETCH p.submissions submission
+                LEFT JOIN p.submissions submission
             WHERE submission.submissionDate >= :startDate
                 AND submission.submissionDate <= :endDate
-                AND student.login not like '%test%'
+                AND p.student.login not like '%test%'
                 AND (
                     p.exercise.exerciseGroup IS NOT NULL
                     OR p.exercise.course.testCourse IS fALSE
@@ -130,14 +127,13 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
                 submission.submissionDate,
-                student.login
+                p.student.login
             )
             FROM StudentParticipation p
-                LEFT JOIN FETCH p.student student
-                LEFT JOIN FETCH p.submissions submission
+                LEFT JOIN p.submissions submission
             WHERE submission.submissionDate >= :startDate
                 AND submission.submissionDate <= :endDate
-                AND student.login NOT LIKE '%test%'
+                AND p.student.login NOT LIKE '%test%'
                 AND p.exercise.id IN :exerciseIds
             ORDER BY submission.submissionDate ASC
             """)
@@ -147,14 +143,13 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
                 submission.submissionDate,
-                student.login
+                p.student.login
             )
             FROM StudentParticipation p
-                LEFT JOIN FETCH p.student student
-                LEFT JOIN FETCH p.submissions submission
+                LEFT JOIN p.submissions submission
             WHERE submission.submissionDate >= :startDate
                 AND submission.submissionDate <= :endDate
-                AND student.login NOT LIKE '%test%'
+                AND p.student.login NOT LIKE '%test%'
             AND p.exercise.id = :exerciseId
             ORDER BY submission.submissionDate ASC
             """)
@@ -469,7 +464,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 LEFT JOIN TREAT (post.conversation AS Channel) channel
             WHERE post.creationDate >= :startDate
                 AND post.creationDate <= :endDate
-                AND channel.course.id = :courseId
+                AND channel.exercise.id = :exerciseId
             GROUP BY post.creationDate
             ORDER BY post.creationDate ASC
             """)
