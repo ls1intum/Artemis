@@ -55,8 +55,8 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
     @Query("""
             SELECT DISTINCT submission
             FROM ModelingSubmission submission
-            LEFT JOIN FETCH submission.results r
-            LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH submission.results r
+                LEFT JOIN FETCH r.feedbacks
             WHERE submission.participation.exercise.id = :exerciseId
                 AND submission.submitted IS TRUE
             """)
