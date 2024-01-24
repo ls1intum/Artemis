@@ -46,10 +46,10 @@ class FilePathServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     void testActualPathForPublicFileUploadExercisePathOrThrow_shouldThrowException() {
         assertThatExceptionOfType(FilePathParsingException.class)
-                .isThrownBy(() -> filePathService.actualPathForPublicPathOrThrow(URI.create("/api/files/file-upload-exercises/file.pdf")))
+                .isThrownBy(() -> FilePathService.actualPathForPublicPathOrThrow(URI.create("/api/files/file-upload-exercises/file.pdf")))
                 .withMessageStartingWith("Public path does not contain correct exerciseId or submissionId:");
 
-        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> filePathService.actualPathForPublicPathOrThrow(URI.create("/api/unknown-path/unknown-file.pdf")))
+        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> FilePathService.actualPathForPublicPathOrThrow(URI.create("/api/unknown-path/unknown-file.pdf")))
                 .withMessageStartingWith("Unknown Filepath:");
     }
 

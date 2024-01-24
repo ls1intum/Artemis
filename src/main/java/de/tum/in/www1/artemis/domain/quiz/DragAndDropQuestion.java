@@ -30,11 +30,7 @@ import de.tum.in.www1.artemis.service.FileService;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DragAndDropQuestion extends QuizQuestion {
 
-    @Transient
-    private static final transient Logger log = LoggerFactory.getLogger(DragAndDropQuestion.class);
-
-    @Transient
-    private final transient FilePathService filePathService = new FilePathService();
+    private static final Logger log = LoggerFactory.getLogger(DragAndDropQuestion.class);
 
     @Transient
     private final transient FileService fileService = new FileService();
@@ -172,7 +168,7 @@ public class DragAndDropQuestion extends QuizQuestion {
         // delete old file if necessary
         try {
             if (backgroundFilePath != null) {
-                fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(URI.create(backgroundFilePath)), 0);
+                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(backgroundFilePath)), 0);
             }
         }
         catch (FilePathParsingException e) {

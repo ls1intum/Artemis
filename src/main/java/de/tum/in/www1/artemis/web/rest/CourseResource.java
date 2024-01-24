@@ -233,12 +233,12 @@ public class CourseResource {
             courseUpdate.setCourseIcon(filePathService.publicPathForActualPathOrThrow(savePath, courseId).toString());
             if (existingCourse.getCourseIcon() != null) {
                 // delete old course icon
-                fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
+                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
             }
         }
         else if (courseUpdate.getCourseIcon() == null && existingCourse.getCourseIcon() != null) {
             // delete old course icon
-            fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
+            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
         }
 
         if (courseUpdate.isOnlineCourse() != existingCourse.isOnlineCourse()) {

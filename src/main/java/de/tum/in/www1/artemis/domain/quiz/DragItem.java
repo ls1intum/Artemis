@@ -31,11 +31,7 @@ import de.tum.in.www1.artemis.service.FileService;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DragItem extends TempIdObject implements QuizQuestionComponent<DragAndDropQuestion> {
 
-    @Transient
-    private static final transient Logger log = LoggerFactory.getLogger(DragItem.class);
-
-    @Transient
-    private final transient FilePathService filePathService = new FilePathService();
+    private static final Logger log = LoggerFactory.getLogger(DragItem.class);
 
     @Transient
     private final transient FileService fileService = new FileService();
@@ -139,7 +135,7 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
         // delete old file if necessary
         try {
             if (pictureFilePath != null) {
-                fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(URI.create(pictureFilePath)), 0);
+                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(pictureFilePath)), 0);
             }
         }
         catch (FilePathParsingException e) {

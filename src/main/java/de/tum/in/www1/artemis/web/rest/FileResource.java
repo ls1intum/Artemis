@@ -492,7 +492,7 @@ public class FileResource {
         if (publicPath == null) {
             throw new EntityNotFoundException("No file linked");
         }
-        return filePathService.actualPathForPublicPathOrThrow(URI.create(publicPath));
+        return FilePathService.actualPathForPublicPathOrThrow(URI.create(publicPath));
     }
 
     private MediaType getMediaTypeFromFilename(String filename) {

@@ -158,7 +158,7 @@ public class AdminCourseResource {
 
         courseService.delete(course);
         if (course.getCourseIcon() != null) {
-            fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(URI.create(course.getCourseIcon())), 0);
+            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(course.getCourseIcon())), 0);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, Course.ENTITY_NAME, course.getTitle())).build();
     }

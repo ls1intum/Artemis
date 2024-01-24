@@ -59,7 +59,7 @@ public class EntityFileService {
         String filename = Path.of(entityFilePath).getFileName().toString();
         String extension = FilenameUtils.getExtension(filename);
         try {
-            Path source = filePathService.actualPathForPublicPathOrThrow(filePath);
+            Path source = FilePathService.actualPathForPublicPathOrThrow(filePath);
             if (!source.startsWith(FilePathService.getTempFilePath())) {
                 return entityFilePath;
             }
@@ -106,7 +106,7 @@ public class EntityFileService {
             resultingPath = moveFileBeforeEntityPersistenceWithIdIfIsTemp(newEntityFilePath, targetFolder, keepFilename, entityId);
         }
         if (oldEntityFilePath != null && !oldEntityFilePath.equals(resultingPath)) {
-            Path oldFilePath = filePathService.actualPathForPublicPathOrThrow(URI.create(oldEntityFilePath));
+            Path oldFilePath = FilePathService.actualPathForPublicPathOrThrow(URI.create(oldEntityFilePath));
             if (oldFilePath.toFile().exists()) {
                 fileService.schedulePathForDeletion(oldFilePath, 0);
             }
