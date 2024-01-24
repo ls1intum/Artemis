@@ -214,7 +214,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             {
                 title: 'artemisApp.exercise.sections.grading',
                 valid: Boolean(
-                    this.exerciseUpdatePlagiarismComponent.formValid &&
+                    this.exerciseUpdatePlagiarismComponent?.formValid &&
                         this.points.valid &&
                         this.bonusPoints.valid &&
                         (this.isExamMode || (!this.modelingExercise.startDateError && !this.modelingExercise.dueDateError && !this.modelingExercise.assessmentDueDateError)),

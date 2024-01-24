@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 
 import { ArtemisTestModule } from '../../test.module';
@@ -22,6 +22,9 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
+import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
+import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
+import { NgModel } from '@angular/forms';
 
 describe('ModelingExerciseUpdateComponent', () => {
     let comp: ModelingExerciseUpdateComponent;
@@ -286,5 +289,26 @@ describe('ModelingExerciseUpdateComponent', () => {
 
         expect(comp.modelingExercise.categories).toEqual(newCategories);
         expect(comp.exerciseCategories).toEqual(newCategories);
+    });
+
+    it('should subscribe and unsubscribe to input element changes', () => {
+        const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
+        comp.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { formValidChanges: new Subject() } } as ExerciseTitleChannelNameComponent;
+        comp.exerciseUpdatePlagiarismComponent = { formValidChanges: new Subject() } as ExerciseUpdatePlagiarismComponent;
+        comp.bonusPoints = { valueChanges: new Subject() } as any as NgModel;
+        comp.points = { valueChanges: new Subject() } as any as NgModel;
+
+        comp.ngAfterViewInit();
+
+        (comp.points.valueChanges as Subject<boolean>).next(false);
+        expect(calculateValidSpy).toHaveBeenCalledOnce();
+
+        comp.ngOnDestroy();
+
+        expect(comp.titleChannelNameComponentSubscription?.closed).toBeTrue();
+        expect(comp.plagiarismSubscription?.closed).toBeTrue();
+        expect(comp.bonusPointsSubscription?.closed).toBeTrue();
+        expect(comp.pointsSubscription?.closed).toBeTrue();
     });
 });
