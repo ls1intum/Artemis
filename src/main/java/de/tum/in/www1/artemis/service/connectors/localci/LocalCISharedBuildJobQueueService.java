@@ -305,7 +305,7 @@ public class LocalCISharedBuildJobQueueService {
 
                 // In case the participation does not contain the exercise, we have to load it from the database
                 if (participation.getProgrammingExercise() == null) {
-                    participation.setProgrammingExercise(programmingExerciseRepository.findByIdElseThrow(buildJob.exerciseId()));
+                    participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
                 }
 
                 SecurityUtils.setAuthorizationObject();
