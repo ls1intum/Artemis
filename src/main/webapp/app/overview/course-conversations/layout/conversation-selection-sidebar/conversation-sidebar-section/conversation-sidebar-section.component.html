@@ -15,7 +15,7 @@
         }
     </div>
     <div [(ngbCollapse)]="isCollapsed">
-        @if (visibleConversations.length > 0 || mutedConversations.length > 0 || hiddenConversations.length > 0) {
+        @if (visibleConversations.length || mutedConversations.length || hiddenConversations.length) {
             <ul class="conversation-list">
                 @for (conversation of visibleConversations; track conversationsTrackByFn($index, conversation)) {
                     <li
