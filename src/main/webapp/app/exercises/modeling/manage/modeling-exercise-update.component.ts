@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
@@ -13,7 +13,7 @@ import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { cloneDeep } from 'lodash-es';
+import { cloneDeep, isEmpty } from 'lodash-es';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -26,14 +26,23 @@ import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exercises/course-utils';
+import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
+import { Subscription } from 'rxjs';
+import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
+import { NgModel } from '@angular/forms';
+import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
     templateUrl: './modeling-exercise-update.component.html',
 })
-export class ModelingExerciseUpdateComponent implements OnInit {
+export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
+    @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelNameComponent: ExerciseTitleChannelNameComponent;
+    @ViewChild(ExerciseUpdatePlagiarismComponent) exerciseUpdatePlagiarismComponent: ExerciseUpdatePlagiarismComponent;
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor?: ModelingEditorComponent;
+    @ViewChild('bonusPoints') bonusPoints: NgModel;
+    @ViewChild('points') points: NgModel;
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly documentationType: DocumentationType = 'Model';
@@ -56,6 +65,14 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     isExamMode: boolean;
     semiAutomaticAssessmentAvailable = true;
     goBackAfterSaving = false;
+
+    formSectionStatus: FormSectionStatus[];
+
+    // Subscription
+    titleChannelNameComponentSubscription?: Subscription;
+    pointsSubscription?: Subscription;
+    bonusPointsSubscription?: Subscription;
+    plagiarismSubscription?: Subscription;
 
     // Icons
     faSave = faSave;
@@ -81,6 +98,15 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         }
 
         return this.modelingExercise.id == undefined ? EditType.CREATE : EditType.UPDATE;
+    }
+
+    ngAfterViewInit() {
+        this.titleChannelNameComponentSubscription = this.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValidChanges.subscribe(() =>
+            this.calculateFormSectionStatus(),
+        );
+        this.pointsSubscription = this.points?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
+        this.bonusPointsSubscription = this.bonusPoints?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
+        this.plagiarismSubscription = this.exerciseUpdatePlagiarismComponent.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
     }
 
     /**
@@ -165,6 +191,38 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         this.notificationText = undefined;
     }
 
+    ngOnDestroy() {
+        this.titleChannelNameComponentSubscription?.unsubscribe();
+        this.pointsSubscription?.unsubscribe();
+        this.bonusPointsSubscription?.unsubscribe();
+        this.plagiarismSubscription?.unsubscribe();
+    }
+
+    async calculateFormSectionStatus() {
+        await this.modelingEditor?.apollonEditor?.nextRender;
+        this.formSectionStatus = [
+            {
+                title: 'artemisApp.exercise.sections.general',
+                valid: Boolean(this.exerciseTitleChannelNameComponent?.titleChannelNameComponent.formValid),
+            },
+            { title: 'artemisApp.exercise.sections.mode', valid: true },
+            { title: 'artemisApp.exercise.sections.problem', valid: Boolean(this.modelingExercise.problemStatement) },
+            {
+                title: 'artemisApp.exercise.sections.solution',
+                valid: Boolean(!isEmpty(this.modelingEditor?.getCurrentModel()?.elements) && (this.isExamMode || !this.modelingExercise.exampleSolutionPublicationDateError)),
+            },
+            {
+                title: 'artemisApp.exercise.sections.grading',
+                valid: Boolean(
+                    this.exerciseUpdatePlagiarismComponent.formValid &&
+                        this.points.valid &&
+                        this.bonusPoints.valid &&
+                        (this.isExamMode || (!this.modelingExercise.startDateError && !this.modelingExercise.dueDateError && !this.modelingExercise.assessmentDueDateError)),
+                ),
+            },
+        ];
+    }
+
     /**
      * Updates the exercise categories
      * @param categories list of exercise categories
@@ -179,6 +237,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
      */
     validateDate(): void {
         this.exerciseService.validateDate(this.modelingExercise);
+        this.calculateFormSectionStatus();
     }
 
     save() {
