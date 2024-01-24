@@ -34,7 +34,7 @@ const tableColumns: Column<Lecture>[] = [
 export class LectureImportComponent extends ImportComponent<Lecture> {
     constructor(router: Router, sortService: SortService, activeModal: NgbActiveModal, pagingService: LecturePagingService) {
         super(router, sortService, activeModal, pagingService);
-        super.columns = tableColumns;
-        super.entityName = 'lecture';
+        this.columns = tableColumns;
+        this.entityName = 'lecture';
     }
 }
