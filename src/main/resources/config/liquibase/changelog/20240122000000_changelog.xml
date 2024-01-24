@@ -30,7 +30,7 @@
         <!-- migrate competency relation type-column -->
         <renameColumn tableName="competency_relation" oldColumnName="type" newColumnName="type_old" columnDataType="varchar(31)" />
         <addColumn tableName="competency_relation">
-            <column name="type" type="tinyint">
+            <column name="type" type="tinyint" defaultValueNumeric="0">
                 <constraints nullable="false"/>
             </column>
         </addColumn>
