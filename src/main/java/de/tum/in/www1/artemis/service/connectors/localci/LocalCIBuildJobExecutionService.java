@@ -95,6 +95,7 @@ public class LocalCIBuildJobExecutionService {
      * execute the
      * job.
      *
+     * @param buildJob      The build job object containing necessary information to execute the build job.
      * @param containerName The name of the Docker container that will be used to run the build job.
      *                          It needs to be prepared beforehand to stop and remove the container if something goes wrong here.
      * @return The build result.
