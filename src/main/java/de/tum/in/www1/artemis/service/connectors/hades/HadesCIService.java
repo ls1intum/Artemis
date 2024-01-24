@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
-import de.tum.in.www1.artemis.service.connectors.hades.dto.HadesCIBuildResultDTO;
+import de.tum.in.www1.artemis.service.connectors.hades.dto.HadesBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 @Service
@@ -64,7 +64,7 @@ public class HadesCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public String getPlanKey(Object requestBody) throws ContinuousIntegrationException {
-        var dto = HadesCIBuildResultDTO.convert(requestBody);
+        var dto = HadesBuildResultNotificationDTO.convert(requestBody);
 
         log.debug("Received build result for job {} in Hades", dto.getJobName());
 

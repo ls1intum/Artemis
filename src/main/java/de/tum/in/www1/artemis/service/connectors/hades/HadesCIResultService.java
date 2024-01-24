@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationResultService;
-import de.tum.in.www1.artemis.service.connectors.hades.dto.HadesCIBuildResultDTO;
+import de.tum.in.www1.artemis.service.connectors.hades.dto.HadesBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseFeedbackCreationService;
@@ -41,7 +41,7 @@ public class HadesCIResultService extends AbstractContinuousIntegrationResultSer
     public AbstractBuildResultNotificationDTO convertBuildResult(Object requestBody) {
         log.debug("Convert requestbody to BuildResultNotificationDTO");
 
-        return mapper.convertValue(requestBody, HadesCIBuildResultDTO.class);
+        return mapper.convertValue(requestBody, HadesBuildResultNotificationDTO.class);
     }
 
     @Override

@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
 import de.tum.in.www1.artemis.service.dto.TestCaseDTOInterface;
 
-public class HadesResultJobDTO implements BuildJobDTOInterface {
+public class HadesBuildJobResultDTO implements BuildJobDTOInterface {
 
     @JsonProperty("name")
     private String name;
@@ -19,7 +19,7 @@ public class HadesResultJobDTO implements BuildJobDTOInterface {
     private List<HadesTestCaseResultDTO> tests;
 
     // empty constructor needed for Jackson
-    public HadesResultJobDTO() {
+    public HadesBuildJobResultDTO() {
     }
 
     @Override

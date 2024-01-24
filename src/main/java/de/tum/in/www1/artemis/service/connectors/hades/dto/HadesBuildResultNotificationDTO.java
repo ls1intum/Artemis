@@ -15,9 +15,9 @@ import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.TestwiseCoverageReportDTO;
 import de.tum.in.www1.artemis.service.dto.*;
 
-public class HadesCIBuildResultDTO extends AbstractBuildResultNotificationDTO {
+public class HadesBuildResultNotificationDTO extends AbstractBuildResultNotificationDTO {
 
-    private static final Logger log = LoggerFactory.getLogger(HadesCIBuildResultDTO.class);
+    private static final Logger log = LoggerFactory.getLogger(HadesBuildResultNotificationDTO.class);
 
     private String jobName;
 
@@ -37,14 +37,14 @@ public class HadesCIBuildResultDTO extends AbstractBuildResultNotificationDTO {
     private ZonedDateTime buildRunDate;
 
     @JsonProperty("buildJobs") // For some reason this annotation is necessary for jackson to work
-    private List<HadesResultJobDTO> buildJobs;
+    private List<HadesBuildJobResultDTO> buildJobs;
 
     // empty constructor needed for Jackson
-    public HadesCIBuildResultDTO() {
+    public HadesBuildResultNotificationDTO() {
     }
 
-    public HadesCIBuildResultDTO(String jobName, String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful,
-            ZonedDateTime buildRunDate, List<HadesResultJobDTO> buildJobs) {
+    public HadesBuildResultNotificationDTO(String jobName, String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful,
+            ZonedDateTime buildRunDate, List<HadesBuildJobResultDTO> buildJobs) {
         this.jobName = jobName;
         this.assignmentRepoBranchName = assignmentRepoBranchName;
         this.assignmentRepoCommitHash = assignmentRepoCommitHash;
@@ -54,10 +54,10 @@ public class HadesCIBuildResultDTO extends AbstractBuildResultNotificationDTO {
         this.buildJobs = buildJobs;
     }
 
-    public static HadesCIBuildResultDTO convert(Object someResult) {
+    public static HadesBuildResultNotificationDTO convert(Object someResult) {
         var mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        var dto = mapper.convertValue(someResult, HadesCIBuildResultDTO.class);
+        var dto = mapper.convertValue(someResult, HadesBuildResultNotificationDTO.class);
         return dto;
     }
 
@@ -149,7 +149,7 @@ public class HadesCIBuildResultDTO extends AbstractBuildResultNotificationDTO {
         this.buildRunDate = buildRunDate;
     }
 
-    public void setBuildJobs(List<HadesResultJobDTO> buildJobs) {
+    public void setBuildJobs(List<HadesBuildJobResultDTO> buildJobs) {
         this.buildJobs = buildJobs;
     }
 
