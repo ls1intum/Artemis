@@ -45,7 +45,10 @@ public class DragAndDropQuestion extends QuizQuestion {
     @JsonView(QuizView.Before.class)
     private List<DropLocation> dropLocations = new ArrayList<>();
 
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    // TODO: making this a bidirectional relation leads to weired Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
+    // after 6.x upgrade
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @JoinColumn(name = "question_id")
     @OrderColumn
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.Before.class)

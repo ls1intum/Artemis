@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
@@ -40,11 +37,6 @@ public class ShortAnswerSpot extends TempIdObject implements QuizQuestionCompone
     @JoinColumn(name = "question_id")
     @JsonIgnore
     private ShortAnswerQuestion question;
-
-    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "spot")
-    @JsonIgnore
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<ShortAnswerMapping> mappings = new HashSet<>();
 
     public Integer getSpotNr() {
         return spotNr;
@@ -86,22 +78,6 @@ public class ShortAnswerSpot extends TempIdObject implements QuizQuestionCompone
 
     public void setQuestion(ShortAnswerQuestion shortAnswerQuestion) {
         this.question = shortAnswerQuestion;
-    }
-
-    public Set<ShortAnswerMapping> getMappings() {
-        return mappings;
-    }
-
-    public ShortAnswerSpot addMappings(ShortAnswerMapping mapping) {
-        this.mappings.add(mapping);
-        mapping.setSpot(this);
-        return this;
-    }
-
-    public ShortAnswerSpot removeMappings(ShortAnswerMapping mapping) {
-        this.mappings.remove(mapping);
-        mapping.setSpot(null);
-        return this;
     }
 
     @Override

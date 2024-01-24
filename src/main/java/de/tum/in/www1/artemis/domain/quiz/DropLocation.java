@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -48,11 +47,6 @@ public class DropLocation extends TempIdObject implements QuizQuestionComponent<
     @JoinColumn(name = "question_id")
     @JsonIgnore
     private DragAndDropQuestion question;
-
-    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "dropLocation")
-    @JsonIgnore
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<DragAndDropMapping> mappings = new HashSet<>();
 
     public Double getPosX() {
         return posX;
@@ -116,10 +110,6 @@ public class DropLocation extends TempIdObject implements QuizQuestionComponent<
 
     public void setQuestion(DragAndDropQuestion dragAndDropQuestion) {
         this.question = dragAndDropQuestion;
-    }
-
-    public Set<DragAndDropMapping> getMappings() {
-        return mappings;
     }
 
     public void setInvalid(Boolean invalid) {

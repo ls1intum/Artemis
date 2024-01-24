@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
 import java.net.URI;
-import java.util.HashSet;
-import java.util.Set;
 
 import javax.persistence.*;
 
@@ -49,14 +47,8 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
     private Boolean invalid = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "question_id")
     @JsonIgnore
     private DragAndDropQuestion question;
-
-    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "dragItem")
-    @JsonIgnore
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<DragAndDropMapping> mappings = new HashSet<>();
 
     public String getPictureFilePath() {
         return pictureFilePath;
@@ -98,22 +90,6 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
 
     public void setInvalid(Boolean invalid) {
         this.invalid = invalid;
-    }
-
-    public Set<DragAndDropMapping> getMappings() {
-        return mappings;
-    }
-
-    public DragItem addMappings(DragAndDropMapping mapping) {
-        this.mappings.add(mapping);
-        mapping.setDragItem(this);
-        return this;
-    }
-
-    public DragItem removeMappings(DragAndDropMapping mapping) {
-        this.mappings.remove(mapping);
-        mapping.setDragItem(null);
-        return this;
     }
 
     /**

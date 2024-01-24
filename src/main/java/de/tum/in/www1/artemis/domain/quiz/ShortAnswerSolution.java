@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
@@ -33,15 +30,8 @@ public class ShortAnswerSolution extends TempIdObject implements QuizQuestionCom
     private Boolean invalid = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "question_id")
     @JsonIgnore
     private ShortAnswerQuestion question;
-
-    // added additionally, could possibly be created within artemis.jh?
-    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "solution")
-    @JsonIgnore
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<ShortAnswerMapping> mappings = new HashSet<>();
 
     public String getText() {
         return text;
@@ -70,22 +60,6 @@ public class ShortAnswerSolution extends TempIdObject implements QuizQuestionCom
 
     public void setQuestion(ShortAnswerQuestion shortAnswerQuestion) {
         this.question = shortAnswerQuestion;
-    }
-
-    public Set<ShortAnswerMapping> getMappings() {
-        return mappings;
-    }
-
-    public ShortAnswerSolution addMappings(ShortAnswerMapping mapping) {
-        this.mappings.add(mapping);
-        mapping.setSolution(this);
-        return this;
-    }
-
-    public ShortAnswerSolution removeMappings(ShortAnswerMapping mapping) {
-        this.mappings.remove(mapping);
-        mapping.setSolution(null);
-        return this;
     }
 
     @Override
