@@ -143,10 +143,20 @@ public class LocalCIBuildJobExecutionService {
         // retrieve last commit hash from repositories
         String assignmentCommitHash = buildJob.buildConfig().commitHash();
         if (assignmentCommitHash == null) {
-            assignmentCommitHash = gitService.getLastCommitHash(assignmentRepoUri).getName();
+            try {
+                assignmentCommitHash = gitService.getLastCommitHash(assignmentRepoUri).getName();
+            }
+            catch (EntityNotFoundException e) {
+                throw new LocalCIException("Could not find last commit hash for assignment repository");
+            }
         }
-
-        String testCommitHash = gitService.getLastCommitHash(testsRepoUri).getName();
+        String testCommitHash;
+        try {
+            testCommitHash = gitService.getLastCommitHash(testsRepoUri).getName();
+        }
+        catch (EntityNotFoundException e) {
+            throw new LocalCIException("Could not find last commit hash for test repository " + testsRepoUri.repositorySlug(), e);
+        }
 
         CreateContainerResponse container = localCIContainerService.configureContainer(containerName, buildJob.buildConfig().dockerImage());
 

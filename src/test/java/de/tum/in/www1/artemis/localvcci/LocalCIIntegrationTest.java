@@ -49,6 +49,8 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     private LocalRepository studentAssignmentRepository;
 
+    private LocalRepository testsRepository;
+
     private String commitHash;
 
     @BeforeEach
@@ -56,6 +58,11 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         studentAssignmentRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, assignmentRepositorySlug);
         commitHash = localVCLocalCITestService.commitFile(studentAssignmentRepository.localRepoFile.toPath(), studentAssignmentRepository.localGit);
         studentAssignmentRepository.localGit.push().call();
+
+        testsRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, testsRepositorySlug);
+        localVCLocalCITestService.commitFile(testsRepository.localRepoFile.toPath(), testsRepository.localGit);
+        testsRepository.localGit.push().call();
+
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
         localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, WORKING_DIRECTORY + RESULTS_DIRECTORY);
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commit hash for the tests repository.
@@ -68,6 +75,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     @AfterEach
     void removeRepositories() throws IOException {
         studentAssignmentRepository.resetLocalRepo();
+        testsRepository.resetLocalRepo();
     }
 
     @Test
@@ -217,30 +225,6 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCannotRetrieveCommitHash() {
-        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
-
-        // An IO Exception happens when trying to retrieve the commit hash for the test repository. This should lead to a build result that indicates a failed build.
-
-        // Return an InputStream from dockerClient.copyArchiveFromContainerCmd().exec() such that repositoryTarInputStream.getNextTarEntry() throws an IOException.
-        CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = mock(CopyArchiveFromContainerCmd.class);
-        ArgumentMatcher<String> expectedPathMatcher = path -> path.matches(WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+");
-        doReturn(copyArchiveFromContainerCmd).when(dockerClient).copyArchiveFromContainerCmd(anyString(), argThat(expectedPathMatcher));
-        when(copyArchiveFromContainerCmd.exec()).thenReturn(new InputStream() {
-
-            @Override
-            public int read() throws IOException {
-                throw new IOException("Cannot read from this dummy InputStream");
-            }
-        });
-
-        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
-        // Should return a build result that indicates that the build failed.
-        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), null, 0, true);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCannotFindResults() {
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
@@ -277,7 +261,8 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         await().untilAsserted(() -> verify(programmingMessagingService).notifyUserAboutSubmissionError(Mockito.eq(studentParticipation), any()));
 
         // Should notify the user.
-        verifyUserNotification(studentParticipation, "de.tum.in.www1.artemis.exception.LocalCIException: Error while parsing test results");
+        verifyUserNotification(studentParticipation,
+                "java.util.concurrent.ExecutionException: de.tum.in.www1.artemis.exception.LocalCIException: Error while parsing test results");
     }
 
     @Test
@@ -290,7 +275,8 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         await().untilAsserted(() -> verify(programmingMessagingService).notifyUserAboutSubmissionError(Mockito.eq(studentParticipation), any()));
 
         // Should notify the user.
-        verifyUserNotification(studentParticipation, "de.tum.in.www1.artemis.exception.LocalCIException: Error while parsing test results");
+        verifyUserNotification(studentParticipation,
+                "java.util.concurrent.ExecutionException: de.tum.in.www1.artemis.exception.LocalCIException: Error while parsing test results");
     }
 
     @Test

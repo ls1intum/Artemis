@@ -347,7 +347,7 @@ public class LocalCISharedBuildJobQueueService {
                 if (participationOptional.isPresent() && !isRetry) {
                     ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
                     programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
-                            new BuildTriggerWebsocketError("Build job failed", participation.getId()));
+                            new BuildTriggerWebsocketError(ex.getMessage(), participation.getId()));
 
                     log.warn("Requeueing failed build job: {}", buildJob);
                     LocalCIBuildJobQueueItem requeuedBuildJob = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), null, buildJob.participationId(), buildJob.courseId(),
