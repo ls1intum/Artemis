@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.*;
 
@@ -44,9 +44,14 @@ public class DropLocation extends TempIdObject implements QuizQuestionComponent<
     private Boolean invalid = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "question_id")
     @JsonIgnore
     private DragAndDropQuestion question;
+
+    // NOTE: without cascade and orphanRemoval, deletion of quizzes might not work properly, so we reference mappings here, even if we do not use them
+    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "dropLocation")
+    @JsonIgnore
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private Set<DragAndDropMapping> mappings = new HashSet<>();
 
     public Double getPosX() {
         return posX;

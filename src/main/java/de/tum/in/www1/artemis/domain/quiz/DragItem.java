@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
 import java.net.URI;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.persistence.*;
 
@@ -49,6 +51,12 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     private DragAndDropQuestion question;
+
+    // NOTE: without cascade and orphanRemoval, deletion of quizzes might not work properly, so we reference mappings here, even if we do not use them
+    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "dragItem")
+    @JsonIgnore
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private Set<DragAndDropMapping> mappings = new HashSet<>();
 
     public String getPictureFilePath() {
         return pictureFilePath;

@@ -23,7 +23,8 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DragAndDropSubmittedAnswer extends SubmittedAnswer {
 
-    @OneToMany(mappedBy = "submittedAnswer", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @JoinColumn(name = "submitted_answer_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.Before.class)
     private Set<DragAndDropMapping> mappings = new HashSet<>();

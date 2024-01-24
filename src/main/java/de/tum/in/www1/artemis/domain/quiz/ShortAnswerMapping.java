@@ -42,7 +42,6 @@ public class ShortAnswerMapping extends DomainObject implements QuizQuestionComp
     private ShortAnswerSpot spot;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "question_id")
     @JsonIgnore
     private ShortAnswerQuestion question;
 

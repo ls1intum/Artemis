@@ -42,7 +42,6 @@ public class AnswerOption extends DomainObject implements QuizQuestionComponent<
     private Boolean invalid = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "question_id")
     @JsonIgnore
     private MultipleChoiceQuestion question;
 

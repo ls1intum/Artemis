@@ -22,7 +22,10 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ShortAnswerQuestion extends QuizQuestion {
 
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    // TODO: making this a bidirectional relation leads to weired Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
+    // after 6.x upgrade
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @JoinColumn(name = "question_id")
     @OrderColumn
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.Before.class)
@@ -37,7 +40,10 @@ public class ShortAnswerQuestion extends QuizQuestion {
     @JsonView(QuizView.Before.class)
     private List<ShortAnswerSolution> solutions = new ArrayList<>();
 
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    // TODO: making this a bidirectional relation leads to weired Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
+    // after 6.x upgrade
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @JoinColumn(name = "question_id")
     @OrderColumn
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.After.class)

@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
@@ -34,9 +37,14 @@ public class ShortAnswerSpot extends TempIdObject implements QuizQuestionCompone
     private Boolean invalid;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "question_id")
     @JsonIgnore
     private ShortAnswerQuestion question;
+
+    // NOTE: without cascade and orphanRemoval, deletion of quizzes might not work properly, so we reference mappings here, even if we do not use them
+    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "spot")
+    @JsonIgnore
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private Set<ShortAnswerMapping> mappings = new HashSet<>();
 
     public Integer getSpotNr() {
         return spotNr;

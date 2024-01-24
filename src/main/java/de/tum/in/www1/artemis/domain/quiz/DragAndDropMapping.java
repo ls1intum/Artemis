@@ -42,12 +42,10 @@ public class DragAndDropMapping extends DomainObject implements QuizQuestionComp
     private DropLocation dropLocation;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "submitted_answer_id")
     @JsonIgnore
     private DragAndDropSubmittedAnswer submittedAnswer;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "question_id")
     @JsonIgnore
     private DragAndDropQuestion question;
 
