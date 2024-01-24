@@ -23,7 +23,7 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
             WHERE relation.headCompetency.id = :competencyId
                 OR relation.tailCompetency.id = :competencyId
             """)
-    Set<CompetencyRelation> findAllByCompetencyId(@Param("competencyId") Long competencyId);
+    Set<CompetencyRelation> findAllByCompetencyId(@Param("competencyId") long competencyId);
 
     @Transactional
     @Modifying
@@ -42,7 +42,7 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
             WHERE relation.headCompetency.course.id = :courseId
                 AND relation.tailCompetency.course.id = :courseId
             """)
-    Set<CompetencyRelation> findAllWithHeadAndTailByCourseId(@Param("courseId") Long courseId);
+    Set<CompetencyRelation> findAllWithHeadAndTailByCourseId(@Param("courseId") long courseId);
 
     @Query("""
             SELECT count(cr)
@@ -58,7 +58,7 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
                 LEFT JOIN relation.headCompetency
                 LEFT JOIN relation.tailCompetency
             WHERE relation.tailCompetency.id IN :competencyIds
-                AND relation.type <> 'MATCHES'
+                AND relation.type != 3
             """)
     Set<Long> getPriorCompetenciesByCompetencyIds(@Param("competencyIds") Set<Long> competencyIds);
 
@@ -94,7 +94,7 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
                                 END
                             FROM competency_relation as relation
                             JOIN transitive_closure AS tc ON relation.tail_competency_id = tc.id OR relation.head_competency_id = tc.id
-                            WHERE relation.type = 'M'
+                            WHERE relation.type = 3
                         )
                     )
                     SELECT * FROM transitive_closure
