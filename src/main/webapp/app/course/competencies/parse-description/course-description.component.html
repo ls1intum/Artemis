@@ -28,11 +28,10 @@
             </div>
         }
     </div>
-    <jhi-button
+    <jhi-iris-logo-button
         id="generateButton"
-        [btnType]="ButtonType.SUCCESS"
+        [btnType]="ButtonType.PRIMARY_OUTLINE"
         [title]="!hasBeenSubmitted ? 'artemisApp.competency.parseDescription.courseDescription.generate' : 'artemisApp.competency.parseDescription.courseDescription.regenerate'"
-        [icon]="!hasBeenSubmitted ? faCode : faRotateRight"
         [tooltip]="!hasBeenSubmitted ? '' : 'artemisApp.competency.parseDescription.courseDescription.regenerateTooltip'"
         [disabled]="!isSubmitPossible"
         [isLoading]="isLoading"

@@ -19,6 +19,7 @@ import { ParseCourseDescriptionComponent } from 'app/course/competencies/parse-d
 import { CompetencyRecommendationDetailComponent } from 'app/course/competencies/parse-description/competency-recommendation-detail.component';
 import { CourseDescriptionComponent } from 'app/course/competencies/parse-description/course-description.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { IrisModule } from 'app/iris/iris.module';
 
 @NgModule({
     imports: [
@@ -31,6 +32,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
         FormDateTimePickerModule,
         NgbAccordionModule,
         ArtemisMarkdownModule,
+        IrisModule,
     ],
     declarations: [
         CompetencyFormComponent,

@@ -9,9 +9,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.session.*;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.iris.IrisChatSessionRepository;
 import de.tum.in.www1.artemis.service.iris.session.*;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
  * Service for managing Iris sessions.
@@ -30,31 +28,13 @@ public class IrisSessionService {
 
     private final IrisCompetencyGenerationSessionService irisCompetencyGenerationSessionService;
 
-    private final IrisChatSessionRepository irisChatSessionRepository;
-
     public IrisSessionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisHestiaSessionService irisHestiaSessionService,
-            IrisCodeEditorSessionService irisCodeEditorSessionService, IrisCompetencyGenerationSessionService irisCompetencyGenerationSessionService,
-            IrisChatSessionRepository irisChatSessionRepository) {
+            IrisCodeEditorSessionService irisCodeEditorSessionService, IrisCompetencyGenerationSessionService irisCompetencyGenerationSessionService) {
         this.userRepository = userRepository;
         this.irisChatSessionService = irisChatSessionService;
         this.irisHestiaSessionService = irisHestiaSessionService;
         this.irisCodeEditorSessionService = irisCodeEditorSessionService;
         this.irisCompetencyGenerationSessionService = irisCompetencyGenerationSessionService;
-        this.irisChatSessionRepository = irisChatSessionRepository;
-    }
-
-    /**
-     * Creates a new Iris session for the given exercise and user.
-     *
-     * @param exercise The exercise the session belongs to
-     * @param user     The user the session belongs to
-     * @return The created session
-     */
-    public IrisChatSession createChatSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
-        if (exercise.isExamExercise()) {
-            throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
-        }
-        return irisChatSessionRepository.save(new IrisChatSession(exercise, user));
     }
 
     /**
@@ -153,11 +133,8 @@ public class IrisSessionService {
         if (session instanceof IrisCodeEditorSession codeEditorSession) {
             return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisCodeEditorSessionService, codeEditorSession);
         }
-        if (session instanceof IrisCompetencyGenerationSession) {
-            return irisCodeEditorSessionService;
-        }
-        if (session instanceof IrisCompetencyGenerationSession) {
-            return irisCompetencyGenerationSessionService;
+        if (session instanceof IrisCompetencyGenerationSession irisCompetencyGenerationSession) {
+            return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisCompetencyGenerationSessionService, irisCompetencyGenerationSession);
         }
         throw new BadRequestException("Unknown Iris session type " + session.getClass().getSimpleName());
     }

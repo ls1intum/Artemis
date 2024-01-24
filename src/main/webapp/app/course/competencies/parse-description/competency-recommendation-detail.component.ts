@@ -79,8 +79,8 @@ export class CompetencyRecommendationDetailComponent implements OnInit {
      * @param content markdown content
      */
     updateDescriptionControl(content: string) {
-        this.descriptionControl?.setValue(content);
-        this.descriptionControl?.markAsDirty();
+        this.descriptionControl.setValue(content);
+        this.descriptionControl.markAsDirty();
     }
 
     /**
@@ -103,6 +103,7 @@ export class CompetencyRecommendationDetailComponent implements OnInit {
         return this.form.controls.competency.controls.title;
     }
 
+    //TODO: remove getters for attributes.
     get descriptionControl() {
         return this.form.controls.competency.controls.description;
     }

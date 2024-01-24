@@ -332,6 +332,31 @@ public class IrisSettingsService {
     }
 
     /**
+     * Checks whether an Iris feature is enabled for a course.
+     * Throws an exception if the feature is disabled.
+     *
+     * @param type   The Iris feature to check
+     * @param course The course to check
+     */
+    public void isEnabledForElseThrow(IrisSubSettingsType type, Course course) {
+        if (!isEnabledFor(type, course)) {
+            throw new AccessForbiddenAlertException("The Iris " + type.name() + " feature is disabled for this course.", "Iris", "iris." + type.name().toLowerCase() + "Disabled");
+        }
+    }
+
+    /**
+     * Checks whether an Iris feature is enabled for a course.
+     *
+     * @param type   The Iris feature to check
+     * @param course The course to check
+     * @return Whether the Iris feature is enabled for the course
+     */
+    public boolean isEnabledFor(IrisSubSettingsType type, Course course) {
+        var settings = getCombinedIrisSettingsFor(course, true);
+        return isFeatureEnabledInSettings(settings, type);
+    }
+
+    /**
      * Checks whether an Iris feature is enabled for an exercise.
      *
      * @param type     The Iris feature to check
@@ -340,12 +365,7 @@ public class IrisSettingsService {
      */
     public boolean isEnabledFor(IrisSubSettingsType type, Exercise exercise) {
         var settings = getCombinedIrisSettingsFor(exercise, true);
-        return switch (type) {
-            case CHAT -> settings.irisChatSettings().isEnabled();
-            case HESTIA -> settings.irisHestiaSettings().isEnabled();
-            case CODE_EDITOR -> settings.irisCodeEditorSettings().isEnabled();
-            case COMPETENCY_GENERATION -> settings.irisCompetencyGenerationSettings().isEnabled();
-        };
+        return isFeatureEnabledInSettings(settings, type);
     }
 
     /**
@@ -487,5 +507,21 @@ public class IrisSettingsService {
     public void deleteSettingsFor(Exercise exercise) {
         var irisExerciseSettingsOptional = irisSettingsRepository.findExerciseSettings(exercise.getId());
         irisExerciseSettingsOptional.ifPresent(irisSettingsRepository::delete);
+    }
+
+    /**
+     * Checks if whether an Iris feature is enabled in the given settings
+     *
+     * @param settings the settings
+     * @param type     the type of the feature
+     * @return Whether the settings type is enabled
+     */
+    private boolean isFeatureEnabledInSettings(IrisCombinedSettingsDTO settings, IrisSubSettingsType type) {
+        return switch (type) {
+            case CHAT -> settings.irisChatSettings().isEnabled();
+            case HESTIA -> settings.irisHestiaSettings().isEnabled();
+            case CODE_EDITOR -> settings.irisCodeEditorSettings().isEnabled();
+            case COMPETENCY_GENERATION -> settings.irisCompetencyGenerationSettings().isEnabled();
+        };
     }
 }

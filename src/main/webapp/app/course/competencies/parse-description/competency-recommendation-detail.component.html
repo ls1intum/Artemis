@@ -63,7 +63,7 @@
         <div class="form-group">
             <label for="description-{{ index }}">{{ 'artemisApp.competency.description' | artemisTranslate }}</label>
             <jhi-markdown-editor
-                [markdown]="descriptionControl?.value"
+                [markdown]="descriptionControl.value"
                 (markdownChange)="updateDescriptionControl($event)"
                 id="description-{{ index }}"
                 class="markdown-preview"

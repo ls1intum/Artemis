@@ -69,13 +69,13 @@ public class CompetencyResource {
 
     private final ExerciseService exerciseService;
 
-    private final IrisCompetencyGenerationSessionService irisCompetencyGenerationSessionService;
+    private final Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService;
 
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository, LectureUnitRepository lectureUnitRepository,
             CompetencyService competencyService, CompetencyProgressRepository competencyProgressRepository, ExerciseRepository exerciseRepository,
             CompetencyProgressService competencyProgressService, LearningPathService learningPathService, ExerciseService exerciseService,
-            IrisCompetencyGenerationSessionService irisCompetencyGenerationSessionService) {
+            Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService) {
         this.courseRepository = courseRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.lectureUnitRepository = lectureUnitRepository;
@@ -239,6 +239,7 @@ public class CompetencyResource {
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/" + persistedCompetency.getId())).body(persistedCompetency);
     }
 
+    // TODO: set response type to competency
     /**
      * POST /courses/:courseId/competencies/bulk : creates a number of new competencies
      *
@@ -260,9 +261,11 @@ public class CompetencyResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
         for (var competency : competencies) {
+            // TODO: do this with the method from #7903
             var competencyToCreate = buildCompetencyToCreate(competency, course);
             var persistedCompetency = competencyRepository.save(competencyToCreate);
             linkLectureUnitsToCompetency(persistedCompetency, competency.getLectureUnits(), Set.of());
+            // TODO: do this with the method from #7903
             if (course.getLearningPathsEnabled()) {
                 learningPathService.linkCompetencyToLearningPathsOfCourse(persistedCompetency, courseId);
             }
@@ -568,13 +571,29 @@ public class CompetencyResource {
 
     // TODO: maybe move endpoint to IRIS
     @PostMapping("/courses/{courseId}/competencies/generate-from-description")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastEditor
     public ResponseEntity<List<Competency>> getCompetenciesFromCourseDescription(@PathVariable Long courseId, @RequestBody String courseDescription) {
-        Course course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        var competencies = irisCompetencyGenerationSessionService.generateCompetencyRecommendations(courseDescription, course);
+        var competencyList = new ArrayList<Competency>();
+        for (int i = 0; i < 10; i++) {
+            var competency = new Competency();
+            competency.setTitle("Competency " + i);
+            competency.setDescription("Lorem ipsum".repeat(i));
+            competency.setTaxonomy(CompetencyTaxonomy.ANALYZE);
+            competencyList.add(competency);
+        }
 
-        return ResponseEntity.ok().body(competencies);
+        return ResponseEntity.ok().body(competencyList);
+        /*
+         * var irisService = irisCompetencyGenerationSessionService.orElseThrow();
+         * var user = userRepository.getUserWithGroupsAndAuthorities();
+         * var course = courseRepository.findByIdElseThrow(courseId);
+         * authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+         * var session = irisService.getOrCreateSession(course, user);
+         * irisService.addUserTextMessageToSession(session, courseDescription);
+         * var competencies = irisService.executeRequest(session);
+         * return ResponseEntity.ok().body(competencies);
+         */
+
     }
 
     /**

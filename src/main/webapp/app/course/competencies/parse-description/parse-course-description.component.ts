@@ -16,13 +16,13 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export type CompetencyFormControlsWithViewed = {
     competency: FormGroup<CompetencyFormControls>;
-    viewed: FormControl<boolean | null>;
+    viewed: FormControl<boolean>;
 };
 
 export type CompetencyFormControls = {
-    title: FormControl<string | null | undefined>;
-    description: FormControl<string | null | undefined>;
-    taxonomy: FormControl<CompetencyTaxonomy | null | undefined>;
+    title: FormControl<string | undefined>;
+    description: FormControl<string | undefined>;
+    taxonomy: FormControl<CompetencyTaxonomy | undefined>;
 };
 
 @Component({
@@ -93,8 +93,8 @@ export class ParseCourseDescriptionComponent implements OnInit, ComponentCanDeac
      * @private
      */
     private addCompetencyToForm(competency: Competency) {
-        const formGroup: FormGroup<CompetencyFormControlsWithViewed> = this.formBuilder.group({
-            competency: this.formBuilder.group({
+        const formGroup: FormGroup<CompetencyFormControlsWithViewed> = this.formBuilder.nonNullable.group({
+            competency: this.formBuilder.nonNullable.group({
                 title: [competency.title],
                 description: [competency.description],
                 taxonomy: [competency.taxonomy],
@@ -162,6 +162,7 @@ export class ParseCourseDescriptionComponent implements OnInit, ComponentCanDeac
         return !viewedArray?.includes(false);
     }
 
+    //TODO: replace getters with attributes
     //getter for form controls
     get competencies() {
         return this.form.controls.competencies;
