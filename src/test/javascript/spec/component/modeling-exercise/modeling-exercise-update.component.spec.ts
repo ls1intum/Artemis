@@ -293,7 +293,7 @@ describe('ModelingExerciseUpdateComponent', () => {
 
     it('should subscribe and unsubscribe to input element changes', () => {
         const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
-        comp.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        comp.modelingExercise = {} as ModelingExercise;
         comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { formValidChanges: new Subject() } } as ExerciseTitleChannelNameComponent;
         comp.exerciseUpdatePlagiarismComponent = { formValidChanges: new Subject() } as ExerciseUpdatePlagiarismComponent;
         comp.bonusPoints = { valueChanges: new Subject() } as any as NgModel;
