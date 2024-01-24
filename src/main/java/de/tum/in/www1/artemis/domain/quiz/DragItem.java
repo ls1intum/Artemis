@@ -49,6 +49,7 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
     private Boolean invalid = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "question_id")
     @JsonIgnore
     private DragAndDropQuestion question;
 

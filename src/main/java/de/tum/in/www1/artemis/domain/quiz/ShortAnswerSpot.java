@@ -37,6 +37,7 @@ public class ShortAnswerSpot extends TempIdObject implements QuizQuestionCompone
     private Boolean invalid;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "question_id")
     @JsonIgnore
     private ShortAnswerQuestion question;
 

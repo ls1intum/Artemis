@@ -42,6 +42,7 @@ public class ShortAnswerSubmittedText extends DomainObject {
     private ShortAnswerSpot spot;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "submitted_answer_id")
     @JsonIgnore
     private ShortAnswerSubmittedAnswer submittedAnswer;
 

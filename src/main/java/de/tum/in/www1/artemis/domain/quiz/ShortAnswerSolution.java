@@ -33,6 +33,7 @@ public class ShortAnswerSolution extends TempIdObject implements QuizQuestionCom
     private Boolean invalid = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "question_id")
     @JsonIgnore
     private ShortAnswerQuestion question;
 
