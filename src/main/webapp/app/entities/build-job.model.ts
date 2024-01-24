@@ -5,7 +5,8 @@ export class BuildJob implements StringBaseEntity {
     public id?: string;
     public name?: string;
     public participationId?: number;
-    public repositoryTypeOrUserName?: string;
+    public repositoryName?: string;
+    public repositoryType?: string;
     public commitHash?: string;
     public submissionDate?: dayjs.Dayjs;
     public retryCount?: number;

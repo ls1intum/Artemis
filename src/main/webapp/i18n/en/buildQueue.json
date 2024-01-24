@@ -8,6 +8,7 @@
             "buildJob": {
                 "name": "Name",
                 "participationId": "Participation ID",
+                "repositoryName": "Repository Name",
                 "repositoryType": "Repository Type",
                 "commitHash": "Commit Hash",
                 "submissionDate": "Submission Date",
