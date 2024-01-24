@@ -36,7 +36,7 @@ public class ShortAnswerSpot extends TempIdObject implements QuizQuestionCompone
     @JsonView(QuizView.Before.class)
     private Boolean invalid;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     private ShortAnswerQuestion question;
 
