@@ -79,7 +79,6 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
      * Gets set of all competency ids that are (transitively) connected via a matching relation to the given competency id.
      * <p>
      * Important: this query is native since JPARepositories don't support recursive queries of this form.
-     * type = 3 is the ordinal of the enum {@link RelationType#MATCHES}.
      *
      * @param competencyId the id of the competency
      * @return set of all competency ids that are (transitively) connected via a matching relation
@@ -96,7 +95,7 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
                                 END
                             FROM competency_relation as relation
                             JOIN transitive_closure AS tc ON relation.tail_competency_id = tc.id OR relation.head_competency_id = tc.id
-                            WHERE relation.type = 3
+                            WHERE relation.type = :#{T(de.tum.in.www1.artemis.domain.competency.RelationType).MATCHES.ordinal()}
                         )
                     )
                     SELECT * FROM transitive_closure
