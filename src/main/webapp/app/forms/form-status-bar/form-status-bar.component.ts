@@ -15,6 +15,10 @@ export class FormStatusBarComponent {
     formStatusSections: FormSectionStatus[];
 
     scrollToHeadline(id: string) {
-        document.getElementById(id)?.scrollIntoView();
+        const element = document.getElementById(id);
+        if (element) {
+            element.style.scrollMarginTop = 'calc(2rem + 78px)';
+            element.scrollIntoView();
+        }
     }
 }
