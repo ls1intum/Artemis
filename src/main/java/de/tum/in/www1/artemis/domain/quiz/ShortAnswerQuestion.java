@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ShortAnswerQuestion extends QuizQuestion {
 
-    // TODO: making this a bidirectional relation leads to weired Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
+    // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
     // after 6.x upgrade
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JoinColumn(name = "question_id")
@@ -31,7 +31,7 @@ public class ShortAnswerQuestion extends QuizQuestion {
     @JsonView(QuizView.Before.class)
     private List<ShortAnswerSpot> spots = new ArrayList<>();
 
-    // TODO: making this a bidirectional relation leads to weired Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
+    // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
     // after 6.x upgrade
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JoinColumn(name = "question_id")
@@ -40,7 +40,7 @@ public class ShortAnswerQuestion extends QuizQuestion {
     @JsonView(QuizView.Before.class)
     private List<ShortAnswerSolution> solutions = new ArrayList<>();
 
-    // TODO: making this a bidirectional relation leads to weired Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
+    // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
     // after 6.x upgrade
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JoinColumn(name = "question_id")

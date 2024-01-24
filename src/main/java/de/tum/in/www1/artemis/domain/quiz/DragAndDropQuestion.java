@@ -39,7 +39,7 @@ public class DragAndDropQuestion extends QuizQuestion {
     @JsonView(QuizView.Before.class)
     private String backgroundFilePath;
 
-    // TODO: making this a bidirectional relation leads to weired Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
+    // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
     // after 6.x upgrade
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JoinColumn(name = "question_id")
@@ -48,7 +48,7 @@ public class DragAndDropQuestion extends QuizQuestion {
     @JsonView(QuizView.Before.class)
     private List<DropLocation> dropLocations = new ArrayList<>();
 
-    // TODO: making this a bidirectional relation leads to weired Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
+    // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
     // after 6.x upgrade
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JoinColumn(name = "question_id")
@@ -57,7 +57,7 @@ public class DragAndDropQuestion extends QuizQuestion {
     @JsonView(QuizView.Before.class)
     private List<DragItem> dragItems = new ArrayList<>();
 
-    // TODO: making this a bidirectional relation leads to weired Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
+    // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
     // after 6.x upgrade
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JoinColumn(name = "question_id")
