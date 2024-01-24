@@ -91,9 +91,6 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     void testBuildJobPersistence() {
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-        // clean up build jobs from database
-        buildJobRepository.deleteAll();
-
         localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
 
         await().until(() -> {
