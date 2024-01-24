@@ -45,6 +45,7 @@ public class DropLocation extends TempIdObject implements QuizQuestionComponent<
     private Boolean invalid = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "question_id")
     @JsonIgnore
     private DragAndDropQuestion question;
 

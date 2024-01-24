@@ -39,9 +39,8 @@ public class DragAndDropQuestion extends QuizQuestion {
     @JsonView(QuizView.Before.class)
     private String backgroundFilePath;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @OrderColumn
-    @JoinColumn(name = "question_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.Before.class)
     private List<DropLocation> dropLocations = new ArrayList<>();
