@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 
 import org.eclipse.jgit.lib.ObjectId;
-import org.jetbrains.annotations.Nullable;
 import org.json.JSONException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -1285,7 +1284,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         deleteExamWithInstructor(exam1);
     }
 
-    @Nullable
     private static Submission createSubmission(Exercise exercise) {
         if (exercise instanceof ProgrammingExercise) {
             return new ProgrammingSubmission();
