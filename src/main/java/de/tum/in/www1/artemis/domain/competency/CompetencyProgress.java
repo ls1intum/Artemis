@@ -39,7 +39,6 @@ public class CompetencyProgress implements Serializable {
     @JsonIgnore
     private User user;
 
-    // TODO: rename to competency
     @ManyToOne
     @MapsId("competencyId")
     @JsonIgnore

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
+import de.tum.in.www1.artemis.domain.competency.RelationType;
 
 /**
  * Spring Data JPA repository for the Competency Relation entity.
@@ -58,7 +59,7 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
                 LEFT JOIN relation.headCompetency
                 LEFT JOIN relation.tailCompetency
             WHERE relation.tailCompetency.id IN :competencyIds
-                AND relation.type != 3
+                AND relation.type != de.tum.in.www1.artemis.domain.competency.RelationType.MATCHES
             """)
     Set<Long> getPriorCompetenciesByCompetencyIds(@Param("competencyIds") Set<Long> competencyIds);
 
@@ -71,13 +72,14 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
                 AND relation.headCompetency.id IN :competencyHeadIds
                 AND relation.type = :type
             """)
-    long countRelationsOfTypeBetweenCompetencyGroups(@Param("competencyTailIds") Set<Long> competencyTailIds, @Param("type") CompetencyRelation.RelationType type,
+    long countRelationsOfTypeBetweenCompetencyGroups(@Param("competencyTailIds") Set<Long> competencyTailIds, @Param("type") RelationType type,
             @Param("competencyHeadIds") Set<Long> competencyHeadIds);
 
     /**
      * Gets set of all competency ids that are (transitively) connected via a matching relation to the given competency id.
      * <p>
-     * Important: this query is native since JPARepositories don't support recursive queries of this form
+     * Important: this query is native since JPARepositories don't support recursive queries of this form.
+     * type = 3 is the ordinal of the enum {@link RelationType#MATCHES}.
      *
      * @param competencyId the id of the competency
      * @return set of all competency ids that are (transitively) connected via a matching relation
