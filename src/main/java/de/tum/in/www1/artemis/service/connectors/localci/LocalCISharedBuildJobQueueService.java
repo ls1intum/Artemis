@@ -56,6 +56,8 @@ public class LocalCISharedBuildJobQueueService {
 
     private final BuildJobRepository buildJobRepository;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     /**
      * Map of build jobs currently being processed across all nodes
      */
@@ -79,7 +81,8 @@ public class LocalCISharedBuildJobQueueService {
 
     public LocalCISharedBuildJobQueueService(HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
             LocalCIBuildJobManagementService localCIBuildJobManagementService, ParticipationRepository participationRepository,
-            ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService, BuildJobRepository buildJobRepository) {
+            ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService, BuildJobRepository buildJobRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository) {
         this.hazelcastInstance = hazelcastInstance;
         this.localCIBuildExecutorService = (ThreadPoolExecutor) localCIBuildExecutorService;
         this.localCIBuildJobManagementService = localCIBuildJobManagementService;
@@ -87,6 +90,7 @@ public class LocalCISharedBuildJobQueueService {
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.programmingMessagingService = programmingMessagingService;
         this.buildJobRepository = buildJobRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
         this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
@@ -298,6 +302,12 @@ public class LocalCISharedBuildJobQueueService {
             Optional<Participation> participationOptional = participationRepository.findById(buildJob.participationId());
             if (participationOptional.isPresent()) {
                 ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
+
+                // In case the participation does not contain the exercise, we have to load it from the database
+                if (participation.getProgrammingExercise() == null) {
+                    participation.setProgrammingExercise(programmingExerciseRepository.findByIdElseThrow(buildJob.exerciseId()));
+                }
+
                 SecurityUtils.setAuthorizationObject();
                 Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
                 if (result != null) {
