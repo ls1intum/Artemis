@@ -19,8 +19,14 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface SolutionProgrammingExerciseParticipationRepository extends JpaRepository<SolutionProgrammingExerciseParticipation, Long> {
 
-    @EntityGraph(type = LOAD, attributePaths = { "results", "programmingExercise", "programmingExercise.templateParticipation" })
-    @Query("select p from SolutionProgrammingExerciseParticipation p where p.buildPlanId = :#{#buildPlanId}")
+    @Query("""
+            SELECT p
+            FROM SolutionProgrammingExerciseParticipation p
+                LEFT JOIN FETCH p.results r
+                LEFT JOIN FETCH p.programmingExercise e
+                LEFT JOIN FETCH e.templateParticipation
+            WHERE p.buildPlanId = :buildPlanId
+            """)
     Optional<SolutionProgrammingExerciseParticipation> findByBuildPlanIdWithResults(@Param("buildPlanId") String buildPlanId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results", "submissions", "submissions.results" })

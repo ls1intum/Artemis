@@ -1,13 +1,10 @@
 package de.tum.in.www1.artemis.repository;
 
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
-
 import java.util.List;
 import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,8 +19,12 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface ExerciseGroupRepository extends JpaRepository<ExerciseGroup, Long> {
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises" })
-    @Query("SELECT e FROM ExerciseGroup e WHERE e.id = :exerciseGroupId")
+    @Query("""
+            SELECT e
+            FROM ExerciseGroup e
+                LEFT JOIN FETCH e.exercises
+            WHERE e.id = :exerciseGroupId
+            """)
     Optional<ExerciseGroup> findWithExercisesById(@Param("exerciseGroupId") Long exerciseGroupId);
 
     @Query("""
