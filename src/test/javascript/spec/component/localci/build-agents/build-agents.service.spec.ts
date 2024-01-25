@@ -9,6 +9,7 @@ import { BuildAgentsService } from 'app/localci/build-agents/build-agents.servic
 import { BuildAgent } from 'app/entities/build-agent.model';
 import { RepositoryInfo } from 'app/entities/repository-info.model';
 import { JobTimingInfo } from 'app/entities/job-timing-info.model';
+import { BuildConfig } from 'app/entities/build-config.model';
 
 describe('BuildAgentsService', () => {
     let service: BuildAgentsService;
