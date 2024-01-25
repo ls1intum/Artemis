@@ -57,7 +57,7 @@ export class CourseCommunicationPage {
 
     async filterByContext(context: string) {
         await this.page.locator('#filter-context').click();
-        await this.page.locator(`mat-option >> text="${context}"`).locator('.mat-pseudo-checkbox').click();
+        await this.page.locator('mat-option', { hasText: context }).locator('.mat-pseudo-checkbox').click();
         await this.page.locator('#filter-context-panel').press('Escape');
     }
 
@@ -108,7 +108,7 @@ export class CourseCommunicationPage {
         await this.getSinglePost(postID).locator('.react').click();
         await this.page.locator('.emoji-mart').locator('.emoji-mart-search input').fill(emoji);
         const responsePromise = this.page.waitForResponse(`${BASE_API}courses/*/postings/reactions`);
-        await this.page.locator('.emoji-mart').locator('.emoji-mart-scroll').locator('ngx-emoji:first()').click();
+        await this.page.locator('.emoji-mart').locator('.emoji-mart-scroll').locator('ngx-emoji').first().click();
         await responsePromise;
     }
 
@@ -132,7 +132,11 @@ export class CourseCommunicationPage {
     }
 
     async showReplies(postID: number) {
-        await this.getSinglePost(postID).locator('.expand-answers-btn').click();
+        const postElement = this.getSinglePost(postID);
+        await postElement.waitFor({ state: 'visible' });
+        if (await postElement.locator('.collapse-answers-btn').isHidden()) {
+            await this.getSinglePost(postID).locator('.expand-answers-btn').click();
+        }
     }
 
     async markAsAnswer(answerID: number) {
@@ -153,7 +157,9 @@ export class CourseCommunicationPage {
     }
 
     async checkResolved(postID: number) {
-        await expect(this.getSinglePost(postID).locator('fa-icon.resolved')).toBeVisible();
+        const pageLocator = this.getSinglePost(postID);
+        const messageResolvedIcon = pageLocator.locator(`fa-icon[ng-reflect-ngb-tooltip='Message has been resolved']`);
+        await expect(messageResolvedIcon).toBeVisible();
     }
 
     async checkSinglePostByPosition(position: number, title: string | undefined, content: string) {
