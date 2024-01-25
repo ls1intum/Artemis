@@ -137,10 +137,9 @@ courseConfigsToTest.forEach((configToTest) => {
             let textExercise: TextExercise;
             let channel: Channel;
 
-            test.beforeAll(async ({ login, exerciseAPIRequests, communicationAPIRequests }) => {
+            test.beforeEach(async ({ login, exerciseAPIRequests, communicationAPIRequests }) => {
                 await login(admin);
                 textExercise = await exerciseAPIRequests.createTextExercise({ course });
-                textExercise.channelName = 'exercise-' + textExercise.title!.toLowerCase();
                 channel = await communicationAPIRequests.getExerciseChannel(textExercise.course!.id!, textExercise.id!);
             });
 
@@ -219,10 +218,9 @@ courseConfigsToTest.forEach((configToTest) => {
             let lecture: Lecture;
             let channel: Channel;
 
-            test.beforeAll(async ({ login, courseManagementAPIRequests, communicationAPIRequests }) => {
+            test.beforeEach(async ({ login, courseManagementAPIRequests, communicationAPIRequests }) => {
                 await login(admin);
                 lecture = await courseManagementAPIRequests.createLecture(course);
-                lecture.channelName = 'lecture-' + lecture.title!.toLowerCase();
                 channel = await communicationAPIRequests.getLectureChannel(lecture.course!.id!, lecture.id!);
             });
 
