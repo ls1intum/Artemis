@@ -18,14 +18,54 @@ public class PageUtil {
      */
     public enum ColumnMapping {
 
-        COMPETENCY(Map.of("ID", "id", "TITLE", "title", "COURSE_TITLE", "course.title", "SEMESTER", "course.semester")),
-        COURSE(Map.of("ID", "id", "TITLE", "title", "SHORT_NAME", "shortName", "SEMESTER", "semester")),
-        EXAM(Map.of("ID", "id", "TITLE", "title", "COURSE_TITLE", "course.title", "EXAM_MODE", "testExam")),
-        EXERCISE(Map.of("ID", "id", "TITLE", "title", "PROGRAMMING_LANGUAGE", "programmingLanguage", "COURSE_TITLE", "course.title", "EXAM_TITLE", "exerciseGroup.exam.title")),
-        GRADING_SCALE(Map.of("ID", "id", "COURSE_TITLE", "course.title", "EXAM_TITLE", "exam.title")),
-        LEARNING_PATH(Map.of("ID", "id", "USER_LOGIN", "user.login", "USER_NAME", "user.lastName", "PROGRESS", "progress")),
-        LECTURE(Map.of("ID", "id", "TITLE", "title", "COURSE_TITLE", "course.title", "SEMESTER", "course.semester")),
-        STUDENT_PARTICIPATION(Map.of("ID", "id", "STUDENT_NAME", "student.firstName"));
+        // @formatter:off
+        COMPETENCY(Map.of(
+            "ID", "id",
+            "TITLE", "title",
+            "COURSE_TITLE", "course.title",
+            "SEMESTER", "course.semester"
+        )),
+        COURSE(Map.of(
+            "ID", "id",
+            "TITLE", "title",
+            "SHORT_NAME", "shortName",
+            "SEMESTER", "semester"
+        )),
+        EXAM(Map.of(
+            "ID", "id",
+            "TITLE", "title",
+            "COURSE_TITLE", "course.title",
+            "EXAM_MODE", "testExam"
+        )),
+        EXERCISE(Map.of(
+            "ID", "id",
+            "TITLE", "title",
+            "PROGRAMMING_LANGUAGE", "programmingLanguage",
+            "COURSE_TITLE", "course.title",
+            "EXAM_TITLE", "exerciseGroup.exam.title"
+        )),
+        GRADING_SCALE(Map.of(
+            "ID", "id",
+            "COURSE_TITLE", "course.title",
+            "EXAM_TITLE", "exam.title"
+        )),
+        LEARNING_PATH(Map.of(
+            "ID", "id",
+            "USER_LOGIN", "user.login",
+            "USER_NAME", "user.lastName",
+            "PROGRESS", "progress"
+        )),
+        LECTURE(Map.of(
+            "ID", "id",
+            "TITLE", "title",
+            "COURSE_TITLE", "course.title",
+            "SEMESTER", "course.semester"
+        )),
+        STUDENT_PARTICIPATION(Map.of(
+            "ID", "id",
+            "STUDENT_NAME", "student.firstName"
+        ));
+        // @formatter:on
 
         private final Map<String, String> columnNameMap;
 
