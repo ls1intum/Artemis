@@ -194,7 +194,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     }),
                     // The following is needed for highlighting changed code lines
                     switchMap(() => this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exercise.id!, false, true)),
-                    tap((programmingExercise) => (this.templateParticipation = programmingExercise.body!.templateParticipation!)),
+                    tap((response) => {
+                        const programmingExercise = response.body!;
+                        this.templateParticipation = programmingExercise.templateParticipation!;
+                        this.exercise.gradingCriteria = programmingExercise.gradingCriteria;
+                    }),
                     switchMap(() => {
                         // Get all files with content from template repository
                         this.domainService.setDomain([DomainType.PARTICIPATION, this.templateParticipation]);
