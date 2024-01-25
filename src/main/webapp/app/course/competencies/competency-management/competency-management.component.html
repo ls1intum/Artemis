@@ -14,7 +14,7 @@
             </div>
             <div class="ms-auto text-truncate justify-content-end">
                 <button class="btn btn-primary" id="competencyImportButton" (click)="openImportModal()">
-                    <fa-icon [icon]="faPlus"></fa-icon>
+                    <fa-icon [icon]="faFileImport"></fa-icon>
                     <span>{{ 'artemisApp.competency.manageCompetencies.import' | artemisTranslate }}</span>
                 </button>
                 <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'create']">
