@@ -289,7 +289,6 @@ export const plagiarismPost = {
     author: metisUser1,
     title: 'title',
     content: 'plagiarism Case',
-    creationDate: undefined,
     plagiarismCase: { id: 1 } as PlagiarismCase,
 } as Post;
 
