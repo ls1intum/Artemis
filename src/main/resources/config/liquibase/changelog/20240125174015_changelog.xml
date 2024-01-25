@@ -10,5 +10,18 @@
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="iris_session"
                                  constraintName="fk_iris_session_course_id" referencedColumnNames="id"
                                  referencedTableName="course"/>
+
+        <addColumn tableName="iris_settings">
+            <column name="iris_competency_generation_settings_id"
+                    type="BIGINT"/>
+            <column name="enable_auto_update_competency_generation"
+                    type="BOOLEAN"/>
+        </addColumn>
+        <addForeignKeyConstraint baseColumnNames="iris_competency_generation_settings_id" baseTableName="iris_settings"
+                                 constraintName="FK_IRIS_SETTINGS_ON_IRIS_COMPETENCY_GENERATION_SETTINGS" referencedColumnNames="id"
+                                 referencedTableName="iris_sub_settings"/>
+        <sql>
+            UPDATE iris_settings SET enable_auto_update_competency_generation = FALSE WHERE discriminator = 'GLOBAL';
+        </sql>
     </changeSet>
 </databaseChangeLog>
