@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.domain.iris.message;
 
 import jakarta.persistence.*;
-
-import javax.annotation.Nonnull;
+import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -18,13 +17,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisJsonMessageContent extends IrisMessageContent {
 
-    @Nonnull
+    @NotNull
     @Column(name = "json_content")
     @JsonRawValue
     @JsonProperty(value = "attributes", required = true)
     private String jsonContent;
 
-    @Nonnull
+    @NotNull
     @Transient
     @JsonIgnore
     private JsonNode jsonNode;
@@ -33,7 +32,7 @@ public class IrisJsonMessageContent extends IrisMessageContent {
     public IrisJsonMessageContent() {
     }
 
-    public IrisJsonMessageContent(@Nonnull JsonNode jsonNode) {
+    public IrisJsonMessageContent(@NotNull JsonNode jsonNode) {
         this.jsonNode = jsonNode;
         this.jsonContent = jsonNode.toPrettyString();
     }
@@ -49,7 +48,7 @@ public class IrisJsonMessageContent extends IrisMessageContent {
      *
      * @param jsonContent The JSON string to set as content
      */
-    public void setJsonContent(@Nonnull String jsonContent) {
+    public void setJsonContent(@NotNull String jsonContent) {
         try {
             this.jsonNode = new ObjectMapper().readTree(jsonContent);
             this.jsonContent = jsonContent;
@@ -59,7 +58,7 @@ public class IrisJsonMessageContent extends IrisMessageContent {
         }
     }
 
-    @Nonnull
+    @NotNull
     public JsonNode getJsonNode() {
         return jsonNode;
     }
@@ -70,7 +69,7 @@ public class IrisJsonMessageContent extends IrisMessageContent {
      *
      * @param jsonNode The JsonNode to set as content
      */
-    public void setJsonNode(@Nonnull JsonNode jsonNode) {
+    public void setJsonNode(@NotNull JsonNode jsonNode) {
         this.jsonNode = jsonNode;
         this.jsonContent = jsonNode.toPrettyString();
     }

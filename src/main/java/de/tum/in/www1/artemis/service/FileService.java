@@ -15,7 +15,6 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
@@ -218,7 +217,7 @@ public class FileService implements DisposableBean {
      * @return the sanitized filename
      * @throws IllegalArgumentException if the filename is null
      */
-    @Nonnull
+    @NotNull
     public String checkAndSanitizeFilename(@Nullable String filename) {
         if (filename == null) {
             throw new IllegalArgumentException("Filename cannot be null");
