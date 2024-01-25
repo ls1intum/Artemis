@@ -23,11 +23,8 @@ public class EntityFileService {
 
     private final FileService fileService;
 
-    private final FilePathService filePathService;
-
-    public EntityFileService(FileService fileService, FilePathService filePathService) {
+    public EntityFileService(FileService fileService) {
         this.fileService = fileService;
-        this.filePathService = filePathService;
     }
 
     /**
@@ -76,7 +73,7 @@ public class EntityFileService {
                 FileUtils.delete(target.toFile());
             }
             FileUtils.moveFile(source.toFile(), target.toFile());
-            URI newPath = filePathService.publicPathForActualPathOrThrow(target, entityId);
+            URI newPath = FilePathService.publicPathForActualPathOrThrow(target, entityId);
             log.debug("Moved File from {} to {}", source, target);
             return newPath.toString();
         }

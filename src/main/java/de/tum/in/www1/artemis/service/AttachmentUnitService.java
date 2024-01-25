@@ -25,18 +25,15 @@ public class AttachmentUnitService {
 
     private final FileService fileService;
 
-    private final FilePathService filePathService;
-
     private final SlideSplitterService slideSplitterService;
 
     private final SlideRepository slideRepository;
 
     public AttachmentUnitService(SlideRepository slideRepository, SlideSplitterService slideSplitterService, AttachmentUnitRepository attachmentUnitRepository,
-            AttachmentRepository attachmentRepository, FileService fileService, FilePathService filePathService) {
+            AttachmentRepository attachmentRepository, FileService fileService) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
-        this.filePathService = filePathService;
         this.slideSplitterService = slideSplitterService;
         this.slideRepository = slideRepository;
     }

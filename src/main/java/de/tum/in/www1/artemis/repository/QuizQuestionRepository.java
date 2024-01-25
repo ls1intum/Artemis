@@ -28,9 +28,9 @@ public interface QuizQuestionRepository extends JpaRepository<QuizQuestion, Long
 
     @Query("""
             SELECT question
-                FROM DragAndDropQuestion question
-                WHERE question.id = :questionId
-                """)
+            FROM DragAndDropQuestion question
+            WHERE question.id = :questionId
+            """)
     Optional<DragAndDropQuestion> findDnDQuestionById(@Param("questionId") long questionId);
 
     default DragAndDropQuestion findDnDQuestionByIdOrElseThrow(Long questionId) {

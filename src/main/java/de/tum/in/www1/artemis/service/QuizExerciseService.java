@@ -59,12 +59,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final FileService fileService;
 
-    private final FilePathService filePathService;
-
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
             QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
             ExerciseSpecificationService exerciseSpecificationService, FileService fileService, DragAndDropMappingRepository dragAndDropMappingRepository,
-            ShortAnswerMappingRepository shortAnswerMappingRepository, FilePathService filePathService) {
+            ShortAnswerMappingRepository shortAnswerMappingRepository) {
         super(dragAndDropMappingRepository, shortAnswerMappingRepository);
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
@@ -74,7 +72,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.quizBatchService = quizBatchService;
         this.exerciseSpecificationService = exerciseSpecificationService;
         this.fileService = fileService;
-        this.filePathService = filePathService;
     }
 
     /**
@@ -382,7 +379,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         String clearFileExtension = FileService.sanitizeFilename(FilenameUtils.getExtension(Objects.requireNonNull(file.getOriginalFilename())));
         Path savePath = basePath.resolve(fileService.generateFilename("dnd_image_", clearFileExtension));
         FileUtils.copyToFile(file.getInputStream(), savePath.toFile());
-        return filePathService.publicPathForActualPathOrThrow(savePath, entityId);
+        return FilePathService.publicPathForActualPathOrThrow(savePath, entityId);
     }
 
     /**
