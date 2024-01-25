@@ -239,18 +239,17 @@ public class CompetencyResource {
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/" + persistedCompetency.getId())).body(persistedCompetency);
     }
 
-    // TODO: set response type to competency
     /**
      * POST /courses/:courseId/competencies/bulk : creates a number of new competencies
      *
      * @param courseId     the id of the course to which the competencies should be added
      * @param competencies the competencies that should be created
-     * @return the ResponseEntity with status 201 (Created)
+     * @return the ResponseEntity with status 201 (Created) and body the created competencies
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/courses/{courseId}/competencies/bulk")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Void> createCompetencies(@PathVariable Long courseId, @RequestBody List<Competency> competencies) throws URISyntaxException {
+    public ResponseEntity<List<Competency>> createCompetencies(@PathVariable Long courseId, @RequestBody List<Competency> competencies) throws URISyntaxException {
         log.debug("REST request to create Competencies : {}", competencies);
         for (Competency competency : competencies) {
             if (competency.getId() != null || competency.getTitle() == null || competency.getTitle().trim().isEmpty()) {
@@ -260,17 +259,19 @@ public class CompetencyResource {
         var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
+        var createdCompetencies = new ArrayList<Competency>();
+
         for (var competency : competencies) {
             // TODO: do this with the method from #7903
-            var competencyToCreate = buildCompetencyToCreate(competency, course);
-            var persistedCompetency = competencyRepository.save(competencyToCreate);
-            linkLectureUnitsToCompetency(persistedCompetency, competency.getLectureUnits(), Set.of());
+            var createdCompetency = buildCompetencyToCreate(competency, course);
+            createdCompetency = competencyRepository.save(createdCompetency);
             // TODO: do this with the method from #7903
             if (course.getLearningPathsEnabled()) {
-                learningPathService.linkCompetencyToLearningPathsOfCourse(persistedCompetency, courseId);
+                learningPathService.linkCompetencyToLearningPathsOfCourse(createdCompetency, courseId);
             }
+            createdCompetencies.add(createdCompetency);
         }
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).build();
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(createdCompetencies);
     }
 
     private Competency buildCompetencyToCreate(Competency competency, Course course) {
@@ -569,31 +570,19 @@ public class CompetencyResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, competency.getTitle())).build();
     }
 
-    // TODO: maybe move endpoint to IRIS
     @PostMapping("/courses/{courseId}/competencies/generate-from-description")
     @EnforceAtLeastEditor
     public ResponseEntity<List<Competency>> getCompetenciesFromCourseDescription(@PathVariable Long courseId, @RequestBody String courseDescription) {
-        var competencyList = new ArrayList<Competency>();
-        for (int i = 0; i < 10; i++) {
-            var competency = new Competency();
-            competency.setTitle("Competency " + i);
-            competency.setDescription("Lorem ipsum".repeat(i));
-            competency.setTaxonomy(CompetencyTaxonomy.ANALYZE);
-            competencyList.add(competency);
-        }
+        var irisService = irisCompetencyGenerationSessionService.orElseThrow();
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
-        return ResponseEntity.ok().body(competencyList);
-        /*
-         * var irisService = irisCompetencyGenerationSessionService.orElseThrow();
-         * var user = userRepository.getUserWithGroupsAndAuthorities();
-         * var course = courseRepository.findByIdElseThrow(courseId);
-         * authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
-         * var session = irisService.getOrCreateSession(course, user);
-         * irisService.addUserTextMessageToSession(session, courseDescription);
-         * var competencies = irisService.executeRequest(session);
-         * return ResponseEntity.ok().body(competencies);
-         */
+        var session = irisService.getOrCreateSession(course, user);
+        irisService.addUserTextMessageToSession(session, courseDescription);
+        var competencies = irisService.executeRequest(session);
 
+        return ResponseEntity.ok().body(competencies);
     }
 
     /**

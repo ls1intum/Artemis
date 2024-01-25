@@ -10,12 +10,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
 
+@ActiveProfiles("iris")
 public class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "iriscompetencyintegration";
@@ -35,8 +37,8 @@ public class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void generateCompetencies_asInstructor_shouldSucceed() throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void generateCompetencies_asEditor_shouldSucceed() throws Exception {
         final String courseDescription = "Any description";
         Competency expected = new Competency();
         expected.setTitle("title");
@@ -62,14 +64,8 @@ public class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "TUTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
     void testAll_asTutor_shouldReturnForbidden() throws Exception {
-        testAllPreAuthorize();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testAll_asEditor_shouldReturnForbidden() throws Exception {
         testAllPreAuthorize();
     }
 

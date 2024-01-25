@@ -70,7 +70,7 @@ export class CompetencyService {
 
     createBulk(competencies: Competency[], courseId: number) {
         const copy = competencies.map((competency) => this.convertCompetencyFromClient(competency));
-        return this.httpClient.post<void>(`${this.resourceURL}/courses/${courseId}/competencies/bulk`, copy, { observe: 'response' });
+        return this.httpClient.post<Competency[]>(`${this.resourceURL}/courses/${courseId}/competencies/bulk`, copy, { observe: 'response' });
     }
 
     import(competency: Competency, courseId: number): Observable<EntityResponseType> {
