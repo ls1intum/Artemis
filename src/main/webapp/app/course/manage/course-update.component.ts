@@ -498,7 +498,7 @@ export class CourseUpdateComponent implements OnInit {
             semesters[2 * i + 1] = 'SS' + (18 + i);
             semesters[2 * i + 2] = 'WS' + (18 + i) + '/' + (19 + i);
         }
-        return semesters;
+        return semesters.reverse();
     }
 
     /**
