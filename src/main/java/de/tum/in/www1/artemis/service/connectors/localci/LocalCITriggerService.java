@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import static de.tum.in.www1.artemis.config.Constants.WORKING_DIRECTORY;
+import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -130,7 +130,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     private List<String> getTestResultPaths(Windfile windfile) throws IllegalArgumentException {
         List<String> testResultPaths = new ArrayList<>();
         for (AeolusResult testResultPath : windfile.getResults()) {
-            testResultPaths.add(WORKING_DIRECTORY + "/testing-dir/" + testResultPath.getPath());
+            testResultPaths.add(LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + testResultPath.getPath());
         }
         return testResultPaths;
     }

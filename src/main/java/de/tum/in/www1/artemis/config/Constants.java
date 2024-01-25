@@ -322,12 +322,12 @@ public final class Constants {
     /**
      * The directory in the docker container in which the build script is executed
      */
-    public static final String WORKING_DIRECTORY = "/var/tmp";
+    public static final String LOCALCI_WORKING_DIRECTORY = "/var/tmp";
 
     /**
      * The directory in the docker container in which the results can be found
      */
-    public static final String RESULTS_DIRECTORY = "/results";
+    public static final String LOCALCI_RESULTS_DIRECTORY = "/results";
 
     private Constants() {
     }

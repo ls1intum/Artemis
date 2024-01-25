@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import static de.tum.in.www1.artemis.config.Constants.RESULTS_DIRECTORY;
-import static de.tum.in.www1.artemis.config.Constants.WORKING_DIRECTORY;
+import static de.tum.in.www1.artemis.config.Constants.LOCALCI_RESULTS_DIRECTORY;
+import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -195,14 +195,14 @@ public class LocalCIBuildJobExecutionService {
 
         ZonedDateTime buildCompletedDate = ZonedDateTime.now();
 
-        localCIContainerService.moveResultsToSpecifiedDirectory(containerId, buildJob.buildConfig().resultPaths(), WORKING_DIRECTORY + RESULTS_DIRECTORY);
+        localCIContainerService.moveResultsToSpecifiedDirectory(containerId, buildJob.buildConfig().resultPaths(), LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
 
         // Get an input stream of the test result files.
 
         TarArchiveInputStream testResultsTarInputStream;
 
         try {
-            testResultsTarInputStream = localCIContainerService.getArchiveFromContainer(containerId, WORKING_DIRECTORY + RESULTS_DIRECTORY);
+            testResultsTarInputStream = localCIContainerService.getArchiveFromContainer(containerId, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
         }
         catch (NotFoundException e) {
             // If the test results are not found, this means that something went wrong during the build and testing of the submission.

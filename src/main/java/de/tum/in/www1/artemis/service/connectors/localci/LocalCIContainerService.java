@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import static de.tum.in.www1.artemis.config.Constants.WORKING_DIRECTORY;
+import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -96,7 +96,7 @@ public class LocalCIContainerService {
                 // container from exiting until it finishes.
                 // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is indicated
                 // by the creation of a file "stop_container.txt" in the container's root directory.
-                .withCmd("sh", "-c", "while [ ! -f " + WORKING_DIRECTORY + "/stop_container.txt ]; do sleep 0.5; done")
+                .withCmd("sh", "-c", "while [ ! -f " + LOCALCI_WORKING_DIRECTORY + "/stop_container.txt ]; do sleep 0.5; done")
                 // .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
                 // "docker exec -it <container-id> /bin/bash".
                 .exec();
@@ -124,7 +124,7 @@ public class LocalCIContainerService {
         // container's
         // main process. The execution command can run concurrently with the main process. This setup with the ExecCreateCmdResponse gives us the ability to wait in code until the
         // command has finished before trying to extract the results.
-        return executeDockerCommand(containerId, true, true, false, "bash", WORKING_DIRECTORY + "/script.sh");
+        return executeDockerCommand(containerId, true, true, false, "bash", LOCALCI_WORKING_DIRECTORY + "/script.sh");
     }
 
     /**
@@ -187,7 +187,7 @@ public class LocalCIContainerService {
         // Create a file "stop_container.txt" in the root directory of the container to indicate that the test results have been extracted or that the container should be stopped
         // for some other reason.
         // The container's main process is waiting for this file to appear and then stops the main process, thus stopping and removing the container.
-        executeDockerCommandWithoutAwaitingResponse(containerId, "touch", WORKING_DIRECTORY + "/stop_container.txt");
+        executeDockerCommandWithoutAwaitingResponse(containerId, "touch", LOCALCI_WORKING_DIRECTORY + "/stop_container.txt");
     }
 
     /**
@@ -208,27 +208,27 @@ public class LocalCIContainerService {
         String assignmentCheckoutPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
 
         if (!Objects.equals(testCheckoutPath, "")) {
-            addDirectory(buildJobContainerId, WORKING_DIRECTORY + "/testing-dir", true);
-            executeDockerCommand(buildJobContainerId, false, false, true, "chmod", "-R", "777", WORKING_DIRECTORY + "/testing-dir");
+            addDirectory(buildJobContainerId, LOCALCI_WORKING_DIRECTORY + "/testing-dir", true);
+            executeDockerCommand(buildJobContainerId, false, false, true, "chmod", "-R", "777", LOCALCI_WORKING_DIRECTORY + "/testing-dir");
         }
-        addAndPrepareDirectory(buildJobContainerId, testRepositoryPath, WORKING_DIRECTORY + "/testing-dir/" + testCheckoutPath);
-        addAndPrepareDirectory(buildJobContainerId, assignmentRepositoryPath, WORKING_DIRECTORY + "/testing-dir/" + assignmentCheckoutPath);
+        addAndPrepareDirectory(buildJobContainerId, testRepositoryPath, LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + testCheckoutPath);
+        addAndPrepareDirectory(buildJobContainerId, assignmentRepositoryPath, LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + assignmentCheckoutPath);
         if (solutionRepositoryPath != null) {
             String solutionCheckoutPath = RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
-            addAndPrepareDirectory(buildJobContainerId, solutionRepositoryPath, WORKING_DIRECTORY + "/testing-dir/" + solutionCheckoutPath);
+            addAndPrepareDirectory(buildJobContainerId, solutionRepositoryPath, LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + solutionCheckoutPath);
         }
         for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
-            addAndPrepareDirectory(buildJobContainerId, auxiliaryRepositoriesPaths[i], WORKING_DIRECTORY + "/testing-dir/" + auxiliaryRepositoryCheckoutDirectories[i]);
+            addAndPrepareDirectory(buildJobContainerId, auxiliaryRepositoriesPaths[i], LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + auxiliaryRepositoryCheckoutDirectories[i]);
         }
-        convertDosFilesToUnix(WORKING_DIRECTORY + "/testing-dir/", buildJobContainerId);
+        convertDosFilesToUnix(LOCALCI_WORKING_DIRECTORY + "/testing-dir/", buildJobContainerId);
 
-        addAndPrepareDirectory(buildJobContainerId, buildScriptPath, WORKING_DIRECTORY + "/script.sh");
-        convertDosFilesToUnix(WORKING_DIRECTORY + "/script.sh", buildJobContainerId);
+        addAndPrepareDirectory(buildJobContainerId, buildScriptPath, LOCALCI_WORKING_DIRECTORY + "/script.sh");
+        convertDosFilesToUnix(LOCALCI_WORKING_DIRECTORY + "/script.sh", buildJobContainerId);
     }
 
     private void addAndPrepareDirectory(String containerId, Path repositoryPath, String newDirectoryName) {
         copyToContainer(repositoryPath.toString(), containerId);
-        renameDirectoryOrFile(containerId, WORKING_DIRECTORY + "/" + repositoryPath.getFileName().toString(), newDirectoryName);
+        renameDirectoryOrFile(containerId, LOCALCI_WORKING_DIRECTORY + "/" + repositoryPath.getFileName().toString(), newDirectoryName);
     }
 
     private void renameDirectoryOrFile(String containerId, String oldName, String newName) {
@@ -246,7 +246,7 @@ public class LocalCIContainerService {
 
     private void copyToContainer(String sourcePath, String containerId) {
         try (InputStream uploadStream = new ByteArrayInputStream(createTarArchive(sourcePath).toByteArray())) {
-            dockerClient.copyArchiveToContainerCmd(containerId).withRemotePath(WORKING_DIRECTORY).withTarInputStream(uploadStream).exec();
+            dockerClient.copyArchiveToContainerCmd(containerId).withRemotePath(LOCALCI_WORKING_DIRECTORY).withTarInputStream(uploadStream).exec();
         }
         catch (IOException e) {
             throw new LocalCIException("Could not copy to container " + containerId, e);

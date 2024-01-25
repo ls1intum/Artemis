@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import static de.tum.in.www1.artemis.config.Constants.WORKING_DIRECTORY;
+import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -60,7 +60,7 @@ public class LocalCIBuildConfigurationService {
 
         StringBuilder buildScript = new StringBuilder();
         buildScript.append("#!/bin/bash\n");
-        buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir\n");
+        buildScript.append("cd ").append(LOCALCI_WORKING_DIRECTORY).append("/testing-dir\n");
 
         String customScript = programmingExercise.getBuildScript();
         // Todo: get default script if custom script is null before trying to get actions from windfile
@@ -85,11 +85,11 @@ public class LocalCIBuildConfigurationService {
             actions.forEach(action -> {
                 String workdir = action.getWorkdir();
                 if (workdir != null) {
-                    buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir/").append(workdir).append("\n");
+                    buildScript.append("cd ").append(LOCALCI_WORKING_DIRECTORY).append("/testing-dir/").append(workdir).append("\n");
                 }
                 buildScript.append(action.getScript()).append("\n");
                 if (workdir != null) {
-                    buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir\n");
+                    buildScript.append("cd ").append(LOCALCI_WORKING_DIRECTORY).append("/testing-dir\n");
                 }
             });
 
