@@ -17,6 +17,33 @@ import de.tum.in.www1.artemis.domain.User;
 @Entity
 @Table(name = "learning_path")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+// @formatter:off
+@NamedEntityGraph(name="LearningPath.withEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsers",
+    attributeNodes = {
+        @NamedAttributeNode(value = "competencies", subgraph = "competenciesWithEagerProgressLectureUnitsAndExercises"),
+    },
+    subgraphs = {
+        @NamedSubgraph(name = "competenciesWithEagerProgressLectureUnitsAndExercises",
+            attributeNodes = {
+                @NamedAttributeNode(value = "userProgress"),
+                @NamedAttributeNode(value = "lectureUnits", subgraph = "lectureUnitsWithEagerCompletedUsersAndLecture"),
+                @NamedAttributeNode(value = "exercises", subgraph = "exercisesWithEagerStudentParticipations")
+            }
+        ),
+        @NamedSubgraph(name = "lectureUnitsWithEagerCompletedUsersAndLecture",
+            attributeNodes = {
+                @NamedAttributeNode(value = "completedUsers"),
+                @NamedAttributeNode(value = "lecture")
+            }
+        ),
+        @NamedSubgraph(name = "exercisesWithEagerStudentParticipations",
+            attributeNodes = {
+                @NamedAttributeNode(value = "studentParticipations"),
+            }
+        )
+    }
+)
+// @formatter:on
 public class LearningPath extends DomainObject {
 
     /**

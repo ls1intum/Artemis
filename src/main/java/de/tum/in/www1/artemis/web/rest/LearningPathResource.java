@@ -42,16 +42,20 @@ public class LearningPathResource {
 
     private final LearningPathRepository learningPathRepository;
 
+    private final CustomLearningPathRepository customLearningPathRepository;
+
     private final UserRepository userRepository;
 
     private final CompetencyProgressService competencyProgressService;
 
     public LearningPathResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, LearningPathService learningPathService,
-            LearningPathRepository learningPathRepository, UserRepository userRepository, CompetencyProgressService competencyProgressService) {
+            LearningPathRepository learningPathRepository, CustomLearningPathRepository customLearningPathRepository, UserRepository userRepository,
+            CompetencyProgressService competencyProgressService) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.learningPathService = learningPathService;
         this.learningPathRepository = learningPathRepository;
+        this.customLearningPathRepository = customLearningPathRepository;
         this.userRepository = userRepository;
         this.competencyProgressService = competencyProgressService;
     }
@@ -189,7 +193,7 @@ public class LearningPathResource {
     }
 
     private ResponseEntity<NgxLearningPathDTO> getLearningPathNgx(@PathVariable Long learningPathId, NgxRequestType type) {
-        LearningPath learningPath = learningPathRepository.findWithEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsersByIdElseThrow(learningPathId);
+        LearningPath learningPath = customLearningPathRepository.findWithEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsersByIdElseThrow(learningPathId);
         Course course = courseRepository.findByIdElseThrow(learningPath.getCourse().getId());
         if (!course.getLearningPathsEnabled()) {
             throw new BadRequestException("Learning paths are not enabled for this course.");
