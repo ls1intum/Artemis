@@ -42,7 +42,6 @@ describe('BuildAgentsComponent', () => {
     const jobTimingInfo: JobTimingInfo = {
         submissionDate: dayjs('2023-01-01'),
         buildStartDate: dayjs('2023-01-01'),
-        buildCompletionDate: 0,
     };
 
     const buildConfig: BuildConfig = {
