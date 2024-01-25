@@ -35,12 +35,13 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { User } from 'app/core/user/user.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
+import { UMLDiagramType } from '@ls1intum/apollon';
 
 @Component({
     template: '',

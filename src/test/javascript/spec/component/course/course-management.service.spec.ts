@@ -9,7 +9,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { Exercise, ExerciseType, ScoresPerExerciseType } from 'app/entities/exercise.model';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { Organization } from 'app/entities/organization.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -26,6 +26,7 @@ import { CourseScores } from 'app/course/course-scores/course-scores';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
+import { UMLDiagramType } from '@ls1intum/apollon';
 
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;
