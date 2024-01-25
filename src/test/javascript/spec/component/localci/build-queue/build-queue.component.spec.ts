@@ -33,7 +33,7 @@ describe('BuildQueueComponent', () => {
     const testCourseId = 123;
     const mockQueuedJobs = [
         {
-            id: 1,
+            id: '1',
             name: 'Build Job 1',
             buildAgentAddress: 'agent1',
             participationId: 101,
@@ -69,7 +69,7 @@ describe('BuildQueueComponent', () => {
             },
         },
         {
-            id: 3,
+            id: '3',
             name: 'Build Job 3',
             buildAgentAddress: 'agent3',
             participationId: 103,
@@ -107,7 +107,7 @@ describe('BuildQueueComponent', () => {
     ];
     const mockRunningJobs = [
         {
-            id: 2,
+            id: '2',
             name: 'Build Job 2',
             buildAgentAddress: 'agent2',
             participationId: 102,
@@ -143,7 +143,7 @@ describe('BuildQueueComponent', () => {
             },
         },
         {
-            id: 4,
+            id: '4',
             name: 'Build Job 4',
             buildAgentAddress: 'agent4',
             participationId: 104,
