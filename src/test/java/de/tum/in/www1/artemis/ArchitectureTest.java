@@ -143,7 +143,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testRepositoryParamAnnotation() {
-        var param = methods().that().areAnnotatedWith(Query.class).should(haveAllParametersAnnotatedWith(rawType(Param.class), type(Pageable.class)));
+        var param = methods().that().areAnnotatedWith(Query.class).should(haveAllParametersAnnotatedWithUnless(rawType(Param.class), type(Pageable.class)));
         param.check(productionClasses);
     }
 
@@ -181,7 +181,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
         };
     }
 
-    private ArchCondition<JavaMethod> haveAllParametersAnnotatedWith(DescribedPredicate<? super JavaAnnotation<?>> annotationPredicate, DescribedPredicate<JavaClass> exception) {
+    private ArchCondition<JavaMethod> haveAllParametersAnnotatedWithUnless(DescribedPredicate<? super JavaAnnotation<?>> annotationPredicate,
+            DescribedPredicate<JavaClass> exception) {
         return new ArchCondition<>("have all parameters annotated with " + annotationPredicate.getDescription()) {
 
             @Override
