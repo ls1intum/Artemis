@@ -90,7 +90,7 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @WithAnonymousUser
     @Test
-    void authenticateLtiUser_noAuth() throws IOException {
+    void authenticateLtiUserEmailAlreadyInUse() throws IOException {
         final var username = "mrrobot";
         userRepository.findOneByLogin(username).ifPresent(userRepository::delete);
         final var firstName = "Elliot";
