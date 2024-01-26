@@ -32,20 +32,27 @@ public interface ExamUserRepository extends JpaRepository<ExamUser, Long> {
     List<ExamUser> findAllByExamId(long examId);
 
     @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.ExamUserAttendanceCheckDTO(examUser.id, examUser.studentImagePath, examUser.user.login,
-            examUser.user.registrationNumber, examUser.signingImagePath,
-            studentExams.started, studentExams.submitted)
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.ExamUserAttendanceCheckDTO(
+                examUser.id,
+                examUser.studentImagePath,
+                examUser.user.login,
+                examUser.user.registrationNumber,
+                examUser.signingImagePath,
+                studentExams.started,
+                studentExams.submitted
+            )
             FROM ExamUser examUser
                 LEFT JOIN examUser.exam exam
                 LEFT JOIN exam.studentExams studentExams ON studentExams.user.id = examUser.user.id
             WHERE exam.id = :examId
-            AND studentExams.started = true
-            AND (examUser.signingImagePath IS NULL
-                OR examUser.signingImagePath = ''
-                OR examUser.didCheckImage = false
-                OR examUser.didCheckLogin = false
-                OR examUser.didCheckRegistrationNumber = false
-                OR examUser.didCheckName = false)
+                AND studentExams.started IS TRUE
+                AND (examUser.signingImagePath IS NULL
+                    OR examUser.signingImagePath = ''
+                    OR examUser.didCheckImage IS FALSE
+                    OR examUser.didCheckLogin IS FALSE
+                    OR examUser.didCheckRegistrationNumber IS FALSE
+                    OR examUser.didCheckName IS FALSE
+                )
             """)
     Set<ExamUserAttendanceCheckDTO> findAllExamUsersWhoDidNotSign(@Param("examId") long examId);
 }
