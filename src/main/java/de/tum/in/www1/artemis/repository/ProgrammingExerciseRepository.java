@@ -211,7 +211,12 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             """)
     Optional<ProgrammingExercise> findWithEagerTemplateAndSolutionParticipationsById(@Param("exerciseId") Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = "studentParticipations")
+    @Query("""
+            SELECT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN FETCH pe.studentParticipations
+            WHERE pe.id = :exerciseId
+            """)
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsById(Long exerciseId);
 
     @Query("""
