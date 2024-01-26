@@ -67,6 +67,35 @@ export class CompetencyRelation implements BaseEntity {
     constructor() {}
 }
 
+export class CompetencyRelationDTO implements BaseEntity {
+    id?: number;
+    tailCompetencyId?: number;
+    headCompetencyId?: number;
+    relationType?: string;
+
+    constructor() {}
+}
+
+/**
+ * Converts a CompetencyRelationDTO to a CompetencyRelation
+ * @param competencyRelationDTO
+ */
+export function dtoToCompetencyRelation(competencyRelationDTO: CompetencyRelationDTO): CompetencyRelation {
+    return {
+        id: competencyRelationDTO.id,
+        tailCompetency: { id: competencyRelationDTO.tailCompetencyId },
+        headCompetency: { id: competencyRelationDTO.headCompetencyId },
+        type: competencyRelationDTO.relationType,
+    };
+}
+
+export class CompetencyWithTailRelationDTO {
+    competency?: Competency;
+    tailRelations?: CompetencyRelationDTO[];
+
+    constructor() {}
+}
+
 export function getIcon(competencyTaxonomy?: CompetencyTaxonomy): IconProp {
     if (!competencyTaxonomy) {
         return faQuestion as IconProp;

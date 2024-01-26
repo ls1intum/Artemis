@@ -151,7 +151,7 @@ export class Course implements BaseEntity {
     /**
      * Correctly initializes a class instance from a typecasted object.
      * Returns a 'real' class instance that supports all class methods.
-     * @param object: The typecasted object
+     * @param object The typecasted object
      * @returns The class instance
      */
     static from(object: Course): Course {
@@ -164,6 +164,15 @@ export class Course implements BaseEntity {
         }
         return course;
     }
+}
+
+export class CourseForImportDTO {
+    id?: number;
+    title?: string;
+    shortName?: string;
+    semester?: string;
+
+    constructor() {}
 }
 
 export const enum CourseGroup {
