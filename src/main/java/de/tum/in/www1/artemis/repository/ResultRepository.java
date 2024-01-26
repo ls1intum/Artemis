@@ -58,15 +58,16 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             FROM Result r
                 LEFT JOIN FETCH r.feedbacks f
                 LEFT JOIN FETCH f.testCase
+                LEFT JOIN TREAT (r.participation AS StudentParticipation) sp
             WHERE r.completionDate =
                 (SELECT max(rr.completionDate) FROM Result rr
+                    JOIN TREAT (rr.participation AS StudentParticipation) ssp
                     WHERE rr.assessmentType = 'AUTOMATIC'
                         AND rr.participation.exercise.id = :exerciseId
-                        AND TYPE(rr.participation) = StudentParticipation
-                        AND rr.participation.student.id = r.participation.student.id
+                        AND ssp.student = sp.student
                 )
                 AND r.participation.exercise.id = :exerciseId
-                AND r.participation.student.id IS NOT NULL
+                AND sp.student.id IS NOT NULL
             ORDER BY r.completionDate ASC
               """)
     List<Result> findLatestAutomaticResultsWithEagerFeedbacksForExercise(@Param("exerciseId") Long exerciseId);
