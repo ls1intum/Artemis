@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,8 +22,9 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile("core")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/core/")
 public class TextUnitResource {
 
     private static final Logger log = LoggerFactory.getLogger(TextUnitResource.class);
@@ -75,7 +77,7 @@ public class TextUnitResource {
      * @param textUnitForm the text unit to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated textUnit
      */
-    @PutMapping("/lectures/{lectureId}/text-units")
+    @PutMapping("lectures/{lectureId}/text-units")
     @EnforceAtLeastEditor
     public ResponseEntity<TextUnit> updateTextUnit(@PathVariable Long lectureId, @RequestBody TextUnit textUnitForm) {
         log.debug("REST request to update an text unit : {}", textUnitForm);
@@ -107,7 +109,7 @@ public class TextUnitResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new text unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/lectures/{lectureId}/text-units")
+    @PostMapping("lectures/{lectureId}/text-units")
     @EnforceAtLeastEditor
     public ResponseEntity<TextUnit> createTextUnit(@PathVariable Long lectureId, @RequestBody TextUnit textUnit) throws URISyntaxException {
         log.debug("REST request to create TextUnit : {}", textUnit);

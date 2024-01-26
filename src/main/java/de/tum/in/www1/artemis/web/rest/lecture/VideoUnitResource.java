@@ -9,6 +9,7 @@ import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,8 +23,9 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CompetencyProgressService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
+@Profile("core")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/core/")
 public class VideoUnitResource {
 
     private static final Logger log = LoggerFactory.getLogger(VideoUnitResource.class);
@@ -68,7 +70,7 @@ public class VideoUnitResource {
      * @param videoUnit the video unit to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated videoUnit
      */
-    @PutMapping("/lectures/{lectureId}/video-units")
+    @PutMapping("lectures/{lectureId}/video-units")
     @EnforceAtLeastEditor
     public ResponseEntity<VideoUnit> updateVideoUnit(@PathVariable Long lectureId, @RequestBody VideoUnit videoUnit) {
         log.debug("REST request to update an video unit : {}", videoUnit);
@@ -96,7 +98,7 @@ public class VideoUnitResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new video unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/lectures/{lectureId}/video-units")
+    @PostMapping("lectures/{lectureId}/video-units")
     @EnforceAtLeastEditor
     public ResponseEntity<VideoUnit> createVideoUnit(@PathVariable Long lectureId, @RequestBody VideoUnit videoUnit) throws URISyntaxException {
         log.debug("REST request to create VideoUnit : {}", videoUnit);
