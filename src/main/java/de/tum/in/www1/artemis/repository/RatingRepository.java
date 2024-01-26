@@ -35,14 +35,13 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
     // Valid JPQL syntax, only SCA is not able to parse it
     @Query("""
                 SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseRatingCount(
-                    CAST(SUM(ra.rating) as double) / SUM(CASE WHEN ra.rating IS NOT NULL THEN 1 ELSE 0 END),
+                    CAST(SUM(ra.rating) AS double) / SUM(CASE WHEN ra.rating IS NOT NULL THEN 1 ELSE 0 END),
                     SUM(CASE WHEN ra.rating IS NOT NULL THEN 1 ELSE 0 END))
                 FROM Result r
                     JOIN r.participation p
                     JOIN p.exercise e
                     LEFT JOIN FETCH Rating ra ON ra.result = r
-                WHERE
-                    r.completionDate IS NOT NULL
+                WHERE r.completionDate IS NOT NULL
                     AND e.id = :exerciseId
             """)
     ExerciseRatingCount averageRatingByExerciseId(@Param("exerciseId") Long exerciseId);

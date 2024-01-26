@@ -160,8 +160,8 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
     @Query("""
             SELECT gs
             FROM GradingScale gs
-            LEFT JOIN gs.course
-            LEFT JOIN gs.exam
+                LEFT JOIN gs.course
+                LEFT JOIN gs.exam
             WHERE gs.gradeType = de.tum.in.www1.artemis.domain.GradeType.BONUS
                 AND (gs.course.title LIKE %:partialTitle% OR gs.exam.title LIKE %:partialTitle%)
             """)
