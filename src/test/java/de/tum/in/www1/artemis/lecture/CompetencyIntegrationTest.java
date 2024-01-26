@@ -751,7 +751,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void removePrerequisite_conflict() throws Exception {
+    void removePrerequisite_bad_request() throws Exception {
         request.delete("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), HttpStatus.BAD_REQUEST);
     }
 
@@ -804,7 +804,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void importingCompetencies_intoSameCourse_shouldReturnConflict() throws Exception {
+    void importingCompetencies_intoSameCourse_shouldReturnBadRequest() throws Exception {
         request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-all/" + course.getId(), null, CompetencyWithTailRelationDTO.class,
                 HttpStatus.BAD_REQUEST);
     }
