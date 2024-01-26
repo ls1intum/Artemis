@@ -246,21 +246,21 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createHintAsAStudentShouldReturnForbidden() throws Exception {
         ExerciseHint exerciseHint = new ExerciseHint().content("content 4").title("title 4").exercise(exerciseLite);
-        request.post("/api/programming-exercises/" + exercise.getId() + "/exercise-hints/", exerciseHint, HttpStatus.FORBIDDEN);
+        request.post("/api/programming-exercises/" + exercise.getId() + "/exercise-hints", exerciseHint, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void createHintAsTutorForbidden() throws Exception {
         ExerciseHint exerciseHint = new ExerciseHint().content("content 4").title("title 4").exercise(exerciseLite);
-        request.post("/api/programming-exercises/" + exerciseHint.getExercise().getId() + "/exercise-hints/", exerciseHint, HttpStatus.FORBIDDEN);
+        request.post("/api/programming-exercises/" + exerciseHint.getExercise().getId() + "/exercise-hints", exerciseHint, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void createHintAsEditor() throws Exception {
         ExerciseHint exerciseHint = new ExerciseHint().content("content 4").title("title 4").exercise(exerciseLite);
-        request.post("/api/programming-exercises/" + exerciseHint.getExercise().getId() + "/exercise-hints/", exerciseHint, HttpStatus.CREATED);
+        request.post("/api/programming-exercises/" + exerciseHint.getExercise().getId() + "/exercise-hints", exerciseHint, HttpStatus.CREATED);
 
         Set<ExerciseHint> exerciseHints = exerciseHintRepository.findByExerciseId(exerciseLite.getId());
         assertThat(exerciseHints).hasSize(4);
@@ -271,12 +271,12 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void createHintAsInstructor() throws Exception {
         ExerciseHint exerciseHint = new ExerciseHint().content("content 4").title("title 4").exercise(exerciseLite);
 
-        request.post("/api/programming-exercises/" + exercise.getId() + "/exercise-hints/", exerciseHint, HttpStatus.CREATED);
+        request.post("/api/programming-exercises/" + exercise.getId() + "/exercise-hints", exerciseHint, HttpStatus.CREATED);
         Set<ExerciseHint> exerciseHints = exerciseHintRepository.findByExerciseId(exerciseLite.getId());
         assertThat(exerciseHints).hasSize(4);
 
         exerciseHint.setExercise(null);
-        request.post("/api/programming-exercises/" + exercise.getId() + "/exercise-hints/", exerciseHint, HttpStatus.CONFLICT);
+        request.post("/api/programming-exercises/" + exercise.getId() + "/exercise-hints", exerciseHint, HttpStatus.CONFLICT);
     }
 
     @Test
@@ -287,7 +287,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationIndependentTe
         codeHint.setExercise(exercise);
 
         long sizeBefore = exerciseHintRepository.count();
-        request.post("/api/programming-exercises/" + codeHint.getExercise().getId() + "/exercise-hints/", codeHint, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming-exercises/" + codeHint.getExercise().getId() + "/exercise-hints", codeHint, HttpStatus.BAD_REQUEST);
         long sizeAfter = exerciseHintRepository.count();
         assertThat(sizeAfter).isEqualTo(sizeBefore);
     }
