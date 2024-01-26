@@ -18,13 +18,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface QuizQuestionRepository extends JpaRepository<QuizQuestion, Long> {
 
-    @Query("""
-            SELECT question
-            FROM QuizExercise exercise
-                LEFT JOIN exercise.quizQuestions question
-            WHERE exercise.id = :exerciseId
-            """)
-    Set<QuizQuestion> getQuizQuestionsByExerciseId(@Param("exerciseId") long exerciseId);
+    Set<QuizQuestion> findByExercise_Id(long id);
 
     @Query("""
             SELECT question
@@ -36,5 +30,4 @@ public interface QuizQuestionRepository extends JpaRepository<QuizQuestion, Long
     default DragAndDropQuestion findDnDQuestionByIdOrElseThrow(Long questionId) {
         return findDnDQuestionById(questionId).orElseThrow(() -> new EntityNotFoundException("DragAndDropQuestion", questionId));
     }
-
 }
