@@ -23,15 +23,16 @@ public class CustomLearningPathRepositoryImpl implements CustomLearningPathRepos
         List<LearningPath> resultList = entityManager.createQuery("""
                     SELECT learningPath
                     FROM LearningPath learningPath
+                        LEFT JOIN learningPath.user user
                         LEFT JOIN learningPath.competencies competencies
                         LEFT JOIN competencies.userProgress progress
-                            ON progress.user.id = learningPath.user.id
+                            ON progress.user = user
                         LEFT JOIN competencies.lectureUnits lectureUnits
                         LEFT JOIN lectureUnits.completedUsers completedUsers
-                            ON completedUsers.user.id = learningPath.user.id
+                            ON completedUsers.user = user
                         LEFT JOIN competencies.exercises exercises
                         LEFT JOIN exercises.studentParticipations studentParticipations
-                            ON studentParticipations.student.id = learningPath.user.id
+                            ON studentParticipations.student = user
                     WHERE learningPath.id = :learningPathId
                 """, LearningPath.class).setParameter("learningPathId", learningPathId)
                 .setHint("javax.persistence.fetchgraph", entityManager.getEntityGraph("LearningPath.withEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsers"))
