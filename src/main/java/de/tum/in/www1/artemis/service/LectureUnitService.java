@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -11,9 +12,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
-import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
-import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
-import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
+import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
@@ -50,11 +49,7 @@ public class LectureUnitService {
         Optional<LectureUnitCompletion> existingCompletion = lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnit.getId(), user.getId());
         if (completed) {
             if (existingCompletion.isEmpty()) {
-                // Create a completion status for this lecture unit (only if it does not exist)
-                LectureUnitCompletion completion = new LectureUnitCompletion();
-                completion.setLectureUnit(lectureUnit);
-                completion.setUser(user);
-                completion.setCompletedAt(ZonedDateTime.now());
+                LectureUnitCompletion completion = createLectureUnitCompletion(lectureUnit, user);
                 try {
                     lectureUnitCompletionRepository.save(completion);
                 }
@@ -68,6 +63,49 @@ public class LectureUnitService {
             // Delete the completion status for this lecture unit (if it exists)
             existingCompletion.ifPresent(lectureUnitCompletionRepository::delete);
         }
+    }
+
+    /**
+     * Set the completion status of all passed lecture units for the give user
+     * If the user completed the unit and completion status already exists, nothing happens
+     *
+     * @param lectureUnits List of all lecture units for which to set the completion flag
+     * @param user         The user that completed/uncompleted the lecture unit
+     * @param completed    True if the lecture unit was completed, false otherwise
+     */
+    public void completeAllLectureUnits(List<? extends LectureUnit> lectureUnits, @NotNull User user, boolean completed) {
+        var existingCompletion = lectureUnitCompletionRepository.findByLectureUnitsAndUserId(lectureUnits, user.getId());
+        if (!completed) {
+            lectureUnitCompletionRepository.deleteAll(existingCompletion);
+            return;
+        }
+
+        if (!existingCompletion.isEmpty()) {
+            var alreadyCompletedUnits = existingCompletion.stream().map(LectureUnitCompletion::getLectureUnit).collect(Collectors.toSet());
+
+            // make lectureUnits modifiable
+            lectureUnits = new ArrayList<>(lectureUnits);
+            lectureUnits.removeAll(alreadyCompletedUnits);
+        }
+
+        var completions = lectureUnits.stream().map(unit -> createLectureUnitCompletion(unit, user)).toList();
+
+        try {
+            lectureUnitCompletionRepository.saveAll(completions);
+        }
+        catch (DataIntegrityViolationException e) {
+            // In rare instances the completion status might already exist if this method runs in parallel.
+            // This fails the SQL unique constraint and throws an exception. We can safely ignore it.
+        }
+    }
+
+    private LectureUnitCompletion createLectureUnitCompletion(LectureUnit lectureUnit, User user) {
+        // Create a completion status for this lecture unit (only if it does not exist)
+        LectureUnitCompletion completion = new LectureUnitCompletion();
+        completion.setLectureUnit(lectureUnit);
+        completion.setUser(user);
+        completion.setCompletedAt(ZonedDateTime.now());
+        return completion;
     }
 
     /**

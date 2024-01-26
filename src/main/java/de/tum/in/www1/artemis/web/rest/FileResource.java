@@ -356,13 +356,13 @@ public class FileResource {
 
         authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
 
-        List<AttachmentUnit> lectureAttachments = attachmentUnitRepository.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE);
-
-        List<String> attachmentLinks = lectureAttachments.stream()
+        List<AttachmentUnit> lectureAttachments = attachmentUnitRepository.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE).stream()
                 .filter(unit -> authCheckService.isAllowedToSeeLectureUnit(unit, user) && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
-                .peek(unit -> lectureUnitService.setLectureUnitCompletion(unit, user, true)).map(unit -> FilePathService.getAttachmentUnitFilePath()
-                        .resolve(Path.of(String.valueOf(unit.getId()), StringUtils.substringAfterLast(unit.getAttachment().getLink(), "/"))).toString())
                 .toList();
+
+        lectureUnitService.completeAllLectureUnits(lectureAttachments, user, true);
+        List<String> attachmentLinks = lectureAttachments.stream().map(unit -> FilePathService.getAttachmentUnitFilePath()
+                .resolve(Path.of(String.valueOf(unit.getId()), StringUtils.substringAfterLast(unit.getAttachment().getLink(), "/"))).toString()).toList();
 
         Optional<byte[]> file = fileService.mergePdfFiles(attachmentLinks, lectureRepository.getLectureTitle(lectureId));
         if (file.isEmpty()) {
