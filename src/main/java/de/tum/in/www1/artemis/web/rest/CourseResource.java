@@ -378,6 +378,22 @@ public class CourseResource {
     }
 
     /**
+     * GET /courses/for-import : Get a list of {@link CourseForImportDTO CourseForImportDTOs} where the user is instructor/editor. The result is pageable.
+     *
+     * @param search The pageable search containing the page size, page number and query string
+     * @return the ResponseEntity with status 200 (OK) and with body the desired page
+     */
+    @GetMapping("courses/for-import")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<SearchResultPageDTO<CourseForImportDTO>> getCoursesForImport(PageableSearchDTO<String> search) {
+        log.debug("REST request to get a list of courses for import.");
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        var coursePage = courseService.getAllOnPageWithSize(search, user);
+        var resultsOnPage = coursePage.getResultsOnPage().stream().map(CourseForImportDTO::new).toList();
+        return ResponseEntity.ok(new SearchResultPageDTO<>(resultsOnPage, coursePage.getNumberOfPages()));
+    }
+
+    /**
      * GET /courses/courses-with-quiz : get all courses with quiz exercises for administration purposes.
      *
      * @return the list of courses

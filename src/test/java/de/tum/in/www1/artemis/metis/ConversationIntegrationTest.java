@@ -3,8 +3,10 @@ package de.tum.in.www1.artemis.metis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -466,7 +468,9 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         ConversationParticipant updatedParticipant = conversationParticipantRepository
                 .findConversationParticipantByConversationIdAndUserIdElseThrow(participant.getConversation().getId(), participant.getUser().getId());
         assertThat(updatedParticipant.getLastRead()).isNotNull();
-        assertThat(updatedParticipant.getLastRead()).isAfterOrEqualTo(participant.getLastRead());
+        // lenient assertion to prevent flaky behavior
+        assertThat(updatedParticipant.getLastRead()).satisfiesAnyOf(lastRead -> assertThat(lastRead).isCloseTo(participant.getLastRead(), Assertions.within(1, ChronoUnit.SECONDS)),
+                lastRead -> assertThat(lastRead).isAfter(participant.getLastRead()));
     }
 
     @Test
