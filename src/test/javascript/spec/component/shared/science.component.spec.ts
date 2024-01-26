@@ -4,6 +4,8 @@ import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ArtemisTestModule } from '../../test.module';
 import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
+import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService } from 'ngx-webstorage';
 
 @Component({ template: '' })
 class ScienceComponent extends AbstractScienceComponent {
@@ -23,6 +25,7 @@ describe('AbstractScienceComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [ScienceComponent],
+            providers: [{ provide: LocalStorageService, useClass: MockLocalStorageService }],
         })
             .compileComponents()
             .then(() => {

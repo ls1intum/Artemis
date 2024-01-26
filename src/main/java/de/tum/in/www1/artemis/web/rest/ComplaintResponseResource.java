@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 @RequestMapping("/api")
 public class ComplaintResponseResource {
 
-    private final Logger log = LoggerFactory.getLogger(ComplaintResponseResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ComplaintResponseResource.class);
 
     public static final String ENTITY_NAME = "complaintResponse";
 
@@ -32,9 +32,9 @@ public class ComplaintResponseResource {
 
     private final UserRepository userRepository;
 
-    public ComplaintResponseResource(ComplaintResponseService complaintResponseService, UserRepository userRepository, ComplaintRepository complaintRepository) {
-        this.complaintResponseService = complaintResponseService;
+    public ComplaintResponseResource(ComplaintRepository complaintRepository, ComplaintResponseService complaintResponseService, UserRepository userRepository) {
         this.complaintRepository = complaintRepository;
+        this.complaintResponseService = complaintResponseService;
         this.userRepository = userRepository;
     }
 

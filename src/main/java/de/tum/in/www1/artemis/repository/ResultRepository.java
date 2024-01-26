@@ -76,6 +76,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "feedbacks.testCase" })
     Optional<Result> findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(Long participationId);
 
+    @EntityGraph(type = LOAD, attributePaths = "submission")
     Optional<Result> findFirstByParticipationIdOrderByCompletionDateDesc(Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = "submission")
@@ -530,10 +531,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      *
      * @param result   the result which should be set to submitted
      * @param exercise the exercises to which the result belongs, which is needed to get points and to determine if the result is rated or not
-     * @param dueDate  before which the result is considered to be rated
      * @return the saved result
      */
-    default Result submitResult(Result result, Exercise exercise, Optional<ZonedDateTime> dueDate) {
+    default Result submitResult(Result result, Exercise exercise) {
         double maxPoints = exercise.getMaxPoints();
         double bonusPoints = Objects.requireNonNullElse(exercise.getBonusPoints(), 0.0);
 

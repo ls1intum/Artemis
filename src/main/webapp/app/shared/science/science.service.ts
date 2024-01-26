@@ -3,6 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ScienceEventDTO, ScienceEventType } from 'app/shared/science/science.model';
 import { ScienceSettingsService } from 'app/shared/user-settings/science-settings/science-settings.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Injectable({ providedIn: 'root' })
 export class ScienceService {
@@ -11,8 +12,16 @@ export class ScienceService {
     constructor(
         private httpClient: HttpClient,
         private scienceSettingsService: ScienceSettingsService,
+        private accountService: AccountService,
     ) {
         this.scienceSettingsService.getScienceSettingsUpdates();
+        this.accountService.getAuthenticationState().subscribe((user) => this.onUserIdentityChange(user));
+    }
+
+    private onUserIdentityChange(user: any): void {
+        if (user) {
+            this.scienceSettingsService.refreshScienceSettings();
+        }
     }
 
     eventLoggingActive() {

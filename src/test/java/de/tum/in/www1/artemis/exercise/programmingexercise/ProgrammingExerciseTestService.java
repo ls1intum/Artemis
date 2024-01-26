@@ -107,7 +107,7 @@ import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 @Service
 public class ProgrammingExerciseTestService {
 
-    private final Logger log = LoggerFactory.getLogger(getClass());
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTestService.class);
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
@@ -768,6 +768,10 @@ public class ProgrammingExerciseTestService {
         assertThat(importedHintIds).doesNotContainAnyElementsOf(sourceHintIds);
         assertThat(importedExercise.getExerciseHints()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "exerciseHintActivations")
                 .containsExactlyInAnyOrderElementsOf(sourceExercise.getExerciseHints());
+
+        // Assert creation of new build plan ids
+        assertThat(importedExercise.getSolutionParticipation().getBuildPlanId()).isNotBlank().isNotEqualTo(sourceExercise.getSolutionParticipation().getBuildPlanId());
+        assertThat(importedExercise.getTemplateParticipation().getBuildPlanId()).isNotBlank().isNotEqualTo(sourceExercise.getTemplateParticipation().getBuildPlanId());
     }
 
     void updateBuildPlanURL() throws Exception {

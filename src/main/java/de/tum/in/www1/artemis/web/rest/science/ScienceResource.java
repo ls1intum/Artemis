@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.web.rest.dto.science.ScienceEventDTO;
 @RequestMapping("api/")
 public class ScienceResource {
 
-    private final Logger log = LoggerFactory.getLogger(ScienceResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ScienceResource.class);
 
     private final ScienceEventService scienceEventService;
 

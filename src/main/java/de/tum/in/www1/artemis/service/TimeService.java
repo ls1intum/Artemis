@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class TimeService {
 
-    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy - hh:mm");
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd - hh:mm");
 
     public ZonedDateTime now() {
         return ZonedDateTime.now();

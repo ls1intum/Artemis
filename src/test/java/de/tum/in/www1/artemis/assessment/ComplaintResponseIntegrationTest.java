@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
-    private final Logger log = LoggerFactory.getLogger(ComplaintResponseIntegrationTest.class);
+    private static final Logger log = LoggerFactory.getLogger(ComplaintResponseIntegrationTest.class);
 
     private static final String TEST_PREFIX = "complaintresponseintegration";
 

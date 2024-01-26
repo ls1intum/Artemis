@@ -25,11 +25,13 @@ import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { StickyPopoverDirective } from 'app/shared/sticky-popover/sticky-popover.directive';
 import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
+import { DetailOverviewNavigationBarComponent } from 'app/shared/detail-overview-navigation-bar/detail-overview-navigation-bar.component';
 import { ScienceDirective } from 'app/shared/science/science.directive';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
     declarations: [
+        DetailOverviewNavigationBarComponent,
         LoadingIndicatorContainerComponent,
         CircularProgressBarComponent,
         CompetencySelectionComponent,
@@ -60,6 +62,7 @@ import { ScienceDirective } from 'app/shared/science/science.directive';
         ArtemisSharedPipesModule,
         CircularProgressBarComponent,
         ConfirmEntityNameComponent,
+        DetailOverviewNavigationBarComponent,
         LoadingIndicatorContainerComponent,
         AdditionalFeedbackComponent,
         HasAnyAuthorityDirective,
