@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
@@ -257,7 +257,7 @@ public class CompetencyResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, competencyToImport.getCourse(), null);
 
         if (competencyToImport.getCourse().getId().equals(courseId)) {
-            throw new ConflictException("The competency is already added to this course", "Competency", "competencyCycle");
+            throw new BadRequestAlertException("The competency is already added to this course", ENTITY_NAME, "competencyCycle");
         }
 
         competencyToImport.setCourse(course);
@@ -287,7 +287,7 @@ public class CompetencyResource {
         log.info("REST request to all competencies from course {} into course {}", sourceCourseId, courseId);
 
         if (courseId == sourceCourseId) {
-            throw new ConflictException("Cannot import from a course into itself", "Course", "courseCycle");
+            throw new BadRequestAlertException("Cannot import from a course into itself", "Course", "courseCycle");
         }
         var course = courseRepository.findByIdElseThrow(courseId);
         var sourceCourse = courseRepository.findByIdElseThrow(sourceCourseId);
@@ -518,7 +518,7 @@ public class CompetencyResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, competency.getCourse(), null);
 
         if (competency.getCourse().getId().equals(courseId)) {
-            throw new ConflictException("The competency of a course can not be a prerequisite to the same course", "Competency", "competencyCycle");
+            throw new BadRequestAlertException("The competency of a course can not be a prerequisite to the same course", ENTITY_NAME, "competencyCycle");
         }
 
         course.addPrerequisite(competency);
@@ -540,7 +540,7 @@ public class CompetencyResource {
         var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
         var competency = competencyRepository.findByIdWithConsecutiveCoursesElseThrow(competencyId);
         if (!competency.getConsecutiveCourses().stream().map(Course::getId).toList().contains(courseId)) {
-            throw new ConflictException("The competency is not a prerequisite of the given course", "Competency", "prerequisiteWrongCourse");
+            throw new BadRequestAlertException("The competency is not a prerequisite of the given course", ENTITY_NAME, "prerequisiteWrongCourse");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, competency.getCourse(), null);
@@ -592,10 +592,10 @@ public class CompetencyResource {
      */
     private void checkAuthorizationForCompetency(Role role, @NotNull Course course, @NotNull Competency competency) {
         if (competency.getCourse() == null) {
-            throw new ConflictException("A competency must belong to a course", "Competency", "competencyNoCourse");
+            throw new BadRequestAlertException("A competency must belong to a course", ENTITY_NAME, "competencyNoCourse");
         }
         if (!competency.getCourse().getId().equals(course.getId())) {
-            throw new ConflictException("The competency does not belong to the correct course", "Competency", "competencyWrongCourse");
+            throw new BadRequestAlertException("The competency does not belong to the correct course", ENTITY_NAME, "competencyWrongCourse");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
     }

@@ -333,7 +333,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getCompetency_asStudent_wrongCourse() throws Exception {
-        request.get("/api/courses/" + course2.getId() + "/competencies/" + competency.getId(), HttpStatus.CONFLICT, Competency.class);
+        request.get("/api/courses/" + course2.getId() + "/competencies/" + competency.getId(), HttpStatus.BAD_REQUEST, Competency.class);
     }
 
     @Test
@@ -752,7 +752,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void removePrerequisite_conflict() throws Exception {
-        request.delete("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), HttpStatus.CONFLICT);
+        request.delete("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -765,7 +765,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void addPrerequisite_doNotAllowCycle() throws Exception {
         // Test that a competency of a course can not be a prerequisite to the same course
-        request.postWithResponseBody("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), competency, Competency.class, HttpStatus.CONFLICT);
+        request.postWithResponseBody("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), competency, Competency.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -806,6 +806,6 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importingCompetencies_intoSameCourse_shouldReturnConflict() throws Exception {
         request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-all/" + course.getId(), null, CompetencyWithTailRelationDTO.class,
-                HttpStatus.CONFLICT);
+                HttpStatus.BAD_REQUEST);
     }
 }
