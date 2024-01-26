@@ -21,6 +21,8 @@ import de.tum.in.www1.artemis.domain.User;
 @NamedEntityGraph(name="LearningPath.withEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsers",
     attributeNodes = {
         @NamedAttributeNode(value = "competencies", subgraph = "competenciesWithEagerProgressLectureUnitsAndExercises"),
+        @NamedAttributeNode(value = "user"),
+        @NamedAttributeNode(value = "course")
     },
     subgraphs = {
         @NamedSubgraph(name = "competenciesWithEagerProgressLectureUnitsAndExercises",
