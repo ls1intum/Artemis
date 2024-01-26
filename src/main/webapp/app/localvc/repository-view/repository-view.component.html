@@ -1,0 +1,25 @@
+<ng-container>
+    @if (!loadingParticipation && !participationCouldNotBeFetched) {
+        <jhi-code-editor-container
+            [editable]="false"
+            [participation]="participation"
+            [showEditorInstructions]="showEditorInstructions"
+            [isTutorAssessment]="true"
+            [highlightFileChanges]="true"
+            [highlightDifferences]="highlightDifferences"
+            [course]="getCourseFromExercise(exercise)"
+            (onFileLoad)="onFileLoad($event)"
+        >
+            <jhi-code-editor-file-browser editorSidebarLeft [highlightFileChanges]="true"></jhi-code-editor-file-browser>
+            <jhi-code-editor-ace editorCenter [highlightDifferences]="highlightDifferences"> </jhi-code-editor-ace>
+            <jhi-programming-exercise-instructions
+                editorSidebar
+                (onNoInstructionsAvailable)="showEditorInstructions = false"
+                [exercise]="exercise"
+                [participation]="participation"
+                [personalParticipation]="true"
+                class="instructions-wrapper__content card-body p-0"
+            ></jhi-programming-exercise-instructions>
+        </jhi-code-editor-container>
+    }
+</ng-container>

@@ -361,6 +361,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         discussion: 'artemisApp.metis.communication.label',
         messages: 'artemisApp.conversationsLayout.breadCrumbLabel',
         code_editor: 'artemisApp.editor.breadCrumbTitle',
+        repository: 'artemisApp.repository.title',
         participate: 'artemisApp.submission.detail.title',
         live: 'artemisApp.submission.detail.title',
         courses: 'artemisApp.course.home.title',
@@ -426,6 +427,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             switch (this.lastRouteUrlSegment) {
                 case 'code-editor':
                 case 'test-exam':
+                case 'repository':
                 case 'participate':
                     this.addTranslationAsCrumb(currentPath, this.lastRouteUrlSegment);
                     return;
@@ -447,6 +449,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'system-notification-management':
             case 'teams':
             case 'code-editor':
+                this.addBreadcrumb(currentPath, segment, false);
+                break;
+            case 'repository':
                 this.addBreadcrumb(currentPath, segment, false);
                 break;
             case 'course-management':
@@ -548,6 +553,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'reset':
             case 'groups':
             case 'code-editor':
+            case 'repository':
             case 'admin':
             case 'ide':
             case 'text-units':

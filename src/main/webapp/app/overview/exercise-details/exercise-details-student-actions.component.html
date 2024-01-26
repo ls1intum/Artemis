@@ -128,6 +128,14 @@
                             >
                             </jhi-clone-repo-button>
                         }
+                        <jhi-open-repository-button
+                            [loading]="!!exercise.loading"
+                            [smallButtons]="smallButtons"
+                            [participations]="exercise.studentParticipations!"
+                            [courseAndExerciseNavigationUrlSegment]="['/courses', courseId, 'programming-exercises', exercise.id, 'repository']"
+                            [exercise]="exercise"
+                        >
+                        </jhi-open-repository-button>
                         @if (exercise.allowManualFeedbackRequests) {
                             <span tabindex="0" [ngbTooltip]="'artemisApp.exerciseActions.requestFeedbackTooltip' | artemisTranslate">
                                 <button
