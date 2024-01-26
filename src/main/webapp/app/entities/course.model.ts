@@ -100,6 +100,7 @@ export class Course implements BaseEntity {
 
     // helper attributes to determine if certain tabs in the client are shown
     public numberOfLectures?: number;
+    public numberOfExams?: number;
     public numberOfTutorialGroups?: number;
     public numberOfCompetencies?: number;
     public numberOfPrerequisites?: number;

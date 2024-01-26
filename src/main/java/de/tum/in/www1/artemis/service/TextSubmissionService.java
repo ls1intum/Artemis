@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 @Service
 public class TextSubmissionService extends SubmissionService {
 
-    private final Logger log = LoggerFactory.getLogger(TextSubmissionService.class);
+    private static final Logger log = LoggerFactory.getLogger(TextSubmissionService.class);
 
     private final TextSubmissionRepository textSubmissionRepository;
 

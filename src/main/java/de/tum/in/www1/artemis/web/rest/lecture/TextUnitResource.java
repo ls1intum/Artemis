@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @RequestMapping("api/core/")
 public class TextUnitResource {
 
-    private final Logger log = LoggerFactory.getLogger(TextUnitResource.class);
+    private static final Logger log = LoggerFactory.getLogger(TextUnitResource.class);
 
     private static final String ENTITY_NAME = "textUnit";
 
@@ -117,7 +117,7 @@ public class TextUnitResource {
             throw new BadRequestAlertException("A new text unit cannot have an id", ENTITY_NAME, "idExists");
         }
 
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
 
         if (lecture.getCourse() == null || (textUnit.getLecture() != null && !lecture.getId().equals(textUnit.getLecture().getId()))) {
             throw new ConflictException("Input data not valid", ENTITY_NAME, "inputInvalid");

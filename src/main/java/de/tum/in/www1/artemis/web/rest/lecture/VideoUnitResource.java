@@ -9,7 +9,6 @@ import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,12 +28,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 @RequestMapping("api/core/")
 public class VideoUnitResource {
 
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
-
-    private final Logger log = LoggerFactory.getLogger(VideoUnitResource.class);
-
-    private static final String ENTITY_NAME = "videoUnit";
+    private static final Logger log = LoggerFactory.getLogger(VideoUnitResource.class);
 
     private final VideoUnitRepository videoUnitRepository;
 
@@ -115,7 +109,7 @@ public class VideoUnitResource {
         normalizeVideoUrl(videoUnit);
         validateVideoUrl(videoUnit);
 
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             throw new ConflictException("Specified lecture is not part of a course", "VideoUnit", "courseMissing");
         }

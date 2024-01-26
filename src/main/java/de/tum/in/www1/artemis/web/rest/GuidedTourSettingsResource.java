@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.service.user.UserService;
 @RequestMapping("api/core/")
 public class GuidedTourSettingsResource {
 
-    private final Logger log = LoggerFactory.getLogger(GuidedTourSettingsResource.class);
+    private static final Logger log = LoggerFactory.getLogger(GuidedTourSettingsResource.class);
 
     private final UserService userService;
 

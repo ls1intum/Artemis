@@ -52,7 +52,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
 /**
@@ -104,7 +104,7 @@ public class LocalVCLocalCITestService {
         String projectKey = programmingExercise.getProjectKey();
         String repositorySlug = getRepositorySlug(projectKey, userLogin);
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userLogin);
-        participation.setRepositoryUrl(String.format(localVCBaseUrl + "/git/%s/%s.git", projectKey, repositorySlug));
+        participation.setRepositoryUri(String.format(localVCBaseUrl + "/git/%s/%s.git", projectKey, repositorySlug));
         participation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(participation);
 
@@ -120,6 +120,17 @@ public class LocalVCLocalCITestService {
      */
     public void mockTestResults(DockerClient dockerClient, Path mockedTestResultsPath, String testResultsPath) throws IOException {
         mockInputStreamReturnedFromContainer(dockerClient, testResultsPath, createMapFromTestResultsFolder(mockedTestResultsPath));
+    }
+
+    /**
+     * Overloaded version of mockTestResults(DockerClient dockerClient, Path mockedTestResultsPath, String testResultsPath) that allows to mock multiple test result folders.
+     *
+     * @param dockerClient           the DockerClient to mock.
+     * @param mockedTestResultsPaths the paths to the directories containing the test results in the resources folder.
+     * @param testResultsPath        the path to the directory containing the test results inside the container.
+     */
+    public void mockTestResults(DockerClient dockerClient, List<Path> mockedTestResultsPaths, String testResultsPath) throws IOException {
+        mockInputStreamReturnedFromContainer(dockerClient, testResultsPath, createMapFromMultipleTestResultFolders(mockedTestResultsPaths));
     }
 
     /**
@@ -280,7 +291,7 @@ public class LocalVCLocalCITestService {
     }
 
     /**
-     * Construct a repository URL that works with the local VC system.
+     * Construct a repository URI that works with the local VC system.
      *
      * @param username       the username of the user that tries to access the repository using this URL.
      * @param projectKey     the project key of the repository.
@@ -292,7 +303,7 @@ public class LocalVCLocalCITestService {
     }
 
     /**
-     * Construct a repository URL that works with the local VC system.
+     * Construct a repository URI that works with the local VC system.
      *
      * @param username       the username of the user that tries to access the repository using this URL.
      * @param password       the password of the user that tries to access the repository using this URL.
@@ -301,7 +312,7 @@ public class LocalVCLocalCITestService {
      * @return the URL to the repository.
      */
     public String constructLocalVCUrl(String username, String password, String projectKey, String repositorySlug) {
-        return "http://" + username + (password.length() > 0 ? ":" : "") + password + (username.length() > 0 ? "@" : "") + "localhost:" + port + "/git/" + projectKey.toUpperCase()
+        return "http://" + username + (!password.isEmpty() ? ":" : "") + password + (!username.isEmpty() ? "@" : "") + "localhost:" + port + "/git/" + projectKey.toUpperCase()
                 + "/" + repositorySlug + ".git";
     }
 
@@ -318,25 +329,47 @@ public class LocalVCLocalCITestService {
         Map<String, String> resultMap = new HashMap<>();
         String testResultsPathString = testResultsPath.toString();
 
-        Files.walkFileTree(testResultsPath, new SimpleFileVisitor<>() {
+        if (Files.isDirectory(testResultsPath)) {
+            Files.walkFileTree(testResultsPath, new SimpleFileVisitor<>() {
 
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                if (!attrs.isDirectory()) {
-                    String key = file.toString().replace(testResultsPathString, "test");
-                    String value;
-                    if (file.getFileName().toString().endsWith(".xml")) {
-                        value = new String(Files.readAllBytes(file));
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    if (!attrs.isDirectory()) {
+                        String key = file.toString().replace(testResultsPathString, "test");
+                        String value;
+                        if (file.getFileName().toString().endsWith(".xml")) {
+                            value = new String(Files.readAllBytes(file));
+                        }
+                        else {
+                            value = "dummy-data";
+                        }
+                        resultMap.put(key, value);
                     }
-                    else {
-                        value = "dummy-data";
-                    }
-                    resultMap.put(key, value);
+                    return FileVisitResult.CONTINUE;
                 }
-                return FileVisitResult.CONTINUE;
-            }
-        });
+            });
+        }
+        else {
+            // If it's a file, handle it directly
+            String key = testResultsPath.toString();
+            String value = Files.isRegularFile(testResultsPath) && testResultsPath.toString().endsWith(".xml") ? new String(Files.readAllBytes(testResultsPath)) : "dummy-data";
+            resultMap.put(key, value);
+        }
 
+        return resultMap;
+    }
+
+    /**
+     * Overloaded version of createMapFromTestResultsFolder(Path testResultsPath) that allows to create a map from multiple test result folders.
+     *
+     * @param testResultsPaths Paths to the folders containing the test results.
+     * @return Map containing the file paths and the content of the files.
+     */
+    public Map<String, String> createMapFromMultipleTestResultFolders(List<Path> testResultsPaths) throws IOException {
+        Map<String, String> resultMap = new HashMap<>();
+        for (Path testResultsPath : testResultsPaths) {
+            resultMap.putAll(createMapFromTestResultsFolder(testResultsPath));
+        }
         return resultMap;
     }
 
@@ -446,10 +479,10 @@ public class LocalVCLocalCITestService {
     }
 
     private void performFetch(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) throws GitAPIException {
-        String repositoryUrl = constructLocalVCUrl(username, password, projectKey, repositorySlug);
+        String repositoryUri = constructLocalVCUrl(username, password, projectKey, repositorySlug);
         FetchCommand fetchCommand = repositoryHandle.fetch();
         // Set the remote URL.
-        fetchCommand.setRemote(repositoryUrl);
+        fetchCommand.setRemote(repositoryUri);
         // Set the refspec to fetch all branches.
         fetchCommand.setRefSpecs(new RefSpec("+refs/heads/*:refs/remotes/origin/*"));
         // Execute the fetch.
@@ -481,8 +514,11 @@ public class LocalVCLocalCITestService {
      *                                            if the commit hash should not be checked.
      * @param expectedSuccessfulTestCaseCount the expected number or passed test cases.
      * @param buildFailed                     whether the build should have failed or not.
+     * @param isStaticCodeAnalysisEnabled     whether static code analysis is enabled for the exercise.
+     * @param expectedCodeIssueCount          the expected number of code issues (only relevant if static code analysis is enabled).
      */
-    public void testLatestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCaseCount, boolean buildFailed) {
+    public void testLatestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCaseCount, boolean buildFailed, boolean isStaticCodeAnalysisEnabled,
+            int expectedCodeIssueCount) {
         // wait for result to be persisted
         await().until(() -> resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId).isPresent());
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -501,6 +537,14 @@ public class LocalVCLocalCITestService {
         int expectedTestCaseCount = buildFailed ? 0 : 13;
         assertThat(result.getTestCaseCount()).isEqualTo(expectedTestCaseCount);
         assertThat(result.getPassedTestCaseCount()).isEqualTo(expectedSuccessfulTestCaseCount);
+
+        if (isStaticCodeAnalysisEnabled) {
+            assertThat(result.getCodeIssueCount()).isEqualTo(expectedCodeIssueCount);
+        }
+    }
+
+    public void testLatestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCaseCount, boolean buildFailed) {
+        testLatestSubmission(participationId, expectedCommitHash, expectedSuccessfulTestCaseCount, buildFailed, false, 0);
     }
 
     /**
@@ -532,10 +576,10 @@ public class LocalVCLocalCITestService {
     }
 
     private void performPush(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) throws GitAPIException {
-        String repositoryUrl = constructLocalVCUrl(username, password, projectKey, repositorySlug);
+        String repositoryUri = constructLocalVCUrl(username, password, projectKey, repositorySlug);
         PushCommand pushCommand = repositoryHandle.push();
         // Set the remote URL.
-        pushCommand.setRemote(repositoryUrl);
+        pushCommand.setRemote(repositoryUri);
         // Execute the push.
         pushCommand.call();
     }
@@ -547,11 +591,11 @@ public class LocalVCLocalCITestService {
      * @param localVCBasePath     the base path for the local repositories taken from the artemis.version-control.local-vcs-repo-path environment variable.
      */
     public void verifyRepositoryFoldersExist(ProgrammingExercise programmingExercise, String localVCBasePath) {
-        LocalVCRepositoryUrl templateRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getTemplateRepositoryUrl(), localVCBaseUrl);
-        assertThat(templateRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).exists();
-        LocalVCRepositoryUrl solutionRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getSolutionRepositoryUrl(), localVCBaseUrl);
-        assertThat(solutionRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).exists();
-        LocalVCRepositoryUrl testsRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getTestRepositoryUrl(), localVCBaseUrl);
-        assertThat(testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).exists();
+        LocalVCRepositoryUri templateRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTemplateRepositoryUri(), localVCBaseUrl);
+        assertThat(templateRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
+        LocalVCRepositoryUri solutionRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getSolutionRepositoryUri(), localVCBaseUrl);
+        assertThat(solutionRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
+        LocalVCRepositoryUri testsRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTestRepositoryUri(), localVCBaseUrl);
+        assertThat(testsRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
     }
 }

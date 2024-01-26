@@ -30,7 +30,7 @@ import tech.jhipster.web.util.ResponseUtil;
 @RequestMapping("api/core/")
 public class SystemNotificationResource {
 
-    private final Logger log = LoggerFactory.getLogger(SystemNotificationResource.class);
+    private static final Logger log = LoggerFactory.getLogger(SystemNotificationResource.class);
 
     private final SystemNotificationRepository systemNotificationRepository;
 

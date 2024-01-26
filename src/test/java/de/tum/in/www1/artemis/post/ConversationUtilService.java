@@ -353,7 +353,7 @@ public class ConversationUtilService {
      *
      * @param postings The list of Postings to check
      */
-    public <T extends Posting> void assertSensitiveInformationHidden(@NotNull List<T> postings) {
+    public <T extends Posting> void assertSensitiveInformationHidden(@NotNull Collection<T> postings) {
         for (Posting posting : postings) {
             assertSensitiveInformationHidden(posting);
         }
@@ -625,7 +625,7 @@ public class ConversationUtilService {
         channel.setCreator(message.getAuthor());
         addReactionForUserToPost(login, message);
         conversationRepository.save(channel);
-        message = postRepository.save(message);
+        postRepository.save(message);
         return conversationRepository.save(channel);
     }
 
@@ -646,8 +646,7 @@ public class ConversationUtilService {
         conversation.setCreator(message.getAuthor());
         addReactionForUserToPost(login, message);
         conversationRepository.save(conversation);
-        message = postRepository.save(message);
 
-        return message;
+        return postRepository.save(message);
     }
 }

@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 @RequestMapping("api/core/")
 public class LearningPathResource {
 
-    private final Logger log = LoggerFactory.getLogger(LearningPathResource.class);
+    private static final Logger log = LoggerFactory.getLogger(LearningPathResource.class);
 
     private final CourseRepository courseRepository;
 
@@ -197,7 +197,7 @@ public class LearningPathResource {
             throw new BadRequestException("Learning paths are not enabled for this course.");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (authorizationCheckService.isStudentInCourse(course, user)) {
+        if (authorizationCheckService.isAtLeastStudentInCourse(course, user) && !authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
             if (!user.getId().equals(learningPath.getUser().getId())) {
                 throw new AccessForbiddenException("You are not allowed to access another users learning path.");
             }

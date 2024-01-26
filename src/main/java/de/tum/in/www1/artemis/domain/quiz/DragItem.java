@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.service.FileService;
 public class DragItem extends TempIdObject implements QuizQuestionComponent<DragAndDropQuestion> {
 
     @Transient
-    private final transient Logger log = LoggerFactory.getLogger(DragItem.class);
+    private static final transient Logger log = LoggerFactory.getLogger(DragItem.class);
 
     @Transient
     private final transient FilePathService filePathService = new FilePathService();
@@ -144,7 +144,7 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
         }
         catch (FilePathParsingException e) {
             // if the file path is invalid, we don't need to delete it
-            log.warn("Could not delete file with path {}. Assume already deleted, entity can be removed.", pictureFilePath, e);
+            log.warn("Could not delete file with path {}. Assume already deleted, DragAndDropQuestion {} can be removed.", pictureFilePath, getId());
         }
     }
 

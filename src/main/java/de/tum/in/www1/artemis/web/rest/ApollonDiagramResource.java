@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 @RequestMapping("api/core/")
 public class ApollonDiagramResource {
 
-    private final Logger log = LoggerFactory.getLogger(ApollonDiagramResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ApollonDiagramResource.class);
 
     private static final String ENTITY_NAME = "apollonDiagram";
 

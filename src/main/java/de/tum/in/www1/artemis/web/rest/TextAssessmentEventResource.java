@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 @RequestMapping("api/core/")
 public class TextAssessmentEventResource {
 
-    private final Logger log = LoggerFactory.getLogger(TextAssessmentEventResource.class);
+    private static final Logger log = LoggerFactory.getLogger(TextAssessmentEventResource.class);
 
     private final TextAssessmentEventRepository textAssessmentEventRepository;
 

@@ -63,11 +63,11 @@
         "invalid": {
             "template": {
                 "build.plan.id": "The Template Build Plan ID seems to be invalid. Please make sure it exists and is accessible for Artemis.",
-                "repository.url": "The Template Repository URL seems to be invalid. Please make sure it exists and is accessible for Artemis."
+                "repository.url": "The Template Repository URI seems to be invalid. Please make sure it exists and is accessible for Artemis."
             },
             "solution": {
                 "build.plan.id": "The Solution Build Plan ID seems to be invalid. Please make sure it exists and is accessible for Artemis.",
-                "repository.url": "The Solution Repository URL seems to be invalid. Please make sure it exists and is accessible for Artemis."
+                "repository.url": "The Solution Repository URI seems to be invalid. Please make sure it exists and is accessible for Artemis."
             },
             "auxiliary.repository": {
                 "id": "The Auxiliary Repository ID seems to be set. Please make sure it does not exist, because it is set by Artemis.",

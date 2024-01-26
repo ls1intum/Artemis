@@ -2,20 +2,29 @@
     <div class="plagiarism-split-pane" jhiPane>
         @if (plagiarismComparison) {
             @if (isModelingExercise) {
-                <jhi-modeling-submission-viewer [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionA()"></jhi-modeling-submission-viewer>
+                <jhi-modeling-submission-viewer [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionA()" [hideContent]="false"></jhi-modeling-submission-viewer>
             }
             @if (isProgrammingOrTextExercise) {
-                <jhi-text-submission-viewer [exercise]="exercise" [matches]="matchesA" [plagiarismSubmission]="getTextSubmissionA()"></jhi-text-submission-viewer>
+                <jhi-text-submission-viewer [exercise]="exercise" [matches]="matchesA" [plagiarismSubmission]="getTextSubmissionA()" [hideContent]="false" />
             }
         }
     </div>
     <div class="plagiarism-split-pane" jhiPane>
         @if (plagiarismComparison) {
             @if (isModelingExercise) {
-                <jhi-modeling-submission-viewer [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionB()"></jhi-modeling-submission-viewer>
+                <jhi-modeling-submission-viewer
+                    [exercise]="exercise"
+                    [plagiarismSubmission]="getModelingSubmissionB()"
+                    [hideContent]="forStudent && dayjs(exercise.dueDate).isAfter(dayjs())"
+                />
             }
             @if (isProgrammingOrTextExercise) {
-                <jhi-text-submission-viewer [exercise]="exercise" [matches]="matchesB" [plagiarismSubmission]="getTextSubmissionB()"></jhi-text-submission-viewer>
+                <jhi-text-submission-viewer
+                    [exercise]="exercise"
+                    [matches]="matchesB"
+                    [plagiarismSubmission]="getTextSubmissionB()"
+                    [hideContent]="forStudent && dayjs(exercise.dueDate).isAfter(dayjs())"
+                />
             }
         }
     </div>

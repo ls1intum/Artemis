@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -10,22 +11,22 @@ public class UserPageableSearchDTO extends PageableSearchDTO<String> {
     /**
      * Set of authorities users need to match.
      */
-    private Set<String> authorities;
+    private Set<String> authorities = new HashSet<>();
 
     /**
      * Set of origins users need to match.
      */
-    private Set<String> origins;
+    private Set<String> origins = new HashSet<>();
 
     /**
      * Set of status users need to match.
      */
-    private Set<String> status;
+    private Set<String> status = new HashSet<>();
 
     /**
      * Set of courseIds users need to be part in.
      */
-    private Set<Long> courseIds;
+    private Set<Long> courseIds = new HashSet<>();
 
     /**
      * Set of registrationNumbers users need to match

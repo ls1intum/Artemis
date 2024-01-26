@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -19,7 +18,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
@@ -271,6 +269,9 @@ public class Course extends DomainObject {
     private Long numberOfLecturesTransient;
 
     @Transient
+    private Long numberOfExamsTransient;
+
+    @Transient
     private Long numberOfTutorialGroupsTransient;
 
     @Transient
@@ -281,6 +282,10 @@ public class Course extends DomainObject {
 
     public Long getNumberOfLectures() {
         return numberOfLecturesTransient;
+    }
+
+    public Long getNumberOfExams() {
+        return numberOfExamsTransient;
     }
 
     public Long getNumberOfTutorialGroups() {
@@ -297,6 +302,10 @@ public class Course extends DomainObject {
 
     public void setNumberOfLectures(Long numberOfLectures) {
         this.numberOfLecturesTransient = numberOfLectures;
+    }
+
+    public void setNumberOfExams(Long numberOfExams) {
+        this.numberOfExamsTransient = numberOfExams;
     }
 
     public void setNumberOfTutorialGroups(Long numberOfTutorialGroups) {
@@ -700,56 +709,6 @@ public class Course extends DomainObject {
     public void removePrerequisite(Competency competency) {
         this.prerequisites.remove(competency);
         competency.getConsecutiveCourses().remove(this);
-    }
-
-    /*
-     * NOTE: The file management is necessary to differentiate between temporary and used files and to delete used files when the corresponding course is deleted, or it is replaced
-     * by another file. The workflow is as follows 1. user uploads a file -> this is a temporary file, because at this point the corresponding course might not exist yet. 2. user
-     * saves the course -> now we move the temporary file which is addressed in courseIcon to a permanent location and update the value in courseIcon accordingly. => This happens
-     * in @PrePersist and @PostPersist 3. user might upload another file to replace the existing file -> this new file is a temporary file at first 4. user saves changes (with the
-     * new courseIcon pointing to the new temporary file) -> now we delete the old file in the permanent location and move the new file to a permanent location and update the value
-     * in courseIcon accordingly. => This happens in @PreUpdate and uses @PostLoad to know the old path 5. When course is deleted, the file in the permanent location is deleted =>
-     * This happens in @PostRemove
-     */
-
-    /**
-     * Initialisation of the Course on Server start
-     */
-    @PostLoad
-    public void onLoad() {
-        // replace placeholder with actual id if necessary (this is needed because changes made in afterCreate() are not persisted)
-        if (courseIcon != null && courseIcon.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
-            courseIcon = courseIcon.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
-        }
-        prevCourseIcon = courseIcon; // save current path as old path (needed to know old path in onUpdate() and onDelete())
-    }
-
-    @PrePersist
-    public void beforeCreate() {
-        if (courseIcon != null) {
-            courseIcon = entityFileService.moveTempFileBeforeEntityPersistence(courseIcon, FilePathService.getCourseIconFilePath(), false);
-        }
-    }
-
-    @PostPersist
-    public void afterCreate() {
-        // replace placeholder with actual id if necessary (id is no longer null at this point)
-        if (courseIcon != null && courseIcon.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
-            courseIcon = courseIcon.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
-        }
-    }
-
-    @PreUpdate
-    public void onUpdate() {
-        // move file and delete old file if necessary
-        courseIcon = entityFileService.handlePotentialFileUpdateBeforeEntityPersistence(getId(), prevCourseIcon, courseIcon, FilePathService.getCourseIconFilePath(), false);
-    }
-
-    @PostRemove
-    public void onDelete() {
-        if (prevCourseIcon != null) {
-            fileService.schedulePathForDeletion(Path.of(prevCourseIcon), 0);
-        }
     }
 
     @Override

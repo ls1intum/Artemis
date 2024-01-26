@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("api/core/")
 public class LectureUnitResource {
 
-    private final Logger log = LoggerFactory.getLogger(LectureUnitResource.class);
+    private static final Logger log = LoggerFactory.getLogger(LectureUnitResource.class);
 
     private static final String ENTITY_NAME = "lectureUnit";
 
@@ -73,7 +73,7 @@ public class LectureUnitResource {
     @EnforceAtLeastEditor
     public ResponseEntity<List<LectureUnit>> updateLectureUnitsOrder(@PathVariable Long lectureId, @RequestBody List<Long> orderedLectureUnitIds) {
         log.debug("REST request to update the order of lecture units of lecture: {}", lectureId);
-        final Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        final Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
 
         if (lecture.getCourse() == null) {
             throw new ConflictException("Specified lecture is not part of a course", "LectureUnit", "courseMissing");

@@ -37,7 +37,7 @@ public class TutorParticipationService {
 
     private static final String ENTITY_NAME = "TutorParticipation";
 
-    private final Logger log = LoggerFactory.getLogger(TutorParticipationService.class);
+    private static final Logger log = LoggerFactory.getLogger(TutorParticipationService.class);
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
@@ -266,7 +266,7 @@ public class TutorParticipationService {
             validateTutorialExampleSubmission(tutorExampleSubmission);
         }
 
-        List<ExampleSubmission> alreadyAssessedSubmissions = new ArrayList<>(existingTutorParticipation.getTrainedExampleSubmissions());
+        Set<ExampleSubmission> alreadyAssessedSubmissions = new HashSet<>(existingTutorParticipation.getTrainedExampleSubmissions());
 
         // If the example submission was already assessed, we do not assess it again, we just return the current participation
         if (alreadyAssessedSubmissions.contains(tutorExampleSubmission)) {

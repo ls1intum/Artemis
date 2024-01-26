@@ -8,7 +8,6 @@ import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
@@ -41,12 +40,9 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @RequestMapping(ROOT)
 public class ProgrammingExercisePlagiarismResource {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExercisePlagiarismResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExercisePlagiarismResource.class);
 
     private static final String ENTITY_NAME = "programmingExercise";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 

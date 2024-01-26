@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 @RequestMapping("api/core/")
 public class CoverageReportResource {
 
-    private final Logger log = LoggerFactory.getLogger(CoverageReportResource.class);
+    private static final Logger log = LoggerFactory.getLogger(CoverageReportResource.class);
 
     private final TestwiseCoverageService testwiseCoverageService;
 

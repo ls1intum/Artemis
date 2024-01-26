@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("api/core/")
 public class NotificationSettingsResource {
 
-    private final Logger log = LoggerFactory.getLogger(NotificationSettingsResource.class);
+    private static final Logger log = LoggerFactory.getLogger(NotificationSettingsResource.class);
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -92,7 +92,7 @@ public class NotificationSettingsResource {
         if (resultAsList.isEmpty()) {
             throw new BadRequestAlertException("Error occurred during saving of Notification Settings", "NotificationSettings", "notificationSettingsEmptyAfterSave");
         }
-        NotificationSetting[] resultAsArray = resultAsList.toArray(new NotificationSetting[0]);
+        NotificationSetting[] resultAsArray = resultAsList.toArray(NotificationSetting[]::new);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "notificationSetting", "test")).body(resultAsArray);
     }
 
@@ -103,7 +103,7 @@ public class NotificationSettingsResource {
      */
     @GetMapping("muted-conversations")
     @EnforceAtLeastStudent
-    public ResponseEntity<Set<Long>> searchMembersOfConversation() {
+    public ResponseEntity<Set<Long>> getMutedConversations() {
         User user = userRepository.getUser();
         Set<Long> mutedConversations = notificationSettingRepository.findMutedConversations(user.getId());
         return ResponseEntity.ok(mutedConversations);

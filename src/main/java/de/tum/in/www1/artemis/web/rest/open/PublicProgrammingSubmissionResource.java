@@ -39,7 +39,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @RequestMapping("api/public/")
 public class PublicProgrammingSubmissionResource {
 
-    private final Logger log = LoggerFactory.getLogger(PublicProgrammingSubmissionResource.class);
+    private static final Logger log = LoggerFactory.getLogger(PublicProgrammingSubmissionResource.class);
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
@@ -82,7 +82,7 @@ public class PublicProgrammingSubmissionResource {
             // Therefore, a mock auth object has to be created.
             SecurityUtils.setAuthorizationObject();
 
-            Participation participation = participationRepository.findByIdWithSubmissionsElseThrow(participationId);
+            Participation participation = participationRepository.findWithEagerSubmissionsByIdWithTeamStudentsElseThrow(participationId);
             if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
                 throw new BadRequestAlertException("The referenced participation " + participationId + " is not of type ProgrammingExerciseParticipation", "ProgrammingSubmission",
                         "participationWrongType");
@@ -149,7 +149,7 @@ public class PublicProgrammingSubmissionResource {
         String lastCommitHash = null;
         try {
             Commit commit = versionControlService.orElseThrow().getLastCommitDetails(requestBody);
-            lastCommitHash = commit.getCommitHash();
+            lastCommitHash = commit.commitHash();
             log.info("create new programmingSubmission with commitHash: {} for exercise {}", lastCommitHash, exerciseId);
         }
         catch (Exception ex) {

@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("api/core/")
 public class TutorParticipationResource {
 
-    private final Logger log = LoggerFactory.getLogger(TutorParticipationResource.class);
+    private static final Logger log = LoggerFactory.getLogger(TutorParticipationResource.class);
 
     private static final String ENTITY_NAME = "tutorParticipation";
 

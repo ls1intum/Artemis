@@ -63,7 +63,7 @@ import tech.jhipster.web.util.PaginationUtil;
 @RequestMapping("api/core/")
 public class ExamResource {
 
-    private final Logger log = LoggerFactory.getLogger(ExamResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ExamResource.class);
 
     private static final String ENTITY_NAME = "exam";
 
@@ -117,12 +117,15 @@ public class ExamResource {
 
     private final ExamLiveEventsService examLiveEventsService;
 
+    private final StudentExamService studentExamService;
+
     public ExamResource(ProfileService profileService, UserRepository userRepository, CourseRepository courseRepository, ExamService examService,
             ExamDeletionService examDeletionService, ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository,
             SubmissionService submissionService, AuthorizationCheckService authCheckService, ExamDateService examDateService,
             TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService,
             StudentExamRepository studentExamRepository, ExamImportService examImportService, CustomAuditEventRepository auditEventRepository, ChannelService channelService,
-            ChannelRepository channelRepository, ExerciseRepository exerciseRepository, ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService) {
+            ChannelRepository channelRepository, ExerciseRepository exerciseRepository, ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService,
+            StudentExamService studentExamService) {
         this.profileService = profileService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
@@ -145,6 +148,7 @@ public class ExamResource {
         this.exerciseRepository = exerciseRepository;
         this.examSessionService = examSessionRepository;
         this.examLiveEventsService = examLiveEventsService;
+        this.studentExamService = studentExamService;
     }
 
     /**
@@ -869,7 +873,7 @@ public class ExamResource {
         // Reset existing student exams & participations in case they already exist
         examDeletionService.deleteStudentExamsAndExistingParticipationsForExam(exam.getId());
 
-        List<StudentExam> studentExams = studentExamRepository.generateStudentExams(exam);
+        List<StudentExam> studentExams = studentExamService.generateStudentExams(exam);
 
         // we need to break a cycle for the serialization
         breakCyclesForSerialization(studentExams);
@@ -913,7 +917,7 @@ public class ExamResource {
         log.info("REST request to generate missing student exams for exam {}", examId);
 
         final var exam = checkAccessForStudentExamGenerationAndLogAuditEvent(courseId, examId, Constants.GENERATE_MISSING_STUDENT_EXAMS);
-        List<StudentExam> studentExams = studentExamRepository.generateMissingStudentExams(exam);
+        List<StudentExam> studentExams = studentExamService.generateMissingStudentExams(exam);
 
         // we need to break a cycle for the serialization
         breakCyclesForSerialization(studentExams);

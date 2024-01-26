@@ -160,7 +160,7 @@ public class LectureUtilService {
      * @return The updated Lecture
      */
     public Lecture addLectureUnitsToLecture(Lecture lecture, List<LectureUnit> lectureUnits) {
-        Lecture l = lectureRepo.findByIdWithLectureUnits(lecture.getId()).orElseThrow();
+        Lecture l = lectureRepo.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
         for (LectureUnit lectureUnit : lectureUnits) {
             l.addLectureUnit(lectureUnit);
         }

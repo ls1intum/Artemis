@@ -28,8 +28,6 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 
 class LtiDeepLinkingIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -47,10 +45,10 @@ class LtiDeepLinkingIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Autowired
     private CourseUtilService courseUtilService;
 
-    private Course course;
-
     @Autowired
     private CourseRepository courseRepository;
+
+    private Course course;
 
     @BeforeEach
     void init() {
@@ -93,7 +91,17 @@ class LtiDeepLinkingIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deepLinkingAsInstructor() throws Exception {
-        String jwkJsonString = "{\"kty\":\"RSA\",\"d\":\"base64-encoded-value\",\"e\":\"AQAB\",\"use\":\"sig\",\"kid\":\"123456\",\"alg\":\"RS256\",\"n\":\"base64-encoded-value\"}";
+        String jwkJsonString = """
+                {
+                  "kty": "RSA",
+                  "d": "base64-encoded-value",
+                  "e": "AQAB",
+                  "use": "sig",
+                  "kid": "123456",
+                  "alg": "RS256",
+                  "n": "base64-encoded-value"
+                }
+                """;
         when(this.oAuth2JWKSService.getJWK(any())).thenReturn(JWK.parse(jwkJsonString));
         var params = getDeepLinkingRequestParams();
 
@@ -109,11 +117,9 @@ class LtiDeepLinkingIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     private String createJwtForTest() {
-        SecretKey key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-
+        SecretKey key = Jwts.SIG.HS256.key().build();
         Map<String, Object> claims = prepareTokenClaims();
-
-        return Jwts.builder().setClaims(claims).signWith(key, SignatureAlgorithm.HS256).compact();
+        return Jwts.builder().claims(claims).signWith(key, Jwts.SIG.HS256).compact();
     }
 
     private Map<String, Object> prepareTokenClaims() {

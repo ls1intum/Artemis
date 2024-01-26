@@ -24,12 +24,14 @@ import { Exercise } from 'app/entities/exercise.model';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 
 describe('CourseManagementComponent', () => {
     let fixture: ComponentFixture<CourseManagementComponent>;
     let component: CourseManagementComponent;
     let service: CourseManagementService;
     let guidedTourService: GuidedTourService;
+    let courseAccessStorageService: CourseAccessStorageService;
 
     const pastExercise = {
         dueDate: dayjs().subtract(6, 'days'),
@@ -101,7 +103,12 @@ describe('CourseManagementComponent', () => {
                 MockComponent(CourseManagementCardComponent),
                 MockComponent(DocumentationButtonComponent),
             ],
-            providers: [{ provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }, MockProvider(TranslateService)],
+            providers: [
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                MockProvider(TranslateService),
+                MockProvider(CourseAccessStorageService),
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -109,6 +116,7 @@ describe('CourseManagementComponent', () => {
                 component = fixture.componentInstance;
                 service = TestBed.inject(CourseManagementService);
                 guidedTourService = TestBed.inject(GuidedTourService);
+                courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
             });
     });
 
@@ -130,5 +138,42 @@ describe('CourseManagementComponent', () => {
         expect(component.showOnlyActive).toBeFalse();
         fixture.detectChanges();
         expect(component).not.toBeNull();
+    });
+
+    it('should correctly sort unique semester names', () => {
+        const course1 = { id: 1, semester: 'SS20' } as Course;
+        const course2 = { id: 2, semester: 'WS19' } as Course;
+        const course3 = { id: 3, semester: 'SS19' } as Course;
+        const course4 = { id: 4, semester: 'WS20' } as Course;
+        const course5 = { id: 5, semester: '' } as Course; // course with no semester
+
+        component.courses = [course1, course2, course3, course4, course5];
+        const sortedSemesters = component['getUniqueSemesterNamesSorted'](component.courses);
+
+        expect(sortedSemesters).toEqual(['WS20', 'SS20', 'WS19', 'SS19', '']);
+    });
+
+    it('should correctly sort courses into semesters', () => {
+        const course1 = { id: 1, semester: 'SS20', testCourse: false } as Course;
+        const course2 = { id: 2, semester: 'WS19', testCourse: false } as Course;
+        const course3 = { id: 3, semester: 'SS19', testCourse: false } as Course;
+        const course4 = { id: 4, semester: 'SS19', testCourse: false } as Course;
+        const course5 = { id: 5, semester: '', testCourse: false } as Course; // course with no semester
+        const course6 = { id: 6, semester: 'WS20', testCourse: true } as Course; // test course
+
+        component.courses = [course1, course2, course3, course4, course5, course6];
+        component.courseSemesters = ['SS20', 'WS19', 'SS19', ''];
+
+        // Simulate that course1 and course2 were recently accessed
+        jest.spyOn(courseAccessStorageService, 'getLastAccessedCourses').mockReturnValue([1, 2]);
+
+        component['sortCoursesIntoSemesters']();
+
+        expect(component.coursesBySemester['recent']).toEqual([course1, course2]);
+        expect(component.coursesBySemester['SS20']).toEqual([]);
+        expect(component.coursesBySemester['WS19']).toEqual([]);
+        expect(component.coursesBySemester['SS19']).toEqual([course3, course4]);
+        expect(component.coursesBySemester['']).toEqual([course5]);
+        expect(component.coursesBySemester['test']).toEqual([course6]);
     });
 });

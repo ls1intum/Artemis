@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @RequestMapping("api/core/")
 public class ExamUserResource {
 
-    private final Logger log = LoggerFactory.getLogger(ExamUserResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ExamUserResource.class);
 
     private final UserRepository userRepository;
 

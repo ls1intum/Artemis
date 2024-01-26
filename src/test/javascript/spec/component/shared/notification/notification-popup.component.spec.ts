@@ -85,72 +85,75 @@ describe('Notification Popup Component', () => {
 
     describe('Initialization', () => {
         it('should subscribe to singular notification updates', () => {
-            jest.spyOn(notificationService, 'subscribeToSingleIncomingNotifications');
+            const subscribeToSingleIncomingNotifications = jest.spyOn(notificationService, 'subscribeToSingleIncomingNotifications');
             notificationPopupComponent.ngOnInit();
-            expect(notificationService.subscribeToSingleIncomingNotifications).toHaveBeenCalledOnce();
+            expect(subscribeToSingleIncomingNotifications).toHaveBeenCalledOnce();
         });
     });
 
     describe('Click', () => {
+        it('should navigate to conversation target when New message notification is clicked', () => {
+            notificationPopupComponent.notifications = [newMessageNotification];
+            notificationPopupComponentFixture.detectChanges();
+
+            const navigateToTarget = jest.spyOn(notificationPopupComponent, 'navigateToTarget');
+            const forceComponentReload = jest.spyOn(notificationService, 'forceComponentReload');
+            jest.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
+
+            expect(navigateToTarget).toHaveBeenCalledTimes(0);
+            expect(forceComponentReload).toHaveBeenCalledTimes(0);
+
+            const button = notificationPopupComponentFixture.debugElement.query(By.css('.notification-popup-container > div button'));
+            button.nativeElement.click();
+            expect(navigateToTarget).toHaveBeenCalledOnce();
+            expect(forceComponentReload).toHaveBeenCalledOnce();
+        });
+
+        it('should navigate to exam exercise target when ExamExerciseUpdate notification is clicked', () => {
+            notificationPopupComponent.notifications = [examExerciseUpdateNotification];
+            notificationPopupComponentFixture.detectChanges();
+
+            const navigateToTarget = jest.spyOn(notificationPopupComponent, 'navigateToTarget');
+            const navigateToExamExercise = jest.spyOn(examExerciseUpdateService, 'navigateToExamExercise').mockReturnValue();
+            const button = notificationPopupComponentFixture.debugElement.query(By.css('.notification-popup-container > div button'));
+            button.nativeElement.click();
+            expect(navigateToTarget).toHaveBeenCalledOnce();
+            expect(navigateToExamExercise).toHaveBeenCalledOnce();
+        });
+
         describe('General & Quiz', () => {
             beforeEach(() => {
-                notificationPopupComponent.notifications.push(quizNotification);
+                notificationPopupComponent.notifications = [quizNotification];
                 notificationPopupComponentFixture.detectChanges();
             });
 
             it('should remove notification from component state when notification is closed', () => {
-                jest.spyOn(notificationPopupComponent, 'removeNotification');
+                const removeNotification = jest.spyOn(notificationPopupComponent, 'removeNotification');
                 jest.spyOn(notificationPopupComponent, 'navigateToTarget').mockReturnValue();
                 const button = notificationPopupComponentFixture.debugElement.query(By.css('.notification-popup-container > div button'));
                 button.nativeElement.click();
-                expect(notificationPopupComponent.removeNotification).toHaveBeenCalledTimes(2);
+                expect(removeNotification).toHaveBeenCalledTimes(2);
                 expect(notificationPopupComponent.notifications).toBeEmpty();
             });
 
             it('should remove quiz notification from component state and navigate to quiz target when notification is clicked', () => {
-                jest.spyOn(notificationPopupComponent, 'removeNotification');
-                jest.spyOn(notificationPopupComponent, 'navigateToTarget').mockReturnValue();
+                const removeNotification = jest.spyOn(notificationPopupComponent, 'removeNotification');
+                const navigateToTarget = jest.spyOn(notificationPopupComponent, 'navigateToTarget').mockReturnValue();
                 const notificationElement = notificationPopupComponentFixture.debugElement.query(By.css('.notification-popup-container > div'));
                 notificationElement.nativeElement.click();
-                expect(notificationPopupComponent.removeNotification).toHaveBeenCalledOnce();
+                expect(removeNotification).toHaveBeenCalledOnce();
                 expect(notificationPopupComponent.notifications).toBeEmpty();
-                expect(notificationPopupComponent.navigateToTarget).toHaveBeenCalledOnce();
+                expect(navigateToTarget).toHaveBeenCalledOnce();
             });
 
             it('should navigate to quiz target when quiz notification is clicked', () => {
-                jest.spyOn(notificationPopupComponent, 'navigateToTarget');
-                jest.spyOn(router, 'navigateByUrl');
+                const navigateToTarget = jest.spyOn(notificationPopupComponent, 'navigateToTarget');
+                const navigateByUrl = jest.spyOn(router, 'navigateByUrl');
                 const button = notificationPopupComponentFixture.debugElement.query(By.css('.notification-popup-container > div button'));
                 button.nativeElement.click();
-                expect(notificationPopupComponent.navigateToTarget).toHaveBeenCalledOnce();
-                expect(router.navigateByUrl).toHaveBeenCalledOnce();
+                expect(navigateToTarget).toHaveBeenCalledOnce();
+                expect(navigateByUrl).toHaveBeenCalledOnce();
             });
-        });
-
-        it('should navigate to conversation target when New message notification is clicked', () => {
-            notificationPopupComponent.notifications.push(newMessageNotification);
-            notificationPopupComponentFixture.detectChanges();
-
-            jest.spyOn(notificationPopupComponent, 'navigateToTarget');
-            jest.spyOn(notificationService, 'forceComponentReload');
-            jest.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
-
-            const button = notificationPopupComponentFixture.debugElement.query(By.css('.notification-popup-container > div button'));
-            button.nativeElement.click();
-            expect(notificationPopupComponent.navigateToTarget).toHaveBeenCalledOnce();
-            expect(notificationService.forceComponentReload).toHaveBeenCalledOnce();
-        });
-
-        it('should navigate to exam exercise target when ExamExerciseUpdate notification is clicked', () => {
-            notificationPopupComponent.notifications.push(examExerciseUpdateNotification);
-            notificationPopupComponentFixture.detectChanges();
-
-            jest.spyOn(notificationPopupComponent, 'navigateToTarget');
-            jest.spyOn(examExerciseUpdateService, 'navigateToExamExercise').mockReturnValue();
-            const button = notificationPopupComponentFixture.debugElement.query(By.css('.notification-popup-container > div button'));
-            button.nativeElement.click();
-            expect(notificationPopupComponent.navigateToTarget).toHaveBeenCalledOnce();
-            expect(examExerciseUpdateService.navigateToExamExercise).toHaveBeenCalledOnce();
         });
     });
 
@@ -175,8 +178,7 @@ describe('Notification Popup Component', () => {
             expect(notificationPopupComponent.notifications).toHaveLength(2);
             expect(notificationPopupComponent.notifications[1]).toEqual(quizNotification);
             tick(30000);
-            expect(notificationPopupComponent.notifications).toHaveLength(1);
-            expect(notificationPopupComponent.notifications[0]).toEqual(otherNotification);
+            expect(notificationPopupComponent.notifications).toHaveLength(0);
         }));
 
         it('should not add received quiz notification if user is already on quiz page', () => {
@@ -215,5 +217,9 @@ describe('Notification Popup Component', () => {
             tick(15000);
             expect(notificationPopupComponent.notifications).toBeEmpty();
         }));
+    });
+
+    afterEach(() => {
+        jest.clearAllMocks();
     });
 });

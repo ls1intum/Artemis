@@ -4,9 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,7 +41,7 @@ import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
-import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationService;
@@ -55,7 +53,7 @@ import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 @Profile("bamboo")
 public class BambooService extends AbstractContinuousIntegrationService {
 
-    private final Logger log = LoggerFactory.getLogger(BambooService.class);
+    private static final Logger log = LoggerFactory.getLogger(BambooService.class);
 
     @Value("${artemis.continuous-integration.url}")
     protected URL serverUrl;
@@ -66,7 +64,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     private final ObjectMapper mapper;
 
-    private final UrlService urlService;
+    private final UriService uriService;
 
     private final RestTemplate restTemplate;
 
@@ -74,43 +72,43 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     public BambooService(ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService,
             BambooBuildPlanService bambooBuildPlanService, FeedbackRepository feedbackRepository, @Qualifier("bambooRestTemplate") RestTemplate restTemplate,
-            @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper, UrlService urlService, BuildLogEntryService buildLogService,
+            @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper, UriService uriService, BuildLogEntryService buildLogService,
             TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.bambooBuildPlanService = bambooBuildPlanService;
         this.mapper = mapper;
-        this.urlService = urlService;
+        this.uriService = uriService;
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl sourceCodeRepositoryURL, VcsRepositoryUrl testRepositoryURL,
-            VcsRepositoryUrl solutionRepositoryURL) {
+    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri,
+            VcsRepositoryUri solutionRepositoryUri) {
         var additionalRepositories = programmingExercise.getAuxiliaryRepositoriesForBuildPlan().stream()
-                .map(repo -> new AuxiliaryRepository.AuxRepoNameWithUrl(repo.getName(), repo.getVcsRepositoryUrl())).toList();
-        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, sourceCodeRepositoryURL, testRepositoryURL, solutionRepositoryURL, additionalRepositories);
+                .map(repo -> new AuxiliaryRepository.AuxRepoNameWithUri(repo.getName(), repo.getVcsRepositoryUri())).toList();
+        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, repositoryUri, testRepositoryUri, solutionRepositoryUri, additionalRepositories);
     }
 
     @Override
     public void recreateBuildPlansForExercise(ProgrammingExercise exercise) {
         deleteBuildPlan(exercise.getProjectKey(), exercise.getTemplateBuildPlanId());
         deleteBuildPlan(exercise.getProjectKey(), exercise.getSolutionBuildPlanId());
-        createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getVcsTemplateRepositoryUrl(), exercise.getVcsTestRepositoryUrl(),
-                exercise.getVcsSolutionRepositoryUrl());
-        createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getVcsSolutionRepositoryUrl(), exercise.getVcsTestRepositoryUrl(),
-                exercise.getVcsSolutionRepositoryUrl());
+        createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getVcsTemplateRepositoryUri(), exercise.getVcsTestRepositoryUri(),
+                exercise.getVcsSolutionRepositoryUri());
+        createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getVcsSolutionRepositoryUri(), exercise.getVcsTestRepositoryUri(),
+                exercise.getVcsSolutionRepositoryUri());
     }
 
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation, String branch) {
         String buildPlanId = participation.getBuildPlanId();
-        VcsRepositoryUrl repositoryUrl = participation.getVcsRepositoryUrl();
+        VcsRepositoryUri repositoryUri = participation.getVcsRepositoryUri();
         String projectKey = getProjectKeyFromBuildPlanId(buildPlanId);
-        String repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
-        String plainRepositoryUrl = urlService.getPlainUrlFromRepositoryUrl(repositoryUrl);
-        updatePlanRepository(projectKey, buildPlanId, ASSIGNMENT_REPO_NAME, repoProjectName, plainRepositoryUrl, null /* not needed */, branch);
+        String repoProjectName = uriService.getProjectKeyFromRepositoryUri(repositoryUri);
+        String plainRepositoryUri = uriService.getPlainUriFromRepositoryUri(repositoryUri);
+        updatePlanRepository(projectKey, buildPlanId, ASSIGNMENT_REPO_NAME, repoProjectName, plainRepositoryUri, null /* not needed */, branch);
         enablePlan(projectKey, buildPlanId);
 
         // allow student or team access to the build plan in case this option was specified (only available for course exercises)
@@ -439,9 +437,9 @@ public class BambooService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
+    public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUri, String existingRepoUri,
             String newBranch) throws BambooException {
-        continuousIntegrationUpdateService.orElseThrow().updatePlanRepository(buildPlanKey, ciRepoName, newRepoUrl, newBranch);
+        continuousIntegrationUpdateService.orElseThrow().updatePlanRepository(buildPlanKey, ciRepoName, newRepoUri, newBranch);
     }
 
     /**
@@ -512,7 +510,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
             // Filter out build log and static code analysis artifacts
             if (buildResult != null && buildResult.getArtifacts() != null) {
-                List<String> artifactLabelFilter = StaticCodeAnalysisTool.getAllArtifactLabels();
+                Set<String> artifactLabelFilter = StaticCodeAnalysisTool.getAllArtifactLabels();
                 artifactLabelFilter.add("Build log");
                 buildResult.getArtifacts()
                         .setArtifacts(buildResult.getArtifacts().getArtifacts().stream().filter(artifact -> !artifactLabelFilter.contains(artifact.getName())).toList());

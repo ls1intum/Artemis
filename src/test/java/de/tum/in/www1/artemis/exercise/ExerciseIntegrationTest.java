@@ -216,9 +216,9 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 }
                 else if (exerciseServer instanceof ProgrammingExercise programmingExerciseExercise) {
                     assertThat(programmingExerciseExercise.getProjectKey()).as("Project key was set").isNotNull();
-                    assertThat(programmingExerciseExercise.getTemplateRepositoryUrl()).as("Template repository url was filtered out").isNull();
-                    assertThat(programmingExerciseExercise.getSolutionRepositoryUrl()).as("Solution repository url was filtered out").isNull();
-                    assertThat(programmingExerciseExercise.getTestRepositoryUrl()).as("Test repository url was filtered out").isNull();
+                    assertThat(programmingExerciseExercise.getTemplateRepositoryUri()).as("Template repository uri was filtered out").isNull();
+                    assertThat(programmingExerciseExercise.getSolutionRepositoryUri()).as("Solution repository uri was filtered out").isNull();
+                    assertThat(programmingExerciseExercise.getTestRepositoryUri()).as("Test repository uri was filtered out").isNull();
                     assertThat(programmingExerciseExercise.getTemplateBuildPlanId()).as("Template build plan was filtered out").isNull();
                     assertThat(programmingExerciseExercise.getSolutionBuildPlanId()).as("Solution build plan was filtered out").isNull();
                 }
@@ -326,9 +326,9 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 }
                 else if (exerciseWithDetails instanceof ProgrammingExercise programmingExerciseExercise) {
                     assertThat(programmingExerciseExercise.getProjectKey()).as("Project key was set").isNotNull();
-                    assertThat(programmingExerciseExercise.getTemplateRepositoryUrl()).as("Template repository url was filtered out").isNull();
-                    assertThat(programmingExerciseExercise.getSolutionRepositoryUrl()).as("Solution repository url was filtered out").isNull();
-                    assertThat(programmingExerciseExercise.getTestRepositoryUrl()).as("Test repository url was filtered out").isNull();
+                    assertThat(programmingExerciseExercise.getTemplateRepositoryUri()).as("Template repository uri was filtered out").isNull();
+                    assertThat(programmingExerciseExercise.getSolutionRepositoryUri()).as("Solution repository uri was filtered out").isNull();
+                    assertThat(programmingExerciseExercise.getTestRepositoryUri()).as("Test repository uri was filtered out").isNull();
                     assertThat(programmingExerciseExercise.getTemplateBuildPlanId()).as("Template build plan was filtered out").isNull();
                     assertThat(programmingExerciseExercise.getSolutionBuildPlanId()).as("Solution build plan was filtered out").isNull();
                     assertThat(programmingExerciseExercise.getStudentParticipations()).as("Number of participations is correct").hasSize(2);
@@ -473,7 +473,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 exercise.getStudentParticipations().iterator().next().setResults(Set.of(participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC,
                         ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next())));
             }
-            exerciseService.filterForCourseDashboard(exercise, List.copyOf(exercise.getStudentParticipations()), "student1", true);
+            exerciseService.filterForCourseDashboard(exercise, Set.copyOf(exercise.getStudentParticipations()), "student1", true);
 
             StudentParticipation participation = exercise.getStudentParticipations().iterator().next();
             Submission submission = participation.getSubmissions().iterator().next();
@@ -504,7 +504,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().setResults(new ArrayList<>());
                 exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().addResult(result);
             }
-            exerciseService.filterForCourseDashboard(exercise, List.copyOf(exercise.getStudentParticipations()), "student1", true);
+            exerciseService.filterForCourseDashboard(exercise, Set.copyOf(exercise.getStudentParticipations()), "student1", true);
             // All exercises have one result
             assertThat(exercise.getStudentParticipations().iterator().next().getResults()).hasSize(1);
             // Programming exercises should now have one manual result

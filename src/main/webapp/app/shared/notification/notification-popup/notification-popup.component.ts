@@ -145,13 +145,6 @@ export class NotificationPopupComponent implements OnInit {
         return this.notificationService.getNotificationTextTranslation(notification, this.maxNotificationLength);
     }
 
-    private getParsedPlaceholderValues(notification: Notification): string[] {
-        if (notification.placeholderValues) {
-            return JSON.parse(notification.placeholderValues);
-        }
-        return [];
-    }
-
     private notificationTargetRoute(notification: Notification): UrlTree | string {
         if (notification.target) {
             const target = JSON.parse(notification.target);

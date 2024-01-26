@@ -18,8 +18,6 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
-import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
-import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 
 /**
  * REST controller for managing FileUploadAssessment.
@@ -29,7 +27,7 @@ import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 @RequestMapping("api/core/")
 public class FileUploadAssessmentResource extends AssessmentResource {
 
-    private final Logger log = LoggerFactory.getLogger(FileUploadAssessmentResource.class);
+    private static final Logger log = LoggerFactory.getLogger(FileUploadAssessmentResource.class);
 
     private static final String ENTITY_NAME = "fileUploadAssessment";
 
@@ -38,11 +36,9 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
     public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, AssessmentService assessmentService, UserRepository userRepository,
-            FileUploadExerciseRepository fileUploadExerciseRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, ResultWebsocketService resultWebsocketService,
-            ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService) {
-        super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, examService, resultWebsocketService, exampleSubmissionRepository,
-                submissionRepository, singleUserNotificationService);
+            FileUploadExerciseRepository fileUploadExerciseRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, ExerciseRepository exerciseRepository,
+            ResultRepository resultRepository, ExamService examService, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
+        super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, examService, exampleSubmissionRepository, submissionRepository);
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
     }

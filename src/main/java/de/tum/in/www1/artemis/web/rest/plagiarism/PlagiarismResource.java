@@ -42,7 +42,7 @@ public class PlagiarismResource {
 
     private final UserRepository userRepository;
 
-    private final Logger log = LoggerFactory.getLogger(PlagiarismResource.class);
+    private static final Logger log = LoggerFactory.getLogger(PlagiarismResource.class);
 
     private final PlagiarismComparisonRepository plagiarismComparisonRepository;
 

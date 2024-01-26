@@ -37,7 +37,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private static final String ENTITY_NAME = "textSubmission";
 
-    private final Logger log = LoggerFactory.getLogger(TextSubmissionResource.class);
+    private static final Logger log = LoggerFactory.getLogger(TextSubmissionResource.class);
 
     private final TextSubmissionRepository textSubmissionRepository;
 
@@ -149,7 +149,8 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(textSubmission.getParticipation().getExercise())) {
             // anonymize and throw exception if not authorized to view submission
-            plagiarismService.checkAccessAndAnonymizeSubmissionForStudent(textSubmission, userRepository.getUser().getLogin());
+            plagiarismService.checkAccessAndAnonymizeSubmissionForStudent(textSubmission, userRepository.getUser().getLogin(),
+                    textSubmission.getParticipation().getExercise().getDueDate());
             return ResponseEntity.ok(textSubmission);
         }
 

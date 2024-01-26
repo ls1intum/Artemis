@@ -41,7 +41,7 @@ import tech.jhipster.web.util.PaginationUtil;
 @RequestMapping("api/core/")
 public class ConversationMessageResource {
 
-    private final Logger log = LoggerFactory.getLogger(getClass());
+    private static final Logger log = LoggerFactory.getLogger(ConversationMessageResource.class);
 
     private final ConversationMessagingService conversationMessagingService;
 

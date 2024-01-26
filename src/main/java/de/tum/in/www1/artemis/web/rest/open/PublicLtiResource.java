@@ -43,7 +43,7 @@ import io.jsonwebtoken.*;
 @RequestMapping("api/public/")
 public class PublicLtiResource {
 
-    private final Logger log = LoggerFactory.getLogger(PublicLtiResource.class);
+    private static final Logger log = LoggerFactory.getLogger(PublicLtiResource.class);
 
     private final Lti10Service lti10Service;
 

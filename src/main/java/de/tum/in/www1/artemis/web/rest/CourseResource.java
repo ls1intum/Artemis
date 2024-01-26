@@ -5,6 +5,8 @@ import static java.time.ZonedDateTime.now;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.security.Principal;
 import java.time.ZonedDateTime;
@@ -36,7 +38,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
@@ -53,10 +54,7 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
-import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
-import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
-import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
-import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.dto.user.UserNameAndLoginDTO;
 import de.tum.in.www1.artemis.web.rest.errors.*;
 import tech.jhipster.web.util.PaginationUtil;
@@ -71,7 +69,7 @@ public class CourseResource {
 
     private static final String ENTITY_NAME = "course";
 
-    private final Logger log = LoggerFactory.getLogger(CourseResource.class);
+    private static final Logger log = LoggerFactory.getLogger(CourseResource.class);
 
     private final UserRepository userRepository;
 
@@ -80,8 +78,6 @@ public class CourseResource {
     private final AuthorizationCheckService authCheckService;
 
     private final Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService;
-
-    private final Optional<OAuth2JWKSService> oAuth2JWKSService;
 
     private final CourseRepository courseRepository;
 
@@ -116,17 +112,20 @@ public class CourseResource {
 
     private final LearningPathService learningPathService;
 
+    private final ExamRepository examRepository;
+
+    private final FilePathService filePathService;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
-            Optional<OAuth2JWKSService> oAuth2JWKSService, Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
+            Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
             CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathService learningPathService,
-            ConductAgreementService conductAgreementService) {
+            ConductAgreementService conductAgreementService, ExamRepository examRepository, FilePathService filePathService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
-        this.oAuth2JWKSService = oAuth2JWKSService;
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.authCheckService = authCheckService;
         this.tutorParticipationRepository = tutorParticipationRepository;
@@ -143,6 +142,8 @@ public class CourseResource {
         this.gradingScaleRepository = gradingScaleRepository;
         this.learningPathService = learningPathService;
         this.conductAgreementService = conductAgreementService;
+        this.examRepository = examRepository;
+        this.filePathService = filePathService;
     }
 
     /**
@@ -155,7 +156,8 @@ public class CourseResource {
      */
     @PutMapping(value = "courses/{courseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastInstructor
-    public ResponseEntity<Course> updateCourse(@PathVariable Long courseId, @RequestPart("course") Course courseUpdate, @RequestPart(required = false) MultipartFile file) {
+    public ResponseEntity<Course> updateCourse(@PathVariable Long courseId, @RequestPart("course") Course courseUpdate, @RequestPart(required = false) MultipartFile file)
+            throws URISyntaxException {
         log.debug("REST request to update Course : {}", courseUpdate);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
@@ -227,8 +229,17 @@ public class CourseResource {
         courseUpdate.validateUnenrollmentEndDate();
 
         if (file != null) {
-            String pathString = fileService.handleSaveFile(file, false, false).toString();
-            courseUpdate.setCourseIcon(pathString);
+            Path basePath = FilePathService.getCourseIconFilePath();
+            Path savePath = fileService.saveFile(file, basePath);
+            courseUpdate.setCourseIcon(filePathService.publicPathForActualPathOrThrow(savePath, courseId).toString());
+            if (existingCourse.getCourseIcon() != null) {
+                // delete old course icon
+                fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
+            }
+        }
+        else if (courseUpdate.getCourseIcon() == null && existingCourse.getCourseIcon() != null) {
+            // delete old course icon
+            fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
         }
 
         if (courseUpdate.isOnlineCourse() != existingCourse.isOnlineCourse()) {
@@ -271,7 +282,7 @@ public class CourseResource {
     }
 
     /**
-     * PUT courses/:courseId/onlineCourseConfiguration : Updates the onlineCourseConfiguration for the given cours.
+     * PUT courses/:courseId/onlineCourseConfiguration : Updates the onlineCourseConfiguration for the given course.
      *
      * @param courseId                  the id of the course to update
      * @param onlineCourseConfiguration the online course configuration to update
@@ -303,8 +314,6 @@ public class CourseResource {
         }
 
         courseRepository.save(course);
-
-        oAuth2JWKSService.ifPresent(auth2JWKSService -> auth2JWKSService.updateKey(course.getOnlineCourseConfiguration().getRegistrationId()));
 
         return ResponseEntity.ok(onlineCourseConfiguration);
     }
@@ -503,40 +512,45 @@ public class CourseResource {
      */
     @GetMapping("courses/for-dashboard")
     @EnforceAtLeastStudent
-    public List<CourseForDashboardDTO> getCoursesForDashboard() {
+    public CoursesForDashboardDTO getCoursesForDashboard() {
         long timeNanoStart = System.nanoTime();
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("Request to get all courses user {} has access to with exams, lectures, exercises, participations, submissions and results + calculated scores", user.getLogin());
-        List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(user);
-        log.debug("courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser done");
+        Set<Course> courses = courseService.findAllActiveWithExercisesForUser(user);
+        log.debug("courseService.findAllActiveWithExercisesForUser done");
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, false);
+
         log.debug("courseService.fetchParticipationsWithSubmissionsAndResultsForCourses done");
         // TODO: we should avoid fetching plagiarism in the future, it's unnecessary for 99.9% of the cases
         courseService.fetchPlagiarismCasesForCourseExercises(courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet()), user.getId());
+
         log.debug("courseService.fetchPlagiarismCasesForCourseExercises done");
         // TODO: loading the grading scale here is only done to handle edge cases, we should avoid it, it's unnecessary for 90% of the cases and can be done when navigating into
         // the course
-        Set<GradingScale> gradingScales = gradingScaleRepository.findAllByCourseIds(courses.stream().map(Course::getId).collect(Collectors.toSet()));
+        var gradingScales = gradingScaleRepository.findAllByCourseIds(courses.stream().map(Course::getId).collect(Collectors.toSet()));
+        // we explicitly add 1 hour here to compensate for potential write extensions. Calculating it exactly is not feasible here
+        var activeExams = examRepository.findActiveExams(courses.stream().map(Course::getId).collect(Collectors.toSet()), user.getId(), ZonedDateTime.now(),
+                ZonedDateTime.now().plusHours(1));
+
         log.debug("gradingScaleRepository.findAllByCourseIds done");
-        List<CourseForDashboardDTO> coursesForDashboard = new ArrayList<>();
+        Set<CourseForDashboardDTO> coursesForDashboard = new HashSet<>();
         for (Course course : courses) {
             GradingScale gradingScale = gradingScales.stream().filter(scale -> scale.getCourse().getId().equals(course.getId())).findFirst().orElse(null);
             CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId());
             coursesForDashboard.add(courseForDashboardDTO);
         }
         logDuration(courses, user, timeNanoStart, "courses/for-dashboard (multiple courses)");
-        return coursesForDashboard;
+        return new CoursesForDashboardDTO(coursesForDashboard, activeExams);
     }
 
-    private void logDuration(List<Course> courses, User user, long timeNanoStart, String path) {
+    private void logDuration(Collection<Course> courses, User user, long timeNanoStart, String path) {
         if (log.isInfoEnabled()) {
             Set<Exercise> exercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
             Map<ExerciseMode, List<Exercise>> exercisesGroupedByExerciseMode = exercises.stream().collect(Collectors.groupingBy(Exercise::getMode));
             int noOfIndividualExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL), List.of()).size();
             int noOfTeamExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM), List.of()).size();
-            int noOfExams = courses.stream().mapToInt(course -> course.getExams().size()).sum();
-            log.info("{} finished in {} for {} courses with {} individual exercise(s), {} team exercise(s), and {} exam(s) for user {}", path,
-                    TimeLogUtil.formatDurationFrom(timeNanoStart), courses.size(), noOfIndividualExercises, noOfTeamExercises, noOfExams, user.getLogin());
+            log.info("{} finished in {} for {} courses with {} individual exercise(s) and {} team exercise(s) for user {}", path, TimeLogUtil.formatDurationFrom(timeNanoStart),
+                    courses.size(), noOfIndividualExercises, noOfTeamExercises, user.getLogin());
         }
     }
 
@@ -1201,21 +1215,22 @@ public class CourseResource {
      * GET /courses/:courseId/statistics : Get the active students for this particular course
      *
      * @param courseId    the id of the course
-     * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
+     * @param periodIndex an index indicating which time period, 0 is current week, -1 is one period in the past, -2 is two periods in the past
+     * @param periodSize  optional size of the period, default is 17
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
     @GetMapping("courses/{courseId}/statistics")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<Integer>> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Long periodIndex) {
+    public ResponseEntity<List<Integer>> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Long periodIndex,
+            @RequestParam Optional<Integer> periodSize) {
         var course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
         var chartEndDate = courseService.determineEndDateForActiveStudents(course);
-        var spanEndDate = chartEndDate.plusWeeks(17 * periodIndex);
-        var returnedSpanSize = courseService.determineTimeSpanSizeForActiveStudents(course, spanEndDate, 17);
-        var activeStudents = courseService.getActiveStudents(exerciseIds, periodIndex, 17, chartEndDate);
-        // We omit data concerning the time before the start date
-        return ResponseEntity.ok(activeStudents.subList(activeStudents.size() - returnedSpanSize, activeStudents.size()));
+        var spanEndDate = chartEndDate.plusWeeks(periodSize.orElse(17) * periodIndex);
+        var returnedSpanSize = courseService.determineTimeSpanSizeForActiveStudents(course, spanEndDate, periodSize.orElse(17));
+        var activeStudents = courseService.getActiveStudents(exerciseIds, periodIndex, Math.min(returnedSpanSize, periodSize.orElse(17)), chartEndDate);
+        return ResponseEntity.ok(activeStudents);
     }
 
     /**
