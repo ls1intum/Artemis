@@ -36,7 +36,7 @@ public class ExamUser extends AbstractAuditingEntity {
     private final transient FileService fileService = new FileService();
 
     @Transient
-    private final transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
+    private final transient EntityFileService entityFileService = new EntityFileService(fileService);
 
     @Transient
     private String prevSigningImagePath;

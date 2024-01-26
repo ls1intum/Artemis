@@ -73,7 +73,7 @@ public class DataExportQuizExerciseCreationService {
      */
     private boolean createQuizAnswersExport(QuizExercise quizExercise, StudentParticipation participation, Path outputDir, boolean includeResults,
             Optional<List<String>> exportErrors) {
-        Set<QuizQuestion> quizQuestions = quizQuestionRepository.getQuizQuestionsByExerciseId(quizExercise.getId());
+        Set<QuizQuestion> quizQuestions = quizQuestionRepository.findByExercise_Id(quizExercise.getId());
         boolean errorOccurred = false;
         for (var submission : participation.getSubmissions()) {
             QuizSubmission quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(submission.getId());

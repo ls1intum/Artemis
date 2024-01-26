@@ -32,8 +32,6 @@ public class LocalCIQueueWebsocketService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIQueueWebsocketService.class);
 
-    private final HazelcastInstance hazelcastInstance;
-
     private final IQueue<LocalCIBuildJobQueueItem> queue;
 
     private final IMap<Long, LocalCIBuildJobQueueItem> processingJobs;
@@ -53,12 +51,11 @@ public class LocalCIQueueWebsocketService {
      */
     public LocalCIQueueWebsocketService(HazelcastInstance hazelcastInstance, LocalCIWebsocketMessagingService localCIWebsocketMessagingService,
             LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService) {
-        this.hazelcastInstance = hazelcastInstance;
         this.localCIWebsocketMessagingService = localCIWebsocketMessagingService;
         this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
-        this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
-        this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
-        this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
+        this.queue = hazelcastInstance.getQueue("buildJobQueue");
+        this.processingJobs = hazelcastInstance.getMap("processingJobs");
+        this.buildAgentInformation = hazelcastInstance.getMap("buildAgentInformation");
     }
 
     /**
