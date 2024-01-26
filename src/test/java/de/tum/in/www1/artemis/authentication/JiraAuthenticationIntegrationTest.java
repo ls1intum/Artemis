@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.authentication;
 import static de.tum.in.www1.artemis.user.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.*;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -23,11 +24,13 @@ import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.exception.LtiEmailAlreadyInUseException;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.connectors.lti.LtiService;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 
 class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -58,6 +61,9 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     protected ExerciseUtilService exerciseUtilService;
 
+    @Autowired
+    LtiService ltiService;
+
     private static final String USERNAME = TEST_PREFIX + "student1";
 
     protected ProgrammingExercise programmingExercise;
@@ -80,6 +86,19 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
         userRepository.findOneByLogin(USERNAME).ifPresent(userRepository::delete);
 
         jiraRequestMockProvider.enableMockingOfRequests();
+    }
+
+    @WithAnonymousUser
+    @Test
+    void authenticateLtiUser_noAuth() throws IOException {
+        final var username = "mrrobot";
+        userRepository.findOneByLogin(username).ifPresent(userRepository::delete);
+        final var firstName = "Elliot";
+        final var email = "anonymous@tum.de";
+
+        jiraRequestMockProvider.mockGetUsernameForEmail(email, email, username);
+
+        assertThatExceptionOfType(LtiEmailAlreadyInUseException.class).isThrownBy(() -> ltiService.authenticateLtiUser(email, username, firstName, "lastname", true));
     }
 
     @Test
