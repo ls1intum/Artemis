@@ -6,7 +6,7 @@
             @if (course.isAtLeastInstructor) {
                 <div class="ms-auto text-truncate justify-content-end">
                     <a class="btn btn-primary me-1" (click)="openImportModal()">
-                        <fa-icon [icon]="faPlus"></fa-icon>
+                        <fa-icon [icon]="faFileImport"></fa-icon>
                         <span>{{ 'artemisApp.examManagement.importExam' | artemisTranslate }}</span>
                     </a>
                     <a class="btn btn-primary jh-create-entity create-exam" id="create-exam" [routerLink]="['new']">
