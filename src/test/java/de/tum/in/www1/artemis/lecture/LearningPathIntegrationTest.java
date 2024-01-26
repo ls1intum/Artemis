@@ -178,6 +178,15 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         return request.postWithResponseBody("/api/courses/" + course.getId() + "/competencies/import", competencyToImport, Competency.class, HttpStatus.CREATED);
     }
 
+    private List<CompetencyWithTailRelationDTO> importCompetenciesRESTCall(int numberOfCompetencies) throws Exception {
+        final var course2 = courseUtilService.createCourse();
+        for (int i = 0; i < numberOfCompetencies; i++) {
+            competencyUtilService.createCompetency(course2);
+        }
+        return request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-all/" + course2.getId(), null, CompetencyWithTailRelationDTO.class,
+                HttpStatus.CREATED);
+    }
+
     private void deleteCompetencyRESTCall(Competency competency) throws Exception {
         request.delete("/api/courses/" + course.getId() + "/competencies/" + competency.getId(), HttpStatus.OK);
     }
@@ -331,6 +340,26 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(learningPathOptional).isPresent();
         assertThat(learningPathOptional.get().getCompetencies()).as("should contain new competency").contains(newCompetency);
         assertThat(learningPathOptional.get().getCompetencies().size()).as("should not remove old competencies").isEqualTo(competencies.length + 1);
+        final var oldCompetencies = Set.of(competencies[0], competencies[1], competencies[2], competencies[3], competencies[4]);
+        assertThat(learningPathOptional.get().getCompetencies()).as("should not remove old competencies").containsAll(oldCompetencies);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    void testAddCompetenciesToLearningPaths() throws Exception {
+        final int numberOfNewCompetencies = 3;
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+
+        final var competencyDTOs = importCompetenciesRESTCall(numberOfNewCompetencies);
+        final var newCompetencies = competencyDTOs.stream().map(CompetencyWithTailRelationDTO::competency).toList();
+
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPathOptional = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserId(course.getId(), student.getId());
+
+        assertThat(newCompetencies.size()).isEqualTo(numberOfNewCompetencies);
+        assertThat(learningPathOptional).isPresent();
+        assertThat(learningPathOptional.get().getCompetencies()).as("should contain new competencies").containsAll(newCompetencies);
+        assertThat(learningPathOptional.get().getCompetencies().size()).as("should not remove old competencies").isEqualTo(competencies.length + newCompetencies.size());
         final var oldCompetencies = Set.of(competencies[0], competencies[1], competencies[2], competencies[3], competencies[4]);
         assertThat(learningPathOptional.get().getCompetencies()).as("should not remove old competencies").containsAll(oldCompetencies);
     }

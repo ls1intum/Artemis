@@ -342,23 +342,42 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 {
                     type: DetailType.ProgrammingRepositoryButtons,
                     title: 'artemisApp.programmingExercise.templateRepositoryUri',
-                    data: { participation: exercise.templateParticipation, exerciseId: exercise.id, type: ProgrammingExerciseParticipationType.TEMPLATE },
+                    data: {
+                        participation: exercise.templateParticipation,
+                        exerciseId: exercise.id,
+                        type: 'TEMPLATE',
+                        showOpenLink: !this.localVCEnabled,
+                    },
                 },
                 {
                     type: DetailType.ProgrammingRepositoryButtons,
                     title: 'artemisApp.programmingExercise.solutionRepositoryUri',
-                    data: { participation: exercise.solutionParticipation, exerciseId: exercise.id, type: ProgrammingExerciseParticipationType.SOLUTION },
+                    data: {
+                        participation: exercise.solutionParticipation,
+                        exerciseId: exercise.id,
+                        type: 'SOLUTION',
+                        showOpenLink: !this.localVCEnabled,
+                    },
                 },
                 {
                     type: DetailType.ProgrammingRepositoryButtons,
                     title: 'artemisApp.programmingExercise.testRepositoryUri',
-                    data: { participation: { repositoryUri: exercise.testRepositoryUri }, exerciseId: exercise.id },
+                    data: {
+                        participation: { repositoryUri: exercise.testRepositoryUri },
+                        exerciseId: exercise.id,
+                        type: 'TESTS',
+                        showOpenLink: !this.localVCEnabled,
+                    },
                 },
                 this.supportsAuxiliaryRepositories &&
                     !!exercise.auxiliaryRepositories?.length && {
                         type: DetailType.ProgrammingAuxiliaryRepositoryButtons,
                         title: 'artemisApp.programmingExercise.auxiliaryRepositories',
-                        data: { auxiliaryRepositories: exercise.auxiliaryRepositories, exerciseId: exercise.id },
+                        data: {
+                            auxiliaryRepositories: exercise.auxiliaryRepositories,
+                            exerciseId: exercise.id,
+                            showOpenLink: !this.localVCEnabled,
+                        },
                     },
                 {
                     type: DetailType.Link,
