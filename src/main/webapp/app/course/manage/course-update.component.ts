@@ -493,12 +493,13 @@ export class CourseUpdateComponent implements OnInit {
         // 2018 is the first year we offer semesters for and go one year into the future
         const years = dayjs().year() - 2018 + 1;
         // Add an empty semester as default value
-        const semesters: string[] = [''];
+        const semesters: string[] = [];
         for (let i = 0; i <= years; i++) {
-            semesters[2 * i + 1] = 'SS' + (18 + i);
-            semesters[2 * i + 2] = 'WS' + (18 + i) + '/' + (19 + i);
+            semesters[2 * i] = 'WS' + (18 + years - i) + '/' + (19 + years - i);
+            semesters[2 * i + 1] = 'SS' + (18 + years - i);
         }
-        return semesters.reverse();
+        semesters.push('');
+        return semesters;
     }
 
     /**
