@@ -18,23 +18,23 @@ public interface ModelClusterRepository extends JpaRepository<ModelCluster, Long
     @Query("""
             SELECT COUNT (DISTINCT cluster)
             FROM ModelCluster cluster
-            WHERE cluster.exercise.id = :#{#exerciseId}
+            WHERE cluster.exercise.id = :exerciseId
             """)
     Integer countByExerciseIdWithEagerElements(@Param("exerciseId") Long exerciseId);
 
     @Query("""
             SELECT DISTINCT cluster
             FROM ModelCluster cluster
-            LEFT JOIN FETCH cluster.modelElements element
-            WHERE cluster.exercise.id = :#{#exerciseId}
+                LEFT JOIN FETCH cluster.modelElements element
+            WHERE cluster.exercise.id = :exerciseId
             """)
     List<ModelCluster> findAllByExerciseIdWithEagerElements(@Param("exerciseId") Long exerciseId);
 
     @Query("""
             SELECT DISTINCT cluster
             FROM ModelCluster cluster
-            LEFT JOIN FETCH cluster.modelElements element
-            WHERE cluster.id in :#{#clusterIds}
+                LEFT JOIN FETCH cluster.modelElements element
+            WHERE cluster.id IN :clusterIds
             """)
     List<ModelCluster> findAllByIdInWithEagerElements(@Param("clusterIds") List<Long> clusterIds);
 }

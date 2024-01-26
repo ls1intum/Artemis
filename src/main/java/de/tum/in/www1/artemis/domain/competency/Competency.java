@@ -78,6 +78,18 @@ public class Competency extends DomainObject {
     @JsonIgnoreProperties({ "competencies", "course" })
     private Set<LearningPath> learningPaths = new HashSet<>();
 
+    public Competency() {
+    }
+
+    public Competency(String title, String description, ZonedDateTime softDueDate, Integer masteryThreshold, CompetencyTaxonomy taxonomy, boolean optional) {
+        this.title = title;
+        this.description = description;
+        this.softDueDate = softDueDate;
+        this.masteryThreshold = masteryThreshold;
+        this.taxonomy = taxonomy;
+        this.optional = optional;
+    }
+
     public String getTitle() {
         return title;
     }
