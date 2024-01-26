@@ -147,6 +147,17 @@ class ArchitectureTest extends AbstractArchitectureTest {
         param.check(productionClasses);
     }
 
+    /**
+     * Checks that no class directly calls Git.commit(), but instead uses GitService.commit()
+     * This is necessary to ensure that committing is identical for all setups, with and without commit signing
+     */
+    @Test
+    void testNoDirectGitCommitCalls() {
+        ArchRule usage = noClasses().should().callMethod(Git.class, "commit").because("You should use GitService.commit() instead");
+        var classesWithoutGitService = allClasses.that(not(assignableTo(GitService.class)));
+        usage.check(classesWithoutGitService);
+    }
+
     // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes
 
     private DescribedPredicate<? super JavaAnnotation<?>> simpleNameAnnotation(String name) {
@@ -180,7 +191,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                     if (annotations.stream().anyMatch(annotation -> !exception.test(annotation.getOwner().getRawType()))) {
                         return true;
                     }
-                    // Else, one of the annotations should match the predicated
+                    // Else, one of the annotations should match the given predicate
                     // This allows parameters with multiple annotations (e.g. @NonNull @Param)
                     return annotations.stream().anyMatch(annotationPredicate);
                 });
@@ -189,16 +200,5 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 }
             }
         };
-    }
-
-    /**
-     * Checks that no class directly calls Git.commit(), but instead uses GitService.commit()
-     * This is necessary to ensure that committing is identical for all setups, with and without commit signing
-     */
-    @Test
-    void testNoDirectGitCommitCalls() {
-        ArchRule usage = noClasses().should().callMethod(Git.class, "commit").because("You should use GitService.commit() instead");
-        var classesWithoutGitService = allClasses.that(not(assignableTo(GitService.class)));
-        usage.check(classesWithoutGitService);
     }
 }
