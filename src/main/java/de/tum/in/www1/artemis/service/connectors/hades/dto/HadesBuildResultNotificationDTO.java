@@ -4,20 +4,15 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.lang3.ObjectUtils;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.TestwiseCoverageReportDTO;
 import de.tum.in.www1.artemis.service.dto.*;
 
 public class HadesBuildResultNotificationDTO extends AbstractBuildResultNotificationDTO {
-
-    private static final Logger log = LoggerFactory.getLogger(HadesBuildResultNotificationDTO.class);
 
     private String jobName;
 
@@ -33,7 +28,9 @@ public class HadesBuildResultNotificationDTO extends AbstractBuildResultNotifica
     @JsonProperty("isBuildSuccessful") // For some reason this annotation is necessary for jackson to work
     private boolean isBuildSuccessful;
 
-    // TODO: custom deserializer for ZonedDateTime
+    // This is the timestamp when the build was completed
+    // Hades sends an RFC3339 formatted date string, e.g. "2024-01-24T14:11:46Z"
+    @JsonProperty("buildCompletionTime")
     private ZonedDateTime buildRunDate;
 
     @JsonProperty("buildJobs") // For some reason this annotation is necessary for jackson to work
@@ -54,16 +51,9 @@ public class HadesBuildResultNotificationDTO extends AbstractBuildResultNotifica
         this.buildJobs = buildJobs;
     }
 
-    public static HadesBuildResultNotificationDTO convert(Object someResult) {
-        var mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        var dto = mapper.convertValue(someResult, HadesBuildResultNotificationDTO.class);
-        return dto;
-    }
-
     @Override
     public ZonedDateTime getBuildRunDate() {
-        return null;
+        return buildRunDate;
     }
 
     @Override
@@ -107,8 +97,8 @@ public class HadesBuildResultNotificationDTO extends AbstractBuildResultNotifica
     }
 
     @Override
-    public List<? extends BuildJobDTOInterface> getBuildJobs() {
-        return buildJobs;
+    public List<HadesBuildJobResultDTO> getBuildJobs() {
+        return ObjectUtils.firstNonNull(buildJobs, List.of());
     }
 
     @Override
@@ -124,33 +114,4 @@ public class HadesBuildResultNotificationDTO extends AbstractBuildResultNotifica
     public String getJobName() {
         return jobName;
     }
-
-    public void setJobName(String jobName) {
-        this.jobName = jobName;
-    }
-
-    public void setAssignmentRepoBranchName(String assignmentRepoBranchName) {
-        this.assignmentRepoBranchName = assignmentRepoBranchName;
-    }
-
-    public void setAssignmentRepoCommitHash(String assignmentRepoCommitHash) {
-        this.assignmentRepoCommitHash = assignmentRepoCommitHash;
-    }
-
-    public void setTestsRepoCommitHash(String testsRepoCommitHash) {
-        this.testsRepoCommitHash = testsRepoCommitHash;
-    }
-
-    public void setBuildSuccessful(boolean buildSuccessful) {
-        isBuildSuccessful = buildSuccessful;
-    }
-
-    public void setBuildRunDate(ZonedDateTime buildRunDate) {
-        this.buildRunDate = buildRunDate;
-    }
-
-    public void setBuildJobs(List<HadesBuildJobResultDTO> buildJobs) {
-        this.buildJobs = buildJobs;
-    }
-
 }

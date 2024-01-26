@@ -9,6 +9,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -29,9 +31,12 @@ public class HadesCIService extends AbstractContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(HadesCIService.class);
 
+    private final ObjectMapper objectMapper;
+
     public HadesCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService, ObjectMapper objectMapper) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -64,7 +69,7 @@ public class HadesCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public String getPlanKey(Object requestBody) throws ContinuousIntegrationException {
-        var dto = HadesBuildResultNotificationDTO.convert(requestBody);
+        var dto = objectMapper.convertValue(requestBody, HadesBuildResultNotificationDTO.class);
 
         log.debug("Received build result for job {} in Hades", dto.getJobName());
 

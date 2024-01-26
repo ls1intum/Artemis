@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
@@ -40,7 +41,7 @@ public class HadesCIResultService extends AbstractContinuousIntegrationResultSer
     @Override
     public AbstractBuildResultNotificationDTO convertBuildResult(Object requestBody) {
         log.debug("Convert requestbody to BuildResultNotificationDTO");
-
+        mapper.registerModule(new JavaTimeModule());
         return mapper.convertValue(requestBody, HadesBuildResultNotificationDTO.class);
     }
 
