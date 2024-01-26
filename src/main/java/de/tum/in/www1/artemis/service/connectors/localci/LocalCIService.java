@@ -146,7 +146,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
-        // No webhooks needed between local CI and local VC, so we return an empty Optional.
+        // No webhooks needed within Integrated Code Lifecycle, so we return an empty Optional.
         return Optional.empty();
     }
 

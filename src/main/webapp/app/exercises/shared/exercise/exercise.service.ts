@@ -52,7 +52,6 @@ export class ExerciseService {
 
     constructor(
         private http: HttpClient,
-        private participationService: ParticipationService,
         private accountService: AccountService,
         private translateService: TranslateService,
         private entityTitleService: EntityTitleService,

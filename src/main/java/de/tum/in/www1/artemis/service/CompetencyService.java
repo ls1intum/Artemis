@@ -21,12 +21,9 @@ public class CompetencyService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final CompetencyProgressService competencyProgressService;
-
-    public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService, CompetencyProgressService competencyProgressService) {
+    public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService) {
         this.competencyRepository = competencyRepository;
         this.authCheckService = authCheckService;
-        this.competencyProgressService = competencyProgressService;
     }
 
     /**
@@ -145,11 +142,8 @@ public class CompetencyService {
             public boolean vertexIsPartOfCycle(Vertex sourceVertex) {
                 sourceVertex.setBeingVisited(true);
                 for (Vertex neighbor : sourceVertex.getAdjacencyList()) {
-                    if (neighbor.isBeingVisited()) {
-                        // backward edge exists
-                        return true;
-                    }
-                    else if (!neighbor.isVisited() && vertexIsPartOfCycle(neighbor)) {
+                    if (neighbor.isBeingVisited() || (!neighbor.isVisited() && vertexIsPartOfCycle(neighbor))) {
+                        // backward edge exists -> cycle
                         return true;
                     }
                 }
