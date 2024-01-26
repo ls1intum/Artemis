@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 @Service
 public class ExerciseDeletionService {
 
-    private final Logger log = LoggerFactory.getLogger(ExerciseDeletionService.class);
+    private static final Logger log = LoggerFactory.getLogger(ExerciseDeletionService.class);
 
     private final ParticipationService participationService;
 

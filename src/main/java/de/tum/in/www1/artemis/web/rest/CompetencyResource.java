@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -42,7 +43,7 @@ public class CompetencyResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final Logger log = LoggerFactory.getLogger(CompetencyResource.class);
+    private static final Logger log = LoggerFactory.getLogger(CompetencyResource.class);
 
     private static final String ENTITY_NAME = "competency";
 
@@ -224,13 +225,7 @@ public class CompetencyResource {
         var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
-        Competency competencyToCreate = new Competency();
-        competencyToCreate.setTitle(competency.getTitle().trim());
-        competencyToCreate.setDescription(competency.getDescription());
-        competencyToCreate.setSoftDueDate(competency.getSoftDueDate());
-        competencyToCreate.setTaxonomy(competency.getTaxonomy());
-        competencyToCreate.setMasteryThreshold(competency.getMasteryThreshold());
-        competencyToCreate.setOptional(competency.isOptional());
+        Competency competencyToCreate = competencyService.getCompetencyToCreate(competency);
         competencyToCreate.setCourse(course);
 
         var persistedCompetency = competencyRepository.save(competencyToCreate);
@@ -274,6 +269,34 @@ public class CompetencyResource {
         }
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/" + competencyToImport.getId())).body(competencyToImport);
+    }
+
+    /**
+     * Imports all competencies of the source course (and optionally their relations) into another
+     *
+     * @param courseId        the id of the course to import into
+     * @param sourceCourseId  the id of the course to import from
+     * @param importRelations if relations should be imported aswell
+     * @return the ResponseEntity with status 201 (Created) and with body containing the imported competencies (and relations)
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("/courses/{courseId}/competencies/import-all/{sourceCourseId}")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<List<CompetencyWithTailRelationDTO>> importAllCompetenciesFromCourse(@PathVariable long courseId, @PathVariable long sourceCourseId,
+            @RequestParam(defaultValue = "false") boolean importRelations) throws URISyntaxException {
+        log.info("REST request to all competencies from course {} into course {}", sourceCourseId, courseId);
+
+        if (courseId == sourceCourseId) {
+            throw new ConflictException("Cannot import from a course into itself", "Course", "courseCycle");
+        }
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var sourceCourse = courseRepository.findByIdElseThrow(sourceCourseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, sourceCourse, null);
+
+        List<CompetencyWithTailRelationDTO> importedCompetencies = competencyService.importAllCompetenciesFromCourse(course, sourceCourse, importRelations);
+
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(importedCompetencies);
     }
 
     /**

@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 @Profile("localci")
 public class LocalCIService extends AbstractContinuousIntegrationService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIService.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalCIService.class);
 
     public LocalCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
             BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {
@@ -146,7 +146,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
-        // No webhooks needed between local CI and local VC, so we return an empty Optional.
+        // No webhooks needed within Integrated Code Lifecycle, so we return an empty Optional.
         return Optional.empty();
     }
 

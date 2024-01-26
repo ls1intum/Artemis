@@ -47,7 +47,7 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 @RequestMapping("api/public/")
 public class PublicAccountResource {
 
-    private final Logger log = LoggerFactory.getLogger(PublicAccountResource.class);
+    private static final Logger log = LoggerFactory.getLogger(PublicAccountResource.class);
 
     @Value("${artemis.user-management.registration.allowed-email-pattern:#{null}}")
     private Optional<Pattern> allowedEmailPattern;

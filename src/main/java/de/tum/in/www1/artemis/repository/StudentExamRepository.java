@@ -52,7 +52,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             SELECT DISTINCT se
             FROM StudentExam se
                 LEFT JOIN FETCH se.exercises e
-            WHERE se.testRun = FALSE
+            WHERE se.testRun IS FALSE
                 AND se.exam.id = :examId
                 AND se.user.id = :userId
             """)
@@ -73,7 +73,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             SELECT se
             FROM StudentExam se
             WHERE se.exam.id = :examId
-                AND se.testRun = FALSE
+                AND se.testRun IS FALSE
             """)
     Set<StudentExam> findByExamId(@Param("examId") long examId);
 
@@ -81,7 +81,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             SELECT COUNT(DISTINCT se)
             FROM StudentExam se
             WHERE se.exam.id = :examId
-                AND se.testRun = FALSE
+                AND se.testRun IS FALSE
             """)
     long countByExamId(@Param("examId") long examId);
 
@@ -90,7 +90,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             FROM StudentExam se
                 LEFT JOIN FETCH se.examSessions
             WHERE se.exam.id = :examId
-            	AND se.testRun = FALSE
+            	AND se.testRun IS FALSE
             """)
     Set<StudentExam> findByExamIdWithSessions(@Param("examId") long examId);
 
@@ -107,7 +107,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             FROM StudentExam se
                 LEFT JOIN FETCH se.exercises e
             WHERE se.exam.id = :examId
-            	AND se.testRun = FALSE
+            	AND se.testRun IS FALSE
             """)
     Set<StudentExam> findAllWithoutTestRunsWithExercisesByExamId(@Param("examId") long examId);
 
@@ -115,33 +115,33 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             SELECT se
             FROM StudentExam se
             WHERE se.exam.id = :examId
-            	AND se.testRun = TRUE
+            	AND se.testRun IS TRUE
             """)
     List<StudentExam> findAllTestRunsByExamId(@Param("examId") Long examId);
 
     @Query("""
-            SELECT count(se)
+            SELECT COUNT(se)
             FROM StudentExam se
             WHERE se.exam.id = :examId
-            	AND se.testRun = TRUE
+            	AND se.testRun IS TRUE
             """)
     long countTestRunsByExamId(@Param("examId") Long examId);
 
     @Query("""
-            SELECT count(se)
+            SELECT COUNT(se)
             FROM StudentExam se
             WHERE se.exam.id = :examId
-            	AND se.started = TRUE
-            	AND se.testRun = FALSE
+            	AND se.started IS TRUE
+            	AND se.testRun IS FALSE
             """)
     long countStudentExamsStartedByExamIdIgnoreTestRuns(@Param("examId") Long examId);
 
     @Query("""
-            SELECT count(se)
+            SELECT COUNT(se)
             FROM StudentExam se
             WHERE se.exam.id = :examId
-            	AND se.submitted = TRUE
-            	AND se.testRun = FALSE
+            	AND se.submitted IS TRUE
+            	AND se.testRun IS FALSE
             """)
     long countStudentExamsSubmittedByExamIdIgnoreTestRuns(@Param("examId") Long examId);
 
@@ -154,7 +154,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
                 LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH r.assessor a
             WHERE se.exam.id = :examId
-            	AND se.testRun = TRUE
+            	AND se.testRun IS TRUE
             	AND se.user.id = sp.student.id
             """)
     List<StudentExam> findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(@Param("examId") Long examId);
@@ -185,7 +185,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             FROM StudentExam se
                 LEFT JOIN FETCH se.exercises e
             WHERE se.exam.id = :examId
-            	AND se.testRun = TRUE
+            	AND se.testRun IS TRUE
             	AND se.user.id = :userId
             """)
     List<StudentExam> findAllTestRunsWithExercisesByExamIdForUser(@Param("examId") Long examId, @Param("userId") Long userId);
@@ -193,7 +193,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     @Query("""
             SELECT DISTINCT se
             FROM StudentExam se
-            WHERE se.testRun = FALSE
+            WHERE se.testRun IS FALSE
             	AND se.exam.id = :examId
             	AND se.user.id = :userId
             """)
@@ -207,22 +207,22 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
      * @param userId   the id of the user (student) who may or may not have a StudentExam
      * @return True if the given user id has a matching StudentExam in the given exam and course, else false.
      */
-    boolean existsByExam_CourseIdAndExamIdAndUserId(@Param("courseId") long courseId, @Param("examId") long examId, @Param("userId") long userId);
+    boolean existsByExam_CourseIdAndExamIdAndUserId(long courseId, long examId, long userId);
 
     @Query("""
             SELECT DISTINCT se
             FROM StudentExam se
                 LEFT JOIN FETCH se.exercises e
-            WHERE se.testRun = FALSE
-            	AND e.id = :#{#exerciseId}
+            WHERE se.testRun IS FALSE
+            	AND e.id = :exerciseId
             	AND se.user.id = :userId
             """)
     Optional<StudentExam> findByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
 
     @Query("""
-            SELECT max(se.workingTime)
+            SELECT MAX(se.workingTime)
             FROM StudentExam se
-            WHERE se.testRun = FALSE
+            WHERE se.testRun IS FALSE
             	AND se.exam.id = :examId
             """)
     Optional<Integer> findMaxWorkingTimeByExamId(@Param("examId") Long examId);
@@ -230,7 +230,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     @Query("""
             SELECT DISTINCT se.workingTime
             FROM StudentExam se
-            WHERE se.testRun = FALSE
+            WHERE se.testRun IS FALSE
             	AND se.exam.id = :examId
             """)
     Set<Integer> findAllDistinctWorkingTimesByExamId(@Param("examId") Long examId);
@@ -239,7 +239,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             SELECT DISTINCT u
             FROM StudentExam se
                 LEFT JOIN se.user u
-            WHERE se.testRun = FALSE
+            WHERE se.testRun IS FALSE
             	AND se.exam.id = :examId
             """)
     Set<User> findUsersWithStudentExamsForExam(@Param("examId") Long examId);
@@ -249,20 +249,20 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             FROM StudentExam se
                 LEFT JOIN FETCH se.exercises
             WHERE se.exam.id = :examId
-            	AND se.submitted = FALSE
-            	AND se.testRun = FALSE
+            	AND se.submitted IS FALSE
+            	AND se.testRun IS FALSE
             """)
-    Set<StudentExam> findAllUnsubmittedWithExercisesByExamId(Long examId);
+    Set<StudentExam> findAllUnsubmittedWithExercisesByExamId(@Param("examId") Long examId);
 
-    List<StudentExam> findAllByExamId_AndTestRunIsTrue(@Param("examId") Long examId);
+    List<StudentExam> findAllByExamId_AndTestRunIsTrue(Long examId);
 
     @Query("""
             SELECT DISTINCT se
             FROM StudentExam se
             WHERE se.user.id = :userId
-                AND se.exam.course.id = :#{#courseId}
-                AND se.exam.testExam = TRUE
-                AND se.testRun = FALSE
+                AND se.exam.course.id = :courseId
+                AND se.exam.testExam IS TRUE
+                AND se.testRun IS FALSE
             """)
     List<StudentExam> findStudentExamForTestExamsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
@@ -272,9 +272,9 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
                 LEFT JOIN FETCH se.exercises exercises
             WHERE se.exam.id = :examId
                 AND se.user.id = :userId
-                AND se.submitted = FALSE
-                AND se.testRun = FALSE
-                AND se.exam.testExam = TRUE
+                AND se.submitted IS FALSE
+                AND se.testRun IS FALSE
+                AND se.exam.testExam IS TRUE
             """)
     List<StudentExam> findUnsubmittedStudentExamsForTestExamsWithExercisesByExamIdAndUserId(@Param("examId") Long examId, @Param("userId") Long userId);
 
@@ -282,7 +282,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE StudentExam s
-            SET s.submitted = true,
+            SET s.submitted = TRUE,
                 s.submissionDate = :submissionDate
             WHERE s.id = :studentExamId
             """)
@@ -292,7 +292,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE StudentExam s
-            SET s.started = true,
+            SET s.started = TRUE,
                 s.startedDate = :startedDate
             WHERE s.id = :studentExamId
             """)
@@ -485,7 +485,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
                 LEFT JOIN FETCH se.quizQuestions qq
             WHERE se.id IN :ids
             """)
-    List<StudentExam> findAllWithEagerQuizQuestionsById(List<Long> ids);
+    List<StudentExam> findAllWithEagerQuizQuestionsById(@Param("ids") List<Long> ids);
 
     /**
      * Get all student exams for the given exam id with exercises.
@@ -499,7 +499,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
                 LEFT JOIN FETCH se.exercises e
             WHERE se.id IN :ids
             """)
-    List<StudentExam> findAllWithEagerExercisesById(List<Long> ids);
+    List<StudentExam> findAllWithEagerExercisesById(@Param("ids") List<Long> ids);
 
     /**
      * Get all quiz questions for the given student exam id.

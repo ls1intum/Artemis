@@ -29,7 +29,9 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 @Service
 public class QuizExerciseService extends QuizService<QuizExercise> {
 
-    private final Logger log = LoggerFactory.getLogger(QuizExerciseService.class);
+    public static final String ENTITY_NAME = "QuizExercise";
+
+    private static final Logger log = LoggerFactory.getLogger(QuizExerciseService.class);
 
     private final QuizExerciseRepository quizExerciseRepository;
 

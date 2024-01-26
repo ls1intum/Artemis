@@ -43,7 +43,7 @@ import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 @RequestMapping("/api")
 public class QuizSubmissionResource {
 
-    private final Logger log = LoggerFactory.getLogger(QuizSubmissionResource.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizSubmissionResource.class);
 
     private static final String ENTITY_NAME = "quizSubmission";
 

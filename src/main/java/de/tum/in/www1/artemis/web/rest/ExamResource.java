@@ -61,7 +61,7 @@ import tech.jhipster.web.util.PaginationUtil;
 @RequestMapping("api/")
 public class ExamResource {
 
-    private final Logger log = LoggerFactory.getLogger(ExamResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ExamResource.class);
 
     private static final String ENTITY_NAME = "exam";
 
