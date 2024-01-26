@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.core.env.Environment;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -58,6 +59,7 @@ import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 /**
  * Service Implementation for managing Course.
@@ -192,6 +194,26 @@ public class CourseService {
         this.learningPathService = learningPathService;
         this.irisSettingsService = irisSettingsService;
         this.lectureRepository = lectureRepository;
+    }
+
+    /**
+     * Search for all courses fitting a {@link PageableSearchDTO search query}. The result is paged.
+     *
+     * @param search The search query defining the search term and the size of the returned page
+     * @param user   The user for whom to fetch all available lectures
+     * @return A wrapper object containing a list of all found courses and the total number of pages
+     */
+    public SearchResultPageDTO<Course> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
+        final var pageable = PageUtil.createCoursePageRequest(search);
+        final var searchTerm = search.getSearchTerm();
+        final Page<Course> coursePage;
+        if (authCheckService.isAdmin(user)) {
+            coursePage = courseRepository.findByTitleIgnoreCaseContaining(searchTerm, pageable);
+        }
+        else {
+            coursePage = courseRepository.findByTitleInCoursesWhereInstructorOrEditor(searchTerm, user.getGroups(), pageable);
+        }
+        return new SearchResultPageDTO<>(coursePage.getContent(), coursePage.getTotalPages());
     }
 
     /**
