@@ -7,9 +7,13 @@ import com.fasterxml.jackson.annotation.*;
 @Entity
 @DiscriminatorValue(value = "Q")
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-@JsonSubTypes({ @JsonSubTypes.Type(value = MultipleChoiceQuestionStatistic.class, name = "multiple-choice"),
-        @JsonSubTypes.Type(value = DragAndDropQuestionStatistic.class, name = "drag-and-drop"),
-        @JsonSubTypes.Type(value = ShortAnswerQuestionStatistic.class, name = "short-answer") })
+// @formatter:off
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = MultipleChoiceQuestionStatistic.class, name = "multiple-choice"),
+    @JsonSubTypes.Type(value = DragAndDropQuestionStatistic.class, name = "drag-and-drop"),
+    @JsonSubTypes.Type(value = ShortAnswerQuestionStatistic.class, name = "short-answer")
+})
+// @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class QuizQuestionStatistic extends QuizStatistic implements QuizQuestionComponent<QuizQuestion> {
 

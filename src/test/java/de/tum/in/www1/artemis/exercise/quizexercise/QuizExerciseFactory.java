@@ -108,15 +108,6 @@ public class QuizExerciseFactory {
         sa.addSolution(shortAnswerSolution2);
 
         var mapping1 = new ShortAnswerMapping().spot(sa.getSpots().get(0)).solution(sa.getSolutions().get(0));
-        shortAnswerSolution1.addMappings(mapping1);
-        shortAnswerSpot1.addMappings(mapping1);
-        // also invoke remove once
-        shortAnswerSolution1.removeMappings(mapping1);
-        shortAnswerSpot1.removeMappings(mapping1);
-        shortAnswerSolution1.addMappings(mapping1);
-        shortAnswerSpot1.addMappings(mapping1);
-        assertThat(shortAnswerSolution1.getMappings()).isNotEmpty();
-        assertThat(shortAnswerSpot1.getMappings()).isNotEmpty();
 
         var mapping2 = new ShortAnswerMapping().spot(sa.getSpots().get(1)).solution(sa.getSolutions().get(1));
         sa.addCorrectMapping(mapping1);
@@ -176,11 +167,6 @@ public class QuizExerciseFactory {
         dnd.addDragItem(dragItem4);
 
         var mapping1 = new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1);
-        dragItem1.addMappings(mapping1);
-        // also invoke remove
-        dragItem1.removeMappings(mapping1);
-        dragItem1.addMappings(mapping1);
-        assertThat(dragItem1.getMappings()).isNotEmpty();
 
         dnd.addCorrectMapping(mapping1);
         dnd.removeCorrectMapping(mapping1);
@@ -486,11 +472,6 @@ public class QuizExerciseFactory {
         dnd.addDragItem(dragItem5);
 
         var mapping1 = new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1);
-        dragItem1.addMappings(mapping1);
-        // also invoke remove
-        dragItem1.removeMappings(mapping1);
-        dragItem1.addMappings(mapping1);
-        assertThat(dragItem1.getMappings()).isNotEmpty();
 
         dnd.addCorrectMapping(mapping1);
         dnd.removeCorrectMapping(mapping1);
