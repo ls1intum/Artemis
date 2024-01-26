@@ -50,7 +50,7 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     private Lecture lecture;
 
     @ManyToMany
-    @JoinTable(name = "learning_goal_lecture_unit", joinColumns = @JoinColumn(name = "lecture_unit_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"))
+    @JoinTable(name = "competency_lecture_unit", joinColumns = @JoinColumn(name = "lecture_unit_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "competency_id", referencedColumnName = "id"))
     @OrderBy("title")
     @JsonIgnoreProperties({ "lectureUnits", "course" })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
