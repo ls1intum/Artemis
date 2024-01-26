@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -297,6 +299,22 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     Integer countCourseMembers(@Param("courseId") Long courseId);
 
+    /**
+     * Query which fetches all courses for which the user is editor or instructor and matching the search criteria.
+     *
+     * @param partialTitle title search term
+     * @param groups       user groups
+     * @param pageable     Pageable
+     * @return Page with course results
+     */
+    @Query("""
+            SELECT c
+            FROM Course c
+            WHERE (c.instructorGroupName IN :groups OR c.editorGroupName IN :groups)
+                AND (c.title LIKE %:partialTitle%)
+            """)
+    Page<Course> findByTitleInCoursesWhereInstructorOrEditor(@Param("partialTitle") String partialTitle, @Param("groups") Set<String> groups, Pageable pageable);
+
     @NotNull
     default Course findByIdElseThrow(long courseId) throws EntityNotFoundException {
         return findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
@@ -428,6 +446,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     default Course findWithEagerLearningPathsAndCompetenciesByIdElseThrow(long courseId) {
         return findWithEagerLearningPathsAndCompetenciesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
+
+    Page<Course> findByTitleIgnoreCaseContaining(String partialTitle, Pageable pageable);
 
     /**
      * Checks if the messaging feature is enabled for a course.

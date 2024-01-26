@@ -16,6 +16,7 @@ import { CompetencyImportComponent } from 'app/course/competencies/competency-ma
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { CompetencyImportCourseComponent } from 'app/course/competencies/competency-management/competency-import-course.component';
 
 @NgModule({
     imports: [
@@ -39,6 +40,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
         CompetenciesPopoverComponent,
         PrerequisiteImportComponent,
         CompetencyImportComponent,
+        CompetencyImportCourseComponent,
     ],
     exports: [CompetencyCardComponent, CompetenciesPopoverComponent, CompetencyFormComponent, CompetencyRingsComponent],
 })
