@@ -466,7 +466,8 @@ public abstract class QuizService<T extends QuizConfiguration> {
      */
     private URI saveDragAndDropImage(Path basePath, MultipartFile file, @Nullable Long entityId) throws IOException {
         String clearFileExtension = FileService.sanitizeFilename(FilenameUtils.getExtension(Objects.requireNonNull(file.getOriginalFilename())));
-        Path savePath = basePath.resolve(fileService.generateFilename("dnd_image_", clearFileExtension));
+        String safeFilename = fileService.generateFilename("dnd_image_", clearFileExtension);
+        Path savePath = basePath.resolve(safeFilename).normalize();
         FileUtils.copyToFile(file.getInputStream(), savePath.toFile());
         return filePathService.publicPathForActualPathOrThrow(savePath, entityId);
     }
