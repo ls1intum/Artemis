@@ -21,7 +21,7 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
             DELETE FROM CompetencyProgress cp
             WHERE cp.learningGoal.id = :learningGoalId
             """)
-    void deleteAllByCompetencyId(Long learningGoalId);
+    void deleteAllByCompetencyId(@Param("learningGoalId") Long learningGoalId);
 
     @Transactional // ok because of delete
     @Modifying
