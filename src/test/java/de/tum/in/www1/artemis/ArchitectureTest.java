@@ -5,6 +5,7 @@ import static com.tngtech.archunit.core.domain.JavaCall.Predicates.target;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.*;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
+import static com.tngtech.archunit.core.domain.properties.HasType.Predicates.rawType;
 import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.*;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
@@ -17,6 +18,9 @@ import org.eclipse.jgit.api.Git;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.slf4j.Logger;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 import com.tngtech.archunit.base.DescribedPredicate;
@@ -137,6 +141,12 @@ class ArchitectureTest extends AbstractArchitectureTest {
         jsonParser.check(allClasses);
     }
 
+    @Test
+    void testRepositoryParamAnnotation() {
+        var param = methods().that().areAnnotatedWith(Query.class).should(haveAllParametersAnnotatedWith(rawType(Param.class), type(Pageable.class)));
+        param.check(productionClasses);
+    }
+
     // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes
 
     private DescribedPredicate<? super JavaAnnotation<?>> simpleNameAnnotation(String name) {
@@ -148,11 +158,32 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     private ArchCondition<JavaMethod> notHaveAnyParameterAnnotatedWith(DescribedPredicate<? super JavaAnnotation<?>> annotationPredicate) {
-        return new ArchCondition<>("have parameters annotated with ") {
+        return new ArchCondition<>("not have parameters annotated with " + annotationPredicate.getDescription()) {
 
             @Override
             public void check(JavaMethod item, ConditionEvents events) {
                 boolean satisfied = item.getParameterAnnotations().stream().flatMap(Collection::stream).noneMatch(annotationPredicate);
+                if (!satisfied) {
+                    events.add(violated(item, String.format("Method %s has parameter violating %s", item.getFullName(), annotationPredicate.getDescription())));
+                }
+            }
+        };
+    }
+
+    private ArchCondition<JavaMethod> haveAllParametersAnnotatedWith(DescribedPredicate<? super JavaAnnotation<?>> annotationPredicate, DescribedPredicate<JavaClass> exception) {
+        return new ArchCondition<>("have all parameters annotated with " + annotationPredicate.getDescription()) {
+
+            @Override
+            public void check(JavaMethod item, ConditionEvents events) {
+                boolean satisfied = item.getParameterAnnotations().stream().allMatch(annotations -> {
+                    // Ignore annotations of the Pageable parameter
+                    if (annotations.stream().anyMatch(annotation -> !exception.test(annotation.getOwner().getRawType()))) {
+                        return true;
+                    }
+                    // Else, one of the annotations should match the predicated
+                    // This allows parameters with multiple annotations (e.g. @NonNull @Param)
+                    return annotations.stream().anyMatch(annotationPredicate);
+                });
                 if (!satisfied) {
                     events.add(violated(item, String.format("Method %s has parameter violating %s", item.getFullName(), annotationPredicate.getDescription())));
                 }
