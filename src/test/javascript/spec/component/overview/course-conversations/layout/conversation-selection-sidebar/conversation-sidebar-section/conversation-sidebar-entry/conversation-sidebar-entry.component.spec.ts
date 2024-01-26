@@ -28,6 +28,7 @@ import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/cour
 import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 import { NotificationService } from 'app/shared/notification/notification.service';
+import { MockNotificationService } from '../../../../../../../helpers/mocks/service/mock-notification.service';
 
 const examples: ConversationDto[] = [
     generateOneToOneChatDTO({}),
@@ -47,6 +48,7 @@ examples.forEach((conversation) => {
         let updateIsHiddenSpy: jest.SpyInstance;
         let updateIsMutedSpy: jest.SpyInstance;
         let location: Location;
+        let notificationService: NotificationService;
         const course = { id: 1 } as any;
         const activeConversation = generateExampleGroupChatDTO({ id: 99 });
 
@@ -70,9 +72,9 @@ examples.forEach((conversation) => {
                 providers: [
                     MockProvider(ConversationService),
                     MockProvider(AlertService),
-                    MockProvider(NotificationService),
                     MockProvider(NgbModal),
                     { provide: MetisService, useClass: MockMetisService },
+                    { provide: NotificationService, useClass: MockNotificationService },
                 ],
             }).compileComponents();
         }));
@@ -85,9 +87,10 @@ examples.forEach((conversation) => {
             updateIsMutedSpy = jest.spyOn(conversationService, 'updateIsMuted').mockReturnValue(of(new HttpResponse<void>()));
 
             location = TestBed.inject(Location);
+            notificationService = TestBed.inject(NotificationService);
 
             component = fixture.componentInstance;
-            component.conversation = conversation;
+            component.conversation = Object.assign({}, conversation);
             component.activeConversation = activeConversation;
             component.course = course;
             fixture.detectChanges();
@@ -125,6 +128,18 @@ examples.forEach((conversation) => {
             expect(updateIsMutedSpy).toHaveBeenCalledOnce();
             expect(updateIsMutedSpy).toHaveBeenCalledWith(course.id, conversation.id, true);
             expect(conversationIsMutedDidChangeSpy).toHaveBeenCalledOnce();
+        }));
+
+        it('should update the notification service`s muted conversations', fakeAsync(() => {
+            const button = fixture.debugElement.nativeElement.querySelector('.hide');
+            const muteNotificationsForConversationSpy = jest.spyOn(notificationService, 'muteNotificationsForConversation').mockReturnValue();
+            button.click();
+            tick(501);
+            expect(muteNotificationsForConversationSpy).toHaveBeenCalledOnce();
+            const unmuteNotificationsForConversationSpy = jest.spyOn(notificationService, 'unmuteNotificationsForConversation').mockReturnValue();
+            button.click();
+            tick(501);
+            expect(unmuteNotificationsForConversationSpy).toHaveBeenCalledOnce();
         }));
 
         it('should open conversation detail with setting tab if setting button is clicked', fakeAsync(() => {
