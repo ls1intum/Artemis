@@ -205,7 +205,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query("""
              SELECT user
              FROM User user
-             LEFT JOIN user.groups userGroup
+             LEFT JOIN FETCH user.groups userGroup
              WHERE user.isDeleted = false AND (
                 userGroup IN :#{#groupNames}
                 AND (user.login LIKE :#{#loginOrName}% OR concat(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%)
@@ -227,7 +227,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query("""
              SELECT user
              FROM User user
-             LEFT JOIN user.groups userGroup
+             LEFT JOIN FETCH user.groups userGroup
              WHERE user.isDeleted = false AND (
                 userGroup IN :#{#groupNames}
                 AND (user.login LIKE :#{#loginOrName}% OR concat(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%)
