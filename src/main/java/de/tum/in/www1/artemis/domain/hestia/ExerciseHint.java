@@ -25,7 +25,12 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 @DiscriminatorValue("T")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-@JsonSubTypes({ @JsonSubTypes.Type(value = ExerciseHint.class, name = "text"), @JsonSubTypes.Type(value = CodeHint.class, name = "code") })
+// @formatter:off
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = ExerciseHint.class, name = "text"),
+    @JsonSubTypes.Type(value = CodeHint.class, name = "code")
+})
+// @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExerciseHint extends DomainObject {
 

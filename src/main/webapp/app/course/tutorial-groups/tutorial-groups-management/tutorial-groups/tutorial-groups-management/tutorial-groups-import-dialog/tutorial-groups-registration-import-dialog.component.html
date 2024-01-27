@@ -243,7 +243,7 @@
                 }
             </div>
         }
-        <div class="flex-grow-1 d-flex justify-content-end">
+        <div class="flex-grow-1 d-flex justify-content-end gap-2">
             @if (!isImportDone) {
                 <button type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="clear()">
                     <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span>{{ 'entity.action.cancel' | artemisTranslate }}</span>
@@ -251,7 +251,7 @@
             }
             @if (!isImportDone) {
                 <button type="submit" id="import" name="importButton" class="btn btn-primary" [disabled]="isSubmitDisabled" (click)="import()">
-                    <fa-icon [icon]="faUpload" class="me-2"></fa-icon>
+                    <fa-icon [icon]="faFileImport" class="me-2"></fa-icon>
                     <span>{{ 'entity.action.to-import' | artemisTranslate }}</span>
                     <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="faCircleNotch"></fa-icon>
                 </button>
