@@ -37,86 +37,64 @@
                         </select>
                     </dd>
                 </div>
-                @if (selectedLtiVersionKey) {
+                <div>
                     <div>
-                        @if (selectedLtiVersionKey === 'artemisApp.lti.version10') {
-                            <div>
-                                <dt>
-                                    <span>{{ 'artemisApp.lti.ltiKey' | artemisTranslate }}</span>
-                                </dt>
-                                <dd>
-                                    <span>{{ onlineCourseConfiguration?.ltiKey }}</span>
-                                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiKey ?? ''"></jhi-copy-icon-button>
-                                </dd>
-                                <dt>
-                                    <span>{{ 'artemisApp.lti.ltiSecret' | artemisTranslate }}</span>
-                                </dt>
-                                <dd>
-                                    <span>{{ onlineCourseConfiguration?.ltiSecret }}</span>
-                                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiSecret ?? ''"></jhi-copy-icon-button>
-                                </dd>
-                            </div>
-                        }
-                        @if (selectedLtiVersionKey === 'artemisApp.lti.version13') {
-                            <div>
-                                <dt>
-                                    <span>{{ 'artemisApp.lti13.externalToolSettings' | artemisTranslate }}</span>
-                                    @if (missingLti13ConfigurationField()) {
-                                        <fa-icon
-                                            [icon]="faExclamationTriangle"
-                                            class="text-warning"
-                                            ngbTooltip="{{ 'artemisApp.lti13.missingConfigurationWarning' | artemisTranslate }}"
-                                        ></fa-icon>
-                                    }
-                                    <jhi-help-icon text="artemisApp.lti13.externalToolSettingsTooltip"></jhi-help-icon>
-                                </dt>
-                                <dd></dd>
-                                <dt>
-                                    <span>{{ 'artemisApp.lti.customName' | artemisTranslate }}</span>
-                                </dt>
-                                <dd>
-                                    <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.customName }}</span>
-                                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.customName ?? ''"></jhi-copy-icon-button>
-                                </dd>
-                                <dt>
-                                    <span>{{ 'artemisApp.lti.registrationId' | artemisTranslate }}</span>
-                                </dt>
-                                <dd>
-                                    <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.registrationId }}</span>
-                                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.registrationId ?? ''"></jhi-copy-icon-button>
-                                </dd>
-                                <dt>
-                                    <span>{{ 'artemisApp.lti.clientId' | artemisTranslate }}</span>
-                                </dt>
-                                <dd>
-                                    <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.clientId }}</span>
-                                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.clientId ?? ''"></jhi-copy-icon-button>
-                                </dd>
-                                <dt>
-                                    <span>{{ 'artemisApp.lti.authorizationUri' | artemisTranslate }}</span>
-                                </dt>
-                                <dd>
-                                    <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.authorizationUri }}</span>
-                                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.authorizationUri ?? ''"></jhi-copy-icon-button>
-                                </dd>
-                                <dt>
-                                    <span>{{ 'artemisApp.lti.tokenUri' | artemisTranslate }}</span>
-                                </dt>
-                                <dd>
-                                    <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.tokenUri }}</span>
-                                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.tokenUri ?? ''"></jhi-copy-icon-button>
-                                </dd>
-                                <dt>
-                                    <span>{{ 'artemisApp.lti.jwkSetUri' | artemisTranslate }}</span>
-                                </dt>
-                                <dd>
-                                    <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.jwkSetUri }}</span>
-                                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.jwkSetUri ?? ''"></jhi-copy-icon-button>
-                                </dd>
-                            </div>
-                        }
+                        <dt>
+                            <span>{{ 'artemisApp.lti13.externalToolSettings' | artemisTranslate }}</span>
+                            @if (missingLti13ConfigurationField()) {
+                                <fa-icon
+                                    [icon]="faExclamationTriangle"
+                                    class="text-warning"
+                                    ngbTooltip="{{ 'artemisApp.lti13.missingConfigurationWarning' | artemisTranslate }}"
+                                ></fa-icon>
+                            }
+                            <jhi-help-icon text="artemisApp.lti13.externalToolSettingsTooltip"></jhi-help-icon>
+                        </dt>
+                        <dd></dd>
+                        <dt>
+                            <span>{{ 'artemisApp.lti.customName' | artemisTranslate }}</span>
+                        </dt>
+                        <dd>
+                            <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.customName }}</span>
+                            <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.customName ?? ''"></jhi-copy-icon-button>
+                        </dd>
+                        <dt>
+                            <span>{{ 'artemisApp.lti.registrationId' | artemisTranslate }}</span>
+                        </dt>
+                        <dd>
+                            <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.registrationId }}</span>
+                            <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.registrationId ?? ''"></jhi-copy-icon-button>
+                        </dd>
+                        <dt>
+                            <span>{{ 'artemisApp.lti.clientId' | artemisTranslate }}</span>
+                        </dt>
+                        <dd>
+                            <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.clientId }}</span>
+                            <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.clientId ?? ''"></jhi-copy-icon-button>
+                        </dd>
+                        <dt>
+                            <span>{{ 'artemisApp.lti.authorizationUri' | artemisTranslate }}</span>
+                        </dt>
+                        <dd>
+                            <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.authorizationUri }}</span>
+                            <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.authorizationUri ?? ''"></jhi-copy-icon-button>
+                        </dd>
+                        <dt>
+                            <span>{{ 'artemisApp.lti.tokenUri' | artemisTranslate }}</span>
+                        </dt>
+                        <dd>
+                            <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.tokenUri }}</span>
+                            <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.tokenUri ?? ''"></jhi-copy-icon-button>
+                        </dd>
+                        <dt>
+                            <span>{{ 'artemisApp.lti.jwkSetUri' | artemisTranslate }}</span>
+                        </dt>
+                        <dd>
+                            <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.jwkSetUri }}</span>
+                            <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.jwkSetUri ?? ''"></jhi-copy-icon-button>
+                        </dd>
                     </div>
-                }
+                </div>
                 <div>
                     <dd>
                         <a (click)="toggleAdvancedSettings()">

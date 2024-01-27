@@ -3173,7 +3173,7 @@ public class CourseTestService {
 
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
         course.setOnlineCourse(true);
-        OnlineCourseConfiguration onlineCourseConfiguration = CourseFactory.generateOnlineCourseConfiguration(course, "key", "secret", "prefix", "url");
+        OnlineCourseConfiguration onlineCourseConfiguration = CourseFactory.generateOnlineCourseConfiguration(course, "prefix", "url");
         onlineCourseConfiguration.setLtiPlatformConfiguration(ltiPlatformConfiguration);
 
         course = courseRepo.save(course);

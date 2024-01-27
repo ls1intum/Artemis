@@ -35,8 +35,6 @@ describe('Course LTI Configuration Component', () => {
 
     const onlineCourseConfiguration = {
         id: 1,
-        ltiKey: 'key',
-        ltiSecret: 'secret',
         userPrefix: 'prefix',
     } as OnlineCourseConfiguration;
     const course = {
