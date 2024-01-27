@@ -37,21 +37,18 @@ public class FileUploadSubmissionService extends SubmissionService {
 
     private final FileService fileService;
 
-    private final FilePathService filePathService;
-
     private final ExerciseDateService exerciseDateService;
 
     public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             ParticipationService participationService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, FileService fileService,
             AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository, ExamDateService examDateService, ExerciseDateService exerciseDateService,
             CourseRepository courseRepository, ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService,
-            FilePathService filePathService, Optional<AthenaSubmissionSelectionService> athenaSubmissionSelectionService) {
+            Optional<AthenaSubmissionSelectionService> athenaSubmissionSelectionService) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
                 exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaSubmissionSelectionService);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileService = fileService;
         this.exerciseDateService = exerciseDateService;
-        this.filePathService = filePathService;
     }
 
     /**

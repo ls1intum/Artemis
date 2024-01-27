@@ -6,15 +6,11 @@ import java.net.URI;
 import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
 
 class FilePathServiceTest extends AbstractSpringIntegrationIndependentTest {
-
-    @Autowired
-    private FilePathService filePathService;
 
     @Test
     void testActualPathForPublicPath() {
@@ -46,10 +42,10 @@ class FilePathServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     void testActualPathForPublicFileUploadExercisePathOrThrow_shouldThrowException() {
         assertThatExceptionOfType(FilePathParsingException.class)
-                .isThrownBy(() -> filePathService.actualPathForPublicPathOrThrow(URI.create("/api/files/file-upload-exercises/file.pdf")))
+                .isThrownBy(() -> FilePathService.actualPathForPublicPathOrThrow(URI.create("/api/files/file-upload-exercises/file.pdf")))
                 .withMessageStartingWith("Public path does not contain correct exerciseId or submissionId:");
 
-        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> filePathService.actualPathForPublicPathOrThrow(URI.create("/api/unknown-path/unknown-file.pdf")))
+        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> FilePathService.actualPathForPublicPathOrThrow(URI.create("/api/unknown-path/unknown-file.pdf")))
                 .withMessageStartingWith("Unknown Filepath:");
     }
 

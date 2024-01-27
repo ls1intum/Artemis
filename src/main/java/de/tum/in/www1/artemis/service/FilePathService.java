@@ -74,7 +74,7 @@ public class FilePathService {
      * @throws FilePathParsingException if the path is unknown
      * @return the actual path to that file in the local filesystem
      */
-    public Path actualPathForPublicPathOrThrow(URI publicPath) {
+    public static Path actualPathForPublicPathOrThrow(URI publicPath) {
         Path actualPath = actualPathForPublicPath(publicPath);
         if (actualPath == null) {
             // path is unknown => cannot convert
@@ -98,26 +98,26 @@ public class FilePathService {
 
         // check for known path to convert
         if (uriPath.startsWith("/api/files/temp")) {
-            return FilePathService.getTempFilePath().resolve(filename);
+            return getTempFilePath().resolve(filename);
         }
         if (uriPath.startsWith("/api/files/drag-and-drop/backgrounds")) {
-            return FilePathService.getDragAndDropBackgroundFilePath().resolve(filename);
+            return getDragAndDropBackgroundFilePath().resolve(filename);
         }
         if (uriPath.startsWith("/api/files/drag-and-drop/drag-items")) {
-            return FilePathService.getDragItemFilePath().resolve(filename);
+            return getDragItemFilePath().resolve(filename);
         }
         if (uriPath.startsWith("/api/files/course/icons")) {
-            return FilePathService.getCourseIconFilePath().resolve(filename);
+            return getCourseIconFilePath().resolve(filename);
         }
         if (uriPath.startsWith("/api/files/exam-user/signatures")) {
-            return FilePathService.getExamUserSignatureFilePath().resolve(filename);
+            return getExamUserSignatureFilePath().resolve(filename);
         }
         if (uriPath.startsWith("/api/files/exam-user")) {
-            return FilePathService.getStudentImageFilePath().resolve(filename);
+            return getStudentImageFilePath().resolve(filename);
         }
         if (uriPath.startsWith("/api/files/attachments/lecture")) {
             String lectureId = path.getName(4).toString();
-            return FilePathService.getLectureAttachmentFilePath().resolve(Path.of(lectureId, filename));
+            return getLectureAttachmentFilePath().resolve(Path.of(lectureId, filename));
         }
         if (uriPath.startsWith("/api/files/attachments/attachment-unit")) {
             return actualPathForPublicAttachmentUnitFilePath(publicPath, filename);
@@ -133,7 +133,7 @@ public class FilePathService {
         Path path = Path.of(publicPath.getPath());
         if (!publicPath.toString().contains("/slide")) {
             String attachmentUnitId = path.getName(4).toString();
-            return FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, filename));
+            return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, filename));
         }
         try {
             String attachmentUnitId = path.getName(4).toString();
@@ -141,7 +141,7 @@ public class FilePathService {
             // check if the ids are valid long values
             Long.parseLong(attachmentUnitId);
             Long.parseLong(slideId);
-            return FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, "slide", slideId, filename));
+            return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, "slide", slideId, filename));
         }
         catch (IllegalArgumentException e) {
             throw new FilePathParsingException("Public path does not contain correct attachmentUnitId or slideId: " + publicPath, e);
@@ -194,31 +194,31 @@ public class FilePathService {
         // generate part for id
         String id = entityId == null ? Constants.FILEPATH_ID_PLACEHOLDER : entityId.toString();
         // check for known path to convert
-        if (path.startsWith(FilePathService.getTempFilePath())) {
+        if (path.startsWith(getTempFilePath())) {
             return URI.create(FileService.DEFAULT_FILE_SUBPATH + filename);
         }
-        if (path.startsWith(FilePathService.getDragAndDropBackgroundFilePath())) {
+        if (path.startsWith(getDragAndDropBackgroundFilePath())) {
             return URI.create("/api/files/drag-and-drop/backgrounds/" + id + "/" + filename);
         }
-        if (path.startsWith(FilePathService.getDragItemFilePath())) {
+        if (path.startsWith(getDragItemFilePath())) {
             return URI.create("/api/files/drag-and-drop/drag-items/" + id + "/" + filename);
         }
-        if (path.startsWith(FilePathService.getCourseIconFilePath())) {
+        if (path.startsWith(getCourseIconFilePath())) {
             return URI.create("/api/files/course/icons/" + id + "/" + filename);
         }
-        if (path.startsWith(FilePathService.getExamUserSignatureFilePath())) {
+        if (path.startsWith(getExamUserSignatureFilePath())) {
             return URI.create("/api/files/exam-user/signatures/" + id + "/" + filename);
         }
-        if (path.startsWith(FilePathService.getStudentImageFilePath())) {
+        if (path.startsWith(getStudentImageFilePath())) {
             return URI.create("/api/files/exam-user/" + id + "/" + filename);
         }
-        if (path.startsWith(FilePathService.getLectureAttachmentFilePath())) {
+        if (path.startsWith(getLectureAttachmentFilePath())) {
             return URI.create("/api/files/attachments/lecture/" + id + "/" + filename);
         }
-        if (path.startsWith(FilePathService.getAttachmentUnitFilePath())) {
+        if (path.startsWith(getAttachmentUnitFilePath())) {
             return publicPathForActualAttachmentUnitFilePath(path, filename, id);
         }
-        if (path.startsWith(FilePathService.getFileUploadExercisesFilePath())) {
+        if (path.startsWith(getFileUploadExercisesFilePath())) {
             return publicPathForActualFileUploadExercisesFilePath(path, filename, id);
         }
 

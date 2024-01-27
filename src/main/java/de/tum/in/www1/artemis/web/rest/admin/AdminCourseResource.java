@@ -54,10 +54,8 @@ public class AdminCourseResource {
 
     private final Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService;
 
-    private final FilePathService filePathService;
-
     public AdminCourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
-            FileService fileService, Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, ChannelService channelService, FilePathService filePathService) {
+            FileService fileService, Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, ChannelService channelService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
@@ -65,7 +63,6 @@ public class AdminCourseResource {
         this.fileService = fileService;
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.channelService = channelService;
-        this.filePathService = filePathService;
     }
 
     /**
@@ -158,7 +155,7 @@ public class AdminCourseResource {
 
         courseService.delete(course);
         if (course.getCourseIcon() != null) {
-            fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(URI.create(course.getCourseIcon())), 0);
+            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(course.getCourseIcon())), 0);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, Course.ENTITY_NAME, course.getTitle())).build();
     }

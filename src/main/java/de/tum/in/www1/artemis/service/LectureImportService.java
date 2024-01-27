@@ -32,14 +32,10 @@ public class LectureImportService {
 
     private final AttachmentRepository attachmentRepository;
 
-    private final FilePathService filePathService;
-
-    public LectureImportService(LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository, AttachmentRepository attachmentRepository,
-            FilePathService filePathService) {
+    public LectureImportService(LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository, AttachmentRepository attachmentRepository) {
         this.lectureRepository = lectureRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.attachmentRepository = attachmentRepository;
-        this.filePathService = filePathService;
     }
 
     /**
@@ -162,7 +158,7 @@ public class LectureImportService {
         attachment.setVersion(importedAttachment.getVersion());
         attachment.setAttachmentType(importedAttachment.getAttachmentType());
 
-        Path oldPath = filePathService.actualPathForPublicPathOrThrow(URI.create(importedAttachment.getLink()));
+        Path oldPath = FilePathService.actualPathForPublicPathOrThrow(URI.create(importedAttachment.getLink()));
         Path tempPath = FilePathService.getTempFilePath().resolve(oldPath.getFileName());
 
         try {

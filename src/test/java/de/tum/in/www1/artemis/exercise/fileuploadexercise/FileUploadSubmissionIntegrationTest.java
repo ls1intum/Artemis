@@ -66,9 +66,6 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
 
-    @Autowired
-    private FilePathService filePathService;
-
     private FileUploadExercise releasedFileUploadExercise;
 
     private FileUploadExercise finishedFileUploadExercise;
