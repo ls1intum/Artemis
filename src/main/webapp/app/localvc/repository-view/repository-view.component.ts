@@ -4,14 +4,10 @@ import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
-import { Result } from 'app/entities/result.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { Complaint } from 'app/entities/complaint.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { map, switchMap, tap } from 'rxjs/operators';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
@@ -21,6 +17,8 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { CommitsInfoDropdownComponent } from 'app/exercises/programming/shared/commits-info/commits-info-dropdown.component';
 
 @Component({
     selector: 'jhi-repository-view',
@@ -29,6 +27,7 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 })
 export class RepositoryViewComponent implements OnInit, OnDestroy {
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
+    @ViewChild(CommitsInfoDropdownComponent, { static: false }) commitsInfoDropdown: CommitsInfoDropdownComponent;
     PROGRAMMING = ExerciseType.PROGRAMMING;
 
     readonly diffMatchPatch = new DiffMatchPatch();
@@ -37,33 +36,15 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     paramSub: Subscription;
     participation: ProgrammingExerciseStudentParticipation;
     exercise: ProgrammingExercise;
-    submission?: ProgrammingSubmission;
-    manualResult?: Result;
+    submissions: ProgrammingSubmission[];
     userId: number;
-    // for assessment-layout
-    isTestRun = false;
-    saveBusy = false;
-    submitBusy = false;
-    cancelBusy = false;
-    nextSubmissionBusy = false;
-    isAssessor = false;
-    assessmentsAreValid = false;
-    complaint: Complaint;
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
     loadingParticipation = false;
     participationCouldNotBeFetched = false;
     showEditorInstructions = true;
-    hasAssessmentDueDatePassed: boolean;
-    examId = 0;
-    exerciseId: number;
-    exerciseGroupId: number;
-    exerciseDashboardLink: string[];
-    loadingInitialSubmission = true;
     highlightDifferences = false;
 
     localVCEnabled = false;
-
-    lockLimitReached = false;
 
     templateParticipation: TemplateProgrammingExerciseParticipation;
     templateFileSession: { [fileName: string]: string } = {};
@@ -73,7 +54,6 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
 
     constructor(
         private accountService: AccountService,
-        private programmingSubmissionService: ProgrammingSubmissionService,
         private domainService: DomainService,
         private route: ActivatedRoute,
         private alertService: AlertService,
@@ -103,6 +83,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
                         this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
                         this.participation = participationWithResults;
                         this.exercise = this.participation.exercise as ProgrammingExercise;
+                        this.submissions = this.participation.submissions as ProgrammingSubmission[];
                     }),
                     // The following is needed for highlighting changed code lines
                     switchMap(() => this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exercise.id!)),
@@ -215,6 +196,11 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
      */
     onError(error: string) {
         this.alertService.error(error);
-        this.saveBusy = this.cancelBusy = this.submitBusy = this.nextSubmissionBusy = false;
+    }
+
+    isDropdownOpen: boolean = false;
+
+    toggleDropdown() {
+        this.isDropdownOpen = !this.isDropdownOpen;
     }
 }

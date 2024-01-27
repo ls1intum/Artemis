@@ -15,6 +15,7 @@ import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.
 import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programming/assess/programming-manual-assessment.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { FormsModule } from '@angular/forms';
+import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
 
 @NgModule({
     imports: [
@@ -33,6 +34,7 @@ import { FormsModule } from '@angular/forms';
         AssessmentInstructionsModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         SubmissionResultStatusModule,
+        ArtemisProgrammingExerciseModule,
     ],
     declarations: [RepositoryViewComponent],
 })

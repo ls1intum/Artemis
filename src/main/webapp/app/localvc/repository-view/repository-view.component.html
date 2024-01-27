@@ -1,5 +1,7 @@
 <ng-container>
     @if (!loadingParticipation && !participationCouldNotBeFetched) {
+        <jhi-commits-info-dropdown class="mb-2" [submissions]="submissions" [participationId]="participation?.id" [exerciseProjectKey]="exercise?.projectKey">
+        </jhi-commits-info-dropdown>
         <jhi-code-editor-container
             [editable]="false"
             [participation]="participation"
@@ -10,8 +12,6 @@
             [course]="getCourseFromExercise(exercise)"
             (onFileLoad)="onFileLoad($event)"
         >
-            <jhi-code-editor-file-browser editorSidebarLeft [highlightFileChanges]="true"></jhi-code-editor-file-browser>
-            <jhi-code-editor-ace editorCenter [highlightDifferences]="highlightDifferences"> </jhi-code-editor-ace>
             <jhi-programming-exercise-instructions
                 editorSidebar
                 (onNoInstructionsAvailable)="showEditorInstructions = false"

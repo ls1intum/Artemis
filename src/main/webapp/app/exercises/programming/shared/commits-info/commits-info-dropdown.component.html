@@ -1,0 +1,26 @@
+<div ngbDropdown class="d-inline-block me-2">
+    <button class="btn btn-primary w-100" id="dropdownBasic1" ngbDropdownToggle>
+        {{ 'artemisApp.programmingExercise.commitInfo.title' | artemisTranslate }}
+    </button>
+    <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+        @for (commit of commits; track commit; let i = $index) {
+            <ng-container>
+                <button ngbDropdownItem>
+                    <p>{{ commit.hash }} committed by {{ commit.author }}</p>
+                    <p>{{ commit.message }} at {{ commit.timestamp | artemisDate: 'long' : true }}</p>
+                    @if (currentSubmissionHash === commit.hash) {
+                        <span class="badge bg-info">
+                            {{ 'artemisApp.programmingExercise.commitInfo.currentSubmission' | artemisTranslate }}
+                        </span>
+                    }
+                    @if (previousSubmissionHash === commit.hash) {
+                        <span class="badge bg-info"> {{ 'artemisApp.programmingExercise.commitInfo.previousSubmission' | artemisTranslate }} </span>
+                    }
+                    @if (!previousSubmissionHash && i === commits?.length! - 1) {
+                        <span class="badge bg-info"> {{ 'artemisApp.programmingExercise.commitInfo.template' | artemisTranslate }} </span>
+                    }
+                </button>
+            </ng-container>
+        }
+    </div>
+</div>
