@@ -129,8 +129,8 @@ public class ExerciseDeletionService {
         log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
 
         long start = System.nanoTime();
-        Channel exreciseChannel = channelRepository.findChannelByExerciseId(exerciseId);
-        channelService.deleteChannel(exreciseChannel);
+        Channel exerciseChannel = channelRepository.findChannelByExerciseId(exerciseId);
+        channelService.deleteChannel(exerciseChannel);
         log.info("Deleting the channel took {}", TimeLogUtil.formatDurationFrom(start));
 
         if (exercise instanceof ModelingExercise modelingExercise) {
