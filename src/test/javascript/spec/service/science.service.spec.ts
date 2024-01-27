@@ -9,12 +9,16 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../helpers/mocks/service/mock-local-storage.service';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { MockFeatureToggleService } from '../helpers/mocks/service/mock-feature-toggle.service';
+import { of } from 'rxjs';
 
 describe('ScienceService', () => {
     let scienceSettingService: ScienceSettingsService;
     let scienceService: ScienceService;
     let accountService: AccountService;
     let httpService: HttpClient;
+    let featureToggleService: FeatureToggleService;
     let putStub: jest.SpyInstance;
 
     beforeEach(() => {
@@ -22,6 +26,7 @@ describe('ScienceService', () => {
             imports: [ArtemisTestModule],
             providers: [
                 { provide: HttpClient, useClass: MockHttpService },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: AccountService, useClass: MockAccountService },
             ],
@@ -29,9 +34,11 @@ describe('ScienceService', () => {
             .compileComponents()
             .then(() => {
                 httpService = TestBed.inject(HttpClient);
+                featureToggleService = TestBed.inject(FeatureToggleService);
+                jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
                 scienceSettingService = TestBed.inject(ScienceSettingsService);
                 accountService = TestBed.inject(AccountService);
-                scienceService = new ScienceService(httpService, scienceSettingService, accountService);
+                scienceService = new ScienceService(httpService, featureToggleService, scienceSettingService, accountService);
                 putStub = jest.spyOn(httpService, 'put');
             });
     });

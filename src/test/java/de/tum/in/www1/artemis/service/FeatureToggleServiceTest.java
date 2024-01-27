@@ -23,7 +23,11 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         // Verify that the test has reset the state
         // Must be extended if additional features are added
         assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).isTrue();
+        assertThat(featureToggleService.isFeatureEnabled(Feature.PlagiarismChecks)).isTrue();
+        assertThat(featureToggleService.isFeatureEnabled(Feature.Exports)).isTrue();
+        assertThat(featureToggleService.isFeatureEnabled(Feature.TutorialGroups)).isTrue();
         assertThat(featureToggleService.isFeatureEnabled(Feature.LearningPaths)).isTrue();
+        assertThat(featureToggleService.isFeatureEnabled(Feature.Science)).isFalse();
     }
 
     @Test
