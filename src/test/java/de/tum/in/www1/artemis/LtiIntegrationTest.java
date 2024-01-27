@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -61,7 +62,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         List<LtiPlatformConfiguration> expectedPlatforms = Arrays.asList(platform1, platform2);
         doReturn(expectedPlatforms).when(ltiPlatformConfigurationRepository).findAll();
 
-        MvcResult mvcResult = request.getMvc().perform(get("/api/admin/lti-platforms")).andExpect(status().isOk()).andReturn();
+        MvcResult mvcResult = request.getMvc().perform(get("/api/lti-platforms")).andExpect(status().isOk()).andReturn();
 
         String jsonContent = mvcResult.getResponse().getContentAsString();
         List<LtiPlatformConfiguration> actualPlatforms = objectMapper.readValue(jsonContent, new TypeReference<>() {
@@ -73,9 +74,9 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void getAllConfiguredLtiPlatformsAsInstructor() throws Exception {
-        request.get("/api/admin/lti-platforms", HttpStatus.FORBIDDEN, Object.class);
+    @WithMockUser(username = TEST_PREFIX + "student", roles = "STUDENT")
+    void getAllConfiguredLtiPlatformsAsStudent() throws Exception {
+        request.get("/api/lti-platforms", HttpStatus.FORBIDDEN, Object.class);
     }
 
     @Test
@@ -123,11 +124,41 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student3")
-    void testRepositoryMethods() {
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testFindByRegistrationId() {
+        assertThat(ltiPlatformConfigurationRepository.findByRegistrationId("nonExistingId")).isEqualTo(Optional.empty());
+
+        LtiPlatformConfiguration newPlatformConfiguration = new LtiPlatformConfiguration();
+        fillLtiPlatformConfig(newPlatformConfiguration);
+        ltiPlatformConfigurationRepository.save(newPlatformConfiguration);
+
+        assertThat(ltiPlatformConfigurationRepository.findByRegistrationId(newPlatformConfiguration.getRegistrationId())).isEqualTo(Optional.of(newPlatformConfiguration));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testFindByIdElseThrow() {
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> ltiPlatformConfigurationRepository.findByIdElseThrow(Long.MAX_VALUE));
 
-        assertThat(ltiPlatformConfigurationRepository.findByRegistrationId("")).isEqualTo(Optional.empty());
+        LtiPlatformConfiguration newPlatformConfiguration = new LtiPlatformConfiguration();
+        fillLtiPlatformConfig(newPlatformConfiguration);
+        LtiPlatformConfiguration savedPlatformConfiguration = ltiPlatformConfigurationRepository.save(newPlatformConfiguration);
+
+        assertThat(ltiPlatformConfigurationRepository.findByIdElseThrow(savedPlatformConfiguration.getId())).isEqualTo(savedPlatformConfiguration);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testFindLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow() {
+        LtiPlatformConfiguration newPlatformConfiguration = new LtiPlatformConfiguration();
+        fillLtiPlatformConfig(newPlatformConfiguration);
+        LtiPlatformConfiguration savedPlatformConfiguration = ltiPlatformConfigurationRepository.save(newPlatformConfiguration);
+
+        LtiPlatformConfiguration fetchedPlatformConfiguration = ltiPlatformConfigurationRepository
+                .findLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow(savedPlatformConfiguration.getId());
+
+        assertThat(fetchedPlatformConfiguration).isEqualTo(savedPlatformConfiguration);
+        assertThat(Hibernate.isInitialized(fetchedPlatformConfiguration.getOnlineCourseConfigurations())).isTrue();
     }
 
     private void fillLtiPlatformConfig(LtiPlatformConfiguration ltiPlatformConfiguration) {
