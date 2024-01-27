@@ -74,7 +74,7 @@ jobs:
 
       - name: run tests
         working-directory: ./android-repo
-        run: ./gradlew test --max-workers=4 -Dskip.unit-tests=true -Dskip.e2e=false -Dskip.debugVariants=true -Dskip.flavor.unrestricted=true -Dskip.flavor.beta=true
+        run: ./gradlew test --max-workers=4 -Dskip.unit-tests=true -Dskip.e2e=false -Dskip.debugVariants=true -Dskip.flavor.unrestricted=true -Dskip.flavor.beta=true --rerun-tasks
         continue-on-error: true
 
       - name: Test Report
