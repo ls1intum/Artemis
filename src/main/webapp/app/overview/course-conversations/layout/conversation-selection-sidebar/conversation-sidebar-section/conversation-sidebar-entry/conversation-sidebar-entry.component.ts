@@ -148,11 +148,10 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
             });
         });
         this.conversationIsHiddenDidChange.pipe(mergeWith(this.conversationIsMutedDidChange), takeUntil(this.ngUnsubscribe)).subscribe(() => {
-            if (!this.conversation.id) return;
             if (this.conversation.isHidden || this.conversation.isMuted) {
-                this.notificationService.muteNotificationsForConversation(this.conversation.id);
+                this.notificationService.muteNotificationsForConversation(this.conversation.id!);
             } else {
-                this.notificationService.unmuteNotificationsForConversation(this.conversation.id);
+                this.notificationService.unmuteNotificationsForConversation(this.conversation.id!);
             }
         });
         this.conversationAsChannel = getAsChannelDto(this.conversation);
