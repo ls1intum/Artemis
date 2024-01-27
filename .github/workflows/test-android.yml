@@ -1,0 +1,100 @@
+name: End To End Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  end-to-end-tests:
+    name: Android End To End Tests
+    runs-on: [self-hosted, ase-large-android-sdk-34]
+    timeout-minutes: 60
+
+    steps:
+      - name: Set Android Sdk Env
+        run: export ANDROID_HOME=/usr/lib/android-sdk
+
+      - name: Checkout Main Artemis Repo (this repo)
+        uses: actions/checkout@v4
+        with:
+          path: main-repo
+
+      - name: Checkout Artemis Android Repo
+        uses: actions/checkout@v4
+        with:
+          repository: ls1intum/artemis-android
+          path: android-repo
+
+      - name: Navigate to main repo
+        run: cd main-repo
+
+        # sanity cleanup
+      - name: Stop mysql server
+        run: docker stop mysql
+        continue-on-error: true
+
+      - name: Launch mysql docker container
+        run: docker compose -f docker/mysql.yml up -d mysql
+
+      - name: JDK setup
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: Run Artemis Server
+        id: run-artemis
+        run: ./gradlew bootRun --args='--spring.profiles.active=dev,artemis,scheduling --artemis.user-management.use-external=false --artemis.user-management.internal-admin.username=artemis_admin --artemis.user-management.internal-admin.password=artemis_admin --artemis.user-management.registration.enabled=true --artemis.user-management.registration.allowed-email-pattern=.*' & echo "pid=$!" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for Artemis Server to be healthy
+        uses: nick-fields/retry@v2
+        with:
+          timeout_minutes: 10
+          retry_wait_seconds: 10
+          max_attempts: 60
+          command: wget -nv -t1 --spider http://localhost:8080/actuator/health || exit 1
+
+      - name: Navigate to android repo
+        run: cd ../android-repo
+
+      - name: Set local.properties
+        run: echo "sdk.dir=/usr/lib/android-sdk" > local.properties
+
+      - name: Gradle Wrapper Verification
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: JDK setup
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: run tests
+        run: ./gradlew test --max-workers=4 -Dskip.unit-tests=true -Dskip.e2e=false -Dskip.debugVariants=true -Dskip.flavor.unrestricted=true -Dskip.flavor.beta=true
+        continue-on-error: true
+
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: Android End To End Test Results
+          path: test-outputs/**/*.xml
+          reporter: java-junit
+          fail-on-empty: 'false'
+
+      - name: Cleanup -> Stop artemis server
+        if: always()
+        run: kill ${{ steps.run-artemis.outputs.pid }}
+
+      - name: Cleanup -> Stop all running docker containers
+        if: always()
+        run: docker stop artemis-app artemis-mysql docker-artemis-app-setup
+        continue-on-error: true
+
+      - name: Cleanup -> Remove all docker containers
+        if: always()
+        run: docker rm artemis-app artemis-mysql docker-artemis-app-setup
+        continue-on-error: true
