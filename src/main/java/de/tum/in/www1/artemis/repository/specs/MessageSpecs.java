@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.jpa.domain.Specification;
 
 import de.tum.in.www1.artemis.domain.Course_;
+import de.tum.in.www1.artemis.domain.User_;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
@@ -116,7 +117,7 @@ public class MessageSpecs {
                 return null;
             }
             else {
-                return criteriaBuilder.equal(root.get(Post_.AUTHOR), userId);
+                return criteriaBuilder.equal(root.get(Post_.AUTHOR).get(User_.ID), userId);
             }
         });
     }
@@ -140,8 +141,8 @@ public class MessageSpecs {
                 Join<Post, AnswerPost> joinedReactions = root.join(Post_.REACTIONS, JoinType.LEFT);
                 joinedReactions.on(criteriaBuilder.equal(root.get(Post_.ID), joinedReactions.get(Reaction_.POST).get(Post_.ID)));
 
-                Predicate answered = criteriaBuilder.equal(joinedAnswers.get(AnswerPost_.AUTHOR), userId);
-                Predicate reacted = criteriaBuilder.equal(joinedReactions.get(Reaction_.USER), userId);
+                Predicate answered = criteriaBuilder.equal(joinedAnswers.get(AnswerPost_.AUTHOR).get(User_.ID), userId);
+                Predicate reacted = criteriaBuilder.equal(joinedReactions.get(Reaction_.USER).get(User_.ID), userId);
 
                 return criteriaBuilder.or(answered, reacted);
             }
