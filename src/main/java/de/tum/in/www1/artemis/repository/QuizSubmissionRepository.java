@@ -31,7 +31,7 @@ public interface QuizSubmissionRepository extends JpaRepository<QuizSubmission, 
     Optional<QuizSubmission> findWithEagerResultAndFeedbackById(@Param("submissionId") long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submittedAnswers" })
-    QuizSubmission findWithEagerSubmittedAnswersById(@Param("submissionId") long submissionId);
+    QuizSubmission findWithEagerSubmittedAnswersById(long submissionId);
 
     Set<QuizSubmission> findByParticipation_Exercise_Id(long exerciseId);
 

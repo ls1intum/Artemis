@@ -1105,7 +1105,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                   LEFT JOIN FETCH p.submissions s
             WHERE p.exercise.id = :exerciseId
             """)
-    Set<StudentParticipation> findByExerciseIdWithEagerSubmissions(long exerciseId);
+    Set<StudentParticipation> findByExerciseIdWithEagerSubmissions(@Param("exerciseId") long exerciseId);
 
     /**
      * Helper interface to map the result of the {@link #sumPresentationScoreByStudentIdsAndCourseId(long, Set)} query to a map.

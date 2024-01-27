@@ -175,5 +175,5 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
                 AND (l.visibleDate IS NULL OR l.visibleDate <= :now)
             GROUP BY l.course.id
             """)
-    Set<CourseContentCount> countVisibleLectures(Set<Long> courseIds, @Param("now") ZonedDateTime now);
+    Set<CourseContentCount> countVisibleLectures(@Param("courseIds") Set<Long> courseIds, @Param("now") ZonedDateTime now);
 }
