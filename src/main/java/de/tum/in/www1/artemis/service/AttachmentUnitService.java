@@ -106,7 +106,7 @@ public class AttachmentUnitService {
             if (existingAttachmentUnit.getSlides() != null && !existingAttachmentUnit.getSlides().isEmpty()) {
                 List<Slide> slides = existingAttachmentUnit.getSlides();
                 for (Slide slide : slides) {
-                    fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(URI.create(slide.getSlideImagePath())), 5);
+                    fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(slide.getSlideImagePath())), 5);
                 }
                 slideRepository.deleteAll(existingAttachmentUnit.getSlides());
             }
