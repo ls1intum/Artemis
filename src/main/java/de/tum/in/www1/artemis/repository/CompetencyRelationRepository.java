@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
-import de.tum.in.www1.artemis.domain.enumeration.RelationType;
+import de.tum.in.www1.artemis.domain.competency.RelationType;
 
 /**
  * Spring Data JPA repository for the Competency Relation entity.
@@ -24,7 +24,7 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
             WHERE relation.headCompetency.id = :competencyId
                 OR relation.tailCompetency.id = :competencyId
             """)
-    Set<CompetencyRelation> findAllByCompetencyId(@Param("competencyId") Long competencyId);
+    Set<CompetencyRelation> findAllByCompetencyId(@Param("competencyId") long competencyId);
 
     @Transactional
     @Modifying
@@ -43,7 +43,7 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
             WHERE relation.headCompetency.course.id = :courseId
                 AND relation.tailCompetency.course.id = :courseId
             """)
-    Set<CompetencyRelation> findAllWithHeadAndTailByCourseId(@Param("courseId") Long courseId);
+    Set<CompetencyRelation> findAllWithHeadAndTailByCourseId(@Param("courseId") long courseId);
 
     @Query("""
             SELECT COUNT(cr)
@@ -59,7 +59,7 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
                 LEFT JOIN relation.headCompetency
                 LEFT JOIN relation.tailCompetency
             WHERE relation.tailCompetency.id IN :competencyIds
-                AND relation.type <> de.tum.in.www1.artemis.domain.enumeration.RelationType.MATCHES
+                AND relation.type <> de.tum.in.www1.artemis.domain.competency.RelationType.MATCHES
             """)
     Set<Long> getPriorCompetenciesByCompetencyIds(@Param("competencyIds") Set<Long> competencyIds);
 
@@ -78,7 +78,7 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
     /**
      * Gets set of all competency ids that are (transitively) connected via a matching relation to the given competency id.
      * <p>
-     * Important: this query is native since JPARepositories don't support recursive queries of this form
+     * Important: this query is native since JPARepositories don't support recursive queries of this form.
      *
      * @param competencyId the id of the competency
      * @return set of all competency ids that are (transitively) connected via a matching relation
@@ -86,16 +86,16 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
     @Query(value = """
             WITH RECURSIVE transitive_closure(id) AS
             (
-                (SELECT competency.id FROM learning_goal as competency WHERE competency.id = :competencyId)
+                (SELECT competency.id FROM competency WHERE competency.id = :competencyId)
                 UNION
                 (
                     SELECT CASE
-                        WHEN relation.tail_learning_goal_id = tc.id THEN relation.head_learning_goal_id
-                        WHEN relation.head_learning_goal_id = tc.id THEN relation.tail_learning_goal_id
+                        WHEN relation.tail_competency_id = tc.id THEN relation.head_competency_id
+                        WHEN relation.head_competency_id = tc.id THEN relation.tail_competency_id
                         END
-                    FROM learning_goal_relation as relation
-                    JOIN transitive_closure AS tc ON relation.tail_learning_goal_id = tc.id OR relation.head_learning_goal_id = tc.id
-                    WHERE relation.type = 'M'
+                    FROM competency_relation AS relation
+                    JOIN transitive_closure AS tc ON relation.tail_competency_id = tc.id OR relation.head_competency_id = tc.id
+                    WHERE relation.type = :#{T(de.tum.in.www1.artemis.domain.competency.RelationType).MATCHES.ordinal()}
                 )
             )
             SELECT * FROM transitive_closure

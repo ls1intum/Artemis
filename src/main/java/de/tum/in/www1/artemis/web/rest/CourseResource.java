@@ -55,6 +55,11 @@ import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.OnlineCourseDTO;
+import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.user.UserNameAndLoginDTO;
 import de.tum.in.www1.artemis.web.rest.errors.*;
 import tech.jhipster.web.util.PaginationUtil;
@@ -113,15 +118,13 @@ public class CourseResource {
 
     private final ExamRepository examRepository;
 
-    private final FilePathService filePathService;
-
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
             CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathService learningPathService,
-            ConductAgreementService conductAgreementService, ExamRepository examRepository, FilePathService filePathService) {
+            ConductAgreementService conductAgreementService, ExamRepository examRepository) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -142,7 +145,6 @@ public class CourseResource {
         this.learningPathService = learningPathService;
         this.conductAgreementService = conductAgreementService;
         this.examRepository = examRepository;
-        this.filePathService = filePathService;
     }
 
     /**
@@ -230,15 +232,15 @@ public class CourseResource {
         if (file != null) {
             Path basePath = FilePathService.getCourseIconFilePath();
             Path savePath = fileService.saveFile(file, basePath);
-            courseUpdate.setCourseIcon(filePathService.publicPathForActualPathOrThrow(savePath, courseId).toString());
+            courseUpdate.setCourseIcon(FilePathService.publicPathForActualPathOrThrow(savePath, courseId).toString());
             if (existingCourse.getCourseIcon() != null) {
                 // delete old course icon
-                fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
+                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
             }
         }
         else if (courseUpdate.getCourseIcon() == null && existingCourse.getCourseIcon() != null) {
             // delete old course icon
-            fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
+            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
         }
 
         if (courseUpdate.isOnlineCourse() != existingCourse.isOnlineCourse()) {
@@ -309,11 +311,40 @@ public class CourseResource {
         if (onlineCourseConfigurationService.isPresent()) {
             onlineCourseConfigurationService.get().validateOnlineCourseConfiguration(onlineCourseConfiguration);
             course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+            try {
+                onlineCourseConfigurationService.get().addOnlineCourseConfigurationToLtiConfigurations(onlineCourseConfiguration);
+            }
+            catch (Exception ex) {
+                log.error("Failed to add online course configuration to LTI configurations", ex);
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when adding online course configuration to LTI configurations", ex);
+            }
         }
 
         courseRepository.save(course);
 
         return ResponseEntity.ok(onlineCourseConfiguration);
+    }
+
+    /**
+     * GET courses/for-lti-dashboard : Retrieves a list of online courses for a specific LTI dashboard based on the client ID.
+     *
+     * @param clientId the client ID of the LTI platform used to filter the courses.
+     * @return a {@link ResponseEntity} containing a list of {@link OnlineCourseDTO} for the courses the user has access to.
+     */
+    @GetMapping("courses/for-lti-dashboard")
+    @EnforceAtLeastInstructor
+    @Profile("lti")
+    public ResponseEntity<List<OnlineCourseDTO>> findAllOnlineCoursesForLtiDashboard(@RequestParam("clientId") String clientId) {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        log.debug("REST request to get all online courses the user {} has access to", user.getLogin());
+
+        Set<Course> courses = courseService.findAllOnlineCoursesForPlatformForUser(clientId, user);
+
+        List<OnlineCourseDTO> onlineCourseDTOS = courses.stream()
+                .map(c -> new OnlineCourseDTO(c.getId(), c.getTitle(), c.getShortName(), c.getOnlineCourseConfiguration().getLtiPlatformConfiguration().getRegistrationId()))
+                .toList();
+
+        return ResponseEntity.ok(onlineCourseDTOS);
     }
 
     /**
