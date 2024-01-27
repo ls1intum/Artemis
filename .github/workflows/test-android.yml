@@ -82,9 +82,8 @@ jobs:
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: Android End To End Test Results
-          path: android-repo/test-outputs/**/*.xml
+          path: ./**/test-outputs/**/*.xml
           reporter: java-junit
-          fail-on-empty: 'false'
 
       - name: Cleanup -> Stop artemis server
         if: always()
