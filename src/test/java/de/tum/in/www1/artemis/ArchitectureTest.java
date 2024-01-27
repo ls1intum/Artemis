@@ -143,8 +143,10 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testRepositoryParamAnnotation() {
-        var param = methods().that().areAnnotatedWith(Query.class).should(haveAllParametersAnnotatedWithUnless(rawType(Param.class), type(Pageable.class)));
-        param.check(productionClasses);
+        var useParamInQueries = methods().that().areAnnotatedWith(Query.class).should(haveAllParametersAnnotatedWithUnless(rawType(Param.class), type(Pageable.class)));
+        var notUseParamOutsideQueries = methods().that().areNotAnnotatedWith(Query.class).should(notHaveAnyParameterAnnotatedWith(rawType(Param.class)));
+        useParamInQueries.check(productionClasses);
+        notUseParamOutsideQueries.check(productionClasses);
     }
 
     /**
@@ -187,15 +189,12 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
             @Override
             public void check(JavaMethod item, ConditionEvents events) {
-                boolean satisfied = item.getParameterAnnotations().stream().allMatch(annotations -> {
-                    // Ignore annotations of the Pageable parameter
-                    if (annotations.stream().anyMatch(annotation -> !exception.test(annotation.getOwner().getRawType()))) {
-                        return true;
-                    }
-                    // Else, one of the annotations should match the given predicate
-                    // This allows parameters with multiple annotations (e.g. @NonNull @Param)
-                    return annotations.stream().anyMatch(annotationPredicate);
-                });
+                boolean satisfied = item.getParameters().stream()
+                        // Ignore annotations of the Pageable parameter
+                        .filter(javaParameter -> !exception.test(javaParameter.getRawType())).map(JavaParameter::getAnnotations)
+                        // Else, one of the annotations should match the given predicate
+                        // This allows parameters with multiple annotations (e.g. @NonNull @Param)
+                        .allMatch(annotations -> annotations.stream().anyMatch(annotationPredicate));
                 if (!satisfied) {
                     events.add(violated(item, String.format("Method %s has parameter violating %s", item.getFullName(), annotationPredicate.getDescription())));
                 }
