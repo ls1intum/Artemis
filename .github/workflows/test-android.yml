@@ -73,7 +73,8 @@ jobs:
           java-version: 17
 
       - name: run tests
-        run: ./android-repo/gradlew test --max-workers=4 -Dskip.unit-tests=true -Dskip.e2e=false -Dskip.debugVariants=true -Dskip.flavor.unrestricted=true -Dskip.flavor.beta=true
+        working-directory: ./android-repo
+        run: ./gradlew test --max-workers=4 -Dskip.unit-tests=true -Dskip.e2e=false -Dskip.debugVariants=true -Dskip.flavor.unrestricted=true -Dskip.flavor.beta=true
         continue-on-error: true
 
       - name: Test Report
@@ -81,7 +82,7 @@ jobs:
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: Android End To End Test Results
-          path: test-outputs/**/*.xml
+          path: android-repo/test-outputs/**/*.xml
           reporter: java-junit
           fail-on-empty: 'false'
 
