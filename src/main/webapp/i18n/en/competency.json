@@ -43,6 +43,7 @@
             "manageCompetencies": {
                 "title": "Competency Management",
                 "import": "Import competency",
+                "importAll": "Import all competencies from another course",
                 "create": "Create competency"
             },
             "import": {
@@ -55,6 +56,19 @@
                     "SEMESTER": "Semester",
                     "doImport": "Select"
                 }
+            },
+            "importAll": {
+                "title": "Import all Competencies from another course",
+                "search": "Search for a course:",
+                "importRelations": "Import Relations?",
+                "table": {
+                    "TITLE": "Title",
+                    "SEMESTER": "Semester",
+                    "SHORT_NAME": "Short Name",
+                    "doImport": "Select"
+                },
+                "success": "Imported {{ noOfCompetencies }} competencies from course \"{{ courseTitle }}\".",
+                "warning": "No competencies were found for course \"{{ courseTitle }}\"."
             },
             "createCompetency": {
                 "title": "Create a new competency",
