@@ -66,7 +66,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             try {
                 // here we need to check if this is a deep-linking request or a launch request
                 if ("LtiDeepLinkingRequest".equals(ltiIdToken.getClaim(Claims.MESSAGE_TYPE))) {
-                    lti13Service.startDeepLinking(ltiIdToken);
+                    lti13Service.startDeepLinking(ltiIdToken, authToken.getAuthorizedClientRegistrationId());
                 }
                 else {
                     lti13Service.performLaunch(ltiIdToken, authToken.getAuthorizedClientRegistrationId());
