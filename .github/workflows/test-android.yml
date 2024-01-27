@@ -57,6 +57,9 @@ jobs:
           max_attempts: 60
           command: wget -nv -t1 --spider http://localhost:8080/actuator/health || exit 1
 
+      - name: Create test users
+        run: ./main-repo/supporting_scripts/create_test_users.sh localhost:8080
+
       - name: Navigate to android repo
         run: cd android-repo
 
@@ -87,7 +90,7 @@ jobs:
 
       - name: Cleanup -> Stop artemis server
         if: always()
-        run: kill ${{ steps.run-artemis.outputs.pid }}
+        run: pkill --parent ${{ steps.run-artemis.outputs.pid }}
 
       - name: Cleanup -> Stop all running docker containers
         if: always()
