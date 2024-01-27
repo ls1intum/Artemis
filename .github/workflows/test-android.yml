@@ -28,16 +28,13 @@ jobs:
           repository: ls1intum/artemis-android
           path: android-repo
 
-      - name: Navigate to main repo
-        run: cd main-repo
-
         # sanity cleanup
       - name: Stop mysql server
         run: docker stop mysql
         continue-on-error: true
 
       - name: Launch mysql docker container
-        run: docker compose -f docker/mysql.yml up -d mysql
+        run: docker compose -f main-repo/docker/mysql.yml up -d mysql
 
       - name: JDK setup
         uses: actions/setup-java@v3
@@ -47,7 +44,10 @@ jobs:
 
       - name: Run Artemis Server
         id: run-artemis
-        run: ./gradlew bootRun --args='--spring.profiles.active=dev,artemis,scheduling --artemis.user-management.use-external=false --artemis.user-management.internal-admin.username=artemis_admin --artemis.user-management.internal-admin.password=artemis_admin --artemis.user-management.registration.enabled=true --artemis.user-management.registration.allowed-email-pattern=.*' & echo "pid=$!" >> "$GITHUB_OUTPUT"
+        run: ./main-repo/gradlew bootRun --args='--spring.profiles.active=dev,artemis,scheduling --artemis.user-management.use-external=false --artemis.user-management.internal-admin.username=artemis_admin --artemis.user-management.internal-admin.password=artemis_admin --artemis.user-management.registration.enabled=true --artemis.user-management.registration.allowed-email-pattern=.*' & echo "pid=$!" >> "$GITHUB_OUTPUT"
+
+      - name: Print Pid
+        run: echo ${{ steps.run-artemis.outputs.pid }}
 
       - name: Wait for Artemis Server to be healthy
         uses: nick-fields/retry@v2
@@ -58,7 +58,7 @@ jobs:
           command: wget -nv -t1 --spider http://localhost:8080/actuator/health || exit 1
 
       - name: Navigate to android repo
-        run: cd ../android-repo
+        run: cd android-repo
 
       - name: Set local.properties
         run: echo "sdk.dir=/usr/lib/android-sdk" > local.properties
