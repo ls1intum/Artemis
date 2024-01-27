@@ -357,9 +357,8 @@ public class FileResource {
                 .filter(unit -> authCheckService.isAllowedToSeeLectureUnit(unit, user) && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
                 .toList();
 
-        lectureUnitService.completeAllLectureUnits(lectureAttachments, user, true);
-        List<String> attachmentLinks = lectureAttachments.stream().map(unit -> FilePathService.getAttachmentUnitFilePath()
-                .resolve(Path.of(String.valueOf(unit.getId()), StringUtils.substringAfterLast(unit.getAttachment().getLink(), "/"))).toString()).toList();
+        lectureUnitService.setCompletedForAllLectureUnits(lectureAttachments, user, true);
+        List<Path> attachmentLinks = lectureAttachments.stream().map(unit -> FilePathService.actualPathForPublicPathOrThrow(URI.create(unit.getAttachment().getLink()))).toList();
 
         Optional<byte[]> file = fileService.mergePdfFiles(attachmentLinks, lectureRepository.getLectureTitle(lectureId));
         if (file.isEmpty()) {

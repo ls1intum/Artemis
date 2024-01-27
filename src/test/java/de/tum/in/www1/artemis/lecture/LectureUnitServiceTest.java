@@ -53,7 +53,7 @@ class LectureUnitServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testCompleteAllLectureUnits() {
-        lectureUnitService.completeAllLectureUnits(List.of(unit1, unit2), student1, true);
+        lectureUnitService.setCompletedForAllLectureUnits(List.of(unit1, unit2), student1, true);
 
         assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(unit1.getId(), student1.getId())).isPresent();
         assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(unit2.getId(), student1.getId())).isPresent();
@@ -67,7 +67,7 @@ class LectureUnitServiceTest extends AbstractSpringIntegrationIndependentTest {
         completion.setCompletedAt(ZonedDateTime.now().minusDays(2));
         lectureUnitCompletionRepository.save(completion);
 
-        lectureUnitService.completeAllLectureUnits(List.of(unit1, unit2), student1, true);
+        lectureUnitService.setCompletedForAllLectureUnits(List.of(unit1, unit2), student1, true);
 
         assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(unit1.getId(), student1.getId())).isPresent();
         assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(unit2.getId(), student1.getId())).isPresent();
@@ -81,7 +81,7 @@ class LectureUnitServiceTest extends AbstractSpringIntegrationIndependentTest {
         completion.setCompletedAt(ZonedDateTime.now().minusDays(2));
         lectureUnitCompletionRepository.save(completion);
 
-        lectureUnitService.completeAllLectureUnits(List.of(unit1, unit2), student1, false);
+        lectureUnitService.setCompletedForAllLectureUnits(List.of(unit1, unit2), student1, false);
 
         assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(unit1.getId(), student1.getId())).isEmpty();
         assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(unit2.getId(), student1.getId())).isEmpty();
