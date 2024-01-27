@@ -48,7 +48,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     List<Result> findWithEagerSubmissionAndFeedbackByParticipationExerciseId(Long exerciseId);
 
     /**
-     * Get the latest results for each participation in an exercise from the database together with the list of feedback items.
+     * Get the latest results for each programming exercise student participation in an exercise from the database together with the list of feedback items.
      *
      * @param exerciseId the id of the exercise to load from the database
      * @return a list of results.
@@ -58,16 +58,16 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             FROM Result r
                 LEFT JOIN FETCH r.feedbacks f
                 LEFT JOIN FETCH f.testCase
-                LEFT JOIN TREAT (r.participation as StudentParticipation) sp
+                LEFT JOIN TREAT (r.participation AS ProgrammingExerciseStudentParticipation) sp
             WHERE r.completionDate = (
                     SELECT MAX(rr.completionDate)
                     FROM Result rr
-                        LEFT JOIN TREAT (rr.participation as StudentParticipation) sp2
+                        LEFT JOIN TREAT (rr.participation AS ProgrammingExerciseStudentParticipation) sp2
                     WHERE rr.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
-                        AND rr.participation.exercise.id = :exerciseId
-                        AND sp.student = sp2.student
+                        AND sp2.exercise.id = :exerciseId
+                        AND sp2.student = sp.student
                 )
-                AND r.participation.exercise.id = :exerciseId
+                AND sp.exercise.id = :exerciseId
                 AND sp.student IS NOT NULL
             ORDER BY r.completionDate ASC
             """)
