@@ -36,7 +36,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface StudentParticipationRepository extends JpaRepository<StudentParticipation, Long> {
 
-    Set<StudentParticipation> findByExerciseId(@Param("exerciseId") Long exerciseId);
+    Set<StudentParticipation> findByExerciseId(Long exerciseId);
 
     @Query("""
             SELECT DISTINCT p
