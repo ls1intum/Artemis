@@ -53,6 +53,10 @@ jobs:
         run: docker stop artemis-mysql
         continue-on-error: true
 
+      - name: Remove mysql server
+        run: docker rm artemis-mysql
+        continue-on-error: true
+
       - name: Launch mysql docker container
         run: docker compose -f main-repo/docker/mysql.yml up -d mysql
 
