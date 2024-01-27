@@ -299,7 +299,7 @@ public class AttachmentUnitResource {
     private void checkLecture(Long lectureId) {
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
-            throw new ConflictException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
+            throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
     }
