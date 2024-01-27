@@ -37,9 +37,6 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - name: Set Android Sdk Env
-        run: export ANDROID_HOME=/usr/lib/android-sdk
-
       - name: Checkout Main Artemis Repo (this repo)
         uses: actions/checkout@v4
         with:
