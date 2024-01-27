@@ -30,7 +30,7 @@ jobs:
 
         # sanity cleanup
       - name: Stop mysql server
-        run: docker stop mysql
+        run: docker stop artemis-mysql
         continue-on-error: true
 
       - name: Launch mysql docker container
@@ -92,10 +92,10 @@ jobs:
 
       - name: Cleanup -> Stop all running docker containers
         if: always()
-        run: docker stop artemis-app artemis-mysql docker-artemis-app-setup
+        run: docker stop artemis-mysql
         continue-on-error: true
 
       - name: Cleanup -> Remove all docker containers
         if: always()
-        run: docker rm artemis-app artemis-mysql docker-artemis-app-setup
+        run: docker rm artemis-mysql
         continue-on-error: true
