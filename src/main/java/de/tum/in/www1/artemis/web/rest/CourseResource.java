@@ -113,15 +113,13 @@ public class CourseResource {
 
     private final ExamRepository examRepository;
 
-    private final FilePathService filePathService;
-
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
             CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathService learningPathService,
-            ConductAgreementService conductAgreementService, ExamRepository examRepository, FilePathService filePathService) {
+            ConductAgreementService conductAgreementService, ExamRepository examRepository) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -142,7 +140,6 @@ public class CourseResource {
         this.learningPathService = learningPathService;
         this.conductAgreementService = conductAgreementService;
         this.examRepository = examRepository;
-        this.filePathService = filePathService;
     }
 
     /**
@@ -230,15 +227,15 @@ public class CourseResource {
         if (file != null) {
             Path basePath = FilePathService.getCourseIconFilePath();
             Path savePath = fileService.saveFile(file, basePath);
-            courseUpdate.setCourseIcon(filePathService.publicPathForActualPathOrThrow(savePath, courseId).toString());
+            courseUpdate.setCourseIcon(FilePathService.publicPathForActualPathOrThrow(savePath, courseId).toString());
             if (existingCourse.getCourseIcon() != null) {
                 // delete old course icon
-                fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
+                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
             }
         }
         else if (courseUpdate.getCourseIcon() == null && existingCourse.getCourseIcon() != null) {
             // delete old course icon
-            fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
+            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
         }
 
         if (courseUpdate.isOnlineCourse() != existingCourse.isOnlineCourse()) {
