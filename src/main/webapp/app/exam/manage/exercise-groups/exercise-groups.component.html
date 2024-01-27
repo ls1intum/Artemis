@@ -5,7 +5,7 @@
     @if (course?.isAtLeastEditor) {
         <div class="ms-auto d-flex flex-wrap">
             <a class="btn btn-primary me-1" id="import-group" (click)="openExerciseGroupImportModal()">
-                <fa-icon [icon]="faPlus"></fa-icon>
+                <fa-icon [icon]="faFileImport"></fa-icon>
                 <span class="hidden-sm-down" jhiTranslate="artemisApp.examManagement.exerciseGroup.import"> Import Exercise Group</span>
             </a>
             <a class="btn btn-primary jh-create-entity create-course" id="create-new-group" routerLink="new">

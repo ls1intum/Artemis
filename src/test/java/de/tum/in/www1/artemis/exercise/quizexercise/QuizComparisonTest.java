@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.exercise.quizexercise;
 
+import static de.tum.in.www1.artemis.service.exam.StudentExamService.isContentEqualTo;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import java.time.ZonedDateTime;
@@ -18,7 +19,6 @@ import de.tum.in.www1.artemis.domain.quiz.compare.DnDMapping;
 import de.tum.in.www1.artemis.domain.quiz.compare.SAMapping;
 import de.tum.in.www1.artemis.exam.ExamFactory;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
-import de.tum.in.www1.artemis.service.exam.StudentExamService;
 
 class QuizComparisonTest {
 
@@ -32,9 +32,9 @@ class QuizComparisonTest {
     void compareQuizSubmissionWithNull() {
         // Test null values
         QuizSubmission submission = new QuizSubmission();
-        assertThat(StudentExamService.isContentEqualTo((QuizSubmission) null, null)).isTrue();
-        assertThat(StudentExamService.isContentEqualTo(null, submission)).isFalse();
-        assertThat(StudentExamService.isContentEqualTo(submission, null)).isFalse();
+        assertThat(isContentEqualTo((QuizSubmission) null, null)).isTrue();
+        assertThat(isContentEqualTo(null, submission)).isFalse();
+        assertThat(isContentEqualTo(submission, null)).isFalse();
     }
 
     @Test
@@ -53,14 +53,14 @@ class QuizComparisonTest {
         QuizExerciseFactory.setQuizQuestionsIdToNull(submission3);
 
         // comparison should still work, even if quiz question or the quiz question id is null
-        Assertions.assertThat(StudentExamService.isContentEqualTo(submission1, submission2)).isTrue();
-        Assertions.assertThat(StudentExamService.isContentEqualTo(submission1, submission3)).isTrue();
-        Assertions.assertThat(StudentExamService.isContentEqualTo(submission3, submission2)).isTrue();
+        Assertions.assertThat(isContentEqualTo(submission1, submission2)).isTrue();
+        Assertions.assertThat(isContentEqualTo(submission1, submission3)).isTrue();
+        Assertions.assertThat(isContentEqualTo(submission3, submission2)).isTrue();
 
         // submission4 is different from all other submissions
-        Assertions.assertThat(StudentExamService.isContentEqualTo(submission1, submission4)).isFalse();
-        Assertions.assertThat(StudentExamService.isContentEqualTo(submission2, submission4)).isFalse();
-        Assertions.assertThat(StudentExamService.isContentEqualTo(submission3, submission4)).isFalse();
+        Assertions.assertThat(isContentEqualTo(submission1, submission4)).isFalse();
+        Assertions.assertThat(isContentEqualTo(submission2, submission4)).isFalse();
+        Assertions.assertThat(isContentEqualTo(submission3, submission4)).isFalse();
     }
 
     @Test
@@ -79,9 +79,9 @@ class QuizComparisonTest {
         quizQuestions.get(1).setId(id1);
         quizQuestions.get(2).setId(id1);
 
-        Assertions.assertThat(StudentExamService.isContentEqualTo(mcSubmission, dndSubmission)).isFalse();
-        Assertions.assertThat(StudentExamService.isContentEqualTo(mcSubmission, saSubmission)).isFalse();
-        Assertions.assertThat(StudentExamService.isContentEqualTo(saSubmission, dndSubmission)).isFalse();
+        Assertions.assertThat(isContentEqualTo(mcSubmission, dndSubmission)).isFalse();
+        Assertions.assertThat(isContentEqualTo(mcSubmission, saSubmission)).isFalse();
+        Assertions.assertThat(isContentEqualTo(saSubmission, dndSubmission)).isFalse();
     }
 
     @Test
@@ -97,9 +97,9 @@ class QuizComparisonTest {
 
         QuizSubmission submissionWithNoAnswer = ParticipationFactory.generateQuizSubmission(true);
 
-        Assertions.assertThat(StudentExamService.isContentEqualTo(mcSubmission, submissionWithNoAnswer)).isFalse();
-        Assertions.assertThat(StudentExamService.isContentEqualTo(dndSubmission, submissionWithNoAnswer)).isFalse();
-        Assertions.assertThat(StudentExamService.isContentEqualTo(saSubmission, submissionWithNoAnswer)).isFalse();
+        Assertions.assertThat(isContentEqualTo(mcSubmission, submissionWithNoAnswer)).isFalse();
+        Assertions.assertThat(isContentEqualTo(dndSubmission, submissionWithNoAnswer)).isFalse();
+        Assertions.assertThat(isContentEqualTo(saSubmission, submissionWithNoAnswer)).isFalse();
     }
 
     @Test
@@ -129,17 +129,17 @@ class QuizComparisonTest {
             var submittedAnswer3 = QuizExerciseFactory.generateSubmittedAnswerForQuizWithCorrectAndFalseAnswers(question);
             var submittedAnswer4 = QuizExerciseFactory.generateSubmittedAnswerFor(question, false);
 
-            assertThat(compare(submittedAnswer1, submittedAnswer1)).isTrue();
-            assertThat(compare(submittedAnswer1, submittedAnswer2)).isFalse();
-            assertThat(compare(submittedAnswer2, submittedAnswer1)).isFalse();
-            assertThat(compare(submittedAnswer1, submittedAnswer3)).isFalse();
-            assertThat(compare(submittedAnswer1, submittedAnswer4)).isFalse();
+            assertThat(isContentEqualTo(submittedAnswer1, submittedAnswer1)).isTrue();
+            assertThat(isContentEqualTo(submittedAnswer1, submittedAnswer2)).isFalse();
+            assertThat(isContentEqualTo(submittedAnswer2, submittedAnswer1)).isFalse();
+            assertThat(isContentEqualTo(submittedAnswer1, submittedAnswer3)).isFalse();
+            assertThat(isContentEqualTo(submittedAnswer1, submittedAnswer4)).isFalse();
 
-            assertThat(compare(submittedAnswer2, submittedAnswer3)).isFalse();
-            assertThat(compare(submittedAnswer2, submittedAnswer4)).isTrue();
-            assertThat(compare(submittedAnswer4, submittedAnswer2)).isTrue();
+            assertThat(isContentEqualTo(submittedAnswer2, submittedAnswer3)).isFalse();
+            assertThat(isContentEqualTo(submittedAnswer2, submittedAnswer4)).isTrue();
+            assertThat(isContentEqualTo(submittedAnswer4, submittedAnswer2)).isTrue();
 
-            assertThat(compare(submittedAnswer3, submittedAnswer4)).isFalse();
+            assertThat(isContentEqualTo(submittedAnswer3, submittedAnswer4)).isFalse();
         }
     }
 
@@ -164,11 +164,11 @@ class QuizComparisonTest {
 
                 // set the unselected option
                 changedSubmittedAnswer.setSelectedOptions(notSelectedOption);
-                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 // reset
                 changedSubmittedAnswer.setSelectedOptions(answerOptions);
-                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isTrue();
+                assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isTrue();
 
             }
             else if (submittedAnswer2 instanceof DragAndDropSubmittedAnswer changedSubmittedAnswer) {
@@ -184,41 +184,41 @@ class QuizComparisonTest {
 
                 // change the drag item of one mapping
                 mapping1.setDragItem(mapping2.getDragItem());
-                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 // mapping 1 and 2 have their drag items switched
                 mapping2.setDragItem(dragItem1);
-                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 // change all 3 drag items
                 mapping2.setDragItem(mapping3.getDragItem());
                 mapping3.setDragItem(dragItem1);
-                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 // reset
                 mapping3.setDragItem(mapping2.getDragItem());
                 mapping2.setDragItem(mapping1.getDragItem());
                 mapping1.setDragItem(dragItem1);
-                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isTrue();
+                assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isTrue();
 
                 // change the drop location of one mapping
                 mapping1.setDropLocation(mapping2.getDropLocation());
-                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 // mapping 1 and 2 have their drop locations switched
                 mapping2.setDropLocation(dropLocation1);
-                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 // change all 3 drop locations
                 mapping2.setDropLocation(mapping3.getDropLocation());
                 mapping3.setDropLocation(dropLocation1);
-                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 // reset
                 mapping3.setDropLocation(mapping2.getDropLocation());
                 mapping2.setDropLocation(mapping1.getDropLocation());
                 mapping1.setDropLocation(dropLocation1);
-                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isTrue();
+                assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isTrue();
 
             }
             else if (submittedAnswer2 instanceof ShortAnswerSubmittedAnswer changedSubmittedAnswer) {
@@ -232,33 +232,33 @@ class QuizComparisonTest {
 
                 // change the spot of one mapping
                 submittedText1.setSpot(submittedText2.getSpot());
-                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 // switch spots
                 submittedText1.setSpot(submittedText2.getSpot());
                 submittedText2.setSpot(spot1);
-                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 // reset
                 submittedText2.setSpot(submittedText1.getSpot());
                 submittedText1.setSpot(spot1);
-                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isTrue();
+                assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isTrue();
 
                 // change first submitted text
                 submittedText1.setText("some new text, not yet used");
-                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 submittedText1.setText(submittedText2.getText());
-                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 // switch the texts
                 submittedText2.setText(answerText1);
-                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 // reset
                 submittedText2.setText(submittedText1.getText());
                 submittedText1.setText(answerText1);
-                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isTrue();
+                assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isTrue();
             }
         }
     }
@@ -283,15 +283,15 @@ class QuizComparisonTest {
                         .collect(Collectors.toSet());
                 // add the not selected option
                 notSelectedOption.forEach(changedSubmittedAnswer::addSelectedOptions);
-                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(originalAnswer, changedSubmittedAnswer)).isFalse();
 
                 // also add to the original
                 notSelectedOption.forEach(originalAnswer::addSelectedOptions);
-                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isTrue();
+                assertThat(isContentEqualTo(originalAnswer, changedSubmittedAnswer)).isTrue();
 
                 // reset submitted answers, compare with the unchanged original
                 changedSubmittedAnswer.setSelectedOptions(answerOptions);
-                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isTrue();
+                assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isTrue();
 
             }
             else if (submittedAnswer2 instanceof DragAndDropSubmittedAnswer changedSubmittedAnswer && submittedAnswer1 instanceof DragAndDropSubmittedAnswer originalAnswer) {
@@ -309,24 +309,24 @@ class QuizComparisonTest {
 
                 // remove mapping1 and mapping2 so that they can be added later
                 temporaryRemoved.forEach(originalAnswer::removeMappings);
-                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(originalAnswer, changedSubmittedAnswer)).isFalse();
 
                 changedSubmittedAnswer.removeMappings(mapping1);
-                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(originalAnswer, changedSubmittedAnswer)).isFalse();
 
                 changedSubmittedAnswer.removeMappings(mapping2);
-                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isTrue();
+                assertThat(isContentEqualTo(originalAnswer, changedSubmittedAnswer)).isTrue();
 
                 // start adding the mappings into the changed map
                 changedSubmittedAnswer.addMappings(mapping1);
-                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(originalAnswer, changedSubmittedAnswer)).isFalse();
 
                 changedSubmittedAnswer.addMappings(mapping2);
-                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(originalAnswer, changedSubmittedAnswer)).isFalse();
 
                 // now both answers have the same mappings again
                 temporaryRemoved.forEach(originalAnswer::addMappings);
-                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isTrue();
+                assertThat(isContentEqualTo(originalAnswer, changedSubmittedAnswer)).isTrue();
 
             }
             else if (submittedAnswer2 instanceof ShortAnswerSubmittedAnswer changedSubmittedAnswer && submittedAnswer1 instanceof ShortAnswerSubmittedAnswer originalAnswer) {
@@ -342,24 +342,24 @@ class QuizComparisonTest {
 
                 // remove submittedText1 and submittedText2 so that they can be added later
                 temporaryRemoved.forEach(originalAnswer::removeSubmittedTexts);
-                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(originalAnswer, changedSubmittedAnswer)).isFalse();
 
                 changedSubmittedAnswer.removeSubmittedTexts(submittedText1);
-                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(originalAnswer, changedSubmittedAnswer)).isFalse();
 
                 changedSubmittedAnswer.removeSubmittedTexts(submittedText2);
-                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isTrue();
+                assertThat(isContentEqualTo(originalAnswer, changedSubmittedAnswer)).isTrue();
 
                 // start adding the text
                 changedSubmittedAnswer.addSubmittedTexts(submittedText1);
-                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(originalAnswer, changedSubmittedAnswer)).isFalse();
 
                 changedSubmittedAnswer.addSubmittedTexts(submittedText2);
-                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(originalAnswer, changedSubmittedAnswer)).isFalse();
 
                 // now both answers have the same texts again
                 temporaryRemoved.forEach(originalAnswer::addSubmittedTexts);
-                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isTrue();
+                assertThat(isContentEqualTo(originalAnswer, changedSubmittedAnswer)).isTrue();
             }
 
         }
@@ -383,16 +383,16 @@ class QuizComparisonTest {
 
                 // remove all selected options
                 submittedAnswer.setSelectedOptions(Set.of());
-                assertThat(compare(submittedAnswer1, submittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(submittedAnswer1, submittedAnswer)).isFalse();
 
                 // add additional optionals
                 var allOptions = new HashSet<>(((MultipleChoiceQuestion) question).getAnswerOptions());
                 submittedAnswer.setSelectedOptions(allOptions);
-                assertThat(compare(submittedAnswer1, submittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(submittedAnswer1, submittedAnswer)).isFalse();
 
                 // reset
                 submittedAnswer.setSelectedOptions(answerOptions);
-                assertThat(compare(submittedAnswer1, submittedAnswer)).isTrue();
+                assertThat(isContentEqualTo(submittedAnswer1, submittedAnswer)).isTrue();
 
             }
             else if (submittedAnswer2 instanceof DragAndDropSubmittedAnswer changedSubmittedAnswer) {
@@ -404,17 +404,17 @@ class QuizComparisonTest {
 
                 // remove the first mapping
                 changedSubmittedAnswer.removeMappings(mapping1);
-                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 changedSubmittedAnswer.removeMappings(mapping2);
-                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 changedSubmittedAnswer.removeMappings(mapping3);
-                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 // reset
                 dragAndDropMappings.forEach(changedSubmittedAnswer::addMappings);
-                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isTrue();
+                assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isTrue();
 
             }
             else if (submittedAnswer2 instanceof ShortAnswerSubmittedAnswer changedSubmittedAnswer) {
@@ -425,30 +425,17 @@ class QuizComparisonTest {
 
                 // remove the first text
                 changedSubmittedAnswer.removeSubmittedTexts(mapping1);
-                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 changedSubmittedAnswer.removeSubmittedTexts(mapping2);
-                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+                assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 // reset
                 shortAnswerMappings.forEach(changedSubmittedAnswer::addSubmittedTexts);
-                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isTrue();
+                assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isTrue();
             }
 
         }
-    }
-
-    private boolean compare(SubmittedAnswer answer1, SubmittedAnswer answer2) {
-        if (answer1 instanceof DragAndDropSubmittedAnswer submittedAnswer1 && answer2 instanceof DragAndDropSubmittedAnswer submittedAnswer2) {
-            return StudentExamService.isContentEqualTo(submittedAnswer1, submittedAnswer2);
-        }
-        else if (answer1 instanceof MultipleChoiceSubmittedAnswer submittedAnswer1 && answer2 instanceof MultipleChoiceSubmittedAnswer submittedAnswer2) {
-            return StudentExamService.isContentEqualTo(submittedAnswer1, submittedAnswer2);
-        }
-        else if (answer1 instanceof ShortAnswerSubmittedAnswer submittedAnswer1 && answer2 instanceof ShortAnswerSubmittedAnswer submittedAnswer2) {
-            return StudentExamService.isContentEqualTo(submittedAnswer1, submittedAnswer2);
-        }
-        throw new RuntimeException("Not supported");
     }
 
     @Test
