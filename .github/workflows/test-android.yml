@@ -60,11 +60,8 @@ jobs:
       - name: Create test users
         run: ./main-repo/supporting_scripts/create_test_users.sh localhost:8080
 
-      - name: Navigate to android repo
-        run: cd android-repo
-
       - name: Set local.properties
-        run: echo "sdk.dir=/usr/lib/android-sdk" > local.properties
+        run: echo "sdk.dir=/usr/lib/android-sdk" > android-repo/local.properties
 
       - name: Gradle Wrapper Verification
         uses: gradle/wrapper-validation-action@v1
@@ -76,7 +73,7 @@ jobs:
           java-version: 17
 
       - name: run tests
-        run: ./gradlew test --max-workers=4 -Dskip.unit-tests=true -Dskip.e2e=false -Dskip.debugVariants=true -Dskip.flavor.unrestricted=true -Dskip.flavor.beta=true
+        run: ./android-repo/gradlew test --max-workers=4 -Dskip.unit-tests=true -Dskip.e2e=false -Dskip.debugVariants=true -Dskip.flavor.unrestricted=true -Dskip.flavor.beta=true
         continue-on-error: true
 
       - name: Test Report
