@@ -30,6 +30,14 @@ Artemis automatically creates course-wide channels for course-wide topics, such 
 
 |messaging-page|
 
+This video provides an overview of the course-wide channel types existing in a course:
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/42164?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="450">
+        Watch this video on TUM-Live.
+    </iframe>
+
 Lecture Messages
 ^^^^^^^^^^^^^^^^
 
@@ -273,7 +281,13 @@ Creating Course-Wide Channels
 
 When creating a lecture, exercise, or exam, the creator can decide on a channel name as well. The name is automatically generated based on the lecture's/exercise's/exam's title but can be adapted if needed.
 
-|exercise-channel-creation|
+The video below provides a demonstration for the creation of a course-wide channel:
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/42163?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="450">
+        Watch this video on TUM-Live.
+    </iframe>
 
 Message Announcements
 ^^^^^^^^^^^^^^^^^^^^^
@@ -284,8 +298,6 @@ Announcements can be created in the course messaging overview by selecting the `
 As soon as the announcement is created, all participants who did not actively refrain from being notified will receive an email containing the announcement's content.
 
 .. |communication-toggle| image:: communication/communication-checkbox.png
-    :width: 1000
-.. |exercise-channel-creation| image:: communication/exercise-channel-creation.png
     :width: 1000
 .. |messaging-page| image:: communication/messaging-page.png
     :width: 1000
