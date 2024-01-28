@@ -81,7 +81,7 @@ public class LectureUnitService {
      * @param lectureUnit lecture unit to delete
      */
     public void removeLectureUnit(@NotNull LectureUnit lectureUnit) {
-        LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithCompetenciesElseThrow(lectureUnit.getId());
+        LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnit.getId());
 
         if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
             // update associated competencies
@@ -94,11 +94,11 @@ public class LectureUnitService {
         }
 
         if (lectureUnitToDelete instanceof AttachmentUnit attachmentUnit) {
-            fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(URI.create((attachmentUnit.getAttachment().getLink()))), 5);
+            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create((attachmentUnit.getAttachment().getLink()))), 5);
             if (attachmentUnit.getSlides() != null && !attachmentUnit.getSlides().isEmpty()) {
                 List<Slide> slides = attachmentUnit.getSlides();
                 for (Slide slide : slides) {
-                    fileService.schedulePathForDeletion(filePathService.actualPathForPublicPathOrThrow(URI.create(slide.getSlideImagePath())), 5);
+                    fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(slide.getSlideImagePath())), 5);
                 }
                 slideRepository.deleteAll(slides);
             }
