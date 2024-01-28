@@ -197,13 +197,13 @@ public class FileService implements DisposableBean {
     /**
      * Saves a file to the given path. If the file already exists, it will be <b>overwritten</b>. Make sure the path is <b>sanitized</b> and does not override files unexpectedly!
      *
-     * @param file     the file to save
-     * @param fullPath the full path to save the file to
+     * @param file              the file to save
+     * @param fullSanitizedPath the full path to save the file to
      * @return the path where the file was saved
      */
-    public Path saveFile(MultipartFile file, Path fullPath) {
-        copyFile(file, fullPath);
-        return fullPath;
+    public Path saveFile(MultipartFile file, Path fullSanitizedPath) {
+        copyFile(file, fullSanitizedPath);
+        return fullSanitizedPath;
     }
 
     private void copyFile(MultipartFile file, Path filePath) {
@@ -251,16 +251,16 @@ public class FileService implements DisposableBean {
     /**
      * Generates a new filename based on the current time and either the supplied filename or a random UUID.
      *
-     * @param filenamePrefix the prefix of the filename
-     * @param filename       the sanitized filename including the extension
-     * @param keepFilename   whether to keep the original filename or not
+     * @param filenamePrefix    the prefix of the filename
+     * @param sanitizedFilename the sanitized filename including the extension
+     * @param keepFilename      whether to keep the original filename or not
      * @return the generated filename
      */
-    public String generateFilename(String filenamePrefix, String filename, boolean keepFilename) {
+    public String generateFilename(String filenamePrefix, String sanitizedFilename, boolean keepFilename) {
         if (keepFilename) {
-            return filenamePrefix + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + filename;
+            return filenamePrefix + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + sanitizedFilename;
         }
-        String fileExtension = FilenameUtils.getExtension(filename);
+        String fileExtension = FilenameUtils.getExtension(sanitizedFilename);
         return filenamePrefix + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "." + fileExtension;
     }
 
