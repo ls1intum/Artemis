@@ -86,7 +86,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createNewTutorialGroupWithSchedule_sessionFallsOnTutorialGroupFreeDay_shouldCreateCancelledSession() throws Exception {
         // given
-        var freeDay = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, secondAugustMonday, secondAugustMonday, "Holiday");
+        var freeDay = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, secondAugustMonday, secondAugustMondayEvening, "Holiday");
         var newTutorialGroupCoveringHoliday = this.buildTutorialGroupWithExampleSchedule(firstAugustMondayMorning.toLocalDate(), secondAugustMonday.toLocalDate(), "tutor1");
         var scheduleToCreate = newTutorialGroupCoveringHoliday.getTutorialGroupSchedule();
 
