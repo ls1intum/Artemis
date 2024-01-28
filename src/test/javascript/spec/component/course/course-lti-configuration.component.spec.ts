@@ -24,6 +24,7 @@ import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-rout
 import { ArtemisTestModule } from '../../test.module';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { NgModel } from '@angular/forms';
 
 describe('Course LTI Configuration Component', () => {
     let comp: CourseLtiConfigurationComponent;
@@ -64,6 +65,7 @@ describe('Course LTI Configuration Component', () => {
                 MockDirective(SortByDirective),
                 MockComponent(HelpIconComponent),
                 MockComponent(CopyIconButtonComponent),
+                MockDirective(NgModel),
                 MockRouterLinkDirective,
             ],
             providers: [
@@ -127,7 +129,7 @@ describe('Course LTI Configuration Component', () => {
             ),
         );
         comp.ngOnInit();
-        comp.activeTab = 3;
+        comp.activeTab = 2;
 
         fixture.detectChanges();
 

@@ -8,6 +8,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -35,7 +36,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
+import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
 import de.tum.in.www1.artemis.exception.LtiEmailAlreadyInUseException;
+import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
 import de.tum.in.www1.artemis.security.lti.Lti13LaunchFilter;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
 import uk.ac.ox.ctl.lti13.lti.Claims;
@@ -71,6 +74,9 @@ class Lti13LaunchFilterTest {
     @Mock
     private OidcIdToken idToken;
 
+    @Mock
+    private LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
+
     private Lti13LaunchFilter launchFilter;
 
     private OidcAuthenticationToken oidcToken;
@@ -80,6 +86,8 @@ class Lti13LaunchFilterTest {
     private final Map<String, Object> idTokenClaims = new HashMap<>();
 
     private AutoCloseable closeable;
+
+    private LtiPlatformConfiguration ltiPlatformConfiguration;
 
     @BeforeEach
     void init() {
@@ -100,6 +108,9 @@ class Lti13LaunchFilterTest {
         oidcToken = new OidcAuthenticationToken(oidcUser, null, "some-registration", "some-state");
 
         targetLinkUri = "https://any-artemis-domain.org/course/123/exercise/1234";
+
+        ltiPlatformConfiguration = new LtiPlatformConfiguration();
+        ltiPlatformConfiguration.setRegistrationId("client-registration");
     }
 
     @AfterEach
@@ -145,9 +156,10 @@ class Lti13LaunchFilterTest {
 
     @Test
     void authenticatedLoginForDeepLinking() throws Exception {
+        doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(any());
         doReturn(true).when(authentication).isAuthenticated();
         JsonObject responseJsonBody = getMockJsonObject(true);
-        verify(lti13Service).startDeepLinking(any());
+        verify(lti13Service).startDeepLinking(any(), any());
         verify(httpResponse, never()).setStatus(HttpStatus.UNAUTHORIZED.value());
         assertThat((responseJsonBody.get("targetLinkUri").toString())).as("Response body contains the expected targetLinkUri")
                 .contains("https://any-artemis-domain.org/lti/deep-linking/121");
@@ -165,7 +177,7 @@ class Lti13LaunchFilterTest {
 
         verify(httpResponse).sendError(eq(HttpStatus.INTERNAL_SERVER_ERROR.value()), any());
         verify(lti13Service, never()).performLaunch(any(), any());
-        verify(lti13Service, never()).startDeepLinking(any());
+        verify(lti13Service, never()).startDeepLinking(any(), any());
     }
 
     @Test
@@ -178,7 +190,7 @@ class Lti13LaunchFilterTest {
 
         verify(httpResponse).sendError(eq(HttpStatus.INTERNAL_SERVER_ERROR.value()), any());
         verify(lti13Service, never()).performLaunch(any(), any());
-        verify(lti13Service, never()).startDeepLinking(any());
+        verify(lti13Service, never()).startDeepLinking(any(), any());
     }
 
     @Test
@@ -216,7 +228,7 @@ class Lti13LaunchFilterTest {
     @Test
     void emailAddressAlreadyInUseServiceDeepLinkingFailed() throws ServletException, IOException {
         doReturn(false).when(authentication).isAuthenticated();
-        doThrow(new LtiEmailAlreadyInUseException()).when(lti13Service).startDeepLinking(any());
+        doThrow(new LtiEmailAlreadyInUseException()).when(lti13Service).startDeepLinking(any(), any());
 
         doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
         doReturn(oidcToken).when(defaultFilter).attemptAuthentication(any(), any());
