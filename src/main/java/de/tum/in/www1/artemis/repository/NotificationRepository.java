@@ -63,6 +63,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             WHERE notification.notificationDate > :hideUntil
                 AND (
                     (TYPE(notification) = GroupNotification
+                        AND (notification.title NOT IN :deactivatedTitles OR notification.title IS NULL)
                         AND ((
                                 notification.course.instructorGroupName IN :currentGroups
                                 AND notification.type = de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.INSTRUCTOR
