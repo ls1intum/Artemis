@@ -173,6 +173,17 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "tutorialGroupsConfiguration" })
     Course findWithEagerTutorialGroupConfigurationsById(long courseId);
 
+    /**
+     * Fetches online courses with a specific LTI registration ID.
+     * Eagerly loads related configurations.
+     *
+     * @param registrationId The LTI platform's registration ID.
+     * @return Set of eagerly loaded courses.
+     */
+    @EntityGraph(attributePaths = { "onlineCourseConfiguration", "onlineCourseConfiguration.ltiPlatformConfiguration" })
+    @Query("SELECT c FROM Course c WHERE c.onlineCourse = TRUE AND c.onlineCourseConfiguration.ltiPlatformConfiguration.registrationId = :registrationId")
+    Set<Course> findOnlineCoursesWithRegistrationIdEager(String registrationId);
+
     List<Course> findAllByShortName(String shortName);
 
     Optional<Course> findById(long courseId);
@@ -409,7 +420,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
         return findWithEagerLearningPathsAndCompetenciesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
-    Page<Course> findByTitleIgnoreCaseContaining(@Param("partialTitle") String partialTitle, Pageable pageable);
+    Page<Course> findByTitleIgnoreCaseContaining(String partialTitle, Pageable pageable);
 
     /**
      * Checks if the messaging feature is enabled for a course.

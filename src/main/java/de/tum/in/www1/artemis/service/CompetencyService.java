@@ -10,7 +10,9 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
+import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
@@ -25,10 +27,14 @@ public class CompetencyService {
 
     private final AuthorizationCheckService authCheckService;
 
-    public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService, CompetencyRelationRepository competencyRelationRepository) {
+    private final LearningPathService learningPathService;
+
+    public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService, CompetencyRelationRepository competencyRelationRepository,
+            LearningPathService learningPathService) {
         this.competencyRepository = competencyRepository;
         this.authCheckService = authCheckService;
         this.competencyRelationRepository = competencyRelationRepository;
+        this.learningPathService = learningPathService;
     }
 
     /**
@@ -78,18 +84,23 @@ public class CompetencyService {
     public List<CompetencyWithTailRelationDTO> importAllCompetenciesFromCourse(Course targetCourse, Course sourceCourse, boolean importRelations) {
         var competencies = competencyRepository.findAllForCourse(sourceCourse.getId());
         if (competencies.isEmpty()) {
-            return List.of();
+            return Collections.emptyList();
         }
-        // map the id of the old competency to the new one
-        // used for importing relations and assigning relations to the CompetencyDTO.
+        // map the id of the old competency to the new competency
+        // used for assigning imported relations to the new competency
         var idToImportedCompetency = new HashMap<Long, CompetencyWithTailRelationDTO>();
 
         for (var competency : competencies) {
-            Competency competencyToImport = getCompetencyToCreate(competency);
-            competencyToImport.setCourse(targetCourse);
+            Competency importedCompetency = getCompetencyToCreate(competency);
+            importedCompetency.setCourse(targetCourse);
 
-            competencyToImport = competencyRepository.save(competencyToImport);
-            idToImportedCompetency.put(competency.getId(), new CompetencyWithTailRelationDTO(competencyToImport, new ArrayList<>()));
+            importedCompetency = competencyRepository.save(importedCompetency);
+            idToImportedCompetency.put(competency.getId(), new CompetencyWithTailRelationDTO(importedCompetency, new ArrayList<>()));
+        }
+
+        if (targetCourse.getLearningPathsEnabled()) {
+            var importedCompetencies = idToImportedCompetency.values().stream().map(CompetencyWithTailRelationDTO::competency).toList();
+            learningPathService.linkCompetenciesToLearningPathsOfCourse(importedCompetencies, targetCourse.getId());
         }
 
         if (importRelations) {
@@ -201,11 +212,8 @@ public class CompetencyService {
             public boolean vertexIsPartOfCycle(Vertex sourceVertex) {
                 sourceVertex.setBeingVisited(true);
                 for (Vertex neighbor : sourceVertex.getAdjacencyList()) {
-                    if (neighbor.isBeingVisited()) {
-                        // backward edge exists
-                        return true;
-                    }
-                    else if (!neighbor.isVisited() && vertexIsPartOfCycle(neighbor)) {
+                    if (neighbor.isBeingVisited() || (!neighbor.isVisited() && vertexIsPartOfCycle(neighbor))) {
+                        // backward edge exists -> cycle
                         return true;
                     }
                 }
@@ -230,7 +238,7 @@ public class CompetencyService {
         }
         // combine vertices that are connected through MATCHES
         for (CompetencyRelation relation : relations) {
-            if (relation.getType() == CompetencyRelation.RelationType.MATCHES) {
+            if (relation.getType() == RelationType.MATCHES) {
                 var headVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getHeadCompetency().getTitle())).findFirst().orElseThrow();
                 var tailVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getTailCompetency().getTitle())).findFirst().orElseThrow();
                 if (headVertex.adjacencyList.contains(tailVertex) || tailVertex.adjacencyList.contains(headVertex)) {

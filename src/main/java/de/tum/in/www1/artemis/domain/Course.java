@@ -53,7 +53,7 @@ public class Course extends DomainObject {
     private final transient FileService fileService = new FileService();
 
     @Transient
-    private final transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
+    private final transient EntityFileService entityFileService = new EntityFileService(fileService);
 
     @Transient
     private String prevCourseIcon;
@@ -242,7 +242,7 @@ public class Course extends DomainObject {
     private Set<Organization> organizations = new HashSet<>();
 
     @ManyToMany
-    @JoinTable(name = "learning_goal_course", joinColumns = @JoinColumn(name = "course_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"))
+    @JoinTable(name = "competency_course", joinColumns = @JoinColumn(name = "course_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "competency_id", referencedColumnName = "id"))
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("consecutiveCourses")
     private Set<Competency> prerequisites = new HashSet<>();
@@ -1025,5 +1025,20 @@ public class Course extends DomainObject {
 
     public void setCourseInformationSharingMessagingCodeOfConduct(String courseInformationSharingMessagingCodeOfConduct) {
         this.courseInformationSharingMessagingCodeOfConduct = courseInformationSharingMessagingCodeOfConduct;
+    }
+
+    public enum CourseSearchColumn {
+
+        ID("id"), TITLE("title"), SHORT_NAME("shortName"), SEMESTER("semester");
+
+        private final String mappedColumnName;
+
+        CourseSearchColumn(String mappedColumnName) {
+            this.mappedColumnName = mappedColumnName;
+        }
+
+        public String getMappedColumnName() {
+            return mappedColumnName;
+        }
     }
 }

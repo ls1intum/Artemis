@@ -198,6 +198,21 @@ The following activity diagram depicts the CPC flow described above.
 
 |cpc-activity-diagram|
 
+
+The video below shows the full CPC process from student's and instructor's perspective. It includes:
+
+#. Creating a new exercise with the CPC enabled.
+#. Reviewing check's results by a student and by an instructor.
+#. Fixing submissions marked as a significant similarity.
+#. Responding to a significant similarity plagiarism case that persisted after the exercise due date.
+#. Adding a verdict to a significant similarity plagiarism case that persisted after the exercise due date.
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/42026?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
 Instructors
 ^^^^^^^^^^^
 

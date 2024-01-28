@@ -75,6 +75,10 @@ public class LearningPath extends DomainObject {
         this.competencies.add(competency);
     }
 
+    public void addCompetencies(Set<Competency> competencies) {
+        this.competencies.addAll(competencies);
+    }
+
     public void removeCompetency(Competency competency) {
         this.competencies.remove(competency);
     }
