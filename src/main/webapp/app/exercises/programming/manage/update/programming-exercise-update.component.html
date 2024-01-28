@@ -32,20 +32,21 @@
             <h2 id="jhi-programming-exercise-heading-import" jhiTranslate="artemisApp.programmingExercise.home.importLabel">Import Programming Exercise</h2>
         }
     </div>
-    @if (isShowingWizardMode) {
-        <jhi-programming-exercise-update-wizard
-            (onNextStep)="nextWizardStep()"
-            [currentStep]="currentWizardModeStep"
-            [toggleMode]="toggleMode"
-            [isSaving]="isSaving"
-            [getInvalidReasons]="getInvalidReasonsForWizard"
-            [isImportFromExistingExercise]="isImportFromExistingExercise"
-            [isExamMode]="isExamMode"
-            [(exercise)]="programmingExercise"
-            [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
-        ></jhi-programming-exercise-update-wizard>
-    }
-    <div style="display: flex">
+
+    <div class="section">
+        @if (isShowingWizardMode) {
+            <jhi-programming-exercise-update-wizard
+                (onNextStep)="nextWizardStep()"
+                [currentStep]="currentWizardModeStep"
+                [toggleMode]="toggleMode"
+                [isSaving]="isSaving"
+                [getInvalidReasons]="getInvalidReasonsForWizard"
+                [isImportFromExistingExercise]="isImportFromExistingExercise"
+                [isExamMode]="isExamMode"
+                [(exercise)]="programmingExercise"
+                [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
+            ></jhi-programming-exercise-update-wizard>
+        }
         @if (!isShowingWizardMode) {
             <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)">
                 <div class="update-programming-exercise">
