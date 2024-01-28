@@ -19,9 +19,9 @@ public interface TutorialGroupFreePeriodRepository extends JpaRepository<Tutoria
     @Query("""
             SELECT period
             FROM TutorialGroupFreePeriod period
-            WHERE period.start <= :#{#toInclusive}
-                AND period.end >= :#{#fromInclusive}
-                AND period.tutorialGroupsConfiguration.course = :#{#course}
+            WHERE period.start <= :toInclusive
+                AND period.end >= :fromInclusive
+                AND period.tutorialGroupsConfiguration.course = :course
             """)
     Optional<TutorialGroupFreePeriod> findOverlappingInSameCourse(@Param("course") Course course, @Param("fromInclusive") ZonedDateTime fromInclusive,
             @Param("toInclusive") ZonedDateTime toInclusive);

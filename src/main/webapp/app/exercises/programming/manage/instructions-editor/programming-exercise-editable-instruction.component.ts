@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, HostListener, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
@@ -143,6 +143,22 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             .subscribe(() => {
                 this.savingInstructions = false;
             });
+    }
+
+    @HostListener('document:keydown.control.s', ['$event'])
+    saveOnControlAndS(event: KeyboardEvent) {
+        if (!navigator.userAgent.includes('Mac')) {
+            event.preventDefault();
+            this.saveInstructions(event);
+        }
+    }
+
+    @HostListener('document:keydown.meta.s', ['$event'])
+    saveOnCommandAndS(event: KeyboardEvent) {
+        if (navigator.userAgent.includes('Mac')) {
+            event.preventDefault();
+            this.saveInstructions(event);
+        }
     }
 
     updateProblemStatement(problemStatement: string) {
