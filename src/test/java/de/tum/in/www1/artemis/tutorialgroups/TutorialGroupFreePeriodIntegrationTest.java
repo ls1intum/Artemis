@@ -117,7 +117,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule(this.exampleCourseId, "tutor1");
         var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
 
-        var dto = createTutorialGroupFreePeriodDTO(firstAugustMondayMorning, firstAugustMondayMorning, "Holiday");
+        var dto = createTutorialGroupFreePeriodDTO(firstAugustMondayMorning, firstAugustMondayEvening, "Holiday");
         // when
         var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
         // then
