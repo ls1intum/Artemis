@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 
 import { ArtemisTestModule } from '../../test.module';
@@ -12,13 +12,16 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
-import { of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { Exam } from 'app/entities/exam.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
+import { NgModel } from '@angular/forms';
+import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
+import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
@@ -71,6 +74,22 @@ describe('TextExercise Management Update Component', () => {
                 // THEN
                 expect(service.update).toHaveBeenCalledWith(entity, {});
                 expect(comp.isSaving).toBeFalse();
+            }));
+
+            it('should error during save', fakeAsync(() => {
+                const onErrorSpy = jest.spyOn(comp as any, 'onSaveError');
+
+                // GIVEN
+                comp.ngOnInit();
+
+                jest.spyOn(service, 'update').mockReturnValue(throwError(new HttpErrorResponse({ error: { title: 'some-error' } })));
+
+                // WHEN
+                comp.save();
+                tick(); // simulate async
+
+                // THEN
+                expect(onErrorSpy).toHaveBeenCalledOnce();
             }));
         });
 
@@ -166,6 +185,30 @@ describe('TextExercise Management Update Component', () => {
             expect(comp.isExamMode).toBeFalse();
             expect(comp.textExercise).toEqual(textExercise);
         }));
+
+        it('should calculate valid sections', () => {
+            const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
+            comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { formValidChanges: new Subject() } } as ExerciseTitleChannelNameComponent;
+            comp.exerciseUpdatePlagiarismComponent = { formValidChanges: new Subject(), formValid: true } as ExerciseUpdatePlagiarismComponent;
+            comp.bonusPoints = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
+            comp.points = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
+
+            comp.ngOnInit();
+            comp.ngAfterViewInit();
+            expect(comp.titleChannelNameComponentSubscription).toBeDefined();
+
+            comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValid = true;
+            comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValidChanges.next(true);
+            expect(calculateValidSpy).toHaveBeenCalledOnce();
+            expect(comp.formSectionStatus).toBeDefined();
+            expect(comp.formSectionStatus[0].valid).toBeTrue();
+
+            comp.validateDate();
+            expect(calculateValidSpy).toHaveBeenCalledTimes(2);
+
+            comp.ngOnDestroy();
+            expect(comp.titleChannelNameComponentSubscription?.closed).toBeTrue();
+        });
     });
 
     describe('ngOnInit in import mode: Course to Course', () => {
@@ -182,6 +225,7 @@ describe('TextExercise Management Update Component', () => {
             route.params = of({ courseId });
             route.url = of([{ path: 'import' } as UrlSegment]);
             route.data = of({ textExercise });
+            route.queryParams = of({ shouldHaveBackButtonToWizard: true });
         });
 
         it('should set isImport and remove all dates', fakeAsync(() => {
