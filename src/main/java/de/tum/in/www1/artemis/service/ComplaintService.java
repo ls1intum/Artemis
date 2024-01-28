@@ -132,7 +132,7 @@ public class ComplaintService {
      */
     public long countUnacceptedComplaintsByParticipantAndCourseId(Participant participant, long courseId) {
         if (participant instanceof User) {
-            return complaintRepository.countUnacceptedComplaintsByComplaintTypeStudentIdAndCourseId(participant.getId(), courseId);
+            return complaintRepository.countUnacceptedComplaintsByStudentIdAndCourseId(participant.getId(), courseId);
         }
         else if (participant instanceof Team) {
             return complaintRepository.countUnacceptedComplaintsByComplaintTypeTeamShortNameAndCourseId(participant.getParticipantIdentifier(), courseId);
