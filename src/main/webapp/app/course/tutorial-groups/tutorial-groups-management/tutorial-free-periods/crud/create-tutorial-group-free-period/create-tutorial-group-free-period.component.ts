@@ -74,7 +74,7 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
                 throw new Error('date and time are undefined');
             } else if (time == undefined) {
                 const resDate = new Date(alternativeDate);
-                resDate.setHours(23, 59, 59);
+                resDate.setHours(23, 59);
                 return resDate;
             } else {
                 const resDate = new Date(alternativeDate);
@@ -82,6 +82,7 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
                 return resDate;
             }
         } else if (time == undefined) {
+            date.setHours(0, 0, 0);
             return date;
         } else {
             date.setHours(time.getHours(), time.getMinutes());

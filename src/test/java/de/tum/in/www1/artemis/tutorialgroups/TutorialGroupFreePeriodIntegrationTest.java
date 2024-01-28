@@ -67,12 +67,12 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     }
 
     void testJustForInstructorEndpoints() throws Exception {
-        var freePeriod = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, firstAugustMonday, firstAugustMonday, "Holiday");
+        var freePeriod = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, firstAugustMondayMorning, firstAugustMondayEvening, "Holiday");
         request.get(getTutorialGroupFreePeriodsPath() + freePeriod.getId(), HttpStatus.FORBIDDEN, TutorialGroupFreePeriod.class);
-        request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), createTutorialGroupFreePeriodDTO(firstAugustMonday, firstAugustMonday, "Holiday"),
+        request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), createTutorialGroupFreePeriodDTO(firstAugustMondayMorning, firstAugustMondayEvening, "Holiday"),
                 TutorialGroupFreePeriod.class, HttpStatus.FORBIDDEN);
         request.putWithResponseBody(getTutorialGroupFreePeriodsPath() + freePeriod.getId(),
-                createTutorialGroupFreePeriodDTO(secondAugustMonday, secondAugustMonday, "Another Holiday"), TutorialGroupFreePeriod.class, HttpStatus.FORBIDDEN);
+                createTutorialGroupFreePeriodDTO(secondAugustMonday, secondAugustMondayEvening, "Another Holiday"), TutorialGroupFreePeriod.class, HttpStatus.FORBIDDEN);
         request.delete(getTutorialGroupFreePeriodsPath() + freePeriod.getId(), HttpStatus.FORBIDDEN);
 
         // cleanup
@@ -83,7 +83,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getOneOfConfiguration_asInstructor_shouldReturnTutorialGroupFreePeriod() throws Exception {
         // given
-        var freePeriod = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, firstAugustMonday, firstAugustMonday, "Holiday");
+        var freePeriod = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, firstAugustMondayMorning, firstAugustMondayEvening, "Holiday");
         // when
         var freePeriodFromRequest = request.get(getTutorialGroupFreePeriodsPath() + freePeriod.getId(), HttpStatus.OK, TutorialGroupFreePeriod.class);
         // then
@@ -97,7 +97,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void create_asInstructor_shouldCreateTutorialGroupFreePeriod() throws Exception {
         // given
-        var dto = createTutorialGroupFreePeriodDTO(firstAugustMonday, firstAugustMonday, "Holiday");
+        var dto = createTutorialGroupFreePeriodDTO(firstAugustMondayMorning, firstAugustMondayEvening, "Holiday");
         // when
         var freePeriodId = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED).getId();
         // then
@@ -117,13 +117,13 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule(this.exampleCourseId, "tutor1");
         var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
 
-        var dto = createTutorialGroupFreePeriodDTO(firstAugustMonday, firstAugustMonday, "Holiday");
+        var dto = createTutorialGroupFreePeriodDTO(firstAugustMondayMorning, firstAugustMondayMorning, "Holiday");
         // when
         var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
         // then
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
         var firstMondayOfAugustSession = sessions.get(0);
-        assertScheduledSessionIsCancelledOnDate(firstMondayOfAugustSession, firstAugustMonday.toLocalDate(), tutorialGroup.getId(), persistedSchedule);
+        assertScheduledSessionIsCancelledOnDate(firstMondayOfAugustSession, firstAugustMondayMorning.toLocalDate(), tutorialGroup.getId(), persistedSchedule);
 
         // cleanup
         tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());
@@ -134,8 +134,8 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void create_overlapsWithExistingIndividualSession_shouldCancelSession() throws Exception {
         // given
-        this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, firstAugustMonday);
-        var dto = createTutorialGroupFreePeriodDTO(firstAugustMonday, firstAugustMonday, "Holiday");
+        this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, firstAugustMondayMorning);
+        var dto = createTutorialGroupFreePeriodDTO(firstAugustMondayMorning, firstAugustMondayEvening, "Holiday");
 
         // when
         var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
@@ -143,7 +143,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         // then
         var sessions = this.getTutorialGroupSessionsAscending(exampleTutorialGroupId);
         var firstMondayOfAugustSession = sessions.get(0);
-        assertIndividualSessionIsCancelledOnDate(firstMondayOfAugustSession, firstAugustMonday, exampleTutorialGroupId, null);
+        assertIndividualSessionIsCancelledOnDate(firstMondayOfAugustSession, firstAugustMondayMorning, exampleTutorialGroupId, null);
         assertThat(firstMondayOfAugustSession.getTutorialGroupFreePeriod()).isNotNull();
 
         // cleanup
@@ -155,8 +155,8 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void create_overlapsWithExistingFreePeriod_shouldReturnBadRequest() throws Exception {
         // given
-        var freeDay = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, firstAugustMonday, firstAugustMonday, "Holiday");
-        var dto = createTutorialGroupFreePeriodDTO(firstAugustMonday, firstAugustMonday, "Holiday");
+        var freeDay = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, firstAugustMondayMorning, firstAugustMondayEvening, "Holiday");
+        var dto = createTutorialGroupFreePeriodDTO(firstAugustMondayMorning, firstAugustMondayEvening, "Holiday");
         var numberOfFreePeriods = tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(exampleCourseId).size();
         // when
         request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.BAD_REQUEST);
@@ -175,20 +175,20 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
                 userRepository.findOneByLogin(testPrefix + "tutor1").orElseThrow(), Set.of(userRepository.findOneByLogin(testPrefix + "student1").orElseThrow())).getId();
 
         // given
-        var firstMondayOfAugustSession = this.buildAndSaveExampleIndividualTutorialGroupSession(groupId, firstAugustMonday);
+        var firstMondayOfAugustSession = this.buildAndSaveExampleIndividualTutorialGroupSession(groupId, firstAugustMondayMorning);
         var secondMondayOfAugustSession = this.buildAndSaveExampleIndividualTutorialGroupSession(groupId, secondAugustMonday);
 
-        var firstOfAugustFreeDayDTO = createTutorialGroupFreePeriodDTO(firstAugustMonday, firstAugustMonday, "Holiday");
+        var firstOfAugustFreeDayDTO = createTutorialGroupFreePeriodDTO(firstAugustMondayMorning, firstAugustMondayEvening, "Holiday");
         var periodId = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), firstOfAugustFreeDayDTO, TutorialGroupFreePeriod.class, HttpStatus.CREATED).getId();
 
         firstMondayOfAugustSession = this.tutorialGroupSessionRepository.findByIdElseThrow(firstMondayOfAugustSession.getId());
         secondMondayOfAugustSession = this.tutorialGroupSessionRepository.findByIdElseThrow(secondMondayOfAugustSession.getId());
-        assertIndividualSessionIsCancelledOnDate(firstMondayOfAugustSession, firstAugustMonday, groupId, null);
+        assertIndividualSessionIsCancelledOnDate(firstMondayOfAugustSession, firstAugustMondayMorning, groupId, null);
         assertIndividualSessionIsActiveOnDate(secondMondayOfAugustSession, secondAugustMonday, groupId);
         assertThat(firstMondayOfAugustSession.getTutorialGroupFreePeriod()).isNotNull();
         assertThat(secondMondayOfAugustSession.getTutorialGroupFreePeriod()).isNull();
 
-        var secondOfAugustFreeDayDTO = createTutorialGroupFreePeriodDTO(secondAugustMonday, secondAugustMonday, "Another Holiday");
+        var secondOfAugustFreeDayDTO = createTutorialGroupFreePeriodDTO(secondAugustMonday, secondAugustMondayEvening, "Another Holiday");
         // when
         request.putWithResponseBody(getTutorialGroupFreePeriodsPath() + periodId, secondOfAugustFreeDayDTO, TutorialGroupFreePeriod.class, HttpStatus.OK);
 
@@ -197,7 +197,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         secondMondayOfAugustSession = tutorialGroupSessionRepository.findByIdElseThrow(secondMondayOfAugustSession.getId());
         assertThat(firstMondayOfAugustSession.getTutorialGroupFreePeriod()).isNull();
         assertThat(secondMondayOfAugustSession.getTutorialGroupFreePeriod()).isNotNull();
-        assertIndividualSessionIsActiveOnDate(firstMondayOfAugustSession, firstAugustMonday, groupId);
+        assertIndividualSessionIsActiveOnDate(firstMondayOfAugustSession, firstAugustMondayMorning, groupId);
         assertIndividualSessionIsCancelledOnDate(secondMondayOfAugustSession, secondAugustMonday, groupId, null);
 
         // cleanup
@@ -210,9 +210,10 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void update_overlapsWithExistingFreePeriod_shouldReturnBadRequest() throws Exception {
         // given
-        var firstMondayOfAugustFreeDay = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, firstAugustMonday, firstAugustMonday, "Holiday");
-        var secondMondayOfAugustFreeDay = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, secondAugustMonday, firstAugustMonday, "Another Holiday");
-        var dto = createTutorialGroupFreePeriodDTO(secondAugustMonday, secondAugustMonday, "Holiday");
+        var firstMondayOfAugustFreeDay = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, firstAugustMondayMorning, firstAugustMondayEvening, "Holiday");
+        var secondMondayOfAugustFreeDay = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, secondAugustMonday, secondAugustMondayEvening,
+                "Another Holiday");
+        var dto = createTutorialGroupFreePeriodDTO(secondAugustMonday, secondAugustMondayEvening, "Holiday");
 
         var numberOfFreePeriods = tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(exampleCourseId).size();
         // when
@@ -232,8 +233,8 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void update_justReasonChange_shouldUpdateFreePeriodReason() throws Exception {
         // given
-        var firstMondayOfAugustFreeDay = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, firstAugustMonday, firstAugustMonday, "Holiday");
-        var dto = createTutorialGroupFreePeriodDTO(firstAugustMonday, firstAugustMonday, "Another Holiday");
+        var firstMondayOfAugustFreeDay = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, firstAugustMondayMorning, firstAugustMondayEvening, "Holiday");
+        var dto = createTutorialGroupFreePeriodDTO(firstAugustMondayMorning, firstAugustMondayEvening, "Another Holiday");
         var numberOfFreePeriods = tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(exampleCourseId).size();
 
         // when
@@ -253,14 +254,14 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void delete_asInstructor_shouldActivatePreviouslyCancelledSessionsOnThatDate() throws Exception {
         // given
-        var firstMondayOfAugustSession = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, firstAugustMonday);
+        var firstMondayOfAugustSession = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, firstAugustMondayMorning);
 
-        var firstOfAugustFreeDayDTO = createTutorialGroupFreePeriodDTO(firstAugustMonday, firstAugustMonday, "Holiday");
+        var firstOfAugustFreeDayDTO = createTutorialGroupFreePeriodDTO(firstAugustMondayMorning, firstAugustMondayEvening, "Holiday");
         var periodId = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), firstOfAugustFreeDayDTO, TutorialGroupFreePeriod.class, HttpStatus.CREATED).getId();
 
         firstMondayOfAugustSession = this.tutorialGroupSessionRepository.findByIdElseThrow(firstMondayOfAugustSession.getId());
 
-        assertIndividualSessionIsCancelledOnDate(firstMondayOfAugustSession, firstAugustMonday, exampleTutorialGroupId, null);
+        assertIndividualSessionIsCancelledOnDate(firstMondayOfAugustSession, firstAugustMondayMorning, exampleTutorialGroupId, null);
         assertThat(firstMondayOfAugustSession.getTutorialGroupFreePeriod()).isNotNull();
 
         // when
@@ -268,7 +269,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
         // then
         firstMondayOfAugustSession = tutorialGroupSessionRepository.findByIdElseThrow(firstMondayOfAugustSession.getId());
-        assertIndividualSessionIsActiveOnDate(firstMondayOfAugustSession, firstAugustMonday, exampleTutorialGroupId);
+        assertIndividualSessionIsActiveOnDate(firstMondayOfAugustSession, firstAugustMondayMorning, exampleTutorialGroupId);
         assertThat(firstMondayOfAugustSession.getTutorialGroupFreePeriod()).isNull();
 
         // cleanup

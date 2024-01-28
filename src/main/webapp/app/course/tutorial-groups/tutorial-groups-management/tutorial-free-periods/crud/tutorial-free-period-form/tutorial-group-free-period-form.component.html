@@ -76,7 +76,7 @@
                     }
                 </div>
                 <!--Todo: EndDate selector and lables. Where is the endDate saved before submitting the form?-->
-                @if (TimeFrameControl == TimeFrame.Period) {
+                @if (TimeFrameControl === TimeFrame.Period) {
                     <label class="form-label" for="endDate">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEnd' | artemisTranslate }}</label>
                     <div class="input-group">
                         <input formControlName="endDate" [(ngModel)]="formData.endDate" required [owlDateTime]="endDate" class="d-none" />
@@ -105,7 +105,7 @@
                             {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError' | artemisTranslate }}
                         </div>
                     }
-                } @else if (TimeFrameControl == TimeFrame.PeriodWithinDay) {
+                } @else if (TimeFrameControl === TimeFrame.PeriodWithinDay) {
                     <label class="form-label" for="startTime">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStartTime' | artemisTranslate }}</label>
                     <div class="input-group">
                         <input formControlName="startTime" [(ngModel)]="formData.startTime" required [owlDateTime]="startTime" class="d-none" />

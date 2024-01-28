@@ -98,9 +98,13 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
 
     Integer defaultSessionEndHour = 12;
 
-    LocalDateTime firstAugustMonday = LocalDateTime.of(2022, 8, 1, 0, 0, 0);
+    LocalDateTime firstAugustMondayMorning = LocalDateTime.of(2022, 8, 1, 0, 0, 0);
+
+    LocalDateTime firstAugustMondayEvening = LocalDateTime.of(2022, 8, 1, 23, 59);
 
     LocalDateTime secondAugustMonday = LocalDateTime.of(2022, 8, 8, 0, 0, 0);
+
+    LocalDateTime secondAugustMondayEvening = LocalDateTime.of(2022, 8, 8, 23, 59);
 
     LocalDateTime thirdAugustMonday = LocalDateTime.of(2022, 8, 15, 0, 0, 0);
 
@@ -156,7 +160,7 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
     TutorialGroupsConfiguration buildExampleConfiguration(Long courseId) {
         TutorialGroupsConfiguration tutorialGroupsConfiguration = new TutorialGroupsConfiguration();
         tutorialGroupsConfiguration.setCourse(courseRepository.findById(courseId).orElseThrow());
-        tutorialGroupsConfiguration.setTutorialPeriodStartInclusive(firstAugustMonday.toString());
+        tutorialGroupsConfiguration.setTutorialPeriodStartInclusive(firstAugustMondayMorning.toString());
         tutorialGroupsConfiguration.setTutorialPeriodEndInclusive(firstSeptemberMonday.toString());
         tutorialGroupsConfiguration.setUseTutorialGroupChannels(true);
         tutorialGroupsConfiguration.setUsePublicTutorialGroupChannels(true);
@@ -206,7 +210,7 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
     }
 
     TutorialGroup setUpTutorialGroupWithSchedule(Long courseId, String tutorLogin) throws Exception {
-        var newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(firstAugustMonday.toLocalDate(), secondAugustMonday.toLocalDate(), tutorLogin);
+        var newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(firstAugustMondayMorning.toLocalDate(), secondAugustMonday.toLocalDate(), tutorLogin);
         var scheduleToCreate = newTutorialGroup.getTutorialGroupSchedule();
         var persistedTutorialGroupId = request.postWithResponseBody(getTutorialGroupsPath(courseId), newTutorialGroup, TutorialGroup.class, HttpStatus.CREATED).getId();
 
