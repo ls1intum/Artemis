@@ -149,7 +149,7 @@ describe('TextExercise Management Update Component', () => {
         });
     });
 
-    describe('ngOnInit cl for exam exercise', () => {
+    describe('exam exercise', () => {
         const textExercise = new TextExercise(undefined, new ExerciseGroup());
 
         beforeEach(() => {
@@ -165,6 +165,18 @@ describe('TextExercise Management Update Component', () => {
             // THEN
             expect(comp.isExamMode).toBeTrue();
             expect(comp.textExercise).toEqual(textExercise);
+        }));
+
+        it('should not set dateErrors', fakeAsync(() => {
+            const calculatValidationSectionsSpy = jest.spyOn(comp, 'calculateFormSectionStatus').mockReturnValue();
+            const dateErrorNames = ['dueDateError', 'startDateError', 'assessmentDueDateError', 'exampleSolutionPublicationDateError'];
+            comp.ngOnInit();
+            tick();
+            comp.validateDate();
+            expect(calculatValidationSectionsSpy).toHaveBeenCalledOnce();
+            for (const errorName of dateErrorNames) {
+                expect(comp.textExercise[errorName]).toBeFalsy();
+            }
         }));
     });
 
