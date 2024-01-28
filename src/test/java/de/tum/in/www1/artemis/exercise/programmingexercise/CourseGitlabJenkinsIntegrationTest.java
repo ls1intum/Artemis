@@ -1072,10 +1072,4 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     void testFindAllOnlineCoursesForLtiDashboard() throws Exception {
         courseTestService.testFindAllOnlineCoursesForLtiDashboard();
     }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testFindAllOnlineCoursesForLtiDashboard() throws Exception {
-        courseTestService.testFindAllOnlineCoursesForLtiDashboard();
-    }
 }
