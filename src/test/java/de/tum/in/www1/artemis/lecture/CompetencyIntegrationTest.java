@@ -800,9 +800,9 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         competency.setId(1L); // id is set
         request.post("/api/courses/" + course.getId() + "/competencies/bulk", List.of(competency), HttpStatus.BAD_REQUEST);
     }
-  
+
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")      
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importingCompetencies_asInstructor_shouldImportCompetencies() throws Exception {
         var competencyDTOList = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-all/" + course2.getId(), null,
                 CompetencyWithTailRelationDTO.class, HttpStatus.CREATED);
