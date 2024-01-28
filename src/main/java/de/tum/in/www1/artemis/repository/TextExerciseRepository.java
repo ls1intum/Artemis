@@ -37,19 +37,9 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
     @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencies", "plagiarismDetectionConfig" })
     Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(Long exerciseId);
 
-    @Query("""
-            SELECT textExercise
-            FROM TextExercise textExercise
-                LEFT JOIN FETCH textExercise.exampleSubmissions exampleSubmissions
-                LEFT JOIN FETCH exampleSubmissions.submission submission
-                LEFT JOIN FETCH submission.results result
-                LEFT JOIN FETCH result.feedbacks
-                LEFT JOIN FETCH submission.blocks
-                LEFT JOIN FETCH result.assessor
-                LEFT JOIN FETCH textExercise.teamAssignmentConfig
-            WHERE textExercise.id = :exerciseId
-            """)
-    Optional<TextExercise> findByIdWithExampleSubmissionsAndResults(@Param("exerciseId") Long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "textExercise.exampleSubmissions.submission.results.feedbacks", "textExercise.exampleSubmissions.submission.results.assessor",
+            "textExercise.exampleSubmissions.submission.blocks", "textExercise.teamAssignmentConfig" })
+    Optional<TextExercise> findWithExampleSubmissionsAndResultsById(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
     Optional<TextExercise> findWithStudentParticipationsAndSubmissionsById(Long exerciseId);
@@ -74,7 +64,7 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
 
     @NotNull
     default TextExercise findByIdWithExampleSubmissionsAndResultsElseThrow(long exerciseId) {
-        return findByIdWithExampleSubmissionsAndResults(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
+        return findWithExampleSubmissionsAndResultsById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
     }
 
     @NotNull

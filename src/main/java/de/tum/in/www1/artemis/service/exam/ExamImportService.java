@@ -275,7 +275,7 @@ public class ExamImportService {
                 }
 
                 case TEXT -> {
-                    final Optional<TextExercise> optionalOriginalTextExercise = textExerciseRepository.findByIdWithExampleSubmissionsAndResults(exerciseToCopy.getId());
+                    final Optional<TextExercise> optionalOriginalTextExercise = textExerciseRepository.findWithExampleSubmissionsAndResultsById(exerciseToCopy.getId());
                     if (optionalOriginalTextExercise.isEmpty()) {
                         yield Optional.empty();
                     }
