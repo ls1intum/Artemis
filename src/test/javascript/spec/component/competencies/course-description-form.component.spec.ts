@@ -1,13 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTestModule } from '../../test.module';
 import { CourseDescriptionFormComponent } from 'app/course/competencies/parse-description/course-description-form.component';
-import { ButtonComponent } from 'app/shared/components/button.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { IrisLogoButtonComponent } from 'app/iris/iris-logo-button/iris-logo-button.component';
+import { IrisLogoComponent } from 'app/iris/iris-logo/iris-logo.component';
 
 describe('CourseDescriptionFormComponent', () => {
     let courseDescriptionComponentFixture: ComponentFixture<CourseDescriptionFormComponent>;
@@ -19,7 +20,8 @@ describe('CourseDescriptionFormComponent', () => {
             declarations: [
                 CourseDescriptionFormComponent,
                 MockPipe(ArtemisTranslatePipe),
-                ButtonComponent,
+                IrisLogoButtonComponent,
+                MockComponent(IrisLogoComponent),
                 MockDirective(FeatureToggleDirective),
                 MockDirective(TranslateDirective),
             ],

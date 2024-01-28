@@ -3,13 +3,15 @@ import { CompetencyRecommendationDetailComponent } from 'app/course/competencies
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTestModule } from '../../test.module';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { NgbCollapseMocksModule } from '../../helpers/mocks/directive/ngbCollapseMocks.module';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 
 describe('CompetencyRecommendationDetailComponent', () => {
     let competencyRecommendationDetailComponentFixture: ComponentFixture<CompetencyRecommendationDetailComponent>;
@@ -24,6 +26,8 @@ describe('CompetencyRecommendationDetailComponent', () => {
                 MockDirective(FeatureToggleDirective),
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
+                MockPipe(HtmlForMarkdownPipe),
+                MockComponent(MarkdownEditorComponent),
             ],
             providers: [],
         })

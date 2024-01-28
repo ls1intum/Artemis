@@ -290,7 +290,7 @@ public class IrisSubSettingsService {
      * @param minimal      Whether to return a minimal version of the combined settings.
      * @return Combined Competency Generation settings.
      */
-    public IrisCombinedCompetencyGenerationSubSettingsDTO combineCompetenyGenerationSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
+    public IrisCombinedCompetencyGenerationSubSettingsDTO combineCompetencyGenerationSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
         var actualSettingsList = settingsList.stream().filter(settings -> !(settings instanceof IrisExerciseSettings)).toList();
         var combinedCompetencyGenerationSettings = new IrisCombinedCompetencyGenerationSubSettingsDTO();
         combinedCompetencyGenerationSettings.setEnabled(getCombinedEnabled(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings));
