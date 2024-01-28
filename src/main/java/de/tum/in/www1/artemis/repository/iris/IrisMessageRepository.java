@@ -46,7 +46,6 @@ public interface IrisMessageRepository extends JpaRepository<IrisMessage, Long> 
         return findById(messageId).orElseThrow(() -> new EntityNotFoundException("Iris Message", messageId));
     }
 
-    // TODO: this only gets the latest message, not message content!
     @EntityGraph(type = LOAD, attributePaths = { "content" })
     IrisMessage findFirstWithContentBySessionIdAndSenderOrderBySentAtDesc(long sessionId, IrisMessageSender sender);
 }

@@ -6,6 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import de.tum.in.www1.artemis.domain.iris.session.IrisCompetencyGenerationSession;
 
+/**
+ * Repository interface for managing {@link IrisCompetencyGenerationSession} entities.
+ */
 public interface IrisCompetencyGenerationSessionRepository extends JpaRepository<IrisCompetencyGenerationSession, Long> {
 
     /**

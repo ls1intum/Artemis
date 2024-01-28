@@ -49,12 +49,14 @@ public class IrisGlobalSettings extends IrisSettings {
 
     @Override
     public boolean isValid() {
-        // TODO: look at this. Need to add code editor and comp gen? Also extract sub method.
         var chatSettingsValid = !Hibernate.isInitialized(irisChatSettings) || irisChatSettings == null
                 || (irisChatSettings.getTemplate() != null && irisChatSettings.getTemplate().getContent() != null && !irisChatSettings.getTemplate().getContent().isEmpty());
         var hestiaSettingsValid = !Hibernate.isInitialized(irisHestiaSettings) || irisHestiaSettings == null
                 || (irisHestiaSettings.getTemplate() != null && irisHestiaSettings.getTemplate().getContent() != null && !irisHestiaSettings.getTemplate().getContent().isEmpty());
-        return chatSettingsValid && hestiaSettingsValid;
+        var competencyGenerationSettingsValid = !Hibernate.isInitialized(irisCompetencyGenerationSettings) || irisCompetencyGenerationSettings == null
+                || (irisCompetencyGenerationSettings.getTemplate() != null && irisCompetencyGenerationSettings.getTemplate().getContent() != null
+                        && !irisCompetencyGenerationSettings.getTemplate().getContent().isEmpty());
+        return chatSettingsValid && hestiaSettingsValid && competencyGenerationSettingsValid;
     }
 
     public int getCurrentVersion() {

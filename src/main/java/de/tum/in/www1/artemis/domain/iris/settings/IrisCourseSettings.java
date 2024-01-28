@@ -35,7 +35,6 @@ public class IrisCourseSettings extends IrisSettings {
     @JoinColumn(name = "iris_competency_generation_settings_id")
     private IrisCompetencyGenerationSubSettings irisCompetencyGenerationSettings;
 
-    // TODO: does this (isvalid) make sense?
     @Override
     public boolean isValid() {
         return course != null;

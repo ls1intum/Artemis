@@ -27,6 +27,9 @@ import de.tum.in.www1.artemis.service.iris.exception.IrisParseResponseException;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
+/**
+ * Service to handle the Competency generation subsytem of Iris.
+ */
 @Service
 @Profile("iris")
 public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFeatureInterface<IrisCompetencyGenerationSession, List<Competency>> {

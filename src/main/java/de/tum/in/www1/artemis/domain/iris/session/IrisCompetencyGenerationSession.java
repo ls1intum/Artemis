@@ -10,12 +10,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 
+/**
+ * A IrisCompetencyGenerationSession is a session specific to a course and user.
+ * This is used for course editors to generate competency reccommendations.
+ */
 @Entity
 @DiscriminatorValue("COMPETENCY_GENERATION")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisCompetencyGenerationSession extends IrisSession {
-    // TODO: either link competency recommendations OR just save as string.
-    // TODO: problem is messages are not compatible with irisv2(?)
 
     @ManyToOne
     @JsonIgnore

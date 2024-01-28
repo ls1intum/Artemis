@@ -265,28 +265,17 @@ public class CompetencyResource {
         var createdCompetencies = new ArrayList<Competency>();
 
         for (var competency : competencies) {
-            // TODO: do this with the method from #7903
-            var createdCompetency = buildCompetencyToCreate(competency, course);
+            var createdCompetency = competencyService.getCompetencyToCreate(competency);
+            createdCompetency.setCourse(course);
             createdCompetency = competencyRepository.save(createdCompetency);
-            // TODO: do this with the method from #7903
-            if (course.getLearningPathsEnabled()) {
-                learningPathService.linkCompetencyToLearningPathsOfCourse(createdCompetency, courseId);
-            }
             createdCompetencies.add(createdCompetency);
         }
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(createdCompetencies);
-    }
 
-    private Competency buildCompetencyToCreate(Competency competency, Course course) {
-        Competency competencyToCreate = new Competency();
-        competencyToCreate.setTitle(competency.getTitle().trim());
-        competencyToCreate.setDescription(competency.getDescription());
-        competencyToCreate.setSoftDueDate(competency.getSoftDueDate());
-        competencyToCreate.setTaxonomy(competency.getTaxonomy());
-        competencyToCreate.setMasteryThreshold(competency.getMasteryThreshold());
-        competencyToCreate.setOptional(competency.isOptional());
-        competencyToCreate.setCourse(course);
-        return competencyToCreate;
+        if (course.getLearningPathsEnabled()) {
+            learningPathService.linkCompetenciesToLearningPathsOfCourse(createdCompetencies, courseId);
+        }
+
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(createdCompetencies);
     }
 
     /**
