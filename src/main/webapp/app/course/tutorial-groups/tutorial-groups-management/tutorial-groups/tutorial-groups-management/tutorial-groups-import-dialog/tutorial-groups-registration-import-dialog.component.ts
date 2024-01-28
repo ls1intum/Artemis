@@ -1,5 +1,5 @@
 import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheck, faCircleNotch, faFileImport, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupRegistrationImportDTO } from 'app/entities/tutorial-group/tutorial-group-import-dto.model';
 import { ParseResult, parse } from 'papaparse';
 import { AlertService } from 'app/core/util/alert.service';
@@ -88,7 +88,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     faSpinner = faSpinner;
     faCheck = faCheck;
     faCircleNotch = faCircleNotch;
-    faUpload = faUpload;
+    faFileImport = faFileImport;
     selectedFilter: filterValues = 'all';
 
     constructor(
