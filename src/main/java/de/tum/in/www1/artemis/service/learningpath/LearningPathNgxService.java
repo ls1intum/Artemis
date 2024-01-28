@@ -74,8 +74,8 @@ public class LearningPathNgxService {
         // generates start and end node
         final var startNodeId = getCompetencyStartNodeId(competency.getId());
         final var endNodeId = getCompetencyEndNodeId(competency.getId());
-        currentCluster.add(new NgxLearningPathDTO.Node(startNodeId, NgxLearningPathDTO.NodeType.COMPETENCY_START, competency.getId()));
-        currentCluster.add(new NgxLearningPathDTO.Node(endNodeId, NgxLearningPathDTO.NodeType.COMPETENCY_END, competency.getId()));
+        currentCluster.add(NgxLearningPathDTO.Node.of(startNodeId, NgxLearningPathDTO.NodeType.COMPETENCY_START, competency.getId()));
+        currentCluster.add(NgxLearningPathDTO.Node.of(endNodeId, NgxLearningPathDTO.NodeType.COMPETENCY_END, competency.getId()));
 
         // generate nodes and edges for lecture units
         competency.getLectureUnits().forEach(lectureUnit -> {
@@ -88,7 +88,7 @@ public class LearningPathNgxService {
         });
         // generate nodes and edges for exercises
         competency.getExercises().forEach(exercise -> {
-            currentCluster.add(new NgxLearningPathDTO.Node(getExerciseNodeId(competency.getId(), exercise.getId()), NgxLearningPathDTO.NodeType.EXERCISE, exercise.getId(),
+            currentCluster.add(NgxLearningPathDTO.Node.of(getExerciseNodeId(competency.getId(), exercise.getId()), NgxLearningPathDTO.NodeType.EXERCISE, exercise.getId(),
                     exercise.isCompletedFor(learningPath.getUser()), exercise.getTitle()));
             edges.add(new NgxLearningPathDTO.Edge(getExerciseInEdgeId(competency.getId(), exercise.getId()), startNodeId, getExerciseNodeId(competency.getId(), exercise.getId())));
             edges.add(new NgxLearningPathDTO.Edge(getExerciseOutEdgeId(competency.getId(), exercise.getId()), getExerciseNodeId(competency.getId(), exercise.getId()), endNodeId));
@@ -149,8 +149,8 @@ public class LearningPathNgxService {
 
             // generate match cluster start and end nodes
             for (int i = 0; i < matchClusters.numberOfSets(); i++) {
-                nodes.add(new NgxLearningPathDTO.Node(getMatchingClusterStartNodeId(i), NgxLearningPathDTO.NodeType.MATCH_START));
-                nodes.add(new NgxLearningPathDTO.Node(getMatchingClusterEndNodeId(i), NgxLearningPathDTO.NodeType.MATCH_END));
+                nodes.add(NgxLearningPathDTO.Node.of(getMatchingClusterStartNodeId(i), NgxLearningPathDTO.NodeType.MATCH_START));
+                nodes.add(NgxLearningPathDTO.Node.of(getMatchingClusterEndNodeId(i), NgxLearningPathDTO.NodeType.MATCH_END));
             }
 
             // generate edges between match cluster nodes and corresponding competencies
@@ -251,8 +251,8 @@ public class LearningPathNgxService {
         // generates start and end node
         final var startNodeId = getCompetencyStartNodeId(competency.getId());
         final var endNodeId = getCompetencyEndNodeId(competency.getId());
-        currentCluster.add(new NgxLearningPathDTO.Node(startNodeId, NgxLearningPathDTO.NodeType.COMPETENCY_START, competency.getId()));
-        currentCluster.add(new NgxLearningPathDTO.Node(endNodeId, NgxLearningPathDTO.NodeType.COMPETENCY_END, competency.getId()));
+        currentCluster.add(NgxLearningPathDTO.Node.of(startNodeId, NgxLearningPathDTO.NodeType.COMPETENCY_START, competency.getId()));
+        currentCluster.add(NgxLearningPathDTO.Node.of(endNodeId, NgxLearningPathDTO.NodeType.COMPETENCY_END, competency.getId()));
 
         final var recommendedLearningObjects = learningPathRecommendationService.getRecommendedOrderOfLearningObjects(learningPath, competency, state);
         for (int i = 0; i < recommendedLearningObjects.size(); i++) {
@@ -287,7 +287,7 @@ public class LearningPathNgxService {
                     lectureUnit.getLecture().getId(), false, lectureUnit.getName()));
         }
         else if (learningObject instanceof Exercise exercise) {
-            nodes.add(new NgxLearningPathDTO.Node(getExerciseNodeId(competency.getId(), exercise.getId()), NgxLearningPathDTO.NodeType.EXERCISE, exercise.getId(), false,
+            nodes.add(NgxLearningPathDTO.Node.of(getExerciseNodeId(competency.getId(), exercise.getId()), NgxLearningPathDTO.NodeType.EXERCISE, exercise.getId(), false,
                     exercise.getTitle()));
         }
     }

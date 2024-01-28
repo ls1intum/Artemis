@@ -1,9 +1,11 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.competency;
 
 import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -12,14 +14,22 @@ import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
+/**
+ * Service for managing competencies.
+ */
 @Service
 public class CompetencyService {
+
+    public static final Logger log = LoggerFactory.getLogger(CompetencyService.class);
 
     private final CompetencyRepository competencyRepository;
 
@@ -29,22 +39,30 @@ public class CompetencyService {
 
     private final LearningPathService learningPathService;
 
+    private final CompetencyProgressService competencyProgressService;
+
+    private final LectureUnitService lectureUnitService;
+
+    private final ExerciseService exerciseService;
+
     public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService, CompetencyRelationRepository competencyRelationRepository,
-            LearningPathService learningPathService) {
+            LearningPathService learningPathService, CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService, ExerciseService exerciseService) {
         this.competencyRepository = competencyRepository;
         this.authCheckService = authCheckService;
         this.competencyRelationRepository = competencyRelationRepository;
         this.learningPathService = learningPathService;
+        this.competencyProgressService = competencyProgressService;
+        this.lectureUnitService = lectureUnitService;
+        this.exerciseService = exerciseService;
     }
 
     /**
-     * Get all prerequisites for a course. Lecture units are removed if the student is not part of the course.
+     * Get all prerequisites for a course. Lecture units are removed.
      *
      * @param course The course for which the prerequisites should be retrieved.
-     * @param user   The user that is requesting the prerequisites.
-     * @return A list of prerequisites (without lecture units if student is not part of course).
+     * @return A list of prerequisites.
      */
-    public Set<Competency> findAllPrerequisitesForCourse(@NotNull Course course, @NotNull User user) {
+    public Set<Competency> findAllPrerequisitesForCourse(@NotNull Course course) {
         Set<Competency> prerequisites = competencyRepository.findPrerequisitesByCourseId(course.getId());
         // Remove all lecture units
         for (Competency prerequisite : prerequisites) {
@@ -115,21 +133,90 @@ public class CompetencyService {
                 relationToImport.setHeadCompetency(headCompetencyDTO.competency());
 
                 relationToImport = competencyRelationRepository.save(relationToImport);
-                tailCompetencyDTO.tailRelations().add(new CompetencyRelationDTO(relationToImport));
+                tailCompetencyDTO.tailRelations().add(CompetencyRelationDTO.of(relationToImport));
             }
         }
         return idToImportedCompetency.values().stream().toList();
     }
 
     /**
-     * Creates a new Competency from an existing one (without relations)
+     * Gets a new competency from an existing one (without relations).
+     * <p>
+     * The competency is not persisted.
      *
      * @param competency the existing competency
-     * @return the new Competency
+     * @return the new competency
      */
     public Competency getCompetencyToCreate(Competency competency) {
         return new Competency(competency.getTitle().trim(), competency.getDescription(), competency.getSoftDueDate(), competency.getMasteryThreshold(), competency.getTaxonomy(),
                 competency.isOptional());
+    }
+
+    /**
+     * Creates a new competency and links it to a course and lecture units.
+     *
+     * @param competency the competency to create
+     * @param course     the course to link the competency to
+     * @return the persisted competency
+     */
+    public Competency createCompetency(Competency competency, Course course) {
+        Competency competencyToCreate = getCompetencyToCreate(competency);
+        competencyToCreate.setCourse(course);
+
+        var persistedCompetency = competencyRepository.save(competencyToCreate);
+
+        lectureUnitService.linkLectureUnitsToCompetency(persistedCompetency, competency.getLectureUnits(), Set.of());
+
+        if (course.getLearningPathsEnabled()) {
+            learningPathService.linkCompetencyToLearningPathsOfCourse(persistedCompetency, course.getId());
+        }
+
+        return persistedCompetency;
+    }
+
+    /**
+     * Updates a competency with the values of another one. Updates progress if necessary.
+     *
+     * @param competencyToUpdate the competency to update
+     * @param competency         the competency to update with
+     * @return the updated competency
+     */
+    public Competency updateCompetency(Competency competencyToUpdate, Competency competency) {
+        competencyToUpdate.setTitle(competency.getTitle().trim());
+        competencyToUpdate.setDescription(competency.getDescription());
+        competencyToUpdate.setSoftDueDate(competency.getSoftDueDate());
+        competencyToUpdate.setMasteryThreshold(competency.getMasteryThreshold());
+        competencyToUpdate.setTaxonomy(competency.getTaxonomy());
+        competencyToUpdate.setOptional(competency.isOptional());
+        final var persistedCompetency = competencyRepository.save(competencyToUpdate);
+
+        // update competency progress if necessary
+        if (competency.getLectureUnits().size() != competencyToUpdate.getLectureUnits().size() || !competencyToUpdate.getLectureUnits().containsAll(competency.getLectureUnits())) {
+            log.debug("Linked lecture units changed, updating student progress for competency...");
+            competencyProgressService.updateProgressByCompetencyAsync(persistedCompetency);
+        }
+
+        return persistedCompetency;
+    }
+
+    /**
+     * Deletes a competency and all its relations.
+     *
+     * @param competency the competency to delete
+     * @param course     the course the competency belongs to
+     */
+    public void deleteCompetency(Competency competency, Course course) {
+        competencyRelationRepository.deleteAllByCompetencyId(competency.getId());
+        competencyProgressService.deleteProgressForCompetency(competency.getId());
+
+        exerciseService.removeCompetency(competency.getExercises(), competency);
+        lectureUnitService.removeCompetency(competency.getLectureUnits(), competency);
+
+        if (course.getLearningPathsEnabled()) {
+            learningPathService.removeLinkedCompetencyFromLearningPathsOfCourse(competency, course.getId());
+        }
+
+        competencyRepository.deleteById(competency.getId());
     }
 
     /**
