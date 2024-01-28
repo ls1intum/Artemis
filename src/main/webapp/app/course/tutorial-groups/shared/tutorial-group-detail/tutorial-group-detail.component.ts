@@ -6,7 +6,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { getDayTranslationKey } from '../weekdays';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
+import { Detail, DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
@@ -77,54 +77,62 @@ export class TutorialGroupDetailComponent implements OnChanges {
 
     getTutorialDetailSections() {
         const tutorialGroup = this.tutorialGroup;
+        const tutorialDetails: Detail[] = [
+            { type: DetailType.Link, title: 'artemisApp.entities.tutorialGroup.course', data: { text: tutorialGroup.courseTitle, routerLink: ['../..'] } },
+            { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.title', data: { text: tutorialGroup.title } },
+        ];
+
+        if (tutorialGroup.channel && isMessagingEnabled(this.course)) {
+            tutorialDetails.push({
+                type: DetailType.Link,
+                title: 'artemisApp.entities.tutorialGroup.channel',
+                data: {
+                    text: tutorialGroup.channel.name,
+                    routerLink: tutorialGroup.channel.isMember && ['/courses', this.course.id!, 'messages'],
+                    queryParams: { conversationId: tutorialGroup.channel.id },
+                },
+            });
+        }
+        tutorialDetails.push(
+            { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.teachingAssistant', data: { text: tutorialGroup.teachingAssistantName } },
+            {
+                type: DetailType.Text,
+                title: 'artemisApp.entities.tutorialGroup.utilization',
+                titleHelpText: 'artemisApp.entities.tutorialGroup.utilizationHelpDetail',
+                data: { text: tutorialGroup.averageAttendance && tutorialGroup.capacity && Math.round((tutorialGroup.averageAttendance / tutorialGroup.capacity) * 100) },
+            },
+            {
+                type: DetailType.Text,
+                title: 'artemisApp.entities.tutorialGroup.averageAttendanceDetail',
+                titleHelpText: 'artemisApp.entities.tutorialGroup.averageAttendanceHelpDetail',
+                data: { text: tutorialGroup.averageAttendance && Math.round(tutorialGroup.averageAttendance) },
+            },
+            { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.capacity', data: { text: tutorialGroup.capacity } },
+            { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.registrations', data: { text: tutorialGroup.numberOfRegisteredUsers } },
+            { type: DetailType.Boolean, title: 'artemisApp.entities.tutorialGroup.isOnline', data: { boolean: tutorialGroup.isOnline } },
+            { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.language', data: { text: tutorialGroup.language } },
+            { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.campus', data: { text: tutorialGroup.campus } },
+            { type: DetailType.Markdown, title: 'artemisApp.entities.tutorialGroup.additionalInformation', data: { innerHtml: this.formattedAdditionalInformation } },
+            { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.schedule', data: { text: this.getTutorialTimeSlotString() } },
+        );
+        if (tutorialGroup.isOnline) {
+            tutorialDetails.push({
+                type: DetailType.Text,
+                title: 'artemisApp.forms.scheduleForm.locationInput.labelOnline',
+                data: { text: tutorialGroup.tutorialGroupSchedule?.location },
+            });
+        } else {
+            tutorialDetails.push({
+                type: DetailType.Text,
+                title: 'artemisApp.forms.scheduleForm.locationInput.labelOffline',
+                data: { text: tutorialGroup.tutorialGroupSchedule?.location },
+            });
+        }
         this.tutorialDetailSections = [
             {
                 headline: 'artemisApp.pages.courseTutorialGroupDetail.sections.general',
-                details: [
-                    { type: DetailType.Link, title: 'artemisApp.entities.tutorialGroup.course', data: { text: tutorialGroup.courseTitle, routerLink: ['../..'] } },
-                    { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.title', data: { text: tutorialGroup.title } },
-                    tutorialGroup.channel &&
-                        isMessagingEnabled(this.course) && {
-                            type: DetailType.Link,
-                            title: 'artemisApp.entities.tutorialGroup.channel',
-                            data: {
-                                text: tutorialGroup.channel.name,
-                                routerLink: tutorialGroup.channel.isMember && ['/courses', this.course.id!, 'messages'],
-                                queryParams: { conversationId: tutorialGroup.channel.id },
-                            },
-                        },
-                    { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.teachingAssistant', data: { text: tutorialGroup.teachingAssistantName } },
-                    {
-                        type: DetailType.Text,
-                        title: 'artemisApp.entities.tutorialGroup.utilization',
-                        titleHelpText: 'artemisApp.entities.tutorialGroup.utilizationHelpDetail',
-                        data: { text: tutorialGroup.averageAttendance && tutorialGroup.capacity && Math.round((tutorialGroup.averageAttendance / tutorialGroup.capacity) * 100) },
-                    },
-                    {
-                        type: DetailType.Text,
-                        title: 'artemisApp.entities.tutorialGroup.averageAttendanceDetail',
-                        titleHelpText: 'artemisApp.entities.tutorialGroup.averageAttendanceHelpDetail',
-                        data: { text: tutorialGroup.averageAttendance && Math.round(tutorialGroup.averageAttendance) },
-                    },
-                    { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.capacity', data: { text: tutorialGroup.capacity } },
-                    { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.registrations', data: { text: tutorialGroup.numberOfRegisteredUsers } },
-                    { type: DetailType.Boolean, title: 'artemisApp.entities.tutorialGroup.isOnline', data: { boolean: tutorialGroup.isOnline } },
-                    { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.language', data: { text: tutorialGroup.language } },
-                    { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.campus', data: { text: tutorialGroup.campus } },
-                    { type: DetailType.Markdown, title: 'artemisApp.entities.tutorialGroup.additionalInformation', data: { innerHtml: this.formattedAdditionalInformation } },
-                    { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.schedule', data: { text: this.getTutorialTimeSlotString() } },
-                    tutorialGroup.isOnline && {
-                        type: DetailType.Text,
-                        title: 'artemisApp.forms.scheduleForm.locationInput.labelOnline',
-                        data: { text: tutorialGroup.tutorialGroupSchedule?.location },
-                    },
-                    !tutorialGroup.isOnline && {
-                        type: DetailType.Text,
-                        title: 'artemisApp.forms.scheduleForm.locationInput.labelOffline',
-                        data: { text: tutorialGroup.tutorialGroupSchedule?.location },
-                    },
-                ].filter(Boolean),
-            } as DetailOverviewSection,
+                details: tutorialDetails,
+            },
         ];
     }
 }
