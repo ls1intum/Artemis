@@ -45,8 +45,15 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
         } else {
             this.formData = {
                 startDate: this.tutorialGroupFreePeriod.start?.tz(this.course.timeZone).toDate(),
+                endDate: this.tutorialGroupFreePeriod.end?.tz(this.course.timeZone).toDate(),
+                startTime: this.tutorialGroupFreePeriod.start?.tz(this.course.timeZone).toDate(),
+                endTime: this.tutorialGroupFreePeriod.end?.tz(this.course.timeZone).toDate(),
                 reason: this.tutorialGroupFreePeriod.reason,
             };
+
+            this.formData.startTime?.setHours(this.tutorialGroupFreePeriod.start?.tz(this.course.timeZone).hour()!);
+            this.formData.endTime?.setHours(this.tutorialGroupFreePeriod.end?.tz(this.course.timeZone).hour()!);
+
             this.isInitialized = true;
         }
     }

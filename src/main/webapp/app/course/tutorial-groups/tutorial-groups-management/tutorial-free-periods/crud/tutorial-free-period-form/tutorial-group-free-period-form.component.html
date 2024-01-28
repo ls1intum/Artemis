@@ -9,13 +9,37 @@
         @if (form) {
             <form class="row" [formGroup]="form" (ngSubmit)="submitForm()">
                 <div class="btn-group" role="group">
-                    <input type="radio" class="btn-check" name="timeFrame" id="FreePeriod" autocomplete="off" (click)="setTimeFrame(TimeFrame.Period)" />
+                    <input
+                        type="radio"
+                        class="btn-check"
+                        name="timeFrame"
+                        id="FreePeriod"
+                        autocomplete="off"
+                        [checked]="timeFrame === TimeFrame.Period"
+                        (click)="setTimeFrame(TimeFrame.Period)"
+                    />
                     <label class="btn btn-outline-primary" for="FreePeriod">{{ 'artemisApp.forms.tutorialFreePeriodForm.timeFrame.period' | artemisTranslate }}</label>
 
-                    <input type="radio" class="btn-check" name="timeFrame" id="FreeDay" autocomplete="off" checked (click)="setTimeFrame(TimeFrame.Day)" />
+                    <input
+                        type="radio"
+                        class="btn-check"
+                        name="timeFrame"
+                        id="FreeDay"
+                        autocomplete="off"
+                        [checked]="timeFrame === TimeFrame.Day"
+                        (click)="setTimeFrame(TimeFrame.Day)"
+                    />
                     <label class="btn btn-outline-primary" for="FreeDay">{{ 'artemisApp.forms.tutorialFreePeriodForm.timeFrame.day' | artemisTranslate }}</label>
 
-                    <input type="radio" class="btn-check" name="timeFrame" id="FreePeriodWithinDay" autocomplete="off" (click)="setTimeFrame(TimeFrame.PeriodWithinDay)" />
+                    <input
+                        type="radio"
+                        class="btn-check"
+                        name="timeFrame"
+                        id="FreePeriodWithinDay"
+                        autocomplete="off"
+                        [checked]="timeFrame === TimeFrame.PeriodWithinDay"
+                        (click)="setTimeFrame(TimeFrame.PeriodWithinDay)"
+                    />
                     <label class="btn btn-outline-primary" for="FreePeriodWithinDay">{{
                         'artemisApp.forms.tutorialFreePeriodForm.timeFrame.periodWithinDay' | artemisTranslate
                     }}</label>

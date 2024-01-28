@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
-// import { TutorialGroupSessionFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
+import { TutorialGroupFreePeriodsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component';
+import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
+import dayjs from 'dayjs/esm';
 
 export interface TutorialGroupFreePeriodFormData {
     startDate?: Date;
@@ -45,7 +47,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
 
     form: FormGroup;
 
-    private timeFrame = TimeFrame.Day;
+    protected timeFrame = TimeFrame.Day;
 
     protected readonly TimeFrame = TimeFrame;
 
@@ -81,6 +83,21 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         }
     }
 
+    get isFreeDay(): boolean {
+        // debugger
+        return this.timeFrame == TimeFrame.Day;
+    }
+
+    get isFreePeriod(): boolean {
+        // debugger
+        return this.timeFrame == TimeFrame.Period;
+    }
+
+    get isFreePeriodWithinDay(): boolean {
+        // debugger
+        return this.timeFrame == TimeFrame.PeriodWithinDay;
+    }
+
     get TimeFrameControl(): TimeFrame {
         return this.timeFrame;
     }
@@ -106,12 +123,12 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     }
 
     get isSubmitPossible() {
-        if (this.form.get('startDate') == undefined) {
+        if (!this.form.get('startDate')) {
             return false;
         }
 
         if (this.timeFrame == TimeFrame.Day) {
-            return this.form.get('startDate')?.touched && !this.isStartDateInvalid;
+            return !this.isStartDateInvalid;
         } else if (this.timeFrame == TimeFrame.Period) {
             if (!this.endDateControl) {
                 return false;
@@ -143,10 +160,10 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         this.initializeForm();
         if (this.isEditMode && this.formData) {
             this.setFormValues(this.formData);
+            this.setFirstTimeFrameInEditMode(this.formData);
         }
     }
 
-    // Todo: How can i submit a form with some empty fields? This does not work yet :/ Also, how can i merge the startTime with the date for the freePeriodWithinADay?
     submitForm() {
         const tutorialGroupFreePeriodFormData: TutorialGroupFreePeriodFormData = { ...this.form.value };
         this.formSubmitted.emit(tutorialGroupFreePeriodFormData);
@@ -154,6 +171,31 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
 
     private setFormValues(formData: TutorialGroupFreePeriodFormData) {
         this.form.patchValue(formData);
+    }
+
+    private setFirstTimeFrameInEditMode(formData: TutorialGroupFreePeriodFormData) {
+        const tempFreePeriod = this.createTutorialGroupFreePeriodFromFormData(formData);
+        if (TutorialGroupFreePeriodsManagementComponent.isFreeDay(tempFreePeriod)) {
+            this.setTimeFrame(TimeFrame.Day);
+            formData.endDate = undefined;
+            formData.startTime = undefined;
+            formData.endTime = undefined;
+        } else if (TutorialGroupFreePeriodsManagementComponent.isFreePeriod(tempFreePeriod)) {
+            this.setTimeFrame(TimeFrame.Period);
+            formData.startTime = undefined;
+            formData.endTime = undefined;
+        } else if (TutorialGroupFreePeriodsManagementComponent.isFreePeriodWithinDay(tempFreePeriod)) {
+            this.setTimeFrame(TimeFrame.PeriodWithinDay);
+            formData.endDate = undefined;
+        }
+    }
+
+    private createTutorialGroupFreePeriodFromFormData(formData: TutorialGroupFreePeriodFormData): TutorialGroupFreePeriod {
+        const tutorialGroupFreePeriod = new TutorialGroupFreePeriod();
+        tutorialGroupFreePeriod.start = formData.startDate ? dayjs(formData.startDate) : undefined;
+        tutorialGroupFreePeriod.end = formData.endDate ? dayjs(formData.endDate) : undefined;
+        tutorialGroupFreePeriod.reason = formData.reason;
+        return tutorialGroupFreePeriod;
     }
 
     private initializeForm() {
@@ -227,4 +269,6 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
             return false;
         }
     }
+
+    protected readonly TutorialGroupFreePeriodsManagementComponent = TutorialGroupFreePeriodsManagementComponent;
 }

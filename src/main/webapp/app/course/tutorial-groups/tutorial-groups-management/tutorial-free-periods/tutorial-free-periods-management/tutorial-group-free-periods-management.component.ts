@@ -55,28 +55,30 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
     }
 
     get freeDays(): TutorialGroupFreePeriod[] {
-        return this.tutorialGroupFreePeriods.filter((tutorialGroupFreePeriod) => this.isFreeDay(tutorialGroupFreePeriod));
+        return this.tutorialGroupFreePeriods.filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreeDay(tutorialGroupFreePeriod));
     }
-    private isFreeDay(tutorialGroupFreePeriod: TutorialGroupFreePeriod): boolean {
+    public static isFreeDay(tutorialGroupFreePeriod: TutorialGroupFreePeriod): boolean {
+        // debugger;
         const isMidnight: boolean = tutorialGroupFreePeriod.start!.hour() === 0 && tutorialGroupFreePeriod.start!.minute() === 0;
 
         return tutorialGroupFreePeriod.start!.isSame(tutorialGroupFreePeriod.end!, 'day') && isMidnight;
     }
 
     get freePeriods(): TutorialGroupFreePeriod[] {
-        return this.tutorialGroupFreePeriods.filter((tutorialGroupFreePeriod) => this.isFreePeriod(tutorialGroupFreePeriod));
+        return this.tutorialGroupFreePeriods.filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreePeriod(tutorialGroupFreePeriod));
     }
 
-    private isFreePeriod(tutorialGroupFreePeriod: TutorialGroupFreePeriod): boolean {
+    public static isFreePeriod(tutorialGroupFreePeriod: TutorialGroupFreePeriod): boolean {
         return !tutorialGroupFreePeriod.start!.isSame(tutorialGroupFreePeriod.end!, 'day');
     }
 
     get freePeriodsWithinDay(): TutorialGroupFreePeriod[] {
-        return this.tutorialGroupFreePeriods.filter((tutorialGroupFreePeriod) => this.isFreePeriodWithinDay(tutorialGroupFreePeriod));
+        return this.tutorialGroupFreePeriods.filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreePeriodWithinDay(tutorialGroupFreePeriod));
     }
 
-    private isFreePeriodWithinDay(tutorialGroupFreePeriod: TutorialGroupFreePeriod) {
-        return tutorialGroupFreePeriod.start!.day() === tutorialGroupFreePeriod.end!.day() && !this.isFreeDay(tutorialGroupFreePeriod);
+    public static isFreePeriodWithinDay(tutorialGroupFreePeriod: TutorialGroupFreePeriod) {
+        // debugger;
+        return tutorialGroupFreePeriod.start!.day() === tutorialGroupFreePeriod.end!.day() && !TutorialGroupFreePeriodsManagementComponent.isFreeDay(tutorialGroupFreePeriod);
     }
 
     public isInThePast(tutorialGroupFreeDay: TutorialGroupFreePeriod): boolean {
@@ -115,7 +117,7 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
             .add(() => this.cdr.detectChanges());
     }
 
-    openCreateFreeDayDialog(event: MouseEvent) {
+    openCreateFreePeriodDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(CreateTutorialGroupFreePeriodComponent, { size: 'lg', scrollable: false, backdrop: 'static', animation: false });
         modalRef.componentInstance.course = this.course;
