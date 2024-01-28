@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 @Service
 public class CompetencyService {
 
-    public static final Logger log = LoggerFactory.getLogger(CompetencyService.class);
+    private static final Logger log = LoggerFactory.getLogger(CompetencyService.class);
 
     private final CompetencyRepository competencyRepository;
 
