@@ -17,7 +17,7 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
 import { ParseCourseDescriptionComponent } from 'app/course/competencies/parse-description/parse-course-description.component';
 import { CompetencyRecommendationDetailComponent } from 'app/course/competencies/parse-description/competency-recommendation-detail.component';
-import { CourseDescriptionComponent } from 'app/course/competencies/parse-description/course-description.component';
+import { CourseDescriptionFormComponent } from 'app/course/competencies/parse-description/course-description-form.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { IrisModule } from 'app/iris/iris.module';
 import { CompetencyImportCourseComponent } from 'app/course/competencies/competency-management/competency-import-course.component';
@@ -42,7 +42,7 @@ import { CompetencyImportCourseComponent } from 'app/course/competencies/compete
         EditCompetencyComponent,
         ParseCourseDescriptionComponent,
         CompetencyRecommendationDetailComponent,
-        CourseDescriptionComponent,
+        CourseDescriptionFormComponent,
         CompetencyManagementComponent,
         CompetencyCardComponent,
         CompetenciesPopoverComponent,

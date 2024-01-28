@@ -4,7 +4,7 @@
             <div class="icon-container pe-3">
                 <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="isCollapsed" (click)="toggle()"></fa-icon>
             </div>
-            <h6 class="mb-0 pe-1">{{ titleControl.value }}</h6>
+            <h6 class="mb-0 pe-1">{{ titleControl.value ?? '' }}</h6>
             <input type="checkbox" formControlName="viewed" [ngbTooltip]="'artemisApp.competency.parseDescription.viewedTooltip' | artemisTranslate" />
         </div>
         <div>
@@ -71,7 +71,7 @@
                     [enableFileUpload]="false"
                 />
             } @else {
-                <div id="description-{{ index }}" disabled="true" class="markdown-preview" [innerHTML]="descriptionControl.value | htmlForMarkdown"></div>
+                <div id="description-{{ index }}" disabled="true" class="markdown-preview border rounded p-1" [innerHTML]="descriptionControl.value | htmlForMarkdown"></div>
             }
             @if (descriptionControl.invalid && descriptionControl.dirty) {
                 <div class="alert alert-danger">

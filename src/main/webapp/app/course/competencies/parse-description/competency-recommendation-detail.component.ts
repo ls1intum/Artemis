@@ -36,8 +36,8 @@ export class CompetencyRecommendationDetailComponent implements OnInit {
         this.descriptionControl.addValidators([Validators.maxLength(CompetencyValidators.DESCRIPTION_MAX)]);
         //disable all competency controls as component is not in edit mode
         this.form.controls.competency.disable();
-        //viewed checkbox is always disabled and only updated through toggle/edit
-        this.viewedControl.disable();
+        //viewed checkbox is always enabled
+        this.viewedControl.enable();
     }
 
     /**
@@ -103,7 +103,6 @@ export class CompetencyRecommendationDetailComponent implements OnInit {
         return this.form.controls.competency.controls.title;
     }
 
-    //TODO: remove getters for attributes.
     get descriptionControl() {
         return this.form.controls.competency.controls.description;
     }

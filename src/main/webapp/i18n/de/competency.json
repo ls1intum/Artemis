@@ -45,8 +45,8 @@
                 "title": "Kompetenzmanagement",
                 "import": "Kompetenz importieren",
                 "create": "Kompetenz erstellen",
-                "parseDescription": "Kompetenzvorschläge generieren"
-                "importAll": "Alle Kompetenzen eines Kurses importieren",
+                "parseDescription": "Kompetenzvorschläge generieren",
+                "importAll": "Alle Kompetenzen eines Kurses importieren"
             },
             "import": {
                 "label": "Kompetenz importieren",
@@ -65,6 +65,7 @@
                 "confirmationModalTitle": "Speichern bestätigen",
                 "confirmationModalText": "Du hast nicht alle Empfehlungen angesehen, möchtest du trotzdem fortfahren?",
                 "errorWarning": "Speichern nicht möglich, weil fehlerhafte Kompetenzen vorliegen",
+                "loading": "Generiere Kompetenzvorschläge... Das kann eine Weile dauern.",
                 "courseDescription": {
                     "title": "Kursbeschreibung eingeben",
                     "placeholder": "Bitte gib eine Kursbeschreibung ein",
@@ -75,6 +76,7 @@
                     "regenerate": "Erneut generieren",
                     "regenerateTooltip": "Zusätzliche Kompetenzvorschläge generieren"
                 }
+            },
             "importAll": {
                 "title": "Alle Kompetenzen eines Kurses importieren",
                 "search": "Suche nach einem Kurs:",

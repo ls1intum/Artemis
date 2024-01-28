@@ -13,12 +13,14 @@
                 <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
             </div>
             <div class="ms-auto text-truncate justify-content-end">
-                <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'parse-description']">
-                    <fa-icon [icon]="faPlus"></fa-icon>
-                    <span>{{ 'artemisApp.competency.manageCompetencies.parseDescription' | artemisTranslate }}</span>
-                </a>
+                @if (irisCompetencyGenerationEnabled) {
+                    <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'parse-description']">
+                        <fa-icon [icon]="faRobot"></fa-icon>
+                        <span>{{ 'artemisApp.competency.manageCompetencies.parseDescription' | artemisTranslate }}</span>
+                    </a>
+                }
                 <button class="btn btn-primary" id="competencyImportAllButton" (click)="openImportAllModal()">
-                    <fa-icon [icon]="faPlus"></fa-icon>
+                    <fa-icon [icon]="faFileImport"></fa-icon>
                     <span>{{ 'artemisApp.competency.manageCompetencies.importAll' | artemisTranslate }}</span>
                 </button>
                 <button class="btn btn-primary" id="competencyImportButton" (click)="openImportModal()">

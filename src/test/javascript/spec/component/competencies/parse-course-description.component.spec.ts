@@ -15,7 +15,7 @@ import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { CourseDescriptionStubComponent } from './course-description-stub.component';
+import { CourseDescriptionFormStubComponent } from './course-description-form-stub.component';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
 import { HttpResponse } from '@angular/common/http';
@@ -31,7 +31,7 @@ describe('ParseCourseDescriptionComponent', () => {
             imports: [ArtemisTestModule, ReactiveFormsModule, NgbTooltipMocksModule],
             declarations: [
                 ParseCourseDescriptionComponent,
-                CourseDescriptionStubComponent,
+                CourseDescriptionFormStubComponent,
                 MockComponent(CompetencyRecommendationDetailComponent),
                 ButtonComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -70,8 +70,8 @@ describe('ParseCourseDescriptionComponent', () => {
         parseCourseDescriptionComponentFixture.detectChanges();
         const getCompetencyRecommendationsSpy = jest.spyOn(parseCourseDescriptionComponent, 'getCompetencyRecommendations').mockReturnValue();
 
-        const courseDescriptionComponent: CourseDescriptionStubComponent = parseCourseDescriptionComponentFixture.debugElement.query(
-            By.directive(CourseDescriptionStubComponent),
+        const courseDescriptionComponent: CourseDescriptionFormStubComponent = parseCourseDescriptionComponentFixture.debugElement.query(
+            By.directive(CourseDescriptionFormStubComponent),
         ).componentInstance;
         courseDescriptionComponent.formSubmitted.emit('');
 
@@ -150,13 +150,14 @@ describe('ParseCourseDescriptionComponent', () => {
 
         const navigateSpy = jest.spyOn(router, 'navigate');
         const openSpy = jest.spyOn(modalService, 'open');
-        const response: HttpResponse<void> = new HttpResponse({
+        const response: HttpResponse<Competency[]> = new HttpResponse({
+            body: [],
             status: 200,
         });
         const createBulkSpy = jest.spyOn(competencyService, 'createBulk').mockReturnValue(of(response));
 
         //create competency recomendations that are VIEWED
-        parseCourseDescriptionComponent.competencies.push(createCompetencyFormGroup('Title', 'Descripion', CompetencyTaxonomy.ANALYZE, true));
+        parseCourseDescriptionComponent.competencies.push(createCompetencyFormGroup('Title', 'Description', CompetencyTaxonomy.ANALYZE, true));
         const saveButton = parseCourseDescriptionComponentFixture.debugElement.nativeElement.querySelector('#saveButton > .jhi-btn');
         saveButton.click();
 
@@ -172,11 +173,11 @@ describe('ParseCourseDescriptionComponent', () => {
     function createCompetencyFormGroup(title?: string, description?: string, taxonomy?: CompetencyTaxonomy, viewed = false): FormGroup<CompetencyFormControlsWithViewed> {
         return new FormGroup({
             competency: new FormGroup({
-                title: new FormControl(title),
-                description: new FormControl(description),
-                taxonomy: new FormControl(taxonomy),
+                title: new FormControl(title, { nonNullable: true }),
+                description: new FormControl(description, { nonNullable: true }),
+                taxonomy: new FormControl(taxonomy, { nonNullable: true }),
             }),
-            viewed: new FormControl(viewed),
+            viewed: new FormControl(viewed, { nonNullable: true }),
         });
     }
 });

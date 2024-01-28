@@ -75,9 +75,9 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
         }
 
         var irisSession = new IrisCompetencyGenerationSession();
-        checkHasAccessTo(user, irisSession);
         irisSession.setCourse(course);
         irisSession.setUser(user);
+        checkHasAccessTo(user, irisSession);
         irisSession = irisSessionRepository.save(irisSession);
         return irisSession;
     }
@@ -103,7 +103,6 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
             throw new InternalServerErrorException("Unable to get last user message!");
         }
         var courseDescription = userMessageContent.getContentAsString();
-        log.warn("Course Description is: " + courseDescription);
 
         Map<String, Object> parameters = Map.of("courseDescription", courseDescription, "taxonomyOptions", CompetencyTaxonomy.values());
         var irisSettings = irisSettingsService.getCombinedIrisSettingsFor(session.getCourse(), false);
@@ -140,6 +139,12 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
             try {
                 Competency competency = new Competency();
                 competency.setTitle(node.required("title").asText());
+
+                // skip competency if IRIS only replied with a title (i.e. no further competencies exist)
+                if (node.get("description") == null) {
+                    log.error("No description found, skipping competency: " + node.toPrettyString());
+                    continue;
+                }
                 competency.setDescription(node.required("description").asText());
                 competency.setTaxonomy(CompetencyTaxonomy.valueOf(node.required("taxonomy").asText()));
 

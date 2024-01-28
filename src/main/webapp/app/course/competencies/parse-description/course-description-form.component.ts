@@ -4,10 +4,10 @@ import { faCode, faRotateRight } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
 
 @Component({
-    selector: 'jhi-course-description',
-    templateUrl: './course-description.component.html',
+    selector: 'jhi-course-description-form',
+    templateUrl: './course-description-form.component.html',
 })
-export class CourseDescriptionComponent implements OnInit {
+export class CourseDescriptionFormComponent implements OnInit {
     @Input() isLoading = false;
     @Output() formSubmitted: EventEmitter<string> = new EventEmitter<string>();
 

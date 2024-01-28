@@ -2,25 +2,31 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTestModule } from '../../test.module';
-import { CourseDescriptionComponent } from 'app/course/competencies/parse-description/course-description.component';
+import { CourseDescriptionFormComponent } from 'app/course/competencies/parse-description/course-description-form.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
-describe('CourseDescriptionComponent', () => {
-    let courseDescriptionComponentFixture: ComponentFixture<CourseDescriptionComponent>;
-    let courseDescriptionComponent: CourseDescriptionComponent;
+describe('CourseDescriptionFormComponent', () => {
+    let courseDescriptionComponentFixture: ComponentFixture<CourseDescriptionFormComponent>;
+    let courseDescriptionComponent: CourseDescriptionFormComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ReactiveFormsModule, NgbTooltipMocksModule],
-            declarations: [CourseDescriptionComponent, MockPipe(ArtemisTranslatePipe), ButtonComponent, MockDirective(FeatureToggleDirective), MockDirective(TranslateDirective)],
+            declarations: [
+                CourseDescriptionFormComponent,
+                MockPipe(ArtemisTranslatePipe),
+                ButtonComponent,
+                MockDirective(FeatureToggleDirective),
+                MockDirective(TranslateDirective),
+            ],
         })
             .compileComponents()
             .then(() => {
-                courseDescriptionComponentFixture = TestBed.createComponent(CourseDescriptionComponent);
+                courseDescriptionComponentFixture = TestBed.createComponent(CourseDescriptionFormComponent);
                 courseDescriptionComponent = courseDescriptionComponentFixture.componentInstance;
             });
     });

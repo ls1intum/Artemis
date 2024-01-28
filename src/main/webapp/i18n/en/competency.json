@@ -44,8 +44,8 @@
                 "title": "Competency Management",
                 "import": "Import competency",
                 "create": "Create competency",
-                "parseDescription": "Generate Competency Recommendations"
-                "importAll": "Import all competencies from another course",
+                "parseDescription": "Generate Competency Recommendations",
+                "importAll": "Import all competencies from another course"
             },
             "import": {
                 "label": "Import a Competency",
@@ -64,6 +64,7 @@
                 "confirmationModalTitle": "Confirm Save",
                 "confirmationModalText": "You have not viewed all recommendations, do you still want to continue?",
                 "errorWarning": "You may not save because some competencies are invalid",
+                "loading": "Generating competency recommendations... This might take a while.",
                 "courseDescription": {
                     "title": "Enter a Course Description",
                     "placeholder": "Please enter a course description",
@@ -74,6 +75,7 @@
                     "regenerate": "Generate again",
                     "regenerateTooltip": "Generate additional Competency Recommendations"
                 }
+            },
             "importAll": {
                 "title": "Import all Competencies from another course",
                 "search": "Search for a course:",
