@@ -81,7 +81,7 @@ export class CompetencyService {
     getCompetenciesFromCourseDescription(courseDescription: string, courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient.post<Competency[]>(`${this.resourceURL}/courses/${courseId}/competencies/generate-from-description`, courseDescription, { observe: 'response' });
     }
-  
+
     importAll(courseId: number, sourceCourseId: number, importRelations: boolean) {
         const params = new HttpParams().set('importRelations', importRelations);
         return this.httpClient.post<Array<CompetencyWithTailRelationDTO>>(`${this.resourceURL}/courses/${courseId}/competencies/import-all/${sourceCourseId}`, null, {

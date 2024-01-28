@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 @Profile("iris")
 public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFeatureInterface<IrisCompetencyGenerationSession, List<Competency>> {
 
-    private final Logger log = LoggerFactory.getLogger(IrisCompetencyGenerationSessionService.class);
+    private static final Logger log = LoggerFactory.getLogger(IrisCompetencyGenerationSessionService.class);
 
     private final IrisConnectorService irisConnectorService;
 

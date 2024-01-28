@@ -601,6 +601,13 @@ public class CompetencyResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, competency.getTitle())).build();
     }
 
+    /**
+     * Generates a list of competencies from a given course description by using IRIS.
+     *
+     * @param courseId          the id of the current course
+     * @param courseDescription the text description of the course
+     * @return the ResponseEntity with status 200 (OK) and body the genrated competencies
+     */
     @PostMapping("/courses/{courseId}/competencies/generate-from-description")
     @EnforceAtLeastEditor
     public ResponseEntity<List<Competency>> getCompetenciesFromCourseDescription(@PathVariable Long courseId, @RequestBody String courseDescription) {

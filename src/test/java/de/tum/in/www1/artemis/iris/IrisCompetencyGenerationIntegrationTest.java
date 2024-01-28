@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
 
 @ActiveProfiles("iris")
-public class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTest {
+class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "iriscompetencyintegration";
 

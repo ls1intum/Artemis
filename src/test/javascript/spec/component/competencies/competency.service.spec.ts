@@ -228,10 +228,10 @@ describe('CompetencyService', () => {
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
         tick();
-      
+
         expect(response.body).toEqual(expected);
     }));
-      
+
     it('should import all competencies of a course', fakeAsync(() => {
         const competencyDTO = new CompetencyWithTailRelationDTO();
         competencyDTO.competency = { ...defaultCompetencies.first(), id: 1 };
@@ -247,7 +247,7 @@ describe('CompetencyService', () => {
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
         tick();
-      
+
         expect(resultImportAll.body).toEqual(expected);
     }));
 });
