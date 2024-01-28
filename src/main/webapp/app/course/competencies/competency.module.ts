@@ -20,6 +20,7 @@ import { CompetencyRecommendationDetailComponent } from 'app/course/competencies
 import { CourseDescriptionComponent } from 'app/course/competencies/parse-description/course-description.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { IrisModule } from 'app/iris/iris.module';
+import { CompetencyImportCourseComponent } from 'app/course/competencies/competency-management/competency-import-course.component';
 
 @NgModule({
     imports: [
@@ -47,6 +48,7 @@ import { IrisModule } from 'app/iris/iris.module';
         CompetenciesPopoverComponent,
         PrerequisiteImportComponent,
         CompetencyImportComponent,
+        CompetencyImportCourseComponent,
     ],
     exports: [CompetencyCardComponent, CompetenciesPopoverComponent, CompetencyFormComponent, CompetencyRingsComponent],
 })

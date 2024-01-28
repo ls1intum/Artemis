@@ -17,8 +17,12 @@
                     <fa-icon [icon]="faPlus"></fa-icon>
                     <span>{{ 'artemisApp.competency.manageCompetencies.parseDescription' | artemisTranslate }}</span>
                 </a>
-                <button class="btn btn-primary" id="competencyImportButton" (click)="openImportModal()">
+                <button class="btn btn-primary" id="competencyImportAllButton" (click)="openImportAllModal()">
                     <fa-icon [icon]="faPlus"></fa-icon>
+                    <span>{{ 'artemisApp.competency.manageCompetencies.importAll' | artemisTranslate }}</span>
+                </button>
+                <button class="btn btn-primary" id="competencyImportButton" (click)="openImportModal()">
+                    <fa-icon [icon]="faFileImport"></fa-icon>
                     <span>{{ 'artemisApp.competency.manageCompetencies.import' | artemisTranslate }}</span>
                 </button>
                 <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'create']">
@@ -114,24 +118,12 @@
                                     [draggingEnabled]="false"
                                     [nodes]="nodes"
                                     [links]="edges"
-                                    [clusters]="clusters"
                                     [update$]="update$"
                                 >
                                     <ng-template #defsTemplate>
                                         <svg:marker id="arrow" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
                                             <svg:path d="M0,-5L10,0L0,5" class="arrow-head" />
                                         </svg:marker>
-                                    </ng-template>
-                                    <ng-template #clusterTemplate let-cluster>
-                                        <svg:g class="node cluster">
-                                            <svg:rect
-                                                rx="5"
-                                                ry="5"
-                                                [attr.width]="cluster.dimension.width"
-                                                [attr.height]="cluster.dimension.height"
-                                                [attr.fill]="cluster.data.color"
-                                            />
-                                        </svg:g>
                                     </ng-template>
                                     <ng-template #nodeTemplate let-node>
                                         <svg:g class="node">
@@ -230,10 +222,10 @@
         <div class="d-flex flex-wrap">
             <h2 jhiTranslate="artemisApp.competency.prerequisite.managePrerequisites.title">Prerequisite Management</h2>
             <div class="ms-auto text-truncate justify-content-end">
-                <a class="btn btn-primary" (click)="openPrerequisiteSelectionModal()">
+                <button class="btn btn-primary" (click)="openPrerequisiteSelectionModal()">
                     <fa-icon [icon]="faPlus"></fa-icon>
                     <span>{{ 'artemisApp.competency.prerequisite.managePrerequisites.select' | artemisTranslate }}</span>
-                </a>
+                </button>
             </div>
         </div>
         <div class="container-fluid" style="min-height: 100px">

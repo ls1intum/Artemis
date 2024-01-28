@@ -31,9 +31,14 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-@JsonSubTypes({ @JsonSubTypes.Type(value = IrisChatSubSettings.class, name = "chat"), @JsonSubTypes.Type(value = IrisHestiaSubSettings.class, name = "hestia"),
-        @JsonSubTypes.Type(value = IrisCodeEditorSubSettings.class, name = "code-editor"),
-        @JsonSubTypes.Type(value = IrisCompetencyGenerationSubSettings.class, name = "competency-generation") })
+// @formatter:off
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = IrisChatSubSettings.class, name = "chat"),
+    @JsonSubTypes.Type(value = IrisHestiaSubSettings.class, name = "hestia"),
+    @JsonSubTypes.Type(value = IrisCodeEditorSubSettings.class, name = "code-editor")
+    @JsonSubTypes.Type(value = IrisCompetencyGenerationSubSettings.class, name = "competency-generation") })
+})
+// @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class IrisSubSettings extends DomainObject {
 

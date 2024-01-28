@@ -59,6 +59,10 @@
                         "chat": "Iris Chat",
                         "codeEditor": "Programmieraufgaben Erstellungs Chat",
                         "hestia": "Hestia Integration"
+                    },
+                    "disabled": {
+                        "course": "IRIS ist in den Kurs-IRIS-Einstellungen deaktiviert",
+                        "global": "IRIS ist in den globalen IRIS-Einstellungen deaktiviert"
                     }
                 },
                 "title": {
