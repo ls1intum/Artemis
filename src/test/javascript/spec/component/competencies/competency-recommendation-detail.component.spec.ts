@@ -38,11 +38,11 @@ describe('CompetencyRecommendationDetailComponent', () => {
         //initialize component
         competencyRecommendationDetailComponent.form = new FormGroup({
             competency: new FormGroup({
-                title: new FormControl('Title' as string | undefined),
-                description: new FormControl('Description' as string | undefined),
-                taxonomy: new FormControl(CompetencyTaxonomy.ANALYZE as CompetencyTaxonomy | undefined),
+                title: new FormControl('Title' as string | undefined, { nonNullable: true }),
+                description: new FormControl('Description' as string | undefined, { nonNullable: true }),
+                taxonomy: new FormControl(CompetencyTaxonomy.ANALYZE as CompetencyTaxonomy | undefined, { nonNullable: true }),
             }),
-            viewed: new FormControl(false),
+            viewed: new FormControl(false, { nonNullable: true }),
         });
         competencyRecommendationDetailComponent.index = 0;
     });

@@ -10,14 +10,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
 
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
 
-@ActiveProfiles("iris")
 class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "iriscompetencyintegration";
@@ -31,7 +29,7 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
-        course = courseUtilService.createCourse(1L);
+        course = courseUtilService.createCourse();
         activateIrisGlobally();
         activateIrisFor(course);
     }
