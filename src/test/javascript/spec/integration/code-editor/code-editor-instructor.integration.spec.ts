@@ -239,9 +239,9 @@ describe('CodeEditorInstructorIntegration', () => {
         const exercise = {
             id: 1,
             problemStatement,
-            studentParticipations: [{ id: 2, repositoryUrl: 'test' }],
-            templateParticipation: { id: 3, repositoryUrl: 'test2', results: [{ id: 9, submission: { id: 1, buildFailed: false } }] },
-            solutionParticipation: { id: 4, repositoryUrl: 'test3' },
+            studentParticipations: [{ id: 2, repositoryUri: 'test' }],
+            templateParticipation: { id: 3, repositoryUri: 'test2', results: [{ id: 9, submission: { id: 1, buildFailed: false } }] },
+            solutionParticipation: { id: 4, repositoryUri: 'test3' },
             course: { id: 1 },
         } as ProgrammingExercise;
         exercise.studentParticipations = exercise.studentParticipations?.map((p) => {
@@ -358,10 +358,10 @@ describe('CodeEditorInstructorIntegration', () => {
             course: { id: 1 },
             problemStatement,
         } as ProgrammingExercise;
-        exercise.templateParticipation = { id: 3, repositoryUrl: 'test2', programmingExercise: exercise } as TemplateProgrammingExerciseParticipation;
-        exercise.solutionParticipation = { id: 4, repositoryUrl: 'test3', programmingExercise: exercise } as SolutionProgrammingExerciseParticipation;
+        exercise.templateParticipation = { id: 3, repositoryUri: 'test2', programmingExercise: exercise } as TemplateProgrammingExerciseParticipation;
+        exercise.solutionParticipation = { id: 4, repositoryUri: 'test3', programmingExercise: exercise } as SolutionProgrammingExerciseParticipation;
         // @ts-ignore
-        exercise.studentParticipations = [{ id: 2, repositoryUrl: 'test', exercise } as ProgrammingExerciseStudentParticipation];
+        exercise.studentParticipations = [{ id: 2, repositoryUri: 'test', exercise } as ProgrammingExerciseStudentParticipation];
 
         const setDomainSpy = jest.spyOn(domainService, 'setDomain');
 
@@ -399,7 +399,7 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(setDomainSpy).toHaveBeenNthCalledWith(2, [DomainType.PARTICIPATION, exercise.solutionParticipation]);
     });
 
-    it('should not be able to select a repository without repositoryUrl', () => {
+    it('should not be able to select a repository without repositoryUri', () => {
         // @ts-ignore
         const exercise = {
             id: 1,
@@ -407,9 +407,9 @@ describe('CodeEditorInstructorIntegration', () => {
             problemStatement,
         } as ProgrammingExercise;
         // @ts-ignore
-        exercise.studentParticipations = [{ id: 2, repositoryUrl: 'test', exercise } as ProgrammingExerciseStudentParticipation];
+        exercise.studentParticipations = [{ id: 2, repositoryUri: 'test', exercise } as ProgrammingExerciseStudentParticipation];
         exercise.templateParticipation = { id: 3, programmingExercise: exercise } as TemplateProgrammingExerciseParticipation;
-        exercise.solutionParticipation = { id: 4, repositoryUrl: 'test3', programmingExercise: exercise } as SolutionProgrammingExerciseParticipation;
+        exercise.solutionParticipation = { id: 4, repositoryUri: 'test3', programmingExercise: exercise } as SolutionProgrammingExerciseParticipation;
 
         const setDomainSpy = jest.spyOn(domainService, 'setDomain');
 
@@ -434,9 +434,9 @@ describe('CodeEditorInstructorIntegration', () => {
             problemStatement,
         } as ProgrammingExercise;
 
-        exercise.studentParticipations = [{ id: 2, repositoryUrl: 'test', exercise } as ProgrammingExerciseStudentParticipation];
+        exercise.studentParticipations = [{ id: 2, repositoryUri: 'test', exercise } as ProgrammingExerciseStudentParticipation];
         exercise.templateParticipation = { id: 3, programmingExercise: exercise } as TemplateProgrammingExerciseParticipation;
-        exercise.solutionParticipation = { id: 4, repositoryUrl: 'test3', programmingExercise: exercise } as SolutionProgrammingExerciseParticipation;
+        exercise.solutionParticipation = { id: 4, repositoryUri: 'test3', programmingExercise: exercise } as SolutionProgrammingExerciseParticipation;
 
         const websocketSubscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
         const websocketReceiveMock = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(mockCodeEditorWebsocketStepSuccess));
@@ -463,9 +463,9 @@ describe('CodeEditorInstructorIntegration', () => {
             course: { id: 1 },
             problemStatement,
         } as ProgrammingExercise;
-        exercise.studentParticipations = [{ id: 2, repositoryUrl: 'test', exercise } as ProgrammingExerciseStudentParticipation];
+        exercise.studentParticipations = [{ id: 2, repositoryUri: 'test', exercise } as ProgrammingExerciseStudentParticipation];
         exercise.templateParticipation = { id: 3, programmingExercise: exercise } as TemplateProgrammingExerciseParticipation;
-        exercise.solutionParticipation = { id: 4, repositoryUrl: 'test3', programmingExercise: exercise } as SolutionProgrammingExerciseParticipation;
+        exercise.solutionParticipation = { id: 4, repositoryUri: 'test3', programmingExercise: exercise } as SolutionProgrammingExerciseParticipation;
 
         const websocketReceiveMock = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(mockCodeEditorWebsocketSolutionSuccess));
         const toRepositorySpy = jest.spyOn(container, 'toRepository');
@@ -494,9 +494,9 @@ describe('CodeEditorInstructorIntegration', () => {
             course: { id: 1 },
             problemStatement,
         } as ProgrammingExercise;
-        exercise.studentParticipations = [{ id: 2, repositoryUrl: 'test', exercise } as ProgrammingExerciseStudentParticipation];
+        exercise.studentParticipations = [{ id: 2, repositoryUri: 'test', exercise } as ProgrammingExerciseStudentParticipation];
         exercise.templateParticipation = { id: 3, programmingExercise: exercise } as TemplateProgrammingExerciseParticipation;
-        exercise.solutionParticipation = { id: 4, repositoryUrl: 'test3', programmingExercise: exercise } as SolutionProgrammingExerciseParticipation;
+        exercise.solutionParticipation = { id: 4, repositoryUri: 'test3', programmingExercise: exercise } as SolutionProgrammingExerciseParticipation;
 
         const websocketReceiveMock = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(mockCodeEditorWebsocketTemplateSuccess));
         const toRepositorySpy = jest.spyOn(container, 'toRepository');
@@ -523,9 +523,9 @@ describe('CodeEditorInstructorIntegration', () => {
             course: { id: 1 },
             problemStatement,
         } as ProgrammingExercise;
-        exercise.studentParticipations = [{ id: 2, repositoryUrl: 'test', exercise } as ProgrammingExerciseStudentParticipation];
+        exercise.studentParticipations = [{ id: 2, repositoryUri: 'test', exercise } as ProgrammingExerciseStudentParticipation];
         exercise.templateParticipation = { id: 3, programmingExercise: exercise } as TemplateProgrammingExerciseParticipation;
-        exercise.solutionParticipation = { id: 4, repositoryUrl: 'test3', programmingExercise: exercise } as SolutionProgrammingExerciseParticipation;
+        exercise.solutionParticipation = { id: 4, repositoryUri: 'test3', programmingExercise: exercise } as SolutionProgrammingExerciseParticipation;
 
         const websocketReceiveMock = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(mockCodeEditorWebsocketTestSuccess));
         const toRepositorySpy = jest.spyOn(container, 'toRepository');
@@ -552,9 +552,9 @@ describe('CodeEditorInstructorIntegration', () => {
             problemStatement,
         } as ProgrammingExercise;
 
-        exercise.studentParticipations = [{ id: 2, repositoryUrl: 'test', exercise } as ProgrammingExerciseStudentParticipation];
+        exercise.studentParticipations = [{ id: 2, repositoryUri: 'test', exercise } as ProgrammingExerciseStudentParticipation];
         exercise.templateParticipation = { id: 3, programmingExercise: exercise } as TemplateProgrammingExerciseParticipation;
-        exercise.solutionParticipation = { id: 4, repositoryUrl: 'test3', programmingExercise: exercise } as SolutionProgrammingExerciseParticipation;
+        exercise.solutionParticipation = { id: 4, repositoryUri: 'test3', programmingExercise: exercise } as SolutionProgrammingExerciseParticipation;
 
         const websocketReceiveMock = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(mockCodeEditorWebsocketStepException));
 

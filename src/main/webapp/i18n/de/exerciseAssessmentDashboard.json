@@ -29,7 +29,7 @@
             "youAssessedSoFar": "Du hast bisher {{numberOfTutorAssessments}} Abgaben bewertet.",
             "needToReadGradingInstructions": "Du musst die Bewertungsanweisungen lesen, bevor du mit der Bewertung beginnen kannst.",
             "readGradingInstructions": "Bewertungsanweisungen lesen",
-            "startYourParticipation": "Beginne deine Teilnahme an der Übung.",
+            "startYourParticipation": "Manuelle Bewertung starten",
             "gradingInstructions": "Bewertungsanweisungen",
             "structuredGradingInstructions": "Strukturierte Benotungshinweise",
             "problemStatement": "Aufgabenstellung",

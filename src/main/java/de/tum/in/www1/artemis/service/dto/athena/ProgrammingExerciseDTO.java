@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.service.dto.GradingCriterionDTO;
  * A DTO representing a ProgrammingExercise, for transferring data to Athena
  */
 public record ProgrammingExerciseDTO(long id, String title, double maxPoints, double bonusPoints, String gradingInstructions, List<GradingCriterionDTO> gradingCriteria,
-        String problemStatement, String programmingLanguage, String solutionRepositoryUrl, String templateRepositoryUrl, String testsRepositoryUrl) implements ExerciseDTO {
+        String problemStatement, String programmingLanguage, String solutionRepositoryUri, String templateRepositoryUri, String testsRepositoryUri) implements ExerciseDTO {
 
     /**
      * Create a new TextExerciseDTO from a TextExercise

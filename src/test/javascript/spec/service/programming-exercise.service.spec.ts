@@ -156,8 +156,8 @@ describe('ProgrammingExercise Service', () => {
         it('should update a ProgrammingExercise', fakeAsync(() => {
             const returnedFromService = {
                 ...defaultProgrammingExercise,
-                templateRepositoryUrl: 'BBBBBB',
-                solutionRepositoryUrl: 'BBBBBB',
+                templateRepositoryUri: 'BBBBBB',
+                solutionRepositoryUri: 'BBBBBB',
                 templateBuildPlanId: 'BBBBBB',
                 publishBuildPlanUrl: true,
                 allowOnlineEditor: true,
@@ -200,8 +200,8 @@ describe('ProgrammingExercise Service', () => {
         it('should return a list of ProgrammingExercise', fakeAsync(() => {
             const returnedFromService = {
                 ...defaultProgrammingExercise,
-                templateRepositoryUrl: 'BBBBBB',
-                solutionRepositoryUrl: 'BBBBBB',
+                templateRepositoryUri: 'BBBBBB',
+                solutionRepositoryUri: 'BBBBBB',
                 templateBuildPlanId: 'BBBBBB',
                 publishBuildPlanUrl: true,
                 allowOnlineEditor: true,

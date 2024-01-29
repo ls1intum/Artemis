@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -97,21 +99,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     List<Course> findAllActiveWithoutTestCourses(@Param("now") ZonedDateTime now);
 
-    /**
-     * Note: you should not add exercises or exercises+categories here, because this would make the query too complex and would take significantly longer
-     *
-     * @param now the current date, typically ZonedDateTime.now()
-     * @return List of found courses with lectures and their attachments
-     */
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments" })
-    @Query("""
-            SELECT DISTINCT c
-            FROM Course c
-            WHERE (c.startDate <= :now OR c.startDate IS NULL)
-                AND (c.endDate >= :now OR c.endDate IS NULL)
-            """)
-    List<Course> findAllActiveWithLectures(@Param("now") ZonedDateTime now);
-
     @Query("""
             SELECT DISTINCT c FROM Course c
                 LEFT JOIN FETCH c.organizations organizations
@@ -134,19 +121,20 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "competencies", "learningPaths", "learningPaths.competencies" })
     Optional<Course> findWithEagerLearningPathsAndCompetenciesById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "lectures" })
+    // Note: we load attachments directly because otherwise, they will be loaded in subsequent DB calls due to the EAGER relationship
+    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments" })
     Optional<Course> findWithEagerLecturesById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures" })
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.attachments" })
     Optional<Course> findWithEagerExercisesAndLecturesById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits" })
+    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits", "lectures.attachments" })
     Optional<Course> findWithEagerLecturesAndLectureUnitsById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
     Optional<Course> findForUpdateById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "competencies", "prerequisites" })
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "lectures.attachments", "competencies", "prerequisites" })
     Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(long courseId);
 
     @Query("""
@@ -185,6 +173,17 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "tutorialGroupsConfiguration" })
     Course findWithEagerTutorialGroupConfigurationsById(long courseId);
 
+    /**
+     * Fetches online courses with a specific LTI registration ID.
+     * Eagerly loads related configurations.
+     *
+     * @param registrationId The LTI platform's registration ID.
+     * @return Set of eagerly loaded courses.
+     */
+    @EntityGraph(attributePaths = { "onlineCourseConfiguration", "onlineCourseConfiguration.ltiPlatformConfiguration" })
+    @Query("SELECT c FROM Course c WHERE c.onlineCourse = TRUE AND c.onlineCourseConfiguration.ltiPlatformConfiguration.registrationId = :registrationId")
+    Set<Course> findOnlineCoursesWithRegistrationIdEager(String registrationId);
+
     List<Course> findAllByShortName(String shortName);
 
     Optional<Course> findById(long courseId);
@@ -215,7 +214,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("""
             SELECT DISTINCT c
             FROM Course c
-            LEFT JOIN FETCH c.exercises e
+                LEFT JOIN FETCH c.exercises e
             WHERE TYPE(e) = QuizExercise
             """)
     List<Course> findAllWithQuizExercisesWithEagerExercises();
@@ -273,6 +272,22 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     Integer countCourseMembers(@Param("courseId") Long courseId);
 
+    /**
+     * Query which fetches all courses for which the user is editor or instructor and matching the search criteria.
+     *
+     * @param partialTitle title search term
+     * @param groups       user groups
+     * @param pageable     Pageable
+     * @return Page with course results
+     */
+    @Query("""
+            SELECT c
+            FROM Course c
+            WHERE (c.instructorGroupName IN :groups OR c.editorGroupName IN :groups)
+                AND (c.title LIKE %:partialTitle%)
+            """)
+    Page<Course> findByTitleInCoursesWhereInstructorOrEditor(@Param("partialTitle") String partialTitle, @Param("groups") Set<String> groups, Pageable pageable);
+
     @NotNull
     default Course findByIdElseThrow(long courseId) throws EntityNotFoundException {
         return findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
@@ -323,8 +338,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      *
      * @return the list of entities
      */
-    default List<Course> findAllActiveWithLectures() {
-        return findAllActiveWithLectures(ZonedDateTime.now());
+    default List<Course> findAllActive() {
+        return findAllActive(ZonedDateTime.now());
     }
 
     /**
@@ -404,6 +419,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     default Course findWithEagerLearningPathsAndCompetenciesByIdElseThrow(long courseId) {
         return findWithEagerLearningPathsAndCompetenciesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
+
+    Page<Course> findByTitleIgnoreCaseContaining(String partialTitle, Pageable pageable);
 
     /**
      * Checks if the messaging feature is enabled for a course.

@@ -44,7 +44,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @RequestMapping("/api")
 public class FileResource {
 
-    private final Logger log = LoggerFactory.getLogger(FileResource.class);
+    private static final Logger log = LoggerFactory.getLogger(FileResource.class);
 
     private static final int DAYS_TO_CACHE = 1;
 
@@ -78,13 +78,10 @@ public class FileResource {
 
     private final CourseRepository courseRepository;
 
-    private final FilePathService filePathService;
-
     public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
             LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
             AttachmentRepository attachmentRepository, AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ExamUserRepository examUserRepository, QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository,
-            FilePathService filePathService) {
+            ExamUserRepository examUserRepository, QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -100,7 +97,6 @@ public class FileResource {
         this.quizQuestionRepository = quizQuestionRepository;
         this.dragItemRepository = dragItemRepository;
         this.courseRepository = courseRepository;
-        this.filePathService = filePathService;
     }
 
     /**
@@ -258,7 +254,7 @@ public class FileResource {
     public ResponseEntity<byte[]> getCourseIcon(@PathVariable Long courseId) {
         log.debug("REST request to get icon for course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        // NOTE: we do not enforce a check if the user is a student in the course here, because the course icon is not criticial and we do not want to waste resources
         return responseEntityForFilePath(getActualPathFromPublicPathString(course.getCourseIcon()));
     }
 
@@ -492,7 +488,7 @@ public class FileResource {
         if (publicPath == null) {
             throw new EntityNotFoundException("No file linked");
         }
-        return filePathService.actualPathForPublicPathOrThrow(URI.create(publicPath));
+        return FilePathService.actualPathForPublicPathOrThrow(URI.create(publicPath));
     }
 
     private MediaType getMediaTypeFromFilename(String filename) {

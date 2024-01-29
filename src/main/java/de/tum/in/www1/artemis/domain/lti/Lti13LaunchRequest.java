@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain.lti;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.util.Assert;
 
-import com.google.gson.JsonParser;
+import com.google.gson.Gson;
 
 public class Lti13LaunchRequest {
 
@@ -26,7 +26,7 @@ public class Lti13LaunchRequest {
 
         var resourceLinkClaim = ltiIdToken.getClaim(Claims.RESOURCE_LINK);
         if (resourceLinkClaim != null) {
-            this.resourceLinkId = JsonParser.parseString(resourceLinkClaim.toString()).getAsJsonObject().get("id").getAsString();
+            this.resourceLinkId = new Gson().toJsonTree(resourceLinkClaim).getAsJsonObject().get("id").getAsString();
         }
         else {
             this.resourceLinkId = null;

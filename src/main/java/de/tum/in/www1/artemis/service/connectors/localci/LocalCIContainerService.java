@@ -1,13 +1,13 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
@@ -17,8 +17,6 @@ import java.util.concurrent.CountDownLatch;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +26,7 @@ import org.springframework.stereotype.Service;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.ExecCreateCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
@@ -35,14 +34,10 @@ import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
+import de.tum.in.www1.artemis.service.connectors.BuildScriptProvider;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
-import de.tum.in.www1.artemis.service.connectors.aeolus.ScriptAction;
-import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
 
 /**
@@ -53,45 +48,55 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService
 @Profile("localci")
 public class LocalCIContainerService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIContainerService.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalCIContainerService.class);
 
     private final DockerClient dockerClient;
 
     private final HostConfig hostConfig;
 
-    public static final String WORKING_DIRECTORY = "/var/tmp";
+    @Value("${artemis.continuous-integration.proxies.use-system-proxy:false}")
+    private boolean useSystemProxy;
 
-    @Value("${artemis.continuous-integration.build.images.java.default}")
-    String dockerImage;
+    @Value("${artemis.continuous-integration.proxies.default.http-proxy:}")
+    private String httpProxy;
 
-    @Value("${artemis.continuous-integration.local-cis-build-scripts-path}")
-    String localCIBuildScriptBasePath;
+    @Value("${artemis.continuous-integration.proxies.default.https-proxy:}")
+    private String httpsProxy;
+
+    @Value("${artemis.continuous-integration.proxies.default.no-proxy:}")
+    private String noProxy;
 
     AeolusTemplateService aeolusTemplateService;
 
-    public LocalCIContainerService(DockerClient dockerClient, HostConfig hostConfig, AeolusTemplateService aeolusTemplateService) {
+    BuildScriptProvider buildScriptProvider;
+
+    public LocalCIContainerService(DockerClient dockerClient, HostConfig hostConfig, AeolusTemplateService aeolusTemplateService, BuildScriptProvider buildScriptProvider) {
         this.dockerClient = dockerClient;
         this.hostConfig = hostConfig;
         this.aeolusTemplateService = aeolusTemplateService;
+        this.buildScriptProvider = buildScriptProvider;
     }
 
     /**
-     * Configure a container with the Docker image, the container name, the binds, and the branch to checkout, and set the command that runs when the container starts.
+     * Configure a container with the Docker image, the container name, optional proxy config variables, and set the command that runs when the container starts.
      *
      * @param containerName the name of the container to be created
-     * @param branch        the branch to checkout
-     * @param commitHash    the commit hash to checkout. If it is null, the latest commit of the branch will be checked out.
      * @param image         the Docker image to use for the container
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
-    public CreateContainerResponse configureContainer(String containerName, String branch, String commitHash, String image) {
-        return dockerClient.createContainerCmd(image).withName(containerName).withHostConfig(hostConfig)
-                .withEnv("ARTEMIS_BUILD_TOOL=gradle", "ARTEMIS_DEFAULT_BRANCH=" + branch, "ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH=" + (commitHash != null ? commitHash : ""))
+    public CreateContainerResponse configureContainer(String containerName, String image) {
+        List<String> envVars = new ArrayList<>();
+        if (useSystemProxy) {
+            envVars.add("HTTP_PROXY=" + httpProxy);
+            envVars.add("HTTPS_PROXY=" + httpsProxy);
+            envVars.add("NO_PROXY=" + noProxy);
+        }
+        return dockerClient.createContainerCmd(image).withName(containerName).withHostConfig(hostConfig).withEnv(envVars)
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
                 // container from exiting until it finishes.
                 // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is indicated
                 // by the creation of a file "stop_container.txt" in the container's root directory.
-                .withCmd("sh", "-c", "while [ ! -f " + WORKING_DIRECTORY + "/stop_container.txt ]; do sleep 0.5; done")
+                .withCmd("sh", "-c", "while [ ! -f " + LOCALCI_WORKING_DIRECTORY + "/stop_container.txt ]; do sleep 0.5; done")
                 // .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
                 // "docker exec -it <container-id> /bin/bash".
                 .exec();
@@ -119,7 +124,25 @@ public class LocalCIContainerService {
         // container's
         // main process. The execution command can run concurrently with the main process. This setup with the ExecCreateCmdResponse gives us the ability to wait in code until the
         // command has finished before trying to extract the results.
-        return executeDockerCommand(containerId, true, true, "sh", WORKING_DIRECTORY + "/script.sh");
+        return executeDockerCommand(containerId, true, true, false, "bash", LOCALCI_WORKING_DIRECTORY + "/script.sh");
+    }
+
+    /**
+     * Moves the generated result files to a specified directory so it can easily be retrieved
+     *
+     * @param containerId     the id of the container which generated the files
+     * @param sourcePaths     the list of paths in the container where the generated files can be found
+     * @param destinationPath the path of the directory where the files shall be moved
+     */
+    public void moveResultsToSpecifiedDirectory(String containerId, List<String> sourcePaths, String destinationPath) {
+        String command = "shopt -s globstar && mkdir -p " + destinationPath;
+        executeDockerCommand(containerId, true, true, true, "bash", "-c", command);
+
+        for (String sourcePath : sourcePaths) {
+            checkPath(sourcePath);
+            command = "shopt -s globstar && mv " + sourcePath + " " + destinationPath;
+            executeDockerCommand(containerId, true, true, true, "bash", "-c", command);
+        }
     }
 
     /**
@@ -129,45 +152,8 @@ public class LocalCIContainerService {
      * @param path        the path to the file or directory to be retrieved.
      * @return a {@link TarArchiveInputStream} that can be used to read the archive.
      */
-    public TarArchiveInputStream getArchiveFromContainer(String containerId, String path) {
-        try {
-            return new TarArchiveInputStream(dockerClient.copyArchiveFromContainerCmd(containerId, path).exec());
-        }
-        catch (NotFoundException e) {
-            return null;
-        }
-
-    }
-
-    /**
-     * Retrieve the commit hash of the latest commit to a given repository on a given container for a given branch.
-     * This is the commit hash that was checked out by the build job.
-     *
-     * @param containerId         the id of the container in which the repository is located
-     * @param repositoryType      the type of the repository, either "assignment" or "test"
-     * @param branchName          the name of the branch for which the commit hash should be retrieved
-     * @param programmingLanguage the programming language of the exercise
-     * @return the commit hash of the latest commit to the repository on the container for the given branch
-     * @throws IOException if no commit hash could be retrieved
-     */
-    public String getCommitHashOfBranch(String containerId, LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType repositoryType, String branchName,
-            ProgrammingLanguage programmingLanguage) throws IOException {
-        // Get an input stream of the file in .git folder of the repository that contains the current commit hash of the branch.
-
-        String repositoryCheckoutPath = RepositoryCheckoutPath.valueOf(repositoryType.toString().toUpperCase()).forProgrammingLanguage(programmingLanguage);
-        TarArchiveInputStream repositoryTarInputStream;
-
-        if (Objects.equals(repositoryCheckoutPath, "")) {
-            repositoryTarInputStream = getArchiveFromContainer(containerId, WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/" + branchName);
-        }
-        else {
-            repositoryTarInputStream = getArchiveFromContainer(containerId, WORKING_DIRECTORY + "/testing-dir/" + repositoryCheckoutPath + "/.git/refs/heads/" + branchName);
-        }
-
-        repositoryTarInputStream.getNextTarEntry();
-        String commitHash = IOUtils.toString(repositoryTarInputStream, StandardCharsets.UTF_8).replace("\n", "");
-        repositoryTarInputStream.close();
-        return commitHash;
+    public TarArchiveInputStream getArchiveFromContainer(String containerId, String path) throws NotFoundException {
+        return new TarArchiveInputStream(dockerClient.copyArchiveFromContainerCmd(containerId, path).exec());
     }
 
     /**
@@ -201,7 +187,7 @@ public class LocalCIContainerService {
         // Create a file "stop_container.txt" in the root directory of the container to indicate that the test results have been extracted or that the container should be stopped
         // for some other reason.
         // The container's main process is waiting for this file to appear and then stops the main process, thus stopping and removing the container.
-        executeDockerCommandWithoutAwaitingResponse(containerId, "touch", WORKING_DIRECTORY + "/stop_container.txt");
+        executeDockerCommandWithoutAwaitingResponse(containerId, "touch", LOCALCI_WORKING_DIRECTORY + "/stop_container.txt");
     }
 
     /**
@@ -222,45 +208,45 @@ public class LocalCIContainerService {
         String assignmentCheckoutPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
 
         if (!Objects.equals(testCheckoutPath, "")) {
-            addDirectory(buildJobContainerId, WORKING_DIRECTORY + "/testing-dir", true);
-            executeDockerCommand(buildJobContainerId, false, false, "chmod", "-R", "777", WORKING_DIRECTORY + "/testing-dir");
+            addDirectory(buildJobContainerId, LOCALCI_WORKING_DIRECTORY + "/testing-dir", true);
+            executeDockerCommand(buildJobContainerId, false, false, true, "chmod", "-R", "777", LOCALCI_WORKING_DIRECTORY + "/testing-dir");
         }
-        addAndPrepareDirectory(buildJobContainerId, testRepositoryPath, WORKING_DIRECTORY + "/testing-dir/" + testCheckoutPath);
-        addAndPrepareDirectory(buildJobContainerId, assignmentRepositoryPath, WORKING_DIRECTORY + "/testing-dir/" + assignmentCheckoutPath);
+        addAndPrepareDirectory(buildJobContainerId, testRepositoryPath, LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + testCheckoutPath);
+        addAndPrepareDirectory(buildJobContainerId, assignmentRepositoryPath, LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + assignmentCheckoutPath);
         if (solutionRepositoryPath != null) {
             String solutionCheckoutPath = RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
-            addAndPrepareDirectory(buildJobContainerId, solutionRepositoryPath, WORKING_DIRECTORY + "/testing-dir/" + solutionCheckoutPath);
+            addAndPrepareDirectory(buildJobContainerId, solutionRepositoryPath, LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + solutionCheckoutPath);
         }
         for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
-            addAndPrepareDirectory(buildJobContainerId, auxiliaryRepositoriesPaths[i], WORKING_DIRECTORY + "/testing-dir/" + auxiliaryRepositoryCheckoutDirectories[i]);
+            addAndPrepareDirectory(buildJobContainerId, auxiliaryRepositoriesPaths[i], LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + auxiliaryRepositoryCheckoutDirectories[i]);
         }
-        convertDosFilesToUnix(WORKING_DIRECTORY + "/testing-dir/", buildJobContainerId);
+        convertDosFilesToUnix(LOCALCI_WORKING_DIRECTORY + "/testing-dir/", buildJobContainerId);
 
-        addAndPrepareDirectory(buildJobContainerId, buildScriptPath, WORKING_DIRECTORY + "/script.sh");
-        convertDosFilesToUnix(WORKING_DIRECTORY + "/script.sh", buildJobContainerId);
+        addAndPrepareDirectory(buildJobContainerId, buildScriptPath, LOCALCI_WORKING_DIRECTORY + "/script.sh");
+        convertDosFilesToUnix(LOCALCI_WORKING_DIRECTORY + "/script.sh", buildJobContainerId);
     }
 
     private void addAndPrepareDirectory(String containerId, Path repositoryPath, String newDirectoryName) {
         copyToContainer(repositoryPath.toString(), containerId);
-        renameDirectoryOrFile(containerId, WORKING_DIRECTORY + "/" + repositoryPath.getFileName().toString(), newDirectoryName);
+        renameDirectoryOrFile(containerId, LOCALCI_WORKING_DIRECTORY + "/" + repositoryPath.getFileName().toString(), newDirectoryName);
     }
 
     private void renameDirectoryOrFile(String containerId, String oldName, String newName) {
-        executeDockerCommand(containerId, false, false, "mv", oldName, newName);
+        executeDockerCommand(containerId, false, false, true, "mv", oldName, newName);
     }
 
     private void addDirectory(String containerId, String directoryName, boolean createParentsIfNecessary) {
         String[] command = createParentsIfNecessary ? new String[] { "mkdir", "-p", directoryName } : new String[] { "mkdir", directoryName };
-        executeDockerCommand(containerId, false, false, command);
+        executeDockerCommand(containerId, false, false, true, command);
     }
 
     private void convertDosFilesToUnix(String path, String containerId) {
-        executeDockerCommand(containerId, false, false, "sh", "-c", "find " + path + " -type f ! -path '*/.git/*' -exec sed -i 's/\\r$//' {} \\;");
+        executeDockerCommand(containerId, false, false, true, "sh", "-c", "find " + path + " -type f ! -path '*/.git/*' -exec sed -i 's/\\r$//' {} \\;");
     }
 
     private void copyToContainer(String sourcePath, String containerId) {
         try (InputStream uploadStream = new ByteArrayInputStream(createTarArchive(sourcePath).toByteArray())) {
-            dockerClient.copyArchiveToContainerCmd(containerId).withRemotePath(WORKING_DIRECTORY).withTarInputStream(uploadStream).exec();
+            dockerClient.copyArchiveToContainerCmd(containerId).withRemotePath(LOCALCI_WORKING_DIRECTORY).withTarInputStream(uploadStream).exec();
         }
         catch (IOException e) {
             throw new LocalCIException("Could not copy to container " + containerId, e);
@@ -316,11 +302,14 @@ public class LocalCIContainerService {
         dockerClient.execStartCmd(createCmdResponse.getId()).withDetach(true).exec(new ResultCallback.Adapter<>());
     }
 
-    private List<BuildLogEntry> executeDockerCommand(String containerId, boolean attachStdout, boolean attachStderr, String... command) {
+    private List<BuildLogEntry> executeDockerCommand(String containerId, boolean attachStdout, boolean attachStderr, boolean forceRoot, String... command) {
         boolean detach = !attachStdout && !attachStderr;
 
-        ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(containerId).withAttachStdout(attachStdout).withAttachStderr(attachStderr).withUser("root")
-                .withCmd(command).exec();
+        ExecCreateCmd execCreateCmd = dockerClient.execCreateCmd(containerId).withAttachStdout(attachStdout).withAttachStderr(attachStderr).withCmd(command);
+        if (forceRoot) {
+            execCreateCmd = execCreateCmd.withUser("root");
+        }
+        ExecCreateCmdResponse execCreateCmdResponse = execCreateCmd.exec();
         List<BuildLogEntry> buildLogEntries = new ArrayList<>();
         final CountDownLatch latch = new CountDownLatch(1);
         dockerClient.execStartCmd(execCreateCmdResponse.getId()).withDetach(detach).exec(new ResultCallback.Adapter<>() {
@@ -346,163 +335,9 @@ public class LocalCIContainerService {
         return buildLogEntries;
     }
 
-    /**
-     * Creates a build script for a given programming exercise.
-     * The build script is stored in a file in the local-ci-scripts directory.
-     * The build script is used to build the programming exercise in a Docker container.
-     *
-     * @param participation the participation for which to create the build script
-     * @param containerName the name of the container for which to create the build script
-     * @return the path to the build script file
-     */
-    public Path createBuildScript(ProgrammingExerciseParticipation participation, String containerName) {
-        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-        boolean hasSequentialTestRuns = programmingExercise.hasSequentialTestRuns();
-        boolean hasStaticCodeAnalysis = programmingExercise.isStaticCodeAnalysisEnabled();
-
-        List<ScriptAction> actions = List.of();
-
-        Windfile windfile = programmingExercise.getWindfile();
-
-        if (windfile == null) {
-            windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
-        }
-        if (windfile != null) {
-            actions = windfile.getScriptActions();
-        }
-
-        Path scriptsPath = Path.of(localCIBuildScriptBasePath);
-
-        if (!Files.exists(scriptsPath)) {
-            try {
-                Files.createDirectory(scriptsPath);
-            }
-            catch (IOException e) {
-                throw new LocalCIException("Failed to create directory for local CI scripts", e);
-            }
-        }
-
-        // We use the container name as part of the file name to avoid conflicts when multiple build jobs are running at the same time.
-        Path buildScriptPath = scriptsPath.toAbsolutePath().resolve(containerName + "-build.sh");
-
-        StringBuilder buildScript = new StringBuilder();
-        buildScript.append("#!/bin/bash\n");
-        buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir\n");
-
-        actions.forEach(action -> {
-            String workdir = action.getWorkdir();
-            if (workdir != null) {
-                buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir/").append(workdir).append("\n");
-            }
-            buildScript.append(action.getScript()).append("\n");
-            if (workdir != null) {
-                buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir\n");
-            }
-        });
-
-        // Fall back to hardcoded scripts for old exercises without windfile
-        // *****************
-        // TODO: Delete once windfile templates can be used as fallbacks
-        if (actions.isEmpty()) {
-            // Windfile actions are not defined, use default build script
-            switch (programmingExercise.getProgrammingLanguage()) {
-                case JAVA, KOTLIN -> scriptForJavaKotlin(programmingExercise, buildScript, hasSequentialTestRuns, hasStaticCodeAnalysis);
-                case PYTHON -> scriptForPython(buildScript);
-                default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingExercise.getProgrammingLanguage());
-            }
-        }
-        // *****************
-
-        try {
-            FileUtils.writeStringToFile(buildScriptPath.toFile(), buildScript.toString(), StandardCharsets.UTF_8);
-        }
-        catch (IOException e) {
-            throw new LocalCIException("Failed to create build script file", e);
-        }
-
-        return buildScriptPath;
-    }
-
-    private void scriptForJavaKotlin(ProgrammingExercise programmingExercise, StringBuilder buildScript, boolean hasSequentialTestRuns, boolean hasStaticCodeAnalysis) {
-        boolean isMaven = ProjectType.isMavenProject(programmingExercise.getProjectType());
-
-        if (isMaven) {
-            if (hasSequentialTestRuns) {
-                buildScript.append("""
-                        cd structural
-                        mvn clean test
-                        if [ $? -eq 0 ]; then
-                            cd ..
-                            cd behavior
-                            mvn clean test
-                        fi
-                        cd ..
-                        """);
-            }
-            else {
-                buildScript.append("""
-                        mvn clean test
-                        """);
-                if (hasStaticCodeAnalysis) {
-                    buildScript.append("""
-                            mvn checkstyle:checkstyle
-                            mvn pmd:pmd
-                            mvn spotbugs:spotbugs
-                            """);
-                }
-            }
-        }
-        else {
-            if (hasSequentialTestRuns) {
-                buildScript.append("""
-                        chmod +x gradlew
-                        ./gradlew clean structuralTests
-                        if [ $? -eq 0 ]; then
-                            ./gradlew behaviorTests
-                        fi
-                        """);
-            }
-            else {
-                buildScript.append("""
-                        chmod +x gradlew
-                        ./gradlew clean test
-                        """);
-                if (hasStaticCodeAnalysis) {
-                    buildScript.append("""
-                            ./gradlew check -x test
-                            """);
-                }
-            }
+    private void checkPath(String path) {
+        if (path == null || path.contains("..") || !path.matches("[a-zA-Z0-9_*./-]+")) {
+            throw new LocalCIException("Invalid path: " + path);
         }
     }
-
-    private void scriptForPython(StringBuilder buildScript) {
-        buildScript.append("""
-                python3 -m compileall . -q || error=true
-                if [ ! $error ]
-                then
-                    pytest --junitxml=test-reports/results.xml
-                else
-                    exit 1
-                fi
-                """);
-    }
-
-    /**
-     * Deletes the build script for a given programming exercise.
-     * The build script is stored in a file in the local-ci-scripts directory.
-     *
-     * @param containerName the name of the container for which to delete the build script
-     */
-    public void deleteScriptFile(String containerName) {
-        Path scriptsPath = Path.of("local-ci-scripts");
-        Path buildScriptPath = scriptsPath.resolve(containerName + "-build.sh").toAbsolutePath();
-        try {
-            Files.deleteIfExists(buildScriptPath);
-        }
-        catch (IOException e) {
-            throw new LocalCIException("Failed to delete build script file", e);
-        }
-    }
-
 }

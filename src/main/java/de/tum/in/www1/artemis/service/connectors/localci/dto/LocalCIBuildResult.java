@@ -33,7 +33,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
 
     private List<BuildLogEntry> buildLogEntries = new ArrayList<>();
 
-    private List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports;
+    private final List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports;
 
     private boolean hasLogs = false;
 
@@ -55,7 +55,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
 
     @Override
     public Optional<String> getCommitHashFromAssignmentRepo() {
-        if (assignmentRepoCommitHash.length() == 0) {
+        if (assignmentRepoCommitHash.isEmpty()) {
             return Optional.empty();
         }
         return Optional.of(assignmentRepoCommitHash);
@@ -63,7 +63,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
 
     @Override
     public Optional<String> getCommitHashFromTestsRepo() {
-        if (testsRepoCommitHash.length() == 0) {
+        if (testsRepoCommitHash.isEmpty()) {
             return Optional.empty();
         }
         return Optional.of(testsRepoCommitHash);

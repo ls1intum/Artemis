@@ -31,7 +31,7 @@
                             <span>Exams: {{ examCount }}</span>
                         }
                         @if (examCount > 0) {
-                            <a [routerLink]="['/courses', course.id!, 'exams']">Exams: {{ examCount }}</a>
+                            <a (click)="navigateToExams($event)">Exams: {{ examCount }}</a>
                         }
                     </div>
                 </div>

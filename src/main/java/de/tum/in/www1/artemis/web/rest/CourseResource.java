@@ -5,6 +5,8 @@ import static java.time.ZonedDateTime.now;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.security.Principal;
 import java.time.ZonedDateTime;
@@ -36,7 +38,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
@@ -53,9 +54,11 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
+import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.OnlineCourseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.user.UserNameAndLoginDTO;
 import de.tum.in.www1.artemis.web.rest.errors.*;
@@ -70,7 +73,7 @@ public class CourseResource {
 
     private static final String ENTITY_NAME = "course";
 
-    private final Logger log = LoggerFactory.getLogger(CourseResource.class);
+    private static final Logger log = LoggerFactory.getLogger(CourseResource.class);
 
     private final UserRepository userRepository;
 
@@ -79,8 +82,6 @@ public class CourseResource {
     private final AuthorizationCheckService authCheckService;
 
     private final Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService;
-
-    private final Optional<OAuth2JWKSService> oAuth2JWKSService;
 
     private final CourseRepository courseRepository;
 
@@ -115,17 +116,18 @@ public class CourseResource {
 
     private final LearningPathService learningPathService;
 
+    private final ExamRepository examRepository;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
-            Optional<OAuth2JWKSService> oAuth2JWKSService, Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
+            Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
             CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathService learningPathService,
-            ConductAgreementService conductAgreementService) {
+            ConductAgreementService conductAgreementService, ExamRepository examRepository) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
-        this.oAuth2JWKSService = oAuth2JWKSService;
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.authCheckService = authCheckService;
         this.tutorParticipationRepository = tutorParticipationRepository;
@@ -142,6 +144,7 @@ public class CourseResource {
         this.gradingScaleRepository = gradingScaleRepository;
         this.learningPathService = learningPathService;
         this.conductAgreementService = conductAgreementService;
+        this.examRepository = examRepository;
     }
 
     /**
@@ -154,7 +157,8 @@ public class CourseResource {
      */
     @PutMapping(value = "courses/{courseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastInstructor
-    public ResponseEntity<Course> updateCourse(@PathVariable Long courseId, @RequestPart("course") Course courseUpdate, @RequestPart(required = false) MultipartFile file) {
+    public ResponseEntity<Course> updateCourse(@PathVariable Long courseId, @RequestPart("course") Course courseUpdate, @RequestPart(required = false) MultipartFile file)
+            throws URISyntaxException {
         log.debug("REST request to update Course : {}", courseUpdate);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
@@ -226,8 +230,17 @@ public class CourseResource {
         courseUpdate.validateUnenrollmentEndDate();
 
         if (file != null) {
-            String pathString = fileService.handleSaveFile(file, false, false).toString();
-            courseUpdate.setCourseIcon(pathString);
+            Path basePath = FilePathService.getCourseIconFilePath();
+            Path savePath = fileService.saveFile(file, basePath);
+            courseUpdate.setCourseIcon(FilePathService.publicPathForActualPathOrThrow(savePath, courseId).toString());
+            if (existingCourse.getCourseIcon() != null) {
+                // delete old course icon
+                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
+            }
+        }
+        else if (courseUpdate.getCourseIcon() == null && existingCourse.getCourseIcon() != null) {
+            // delete old course icon
+            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
         }
 
         if (courseUpdate.isOnlineCourse() != existingCourse.isOnlineCourse()) {
@@ -270,7 +283,7 @@ public class CourseResource {
     }
 
     /**
-     * PUT courses/:courseId/onlineCourseConfiguration : Updates the onlineCourseConfiguration for the given cours.
+     * PUT courses/:courseId/onlineCourseConfiguration : Updates the onlineCourseConfiguration for the given course.
      *
      * @param courseId                  the id of the course to update
      * @param onlineCourseConfiguration the online course configuration to update
@@ -298,13 +311,40 @@ public class CourseResource {
         if (onlineCourseConfigurationService.isPresent()) {
             onlineCourseConfigurationService.get().validateOnlineCourseConfiguration(onlineCourseConfiguration);
             course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+            try {
+                onlineCourseConfigurationService.get().addOnlineCourseConfigurationToLtiConfigurations(onlineCourseConfiguration);
+            }
+            catch (Exception ex) {
+                log.error("Failed to add online course configuration to LTI configurations", ex);
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when adding online course configuration to LTI configurations", ex);
+            }
         }
 
         courseRepository.save(course);
 
-        oAuth2JWKSService.ifPresent(auth2JWKSService -> auth2JWKSService.updateKey(course.getOnlineCourseConfiguration().getRegistrationId()));
-
         return ResponseEntity.ok(onlineCourseConfiguration);
+    }
+
+    /**
+     * GET courses/for-lti-dashboard : Retrieves a list of online courses for a specific LTI dashboard based on the client ID.
+     *
+     * @param clientId the client ID of the LTI platform used to filter the courses.
+     * @return a {@link ResponseEntity} containing a list of {@link OnlineCourseDTO} for the courses the user has access to.
+     */
+    @GetMapping("courses/for-lti-dashboard")
+    @EnforceAtLeastInstructor
+    @Profile("lti")
+    public ResponseEntity<List<OnlineCourseDTO>> findAllOnlineCoursesForLtiDashboard(@RequestParam("clientId") String clientId) {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        log.debug("REST request to get all online courses the user {} has access to", user.getLogin());
+
+        Set<Course> courses = courseService.findAllOnlineCoursesForPlatformForUser(clientId, user);
+
+        List<OnlineCourseDTO> onlineCourseDTOS = courses.stream()
+                .map(c -> new OnlineCourseDTO(c.getId(), c.getTitle(), c.getShortName(), c.getOnlineCourseConfiguration().getLtiPlatformConfiguration().getRegistrationId()))
+                .toList();
+
+        return ResponseEntity.ok(onlineCourseDTOS);
     }
 
     /**
@@ -352,7 +392,7 @@ public class CourseResource {
      */
     @GetMapping("courses")
     @EnforceAtLeastTutor
-    public List<Course> getAllCourses(@RequestParam(defaultValue = "false") boolean onlyActive) {
+    public List<Course> getCourses(@RequestParam(defaultValue = "false") boolean onlyActive) {
         log.debug("REST request to get all Courses the user has access to");
         User user = userRepository.getUserWithGroupsAndAuthorities();
         // TODO: we should avoid findAll() and instead try to filter this directly in the database, in case of admins, we should load batches of courses, e.g. per semester
@@ -367,13 +407,29 @@ public class CourseResource {
     }
 
     /**
+     * GET /courses/for-import : Get a list of {@link CourseForImportDTO CourseForImportDTOs} where the user is instructor/editor. The result is pageable.
+     *
+     * @param search The pageable search containing the page size, page number and query string
+     * @return the ResponseEntity with status 200 (OK) and with body the desired page
+     */
+    @GetMapping("courses/for-import")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<SearchResultPageDTO<CourseForImportDTO>> getCoursesForImport(PageableSearchDTO<String> search) {
+        log.debug("REST request to get a list of courses for import.");
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        var coursePage = courseService.getAllOnPageWithSize(search, user);
+        var resultsOnPage = coursePage.getResultsOnPage().stream().map(CourseForImportDTO::new).toList();
+        return ResponseEntity.ok(new SearchResultPageDTO<>(resultsOnPage, coursePage.getNumberOfPages()));
+    }
+
+    /**
      * GET /courses/courses-with-quiz : get all courses with quiz exercises for administration purposes.
      *
      * @return the list of courses
      */
     @GetMapping("courses/courses-with-quiz")
     @EnforceAtLeastEditor
-    public List<Course> getAllCoursesWithQuizExercises() {
+    public List<Course> getCoursesWithQuizExercises() {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (authCheckService.isAdmin(user)) {
             return courseRepository.findAllWithQuizExercisesWithEagerExercises();
@@ -392,9 +448,9 @@ public class CourseResource {
      */
     @GetMapping("courses/with-user-stats")
     @EnforceAtLeastTutor
-    public List<Course> getAllCoursesWithUserStats(@RequestParam(defaultValue = "false") boolean onlyActive) {
+    public List<Course> getCoursesWithUserStats(@RequestParam(defaultValue = "false") boolean onlyActive) {
         log.debug("get courses with user stats, only active: {}", onlyActive);
-        List<Course> courses = getAllCourses(onlyActive);
+        List<Course> courses = getCourses(onlyActive);
         for (Course course : courses) {
             course.setNumberOfInstructors(userRepository.countUserInGroup(course.getInstructorGroupName()));
             course.setNumberOfTeachingAssistants(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
@@ -412,7 +468,7 @@ public class CourseResource {
      */
     @GetMapping("courses/course-management-overview")
     @EnforceAtLeastTutor
-    public List<Course> getAllCoursesForManagementOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
+    public List<Course> getCoursesForManagementOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
         return courseService.getAllCoursesForManagementOverview(onlyActive);
     }
 
@@ -442,7 +498,7 @@ public class CourseResource {
      */
     @GetMapping("courses/for-enrollment")
     @EnforceAtLeastStudent
-    public List<Course> getAllCoursesForEnrollment() {
+    public List<Course> getCoursesForEnrollment() {
         log.debug("REST request to get all currently active courses that are not online courses");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
         return courseService.findAllEnrollableForUser(user).stream().filter(course -> authCheckService.isUserAllowedToSelfEnrollInCourse(user, course)).toList();
@@ -464,6 +520,7 @@ public class CourseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsForUser(courseId, user);
+        log.debug("courseService.findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsForUser done");
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             // user might be allowed to enroll in the course
             // We need the course with organizations so that we can check if the user is allowed to enroll
@@ -481,9 +538,11 @@ public class CourseResource {
         }
 
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user, true);
+        log.debug("courseService.fetchParticipationsWithSubmissionsAndResultsForCourses done");
         courseService.fetchPlagiarismCasesForCourseExercises(course.getExercises(), user.getId());
+        log.debug("courseService.fetchPlagiarismCasesForCourseExercises done");
         GradingScale gradingScale = gradingScaleRepository.findByCourseId(course.getId()).orElse(null);
-
+        log.debug("gradingScaleRepository.findByCourseId done");
         CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId());
         logDuration(List.of(course), user, timeNanoStart, "courses/" + courseId + "/for-dashboard (single course)");
         return ResponseEntity.ok(courseForDashboardDTO);
@@ -498,36 +557,45 @@ public class CourseResource {
      */
     @GetMapping("courses/for-dashboard")
     @EnforceAtLeastStudent
-    public List<CourseForDashboardDTO> getAllCoursesForDashboard() {
+    public CoursesForDashboardDTO getCoursesForDashboard() {
         long timeNanoStart = System.nanoTime();
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug(
-                "REST request to get all courses the user {} has access to with exams, lectures, exercises, participations, submissions and results + the calculated scores the user achieved in each of those courses",
-                user.getLogin());
-        List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(user);
+        log.debug("Request to get all courses user {} has access to with exams, lectures, exercises, participations, submissions and results + calculated scores", user.getLogin());
+        Set<Course> courses = courseService.findAllActiveWithExercisesForUser(user);
+        log.debug("courseService.findAllActiveWithExercisesForUser done");
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, false);
-        courseService.fetchPlagiarismCasesForCourseExercises(courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet()), user.getId());
-        Set<GradingScale> gradingScales = gradingScaleRepository.findAllByCourseIds(courses.stream().map(Course::getId).collect(Collectors.toSet()));
 
-        List<CourseForDashboardDTO> coursesForDashboard = new ArrayList<>();
+        log.debug("courseService.fetchParticipationsWithSubmissionsAndResultsForCourses done");
+        // TODO: we should avoid fetching plagiarism in the future, it's unnecessary for 99.9% of the cases
+        courseService.fetchPlagiarismCasesForCourseExercises(courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet()), user.getId());
+
+        log.debug("courseService.fetchPlagiarismCasesForCourseExercises done");
+        // TODO: loading the grading scale here is only done to handle edge cases, we should avoid it, it's unnecessary for 90% of the cases and can be done when navigating into
+        // the course
+        var gradingScales = gradingScaleRepository.findAllByCourseIds(courses.stream().map(Course::getId).collect(Collectors.toSet()));
+        // we explicitly add 1 hour here to compensate for potential write extensions. Calculating it exactly is not feasible here
+        var activeExams = examRepository.findActiveExams(courses.stream().map(Course::getId).collect(Collectors.toSet()), user.getId(), ZonedDateTime.now(),
+                ZonedDateTime.now().plusHours(1));
+
+        log.debug("gradingScaleRepository.findAllByCourseIds done");
+        Set<CourseForDashboardDTO> coursesForDashboard = new HashSet<>();
         for (Course course : courses) {
             GradingScale gradingScale = gradingScales.stream().filter(scale -> scale.getCourse().getId().equals(course.getId())).findFirst().orElse(null);
             CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId());
             coursesForDashboard.add(courseForDashboardDTO);
         }
         logDuration(courses, user, timeNanoStart, "courses/for-dashboard (multiple courses)");
-        return coursesForDashboard;
+        return new CoursesForDashboardDTO(coursesForDashboard, activeExams);
     }
 
-    private void logDuration(List<Course> courses, User user, long timeNanoStart, String path) {
+    private void logDuration(Collection<Course> courses, User user, long timeNanoStart, String path) {
         if (log.isInfoEnabled()) {
             Set<Exercise> exercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
             Map<ExerciseMode, List<Exercise>> exercisesGroupedByExerciseMode = exercises.stream().collect(Collectors.groupingBy(Exercise::getMode));
             int noOfIndividualExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL), List.of()).size();
             int noOfTeamExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM), List.of()).size();
-            int noOfExams = courses.stream().mapToInt(course -> course.getExams().size()).sum();
-            log.info("{} finished in {} for {} courses with {} individual exercise(s), {} team exercise(s), and {} exam(s) for user {}", path,
-                    TimeLogUtil.formatDurationFrom(timeNanoStart), courses.size(), noOfIndividualExercises, noOfTeamExercises, noOfExams, user.getLogin());
+            log.info("{} finished in {} for {} courses with {} individual exercise(s) and {} team exercise(s) for user {}", path, TimeLogUtil.formatDurationFrom(timeNanoStart),
+                    courses.size(), noOfIndividualExercises, noOfTeamExercises, user.getLogin());
         }
     }
 
@@ -538,7 +606,7 @@ public class CourseResource {
      */
     @GetMapping("courses/for-notifications")
     @EnforceAtLeastStudent
-    public Set<Course> getAllCoursesForNotifications() {
+    public Set<Course> getCoursesForNotifications() {
         log.debug("REST request to get all Courses the user has access to");
         User user = userRepository.getUserWithGroupsAndAuthorities();
         return courseService.findAllActiveForUser(user);
@@ -824,7 +892,7 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/students")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Set<User>> getAllStudentsInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<User>> getStudentsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all students in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         return courseService.getAllUsersInGroup(course, course.getStudentGroupName());
@@ -908,7 +976,7 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/tutors")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Set<User>> getAllTutorsInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<User>> getTutorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all tutors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         return courseService.getAllUsersInGroup(course, course.getTeachingAssistantGroupName());
@@ -922,7 +990,7 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/editors")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Set<User>> getAllEditorsInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<User>> getEditorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all editors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         return courseService.getAllUsersInGroup(course, course.getEditorGroupName());
@@ -936,7 +1004,7 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/instructors")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Set<User>> getAllInstructorsInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<User>> getInstructorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all instructors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         return courseService.getAllUsersInGroup(course, course.getInstructorGroupName());
@@ -1192,21 +1260,22 @@ public class CourseResource {
      * GET /courses/:courseId/statistics : Get the active students for this particular course
      *
      * @param courseId    the id of the course
-     * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
+     * @param periodIndex an index indicating which time period, 0 is current week, -1 is one period in the past, -2 is two periods in the past
+     * @param periodSize  optional size of the period, default is 17
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
     @GetMapping("courses/{courseId}/statistics")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<Integer>> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Long periodIndex) {
+    public ResponseEntity<List<Integer>> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Long periodIndex,
+            @RequestParam Optional<Integer> periodSize) {
         var course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
         var chartEndDate = courseService.determineEndDateForActiveStudents(course);
-        var spanEndDate = chartEndDate.plusWeeks(17 * periodIndex);
-        var returnedSpanSize = courseService.determineTimeSpanSizeForActiveStudents(course, spanEndDate, 17);
-        var activeStudents = courseService.getActiveStudents(exerciseIds, periodIndex, 17, chartEndDate);
-        // We omit data concerning the time before the start date
-        return ResponseEntity.ok(activeStudents.subList(activeStudents.size() - returnedSpanSize, activeStudents.size()));
+        var spanEndDate = chartEndDate.plusWeeks(periodSize.orElse(17) * periodIndex);
+        var returnedSpanSize = courseService.determineTimeSpanSizeForActiveStudents(course, spanEndDate, periodSize.orElse(17));
+        var activeStudents = courseService.getActiveStudents(exerciseIds, periodIndex, Math.min(returnedSpanSize, periodSize.orElse(17)), chartEndDate);
+        return ResponseEntity.ok(activeStudents);
     }
 
     /**

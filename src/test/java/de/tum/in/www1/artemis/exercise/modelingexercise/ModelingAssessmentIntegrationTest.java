@@ -1534,6 +1534,8 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
     void testCheckPlagiarismIdenticalLongModels() throws Exception {
         modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student1");
         modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student2");
+        modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "tutor1");
+        modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "instructor1");
         var path = "/api/modeling-exercises/" + classExercise.getId() + "/check-plagiarism";
         var result = request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, plagiarismUtilService.getDefaultPlagiarismOptions());
         assertThat(result.plagiarismResult().getComparisons()).hasSize(1);

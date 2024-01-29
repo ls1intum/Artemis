@@ -71,6 +71,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockAthenaService } from '../../helpers/mocks/service/mock-athena.service';
 import { AthenaService } from 'app/assessment/athena.service';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
+import { EntityResponseType } from 'app/exercises/shared/result/result.service';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
@@ -122,7 +123,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         id: 1,
         templateParticipation: {
             id: 3,
-            repositoryUrl: 'test2',
+            repositoryUri: 'test2',
             results: [{ id: 9, submission: { id: 1, buildFailed: false } }],
         },
         maxPoints: 100,
@@ -135,7 +136,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     participation.exercise = exercise;
     participation.id = 1;
     participation.student = { login: 'student1' } as User;
-    participation.repositoryUrl = 'http://student1@bitbucket.ase.in.tum.de/scm/TEST/test-repo-student1.git';
+    participation.repositoryUri = 'http://student1@bitbucket.ase.in.tum.de/scm/TEST/test-repo-student1.git';
     result.submission!.participation = participation;
 
     const submission: ProgrammingSubmission = new ProgrammingSubmission();
@@ -149,6 +150,12 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     const afterComplaintResult = new Result();
     afterComplaintResult.score = 100;
+
+    const afterOverrideResult: Result = new Result();
+    afterOverrideResult.feedbacks = [{ type: FeedbackType.AUTOMATIC, testCase: { testName: 'testCase1' }, detailText: 'testCase1 failed', credits: 0 }];
+    afterOverrideResult.assessor = user;
+
+    const overrideEntityResponse: EntityResponseType = new HttpResponse({ body: afterOverrideResult });
 
     const route = (): ActivatedRoute => ({ params: of({ submissionId: 123 }), queryParamMap: of(convertToParamMap({ testRun: false })) }) as any as ActivatedRoute;
     const fileContent = 'This is the content of a file';
@@ -237,12 +244,37 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+        result.assessor = user;
+        result.hasComplaint = true;
     });
 
     it('should use jhi-assessment-layout', () => {
         const assessmentLayout = fixture.debugElement.query(By.directive(AssessmentLayoutComponent));
         expect(assessmentLayout).toBeDefined();
     });
+
+    it('should update assessor correctly if the manual assessment is overridden', fakeAsync(() => {
+        const user2 = <User>{ id: 100, groups: ['instructorGroup'] };
+        const discardPendingSubmissionsWithConfirmationStub = jest.spyOn(comp, 'discardPendingSubmissionsWithConfirmation').mockReturnValue(Promise.resolve(true));
+        const updateAfterNewAssessment = jest.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(of(overrideEntityResponse));
+        result.assessor = user2;
+        result.hasComplaint = false;
+        comp.ngOnInit();
+        tick(100);
+        expect(comp.isAssessor).toBeFalse();
+        addFeedbackAndValidateScore(comp, 0, 0);
+        comp.submit().then(() => {
+            fixture.detectChanges();
+            const alertElementSubmit = debugElement.queryAll(By.css('jhi-alert'));
+            expect(alertElementSubmit).not.toBeNull();
+
+            expect(getIdentityStub).toHaveBeenCalled();
+            expect(discardPendingSubmissionsWithConfirmationStub).toHaveBeenCalled();
+            expect(updateAfterNewAssessment).toHaveBeenCalledOnce();
+            expect(comp.isAssessor).toBeTrue();
+        });
+        flush();
+    }));
 
     it('should show unreferenced feedback suggestions', () => {
         comp.feedbackSuggestions = [{ reference: 'file:src/Test.java_line:1' }, { reference: 'file:src/Test.java_line:2' }, { reference: undefined }];

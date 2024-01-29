@@ -39,7 +39,7 @@ public class DataExportScheduleService {
 
     private final UserService userService;
 
-    private final Logger log = LoggerFactory.getLogger(DataExportScheduleService.class);
+    private static final Logger log = LoggerFactory.getLogger(DataExportScheduleService.class);
 
     public DataExportScheduleService(DataExportRepository dataExportRepository, DataExportCreationService dataExportCreationService, DataExportService dataExportService,
             ProfileService profileService, MailService mailService, UserService userService) {

@@ -215,7 +215,7 @@ public class BambooRequestMockProvider {
         }
     }
 
-    public void mockUpdateRepository(String buildPlanKey, BambooRepositoryDTO bambooRepository, String newRepoUrl, String defaultBranch) throws URISyntaxException {
+    public void mockUpdateRepository(String buildPlanKey, BambooRepositoryDTO bambooRepository, String newRepoUri, String defaultBranch) throws URISyntaxException {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("planKey", buildPlanKey);
         parameters.add("selectedRepository", "com.atlassian.bamboo.plugins.atlassian-bamboo-plugin-git:gitv2");
@@ -225,7 +225,7 @@ public class BambooRequestMockProvider {
         parameters.add("save", "Save repository");
         parameters.add("bamboo.successReturnMode", "json");
         parameters.add("repository.git.branch", defaultBranch);
-        parameters.add("repository.git.repositoryUrl", newRepoUrl);
+        parameters.add("repository.git.repositoryUrl", newRepoUri);
         parameters.add("repository.git.authenticationType", "PASSWORD");
         parameters.add("repository.git.passwordCredentialsSource", "SHARED_CREDENTIALS");
         parameters.add("___advancedOptionsPresent___", "true");
@@ -238,12 +238,12 @@ public class BambooRequestMockProvider {
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockUpdatePlanRepository(String buildPlanKey, String ciRepoName, String newRepoUrl, String defaultBranch) throws URISyntaxException, IOException {
+    public void mockUpdatePlanRepository(String buildPlanKey, String ciRepoName, String newRepoUri, String defaultBranch) throws URISyntaxException, IOException {
         mockGetBuildPlanRepositoryList(buildPlanKey);
 
         BambooRepositoryDTO bambooRepository = new BambooRepositoryDTO(Long.parseLong("296200357"), ciRepoName);
 
-        mockUpdateRepository(buildPlanKey, bambooRepository, newRepoUrl, defaultBranch);
+        mockUpdateRepository(buildPlanKey, bambooRepository, newRepoUri, defaultBranch);
     }
 
     public void mockGetBuildPlanRepositoryList(String buildPlanKey) throws IOException, URISyntaxException {

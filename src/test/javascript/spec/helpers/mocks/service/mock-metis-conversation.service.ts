@@ -44,5 +44,7 @@ export class MockMetisConversationService {
         return EMPTY;
     }
 
+    markAsRead(): void {}
+
     acceptCodeOfConduct(course: Course) {}
 }

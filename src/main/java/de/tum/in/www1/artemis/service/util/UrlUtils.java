@@ -42,6 +42,6 @@ public class UrlUtils {
             throw new IllegalArgumentException("Unable to build endpoint. Too many arguments! " + Arrays.toString(args));
         }
 
-        return UriComponentsBuilder.fromHttpUrl(baseUrl).pathSegment(parsedSegments.toArray(new String[0]));
+        return UriComponentsBuilder.fromHttpUrl(baseUrl).pathSegment(parsedSegments.toArray(String[]::new));
     }
 }

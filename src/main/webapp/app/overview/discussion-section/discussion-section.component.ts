@@ -8,13 +8,13 @@ import { Subject, combineLatest, map, takeUntil } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faLongArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
 import { FormBuilder } from '@angular/forms';
 import { Channel, ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 
 @Component({
     selector: 'jhi-discussion-section',
@@ -40,8 +40,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     private messagesContainerHeight = 700;
     currentSortDirection = SortDirection.DESCENDING;
 
-    channel: Channel;
-    isNotAChannelMember: boolean;
+    channel: ChannelDTO;
     noChannelAvailable: boolean;
     collapsed = false;
     currentPostId?: number;
@@ -60,9 +59,9 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         protected metisService: MetisService,
         private channelService: ChannelService,
         private activatedRoute: ActivatedRoute,
-        private courseManagementService: CourseManagementService,
         private router: Router,
         private formBuilder: FormBuilder,
+        private metisConversationService: MetisConversationService,
     ) {
         super(metisService);
     }
@@ -127,30 +126,21 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     setChannel(courseId: number): void {
         const getChannel = () => {
             return {
-                next: (channel: Channel) => {
+                next: (channel: ChannelDTO) => {
                     this.channel = channel ?? undefined;
                     this.resetFormGroup();
                     this.setFilterAndSort();
 
-                    if (!this.channel) {
+                    if (!this.channel?.id) {
                         this.noChannelAvailable = true;
                         this.collapsed = true;
                         return;
                     }
 
-                    const channelDTO = new ChannelDTO();
-                    channelDTO.isCourseWide = true;
-                    channelDTO.id = this.channel.id;
-                    this.metisService.getFilteredPosts(this.currentPostContextFilter, true, channelDTO);
+                    this.metisService.getFilteredPosts(this.currentPostContextFilter, true, this.channel);
 
                     this.createEmptyPost();
                     this.resetFormGroup();
-                },
-                error: (error: HttpErrorResponse) => {
-                    if (error.status === 403 && error.error.message === 'error.noAccessButCouldJoin') {
-                        this.isNotAChannelMember = true;
-                        this.collapsed = true;
-                    }
                 },
             };
         };
@@ -160,12 +150,12 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         if (this.lecture?.id) {
             this.channelService
                 .getChannelOfLecture(courseId, this.lecture.id)
-                .pipe(map((res: HttpResponse<Channel>) => res.body))
+                .pipe(map((res: HttpResponse<ChannelDTO>) => res.body))
                 .subscribe(getChannel());
         } else if (this.exercise?.id) {
             this.channelService
                 .getChannelOfExercise(courseId, this.exercise.id)
-                .pipe(map((res: HttpResponse<Channel>) => res.body))
+                .pipe(map((res: HttpResponse<ChannelDTO>) => res.body))
                 .subscribe(getChannel());
         }
     }
@@ -176,11 +166,11 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      */
     createEmptyPost(): void {
         if (this.channel) {
-            const conversation = this.channel;
+            const conversation = this.channel as Channel;
             this.shouldSendMessage = false;
-            this.createdPost = this.metisService.createEmptyPostForContext(undefined, undefined, undefined, undefined, conversation);
+            this.createdPost = this.metisService.createEmptyPostForContext(conversation);
         } else {
-            this.createdPost = this.metisService.createEmptyPostForContext(undefined, this.exercise, this.lecture);
+            this.createdPost = this.metisService.createEmptyPostForContext();
         }
     }
 
@@ -217,11 +207,14 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                 target.style.width = event.rect.width + 'px';
             });
 
-        this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(this.handleScrollOnNewMessage);
+        this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
+            this.handleScrollOnNewMessage();
+            this.metisConversationService.markAsRead(this.channel.id!);
+        });
     }
 
     handleScrollOnNewMessage = () => {
-        if ((this.posts.length > 0 && this.content.nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
+        if ((this.posts.length > 0 && this.content?.nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
             this.scrollToBottomOfMessages();
         }
     };
@@ -256,8 +249,6 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         this.scrollToBottomOfMessages();
         this.currentPostContextFilter = {
             courseId: undefined,
-            exerciseIds: undefined,
-            lectureIds: undefined,
             conversationId: this.channel?.id,
             searchText: this.searchText?.trim(),
             filterToUnresolved: this.formGroup.get('filterToUnresolved')?.value,

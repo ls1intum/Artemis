@@ -267,7 +267,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * @param participation Participation for which to get the link for
      */
     getRepositoryLink(participation: Participation) {
-        return (participation! as ProgrammingExerciseStudentParticipation).userIndependentRepositoryUrl;
+        return (participation! as ProgrammingExerciseStudentParticipation).userIndependentRepositoryUri;
     }
 
     /**

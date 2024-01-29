@@ -193,34 +193,6 @@ public class NotificationTargetFactory {
         return new NotificationTarget(message, course.getId(), COURSES_TEXT, course.getId(), COURSES_TEXT);
     }
 
-    // POST related targets
-
-    /**
-     * Create a NotificationTarget for "LecturePost" notifications
-     *
-     * @param post   which contains the needed lecture
-     * @param course the post belongs to
-     * @return the final NotificationTarget
-     */
-    public static NotificationTarget createLecturePostTarget(Post post, Course course) {
-        NotificationTarget target = new NotificationTarget(post.getId(), course.getId());
-        target.setLectureId(post.getLecture().getId());
-        return target;
-    }
-
-    /**
-     * Create a NotificationTarget for "ExercisePost" notifications
-     *
-     * @param post   which contains the needed exercise
-     * @param course the post belongs to
-     * @return the final NotificationTarget
-     */
-    public static NotificationTarget createExercisePostTarget(Post post, Course course) {
-        NotificationTarget target = new NotificationTarget(post.getId(), course.getId());
-        target.setExerciseId(post.getExercise().getId());
-        return target;
-    }
-
     /**
      * Create a NotificationTarget for "CoursePost" notifications
      *
@@ -368,6 +340,6 @@ public class NotificationTargetFactory {
      */
     public static String extractNotificationUrl(Post post, String baseUrl) {
         // e.g. http://localhost:8080/courses/1/messages?conversationId=123
-        return baseUrl + "/courses/" + post.getCourse().getId() + "/messages?conversationId=" + post.getConversation().getId();
+        return baseUrl + "/courses/" + post.getConversation().getCourse().getId() + "/messages?conversationId=" + post.getConversation().getId();
     }
 }

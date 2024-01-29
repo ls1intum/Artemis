@@ -37,7 +37,7 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 @Service
 public class LearningPathService {
 
-    private final Logger log = LoggerFactory.getLogger(LearningPathService.class);
+    private static final Logger log = LoggerFactory.getLogger(LearningPathService.class);
 
     private final UserRepository userRepository;
 
@@ -126,6 +126,23 @@ public class LearningPathService {
         learningPaths.forEach(learningPath -> learningPath.addCompetency(competency));
         learningPathRepository.saveAll(learningPaths);
         log.debug("Linked competency (id={}) to learning paths", competency.getId());
+    }
+
+    /**
+     * Links a list of competencies to all learning paths of the course.
+     *
+     * @param competencies The list of competencies that should be added
+     * @param courseId     course id that the learning paths belong to
+     */
+    public void linkCompetenciesToLearningPathsOfCourse(@NotNull List<Competency> competencies, long courseId) {
+        if (competencies.isEmpty()) {
+            return;
+        }
+        var course = courseRepository.findWithEagerLearningPathsAndCompetenciesByIdElseThrow(courseId);
+        var learningPaths = course.getLearningPaths();
+        learningPaths.forEach(learningPath -> learningPath.addCompetencies(new HashSet<>(competencies)));
+        learningPathRepository.saveAll(learningPaths);
+        log.debug("Linked {} competencies to learning paths", competencies.size());
     }
 
     /**

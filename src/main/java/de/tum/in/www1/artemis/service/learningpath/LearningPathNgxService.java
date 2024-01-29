@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
+import de.tum.in.www1.artemis.domain.competency.RelationType;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
@@ -126,20 +127,20 @@ public class LearningPathNgxService {
      * @param edges        set of edges to store the new edges
      */
     private void generateNgxGraphRepresentationForRelations(LearningPath learningPath, Set<NgxLearningPathDTO.Node> nodes, Set<NgxLearningPathDTO.Edge> edges) {
-        final var relations = competencyRelationRepository.findAllByCourseId(learningPath.getCourse().getId());
+        final var relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(learningPath.getCourse().getId());
 
         // compute match clusters
         Map<Long, Integer> competencyToMatchCluster = new HashMap<>();
-        final var competenciesInMatchRelation = relations.stream().filter(relation -> relation.getType().equals(CompetencyRelation.RelationType.MATCHES))
+        final var competenciesInMatchRelation = relations.stream().filter(relation -> relation.getType().equals(RelationType.MATCHES))
                 .flatMap(relation -> Stream.of(relation.getHeadCompetency().getId(), relation.getTailCompetency().getId())).collect(Collectors.toSet());
         if (!competenciesInMatchRelation.isEmpty()) {
             UnionFind<Long> matchClusters = new UnionFind<>(competenciesInMatchRelation);
-            relations.stream().filter(relation -> relation.getType().equals(CompetencyRelation.RelationType.MATCHES))
+            relations.stream().filter(relation -> relation.getType().equals(RelationType.MATCHES))
                     .forEach(relation -> matchClusters.union(relation.getHeadCompetency().getId(), relation.getTailCompetency().getId()));
 
             // generate map between competencies and cluster node
             AtomicInteger matchClusterId = new AtomicInteger();
-            relations.stream().filter(relation -> relation.getType().equals(CompetencyRelation.RelationType.MATCHES))
+            relations.stream().filter(relation -> relation.getType().equals(RelationType.MATCHES))
                     .flatMapToLong(relation -> LongStream.of(relation.getHeadCompetency().getId(), relation.getTailCompetency().getId())).distinct().forEach(competencyId -> {
                         var parentId = matchClusters.find(competencyId);
                         var clusterId = competencyToMatchCluster.computeIfAbsent(parentId, (key) -> matchClusterId.getAndIncrement());
@@ -161,7 +162,7 @@ public class LearningPathNgxService {
 
         // generate edges for remaining relations
         final Set<String> createdRelations = new HashSet<>();
-        relations.stream().filter(relation -> !relation.getType().equals(CompetencyRelation.RelationType.MATCHES))
+        relations.stream().filter(relation -> !relation.getType().equals(RelationType.MATCHES))
                 .forEach(relation -> generateNgxGraphRepresentationForRelation(relation, competencyToMatchCluster, createdRelations, edges));
     }
 

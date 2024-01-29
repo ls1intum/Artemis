@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 @RequestMapping("/api")
 public class OnlineUnitResource {
 
-    private final Logger log = LoggerFactory.getLogger(OnlineUnitResource.class);
+    private static final Logger log = LoggerFactory.getLogger(OnlineUnitResource.class);
 
     private final OnlineUnitRepository onlineUnitRepository;
 
@@ -112,7 +112,7 @@ public class OnlineUnitResource {
 
         validateUrl(onlineUnit);
 
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             throw new ConflictException("Specified lecture is not part of a course", "onlineUnit", "courseMissing");
         }

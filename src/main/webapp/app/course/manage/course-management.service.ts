@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
 import { BehaviorSubject, Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { filter, map, tap } from 'rxjs/operators';
@@ -25,6 +26,7 @@ import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dt
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ExerciseType, ScoresPerExerciseType } from 'app/entities/exercise.model';
+import { OnlineCourseDtoModel } from 'app/lti/online-course-dto.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -78,6 +80,11 @@ export class CourseManagementService {
         return this.http.put<OnlineCourseConfiguration>(`${this.resourceUrl}/${courseId}/onlineCourseConfiguration`, onlineCourseConfiguration, { observe: 'response' });
     }
 
+    findAllOnlineCoursesWithRegistrationId(clientId: string): Observable<OnlineCourseDtoModel[]> {
+        const params = new HttpParams().set('clientId', '' + clientId);
+        return this.http.get<OnlineCourseDtoModel[]>(`${this.resourceUrl}/for-lti-dashboard`, { params });
+    }
+
     /**
      * finds the course with the provided unique identifier
      * @param courseId - the id of the course to be found
@@ -100,9 +107,13 @@ export class CourseManagementService {
      * gets the active users for the line chart in the detail view
      * @param courseId the id of the course of which the statistics should be fetched
      * @param periodIndex the period of the statistics we want to have
+     * @param periodSize the size of the statistics-period to be fetched
      */
-    getStatisticsData(courseId: number, periodIndex: number): Observable<number[]> {
-        const params = new HttpParams().set('periodIndex', '' + periodIndex);
+    getStatisticsData(courseId: number, periodIndex: number, periodSize?: number): Observable<number[]> {
+        const params: Record<string, number> = { periodIndex };
+        if (periodSize) {
+            params.periodSize = periodSize;
+        }
         return this.http.get<number[]>(`${this.resourceUrl}/${courseId}/statistics`, { params });
     }
 
@@ -134,28 +145,27 @@ export class CourseManagementService {
             .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
     }
 
-    // TODO: separate course overview and course management REST API calls in a better way
     /**
      * finds all courses using a GET request
      */
-    findAllForDashboard(): Observable<EntityArrayResponseType> {
+    findAllForDashboard(): Observable<HttpResponse<CoursesForDashboardDTO>> {
         this.fetchingCoursesForNotifications = true;
-        return this.http.get<CourseForDashboardDTO[]>(`${this.resourceUrl}/for-dashboard`, { observe: 'response' }).pipe(
-            map((res: HttpResponse<CourseForDashboardDTO[]>) => {
+        return this.http.get<CoursesForDashboardDTO>(`${this.resourceUrl}/for-dashboard`, { observe: 'response' }).pipe(
+            map((res: HttpResponse<CoursesForDashboardDTO>) => {
                 if (res.body) {
                     const courses: Course[] = [];
-                    res.body.forEach((courseForDashboardDTO) => {
+                    res.body.courses?.forEach((courseForDashboardDTO) => {
                         courses.push(courseForDashboardDTO.course);
                         this.saveScoresInStorage(courseForDashboardDTO);
                     });
                     // Replace the CourseForDashboardDTOs in the response body with the normal courses to enable further processing.
-                    return res.clone({ body: courses });
+                    const courseResponse = res.clone({ body: courses });
+                    this.processCourseEntityArrayResponseType(courseResponse);
+                    this.setCoursesForNotifications(courseResponse);
+                    this.courseStorageService.setCourses(courseResponse.body !== null ? courseResponse.body : undefined);
                 }
                 return res;
             }),
-            map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)),
-            map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)),
-            tap((res: EntityArrayResponseType) => this.courseStorageService.setCourses(res.body !== null ? res.body : undefined)),
         );
     }
 
@@ -283,19 +293,6 @@ export class CourseManagementService {
                 }
                 return res;
             }),
-        );
-    }
-
-    /**
-     * finds all courses using a GET request
-     * @param req
-     */
-    getAll(req?: any): Observable<EntityArrayResponseType> {
-        const options = createRequestOption(req);
-        this.fetchingCoursesForNotifications = true;
-        return this.http.get<Course[]>(this.resourceUrl, { params: options, observe: 'response' }).pipe(
-            map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)),
-            map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)),
         );
     }
 

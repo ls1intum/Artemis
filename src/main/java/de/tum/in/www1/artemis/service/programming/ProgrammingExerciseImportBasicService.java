@@ -179,14 +179,14 @@ public class ProgrammingExerciseImportBasicService {
     }
 
     /**
-     * Sets up the test repository for a new exercise by setting the repository URL. This does not create the actual
+     * Sets up the test repository for a new exercise by setting the repository URI. This does not create the actual
      * repository on the version control server!
      *
      * @param newExercise the new exercises that should be created during import
      */
     private void setupTestRepository(ProgrammingExercise newExercise) {
         final var testRepoName = newExercise.generateRepositoryName(RepositoryType.TESTS);
-        newExercise.setTestRepositoryUrl(versionControlService.orElseThrow().getCloneRepositoryUrl(newExercise.getProjectKey(), testRepoName).toString());
+        newExercise.setTestRepositoryUri(versionControlService.orElseThrow().getCloneRepositoryUri(newExercise.getProjectKey(), testRepoName).toString());
     }
 
     /**
