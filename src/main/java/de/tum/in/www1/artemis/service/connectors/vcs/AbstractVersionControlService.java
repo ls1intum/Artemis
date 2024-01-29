@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 
 public abstract class AbstractVersionControlService implements VersionControlService {
 
-    private final Logger log = LoggerFactory.getLogger(AbstractVersionControlService.class);
+    private static final Logger log = LoggerFactory.getLogger(AbstractVersionControlService.class);
 
     @Value("${server.url}")
     protected String ARTEMIS_SERVER_URL;

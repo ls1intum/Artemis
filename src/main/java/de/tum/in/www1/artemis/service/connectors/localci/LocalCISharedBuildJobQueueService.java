@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
@@ -21,15 +22,14 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.cp.lock.FencedLock;
 import com.hazelcast.map.IMap;
 
+import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.enumeration.BuildJobResult;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
@@ -38,7 +38,7 @@ import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWe
 @Profile("localci")
 public class LocalCISharedBuildJobQueueService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCISharedBuildJobQueueService.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalCISharedBuildJobQueueService.class);
 
     private final HazelcastInstance hazelcastInstance;
 
@@ -54,12 +54,14 @@ public class LocalCISharedBuildJobQueueService {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
+    private final BuildJobRepository buildJobRepository;
+
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     /**
      * Map of build jobs currently being processed across all nodes
      */
-    private final IMap<Long, LocalCIBuildJobQueueItem> processingJobs;
+    private final IMap<String, LocalCIBuildJobQueueItem> processingJobs;
 
     private final IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
 
@@ -75,9 +77,11 @@ public class LocalCISharedBuildJobQueueService {
      */
     private final ReentrantLock instanceLock = new ReentrantLock();
 
+    private UUID listenerId;
+
     public LocalCISharedBuildJobQueueService(HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
             LocalCIBuildJobManagementService localCIBuildJobManagementService, ParticipationRepository participationRepository,
-            ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService,
+            ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService, BuildJobRepository buildJobRepository,
             ProgrammingExerciseRepository programmingExerciseRepository) {
         this.hazelcastInstance = hazelcastInstance;
         this.localCIBuildExecutorService = (ThreadPoolExecutor) localCIBuildExecutorService;
@@ -85,6 +89,7 @@ public class LocalCISharedBuildJobQueueService {
         this.participationRepository = participationRepository;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.programmingMessagingService = programmingMessagingService;
+        this.buildJobRepository = buildJobRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
@@ -97,26 +102,11 @@ public class LocalCISharedBuildJobQueueService {
      */
     @PostConstruct
     public void addListener() {
-        this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
+        this.listenerId = this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
     }
 
-    /**
-     * Create build job item object and add it to the queue.
-     *
-     * @param name                     name of the build job
-     * @param participationId          participation id of the build job
-     * @param repositoryTypeOrUsername repository type (if template or solution) or username (if student repository)
-     * @param commitHash               commit hash of the build job
-     * @param submissionDate           submission date of the build job
-     * @param priority                 priority of the build job
-     * @param courseId                 course id of the build job
-     * @param isPushToTestRepository   defines if the build job is triggered by a push to a test repository
-     */
-    public void addBuildJob(String name, long participationId, String repositoryTypeOrUsername, String commitHash, ZonedDateTime submissionDate, int priority, long courseId,
-            boolean isPushToTestRepository) {
-        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(Long.parseLong(String.valueOf(participationId) + submissionDate.toInstant().toEpochMilli()), name,
-                null, participationId, repositoryTypeOrUsername, commitHash, submissionDate, 0, null, priority, courseId, isPushToTestRepository);
-        queue.add(buildJobQueueItem);
+    public void removeListener() {
+        this.queue.removeItemListener(this.listenerId);
     }
 
     public List<LocalCIBuildJobQueueItem> getQueuedJobs() {
@@ -142,18 +132,36 @@ public class LocalCISharedBuildJobQueueService {
     }
 
     /**
-     * Remove all queued build jobs for a participation from the shared build job queue.
+     * Save a finished build job to the database.
      *
-     * @param participationId id of the participation
+     * @param queueItem           the build job object from the queue
+     * @param result              the result of the build job (SUCCESSFUL, FAILED, CANCELLED)
+     * @param buildCompletionDate the date when the build job was completed
      */
-    public void removeQueuedJobsForParticipation(long participationId) {
-        List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
-        for (LocalCIBuildJobQueueItem job : queue) {
-            if (job.participationId() == participationId) {
-                toRemove.add(job);
-            }
+    public void saveFinishedBuildJob(LocalCIBuildJobQueueItem queueItem, BuildJobResult result, ZonedDateTime buildCompletionDate) {
+        try {
+            BuildJob buildJob = new BuildJob();
+            buildJob.setName(queueItem.name());
+            buildJob.setExerciseId(queueItem.exerciseId());
+            buildJob.setCourseId(queueItem.courseId());
+            buildJob.setParticipationId(queueItem.participationId());
+            buildJob.setBuildAgentAddress(queueItem.buildAgentAddress());
+            buildJob.setBuildStartDate(queueItem.jobTimingInfo().buildStartDate());
+            buildJob.setBuildCompletionDate(buildCompletionDate);
+            buildJob.setRepositoryType(queueItem.repositoryInfo().repositoryType());
+            buildJob.setRepositoryName(queueItem.repositoryInfo().repositoryName());
+            buildJob.setCommitHash(queueItem.buildConfig().commitHash());
+            buildJob.setRetryCount(queueItem.retryCount());
+            buildJob.setPriority(queueItem.priority());
+            buildJob.setTriggeredByPushTo(queueItem.repositoryInfo().triggeredByPushTo());
+            buildJob.setBuildJobResult(result);
+            buildJob.setDockerImage(queueItem.buildConfig().dockerImage());
+
+            buildJobRepository.save(buildJob);
         }
-        queue.removeAll(toRemove);
+        catch (Exception e) {
+            log.error("Could not save build job to database", e);
+        }
     }
 
     /**
@@ -219,7 +227,6 @@ public class LocalCISharedBuildJobQueueService {
             finally {
                 sharedLock.unlock();
             }
-
             processBuild(buildJob);
         }
         finally {
@@ -231,15 +238,19 @@ public class LocalCISharedBuildJobQueueService {
         LocalCIBuildJobQueueItem buildJob = queue.poll();
         if (buildJob != null) {
             String hazelcastMemberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+
+            JobTimingInfo jobTimingInfo = new JobTimingInfo(buildJob.jobTimingInfo().submissionDate(), ZonedDateTime.now(), null);
+
             LocalCIBuildJobQueueItem processingJob = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), hazelcastMemberAddress, buildJob.participationId(),
-                    buildJob.repositoryTypeOrUserName(), buildJob.commitHash(), buildJob.submissionDate(), buildJob.retryCount(), ZonedDateTime.now(), buildJob.priority(),
-                    buildJob.courseId(), buildJob.isPushToTestRepository());
+                    buildJob.courseId(), buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), buildJob.repositoryInfo(), jobTimingInfo, buildJob.buildConfig());
+
             processingJobs.put(processingJob.id(), processingJob);
             localProcessingJobs.incrementAndGet();
 
             updateLocalBuildAgentInformation();
+            return processingJob;
         }
-        return buildJob;
+        return null;
     }
 
     private void updateLocalBuildAgentInformation() {
@@ -248,7 +259,8 @@ public class LocalCISharedBuildJobQueueService {
         List<LocalCIBuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(memberAddress);
         int numberOfCurrentBuildJobs = processingJobsOfMember.size();
         int maxNumberOfConcurrentBuilds = localCIBuildExecutorService.getMaximumPoolSize();
-        LocalCIBuildAgentInformation info = new LocalCIBuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember);
+        boolean active = numberOfCurrentBuildJobs > 0;
+        LocalCIBuildAgentInformation info = new LocalCIBuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, active);
         buildAgentInformation.put(memberAddress, info);
     }
 
@@ -257,7 +269,7 @@ public class LocalCISharedBuildJobQueueService {
     }
 
     private void removeOfflineNodes() {
-        List<String> memberAddresses = hazelcastInstance.getCluster().getMembers().stream().map(member -> member.getAddress().toString()).toList();
+        Set<String> memberAddresses = hazelcastInstance.getCluster().getMembers().stream().map(member -> member.getAddress().toString()).collect(Collectors.toSet());
         for (String key : buildAgentInformation.keySet()) {
             if (!memberAddresses.contains(key)) {
                 buildAgentInformation.remove(key);
@@ -278,46 +290,24 @@ public class LocalCISharedBuildJobQueueService {
             return;
         }
 
-        log.info("Processing build job: " + buildJob);
-        String commitHash = buildJob.commitHash();
+        log.info("Processing build job: {}", buildJob);
         boolean isRetry = buildJob.retryCount() >= 1;
 
-        ProgrammingExerciseParticipation participation;
-
-        // Participation might not be persisted in the database yet or it has been deleted in the meantime
-        try {
-            participation = retrieveParticipationWithRetry(buildJob.participationId());
-        }
-        catch (IllegalStateException e) {
-            log.error("Cannot process build job for participation with id {} because it could not be retrieved from the database.", buildJob.participationId());
-            processingJobs.remove(buildJob.id());
-            localProcessingJobs.decrementAndGet();
-            updateLocalBuildAgentInformation();
-            checkAvailabilityAndProcessNextBuild();
-            return;
-        }
-        catch (Exception e) {
-            log.error("Cannot process build job for participation with id {} because of an unexpected error.", buildJob.participationId(), e);
-            processingJobs.remove(buildJob.id());
-            localProcessingJobs.decrementAndGet();
-            updateLocalBuildAgentInformation();
-            checkAvailabilityAndProcessNextBuild();
-            return;
-        }
-
-        // For some reason, it is possible that the participation object does not have the programming exercise
-        if (participation.getProgrammingExercise() == null) {
-            SecurityUtils.setAuthorizationObject();
-            participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
-        }
-
-        CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.executeBuildJob(participation, commitHash, isRetry,
-                buildJob.isPushToTestRepository());
+        CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.executeBuildJob(buildJob);
         futureResult.thenAccept(buildResult -> {
 
+            ZonedDateTime buildCompletionDate = ZonedDateTime.now();
+
             // Do not process the result if the participation has been deleted in the meantime
-            Optional<Participation> participationOptional = participationRepository.findById(participation.getId());
+            Optional<Participation> participationOptional = participationRepository.findById(buildJob.participationId());
             if (participationOptional.isPresent()) {
+                ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
+
+                // In case the participation does not contain the exercise, we have to load it from the database
+                if (participation.getProgrammingExercise() == null) {
+                    participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
+                }
+
                 SecurityUtils.setAuthorizationObject();
                 Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
                 if (result != null) {
@@ -329,8 +319,11 @@ public class LocalCISharedBuildJobQueueService {
                 }
             }
             else {
-                log.warn("Participation with id {} has been deleted. Cancelling the processing of the build result.", participation.getId());
+                log.warn("Participation with id {} has been deleted. Cancelling the processing of the build result.", buildJob.participationId());
             }
+
+            // save build job to database
+            saveFinishedBuildJob(buildJob, BuildJobResult.SUCCESSFUL, buildCompletionDate);
 
             // after processing a build job, remove it from the processing jobs
             processingJobs.remove(buildJob.id());
@@ -339,31 +332,50 @@ public class LocalCISharedBuildJobQueueService {
 
             // process next build job if node is available
             checkAvailabilityAndProcessNextBuild();
+
         }).exceptionally(ex -> {
-            log.error("Error while processing build job: {}", buildJob, ex);
-
-            processingJobs.remove(buildJob.id());
-            localProcessingJobs.decrementAndGet();
-            updateLocalBuildAgentInformation();
-
-            if (isRetry) {
-                log.error("Build job failed for the second time: {}", buildJob);
-                return null;
-            }
-
-            // Do not requeue the build job if the participation has been deleted in the meantime
+            ZonedDateTime buildCompletionDate = ZonedDateTime.now();
             SecurityUtils.setAuthorizationObject();
-            Optional<Participation> participationOptional = participationRepository.findById(participation.getId());
-            if (participationOptional.isPresent()) {
-                log.warn("Requeueing failed build job: {}", buildJob);
-                LocalCIBuildJobQueueItem requeuedBuildJob = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(), buildJob.participationId(),
-                        buildJob.repositoryTypeOrUserName(), buildJob.commitHash(), buildJob.submissionDate(), buildJob.retryCount() + 1, null, buildJob.priority(),
-                        buildJob.courseId(), buildJob.isPushToTestRepository());
-                queue.add(requeuedBuildJob);
+            Optional<Participation> participationOptional = participationRepository.findById(buildJob.participationId());
+            if (ex.getCause() instanceof CancellationException && ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
+                localProcessingJobs.decrementAndGet();
+                updateLocalBuildAgentInformation();
+
+                if (participationOptional.isPresent()) {
+                    ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
+                    programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
+                            new BuildTriggerWebsocketError("Build job was cancelled", participation.getId()));
+                }
+
+                saveFinishedBuildJob(buildJob, BuildJobResult.CANCELLED, buildCompletionDate);
             }
             else {
-                log.warn("Participation with id {} has been deleted. Cancelling the requeueing of the build job.", participation.getId());
+                log.error("Error while processing build job: {}", buildJob, ex);
+
+                processingJobs.remove(buildJob.id());
+                localProcessingJobs.decrementAndGet();
+                updateLocalBuildAgentInformation();
+
+                if (participationOptional.isPresent() && !isRetry) {
+                    ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
+                    programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
+                            new BuildTriggerWebsocketError(ex.getMessage(), participation.getId()));
+
+                    log.warn("Requeueing failed build job: {}", buildJob);
+                    LocalCIBuildJobQueueItem requeuedBuildJob = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), null, buildJob.participationId(), buildJob.courseId(),
+                            buildJob.exerciseId(), buildJob.retryCount() + 1, buildJob.priority(), buildJob.repositoryInfo(), buildJob.jobTimingInfo(), buildJob.buildConfig());
+                    queue.add(requeuedBuildJob);
+                }
+                else if (participationOptional.isEmpty()) {
+                    log.warn("Participation with id {} has been deleted. Cancelling the requeueing of the build job.", buildJob.participationId());
+                }
+                else {
+                    log.error("Build job failed for the second time: {}", buildJob);
+                }
+
+                saveFinishedBuildJob(buildJob, BuildJobResult.FAILED, buildCompletionDate);
             }
+            checkAvailabilityAndProcessNextBuild();
             return null;
         });
     }
@@ -378,39 +390,127 @@ public class LocalCISharedBuildJobQueueService {
     }
 
     /**
-     * Retrieve participation from database with retries.
-     * This is necessary because the participation might not be persisted in the database yet.
+     * Cancel a build job by removing it from the queue or stopping the build process.
      *
-     * @param participationId id of the participation
+     * @param buildJobId id of the build job to cancel
      */
-    private ProgrammingExerciseParticipation retrieveParticipationWithRetry(Long participationId) {
-        int maxRetries = 5;
-        int retries = 0;
-        ProgrammingExerciseParticipation participation;
-        Optional<Participation> tempParticipation;
-        while (retries < maxRetries) {
-            SecurityUtils.setAuthorizationObject();
-            tempParticipation = participationRepository.findById(participationId);
-            if (tempParticipation.isPresent()) {
-                participation = (ProgrammingExerciseParticipation) tempParticipation.get();
-                return participation;
+    public void cancelBuildJob(String buildJobId) {
+        sharedLock.lock();
+        try {
+            // Remove build job if it is queued
+            if (queue.stream().anyMatch(job -> Objects.equals(job.id(), buildJobId))) {
+                List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
+                for (LocalCIBuildJobQueueItem job : queue) {
+                    if (Objects.equals(job.id(), buildJobId)) {
+                        toRemove.add(job);
+                    }
+                }
+                queue.removeAll(toRemove);
             }
             else {
-                log.debug("Could not retrieve participation with id {} from database", participationId);
-                log.info("Retrying to retrieve participation with id {} from database", participationId);
-                retries++;
-                try {
-                    Thread.sleep(1000);
-                }
-                catch (InterruptedException e1) {
-                    log.error("Error while waiting for participation with id {} to be persisted in database", participationId, e1);
+                // Cancel build job if it is currently being processed
+                LocalCIBuildJobQueueItem buildJob = processingJobs.remove(buildJobId);
+                if (buildJob != null) {
+                    localCIBuildJobManagementService.triggerBuildJobCancellation(buildJobId);
                 }
             }
         }
-        throw new IllegalStateException("Could not retrieve participation with id " + participationId + " from database after " + maxRetries + " retries.");
+        finally {
+            sharedLock.unlock();
+        }
     }
 
-    private class QueuedBuildJobItemListener implements ItemListener<LocalCIBuildJobQueueItem> {
+    /**
+     * Cancel all queued build jobs.
+     */
+    public void cancelAllQueuedBuildJobs() {
+        sharedLock.lock();
+        try {
+            log.debug("Cancelling all queued build jobs");
+            queue.clear();
+        }
+        finally {
+            sharedLock.unlock();
+        }
+    }
+
+    /**
+     * Cancel all running build jobs.
+     */
+    public void cancelAllRunningBuildJobs() {
+        sharedLock.lock();
+        try {
+            for (LocalCIBuildJobQueueItem buildJob : processingJobs.values()) {
+                cancelBuildJob(buildJob.id());
+            }
+        }
+        finally {
+            sharedLock.unlock();
+        }
+    }
+
+    /**
+     * Cancel all queued build jobs for a course.
+     *
+     * @param courseId id of the course
+     */
+    public void cancelAllQueuedBuildJobsForCourse(long courseId) {
+        sharedLock.lock();
+        try {
+            List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
+            for (LocalCIBuildJobQueueItem job : queue) {
+                if (job.courseId() == courseId) {
+                    toRemove.add(job);
+                }
+            }
+            queue.removeAll(toRemove);
+        }
+        finally {
+            sharedLock.unlock();
+        }
+    }
+
+    /**
+     * Cancel all running build jobs for a course.
+     *
+     * @param courseId id of the course
+     */
+    public void cancelAllRunningBuildJobsForCourse(long courseId) {
+        for (LocalCIBuildJobQueueItem buildJob : processingJobs.values()) {
+            if (buildJob.courseId() == courseId) {
+                cancelBuildJob(buildJob.id());
+            }
+        }
+    }
+
+    /**
+     * Remove all queued build jobs for a participation from the shared build job queue.
+     *
+     * @param participationId id of the participation
+     */
+    public void cancelAllJobsForParticipation(long participationId) {
+        sharedLock.lock();
+        try {
+            List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
+            for (LocalCIBuildJobQueueItem queuedJob : queue) {
+                if (queuedJob.participationId() == participationId) {
+                    toRemove.add(queuedJob);
+                }
+            }
+            queue.removeAll(toRemove);
+
+            for (LocalCIBuildJobQueueItem runningJob : processingJobs.values()) {
+                if (runningJob.participationId() == participationId) {
+                    cancelBuildJob(runningJob.id());
+                }
+            }
+        }
+        finally {
+            sharedLock.unlock();
+        }
+    }
+
+    public class QueuedBuildJobItemListener implements ItemListener<LocalCIBuildJobQueueItem> {
 
         @Override
         public void itemAdded(ItemEvent<LocalCIBuildJobQueueItem> event) {

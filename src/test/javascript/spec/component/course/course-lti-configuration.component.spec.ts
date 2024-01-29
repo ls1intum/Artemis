@@ -23,6 +23,7 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { ArtemisTestModule } from '../../test.module';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgModel } from '@angular/forms';
 
 describe('Course LTI Configuration Component', () => {
     let comp: CourseLtiConfigurationComponent;
@@ -37,8 +38,6 @@ describe('Course LTI Configuration Component', () => {
         ltiKey: 'key',
         ltiSecret: 'secret',
         userPrefix: 'prefix',
-        registrationId: 'regId',
-        clientId: 'clientId',
     } as OnlineCourseConfiguration;
     const course = {
         id: 123,
@@ -65,6 +64,7 @@ describe('Course LTI Configuration Component', () => {
                 MockDirective(SortByDirective),
                 MockComponent(HelpIconComponent),
                 MockComponent(CopyIconButtonComponent),
+                MockDirective(NgModel),
                 MockRouterLinkDirective,
             ],
             providers: [
@@ -115,13 +115,6 @@ describe('Course LTI Configuration Component', () => {
             expect(comp.onlineCourseConfiguration).toEqual(course.onlineCourseConfiguration);
             expect(comp.exercises).toEqual(courseWithExercises.exercises);
             expect(findWithExercisesStub).toHaveBeenCalledOnce();
-
-            expect(comp.getDynamicRegistrationUrl()).toBe(`${location.origin}/lti/dynamic-registration/${course.id}`);
-            expect(comp.getDeepLinkingUrl()).toBe(`${location.origin}/lti/deep-linking/${course.id}`);
-            expect(comp.getToolUrl()).toBe(`${location.origin}/courses/${course.id}`);
-            expect(comp.getKeysetUrl()).toBe(`${location.origin}/.well-known/jwks.json`);
-            expect(comp.getInitiateLoginUrl()).toBe(`${location.origin}/api/public/lti13/initiate-login/${course.onlineCourseConfiguration?.registrationId}`);
-            expect(comp.getRedirectUri()).toBe(`${location.origin}/api/public/lti13/auth-callback`);
         });
     });
 
@@ -135,7 +128,7 @@ describe('Course LTI Configuration Component', () => {
             ),
         );
         comp.ngOnInit();
-        comp.activeTab = 4;
+        comp.activeTab = 2;
 
         fixture.detectChanges();
 

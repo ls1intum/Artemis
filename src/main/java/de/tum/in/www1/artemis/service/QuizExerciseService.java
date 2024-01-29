@@ -41,7 +41,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     public static final String ENTITY_NAME = "QuizExercise";
 
-    private final Logger log = LoggerFactory.getLogger(QuizExerciseService.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizExerciseService.class);
 
     private final QuizExerciseRepository quizExerciseRepository;
 
@@ -59,12 +59,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final FileService fileService;
 
-    private final FilePathService filePathService;
-
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
             QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
             ExerciseSpecificationService exerciseSpecificationService, FileService fileService, DragAndDropMappingRepository dragAndDropMappingRepository,
-            ShortAnswerMappingRepository shortAnswerMappingRepository, FilePathService filePathService) {
+            ShortAnswerMappingRepository shortAnswerMappingRepository) {
         super(dragAndDropMappingRepository, shortAnswerMappingRepository);
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
@@ -74,7 +72,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.quizBatchService = quizBatchService;
         this.exerciseSpecificationService = exerciseSpecificationService;
         this.fileService = fileService;
-        this.filePathService = filePathService;
     }
 
     /**
@@ -323,7 +320,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         Set<String> exerciseFileNames = getAllPathsFromDragAndDropQuestionsOfExercise(quizExercise);
         Set<String> newFileNames = isCreate ? exerciseFileNames : exerciseFileNames.stream().filter(fileNameOrUri -> {
             try {
-                return !Files.exists(filePathService.actualPathForPublicPathOrThrow(URI.create(fileNameOrUri)));
+                return !Files.exists(FilePathService.actualPathForPublicPathOrThrow(URI.create(fileNameOrUri)));
             }
             catch (FilePathParsingException e) {
                 // File is not in the internal API format and hence expected to be a new file
@@ -380,9 +377,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      */
     private URI saveDragAndDropImage(Path basePath, MultipartFile file, @Nullable Long entityId) throws IOException {
         String clearFileExtension = FileService.sanitizeFilename(FilenameUtils.getExtension(Objects.requireNonNull(file.getOriginalFilename())));
-        Path savePath = fileService.generateFilePath("dnd_image_", clearFileExtension, basePath);
+        Path savePath = basePath.resolve(fileService.generateFilename("dnd_image_", clearFileExtension));
         FileUtils.copyToFile(file.getInputStream(), savePath.toFile());
-        return filePathService.publicPathForActualPathOrThrow(savePath, entityId);
+        return FilePathService.publicPathForActualPathOrThrow(savePath, entityId);
     }
 
     /**

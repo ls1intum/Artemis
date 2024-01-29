@@ -12,14 +12,22 @@ import { SortService } from 'app/shared/service/sort.service';
     templateUrl: './course-lti-configuration.component.html',
 })
 export class CourseLtiConfigurationComponent implements OnInit {
+    protected readonly Object = Object;
+
     course: Course;
     onlineCourseConfiguration: OnlineCourseConfiguration;
     exercises: Exercise[];
 
     activeTab = 1;
+    ltiVersions = {
+        'artemisApp.lti.version10': '',
+        'artemisApp.lti.version13': '',
+    };
 
+    selectedLtiVersionKey: string;
     predicate = 'type';
     reverse = false;
+    showAdvancedSettings = false;
 
     // Icons
     faSort = faSort;
@@ -30,7 +38,9 @@ export class CourseLtiConfigurationComponent implements OnInit {
         private route: ActivatedRoute,
         private sortService: SortService,
         private courseManagementService: CourseManagementService,
-    ) {}
+    ) {
+        this.selectedLtiVersionKey = 'artemisApp.lti.version13';
+    }
 
     /**
      * Gets the configuration for the course encoded in the route and fetches the exercises
@@ -50,60 +60,6 @@ export class CourseLtiConfigurationComponent implements OnInit {
     }
 
     /**
-     * Returns true if any required LTI 1.3 fields are missing
-     */
-    missingLti13ConfigurationField(): boolean {
-        return (
-            !this.onlineCourseConfiguration.registrationId ||
-            !this.onlineCourseConfiguration.clientId ||
-            !this.onlineCourseConfiguration.authorizationUri ||
-            !this.onlineCourseConfiguration.jwkSetUri
-        );
-    }
-
-    /**
-     * Gets the dynamic registration url
-     */
-    getDynamicRegistrationUrl(): string {
-        return `${location.origin}/lti/dynamic-registration/${this.course.id}`; // Needs to match url in lti.route
-    }
-
-    /**
-     * Gets the deep linking url
-     */
-    getDeepLinkingUrl(): string {
-        return `${location.origin}/lti/deep-linking/${this.course.id}`; // Needs to match url in CustomLti13Configurer
-    }
-
-    /**
-     * Gets the tool url
-     */
-    getToolUrl(): string {
-        return `${location.origin}/courses/${this.course.id}`; // Needs to match url in CustomLti13Configurer
-    }
-
-    /**
-     * Gets the keyset url
-     */
-    getKeysetUrl(): string {
-        return `${location.origin}/.well-known/jwks.json`; // Needs to match url in CustomLti13Configurer
-    }
-
-    /**
-     * Gets the initiate login url
-     */
-    getInitiateLoginUrl(): string {
-        return `${location.origin}/api/public/lti13/initiate-login/${this.onlineCourseConfiguration?.registrationId}`; // Needs to match uri in CustomLti13Configurer
-    }
-
-    /**
-     * Gets the redirect uri
-     */
-    getRedirectUri(): string {
-        return `${location.origin}/api/public/lti13/auth-callback`; // Needs to match uri in CustomLti13Configurer
-    }
-
-    /**
      * Gets the LTI 1.0 launch url for an exercise
      */
     getExerciseLti10LaunchUrl(exercise: Exercise): string {
@@ -119,5 +75,16 @@ export class CourseLtiConfigurationComponent implements OnInit {
 
     sortRows() {
         this.sortService.sortByProperty(this.exercises, this.predicate, this.reverse);
+    }
+
+    /**
+     * Returns true if any required LTI 1.3 fields are missing
+     */
+    missingLti13ConfigurationField(): boolean {
+        return !this.onlineCourseConfiguration.ltiPlatformConfiguration;
+    }
+
+    toggleAdvancedSettings() {
+        this.showAdvancedSettings = !this.showAdvancedSettings;
     }
 }

@@ -58,7 +58,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("/api")
 public class QuizExerciseResource {
 
-    private final Logger log = LoggerFactory.getLogger(QuizExerciseResource.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizExerciseResource.class);
 
     private static final String ENTITY_NAME = "quizExercise";
 
@@ -109,15 +109,13 @@ public class QuizExerciseResource {
 
     private final ChannelRepository channelRepository;
 
-    private final FilePathService filePathService;
-
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
             UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, ExamDateService examDateService, QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService,
             QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
             GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
             QuizBatchRepository quizBatchRepository, SubmissionRepository submissionRepository, FileService fileService, ChannelService channelService,
-            ChannelRepository channelRepository, FilePathService filePathService) {
+            ChannelRepository channelRepository) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -140,7 +138,6 @@ public class QuizExerciseResource {
         this.fileService = fileService;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
-        this.filePathService = filePathService;
     }
 
     /**
@@ -580,11 +577,11 @@ public class QuizExerciseResource {
                 return null;
             }
             try {
-                return filePathService.actualPathForPublicPathOrThrow(URI.create(path));
+                return FilePathService.actualPathForPublicPathOrThrow(URI.create(path));
             }
             catch (FilePathParsingException e) {
                 // if the path is invalid, we can't delete it, but we don't want to fail the whole deletion
-                log.warn("Could not find file " + path + " for deletion");
+                log.warn("Could not find file {} for deletion", path);
                 return null;
             }
         }).filter(Objects::nonNull).toList();
@@ -676,7 +673,7 @@ public class QuizExerciseResource {
     @PostMapping(value = "quiz-exercises/import/{sourceExerciseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
     public ResponseEntity<QuizExercise> importExercise(@PathVariable long sourceExerciseId, @RequestPart("exercise") QuizExercise importedExercise,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws URISyntaxException, IOException {
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws URISyntaxException {
         log.info("REST request to import from quiz exercise : {}", sourceExerciseId);
         if (sourceExerciseId <= 0 || (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedExercise.getExerciseGroup() == null)) {
             log.debug("Either the courseId or exerciseGroupId must be set for an import");
@@ -702,7 +699,7 @@ public class QuizExerciseResource {
         quizExerciseService.validateQuizExerciseFiles(importedExercise, nullsafeFiles, false);
 
         final var originalQuizExercise = quizExerciseRepository.findByIdElseThrow(sourceExerciseId);
-        final var newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise, nullsafeFiles);
+        final var newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise);
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + newQuizExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
     }

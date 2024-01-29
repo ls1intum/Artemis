@@ -50,7 +50,7 @@ public class UserCreationService {
     @Value("${info.guided-tour.course-group-instructors:#{null}}")
     private Optional<String> tutorialGroupInstructors;
 
-    private final Logger log = LoggerFactory.getLogger(UserCreationService.class);
+    private static final Logger log = LoggerFactory.getLogger(UserCreationService.class);
 
     private final UserRepository userRepository;
 

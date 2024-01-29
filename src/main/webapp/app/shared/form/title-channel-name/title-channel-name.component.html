@@ -4,6 +4,7 @@
             <label [class]="'form-control-label' + (emphasizeLabels ? ' emphasized-label' : '')" jhiTranslate="artemisApp.lecture.title" for="field_title">Title</label>
         }
         <input
+            #field_title="ngModel"
             required
             [minlength]="minTitleLength"
             [pattern]="titlePattern"
@@ -15,7 +16,7 @@
             (ngModelChange)="updateTitle($event)"
         />
     </div>
-    @if (!this.hideChannelName) {
+    @if (!hideChannelName) {
         <div class="form-group">
             <div>
                 <label [class]="'form-control-label' + (emphasizeLabels ? ' emphasized-label' : '')" jhiTranslate="artemisApp.lecture.channelName" for="field_channel_name"
@@ -24,6 +25,7 @@
                 <jhi-help-icon text="artemisApp.programmingExercise.channelNameTooltip"></jhi-help-icon>
             </div>
             <input
+                #field_channel_name="ngModel"
                 required
                 type="text"
                 class="form-control"
