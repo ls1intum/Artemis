@@ -35,7 +35,6 @@ import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-f
 @Component({
     selector: 'jhi-text-exercise-update',
     templateUrl: './text-exercise-update.component.html',
-    styleUrls: ['./text-exercise-update.component.scss'],
 })
 export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
