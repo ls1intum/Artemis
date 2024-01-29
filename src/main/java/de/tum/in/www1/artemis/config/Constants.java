@@ -319,6 +319,16 @@ public final class Constants {
      */
     public static final int PUSH_NOTIFICATION_VERSION = 1;
 
+    /**
+     * The directory in the docker container in which the build script is executed
+     */
+    public static final String LOCALCI_WORKING_DIRECTORY = "/var/tmp";
+
+    /**
+     * The directory in the docker container in which the results can be found
+     */
+    public static final String LOCALCI_RESULTS_DIRECTORY = "/results";
+
     private Constants() {
     }
 }
