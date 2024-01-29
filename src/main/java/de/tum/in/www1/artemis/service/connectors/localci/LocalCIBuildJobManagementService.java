@@ -177,6 +177,7 @@ public class LocalCIBuildJobManagementService {
     private void finishBuildJobExceptionally(String buildJobId, String repositoryUri, String commitHash, String containerName, Exception exception) {
         log.error("Error while building and testing commit {} in repository {}", commitHash, repositoryUri, exception);
 
+        // Todo: build agent might not have access to the file system
         localCIBuildConfigurationService.deleteScriptFile(buildJobId);
 
         localCIContainerService.stopContainer(containerName);
@@ -224,6 +225,7 @@ public class LocalCIBuildJobManagementService {
     private void finishCancelledBuildJob(String repositoryUri, String buildJobId, String containerName) {
         log.debug("Build job with id {} in repository {} was cancelled", buildJobId, repositoryUri);
 
+        // Todo: build agent might not have access to the file system
         localCIBuildConfigurationService.deleteScriptFile(buildJobId);
 
         localCIContainerService.stopContainer(containerName);

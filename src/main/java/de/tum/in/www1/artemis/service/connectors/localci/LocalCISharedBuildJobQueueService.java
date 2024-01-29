@@ -44,6 +44,8 @@ public class LocalCISharedBuildJobQueueService {
 
     private final IQueue<LocalCIBuildJobQueueItem> queue;
 
+    private final IQueue<LocalCIBuildResult> resultQueue;
+
     private final ThreadPoolExecutor localCIBuildExecutorService;
 
     private final LocalCIBuildJobManagementService localCIBuildJobManagementService;
@@ -95,6 +97,7 @@ public class LocalCISharedBuildJobQueueService {
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
         this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
+        this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
     }
 
     /**
@@ -295,6 +298,9 @@ public class LocalCISharedBuildJobQueueService {
 
         CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.executeBuildJob(buildJob);
         futureResult.thenAccept(buildResult -> {
+
+            resultQueue.add(buildResult);
+            log.info("baolf " + resultQueue.isEmpty());
 
             ZonedDateTime buildCompletionDate = ZonedDateTime.now();
 

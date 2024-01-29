@@ -120,6 +120,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(buildJobId, participation.getBuildPlanId(), null, participation.getId(), courseId,
                 programmingExercise.getId(), 0, priority, repositoryInfo, jobTimingInfo, buildConfig);
 
+        // Todo: If build agent does not have access to filesystem, we need to send the build script to the build agent and execute it there.
         localCIBuildConfigurationService.createBuildScript(participation, buildJobId);
 
         queue.add(buildJobQueueItem);
