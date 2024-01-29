@@ -30,6 +30,7 @@ import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exerci
 import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
 import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
+import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -44,8 +45,8 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     @ViewChild('bonusPoints') bonusPoints: NgModel;
     @ViewChild('points') points: NgModel;
     @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelNameComponent: ExerciseTitleChannelNameComponent;
-
     @ViewChild(ExerciseUpdatePlagiarismComponent) exerciseUpdatePlagiarismComponent: ExerciseUpdatePlagiarismComponent;
+    @ViewChild(TeamConfigFormGroupComponent) teamConfigFormGroupComponent: TeamConfigFormGroupComponent;
 
     examCourseId?: number;
     isExamMode: boolean;
@@ -72,6 +73,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     pointsSubscription?: Subscription;
     bonusPointsSubscription?: Subscription;
     plagiarismSubscription?: Subscription;
+    teamSubscription?: Subscription;
 
     // Icons
     faSave = faSave;
@@ -106,6 +108,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         this.pointsSubscription = this.points?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.bonusPointsSubscription = this.bonusPoints?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.plagiarismSubscription = this.exerciseUpdatePlagiarismComponent.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
+        this.teamSubscription = this.teamConfigFormGroupComponent.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
     }
 
     /**
@@ -196,7 +199,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                     title: 'artemisApp.exercise.sections.general',
                     valid: this.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValid,
                 },
-                { title: 'artemisApp.exercise.sections.mode', valid: true },
+                { title: 'artemisApp.exercise.sections.mode', valid: this.teamConfigFormGroupComponent.formValid },
                 { title: 'artemisApp.exercise.sections.problem', valid: Boolean(this.textExercise.problemStatement) },
                 {
                     title: 'artemisApp.exercise.sections.solution',
