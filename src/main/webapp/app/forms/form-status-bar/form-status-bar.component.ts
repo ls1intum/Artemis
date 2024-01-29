@@ -3,6 +3,7 @@ import { Component, Input } from '@angular/core';
 export type FormSectionStatus = {
     title: string;
     valid: boolean;
+    empty?: boolean;
 };
 
 @Component({

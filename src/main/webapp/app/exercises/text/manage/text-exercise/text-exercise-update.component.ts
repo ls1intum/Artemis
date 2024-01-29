@@ -199,10 +199,11 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                     valid: this.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValid,
                 },
                 { title: 'artemisApp.exercise.sections.mode', valid: this.teamConfigFormGroupComponent.formValid },
-                { title: 'artemisApp.exercise.sections.problem', valid: Boolean(this.textExercise.problemStatement) },
+                { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.textExercise.problemStatement },
                 {
                     title: 'artemisApp.exercise.sections.solution',
-                    valid: Boolean(this.textExercise.exampleSolution && (this.isExamMode || !this.textExercise.exampleSolutionPublicationDateError)),
+                    valid: Boolean(this.isExamMode || !this.textExercise.exampleSolutionPublicationDateError),
+                    empty: !this.textExercise.exampleSolution || (!this.isExamMode && !this.textExercise.exampleSolutionPublicationDate),
                 },
                 {
                     title: 'artemisApp.exercise.sections.grading',
@@ -212,6 +213,8 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                             this.bonusPoints.valid &&
                             (this.isExamMode || (!this.textExercise.startDateError && !this.textExercise.dueDateError && !this.textExercise.assessmentDueDateError)),
                     ),
+                    empty:
+                        !this.isExamMode && (!this.textExercise.startDate || !this.textExercise.dueDate || !this.textExercise.assessmentDueDate || !this.textExercise.releaseDate),
                 },
             ];
         }

@@ -210,7 +210,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                 valid: Boolean(this.exerciseTitleChannelNameComponent?.titleChannelNameComponent.formValid),
             },
             { title: 'artemisApp.exercise.sections.mode', valid: this.teamConfigFormGroupComponent.formValid },
-            { title: 'artemisApp.exercise.sections.problem', valid: Boolean(this.modelingExercise.problemStatement) },
+            { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.modelingExercise.problemStatement },
             {
                 title: 'artemisApp.exercise.sections.solution',
                 valid: Boolean(!isEmpty(this.modelingEditor?.getCurrentModel()?.elements) && (this.isExamMode || !this.modelingExercise.exampleSolutionPublicationDateError)),
@@ -223,6 +223,9 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                         this.bonusPoints.valid &&
                         (this.isExamMode || (!this.modelingExercise.startDateError && !this.modelingExercise.dueDateError && !this.modelingExercise.assessmentDueDateError)),
                 ),
+                empty:
+                    !this.isExamMode &&
+                    (!this.modelingExercise.startDate || !this.modelingExercise.dueDate || !this.modelingExercise.assessmentDueDate || !this.modelingExercise.releaseDate),
             },
         ];
     }
