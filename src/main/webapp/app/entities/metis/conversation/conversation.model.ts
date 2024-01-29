@@ -27,6 +27,11 @@ export abstract class Conversation implements BaseEntity {
     protected constructor(type: ConversationType) {
         this.type = type;
     }
+
+    // TODO: Find solution
+    public shouldNotifyRecipient(): boolean {
+        return false;
+    }
 }
 
 /**
