@@ -137,7 +137,7 @@ export class ParseCourseDescriptionComponent implements OnInit, ComponentCanDeac
      * Saves the competency recommendations as competencies and navigates back
      */
     save() {
-        const competenciesToSave = this.competencies.value.map((c) => c.competency as Competency);
+        const competenciesToSave = this.competencies.getRawValue().map((c) => c.competency as Competency);
         this.competencyService.createBulk(competenciesToSave, this.courseId).subscribe({
             next: () => {
                 this.submitted = true;
@@ -158,11 +158,10 @@ export class ParseCourseDescriptionComponent implements OnInit, ComponentCanDeac
      * Needs confirmation to submit if not all competency recommendations were viewed
      */
     private isSubmitPossibleWithoutConfirmation() {
-        const viewedArray = this.form.value.competencies?.map((c) => c.viewed);
+        const viewedArray = this.form.getRawValue().competencies?.map((c) => c.viewed);
         return !viewedArray?.includes(false);
     }
 
-    //TODO: replace getters with attributes
     //getter for form controls
     get competencies() {
         return this.form.controls.competencies;
