@@ -170,11 +170,6 @@
                         }
                     </dd>
                 }
-                @if (ltiEnabled && course.onlineCourse && course.isAtLeastInstructor) {
-                    <dd>
-                        <a [routerLink]="['/course-management', course?.id, 'lti-configuration']">LTI Configuration</a>
-                    </dd>
-                }
                 @if (course.enrollmentEnabled) {
                     <dt><span jhiTranslate="artemisApp.course.enrollmentStartDate">Enrollment Start</span></dt>
                     <dd id="course-enrollment-start-date">

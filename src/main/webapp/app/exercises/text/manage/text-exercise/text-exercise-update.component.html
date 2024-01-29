@@ -11,9 +11,9 @@
         }
         <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
     </div>
-    <hr />
+    <jhi-form-status-bar [formStatusSections]="formSectionStatus" />
     <div>
-        <h3 jhiTranslate="artemisApp.exercise.sections.general">General Information</h3>
+        <h3 jhiTranslate="artemisApp.exercise.sections.general" id="artemisApp.exercise.sections.general" class="nav-offset">General Information</h3>
         <div class="form-group" [hidden]="isImport || !textExercise.id">
             <label for="id" jhiTranslate="global.field.id">ID</label>
             <input type="text" class="form-control" id="id" name="id" [(ngModel)]="textExercise.id" readonly />
@@ -32,7 +32,7 @@
                 <jhi-category-selector [categories]="exerciseCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)" />
             </div>
         }
-        <h3 jhiTranslate="artemisApp.exercise.sections.mode">Mode</h3>
+        <h3 jhiTranslate="artemisApp.exercise.sections.mode" id="artemisApp.exercise.sections.mode" class="nav-offset">Mode</h3>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty">Difficulty</label>
             <div>
@@ -40,7 +40,7 @@
             </div>
         </div>
         <jhi-team-config-form-group class="form-element" [exercise]="textExercise" [isImport]="isImport"></jhi-team-config-form-group>
-        <h3 jhiTranslate="artemisApp.exercise.sections.problem">Problem Statement</h3>
+        <h3 jhiTranslate="artemisApp.exercise.sections.problem" id="artemisApp.exercise.sections.problem" class="nav-offset">Problem Statement</h3>
         <div class="form-group">
             <label jhiTranslate="artemisApp.exercise.problemStatement" for="problemStatement">Problem Statement</label>
             <jhi-markdown-editor
@@ -49,9 +49,10 @@
                 [domainCommands]="domainCommandsProblemStatement"
                 [(markdown)]="textExercise.problemStatement"
                 [editorMode]="EditorMode.LATEX"
+                (markdownChange)="calculateFormSectionStatus()"
             ></jhi-markdown-editor>
         </div>
-        <h3 jhiTranslate="artemisApp.exercise.sections.solution">Example Solution</h3>
+        <h3 jhiTranslate="artemisApp.exercise.sections.solution" id="artemisApp.exercise.sections.solution" class="nav-offset">Example Solution</h3>
         <div class="form-group">
             <label jhiTranslate="artemisApp.exercise.exampleSolution" for="exampleSolution">Example Solution</label>
             <jhi-markdown-editor
@@ -60,6 +61,7 @@
                 [domainCommands]="domainCommandsSampleSolution"
                 [(markdown)]="textExercise.exampleSolution"
                 [editorMode]="EditorMode.LATEX"
+                (markdownChange)="calculateFormSectionStatus()"
             ></jhi-markdown-editor>
         </div>
         @if (!isExamMode) {
@@ -77,7 +79,7 @@
                 }
             </div>
         }
-        <h3 jhiTranslate="artemisApp.exercise.sections.grading">Grading</h3>
+        <h3 jhiTranslate="artemisApp.exercise.sections.grading" id="artemisApp.exercise.sections.grading" class="nav-offset">Grading</h3>
         @if (!isExamMode) {
             <div class="d-flex">
                 <div class="form-group flex-grow-1">
@@ -106,8 +108,6 @@
                     }
                 </div>
             </div>
-        }
-        @if (!isExamMode) {
             <div class="d-flex">
                 <div class="form-group flex-grow-1">
                     <jhi-date-time-picker
