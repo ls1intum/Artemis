@@ -1,7 +1,7 @@
 import { Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { faChalkboardTeacher, faEllipsis, faUser, faUserCheck, faUserGear } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { EMPTY, Observable, Subject, from, takeUntil } from 'rxjs';
@@ -31,7 +31,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
 
     @Input()
-    activeConversation: ConversationDto;
+    activeConversation: ConversationDTO;
 
     @Input()
     course: Course;

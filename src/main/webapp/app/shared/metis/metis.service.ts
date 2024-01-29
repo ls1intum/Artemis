@@ -28,7 +28,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import dayjs from 'dayjs/esm';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
-import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, ChannelSubType, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
@@ -40,7 +40,7 @@ export class MetisService implements OnDestroy {
     private totalNumberOfPosts$: ReplaySubject<number> = new ReplaySubject<number>(1);
 
     private currentPostContextFilter: PostContextFilter = {};
-    private currentConversation?: ConversationDto = undefined;
+    private currentConversation?: ConversationDTO = undefined;
     private user: User;
     private pageType: PageType;
     private course: Course;
@@ -82,7 +82,7 @@ export class MetisService implements OnDestroy {
         return this.totalNumberOfPosts$.asObservable();
     }
 
-    getCurrentConversation(): ConversationDto | undefined {
+    getCurrentConversation(): ConversationDTO | undefined {
         return this.currentConversation;
     }
 
@@ -175,7 +175,7 @@ export class MetisService implements OnDestroy {
      * @param {boolean} forceUpdate if true, forces a re-fetch even if filter property did not change
      * @param conversation active conversation if available
      */
-    getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true, conversation: ConversationDto | undefined = undefined): void {
+    getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true, conversation: ConversationDTO | undefined = undefined): void {
         // store value for promise
         this.forceUpdate = forceUpdate;
 

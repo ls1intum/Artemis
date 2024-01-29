@@ -9,7 +9,7 @@ import { GroupChatService } from 'app/shared/metis/conversations/group-chat.serv
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../../helpers/conversationExampleModels';
 import { Course } from 'app/entities/course.model';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
@@ -37,7 +37,7 @@ const memberTemplate = {
 const creatorTemplate = { id: 2, login: 'login2', firstName: 'Kaddl2', lastName: 'Garching2' } as ConversationUserDTO;
 const currentUserTemplate = { id: 3, login: 'login3', firstName: 'Kaddl3', lastName: 'Garching3' } as User;
 
-const examples: ConversationDto[] = [
+const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
     generateExampleGroupChatDTO({}),
     generateExampleChannelDTO({}),

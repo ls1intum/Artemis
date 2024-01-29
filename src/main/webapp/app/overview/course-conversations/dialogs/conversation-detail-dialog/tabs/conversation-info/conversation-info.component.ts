@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { defaultSecondLayerDialogOptions, getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
@@ -35,12 +35,12 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     canChangeChannelProperties = canChangeChannelProperties;
     canChangeGroupChatProperties = canChangeGroupChatProperties;
 
-    getAsChannelOrGroupChat(conversation: ConversationDto): ChannelDTO | GroupChatDto | undefined {
+    getAsChannelOrGroupChat(conversation: ConversationDTO): ChannelDTO | GroupChatDto | undefined {
         return getAsChannelDto(conversation) || getAsGroupChatDto(conversation);
     }
 
     @Input()
-    activeConversation: ConversationDto;
+    activeConversation: ConversationDTO;
 
     @Input()
     course: Course;

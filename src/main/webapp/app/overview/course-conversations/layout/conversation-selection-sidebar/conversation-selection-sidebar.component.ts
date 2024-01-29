@@ -4,7 +4,7 @@ import { faChevronLeft, faChevronRight, faComments, faFilter, faGripLinesVertica
 import { EMPTY, Subject, from, map, takeUntil } from 'rxjs';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { Course, isMessagingEnabled } from 'app/entities/course.model';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
@@ -37,11 +37,11 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     searchTerm = '';
     course?: Course;
 
-    activeConversation?: ConversationDto;
-    allConversations: ConversationDto[] = [];
+    activeConversation?: ConversationDTO;
+    allConversations: ConversationDTO[] = [];
 
-    starredConversations: ConversationDto[] = [];
-    displayedStarredConversations: ConversationDto[] = [];
+    starredConversations: ConversationDTO[] = [];
+    displayedStarredConversations: ConversationDTO[] = [];
 
     channelConversations: ChannelDTO[] = [];
     displayedChannelConversations: ChannelDTO[] = [];
@@ -148,13 +148,13 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     }
 
     private subscribeToActiveConversation() {
-        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((activeConversation: ConversationDto) => {
+        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((activeConversation: ConversationDTO) => {
             this.activeConversation = activeConversation;
         });
     }
 
     private subscribeToConversationsOfUser() {
-        this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDto[]) => {
+        this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
             this.onConversationsUpdate(conversations);
         });
     }
@@ -167,7 +167,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         });
     }
 
-    onConversationsUpdate(conversations: ConversationDto[]) {
+    onConversationsUpdate(conversations: ConversationDTO[]) {
         this.allConversations = conversations ?? [];
 
         this.starredConversations = this.allConversations
@@ -179,7 +179,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
                 // newest messages at the top of the list
                 return bLastMessageDate!.isAfter(aLastMessageDate!) ? 1 : -1;
             });
-        this.channelConversations = this.allConversations
+        this.channelConversations = this.allConversations //
             .filter((conversation) => isChannelDto(conversation) && !conversation.isFavorite)
             .map((channel) => channel as Channel)
             .sort((a, b) => a.name!.localeCompare(b.name!));
@@ -340,7 +340,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
             });
     }
 
-    onConversationSelected($event: ConversationDto) {
+    onConversationSelected($event: ConversationDTO) {
         this.metisConversationService.setActiveConversation($event);
     }
 

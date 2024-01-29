@@ -6,7 +6,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../helpers/conversationExampleModels';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
@@ -31,9 +31,9 @@ class ConversationAddUsersFormStubComponent {
     @Input() maxSelectable?: number = undefined;
 
     @Input()
-    activeConversation: ConversationDto;
+    activeConversation: ConversationDTO;
 }
-const examples: ConversationDto[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: ConversationDTO[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 examples.forEach((activeConversation) => {
     describe('ConversationAddUsersDialogComponent with ' + activeConversation.type, () => {
         let component: ConversationAddUsersDialogComponent;

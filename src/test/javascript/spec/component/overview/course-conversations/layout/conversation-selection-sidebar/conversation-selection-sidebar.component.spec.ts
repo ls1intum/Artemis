@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { ConversationSelectionSidebarComponent } from 'app/overview/course-conversations/layout/conversation-selection-sidebar/conversation-selection-sidebar.component';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Type } from '@angular/core';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -35,7 +35,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { NotificationService } from 'app/shared/notification/notification.service';
 
-const examples: (ConversationDto | undefined)[] = [
+const examples: (ConversationDTO | undefined)[] = [
     undefined,
     generateOneToOneChatDTO({}),
     generateExampleGroupChatDTO({}),
@@ -56,7 +56,7 @@ examples.forEach((activeConversation) => {
             let metisConversationService: MetisConversationService;
             const course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING } as any;
             const canCreateChannel = jest.fn();
-            let allConversations: ConversationDto[] = [];
+            let allConversations: ConversationDTO[] = [];
 
             const visibleGroupChat = generateExampleGroupChatDTO({ id: 3 });
             const favoriteGroupChat = generateExampleGroupChatDTO({ id: 4, isFavorite: true });
@@ -109,7 +109,7 @@ examples.forEach((activeConversation) => {
                         MockProvider(MetisService),
                         { provide: LocalStorageService, useClass: MockLocalStorageService },
                         MockProvider(ConversationService, {
-                            getConversationName: (conversation: ConversationDto) => {
+                            getConversationName: (conversation: ConversationDTO) => {
                                 return conversation.id + '';
                             },
                         }),

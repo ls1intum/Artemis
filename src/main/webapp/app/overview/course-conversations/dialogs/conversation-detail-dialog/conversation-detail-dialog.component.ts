@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
@@ -19,7 +19,7 @@ export enum ConversationDetailTabs {
     templateUrl: './conversation-detail-dialog.component.html',
 })
 export class ConversationDetailDialogComponent extends AbstractDialogComponent {
-    @Input() public activeConversation: ConversationDto;
+    @Input() public activeConversation: ConversationDTO;
     @Input() course: Course;
     @Input() selectedTab: ConversationDetailTabs = ConversationDetailTabs.MEMBERS;
 

@@ -1,6 +1,6 @@
 import { Component, ContentChild, EventEmitter, Input, OnInit, Output, TemplateRef, ViewEncapsulation } from '@angular/core';
 import { faChevronRight, faMessage } from '@fortawesome/free-solid-svg-icons';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { Course } from 'app/entities/course.model';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -12,7 +12,7 @@ import { LocalStorageService } from 'ngx-webstorage';
     encapsulation: ViewEncapsulation.None,
 })
 export class ConversationSidebarSectionComponent implements OnInit {
-    @Output() conversationSelected = new EventEmitter<ConversationDto>();
+    @Output() conversationSelected = new EventEmitter<ConversationDTO>();
     @Output() settingsDidChange = new EventEmitter<void>();
     @Output() conversationIsFavoriteDidChange = new EventEmitter<void>();
     @Output() conversationIsHiddenDidChange = new EventEmitter<void>();
@@ -20,12 +20,12 @@ export class ConversationSidebarSectionComponent implements OnInit {
 
     @Input() label: string;
     @Input() course: Course;
-    @Input() activeConversation?: ConversationDto;
+    @Input() activeConversation?: ConversationDTO;
     @Input() headerKey: string;
     @Input() searchTerm: string;
     @Input() hideIfEmpty = true;
 
-    @Input() set conversations(conversations: ConversationDto[]) {
+    @Input() set conversations(conversations: ConversationDTO[]) {
         this.hiddenConversations = [];
         this.mutedConversations = [];
         this.visibleConversations = [];
@@ -52,10 +52,10 @@ export class ConversationSidebarSectionComponent implements OnInit {
     isHiddenConversationListPresented = false;
 
     numberOfConversations = 0;
-    allConversations: ConversationDto[] = [];
-    visibleConversations: ConversationDto[] = [];
-    mutedConversations: ConversationDto[] = [];
-    hiddenConversations: ConversationDto[] = [];
+    allConversations: ConversationDTO[] = [];
+    visibleConversations: ConversationDTO[] = [];
+    mutedConversations: ConversationDTO[] = [];
+    hiddenConversations: ConversationDTO[] = [];
 
     // icon imports
     faChevronRight = faChevronRight;
@@ -109,7 +109,7 @@ export class ConversationSidebarSectionComponent implements OnInit {
         return containsUnreadConversation;
     }
 
-    conversationsTrackByFn = (index: number, conversation: ConversationDto): number => conversation.id!;
+    conversationsTrackByFn = (index: number, conversation: ConversationDTO): number => conversation.id!;
 
     toggleCollapsed() {
         this.isCollapsed = !this.isCollapsed;

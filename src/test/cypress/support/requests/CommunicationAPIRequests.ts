@@ -7,7 +7,7 @@ import { Post } from 'app/entities/metis/post.model';
 
 import { COURSE_BASE, GET, POST, PUT } from '../constants';
 import { CypressCredentials } from '../users';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import Chainable = Cypress.Chainable;
 
 /**
@@ -69,7 +69,7 @@ export class CommunicationAPIRequests {
     getCourseWideChannels(courseId: number): Chainable<ChannelDTO[]> {
         return cy
             .request({ method: GET, url: `${COURSE_BASE}${courseId}/conversations` })
-            .then((response) => response.body.filter((conv: ConversationDto) => getAsChannelDto(conv)?.isCourseWide === true));
+            .then((response) => response.body.filter((conv: ConversationDTO) => getAsChannelDto(conv)?.isCourseWide === true));
     }
 
     /**

@@ -6,7 +6,7 @@ import { NgbDropdownMocksModule } from '../../../../../../../helpers/mocks/direc
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../helpers/conversationExampleModels';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
@@ -30,7 +30,7 @@ import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/co
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../../../../../helpers/mocks/service/mock-notification.service';
 
-const examples: (() => ConversationDto)[] = [
+const examples: (() => ConversationDTO)[] = [
     () => generateOneToOneChatDTO({}),
     () => generateExampleGroupChatDTO({}),
     () => generateExampleChannelDTO({}),

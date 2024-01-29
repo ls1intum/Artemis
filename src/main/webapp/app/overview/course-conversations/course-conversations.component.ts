@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, take, takeUntil } from 'rxjs';
@@ -22,8 +22,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     isLoading = false;
     isServiceSetUp = false;
     postInThread?: Post;
-    activeConversation?: ConversationDto = undefined;
-    conversationsOfUser: ConversationDto[] = [];
+    activeConversation?: ConversationDTO = undefined;
+    conversationsOfUser: ConversationDTO[] = [];
 
     isCodeOfConductAccepted: boolean = false;
     isCodeOfConductPresented: boolean = false;
@@ -100,7 +100,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     private subscribeToActiveConversation() {
-        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDto) => {
+        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
             this.activeConversation = conversation;
             this.updateQueryParameters();
         });
@@ -119,7 +119,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     private subscribeToConversationsOfUser() {
-        this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDto[]) => {
+        this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
             this.conversationsOfUser = conversations ?? [];
         });
     }

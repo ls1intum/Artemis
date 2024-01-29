@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
@@ -30,7 +30,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     MEMBERS = ConversationDetailTabs.MEMBERS;
 
     course: Course;
-    activeConversation?: ConversationDto;
+    activeConversation?: ConversationDTO;
 
     activeConversationAsChannel?: ChannelDTO;
     channelSubTypeReferenceTranslationKey?: string;
@@ -62,7 +62,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     }
 
     private subscribeToActiveConversation() {
-        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDto) => {
+        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
             this.activeConversation = conversation;
             this.activeConversationAsChannel = getAsChannelDto(conversation);
             this.channelSubTypeReferenceTranslationKey = getChannelSubTypeReferenceTranslationKey(this.activeConversationAsChannel?.subType);

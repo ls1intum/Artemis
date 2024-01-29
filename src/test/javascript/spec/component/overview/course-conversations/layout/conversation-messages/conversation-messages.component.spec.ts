@@ -12,7 +12,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
 import { BehaviorSubject } from 'rxjs';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
 import { Directive, EventEmitter, Input, Output } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -20,7 +20,7 @@ import { Course } from 'app/entities/course.model';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 
-const examples: ConversationDto[] = [
+const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
     generateExampleGroupChatDTO({}),
     generateExampleChannelDTO({}),

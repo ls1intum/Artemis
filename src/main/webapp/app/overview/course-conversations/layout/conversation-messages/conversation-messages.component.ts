@@ -14,7 +14,7 @@ import {
     ViewEncapsulation,
 } from '@angular/core';
 import { faCircleNotch, faEnvelope, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Subject, map, takeUntil } from 'rxjs';
 import { Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
@@ -61,7 +61,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     currentPostContextFilter?: PostContextFilter;
     private readonly search$ = new Subject<string>();
     searchText = '';
-    _activeConversation?: ConversationDto;
+    _activeConversation?: ConversationDTO;
 
     newPost?: Post;
     posts: Post[] = [];
@@ -88,7 +88,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private subscribeToActiveConversation() {
-        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDto) => {
+        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
             this._activeConversation = conversation;
             this.onActiveConversationChange();
         });

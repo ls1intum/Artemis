@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { ChannelDTO, getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
@@ -25,7 +25,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
 
     @Input()
-    activeConversation: ConversationDto;
+    activeConversation: ConversationDTO;
 
     @Input()
     course: Course;

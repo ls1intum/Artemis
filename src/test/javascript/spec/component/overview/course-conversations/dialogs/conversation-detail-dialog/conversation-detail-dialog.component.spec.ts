@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import {
     ConversationDetailDialogComponent,
     ConversationDetailTabs,
@@ -25,7 +25,7 @@ class ConversationMembersStubComponent {
     @Input()
     course: Course;
     @Input()
-    public activeConversation: ConversationDto;
+    public activeConversation: ConversationDTO;
     @Output() changesPerformed = new EventEmitter<void>();
 }
 
@@ -35,7 +35,7 @@ class ConversationMembersStubComponent {
 })
 class ConversationSettingsStubComponent {
     @Input()
-    activeConversation: ConversationDto;
+    activeConversation: ConversationDTO;
 
     @Input()
     course: Course;
@@ -56,7 +56,7 @@ class ConversationSettingsStubComponent {
 })
 class ConversationInfoStubComponent {
     @Input()
-    activeConversation: ConversationDto;
+    activeConversation: ConversationDTO;
 
     @Input()
     course: Course;
@@ -65,7 +65,7 @@ class ConversationInfoStubComponent {
     changesPerformed = new EventEmitter<void>();
 }
 
-const examples: ConversationDto[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
 examples.forEach((activeConversation) => {
     describe('ConversationDetailDialogComponent with ' + activeConversation.type, () => {

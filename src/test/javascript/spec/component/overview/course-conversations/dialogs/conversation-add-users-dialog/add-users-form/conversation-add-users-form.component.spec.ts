@@ -7,14 +7,14 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { CourseUsersSelectorComponent } from 'app/shared/course-users-selector/course-users-selector.component';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../../helpers/conversationExampleModels';
 import { Course } from 'app/entities/course.model';
 import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { By } from '@angular/platform-browser';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 
-const examples: ConversationDto[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: ConversationDTO[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 examples.forEach((activeConversation) => {
     describe('ConversationAddUsersFormComponent with ' + activeConversation.type, () => {
         let component: ConversationAddUsersFormComponent;

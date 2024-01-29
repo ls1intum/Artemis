@@ -9,7 +9,7 @@ import { Course } from 'app/entities/course.model';
 import { Params } from '@angular/router';
 import { metisCourse, metisCoursePosts, metisTags, metisUser1 } from '../../sample/metis-sample-data';
 import { ChannelDTO, ChannelSubType, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 
 let pageType: PageType;
 
@@ -40,7 +40,7 @@ export class MockMetisService {
         pageType = newPageType;
     }
 
-    getCurrentConversation(): ConversationDto | undefined {
+    getCurrentConversation(): ConversationDTO | undefined {
         return this.currentConversation;
     }
 

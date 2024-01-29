@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from '@angular/core';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { faEllipsis } from '@fortawesome/free-solid-svg-icons';
@@ -39,10 +39,10 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
     course: Course;
 
     @Input()
-    conversation: ConversationDto;
+    conversation: ConversationDTO;
 
     @Input()
-    activeConversation: ConversationDto | undefined;
+    activeConversation: ConversationDTO | undefined;
 
     @Output()
     settingsDidChange = new EventEmitter<void>();

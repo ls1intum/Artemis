@@ -13,7 +13,7 @@ import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { ChannelDTO, ChannelSubType, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 
@@ -273,7 +273,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
     }
 
     private subscribeToConversationsOfUser() {
-        this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDto[]) => {
+        this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
             this.courseWideChannels = conversations?.filter((conv) => isChannelDto(conv) && conv.isCourseWide) ?? [];
             this.categorizedChannels = {};
             this.availableChannelSubtypes = [];

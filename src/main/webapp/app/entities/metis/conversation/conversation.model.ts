@@ -37,7 +37,7 @@ export abstract class Conversation implements BaseEntity {
 /**
  * DTO
  */
-export abstract class ConversationDto {
+export abstract class ConversationDTO {
     public type?: ConversationType;
     public id?: number;
     public creationDate?: dayjs.Dayjs;

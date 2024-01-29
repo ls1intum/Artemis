@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
@@ -13,7 +13,7 @@ import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-ch
 import { getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 
-type EntityArrayResponseType = HttpResponse<ConversationDto[]>;
+type EntityArrayResponseType = HttpResponse<ConversationDTO[]>;
 
 export type UserSortDirection = 'asc' | 'desc';
 export type UserSortProperty = keyof User;
@@ -40,7 +40,7 @@ export class ConversationService {
         protected accountService: AccountService,
     ) {}
 
-    getConversationName(conversation: ConversationDto | undefined, showLogin = false): string {
+    getConversationName(conversation: ConversationDTO | undefined, showLogin = false): string {
         if (!conversation) {
             return '';
         }
@@ -99,7 +99,7 @@ export class ConversationService {
 
     getConversationsOfUser(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
-            .get<ConversationDto[]>(`${this.resourceUrl}${courseId}/conversations`, {
+            .get<ConversationDTO[]>(`${this.resourceUrl}${courseId}/conversations`, {
                 observe: 'response',
             })
             .pipe(map(this.convertDateArrayFromServer));
@@ -149,21 +149,21 @@ export class ConversationService {
         lastMessageDate: convertDateFromClient(conversation.lastMessageDate),
     });
 
-    public convertDateFromServer = (res: HttpResponse<ConversationDto>): HttpResponse<ConversationDto> => {
+    public convertDateFromServer = (res: HttpResponse<ConversationDTO>): HttpResponse<ConversationDTO> => {
         if (res.body) {
             this.convertServerDates(res.body);
         }
         return res;
     };
 
-    public convertServerDates(conversation: ConversationDto) {
+    public convertServerDates(conversation: ConversationDTO) {
         conversation.creationDate = convertDateFromServer(conversation.creationDate);
         conversation.lastMessageDate = convertDateFromServer(conversation.lastMessageDate);
         conversation.lastReadDate = convertDateFromServer(conversation.lastReadDate);
         return conversation;
     }
 
-    public convertDateArrayFromServer = (res: HttpResponse<ConversationDto[]>): HttpResponse<ConversationDto[]> => {
+    public convertDateArrayFromServer = (res: HttpResponse<ConversationDTO[]>): HttpResponse<ConversationDTO[]> => {
         if (res.body) {
             res.body.forEach((conversation) => {
                 this.convertServerDates(conversation);

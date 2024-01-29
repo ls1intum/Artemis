@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { Course } from 'app/entities/course.model';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../helpers/conversationExampleModels';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -22,10 +22,10 @@ class ConversationSidebarEntryStubComponent {
     course: Course;
 
     @Input()
-    conversation: ConversationDto;
+    conversation: ConversationDTO;
 
     @Input()
-    activeConversation: ConversationDto | undefined;
+    activeConversation: ConversationDTO | undefined;
 
     @Output()
     settingsDidChange = new EventEmitter<void>();
@@ -40,7 +40,7 @@ class ConversationSidebarEntryStubComponent {
     conversationIsMutedDidChange = new EventEmitter<void>();
 }
 
-const examples: (ConversationDto | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: (ConversationDTO | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 examples.forEach((activeConversation) => {
     describe('ConversationSidebarSectionComponent with ' + (activeConversation?.type || 'no active conversation'), () => {
         let component: ConversationSidebarSectionComponent;

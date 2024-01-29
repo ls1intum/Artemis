@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { ConversationSettingsComponent } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-settings/conversation-settings.component';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../../../helpers/conversationExampleModels';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
@@ -19,7 +19,7 @@ import { GenericConfirmationDialogComponent } from 'app/overview/course-conversa
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 import * as ConversationPermissionUtils from 'app/shared/metis/conversations/conversation-permissions.utils';
 
-const examples: ConversationDto[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: ConversationDTO[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
 examples.forEach((activeConversation) => {
     describe('ConversationSettingsComponent with ' + activeConversation.type, () => {

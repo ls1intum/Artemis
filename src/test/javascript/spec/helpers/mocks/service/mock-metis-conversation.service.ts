@@ -1,6 +1,6 @@
 import { Course } from 'app/entities/course.model';
 import { BehaviorSubject, EMPTY, Observable } from 'rxjs';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { GroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 
 export class MockMetisConversationService {
@@ -8,7 +8,7 @@ export class MockMetisConversationService {
         return undefined;
     }
 
-    get activeConversation$(): Observable<ConversationDto | undefined> {
+    get activeConversation$(): Observable<ConversationDTO | undefined> {
         return EMPTY;
     }
 
@@ -16,7 +16,7 @@ export class MockMetisConversationService {
         return new BehaviorSubject(true).asObservable();
     }
 
-    get conversationsOfUser$(): Observable<ConversationDto[]> {
+    get conversationsOfUser$(): Observable<ConversationDTO[]> {
         return new BehaviorSubject([new GroupChatDto()]).asObservable();
     }
 
@@ -34,7 +34,7 @@ export class MockMetisConversationService {
 
     checkIsCodeOfConductAccepted(): void {}
 
-    setActiveConversation(conversationIdentifier: ConversationDto | number | undefined) {}
+    setActiveConversation(conversationIdentifier: ConversationDTO | number | undefined) {}
 
     setUpConversationService = (course: Course): Observable<never> => {
         return EMPTY;

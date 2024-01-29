@@ -1,10 +1,10 @@
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { GroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { Course } from 'app/entities/course.model';
 import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
 
-export function canAddUsersToConversation(conversation: ConversationDto): boolean {
+export function canAddUsersToConversation(conversation: ConversationDTO): boolean {
     if (!conversation) {
         return false;
     }
@@ -22,12 +22,12 @@ export function canAddUsersToConversation(conversation: ConversationDto): boolea
     }
 }
 
-export function canCreateNewMessageInConversation(conversation: ConversationDto): boolean {
+export function canCreateNewMessageInConversation(conversation: ConversationDTO): boolean {
     if (!conversation) {
         return false;
     }
     const groupChatCheck = (groupChat: GroupChatDto): boolean => !!groupChat.isMember;
-    const oneToOneChatCheck = (oneToOneChat: ConversationDto): boolean => {
+    const oneToOneChatCheck = (oneToOneChat: ConversationDTO): boolean => {
         return !!oneToOneChat.isMember;
     };
     const channelCheck = (channel: ChannelDTO): boolean =>
@@ -52,7 +52,7 @@ export function canRevokeChannelModeratorRole(channel: ChannelDTO): boolean {
     return hasChannelModerationRights(channel);
 }
 
-export function canRemoveUsersFromConversation(conversation: ConversationDto): boolean {
+export function canRemoveUsersFromConversation(conversation: ConversationDTO): boolean {
     if (!conversation) {
         return false;
     }
@@ -70,7 +70,7 @@ export function canRemoveUsersFromConversation(conversation: ConversationDto): b
     }
 }
 
-export function canLeaveConversation(conversation: ConversationDto): boolean {
+export function canLeaveConversation(conversation: ConversationDTO): boolean {
     if (!conversation) {
         return false;
     }

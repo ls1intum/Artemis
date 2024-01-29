@@ -11,7 +11,7 @@ import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 
 @Component({
     selector: 'jhi-post-reactions-bar',
@@ -61,7 +61,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
      *
      * @param currentConversation the conversation the post belongs to
      */
-    private setCanPin(currentConversation: ConversationDto | undefined) {
+    private setCanPin(currentConversation: ConversationDTO | undefined) {
         if (!currentConversation) {
             this.canPin = this.metisService.metisUserIsAtLeastInstructorInCourse();
             return;
