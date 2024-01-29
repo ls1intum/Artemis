@@ -11,6 +11,9 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { BuildAgent } from 'app/entities/build-agent.model';
+import { RepositoryInfo } from 'app/entities/repository-info.model';
+import { JobTimingInfo } from 'app/entities/job-timing-info.model';
+import { BuildConfig } from 'app/entities/build-config.model';
 
 describe('BuildAgentsComponent', () => {
     let component: BuildAgentsComponent;
@@ -26,34 +29,60 @@ describe('BuildAgentsComponent', () => {
         getBuildAgents: jest.fn().mockReturnValue(of([])),
     };
 
+    const repositoryInfo: RepositoryInfo = {
+        repositoryName: 'repo2',
+        repositoryType: 'USER',
+        triggeredByPushTo: 'USER',
+        assignmentRepositoryUri: 'https://some.uri',
+        testRepositoryUri: 'https://some.uri',
+        solutionRepositoryUri: 'https://some.uri',
+        auxiliaryRepositoryUris: [],
+        auxiliaryRepositoryCheckoutDirectories: [],
+    };
+
+    const jobTimingInfo: JobTimingInfo = {
+        submissionDate: dayjs('2023-01-01'),
+        buildStartDate: dayjs('2023-01-01'),
+    };
+
+    const buildConfig: BuildConfig = {
+        dockerImage: 'someImage',
+        commitHash: 'abc124',
+        branch: 'main',
+        programmingLanguage: 'Java',
+        projectType: 'Maven',
+        scaEnabled: false,
+        sequentialTestRunsEnabled: false,
+        testwiseCoverageEnabled: false,
+        resultPaths: [],
+    };
+
     const mockRunningJobs1: BuildJob[] = [
         {
             id: '2',
             name: 'Build Job 2',
+            buildAgentAddress: 'agent2',
             participationId: 102,
-            repositoryType: 'USER',
-            repositoryName: 'repo2',
-            commitHash: 'abc124',
-            submissionDate: dayjs('2023-01-01'),
-            retryCount: 2,
-            buildStartDate: dayjs('2023-01-01'),
-            priority: 5,
             courseId: 10,
-            isPushToTestRepository: false,
+            exerciseId: 100,
+            retryCount: 0,
+            priority: 3,
+            repositoryInfo: repositoryInfo,
+            jobTimingInfo: jobTimingInfo,
+            buildConfig: buildConfig,
         },
         {
             id: '4',
             name: 'Build Job 4',
+            buildAgentAddress: 'agent4',
             participationId: 104,
-            repositoryType: 'USER',
-            repositoryName: 'repo4',
-            commitHash: 'abc126',
-            submissionDate: dayjs('2023-01-04'),
-            retryCount: 3,
-            buildStartDate: dayjs('2023-01-04'),
-            priority: 2,
             courseId: 10,
-            isPushToTestRepository: false,
+            exerciseId: 100,
+            retryCount: 0,
+            priority: 2,
+            repositoryInfo: repositoryInfo,
+            jobTimingInfo: jobTimingInfo,
+            buildConfig: buildConfig,
         },
     ];
 
@@ -61,30 +90,28 @@ describe('BuildAgentsComponent', () => {
         {
             id: '1',
             name: 'Build Job 1',
+            buildAgentAddress: 'agent1',
             participationId: 101,
-            repositoryType: 'USER',
-            repositoryName: 'repo1',
-            commitHash: 'abc123',
-            submissionDate: dayjs('2023-01-02'),
-            retryCount: 2,
-            buildStartDate: dayjs('2023-01-05'),
-            priority: 5,
             courseId: 10,
-            isPushToTestRepository: false,
+            exerciseId: 100,
+            retryCount: 0,
+            priority: 4,
+            repositoryInfo: repositoryInfo,
+            jobTimingInfo: jobTimingInfo,
+            buildConfig: buildConfig,
         },
         {
             id: '3',
             name: 'Build Job 3',
+            buildAgentAddress: 'agent3',
             participationId: 103,
-            repositoryType: 'USER',
-            repositoryName: 'repo3',
-            commitHash: 'abc125',
-            submissionDate: dayjs('2023-01-03'),
-            retryCount: 1,
-            buildStartDate: dayjs('2023-01-05'),
-            priority: 3,
             courseId: 10,
-            isPushToTestRepository: false,
+            exerciseId: 100,
+            retryCount: 0,
+            priority: 5,
+            repositoryInfo: repositoryInfo,
+            jobTimingInfo: jobTimingInfo,
+            buildConfig: buildConfig,
         },
     ];
 
