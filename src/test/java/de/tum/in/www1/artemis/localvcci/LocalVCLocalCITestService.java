@@ -34,6 +34,8 @@ import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.RefSpec;
 import org.mockito.ArgumentMatcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -81,6 +83,8 @@ public class LocalVCLocalCITestService {
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
+
+    private static final Logger log = LoggerFactory.getLogger(LocalVCLocalCITestService.class);
 
     // Cannot inject {local.server.port} here, because it is not available at the time this class is instantiated.
     private int port;
@@ -522,6 +526,12 @@ public class LocalVCLocalCITestService {
         // wait for result to be persisted
         await().until(() -> resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId).isPresent());
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
+        log.info("Expected commit hash: " + expectedCommitHash);
+        for (ProgrammingSubmission submission : submissions) {
+            log.info("Submission with commit hash: " + submission.getCommitHash());
+        }
         await().until(() -> {
             SecurityContextHolder.getContext().setAuthentication(auth);
             return programmingSubmissionRepository.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participationId).orElseThrow().getLatestResult() != null;

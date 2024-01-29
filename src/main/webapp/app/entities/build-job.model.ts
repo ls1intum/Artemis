@@ -1,16 +1,18 @@
 import { StringBaseEntity } from 'app/shared/model/base-entity';
-import dayjs from 'dayjs/esm';
+import { RepositoryInfo } from 'app/entities/repository-info.model';
+import { JobTimingInfo } from 'app/entities/job-timing-info.model';
+import { BuildConfig } from 'app/entities/build-config.model';
 
 export class BuildJob implements StringBaseEntity {
     public id?: string;
     public name?: string;
+    public buildAgentAddress?: string;
     public participationId?: number;
-    public repositoryTypeOrUserName?: string;
-    public commitHash?: string;
-    public submissionDate?: dayjs.Dayjs;
-    public retryCount?: number;
-    public buildStartDate?: dayjs.Dayjs;
-    public priority?: number;
     public courseId?: number;
-    public isPushToTestRepository?: boolean;
+    public exerciseId?: number;
+    public retryCount?: number;
+    public priority?: number;
+    public repositoryInfo?: RepositoryInfo;
+    public jobTimingInfo?: JobTimingInfo;
+    public buildConfig?: BuildConfig;
 }
