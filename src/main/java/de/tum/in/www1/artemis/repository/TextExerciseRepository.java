@@ -37,8 +37,18 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
     @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencies", "plagiarismDetectionConfig" })
     Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "textExercise.exampleSubmissions.submission.results.feedbacks", "textExercise.exampleSubmissions.submission.results.assessor",
-            "textExercise.exampleSubmissions.submission.blocks", "textExercise.teamAssignmentConfig" })
+    @Query("""
+            SELECT textExercise
+            FROM TextExercise textExercise
+                LEFT JOIN FETCH textExercise.exampleSubmissions exampleSubmissions
+                LEFT JOIN FETCH exampleSubmissions.submission submission
+                LEFT JOIN FETCH submission.results result
+                LEFT JOIN FETCH result.feedbacks
+                LEFT JOIN FETCH submission.blocks
+                LEFT JOIN FETCH result.assessor
+                LEFT JOIN FETCH textExercise.teamAssignmentConfig
+            WHERE textExercise.id = :exerciseId
+            """)
     Optional<TextExercise> findWithExampleSubmissionsAndResultsById(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
@@ -49,17 +59,12 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
         return findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
     }
 
-    @Query("""
-            SELECT DISTINCT e
-            FROM TextExercise e
-                LEFT JOIN FETCH e.gradingCriteria
-            WHERE e.id = :exerciseId
-            """)
-    Optional<TextExercise> findByIdWithGradingCriteria(long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "gradingCriteria" })
+    Optional<TextExercise> findWithGradingCriteriaById(long exerciseId);
 
     @NotNull
-    default TextExercise findByIdWithGradingCriteriaElseThrow(long exerciseId) {
-        return findByIdWithGradingCriteria(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
+    default TextExercise findWithGradingCriteriaByIdElseThrow(long exerciseId) {
+        return findWithGradingCriteriaById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
     }
 
     @NotNull
