@@ -6,7 +6,7 @@ import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { CompetencyService } from 'app/course/competencies/competency.service';
-import { Competency, CompetencyProgress, CompetencyRelation, CourseCompetencyProgress } from 'app/entities/competency.model';
+import { Competency, CompetencyProgress, CompetencyRelation, CompetencyWithTailRelationDTO, CourseCompetencyProgress } from 'app/entities/competency.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
@@ -19,6 +19,7 @@ describe('CompetencyService', () => {
     let expectedResultCompetency: any;
     let expectedResultCompetencyProgress: any;
     let expectedResultCompetencyCourseProgress: any;
+    let resultImportAll: HttpResponse<CompetencyWithTailRelationDTO[]>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -202,5 +203,24 @@ describe('CompetencyService', () => {
         tick();
 
         expect(result).toBeTrue();
+    }));
+
+    it('should import all competencies of a course', fakeAsync(() => {
+        const competencyDTO = new CompetencyWithTailRelationDTO();
+        competencyDTO.competency = { ...defaultCompetencies.first(), id: 1 };
+        competencyDTO.tailRelations = [];
+        const returnedFromService = [competencyDTO];
+        const expected = [...returnedFromService];
+
+        competencyService
+            .importAll(1, 2, true)
+            .pipe(take(1))
+            .subscribe((resp) => (resultImportAll = resp));
+
+        const req = httpTestingController.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+        tick();
+
+        expect(resultImportAll.body).toEqual(expected);
     }));
 });
