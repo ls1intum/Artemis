@@ -100,6 +100,21 @@ describe('ParseCourseDescriptionComponent', () => {
         expect(getSpy).toHaveBeenCalledOnce();
     });
 
+    it('should remove competency recommendations', () => {
+        parseCourseDescriptionComponent.competencies.push(createCompetencyFormGroup('Title', 'Description', CompetencyTaxonomy.ANALYZE, true));
+        parseCourseDescriptionComponentFixture.detectChanges();
+
+        //expect no recommendations to exist at the start
+        expect(parseCourseDescriptionComponentFixture.debugElement.queryAll(By.directive(CompetencyRecommendationDetailComponent))).toHaveLength(1);
+        expect(parseCourseDescriptionComponent.competencies.value).toHaveLength(1);
+
+        parseCourseDescriptionComponent.onDelete(0);
+        parseCourseDescriptionComponentFixture.detectChanges();
+
+        expect(parseCourseDescriptionComponentFixture.debugElement.queryAll(By.directive(CompetencyRecommendationDetailComponent))).toHaveLength(0);
+        expect(parseCourseDescriptionComponent.competencies.value).toHaveLength(0);
+    });
+
     it('should cancel', () => {
         parseCourseDescriptionComponentFixture.detectChanges();
         const router: Router = TestBed.inject(Router);

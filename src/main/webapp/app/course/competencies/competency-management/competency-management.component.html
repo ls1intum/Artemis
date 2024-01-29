@@ -14,7 +14,7 @@
             </div>
             <div class="ms-auto text-truncate justify-content-end">
                 @if (irisCompetencyGenerationEnabled) {
-                    <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'parse-description']">
+                    <a class="btn btn-primary" id="generateButton" [routerLink]="['/course-management', courseId, 'competency-management', 'parse-description']">
                         <fa-icon [icon]="faRobot"></fa-icon>
                         <span>{{ 'artemisApp.competency.manageCompetencies.parseDescription' | artemisTranslate }}</span>
                     </a>

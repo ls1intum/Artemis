@@ -42,8 +42,11 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
         expected.setTitle("title");
         expected.setDescription("description");
         expected.setTaxonomy(CompetencyTaxonomy.ANALYZE);
-        var competencyMap = Map.of("title", expected.getTitle(), "description", expected.getDescription(), "taxonomy", expected.getTaxonomy());
-        var responseMap = Map.of("competencies", List.of(competencyMap));
+        var competencyMap1 = Map.of("title", expected.getTitle(), "description", expected.getDescription(), "taxonomy", expected.getTaxonomy());
+        // empty or malformed competencies are ignored
+        var competencyMap2 = Map.of("title", "!done");
+        var competencyMap3 = Map.of("malformed", "any content");
+        var responseMap = Map.of("competencies", List.of(competencyMap1, competencyMap2, competencyMap3));
 
         irisRequestMockProvider.mockMessageV2Response(responseMap);
 

@@ -28,7 +28,7 @@ function getId(baseId: string) {
     return baseId + IrisSubSettingsType.COMPETENCY_GENERATION;
 }
 
-describe('IrisCompetencyGenerationSubSettingsUpdateComponent Component', () => {
+describe('IrisCompetencyGenerationSubSettingsUpdateComponent', () => {
     let component: IrisCompetencyGenerationSubSettingsUpdateComponent;
     let fixture: ComponentFixture<IrisCompetencyGenerationSubSettingsUpdateComponent>;
 
@@ -84,10 +84,20 @@ describe('IrisCompetencyGenerationSubSettingsUpdateComponent Component', () => {
     it('should register template changes', () => {
         component.subSettings = baseSettings();
         fixture.detectChanges();
-        component.templateContent = 'Hello World 2';
+        component.templateContent = 'Hello World';
         component.onTemplateChanged();
 
-        expect(component.subSettings.template?.content).toBe('Hello World 2');
+        expect(component.subSettings.template?.content).toBe('Hello World');
+    });
+
+    it('should create template', () => {
+        component.subSettings = baseSettings();
+        component.subSettings.template = undefined;
+        fixture.detectChanges();
+        component.templateContent = 'Hello World';
+        component.onTemplateChanged();
+
+        expect(component.subSettings.template!.content).toBe('Hello World');
     });
 
     it('should register sub setting changes', () => {
