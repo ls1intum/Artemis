@@ -242,10 +242,7 @@ public class LocalCISharedBuildJobQueueService {
         if (buildJob != null) {
             String hazelcastMemberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
 
-            JobTimingInfo jobTimingInfo = new JobTimingInfo(buildJob.jobTimingInfo().submissionDate(), ZonedDateTime.now(), null);
-
-            LocalCIBuildJobQueueItem processingJob = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), hazelcastMemberAddress, buildJob.participationId(),
-                    buildJob.courseId(), buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), buildJob.repositoryInfo(), jobTimingInfo, buildJob.buildConfig());
+            LocalCIBuildJobQueueItem processingJob = new LocalCIBuildJobQueueItem(buildJob, hazelcastMemberAddress);
 
             processingJobs.put(processingJob.id(), processingJob);
             localProcessingJobs.incrementAndGet();
@@ -367,7 +364,8 @@ public class LocalCISharedBuildJobQueueService {
 
                     log.warn("Requeueing failed build job: {}", buildJob);
                     LocalCIBuildJobQueueItem requeuedBuildJob = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), null, buildJob.participationId(), buildJob.courseId(),
-                            buildJob.exerciseId(), buildJob.retryCount() + 1, buildJob.priority(), buildJob.repositoryInfo(), buildJob.jobTimingInfo(), buildJob.buildConfig());
+                            buildJob.exerciseId(), buildJob.retryCount() + 1, buildJob.priority(), null, buildJob.repositoryInfo(), buildJob.jobTimingInfo(),
+                            buildJob.buildConfig());
                     queue.add(requeuedBuildJob);
                 }
                 else if (participationOptional.isEmpty()) {
