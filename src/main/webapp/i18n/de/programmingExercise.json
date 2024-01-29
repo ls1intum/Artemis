@@ -595,7 +595,8 @@
                 "message": "Nachricht",
                 "previousSubmission": "Vorherige Abgabe",
                 "currentSubmission": "Aktuelle Abgabe",
-                "template": "Vorlage"
+                "template": "Vorlage",
+                "history": "Commit-Historie"
             }
         },
         "error": {

@@ -1,24 +1,33 @@
 <div ngbDropdown class="d-inline-block me-2">
     <button class="btn btn-primary w-100" id="dropdownBasic1" ngbDropdownToggle>
-        {{ 'artemisApp.programmingExercise.commitInfo.title' | artemisTranslate }}
+        {{ 'artemisApp.programmingExercise.commitInfo.history' | artemisTranslate }}
     </button>
     <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
         @for (commit of commits; track commit; let i = $index) {
             <ng-container>
-                <button ngbDropdownItem>
-                    <p>{{ commit.hash }} committed by {{ commit.author }}</p>
-                    <p>{{ commit.message }} at {{ commit.timestamp | artemisDate: 'long' : true }}</p>
-                    @if (currentSubmissionHash === commit.hash) {
-                        <span class="badge bg-info">
-                            {{ 'artemisApp.programmingExercise.commitInfo.currentSubmission' | artemisTranslate }}
-                        </span>
-                    }
-                    @if (previousSubmissionHash === commit.hash) {
-                        <span class="badge bg-info"> {{ 'artemisApp.programmingExercise.commitInfo.previousSubmission' | artemisTranslate }} </span>
-                    }
-                    @if (!previousSubmissionHash && i === commits?.length! - 1) {
-                        <span class="badge bg-info"> {{ 'artemisApp.programmingExercise.commitInfo.template' | artemisTranslate }} </span>
-                    }
+                <button ngbDropdownItem class="border" (click)="onCommitSelected(commit)">
+                    <div class="d-flex align-items-start">
+                        <div>
+                            <h5 style="margin-right: 10px">{{ commits?.length! - i }}</h5>
+                        </div>
+                        <div>
+                            <p class="mb-0">
+                                <span class="text-primary">{{ commit.hash }}</span> committed by <span class="text-primary">{{ commit.author }}</span>
+                            </p>
+                            <p class="mb-0">
+                                <span class="text-secondary">{{ commit.message }} at {{ commit.timestamp | artemisDate: 'long' : true }}</span>
+                            </p>
+                            @if (currentSubmissionHash === commit.hash) {
+                                <span class="badge bg-info">{{ 'artemisApp.programmingExercise.commitInfo.currentSubmission' | artemisTranslate }}</span>
+                            }
+                            @if (previousSubmissionHash === commit.hash) {
+                                <span class="badge bg-info"> {{ 'artemisApp.programmingExercise.commitInfo.previousSubmission' | artemisTranslate }} </span>
+                            }
+                            @if (!previousSubmissionHash && i === commits?.length! - 1) {
+                                <span class="badge bg-info"> {{ 'artemisApp.programmingExercise.commitInfo.template' | artemisTranslate }} </span>
+                            }
+                        </div>
+                    </div>
                 </button>
             </ng-container>
         }

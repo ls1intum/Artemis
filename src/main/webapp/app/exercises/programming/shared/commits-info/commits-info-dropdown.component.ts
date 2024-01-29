@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import dayjs from 'dayjs/esm';
@@ -22,7 +22,8 @@ export class CommitsInfoDropdownComponent implements OnInit, OnDestroy {
     private commitsInfoSubscription: Subscription;
     private profileInfoSubscription: Subscription;
     localVC = false;
-    isNavbarCollapsed = true;
+    // Define an EventEmitter to emit the selected commit
+    @Output() commitSelected: EventEmitter<CommitInfo> = new EventEmitter<CommitInfo>();
 
     constructor(
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
@@ -62,7 +63,7 @@ export class CommitsInfoDropdownComponent implements OnInit, OnDestroy {
         return submissions?.find((submission) => submission.commitHash === commitInfo.hash);
     }
 
-    collapseNavbar() {
-        this.isNavbarCollapsed = true;
+    onCommitSelected(commit: CommitInfo) {
+        this.commitSelected.emit(commit);
     }
 }

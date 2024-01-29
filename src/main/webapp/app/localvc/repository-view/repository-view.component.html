@@ -1,6 +1,11 @@
 <ng-container>
     @if (!loadingParticipation && !participationCouldNotBeFetched) {
-        <jhi-commits-info-dropdown class="mb-2" [submissions]="submissions" [participationId]="participation?.id" [exerciseProjectKey]="exercise?.projectKey">
+        <jhi-commits-info-dropdown
+            [submissions]="submissions"
+            [participationId]="participation?.id"
+            [exerciseProjectKey]="exercise?.projectKey"
+            (commitSelected)="onCommitSelected($event)"
+        >
         </jhi-commits-info-dropdown>
         <jhi-code-editor-container
             [editable]="false"

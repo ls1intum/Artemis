@@ -17,7 +17,7 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { CommitsInfoDropdownComponent } from 'app/exercises/programming/shared/commits-info/commits-info-dropdown.component';
 
 @Component({
@@ -197,10 +197,12 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     onError(error: string) {
         this.alertService.error(error);
     }
-
-    isDropdownOpen: boolean = false;
-
-    toggleDropdown() {
-        this.isDropdownOpen = !this.isDropdownOpen;
+    onCommitSelected(commitInfo: CommitInfo): void {
+        console.error('commit', commitInfo);
+        const selectedSubmission = this.submissions?.find((submission) => submission.commitHash === commitInfo.hash);
+        if (selectedSubmission) {
+            console.error('selectedSubmission', selectedSubmission);
+            this.participation = selectedSubmission.participation as ProgrammingExerciseStudentParticipation;
+        }
     }
 }
