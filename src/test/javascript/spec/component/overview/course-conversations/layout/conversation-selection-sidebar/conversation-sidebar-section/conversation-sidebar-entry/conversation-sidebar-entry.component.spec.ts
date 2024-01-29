@@ -30,17 +30,19 @@ import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/co
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../../../../../helpers/mocks/service/mock-notification.service';
 
-const examples: ConversationDto[] = [
-    generateOneToOneChatDTO({}),
-    generateExampleGroupChatDTO({}),
-    generateExampleChannelDTO({}),
-    generateExampleChannelDTO({ subType: ChannelSubType.EXERCISE, subTypeReferenceId: 1 }),
-    generateExampleChannelDTO({ subType: ChannelSubType.LECTURE, subTypeReferenceId: 1 }),
-    generateExampleChannelDTO({ subType: ChannelSubType.EXAM, subTypeReferenceId: 1 }),
+const examples: (() => ConversationDto)[] = [
+    () => generateOneToOneChatDTO({}),
+    () => generateExampleGroupChatDTO({}),
+    () => generateExampleChannelDTO({}),
+    () => generateExampleChannelDTO({ subType: ChannelSubType.EXERCISE, subTypeReferenceId: 1 }),
+    () => generateExampleChannelDTO({ subType: ChannelSubType.LECTURE, subTypeReferenceId: 1 }),
+    () => generateExampleChannelDTO({ subType: ChannelSubType.EXAM, subTypeReferenceId: 1 }),
 ];
 
 examples.forEach((conversation) => {
-    describe('ConversationSidebarEntryComponent with ' + (conversation instanceof ChannelDTO ? conversation.subType + ' ' : '') + conversation.type, () => {
+    const testDescription = conversation();
+
+    describe('ConversationSidebarEntryComponent with ' + (testDescription instanceof ChannelDTO ? testDescription.subType + ' ' : '') + testDescription.type, () => {
         let component: ConversationSidebarEntryComponent;
         let fixture: ComponentFixture<ConversationSidebarEntryComponent>;
         let conversationService: ConversationService;
@@ -90,7 +92,7 @@ examples.forEach((conversation) => {
             notificationService = TestBed.inject(NotificationService);
 
             component = fixture.componentInstance;
-            component.conversation = Object.assign({}, conversation);
+            component.conversation = conversation();
             component.activeConversation = activeConversation;
             component.course = course;
             fixture.detectChanges();
@@ -106,7 +108,7 @@ examples.forEach((conversation) => {
             button.click();
             tick(501);
             expect(updateIsFavoriteSpy).toHaveBeenCalledOnce();
-            expect(updateIsFavoriteSpy).toHaveBeenCalledWith(course.id, conversation.id, true);
+            expect(updateIsFavoriteSpy).toHaveBeenCalledWith(course.id, component.conversation.id, true);
             expect(conversationFavoriteStatusChangeSpy).toHaveBeenCalledOnce();
         }));
 
@@ -116,7 +118,7 @@ examples.forEach((conversation) => {
             button.click();
             tick(501);
             expect(updateIsHiddenSpy).toHaveBeenCalledOnce();
-            expect(updateIsHiddenSpy).toHaveBeenCalledWith(course.id, conversation.id, true);
+            expect(updateIsHiddenSpy).toHaveBeenCalledWith(course.id, component.conversation.id, true);
             expect(conversationIsHiddenDidChangeSpy).toHaveBeenCalledOnce();
         }));
 
@@ -126,7 +128,7 @@ examples.forEach((conversation) => {
             button.click();
             tick(501);
             expect(updateIsMutedSpy).toHaveBeenCalledOnce();
-            expect(updateIsMutedSpy).toHaveBeenCalledWith(course.id, conversation.id, true);
+            expect(updateIsMutedSpy).toHaveBeenCalledWith(course.id, component.conversation.id, true);
             expect(conversationIsMutedDidChangeSpy).toHaveBeenCalledOnce();
         }));
 
@@ -143,7 +145,7 @@ examples.forEach((conversation) => {
         }));
 
         it('should open conversation detail with setting tab if setting button is clicked', fakeAsync(() => {
-            if (isOneToOneChatDto(conversation)) {
+            if (isOneToOneChatDto(component.conversation)) {
                 const button = fixture.debugElement.nativeElement.querySelector('.setting');
                 expect(button).toBeFalsy(); // should not be present for one-to-one chats
             } else {
@@ -164,22 +166,22 @@ examples.forEach((conversation) => {
                     expect(openDialogSpy).toHaveBeenCalledOnce();
                     expect(openDialogSpy).toHaveBeenCalledWith(ConversationDetailDialogComponent, defaultFirstLayerDialogOptions);
                     expect(mockModalRef.componentInstance.course).toEqual(course);
-                    expect(mockModalRef.componentInstance.activeConversation).toEqual(conversation);
+                    expect(mockModalRef.componentInstance.activeConversation).toEqual(component.conversation);
                     expect(mockModalRef.componentInstance.selectedTab).toEqual(ConversationDetailTabs.SETTINGS);
                 });
             }
         }));
 
-        if (conversation instanceof ChannelDTO && conversation.subType !== ChannelSubType.GENERAL) {
+        if (testDescription instanceof ChannelDTO && testDescription.subType !== ChannelSubType.GENERAL) {
             it(
-                'should navigate to ' + conversation.subType,
+                'should navigate to ' + testDescription.subType,
                 fakeAsync(() => {
                     const button = fixture.debugElement.nativeElement.querySelector('.sub-type-reference');
                     button.click();
                     tick();
 
                     // Assert that the router has navigated to the correct link
-                    expect(location.path()).toBe('/courses/1/' + conversation.subType + 's/1');
+                    expect(location.path()).toBe('/courses/1/' + testDescription.subType + 's/1');
                 }),
             );
         }

@@ -50,4 +50,8 @@ export abstract class ConversationDto {
     protected constructor(type: ConversationType) {
         this.type = type;
     }
+
+    public shouldNotifyRecipient(): boolean {
+        return !this.isMuted && !this.isHidden;
+    }
 }
