@@ -31,18 +31,20 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
             SELECT p
             FROM Post p
             WHERE p.author.id =:authorId
-                  AND p.conversation.course.id =:courseId
+                AND p.conversation.course.id = :courseId
             """)
-    List<Post> findPostsByAuthorIdAndCourseId(long authorId, long courseId);
+    List<Post> findPostsByAuthorIdAndCourseId(@Param("authorId") long authorId, @Param("courseId") long courseId);
 
     @Transactional // ok because of delete
     @Modifying
     void deleteAllByConversationId(Long conversationId);
 
     @Query("""
-            SELECT DISTINCT post FROM Post post
-            LEFT JOIN post.answers answer LEFT JOIN post.reactions reaction
-            WHERE post.plagiarismCase.id = :#{#plagiarismCaseId}
+            SELECT DISTINCT post
+            FROM Post post
+                LEFT JOIN post.answers answer
+                LEFT JOIN post.reactions reaction
+            WHERE post.plagiarismCase.id = :plagiarismCaseId
             """)
     List<Post> findPostsByPlagiarismCaseId(@Param("plagiarismCaseId") Long plagiarismCaseId);
 
