@@ -21,4 +21,8 @@ public record ConversationNotificationRecipientSummary(long userId, String userL
         this(user.getId(), user.getLogin(), user.getFirstName(), user.getLastName(), user.getLangKey(), user.getEmail(), isConversationMuted, isConversationHidden,
                 isAtLeastTutorInCourse);
     }
+
+    public boolean shouldNotifyRecipient() {
+        return !isConversationMuted && !isConversationHidden;
+    }
 }

@@ -253,7 +253,7 @@ public class ConversationMessagingService extends PostingService {
         if (conversation instanceof Channel channel) {
             // If a channel is not an announcement channel, filter out users, that muted or hid the conversation
             if (!channel.getIsAnnouncementChannel()) {
-                filter = filter.and(summary -> ((!summary.isConversationMuted() && !summary.isConversationHidden())) || mentionedUsers
+                filter = filter.and(summary -> summary.shouldNotifyRecipient() || mentionedUsers
                         .contains(new User(summary.userId(), summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail())));
             }
 
@@ -263,7 +263,7 @@ public class ConversationMessagingService extends PostingService {
             }
         }
         else {
-            filter = filter.and(recipientSummary -> !recipientSummary.isConversationMuted() && !recipientSummary.isConversationHidden());
+            filter = filter.and(ConversationNotificationRecipientSummary::shouldNotifyRecipient);
         }
 
         return notificationRecipients.stream().filter(filter)

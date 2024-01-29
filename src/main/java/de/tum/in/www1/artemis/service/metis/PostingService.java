@@ -276,8 +276,7 @@ public abstract class PostingService {
      * @return null or the provided notification
      */
     private Notification getNotificationForRecipient(ConversationNotificationRecipientSummary recipient, Notification notification, Set<User> mentionedUsers) {
-        if (notification instanceof ConversationNotification && (recipient.isConversationMuted() || recipient.isConversationHidden())
-                && !mentionedUsers.contains(new User(recipient.userId()))) {
+        if (notification instanceof ConversationNotification && !recipient.shouldNotifyRecipient() && !mentionedUsers.contains(new User(recipient.userId()))) {
             return null;
         }
 
