@@ -24,7 +24,7 @@ public interface CoverageReportRepository extends JpaRepository<CoverageReport, 
         return optionalReport.orElseThrow(() -> new EntityNotFoundException("Coverage Report", coverageReportId));
     }
 
-    Boolean existsBySubmissionId(@Param("submissionId") Long submissionId);
+    Boolean existsBySubmissionId(Long submissionId);
 
     @Transactional // ok because of delete
     @Modifying
@@ -36,7 +36,7 @@ public interface CoverageReportRepository extends JpaRepository<CoverageReport, 
                 LEFT JOIN FETCH r.submission s
                 JOIN ProgrammingExercise pe ON s.participation = pe.solutionParticipation
             WHERE pe.id = :programmingExerciseId
-                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+                AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY s.submissionDate DESC
             """)
     List<CoverageReport> getLatestCoverageReportsForLegalSubmissionsForProgrammingExercise(@Param("programmingExerciseId") Long programmingExerciseId, Pageable pageable);
@@ -49,7 +49,7 @@ public interface CoverageReportRepository extends JpaRepository<CoverageReport, 
                 LEFT JOIN FETCH f.testwiseCoverageEntries
                 JOIN ProgrammingExercise pe ON s.participation = pe.solutionParticipation
             WHERE pe.id = :programmingExerciseId
-                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+                AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY s.submissionDate DESC
             """)
     List<CoverageReport> getLatestCoverageReportsForLegalSubmissionsForProgrammingExerciseWithEagerFileReportsAndEntries(@Param("programmingExerciseId") Long programmingExerciseId,
