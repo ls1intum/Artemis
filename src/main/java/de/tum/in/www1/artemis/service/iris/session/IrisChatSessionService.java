@@ -14,8 +14,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
@@ -37,6 +35,7 @@ import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisNoResponseException;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
+import de.tum.in.www1.artemis.web.rest.dto.IrisClientArgumentsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
@@ -151,7 +150,7 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
      * @param context Extra arguments from the client to consider in the request (currently unused for this feature)
      */
     @Override
-    public void requestAndHandleResponse(IrisSession session, JsonNode context) {
+    public void requestAndHandleResponse(IrisSession session, IrisClientArgumentsDTO context) {
         var fullSession = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
         Map<String, Object> parameters = new HashMap<>();
         if (!(fullSession instanceof IrisChatSession chatSession)) {

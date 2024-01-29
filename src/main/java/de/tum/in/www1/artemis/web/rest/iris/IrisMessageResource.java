@@ -11,8 +11,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
@@ -22,6 +20,7 @@ import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
+import de.tum.in.www1.artemis.web.rest.dto.IrisClientArgumentsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.IrisMessageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
@@ -104,7 +103,7 @@ public class IrisMessageResource {
      */
     @PostMapping("sessions/{sessionId}/messages/{messageId}/resend")
     @EnforceAtLeastStudent
-    public ResponseEntity<IrisMessage> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @RequestBody JsonNode context) {
+    public ResponseEntity<IrisMessage> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @RequestBody IrisClientArgumentsDTO context) {
         var session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();

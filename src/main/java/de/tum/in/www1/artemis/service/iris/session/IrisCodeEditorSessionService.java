@@ -42,6 +42,8 @@ import de.tum.in.www1.artemis.service.iris.session.codeeditor.file.*;
 import de.tum.in.www1.artemis.service.iris.session.codeeditor.problemstatement.*;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisCodeEditorWebsocketService;
+import de.tum.in.www1.artemis.web.rest.dto.IrisClientArgumentsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.user.IrisCodeEditorClientDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
@@ -157,7 +159,7 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
      * @param context     JsonNode containing the most up-to-date problem statement on the client
      */
     @Override
-    public void requestAndHandleResponse(IrisSession irisSession, JsonNode context) {
+    public void requestAndHandleResponse(IrisSession irisSession, IrisClientArgumentsDTO context) {
         var sessionFromDB = irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
         if (!(sessionFromDB instanceof IrisCodeEditorSession session)) {
             throw new BadRequestException("Iris session is not a code editor session");
@@ -165,6 +167,9 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
         var exercise = session.getExercise();
         var params = initializeParams(exercise);
         params.put("chatHistory", session.getMessages()); // Additionally add the chat history to the request
+        if (context instanceof IrisCodeEditorClientDTO client) {
+            params.put("problemStatement", client.getProblemStatement());
+        }
 
         var settings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false).irisCodeEditorSettings();
         irisConnectorService.sendRequestV2(settings.getChatTemplate().getContent(), settings.getPreferredModel(), params).handleAsync((response, err) -> {

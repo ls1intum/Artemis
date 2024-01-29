@@ -5,13 +5,12 @@ import javax.ws.rs.BadRequestException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.session.*;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.iris.session.*;
+import de.tum.in.www1.artemis.web.rest.dto.IrisClientArgumentsDTO;
 
 /**
  * Service for managing Iris sessions.
@@ -70,7 +69,7 @@ public class IrisSessionService {
      * @param <S>     The type of the session
      * @throws BadRequestException If the session type is invalid
      */
-    public <S extends IrisSession> void requestMessageFromIris(S session, JsonNode context) {
+    public <S extends IrisSession> void requestMessageFromIris(S session, IrisClientArgumentsDTO context) {
         var wrapper = getIrisSessionSubService(session);
         if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface<S> chatWrapper) {
             chatWrapper.requestAndHandleResponse(wrapper.irisSession, context);

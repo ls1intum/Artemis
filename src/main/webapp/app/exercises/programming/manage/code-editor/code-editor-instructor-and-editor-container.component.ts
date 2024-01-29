@@ -90,6 +90,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
     }
 
+    getProblemStatement = () => {
+        return {
+            type: 'code_editor',
+            problemStatement: this.editableInstructions?.exercise.problemStatement,
+        };
+    };
+
     private handleChangeNotification(success: StepExecutionSuccess) {
         if (success.component == ExerciseComponent.PROBLEM_STATEMENT) {
             this.editableInstructions.updateProblemStatement(success.updatedProblemStatement!);

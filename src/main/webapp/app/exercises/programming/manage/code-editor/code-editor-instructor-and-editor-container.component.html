@@ -147,7 +147,7 @@
         </jhi-programming-exercise-editable-instructions>
         <ng-container chatbot-button>
             @if (this.irisSettings?.irisCodeEditorSettings?.enabled) {
-                <jhi-code-editor-chatbot-button></jhi-code-editor-chatbot-button>
+                <jhi-code-editor-chatbot-button [contextOnSend]="getProblemStatement"></jhi-code-editor-chatbot-button>
             }
         </ng-container>
     </jhi-code-editor-container>
