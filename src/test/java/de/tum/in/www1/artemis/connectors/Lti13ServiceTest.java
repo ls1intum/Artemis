@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.mockito.ArgumentCaptor.*;
 import static org.mockito.Mockito.*;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -90,6 +89,8 @@ class Lti13ServiceTest {
 
     private AutoCloseable closeable;
 
+    private LtiPlatformConfiguration ltiPlatformConfiguration;
+
     @BeforeEach
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
@@ -99,6 +100,9 @@ class Lti13ServiceTest {
         onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.setUserPrefix("prefix");
         oidcIdToken = mock(OidcIdToken.class);
+
+        ltiPlatformConfiguration = new LtiPlatformConfiguration();
+        ltiPlatformConfiguration.setRegistrationId("client-registration");
     }
 
     @AfterEach
@@ -259,8 +263,7 @@ class Lti13ServiceTest {
 
     @Test
     void onNewResultNoOnlineCourseConfiguration() {
-        Course course = new Course();
-        course.setId(1L);
+        Course course = createOnlineCourse();
         Exercise exercise = new ProgrammingExercise();
         exercise.setCourse(course);
         StudentParticipation participation = new StudentParticipation();
@@ -268,6 +271,7 @@ class Lti13ServiceTest {
 
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
         doReturn(null).when(onlineCourseConfigurationService).getClientRegistration(any());
+        doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(any());
 
         lti13Service.onNewResult(participation);
 
@@ -277,8 +281,7 @@ class Lti13ServiceTest {
 
     @Test
     void onNewResultNoLaunchesForUser() {
-        Course course = new Course();
-        course.setId(1L);
+        Course course = createOnlineCourse();
         User user = new User();
         user.setId(1L);
         Exercise exercise = new ProgrammingExercise();
@@ -291,6 +294,7 @@ class Lti13ServiceTest {
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
         doReturn(mock(ClientRegistration.class)).when(onlineCourseConfigurationService).getClientRegistration(any());
         doReturn(Collections.emptyList()).when(launchRepository).findByUserAndExercise(user, exercise);
+        doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(any());
 
         lti13Service.onNewResult(participation);
 
@@ -300,8 +304,7 @@ class Lti13ServiceTest {
 
     @Test
     void onNewResultNoResultForUser() {
-        Course course = new Course();
-        course.setId(1L);
+        Course course = createOnlineCourse();
         User user = new User();
         user.setId(1L);
         Exercise exercise = new ProgrammingExercise();
@@ -317,6 +320,7 @@ class Lti13ServiceTest {
         doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());
         doReturn(Collections.singletonList(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
         doReturn(Optional.empty()).when(resultRepository).findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(any());
 
         lti13Service.onNewResult(participation);
 
@@ -333,8 +337,7 @@ class Lti13ServiceTest {
         feedback.setDetailText("Not so good");
         result.addFeedback(feedback);
 
-        Course course = new Course();
-        course.setId(1L);
+        Course course = createOnlineCourse();
         User user = new User();
         user.setId(1L);
         Exercise exercise = new ProgrammingExercise();
@@ -350,6 +353,7 @@ class Lti13ServiceTest {
         doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());
         doReturn(Collections.singletonList(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
         doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(any());
 
         lti13Service.onNewResult(participation);
 
@@ -379,6 +383,7 @@ class Lti13ServiceTest {
         doReturn(Collections.singletonList(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
         doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
         doReturn(null).when(tokenRetriever).getToken(eq(clientRegistration), eq(Scopes.AGS_SCORE));
+        doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(any());
 
         lti13Service.onNewResult(participation);
 
@@ -411,11 +416,7 @@ class Lti13ServiceTest {
         doReturn(Collections.singletonList(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
         doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
-        List<LtiPlatformConfiguration> ltiPlatformConfigurations = new ArrayList<>();
-        LtiPlatformConfiguration ltiPlatformConfiguration = new LtiPlatformConfiguration();
-        ltiPlatformConfiguration.setRegistrationId("client-registration");
-        ltiPlatformConfigurations.add(ltiPlatformConfiguration);
-        doReturn(ltiPlatformConfigurations).when(ltiPlatformConfigurationRepository).findAll();
+        doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(clientRegistrationId);
         doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());
 
         String accessToken = "accessToken";
@@ -452,59 +453,29 @@ class Lti13ServiceTest {
     }
 
     @Test
-    void startDeepLinkingCourseFound() {
-        MockExercise mockExercise = this.getMockExercise(true);
-
-        when(oidcIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID)).thenReturn("1");
-        when(oidcIdToken.getClaim(Claims.MESSAGE_TYPE)).thenReturn("LtiDeepLinkingRequest");
-        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/lti/deep-linking/" + mockExercise.courseId);
-
+    void startDeepLinkingLtiConfigurationFound() {
         when(oidcIdToken.getEmail()).thenReturn("testuser@email.com");
 
+        doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(clientRegistrationId);
         Optional<User> user = Optional.of(new User());
         doReturn(user).when(userRepository).findOneWithGroupsAndAuthoritiesByLogin(any());
         doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
         doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
 
-        lti13Service.startDeepLinking(oidcIdToken);
+        lti13Service.startDeepLinking(oidcIdToken, clientRegistrationId);
     }
 
     @Test
-    void startDeepLinkingNotOnlineCourse() {
-        MockExercise exercise = this.getMockExercise(false);
-
-        OidcIdToken oidcIdToken = mock(OidcIdToken.class);
-        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/lti/deep-linking/" + exercise.courseId);
-
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.startDeepLinking(oidcIdToken));
-
-    }
-
-    @Test
-    void startDeepLinkingCourseNotFound() {
-        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/lti/deep-linking/100000");
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.startDeepLinking(oidcIdToken));
-    }
-
-    @Test
-    void startDeepLinkingInvalidPath() {
-        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/with/invalid/path/to/deeplinking/11");
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.startDeepLinking(oidcIdToken));
-    }
-
-    @Test
-    void startDeepLinkingMalformedUrl() {
-        doReturn("path").when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
-
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.startDeepLinking(oidcIdToken));
+    void startDeepLinkingPlatformNotFound() {
+        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/lti/deep-linking");
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.startDeepLinking(oidcIdToken, clientRegistrationId));
     }
 
     private State getValidStateForNewResult(Result result) {
         User user = new User();
         user.setLogin("someone");
 
-        Course course = new Course();
-        course.setId(1L);
+        Course course = createOnlineCourse();
 
         Exercise exercise = new ProgrammingExercise();
         exercise.setMaxPoints(80d);
@@ -563,5 +534,15 @@ class Lti13ServiceTest {
         doReturn(user).when(userRepository).findOneWithGroupsAndAuthoritiesByLogin(any());
         doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
         doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
+    }
+
+    private Course createOnlineCourse() {
+        Course course = new Course();
+        course.setId(1L);
+        OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
+        onlineCourseConfiguration.setLtiPlatformConfiguration(ltiPlatformConfiguration);
+        onlineCourseConfiguration.setCourse(course);
+        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+        return course;
     }
 }
