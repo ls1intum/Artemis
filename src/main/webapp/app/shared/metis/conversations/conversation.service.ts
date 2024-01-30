@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
@@ -53,7 +53,7 @@ export class ConversationService {
         } else if (isOneToOneChatDto(conversation)) {
             const otherUser = conversation.members?.find((user) => user.isRequestingUser === false);
             return otherUser ? getUserLabel(otherUser, showLogin) : '';
-        } else if (isGroupChatDto(conversation)) {
+        } else if (isGroupChatDTO(conversation)) {
             if (conversation.name && conversation.name.length > 0) {
                 return conversation.name;
             }

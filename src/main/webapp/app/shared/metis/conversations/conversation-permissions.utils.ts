@@ -1,6 +1,6 @@
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { GroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { GroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { Course } from 'app/entities/course.model';
 import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
 
@@ -8,12 +8,12 @@ export function canAddUsersToConversation(conversation: ConversationDTO): boolea
     if (!conversation) {
         return false;
     }
-    const groupChatCheck = (groupChat: GroupChatDto): boolean => !!groupChat.isMember;
+    const groupChatCheck = (groupChat: GroupChatDTO): boolean => !!groupChat.isMember;
     const channelCheck = (channel: ChannelDTO): boolean => !channel.isCourseWide && hasChannelModerationRights(channel);
 
     if (isChannelDto(conversation)) {
         return channelCheck(conversation);
-    } else if (isGroupChatDto(conversation)) {
+    } else if (isGroupChatDTO(conversation)) {
         return groupChatCheck(conversation);
     } else if (isOneToOneChatDto(conversation)) {
         return false;
@@ -26,7 +26,7 @@ export function canCreateNewMessageInConversation(conversation: ConversationDTO)
     if (!conversation) {
         return false;
     }
-    const groupChatCheck = (groupChat: GroupChatDto): boolean => !!groupChat.isMember;
+    const groupChatCheck = (groupChat: GroupChatDTO): boolean => !!groupChat.isMember;
     const oneToOneChatCheck = (oneToOneChat: ConversationDTO): boolean => {
         return !!oneToOneChat.isMember;
     };
@@ -35,7 +35,7 @@ export function canCreateNewMessageInConversation(conversation: ConversationDTO)
 
     if (isChannelDto(conversation)) {
         return channelCheck(conversation);
-    } else if (isGroupChatDto(conversation)) {
+    } else if (isGroupChatDTO(conversation)) {
         return groupChatCheck(conversation);
     } else if (isOneToOneChatDto(conversation)) {
         return oneToOneChatCheck(conversation);
@@ -56,12 +56,12 @@ export function canRemoveUsersFromConversation(conversation: ConversationDTO): b
     if (!conversation) {
         return false;
     }
-    const groupChatCheck = (groupChat: GroupChatDto): boolean => !!groupChat.isMember;
+    const groupChatCheck = (groupChat: GroupChatDTO): boolean => !!groupChat.isMember;
     const channelCheck = (channel: ChannelDTO): boolean => !!channel.hasChannelModerationRights;
 
     if (isChannelDto(conversation)) {
         return channelCheck(conversation);
-    } else if (isGroupChatDto(conversation)) {
+    } else if (isGroupChatDTO(conversation)) {
         return groupChatCheck(conversation);
     } else if (isOneToOneChatDto(conversation)) {
         return false;
@@ -129,7 +129,7 @@ export function canChangeChannelProperties(channel: ChannelDTO): boolean {
     return !!channel.hasChannelModerationRights;
 }
 
-export function canChangeGroupChatProperties(groupChat: GroupChatDto): boolean {
+export function canChangeGroupChatProperties(groupChat: GroupChatDTO): boolean {
     if (!groupChat) {
         return false;
     }

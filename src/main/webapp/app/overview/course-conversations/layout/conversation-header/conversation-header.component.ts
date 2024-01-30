@@ -13,7 +13,7 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { EMPTY, Subject, from, takeUntil } from 'rxjs';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { canAddUsersToConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
-import { getAsGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { getAsGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/overview/course-conversations/other/conversation.util';
 import { catchError } from 'rxjs/operators';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -47,7 +47,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
         private metisService: MetisService,
     ) {}
 
-    getAsGroupChat = getAsGroupChatDto;
+    getAsGroupChat = getAsGroupChatDTO;
 
     canAddUsers = canAddUsersToConversation;
 

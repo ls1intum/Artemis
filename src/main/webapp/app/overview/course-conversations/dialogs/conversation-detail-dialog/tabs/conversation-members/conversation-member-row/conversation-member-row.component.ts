@@ -17,7 +17,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { getAsGroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { getAsGroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { catchError } from 'rxjs/operators';
 
@@ -182,7 +182,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
 
     openRemoveFromGroupChatDialog(event: MouseEvent) {
         event.stopPropagation();
-        const groupChat = getAsGroupChatDto(this.activeConversation);
+        const groupChat = getAsGroupChatDTO(this.activeConversation);
         if (!groupChat) {
             return;
         }
@@ -231,7 +231,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     openRemoveFromConversationDialog(event: MouseEvent) {
         if (isChannelDto(this.activeConversation)) {
             this.openRemoveFromChannelDialog(event);
-        } else if (isGroupChatDto(this.activeConversation)) {
+        } else if (isGroupChatDTO(this.activeConversation)) {
             this.openRemoveFromGroupChatDialog(event);
         } else {
             throw new Error('Unsupported conversation type');

@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
-import { GroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 
 export const generateExampleChannelDTO = ({
@@ -79,8 +79,8 @@ export const generateExampleGroupChatDTO = ({
     isMuted = false,
     isMember = true,
     unreadMessagesCount = 0,
-}: GroupChatDto) => {
-    const exampleGroupChatDTO = new GroupChatDto();
+}: GroupChatDTO) => {
+    const exampleGroupChatDTO = new GroupChatDTO();
     exampleGroupChatDTO.id = id;
     exampleGroupChatDTO.name = name;
     exampleGroupChatDTO.creationDate = creationDate;
@@ -116,7 +116,7 @@ export const generateOneToOneChatDTO = ({
     isMuted = false,
     isMember = true,
     unreadMessagesCount = 0,
-}: GroupChatDto) => {
+}: GroupChatDTO) => {
     const exampleOneToOneChatDTO = new OneToOneChatDTO();
     exampleOneToOneChatDTO.id = id;
     exampleOneToOneChatDTO.creationDate = creationDate;

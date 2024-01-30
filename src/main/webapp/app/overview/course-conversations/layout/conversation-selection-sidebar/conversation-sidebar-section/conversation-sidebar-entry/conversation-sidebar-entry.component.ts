@@ -9,7 +9,7 @@ import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
-import { getAsGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { getAsGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import {
     ConversationDetailDialogComponent,
@@ -83,7 +83,7 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
         return this.activeConversation && this.conversation && this.activeConversation.id! === this.conversation.id!;
     }
 
-    getAsGroupChat = getAsGroupChatDto;
+    getAsGroupChat = getAsGroupChatDTO;
 
     isOneToOneChat = isOneToOneChatDto;
 

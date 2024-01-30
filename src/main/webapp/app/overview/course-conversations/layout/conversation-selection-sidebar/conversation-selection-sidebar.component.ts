@@ -9,7 +9,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
 import { Channel, ChannelDTO, ChannelSubType, isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { GroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { GroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { AccountService } from 'app/core/auth/account.service';
@@ -49,8 +49,8 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     oneToOneChats: OneToOneChatDTO[] = [];
     displayedOneToOneChats: OneToOneChatDTO[] = [];
 
-    groupChats: GroupChatDto[] = [];
-    displayedGroupChats: GroupChatDto[] = [];
+    groupChats: GroupChatDTO[] = [];
+    displayedGroupChats: GroupChatDTO[] = [];
 
     collapsed: boolean;
     // Icons
@@ -194,8 +194,8 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
                 return bLastMessageDate!.isAfter(aLastMessageDate!) ? 1 : -1;
             });
         this.groupChats = this.allConversations
-            .filter((conversation) => isGroupChatDto(conversation) && !conversation.isFavorite)
-            .map((groupChatDto) => groupChatDto as GroupChatDto)
+            .filter((conversation) => isGroupChatDTO(conversation) && !conversation.isFavorite)
+            .map((groupChatDto) => groupChatDto as GroupChatDTO)
             .sort((a, b) => {
                 // sort by last message date
                 const aLastMessageDate = a.lastMessageDate ? a.lastMessageDate : a.creationDate;

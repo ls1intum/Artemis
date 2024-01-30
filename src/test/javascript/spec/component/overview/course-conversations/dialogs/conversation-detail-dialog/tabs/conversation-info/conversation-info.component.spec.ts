@@ -10,7 +10,7 @@ import { ConversationDTO } from 'app/entities/metis/conversation/conversation.mo
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../helpers/conversationExampleModels';
 import { Course } from 'app/entities/course.model';
 import { ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { GroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { GroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { channelRegex } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
@@ -78,7 +78,7 @@ examples.forEach((activeConversation) => {
                 checkThatSectionExistsInTemplate('description');
                 checkThatSectionExistsInTemplate('moreinfo');
             }
-            if (isGroupChatDto(activeConversation)) {
+            if (isGroupChatDTO(activeConversation)) {
                 checkThatSectionExistsInTemplate('name');
                 checkThatSectionDoesNotExistInTemplate('topic');
                 checkThatSectionDoesNotExistInTemplate('description');
@@ -106,7 +106,7 @@ examples.forEach((activeConversation) => {
                 checkThatActionButtonOfSectionDoesNotExistInTemplate('description');
             }
 
-            if (isGroupChatDto(activeConversation)) {
+            if (isGroupChatDTO(activeConversation)) {
                 checkThatActionButtonOfSectionExistsInTemplate('name');
                 canChangeGroupChatProperties.mockReturnValue(false);
                 fixture.detectChanges();
@@ -115,7 +115,7 @@ examples.forEach((activeConversation) => {
         });
 
         it('should open the edit name dialog when the respective action button is clicked', fakeAsync(() => {
-            if (isChannelDto(activeConversation) || isGroupChatDto(activeConversation)) {
+            if (isChannelDto(activeConversation) || isGroupChatDTO(activeConversation)) {
                 genericEditPropertyDialogTest('name', {
                     propertyName: 'name',
                     maxPropertyLength: 30,
@@ -193,8 +193,8 @@ examples.forEach((activeConversation) => {
                 for (const [key, value] of Object.entries(expectedComponentInstance)) {
                     expect(mockModalRef.componentInstance[key]).toEqual(value);
                 }
-                if (isGroupChatDto(activeConversation)) {
-                    const expectedUpdateDTO = new GroupChatDto();
+                if (isGroupChatDTO(activeConversation)) {
+                    const expectedUpdateDTO = new GroupChatDTO();
                     expectedUpdateDTO[expectedComponentInstance['propertyName']] = 'updated';
                     expect(updateGroupChatSpy).toHaveBeenCalledOnce();
                     expect(updateGroupChatSpy).toHaveBeenCalledWith(course.id, activeConversation.id, expectedUpdateDTO);

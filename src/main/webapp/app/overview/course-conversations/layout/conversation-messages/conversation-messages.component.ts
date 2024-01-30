@@ -21,7 +21,7 @@ import { Course } from 'app/entities/course.model';
 import { PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Channel, getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { GroupChat, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { GroupChat, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { OneToOneChat, isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
@@ -197,7 +197,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             const channel = new Channel();
             channel.isAnnouncementChannel = this._activeConversation.isAnnouncementChannel;
             conversation = channel;
-        } else if (isGroupChatDto(this._activeConversation)) {
+        } else if (isGroupChatDTO(this._activeConversation)) {
             conversation = new GroupChat();
         } else if (isOneToOneChatDto(this._activeConversation)) {
             conversation = new OneToOneChat();

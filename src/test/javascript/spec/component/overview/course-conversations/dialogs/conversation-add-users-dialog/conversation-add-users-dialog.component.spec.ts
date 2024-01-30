@@ -18,7 +18,7 @@ import { GroupChatIconComponent } from 'app/overview/course-conversations/other/
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { By } from '@angular/platform-browser';
 import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 @Component({
@@ -102,7 +102,7 @@ examples.forEach((activeConversation) => {
                 expect(activeModal.close).toHaveBeenCalledOnce();
             }
 
-            if (isGroupChatDto(activeConversation)) {
+            if (isGroupChatDTO(activeConversation)) {
                 const groupChatService = TestBed.inject(GroupChatService);
                 const activeModal = TestBed.inject(NgbActiveModal);
                 jest.spyOn(activeModal, 'close');

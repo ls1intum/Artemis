@@ -19,7 +19,7 @@ import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversatio
 import { ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { By } from '@angular/platform-browser';
 import { NgbDropdownMocksModule } from '../../../../../../../../helpers/mocks/directive/ngbDropdownMocks.module';
 
@@ -114,7 +114,7 @@ examples.forEach((activeConversation) => {
             fixture.detectChanges();
             tick();
             fixture.detectChanges();
-            if (isGroupChatDto(activeConversation)) {
+            if (isGroupChatDTO(activeConversation)) {
                 expect(component.canBeRemovedFromConversation).toBeTrue();
                 checkRemoveMemberButton(true);
             }
@@ -135,7 +135,7 @@ examples.forEach((activeConversation) => {
             fixture.detectChanges();
             tick();
             fixture.detectChanges();
-            if (isChannelDto(activeConversation) || isGroupChatDto(activeConversation)) {
+            if (isChannelDto(activeConversation) || isGroupChatDTO(activeConversation)) {
                 expect(component.canBeRemovedFromConversation).toBeFalse();
                 checkRemoveMemberButton(false);
             }
@@ -249,7 +249,7 @@ examples.forEach((activeConversation) => {
             fixture.detectChanges();
             tick();
             fixture.detectChanges();
-            if (isGroupChatDto(activeConversation)) {
+            if (isGroupChatDTO(activeConversation)) {
                 const groupChatService = TestBed.inject(GroupChatService);
                 const changesPerformedSpy = jest.spyOn(component.changePerformed, 'emit');
                 const removeUsersFromGroupChatSpy = jest

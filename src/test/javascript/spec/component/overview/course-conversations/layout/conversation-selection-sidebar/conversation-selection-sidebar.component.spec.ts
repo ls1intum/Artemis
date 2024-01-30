@@ -20,7 +20,7 @@ import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
 import { GroupChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
 import { OneToOneChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
-import { GroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ConversationSidebarSectionComponent } from 'app/overview/course-conversations/layout/conversation-selection-sidebar/conversation-sidebar-section/conversation-sidebar-section.component';
 import { MockLocalStorageService } from '../../../../../helpers/mocks/service/mock-local-storage.service';
@@ -267,7 +267,7 @@ examples.forEach((activeConversation) => {
                         createChannelFn: undefined,
                         initialize: () => {},
                     },
-                    result: Promise.resolve([new GroupChatDto(), true]),
+                    result: Promise.resolve([new GroupChatDTO(), true]),
                 };
                 const openDialogSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
                 fixture.detectChanges();

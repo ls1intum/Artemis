@@ -1,7 +1,7 @@
 import { Course } from 'app/entities/course.model';
 import { BehaviorSubject, EMPTY, Observable } from 'rxjs';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
-import { GroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 
 export class MockMetisConversationService {
     get course(): Course | undefined {
@@ -17,7 +17,7 @@ export class MockMetisConversationService {
     }
 
     get conversationsOfUser$(): Observable<ConversationDTO[]> {
-        return new BehaviorSubject([new GroupChatDto()]).asObservable();
+        return new BehaviorSubject([new GroupChatDTO()]).asObservable();
     }
 
     get isLoading$(): Observable<boolean> {

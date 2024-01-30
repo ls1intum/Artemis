@@ -9,7 +9,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { getAsGroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { getAsGroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { MAX_GROUP_CHAT_PARTICIPANTS } from 'app/shared/metis/conversations/conversation-settings';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
@@ -33,7 +33,7 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
     initialize() {
         super.initialize(['course', 'activeConversation']);
         if (this.isInitialized) {
-            if (isGroupChatDto(this.activeConversation)) {
+            if (isGroupChatDTO(this.activeConversation)) {
                 this.maxSelectable = MAX_GROUP_CHAT_PARTICIPANTS - (this.activeConversation?.numberOfMembers ?? 0);
             }
         }
@@ -60,7 +60,7 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
     }
 
     getAsChannel = getAsChannelDto;
-    getAsGroupChat = getAsGroupChatDto;
+    getAsGroupChat = getAsGroupChatDTO;
 
     private addUsers(usersToAdd: UserPublicInfoDTO[], addAllStudents: boolean, addAllTutors: boolean, addAllInstructors: boolean) {
         const userLogins = usersToAdd.map((user) => user.login!);
@@ -78,7 +78,7 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
                         onError(this.alertService, errorResponse);
                     },
                 });
-        } else if (isGroupChatDto(this.activeConversation)) {
+        } else if (isGroupChatDTO(this.activeConversation)) {
             this.groupChatService
                 .addUsersToGroupChat(this.course.id!, this.activeConversation.id!, userLogins)
                 .pipe(

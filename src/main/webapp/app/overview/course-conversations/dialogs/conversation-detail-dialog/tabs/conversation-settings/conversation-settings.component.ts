@@ -12,7 +12,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { canChangeChannelArchivalState, canDeleteChannel, canLeaveConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
-import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 import { catchError } from 'rxjs/operators';
 
@@ -66,7 +66,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
 
     leaveConversation($event: MouseEvent) {
         $event.stopPropagation();
-        if (isGroupChatDto(this.activeConversation)) {
+        if (isGroupChatDTO(this.activeConversation)) {
             this.groupChatService
                 .removeUsersFromGroupChat(this.course.id!, this.activeConversation.id!)
                 .pipe(takeUntil(this.ngUnsubscribe))

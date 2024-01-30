@@ -8,7 +8,7 @@ export class GroupChat extends Conversation {
         super(ConversationType.GROUP_CHAT);
     }
 }
-export class GroupChatDto extends ConversationDTO {
+export class GroupChatDTO extends ConversationDTO {
     public members?: ConversationUserDTO[];
     public name?: string;
 
@@ -16,13 +16,13 @@ export class GroupChatDto extends ConversationDTO {
         super(ConversationType.GROUP_CHAT);
     }
 }
-export function isGroupChatDto(conversation: ConversationDTO): conversation is GroupChatDto {
+export function isGroupChatDTO(conversation: ConversationDTO): conversation is GroupChatDTO {
     return conversation.type === ConversationType.GROUP_CHAT;
 }
 
-export function getAsGroupChatDto(conversation: ConversationDTO | undefined): GroupChatDto | undefined {
+export function getAsGroupChatDTO(conversation: ConversationDTO | undefined): GroupChatDTO | undefined {
     if (!conversation) {
         return undefined;
     }
-    return isGroupChatDto(conversation) ? conversation : undefined;
+    return isGroupChatDTO(conversation) ? conversation : undefined;
 }

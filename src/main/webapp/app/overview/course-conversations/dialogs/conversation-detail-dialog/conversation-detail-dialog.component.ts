@@ -5,7 +5,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
-import { getAsGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { getAsGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
 
 export enum ConversationDetailTabs {
@@ -31,7 +31,7 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
 
     isOneToOneChat = isOneToOneChatDto;
     getAsChannel = getAsChannelDto;
-    getAsGroupChat = getAsGroupChatDto;
+    getAsGroupChat = getAsGroupChatDTO;
 
     changesWerePerformed = false;
 

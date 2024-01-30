@@ -16,7 +16,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { channelRegex } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { canChangeChannelProperties, canChangeGroupChatProperties } from 'app/shared/metis/conversations/conversation-permissions.utils';
-import { GroupChatDto, getAsGroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { GroupChatDTO, getAsGroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { catchError } from 'rxjs/operators';
 
@@ -28,15 +28,15 @@ import { catchError } from 'rxjs/operators';
 export class ConversationInfoComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
 
-    isGroupChat = isGroupChatDto;
+    isGroupChat = isGroupChatDTO;
     isChannel = isChannelDto;
     getAsChannel = getAsChannelDto;
     getUserLabel = getUserLabel;
     canChangeChannelProperties = canChangeChannelProperties;
     canChangeGroupChatProperties = canChangeGroupChatProperties;
 
-    getAsChannelOrGroupChat(conversation: ConversationDTO): ChannelDTO | GroupChatDto | undefined {
-        return getAsChannelDto(conversation) || getAsGroupChatDto(conversation);
+    getAsChannelOrGroupChat(conversation: ConversationDTO): ChannelDTO | GroupChatDTO | undefined {
+        return getAsChannelDto(conversation) || getAsGroupChatDTO(conversation);
     }
 
     @Input()
@@ -131,7 +131,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     }
 
     private openEditPropertyDialog(
-        channelOrGroupChat: ChannelDTO | GroupChatDto,
+        channelOrGroupChat: ChannelDTO | GroupChatDTO,
         propertyName: string,
         maxLength: number,
         isRequired: boolean,
@@ -169,18 +169,18 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
             });
     }
 
-    private updateGroupChat(groupChat: GroupChatDto, propertyName: string, updateValue: string) {
-        const updateDTO = new GroupChatDto();
+    private updateGroupChat(groupChat: GroupChatDTO, propertyName: string, updateValue: string) {
+        const updateDTO = new GroupChatDTO();
         updateDTO[propertyName] = updateValue;
 
         this.groupChatService
             .update(this.course.id!, groupChat.id!, updateDTO)
             .pipe(
-                map((res: HttpResponse<GroupChatDto>) => res.body),
+                map((res: HttpResponse<GroupChatDTO>) => res.body),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
-                next: (updatedGroupChat: GroupChatDto) => {
+                next: (updatedGroupChat: GroupChatDTO) => {
                     groupChat[propertyName] = updatedGroupChat[propertyName];
                     this.onChangePerformed();
                 },
