@@ -60,7 +60,9 @@
             },
             "parseDescription": {
                 "title": "Competency Recommendations",
-                "viewedTooltip": "Checked if the recommendation was viewed",
+                "viewedLabel": "Viewed",
+                "deleteModalTitle": "Confirm Deletion",
+                "deleteModalText": "Are you sure you want to delete the competency {{title}}?",
                 "confirmationModalTitle": "Confirm Save",
                 "confirmationModalText": "You have not viewed all recommendations, do you still want to continue?",
                 "errorWarning": "You may not save because some competencies are invalid",

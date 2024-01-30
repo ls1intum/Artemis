@@ -109,7 +109,11 @@ export class ParseCourseDescriptionComponent implements OnInit, ComponentCanDeac
      * @param index of the competency
      */
     onDelete(index: number) {
-        this.competencies.removeAt(index);
+        const competencyTitle = this.competencies.at(0).controls.competency.controls.title.getRawValue() ?? '';
+        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'sm' });
+        modalRef.componentInstance.title = 'artemisApp.competency.parseDescription.deleteModalTitle';
+        modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.competency.parseDescription.deleteModalText', { title: competencyTitle });
+        modalRef.result.then(() => this.competencies.removeAt(index));
     }
 
     /**
@@ -125,8 +129,8 @@ export class ParseCourseDescriptionComponent implements OnInit, ComponentCanDeac
     onSubmit() {
         if (!this.isSubmitPossibleWithoutConfirmation()) {
             const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'sm' });
-            modalRef.componentInstance.title = 'artemisApp.competency.parseDescription.confirmationModalTitle';
-            modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.competency.parseDescription.confirmationModalText');
+            modalRef.componentInstance.title = 'artemisApp.competency.parseDescription.saveModalTitle';
+            modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.competency.parseDescription.saveModalText');
             modalRef.result.then(this.save.bind(this));
         } else {
             this.save();

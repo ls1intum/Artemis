@@ -61,9 +61,11 @@
             },
             "parseDescription": {
                 "title": "Kompetenzvorschläge",
-                "viewedTooltip": "aktiviert, wenn der Vorschlag angesehen wurde",
-                "confirmationModalTitle": "Speichern bestätigen",
-                "confirmationModalText": "Du hast nicht alle Empfehlungen angesehen, möchtest du trotzdem fortfahren?",
+                "viewedLabel": "Gesehen",
+                "deleteModalTitle": "Löschen bestätigen",
+                "deleteModalText": "Bist du sicher, dass du die Kompetenz {{title}} löschen willst?",
+                "saveModalTitle": "Speichern bestätigen",
+                "saveModalText": "Du hast nicht alle Empfehlungen angesehen, möchtest du trotzdem fortfahren?",
                 "errorWarning": "Speichern nicht möglich, weil fehlerhafte Kompetenzen vorliegen",
                 "loading": "Generiere Kompetenzvorschläge... Das kann eine Weile dauern.",
                 "courseDescription": {

@@ -1,15 +1,19 @@
 <div class="card form-group" [formGroup]="form">
     <div class="card-header">
         <div class="d-flex align-items-center">
-            <div class="icon-container pe-3">
+            <div class="icon-container me-3">
                 <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="isCollapsed" (click)="toggle()"></fa-icon>
             </div>
-            <h6 class="mb-0 pe-1">{{ titleControl.value ?? '' }}</h6>
-            <input type="checkbox" formControlName="viewed" [ngbTooltip]="'artemisApp.competency.parseDescription.viewedTooltip' | artemisTranslate" />
+            <h6 class="mb-0 text-nowrap text-truncate overflow-hidden">{{ titleControl.value ?? '' }}</h6>
         </div>
-        <div>
+        <div class="d-flex align-items-center">
+            <div class="d-flex me-3">
+                <input class="me-1" type="checkbox" id="viewed-{{ index }}" formControlName="viewed" />
+                <label for="viewed-{{ index }}">{{ 'artemisApp.competency.parseDescription.viewedLabel' | artemisTranslate }}</label>
+            </div>
             @if (!isInEditMode) {
                 <jhi-button
+                    class="me-1"
                     id="editButton-{{ index }}"
                     [btnType]="ButtonType.WARNING"
                     [btnSize]="ButtonSize.SMALL"
