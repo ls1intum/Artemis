@@ -53,7 +53,7 @@ public class ConversationDTOService {
      */
     public ConversationDTO convertToDTO(Conversation conversation, User requestingUser) {
         if (conversation instanceof Channel channel) {
-            return convertChannelToDto(requestingUser, channel);
+            return convertChannelToDTO(requestingUser, channel);
         }
         if (conversation instanceof OneToOneChat oneToOneChat) {
             return convertOneToOneChatToDto(requestingUser, oneToOneChat);
@@ -73,7 +73,7 @@ public class ConversationDTOService {
      */
     public ConversationDTO convertToDTO(ConversationSummary summary, User requestingUser) {
         if (summary.conversation() instanceof Channel channel) {
-            return convertChannelToDto(requestingUser, channel, summary);
+            return convertChannelToDTO(requestingUser, channel, summary);
         }
         if (summary.conversation() instanceof OneToOneChat oneToOneChat) {
             return convertOneToOneChatToDto(requestingUser, oneToOneChat, summary);
@@ -113,7 +113,7 @@ public class ConversationDTOService {
      * @return the created ChannelDTO
      */
     @NotNull
-    public ChannelDTO convertChannelToDto(User requestingUser, Channel channel) {
+    public ChannelDTO convertChannelToDTO(User requestingUser, Channel channel) {
         var channelDTO = new ChannelDTO(channel);
         channelDTO.setIsChannelModerator(channelAuthorizationService.isChannelModerator(channel.getId(), requestingUser.getId()));
         channelDTO.setHasChannelModerationRights(channelAuthorizationService.hasChannelModerationRights(channel.getId(), requestingUser));
@@ -140,7 +140,7 @@ public class ConversationDTOService {
      * @return the created ChannelDTO
      */
     @NotNull
-    private ChannelDTO convertChannelToDto(User requestingUser, Channel channel, ConversationSummary channelSummary) {
+    private ChannelDTO convertChannelToDTO(User requestingUser, Channel channel, ConversationSummary channelSummary) {
         var channelDTO = new ChannelDTO(channel);
         this.fillGeneralConversationDtoFields(channelDTO, requestingUser, channelSummary);
 
