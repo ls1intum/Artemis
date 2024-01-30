@@ -253,7 +253,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         // inserting optional details in reversed order, so that no index calculation is needed
         if (this.course.requestMoreFeedbackEnabled) {
             // insert detail after the complaintDetails
-            details.splice(4 + complaintsDetails?.length ?? 0, 0, {
+            details.splice(4 + complaintsDetails.length, 0, {
                 type: DetailType.Text,
                 title: 'artemisApp.course.maxRequestMoreFeedbackTimeDays.title',
                 data: { text: this.course.maxRequestMoreFeedbackTimeDays },
@@ -378,6 +378,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     private fetchOrganizations(courseId: number) {
         this.organizationService.getOrganizationsByCourse(courseId).subscribe((organizations) => {
             this.course.organizations = organizations;
+            this.getCourseDetailSections();
         });
     }
 }
