@@ -61,10 +61,10 @@
             "parseDescription": {
                 "title": "Competency Recommendations",
                 "viewedLabel": "Viewed",
-                "deleteModalTitle": "Confirm Deletion",
-                "deleteModalText": "Are you sure you want to delete the competency {{title}}?",
-                "confirmationModalTitle": "Confirm Save",
-                "confirmationModalText": "You have not viewed all recommendations, do you still want to continue?",
+                "deleteModalTitle": "Confirm Delete",
+                "deleteModalText": "Are you sure you want to delete \"{{title}}\"?",
+                "saveModalTitle": "Confirm Save",
+                "saveModalText": "You have not viewed all recommendations, do you still want to continue?",
                 "errorWarning": "You may not save because some competencies are invalid",
                 "loading": "Generating competency recommendations... This might take a while.",
                 "courseDescription": {
@@ -75,7 +75,8 @@
                     "maxlengthValidationError": "Course description is limited to {{max}} characters",
                     "generate": "Generate",
                     "regenerate": "Generate again",
-                    "regenerateTooltip": "Generate additional Competency Recommendations"
+                    "regenerateTooltip": "Generate additional Competency Recommendations",
+                    "infoTooltip": "Enter a course description, focusing on the theoretical/practical content and learning objectives. Iris will then use it to generate recommendations for competencies you could add to your course."
                 }
             },
             "importAll": {

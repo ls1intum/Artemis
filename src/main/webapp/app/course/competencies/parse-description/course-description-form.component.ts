@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
-import { faCode, faRotateRight } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
 
 @Component({
@@ -15,8 +15,7 @@ export class CourseDescriptionFormComponent implements OnInit {
     hasBeenSubmitted = false;
 
     //icons
-    protected readonly faRotateRight = faRotateRight;
-    protected readonly faCode = faCode;
+    protected readonly faQuestionCircle = faQuestionCircle;
 
     //other constants
     protected readonly DESCRIPTION_MAX = 10000;

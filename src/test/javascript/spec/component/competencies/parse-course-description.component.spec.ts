@@ -100,19 +100,15 @@ describe('ParseCourseDescriptionComponent', () => {
         expect(getSpy).toHaveBeenCalledOnce();
     });
 
-    it('should remove competency recommendations', () => {
+    it('should opem modal to remove competency recommendations', () => {
+        const modalService: NgbModal = TestBed.inject(NgbModal);
+        const openSpy = jest.spyOn(modalService, 'open');
         parseCourseDescriptionComponent.competencies.push(createCompetencyFormGroup('Title', 'Description', CompetencyTaxonomy.ANALYZE, true));
-        parseCourseDescriptionComponentFixture.detectChanges();
-
-        //expect no recommendations to exist at the start
-        expect(parseCourseDescriptionComponentFixture.debugElement.queryAll(By.directive(CompetencyRecommendationDetailComponent))).toHaveLength(1);
-        expect(parseCourseDescriptionComponent.competencies.value).toHaveLength(1);
+        expect(openSpy).not.toHaveBeenCalled();
 
         parseCourseDescriptionComponent.onDelete(0);
-        parseCourseDescriptionComponentFixture.detectChanges();
 
-        expect(parseCourseDescriptionComponentFixture.debugElement.queryAll(By.directive(CompetencyRecommendationDetailComponent))).toHaveLength(0);
-        expect(parseCourseDescriptionComponent.competencies.value).toHaveLength(0);
+        expect(openSpy).toHaveBeenCalled();
     });
 
     it('should cancel', () => {

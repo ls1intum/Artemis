@@ -1,12 +1,12 @@
 <div class="card form-group" [formGroup]="form">
     <div class="card-header">
-        <div class="d-flex align-items-center">
+        <div class="d-flex align-items-center mw-100">
             <div class="icon-container me-3">
                 <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="isCollapsed" (click)="toggle()"></fa-icon>
             </div>
             <h6 class="mb-0 text-nowrap text-truncate overflow-hidden">{{ titleControl.value ?? '' }}</h6>
         </div>
-        <div class="d-flex align-items-center">
+        <div class="d-flex align-items-center flex-grow-1 justify-content-end">
             <div class="d-flex me-3">
                 <input class="me-1" type="checkbox" id="viewed-{{ index }}" formControlName="viewed" />
                 <label for="viewed-{{ index }}">{{ 'artemisApp.competency.parseDescription.viewedLabel' | artemisTranslate }}</label>

@@ -63,7 +63,7 @@
                 "title": "Kompetenzvorschläge",
                 "viewedLabel": "Gesehen",
                 "deleteModalTitle": "Löschen bestätigen",
-                "deleteModalText": "Bist du sicher, dass du die Kompetenz {{title}} löschen willst?",
+                "deleteModalText": "Bist du sicher, dass du \"{{title}}\" löschen willst?",
                 "saveModalTitle": "Speichern bestätigen",
                 "saveModalText": "Du hast nicht alle Empfehlungen angesehen, möchtest du trotzdem fortfahren?",
                 "errorWarning": "Speichern nicht möglich, weil fehlerhafte Kompetenzen vorliegen",
@@ -76,7 +76,8 @@
                     "maxlengthValidationError": "Kursbeschreibung darf maximal {{max}} Zeichen lang sein",
                     "generate": "Generieren",
                     "regenerate": "Erneut generieren",
-                    "regenerateTooltip": "Zusätzliche Kompetenzvorschläge generieren"
+                    "regenerateTooltip": "Zusätzliche Kompetenzvorschläge generieren",
+                    "infoTooltip": "Gib eine Beschreibung ein, die sich auf den theoretischen/praktischen Inhalt und Lernziele des Kurses fokussiert. Iris generiert daraus Vorschläge für Kompetenzen, die du in deinen Kurs einfügen könntest."
                 }
             },
             "importAll": {
