@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from '@angular/core';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO, shouldNotifyRecipient } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { faEllipsis } from '@fortawesome/free-solid-svg-icons';
@@ -148,7 +148,7 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
             });
         });
         this.conversationIsHiddenDidChange.pipe(mergeWith(this.conversationIsMutedDidChange), takeUntil(this.ngUnsubscribe)).subscribe(() => {
-            if (this.conversation.shouldNotifyRecipient()) {
+            if (shouldNotifyRecipient(this.conversation)) {
                 this.notificationService.unmuteNotificationsForConversation(this.conversation.id!);
             } else {
                 this.notificationService.muteNotificationsForConversation(this.conversation.id!);

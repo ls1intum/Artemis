@@ -27,11 +27,6 @@ export abstract class Conversation implements BaseEntity {
     protected constructor(type: ConversationType) {
         this.type = type;
     }
-
-    // TODO: Find solution
-    public shouldNotifyRecipient(): boolean {
-        return false;
-    }
 }
 
 /**
@@ -55,8 +50,8 @@ export abstract class ConversationDTO {
     protected constructor(type: ConversationType) {
         this.type = type;
     }
+}
 
-    public shouldNotifyRecipient(): boolean {
-        return !this.isMuted && !this.isHidden;
-    }
+export function shouldNotifyRecipient(conversation: ConversationDTO): boolean {
+    return !conversation.isMuted && !conversation.isHidden;
 }
