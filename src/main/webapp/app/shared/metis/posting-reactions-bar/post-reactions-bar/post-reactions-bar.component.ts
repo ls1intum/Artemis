@@ -10,7 +10,7 @@ import dayjs from 'dayjs/esm';
 import { isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 
 @Component({
@@ -71,7 +71,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
             this.canPin = currentConversation.hasChannelModerationRights ?? false;
         } else if (isGroupChatDTO(currentConversation)) {
             this.canPin = currentConversation.creator?.id === this.accountService.userIdentity?.id;
-        } else if (isOneToOneChatDto(currentConversation)) {
+        } else if (isOneToOneChatDTO(currentConversation)) {
             this.canPin = true;
         }
     }

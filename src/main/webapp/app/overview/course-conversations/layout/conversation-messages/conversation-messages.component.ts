@@ -24,7 +24,7 @@ import { Channel, getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conve
 import { GroupChat, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { OneToOneChat, isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { OneToOneChat, isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { canCreateNewMessageInConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
@@ -199,7 +199,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             conversation = channel;
         } else if (isGroupChatDTO(this._activeConversation)) {
             conversation = new GroupChat();
-        } else if (isOneToOneChatDto(this._activeConversation)) {
+        } else if (isOneToOneChatDTO(this._activeConversation)) {
             conversation = new OneToOneChat();
         } else {
             throw new Error('Conversation type not supported');

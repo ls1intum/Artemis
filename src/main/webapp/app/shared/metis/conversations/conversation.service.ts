@@ -9,7 +9,7 @@ import { User } from 'app/core/user/user.model';
 import { isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
-import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 
@@ -50,7 +50,7 @@ export class ConversationService {
                 channelName += ' (' + this.translationService.instant('artemisApp.conversationsLayout.archived') + ')';
             }
             return channelName;
-        } else if (isOneToOneChatDto(conversation)) {
+        } else if (isOneToOneChatDTO(conversation)) {
             const otherUser = conversation.members?.find((user) => user.isRequestingUser === false);
             return otherUser ? getUserLabel(otherUser, showLogin) : '';
         } else if (isGroupChatDTO(conversation)) {

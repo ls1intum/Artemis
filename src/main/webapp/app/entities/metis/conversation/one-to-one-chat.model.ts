@@ -12,6 +12,6 @@ export class OneToOneChatDTO extends ConversationDTO {
     }
     public members?: ConversationUserDTO[];
 }
-export function isOneToOneChatDto(conversation: ConversationDTO): conversation is OneToOneChatDTO {
+export function isOneToOneChatDTO(conversation: ConversationDTO): conversation is OneToOneChatDTO {
     return conversation.type === ConversationType.ONE_TO_ONE;
 }

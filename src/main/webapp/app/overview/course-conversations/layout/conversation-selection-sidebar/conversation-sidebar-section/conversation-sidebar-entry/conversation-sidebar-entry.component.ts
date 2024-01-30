@@ -15,7 +15,7 @@ import {
     ConversationDetailDialogComponent,
     ConversationDetailTabs,
 } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
-import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/overview/course-conversations/other/conversation.util';
 import { catchError } from 'rxjs/operators';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -85,7 +85,7 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
 
     getAsGroupChat = getAsGroupChatDTO;
 
-    isOneToOneChat = isOneToOneChatDto;
+    isOneToOneChat = isOneToOneChatDTO;
 
     onHiddenClicked(event: MouseEvent) {
         event.stopPropagation();

@@ -4,7 +4,7 @@ import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { getAsGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
 
@@ -29,7 +29,7 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
         super.initialize(['course', 'activeConversation', 'selectedTab']);
     }
 
-    isOneToOneChat = isOneToOneChatDto;
+    isOneToOneChat = isOneToOneChatDTO;
     getAsChannel = getAsChannelDTO;
     getAsGroupChat = getAsGroupChatDTO;
 

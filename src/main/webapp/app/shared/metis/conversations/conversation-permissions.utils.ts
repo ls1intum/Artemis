@@ -2,7 +2,7 @@ import { ConversationDTO } from 'app/entities/metis/conversation/conversation.mo
 import { ChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { GroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { Course } from 'app/entities/course.model';
-import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 
 export function canAddUsersToConversation(conversation: ConversationDTO): boolean {
     if (!conversation) {
@@ -15,7 +15,7 @@ export function canAddUsersToConversation(conversation: ConversationDTO): boolea
         return channelCheck(conversation);
     } else if (isGroupChatDTO(conversation)) {
         return groupChatCheck(conversation);
-    } else if (isOneToOneChatDto(conversation)) {
+    } else if (isOneToOneChatDTO(conversation)) {
         return false;
     } else {
         throw new Error('Conversation type not supported');
@@ -37,7 +37,7 @@ export function canCreateNewMessageInConversation(conversation: ConversationDTO)
         return channelCheck(conversation);
     } else if (isGroupChatDTO(conversation)) {
         return groupChatCheck(conversation);
-    } else if (isOneToOneChatDto(conversation)) {
+    } else if (isOneToOneChatDTO(conversation)) {
         return oneToOneChatCheck(conversation);
     } else {
         throw new Error('Conversation type not supported');
@@ -63,7 +63,7 @@ export function canRemoveUsersFromConversation(conversation: ConversationDTO): b
         return channelCheck(conversation);
     } else if (isGroupChatDTO(conversation)) {
         return groupChatCheck(conversation);
-    } else if (isOneToOneChatDto(conversation)) {
+    } else if (isOneToOneChatDTO(conversation)) {
         return false;
     } else {
         throw new Error('Conversation type not supported');
@@ -83,7 +83,7 @@ export function canLeaveConversation(conversation: ConversationDTO): boolean {
     if (isChannelDTO(conversation) && (conversation?.isCreator || conversation?.isCourseWide)) {
         return false;
     }
-    if (isOneToOneChatDto(conversation)) {
+    if (isOneToOneChatDTO(conversation)) {
         return false;
     }
     return true;

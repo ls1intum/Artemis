@@ -14,7 +14,7 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { OneToOneChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
-import { OneToOneChatDTO, isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { OneToOneChatDTO, isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { GroupChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
 import { catchError, debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
@@ -184,7 +184,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
             .map((channel) => channel as Channel)
             .sort((a, b) => a.name!.localeCompare(b.name!));
         this.oneToOneChats = this.allConversations
-            .filter((conversation) => isOneToOneChatDto(conversation) && !conversation.isFavorite)
+            .filter((conversation) => isOneToOneChatDTO(conversation) && !conversation.isFavorite)
             .map((oneToOneChat) => oneToOneChat as OneToOneChatDTO)
             .sort((a, b) => {
                 // sort by last message date

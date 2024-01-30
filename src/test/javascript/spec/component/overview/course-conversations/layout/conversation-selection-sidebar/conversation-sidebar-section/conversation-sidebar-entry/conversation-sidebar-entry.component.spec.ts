@@ -20,7 +20,7 @@ import {
     ConversationDetailTabs,
 } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
-import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../../../helpers/mocks/service/mock-metis-service.service';
@@ -145,7 +145,7 @@ examples.forEach((conversation) => {
         }));
 
         it('should open conversation detail with setting tab if setting button is clicked', fakeAsync(() => {
-            if (isOneToOneChatDto(component.conversation)) {
+            if (isOneToOneChatDTO(component.conversation)) {
                 const button = fixture.debugElement.nativeElement.querySelector('.setting');
                 expect(button).toBeFalsy(); // should not be present for one-to-one chats
             } else {

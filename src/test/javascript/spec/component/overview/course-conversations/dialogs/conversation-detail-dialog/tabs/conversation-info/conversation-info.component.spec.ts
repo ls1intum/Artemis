@@ -11,7 +11,7 @@ import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOn
 import { Course } from 'app/entities/course.model';
 import { ChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { GroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
-import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { channelRegex } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { HttpResponse } from '@angular/common/http';
@@ -85,7 +85,7 @@ examples.forEach((activeConversation) => {
                 checkThatSectionExistsInTemplate('moreinfo');
             }
 
-            if (isOneToOneChatDto(activeConversation)) {
+            if (isOneToOneChatDTO(activeConversation)) {
                 checkThatSectionDoesNotExistInTemplate('name');
                 checkThatSectionDoesNotExistInTemplate('topic');
                 checkThatSectionDoesNotExistInTemplate('description');

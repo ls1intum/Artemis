@@ -14,7 +14,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
 import { initializeDialog } from '../dialog-test-helpers';
-import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { By } from '@angular/platform-browser';
 
 @Component({
@@ -105,7 +105,7 @@ examples.forEach((activeConversation) => {
         });
 
         it('should not show the settings tab for one-to-one chats', () => {
-            if (isOneToOneChatDto(activeConversation)) {
+            if (isOneToOneChatDTO(activeConversation)) {
                 expect(fixture.nativeElement.querySelector('.settings-tab')).toBeFalsy();
             } else {
                 expect(fixture.nativeElement.querySelector('.settings-tab')).toBeTruthy();
@@ -133,7 +133,7 @@ examples.forEach((activeConversation) => {
         });
 
         it('should react correctly to events from settings tab', () => {
-            if (!isOneToOneChatDto(activeConversation)) {
+            if (!isOneToOneChatDTO(activeConversation)) {
                 component.selectedTab = ConversationDetailTabs.SETTINGS;
                 fixture.detectChanges();
                 const settingsComponent = fixture.debugElement.query(By.directive(ConversationSettingsStubComponent)).componentInstance;
