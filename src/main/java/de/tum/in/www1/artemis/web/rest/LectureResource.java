@@ -278,7 +278,7 @@ public class LectureResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Lecture> getLectureWithDetailsAndSlides(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details with slides ", lectureId);
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndWithSlidesElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndSlidesAndAttachmentsElseThrow(lectureId);
         Course course = lecture.getCourse();
         if (course == null) {
             return ResponseEntity.badRequest().build();
