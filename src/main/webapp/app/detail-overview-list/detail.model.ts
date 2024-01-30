@@ -13,53 +13,75 @@ import { SafeHtml } from '@angular/platform-browser';
 import { UMLModel } from '@ls1intum/apollon/lib/es6/typings';
 import dayjs from 'dayjs/esm';
 
-type DetailBase = {
-    type: DetailType;
-    title?: string;
-    titleTranslationProps?: Record<string, string>;
-    titleHelpText?: string;
-};
-
 export type Detail = NotShownDetail | ShownDetail;
 
 type NotShownDetail = false | undefined;
 
-type ShownDetail = DetailBase &
-    (
-        | TextDetail
-        | DateDetail
-        | LinkDetail
-        | BooleanDetail
-        | MarkdownDetail
-        | GradingCriteriaDetail
-        | ModelingEditorDetail
-        | ProgrammingIrisEnabledDetail
-        | ProgrammingRepositoryButtonsDetail
-        | ProgrammingAuxiliaryRepositoryButtonsDetail
-        | ProgrammingTestStatusDetail
-        | ProgrammingDiffReportDetail
-        | ProgrammingProblemStatementDetail
-        | ProgrammingTimelineDetail
-        | ProgrammingBuildStatisticsDetail
-    );
+type ShownDetail =
+    | TextDetail
+    | DateDetail
+    | LinkDetail
+    | BooleanDetail
+    | MarkdownDetail
+    | GradingCriteriaDetail
+    | ModelingEditorDetail
+    | ProgrammingIrisEnabledDetail
+    | ProgrammingRepositoryButtonsDetail
+    | ProgrammingAuxiliaryRepositoryButtonsDetail
+    | ProgrammingTestStatusDetail
+    | ProgrammingDiffReportDetail
+    | ProgrammingProblemStatementDetail
+    | ProgrammingTimelineDetail
+    | ProgrammingBuildStatisticsDetail;
 
-type TextDetail = { type: DetailType.Text; data: { text?: string | number } };
+interface DetailBase {
+    type: DetailType;
+    title?: string;
+    titleTranslationProps?: Record<string, string>;
+    titleHelpText?: string;
+}
 
-type DateDetail = { type: DetailType.Date; data: { date?: dayjs.Dayjs } };
+interface TextDetail extends DetailBase {
+    type: DetailType.Text;
+    data: { text?: string | number };
+}
 
-type LinkDetail = { type: DetailType.Link; data: { text?: string | number; href?: string | false; routerLink?: (string | number | undefined)[] } };
+interface DateDetail extends DetailBase {
+    type: DetailType.Date;
+    data: { date?: dayjs.Dayjs };
+}
 
-type BooleanDetail = { type: DetailType.Boolean; data: { boolean?: boolean } };
+interface LinkDetail extends DetailBase {
+    type: DetailType.Link;
+    data: { text?: string | number; href?: string | false; routerLink?: (string | number | undefined)[] };
+}
 
-type MarkdownDetail = { type: DetailType.Markdown; data: { innerHtml: SafeHtml | null } };
+interface BooleanDetail extends DetailBase {
+    type: DetailType.Boolean;
+    data: { boolean?: boolean };
+}
 
-type GradingCriteriaDetail = { type: DetailType.GradingCriteria; data: { gradingCriteria?: GradingCriterion[] } };
+interface MarkdownDetail extends DetailBase {
+    type: DetailType.Markdown;
+    data: { innerHtml: SafeHtml | null };
+}
 
-type ModelingEditorDetail = { type: DetailType.ModelingEditor; data: { isApollonProfileActive?: boolean; umlModel?: UMLModel; diagramType?: UMLDiagramType; title?: string } };
+interface GradingCriteriaDetail extends DetailBase {
+    type: DetailType.GradingCriteria;
+    data: { gradingCriteria?: GradingCriterion[] };
+}
 
-type ProgrammingIrisEnabledDetail = { type: DetailType.ProgrammingIrisEnabled; data: { exercise: ProgrammingExercise } };
+interface ModelingEditorDetail extends DetailBase {
+    type: DetailType.ModelingEditor;
+    data: { isApollonProfileActive?: boolean; umlModel?: UMLModel; diagramType?: UMLDiagramType; title?: string };
+}
 
-type ProgrammingRepositoryButtonsDetail = {
+interface ProgrammingIrisEnabledDetail extends DetailBase {
+    type: DetailType.ProgrammingIrisEnabled;
+    data: { exercise: ProgrammingExercise };
+}
+
+interface ProgrammingRepositoryButtonsDetail extends DetailBase {
     type: DetailType.ProgrammingRepositoryButtons;
     data: {
         exerciseId?: number;
@@ -67,14 +89,14 @@ type ProgrammingRepositoryButtonsDetail = {
         showOpenLink?: boolean;
         type: ProgrammingExerciseInstructorRepositoryType;
     };
-};
+}
 
-type ProgrammingAuxiliaryRepositoryButtonsDetail = {
+interface ProgrammingAuxiliaryRepositoryButtonsDetail extends DetailBase {
     type: DetailType.ProgrammingAuxiliaryRepositoryButtons;
     data: { auxiliaryRepositories: AuxiliaryRepository[]; exerciseId?: number; showOpenLink?: boolean };
-};
+}
 
-type ProgrammingTestStatusDetail = {
+interface ProgrammingTestStatusDetail extends DetailBase {
     type: DetailType.ProgrammingTestStatus;
     data: {
         participation?: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation;
@@ -84,26 +106,26 @@ type ProgrammingTestStatusDetail = {
         type: ProgrammingExerciseParticipationType;
         submissionRouterLink?: (string | number | undefined)[];
     };
-};
+}
 
-type ProgrammingDiffReportDetail = {
+interface ProgrammingDiffReportDetail extends DetailBase {
     type: DetailType.ProgrammingDiffReport;
     data: { addedLineCount: number; removedLineCount: number; isLoadingDiffReport?: boolean; gitDiffReport?: ProgrammingExerciseGitDiffReport };
-};
+}
 
-type ProgrammingProblemStatementDetail = {
+interface ProgrammingProblemStatementDetail extends DetailBase {
     type: DetailType.ProgrammingProblemStatement;
     data: { exercise: ProgrammingExercise };
-};
+}
 
-type ProgrammingTimelineDetail = {
+interface ProgrammingTimelineDetail extends DetailBase {
     type: DetailType.ProgrammingTimeline;
     data: { exercise: ProgrammingExercise; isExamMode?: boolean };
-};
+}
 
-type ProgrammingBuildStatisticsDetail = {
+interface ProgrammingBuildStatisticsDetail extends DetailBase {
     type: DetailType.ProgrammingBuildStatistics;
     data: {
         buildLogStatistics: BuildLogStatisticsDTO;
     };
-};
+}
