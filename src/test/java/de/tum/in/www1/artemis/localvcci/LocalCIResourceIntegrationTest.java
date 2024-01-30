@@ -16,7 +16,7 @@ import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.domain.enumeration.BuildJobResult;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCISharedBuildJobQueueService;
+import de.tum.in.www1.artemis.service.connectors.localci.buildagent.SharedQueueProcessingService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.*;
 
 class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
@@ -31,7 +31,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     private HazelcastInstance hazelcastInstance;
 
     @Autowired
-    private LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService;
+    private SharedQueueProcessingService sharedQueueProcessingService;
 
     protected IQueue<LocalCIBuildJobQueueItem> queuedJobs;
 
@@ -42,7 +42,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @BeforeEach
     void createJobs() {
         // temporarily remove listener to avoid triggering build job processing
-        localCISharedBuildJobQueueService.removeListener();
+        sharedQueueProcessingService.removeListener();
 
         JobTimingInfo jobTimingInfo = new JobTimingInfo(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2));
         BuildConfig buildConfig = new BuildConfig("test", "test", "test", null, null, false, false, false, null);
@@ -65,7 +65,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
 
     @AfterEach
     void clearDataStructures() {
-        localCISharedBuildJobQueueService.addListener();
+        sharedQueueProcessingService.addListener();
         queuedJobs.clear();
         processingJobs.clear();
         buildAgentInformation.clear();

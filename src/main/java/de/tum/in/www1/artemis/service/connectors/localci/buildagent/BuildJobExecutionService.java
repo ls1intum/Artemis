@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.localci;
+package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_RESULTS_DIRECTORY;
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
@@ -37,6 +37,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.localci.LocalCIBuildConfigurationService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localci.scaparser.exception.UnsupportedToolException;
@@ -53,12 +54,12 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * submitted to the executor service.
  */
 @Service
-@Profile("localci")
-public class LocalCIBuildJobExecutionService {
+@Profile("buildagent")
+public class BuildJobExecutionService {
 
-    private static final Logger log = LoggerFactory.getLogger(LocalCIBuildJobExecutionService.class);
+    private static final Logger log = LoggerFactory.getLogger(BuildJobExecutionService.class);
 
-    private final LocalCIContainerService localCIContainerService;
+    private final BuildJobContainerService buildJobContainerService;
 
     private final LocalCIBuildConfigurationService localCIBuildConfigurationService;
 
@@ -81,9 +82,9 @@ public class LocalCIBuildJobExecutionService {
     @Value("${artemis.continuous-integration.local-cis-build-scripts-path}")
     private String localCIBuildScriptBasePath;
 
-    public LocalCIBuildJobExecutionService(LocalCIContainerService localCIContainerService, LocalCIBuildConfigurationService localCIBuildConfigurationService,
+    public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, LocalCIBuildConfigurationService localCIBuildConfigurationService,
             XMLInputFactory localCIXMLInputFactory, GitService gitService) {
-        this.localCIContainerService = localCIContainerService;
+        this.buildJobContainerService = buildJobContainerService;
         this.localCIBuildConfigurationService = localCIBuildConfigurationService;
         this.localCIXMLInputFactory = localCIXMLInputFactory;
         this.gitService = gitService;
@@ -159,7 +160,7 @@ public class LocalCIBuildJobExecutionService {
             throw new LocalCIException("Could not find last commit hash for test repository " + testsRepoUri.repositorySlug(), e);
         }
 
-        CreateContainerResponse container = localCIContainerService.configureContainer(containerName, buildJob.buildConfig().dockerImage());
+        CreateContainerResponse container = buildJobContainerService.configureContainer(containerName, buildJob.buildConfig().dockerImage());
 
         Path buildScriptPath = Path.of(localCIBuildScriptBasePath).toAbsolutePath().resolve(buildJob.id() + "-build.sh");
 
@@ -182,34 +183,34 @@ public class LocalCIBuildJobExecutionService {
 
         long timeNanoStart = System.nanoTime();
 
-        localCIContainerService.startContainer(containerId);
+        buildJobContainerService.startContainer(containerId);
 
         log.info("Started container for build job {}", containerName);
 
-        localCIContainerService.populateBuildJobContainer(containerId, assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths,
+        buildJobContainerService.populateBuildJobContainer(containerId, assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths,
                 buildJob.repositoryInfo().auxiliaryRepositoryCheckoutDirectories(), buildScriptPath, buildJob.buildConfig().programmingLanguage());
 
-        List<BuildLogEntry> buildLogEntries = localCIContainerService.runScriptInContainer(containerId);
+        List<BuildLogEntry> buildLogEntries = buildJobContainerService.runScriptInContainer(containerId);
 
         log.info("Finished running the build script in container {}", containerName);
 
         ZonedDateTime buildCompletedDate = ZonedDateTime.now();
 
-        localCIContainerService.moveResultsToSpecifiedDirectory(containerId, buildJob.buildConfig().resultPaths(), LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
+        buildJobContainerService.moveResultsToSpecifiedDirectory(containerId, buildJob.buildConfig().resultPaths(), LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
 
         // Get an input stream of the test result files.
 
         TarArchiveInputStream testResultsTarInputStream;
 
         try {
-            testResultsTarInputStream = localCIContainerService.getArchiveFromContainer(containerId, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
+            testResultsTarInputStream = buildJobContainerService.getArchiveFromContainer(containerId, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
         }
         catch (NotFoundException e) {
             // If the test results are not found, this means that something went wrong during the build and testing of the submission.
             return constructFailedBuildResult(buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
         finally {
-            localCIContainerService.stopContainer(containerName);
+            buildJobContainerService.stopContainer(containerName);
 
             // Delete script file from host system
             localCIBuildConfigurationService.deleteScriptFile(buildJob.id());

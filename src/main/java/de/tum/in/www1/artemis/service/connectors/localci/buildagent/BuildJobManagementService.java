@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.localci;
+package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -18,6 +18,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.topic.ITopic;
 
 import de.tum.in.www1.artemis.exception.LocalCIException;
+import de.tum.in.www1.artemis.service.connectors.localci.*;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 
@@ -26,16 +27,16 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
  * It handles timeouts as well as exceptions that occur during the execution of the build job.
  */
 @Service
-@Profile("localci")
-public class LocalCIBuildJobManagementService {
+@Profile("buildagent")
+public class BuildJobManagementService {
 
-    private static final Logger log = LoggerFactory.getLogger(LocalCIBuildJobManagementService.class);
+    private static final Logger log = LoggerFactory.getLogger(BuildJobManagementService.class);
 
-    private final LocalCIBuildJobExecutionService localCIBuildJobExecutionService;
+    private final BuildJobExecutionService buildJobExecutionService;
 
     private final ExecutorService localCIBuildExecutorService;
 
-    private final LocalCIContainerService localCIContainerService;
+    private final BuildJobContainerService buildJobContainerService;
 
     private final LocalCIDockerService localCIDockerService;
 
@@ -65,12 +66,11 @@ public class LocalCIBuildJobManagementService {
 
     private final ITopic<String> canceledBuildJobsTopic;
 
-    public LocalCIBuildJobManagementService(HazelcastInstance hazelcastInstance, LocalCIBuildJobExecutionService localCIBuildJobExecutionService,
-            ExecutorService localCIBuildExecutorService, LocalCIContainerService localCIContainerService, LocalCIDockerService localCIDockerService,
-            LocalCIBuildConfigurationService localCIBuildConfigurationService) {
-        this.localCIBuildJobExecutionService = localCIBuildJobExecutionService;
+    public BuildJobManagementService(HazelcastInstance hazelcastInstance, BuildJobExecutionService buildJobExecutionService, ExecutorService localCIBuildExecutorService,
+            BuildJobContainerService buildJobContainerService, LocalCIDockerService localCIDockerService, LocalCIBuildConfigurationService localCIBuildConfigurationService) {
+        this.buildJobExecutionService = buildJobExecutionService;
         this.localCIBuildExecutorService = localCIBuildExecutorService;
-        this.localCIContainerService = localCIContainerService;
+        this.buildJobContainerService = buildJobContainerService;
         this.localCIDockerService = localCIDockerService;
         this.canceledBuildJobsTopic = hazelcastInstance.getTopic("canceledBuildJobsTopic");
         this.localCIBuildConfigurationService = localCIBuildConfigurationService;
@@ -106,7 +106,7 @@ public class LocalCIBuildJobManagementService {
         String containerName = buildContainerPrefix + buildJobItem.participationId() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
 
         // Prepare a Callable that will later be called. It contains the actual steps needed to execute the build job.
-        Callable<LocalCIBuildResult> buildJob = () -> localCIBuildJobExecutionService.runBuildJob(buildJobItem, containerName);
+        Callable<LocalCIBuildResult> buildJob = () -> buildJobExecutionService.runBuildJob(buildJobItem, containerName);
 
         /*
          * Submit the build job to the executor service. This runs in a separate thread, so it does not block the main thread.
@@ -180,18 +180,7 @@ public class LocalCIBuildJobManagementService {
         // Todo: build agent might not have access to the file system
         localCIBuildConfigurationService.deleteScriptFile(buildJobId);
 
-        localCIContainerService.stopContainer(containerName);
-    }
-
-    /**
-     * Trigger the cancellation of the build job for the given buildJobId.
-     * The listener for the canceledBuildJobsTopic will then cancel the build job.
-     *
-     * @param buildJobId The id of the build job that should be cancelled.
-     */
-    public void triggerBuildJobCancellation(String buildJobId) {
-        // Publish a message to the topic indicating that the specific build job should be canceled
-        canceledBuildJobsTopic.publish(buildJobId);
+        buildJobContainerService.stopContainer(containerName);
     }
 
     /**
@@ -228,7 +217,7 @@ public class LocalCIBuildJobManagementService {
         // Todo: build agent might not have access to the file system
         localCIBuildConfigurationService.deleteScriptFile(buildJobId);
 
-        localCIContainerService.stopContainer(containerName);
+        buildJobContainerService.stopContainer(containerName);
 
         cancelledBuildJobs.remove(buildJobId);
     }

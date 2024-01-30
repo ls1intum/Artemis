@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.localci;
+package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -23,17 +23,17 @@ import com.hazelcast.cp.lock.FencedLock;
 import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.domain.enumeration.BuildJobResult;
-import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.*;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 
+/**
+ * Includes functionality for processing build jobs from the shared build job queue.
+ */
+@Profile("buildagent")
 @Service
-@Profile("localci")
-public class LocalCISharedBuildJobQueueService {
+public class SharedQueueProcessingService {
 
-    private static final Logger log = LoggerFactory.getLogger(LocalCISharedBuildJobQueueService.class);
+    private static final Logger log = LoggerFactory.getLogger(SharedQueueProcessingService.class);
 
     private final HazelcastInstance hazelcastInstance;
 
@@ -43,17 +43,7 @@ public class LocalCISharedBuildJobQueueService {
 
     private final ThreadPoolExecutor localCIBuildExecutorService;
 
-    private final LocalCIBuildJobManagementService localCIBuildJobManagementService;
-
-    private final ParticipationRepository participationRepository;
-
-    private final ProgrammingExerciseGradingService programmingExerciseGradingService;
-
-    private final ProgrammingMessagingService programmingMessagingService;
-
-    private final BuildJobRepository buildJobRepository;
-
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
+    private final BuildJobManagementService buildJobManagementService;
 
     /**
      * Map of build jobs currently being processed across all nodes
@@ -76,18 +66,10 @@ public class LocalCISharedBuildJobQueueService {
 
     private UUID listenerId;
 
-    public LocalCISharedBuildJobQueueService(HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
-            LocalCIBuildJobManagementService localCIBuildJobManagementService, ParticipationRepository participationRepository,
-            ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService, BuildJobRepository buildJobRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+    public SharedQueueProcessingService(HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService, BuildJobManagementService buildJobManagementService) {
         this.hazelcastInstance = hazelcastInstance;
         this.localCIBuildExecutorService = (ThreadPoolExecutor) localCIBuildExecutorService;
-        this.localCIBuildJobManagementService = localCIBuildJobManagementService;
-        this.participationRepository = participationRepository;
-        this.programmingExerciseGradingService = programmingExerciseGradingService;
-        this.programmingMessagingService = programmingMessagingService;
-        this.buildJobRepository = buildJobRepository;
-        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.buildJobManagementService = buildJobManagementService;
         this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
         this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
@@ -95,38 +77,13 @@ public class LocalCISharedBuildJobQueueService {
         this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
     }
 
-    /**
-     * Add listener to the shared build job queue.
-     */
     @PostConstruct
     public void addListener() {
-        this.listenerId = this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
+        this.listenerId = this.queue.addItemListener(new SharedQueueProcessingService.QueuedBuildJobItemListener(), true);
     }
 
     public void removeListener() {
         this.queue.removeItemListener(this.listenerId);
-    }
-
-    public List<LocalCIBuildJobQueueItem> getQueuedJobs() {
-        return queue.stream().toList();
-    }
-
-    public List<LocalCIBuildJobQueueItem> getProcessingJobs() {
-        return processingJobs.values().stream().toList();
-    }
-
-    public List<LocalCIBuildJobQueueItem> getQueuedJobsForCourse(long courseId) {
-        return queue.stream().filter(job -> job.courseId() == courseId).toList();
-    }
-
-    public List<LocalCIBuildJobQueueItem> getProcessingJobsForCourse(long courseId) {
-        return processingJobs.values().stream().filter(job -> job.courseId() == courseId).toList();
-    }
-
-    public List<LocalCIBuildAgentInformation> getBuildAgentInformation() {
-        // Remove build agent information of offline nodes
-        removeOfflineNodes();
-        return buildAgentInformation.values().stream().toList();
     }
 
     /**
@@ -257,7 +214,7 @@ public class LocalCISharedBuildJobQueueService {
 
         log.info("Processing build job: {}", buildJob);
 
-        CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.executeBuildJob(buildJob);
+        CompletableFuture<LocalCIBuildResult> futureResult = buildJobManagementService.executeBuildJob(buildJob);
         futureResult.thenAccept(buildResult -> {
 
             JobTimingInfo jobTimingInfo = new JobTimingInfo(buildJob.jobTimingInfo().submissionDate(), buildJob.jobTimingInfo().buildStartDate(), ZonedDateTime.now());
@@ -313,127 +270,6 @@ public class LocalCISharedBuildJobQueueService {
         log.debug("Currently processing jobs on this node: {}, maximum pool size of thread executor : {}", localProcessingJobs.get(),
                 localCIBuildExecutorService.getMaximumPoolSize());
         return localProcessingJobs.get() < localCIBuildExecutorService.getMaximumPoolSize();
-    }
-
-    /**
-     * Cancel a build job by removing it from the queue or stopping the build process.
-     *
-     * @param buildJobId id of the build job to cancel
-     */
-    public void cancelBuildJob(String buildJobId) {
-        sharedLock.lock();
-        try {
-            // Remove build job if it is queued
-            if (queue.stream().anyMatch(job -> Objects.equals(job.id(), buildJobId))) {
-                List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
-                for (LocalCIBuildJobQueueItem job : queue) {
-                    if (Objects.equals(job.id(), buildJobId)) {
-                        toRemove.add(job);
-                    }
-                }
-                queue.removeAll(toRemove);
-            }
-            else {
-                // Cancel build job if it is currently being processed
-                LocalCIBuildJobQueueItem buildJob = processingJobs.remove(buildJobId);
-                if (buildJob != null) {
-                    localCIBuildJobManagementService.triggerBuildJobCancellation(buildJobId);
-                }
-            }
-        }
-        finally {
-            sharedLock.unlock();
-        }
-    }
-
-    /**
-     * Cancel all queued build jobs.
-     */
-    public void cancelAllQueuedBuildJobs() {
-        sharedLock.lock();
-        try {
-            log.debug("Cancelling all queued build jobs");
-            queue.clear();
-        }
-        finally {
-            sharedLock.unlock();
-        }
-    }
-
-    /**
-     * Cancel all running build jobs.
-     */
-    public void cancelAllRunningBuildJobs() {
-        sharedLock.lock();
-        try {
-            for (LocalCIBuildJobQueueItem buildJob : processingJobs.values()) {
-                cancelBuildJob(buildJob.id());
-            }
-        }
-        finally {
-            sharedLock.unlock();
-        }
-    }
-
-    /**
-     * Cancel all queued build jobs for a course.
-     *
-     * @param courseId id of the course
-     */
-    public void cancelAllQueuedBuildJobsForCourse(long courseId) {
-        sharedLock.lock();
-        try {
-            List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
-            for (LocalCIBuildJobQueueItem job : queue) {
-                if (job.courseId() == courseId) {
-                    toRemove.add(job);
-                }
-            }
-            queue.removeAll(toRemove);
-        }
-        finally {
-            sharedLock.unlock();
-        }
-    }
-
-    /**
-     * Cancel all running build jobs for a course.
-     *
-     * @param courseId id of the course
-     */
-    public void cancelAllRunningBuildJobsForCourse(long courseId) {
-        for (LocalCIBuildJobQueueItem buildJob : processingJobs.values()) {
-            if (buildJob.courseId() == courseId) {
-                cancelBuildJob(buildJob.id());
-            }
-        }
-    }
-
-    /**
-     * Remove all queued build jobs for a participation from the shared build job queue.
-     *
-     * @param participationId id of the participation
-     */
-    public void cancelAllJobsForParticipation(long participationId) {
-        sharedLock.lock();
-        try {
-            List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
-            for (LocalCIBuildJobQueueItem queuedJob : queue) {
-                if (queuedJob.participationId() == participationId) {
-                    toRemove.add(queuedJob);
-                }
-            }
-            queue.removeAll(toRemove);
-
-            for (LocalCIBuildJobQueueItem runningJob : processingJobs.values()) {
-                if (runningJob.participationId() == participationId) {
-                    cancelBuildJob(runningJob.id());
-                }
-            }
-        }
-        finally {
-            sharedLock.unlock();
-        }
     }
 
     public class QueuedBuildJobItemListener implements ItemListener<LocalCIBuildJobQueueItem> {
