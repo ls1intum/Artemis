@@ -44,7 +44,7 @@
                 "title": "Competency Management",
                 "import": "Import competency",
                 "create": "Create competency",
-                "parseDescription": "Generate Competency Recommendations",
+                "generate": "Generate Competency Recommendations",
                 "importAll": "Import all competencies from another course"
             },
             "import": {
@@ -58,8 +58,9 @@
                     "doImport": "Select"
                 }
             },
-            "parseDescription": {
-                "title": "Competency Recommendations",
+            "generate": {
+                "title": "Generate Competency Recommendations",
+                "listTitle": "Competency Recommendations",
                 "viewedLabel": "Viewed",
                 "deleteModalTitle": "Confirm Delete",
                 "deleteModalText": "Are you sure you want to delete \"{{title}}\"?",
@@ -73,7 +74,6 @@
                     "requiredValidationError": "Course description must not be empty",
                     "minlengthValidationError": "Course description must be at least {{min}} characters long",
                     "maxlengthValidationError": "Course description is limited to {{max}} characters",
-                    "generate": "Generate",
                     "regenerate": "Generate again",
                     "regenerateTooltip": "Generate additional Competency Recommendations",
                     "infoTooltip": "Enter a course description, focusing on the theoretical/practical content and learning objectives. Iris will then use it to generate recommendations for competencies you could add to your course."

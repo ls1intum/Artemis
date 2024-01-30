@@ -599,7 +599,7 @@ public class CompetencyResource {
      */
     @PostMapping("/courses/{courseId}/competencies/generate-from-description")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<Competency>> getCompetenciesFromCourseDescription(@PathVariable Long courseId, @RequestBody String courseDescription) {
+    public ResponseEntity<List<Competency>> generateCompetenciesFromCourseDescription(@PathVariable Long courseId, @RequestBody String courseDescription) {
         var irisService = irisCompetencyGenerationSessionService.orElseThrow();
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);

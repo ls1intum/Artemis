@@ -15,9 +15,9 @@ import { CompetencyRingsComponent } from 'app/course/competencies/competency-rin
 import { CompetencyImportComponent } from 'app/course/competencies/competency-management/competency-import.component';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
-import { ParseCourseDescriptionComponent } from 'app/course/competencies/parse-description/parse-course-description.component';
-import { CompetencyRecommendationDetailComponent } from 'app/course/competencies/parse-description/competency-recommendation-detail.component';
-import { CourseDescriptionFormComponent } from 'app/course/competencies/parse-description/course-description-form.component';
+import { GenerateCompetenciesComponent } from 'app/course/competencies/generate-competencies/generate-competencies.component';
+import { CompetencyRecommendationDetailComponent } from 'app/course/competencies/generate-competencies/competency-recommendation-detail.component';
+import { CourseDescriptionFormComponent } from 'app/course/competencies/generate-competencies/course-description-form.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { IrisModule } from 'app/iris/iris.module';
 import { CompetencyImportCourseComponent } from 'app/course/competencies/competency-management/competency-import-course.component';
@@ -40,7 +40,7 @@ import { CompetencyImportCourseComponent } from 'app/course/competencies/compete
         CompetencyRingsComponent,
         CreateCompetencyComponent,
         EditCompetencyComponent,
-        ParseCourseDescriptionComponent,
+        GenerateCompetenciesComponent,
         CompetencyRecommendationDetailComponent,
         CourseDescriptionFormComponent,
         CompetencyManagementComponent,

@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.domain.User;
 
 /**
  * A IrisCompetencyGenerationSession is a session specific to a course and user.
- * This is used for course editors to generate competency reccommendations.
+ * This is used for course editors to generate competency recommendations.
  */
 @Entity
 @DiscriminatorValue("COMPETENCY_GENERATION")

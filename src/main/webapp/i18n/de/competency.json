@@ -45,7 +45,7 @@
                 "title": "Kompetenzmanagement",
                 "import": "Kompetenz importieren",
                 "create": "Kompetenz erstellen",
-                "parseDescription": "Kompetenzvorschläge generieren",
+                "generate": "Kompetenzvorschläge generieren",
                 "importAll": "Alle Kompetenzen eines Kurses importieren"
             },
             "import": {
@@ -59,8 +59,9 @@
                     "doImport": "Auswählen"
                 }
             },
-            "parseDescription": {
-                "title": "Kompetenzvorschläge",
+            "generate": {
+                "title": "Kompetenzvorschläge generieren",
+                "listTitle": "Kompetenzvorschläge",
                 "viewedLabel": "Gesehen",
                 "deleteModalTitle": "Löschen bestätigen",
                 "deleteModalText": "Bist du sicher, dass du \"{{title}}\" löschen willst?",
@@ -74,7 +75,6 @@
                     "requiredValidationError": "Kursbeschreibung darf nicht leer sein",
                     "minlengthValidationError": "Kursbeschreibung muss mindestens {{min}} Zeichen lang sein",
                     "maxlengthValidationError": "Kursbeschreibung darf maximal {{max}} Zeichen lang sein",
-                    "generate": "Generieren",
                     "regenerate": "Erneut generieren",
                     "regenerateTooltip": "Zusätzliche Kompetenzvorschläge generieren",
                     "infoTooltip": "Gib eine Beschreibung ein, die sich auf den theoretischen/praktischen Inhalt und Lernziele des Kurses fokussiert. Iris generiert daraus Vorschläge für Kompetenzen, die du in deinen Kurs einfügen könntest."

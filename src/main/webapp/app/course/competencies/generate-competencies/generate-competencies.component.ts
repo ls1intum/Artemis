@@ -26,10 +26,10 @@ export type CompetencyFormControls = {
 };
 
 @Component({
-    selector: 'jhi-parse-course-description',
-    templateUrl: './parse-course-description.component.html',
+    selector: 'jhi-generate-competencies',
+    templateUrl: './generate-competencies.component.html',
 })
-export class ParseCourseDescriptionComponent implements OnInit, ComponentCanDeactivate {
+export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeactivate {
     courseId: number;
     isLoading = false;
     submitted: boolean = false;
@@ -73,7 +73,7 @@ export class ParseCourseDescriptionComponent implements OnInit, ComponentCanDeac
     getCompetencyRecommendations(courseDescription: string) {
         this.isLoading = true;
         this.competencyService
-            .getCompetenciesFromCourseDescription(courseDescription, this.courseId)
+            .generateCompetenciesFromCourseDescription(courseDescription, this.courseId)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
@@ -109,10 +109,10 @@ export class ParseCourseDescriptionComponent implements OnInit, ComponentCanDeac
      * @param index of the competency
      */
     onDelete(index: number) {
-        const competencyTitle = this.competencies.at(0).controls.competency.controls.title.getRawValue() ?? '';
+        const competencyTitle = this.competencies.at(index).controls.competency.controls.title.getRawValue() ?? '';
         const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'md' });
-        modalRef.componentInstance.title = 'artemisApp.competency.parseDescription.deleteModalTitle';
-        modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.competency.parseDescription.deleteModalText', { title: competencyTitle });
+        modalRef.componentInstance.title = 'artemisApp.competency.generate.deleteModalTitle';
+        modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.competency.generate.deleteModalText', { title: competencyTitle });
         modalRef.result.then(() => this.competencies.removeAt(index));
     }
 
@@ -129,8 +129,8 @@ export class ParseCourseDescriptionComponent implements OnInit, ComponentCanDeac
     onSubmit() {
         if (!this.isSubmitPossibleWithoutConfirmation()) {
             const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'md' });
-            modalRef.componentInstance.title = 'artemisApp.competency.parseDescription.saveModalTitle';
-            modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.competency.parseDescription.saveModalText');
+            modalRef.componentInstance.title = 'artemisApp.competency.generate.saveModalTitle';
+            modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.competency.generate.saveModalText');
             modalRef.result.then(this.save.bind(this));
         } else {
             this.save();

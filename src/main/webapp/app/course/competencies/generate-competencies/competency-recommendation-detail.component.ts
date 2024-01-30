@@ -3,7 +3,7 @@ import { CompetencyTaxonomy, CompetencyValidators } from 'app/entities/competenc
 import { faChevronRight, faEdit, faSave, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FormGroup, Validators } from '@angular/forms';
-import { CompetencyFormControlsWithViewed } from 'app/course/competencies/parse-description/parse-course-description.component';
+import { CompetencyFormControlsWithViewed } from 'app/course/competencies/generate-competencies/generate-competencies.component';
 
 @Component({
     selector: 'jhi-competency-recommendation',

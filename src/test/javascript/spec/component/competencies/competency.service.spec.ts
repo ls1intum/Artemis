@@ -211,7 +211,7 @@ describe('CompetencyService', () => {
         const expected = defaultCompetencies;
         let response: any;
 
-        competencyService.getCompetenciesFromCourseDescription(description, 1).subscribe((resp) => (response = resp));
+        competencyService.generateCompetenciesFromCourseDescription(description, 1).subscribe((resp) => (response = resp));
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
         tick();
