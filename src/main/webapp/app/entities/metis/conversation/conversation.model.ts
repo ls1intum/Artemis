@@ -52,6 +52,10 @@ export abstract class ConversationDTO {
     }
 }
 
+/**
+ * Checks if a notification, due to this conversation, should notify its recipients.
+ * @param conversation a conversation
+ */
 export function shouldNotifyRecipient(conversation: ConversationDTO): boolean {
     return !conversation.isMuted && !conversation.isHidden;
 }
