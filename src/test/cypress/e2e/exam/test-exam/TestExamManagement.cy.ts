@@ -73,7 +73,7 @@ describe('Test Exam management', () => {
             });
         });
 
-        it('Adds a text exercise', () => {
+        it('Adds a text exercise', { scrollBehavior: 'center' }, () => {
             cy.visit(`/course-management/${course.id}/exams`);
             examManagement.openExerciseGroups(exam.id!);
             examExerciseGroups.clickAddTextExercise(exerciseGroup.id!);
