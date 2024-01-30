@@ -158,7 +158,7 @@
                             <span>{{ value }}</span>
                         </ng-template>
                     </ngx-datatable-column>
-                    <ngx-datatable-column prop="repositoryName" [minWidth]="100">
+                    <ngx-datatable-column prop="repositoryInfo.repositoryName" [minWidth]="100">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('repositoryName')">
                                 <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.repositoryName"> Repository Name </span>
@@ -169,7 +169,7 @@
                             <span>{{ value }}</span>
                         </ng-template>
                     </ngx-datatable-column>
-                    <ngx-datatable-column prop="repositoryType" [minWidth]="100">
+                    <ngx-datatable-column prop="repositoryInfo.repositoryType" [minWidth]="100">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('repositoryType')">
                                 <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.repositoryType"> Repository Type </span>
@@ -180,7 +180,7 @@
                             <span>{{ value }}</span>
                         </ng-template>
                     </ngx-datatable-column>
-                    <ngx-datatable-column prop="commitHash" [minWidth]="100">
+                    <ngx-datatable-column prop="buildConfig.commitHash" [minWidth]="100">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('commitHash')">
                                 <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.commitHash"> Commit Hash </span>
@@ -191,7 +191,7 @@
                             <span class="wrap-long-text">{{ value }}</span>
                         </ng-template>
                     </ngx-datatable-column>
-                    <ngx-datatable-column prop="submissionDate" [minWidth]="100">
+                    <ngx-datatable-column prop="jobTimingInfo.submissionDate" [minWidth]="100">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submissionDate')">
                                 <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.submissionDate"> Submission Date </span>
@@ -202,7 +202,7 @@
                             <span>{{ value | artemisDate: 'long' : true }}</span>
                         </ng-template>
                     </ngx-datatable-column>
-                    <ngx-datatable-column prop="buildStartDate" [minWidth]="100">
+                    <ngx-datatable-column prop="jobTimingInfo.buildStartDate" [minWidth]="100">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildStartDate')">
                                 <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.buildStartDate"> Build Start Date </span>
@@ -235,7 +235,7 @@
                             <span>{{ value }}</span>
                         </ng-template>
                     </ngx-datatable-column>
-                    <ngx-datatable-column prop="buildCompletionDate" [minWidth]="170">
+                    <ngx-datatable-column prop="jobTimingInfo.buildCompletionDate" [minWidth]="170">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildCompletionDate')">
                                 <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.buildCompletionDate">
