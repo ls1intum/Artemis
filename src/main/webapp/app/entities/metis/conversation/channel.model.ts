@@ -65,13 +65,13 @@ export class ChannelIdAndNameDTO {
     public name?: string;
 }
 
-export function isChannelDto(conversation: ConversationDTO): conversation is ChannelDTO {
+export function isChannelDTO(conversation: ConversationDTO): conversation is ChannelDTO {
     return conversation.type === ConversationType.CHANNEL;
 }
 
-export function getAsChannelDto(conversation: ConversationDTO | undefined): ChannelDTO | undefined {
+export function getAsChannelDTO(conversation: ConversationDTO | undefined): ChannelDTO | undefined {
     if (!conversation) {
         return undefined;
     }
-    return isChannelDto(conversation) ? conversation : undefined;
+    return isChannelDTO(conversation) ? conversation : undefined;
 }

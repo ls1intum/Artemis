@@ -1,7 +1,7 @@
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { ChannelDTO, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
 import { Post } from 'app/entities/metis/post.model';
 
@@ -69,7 +69,7 @@ export class CommunicationAPIRequests {
     getCourseWideChannels(courseId: number): Chainable<ChannelDTO[]> {
         return cy
             .request({ method: GET, url: `${COURSE_BASE}${courseId}/conversations` })
-            .then((response) => response.body.filter((conv: ConversationDTO) => getAsChannelDto(conv)?.isCourseWide === true));
+            .then((response) => response.body.filter((conv: ConversationDTO) => getAsChannelDTO(conv)?.isCourseWide === true));
     }
 
     /**

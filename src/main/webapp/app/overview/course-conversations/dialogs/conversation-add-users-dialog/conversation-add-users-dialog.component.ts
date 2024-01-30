@@ -8,7 +8,7 @@ import { ConversationDTO } from 'app/entities/metis/conversation/conversation.mo
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
-import { getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { getAsGroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { MAX_GROUP_CHAT_PARTICIPANTS } from 'app/shared/metis/conversations/conversation-settings';
@@ -59,13 +59,13 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
         this.addUsers(selectedUsers ?? [], addAllStudents, addAllTutors, addAllInstructors);
     }
 
-    getAsChannel = getAsChannelDto;
+    getAsChannel = getAsChannelDTO;
     getAsGroupChat = getAsGroupChatDTO;
 
     private addUsers(usersToAdd: UserPublicInfoDTO[], addAllStudents: boolean, addAllTutors: boolean, addAllInstructors: boolean) {
         const userLogins = usersToAdd.map((user) => user.login!);
 
-        if (isChannelDto(this.activeConversation)) {
+        if (isChannelDTO(this.activeConversation)) {
             this.channelService
                 .registerUsersToChannel(this.course.id!, this.activeConversation.id!, addAllStudents, addAllTutors, addAllInstructors, userLogins)
                 .pipe(

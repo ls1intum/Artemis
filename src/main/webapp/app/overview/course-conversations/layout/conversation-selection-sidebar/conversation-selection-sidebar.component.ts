@@ -8,7 +8,7 @@ import { ConversationDTO } from 'app/entities/metis/conversation/conversation.mo
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
-import { Channel, ChannelDTO, ChannelSubType, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { Channel, ChannelDTO, ChannelSubType, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { GroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
@@ -180,7 +180,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
                 return bLastMessageDate!.isAfter(aLastMessageDate!) ? 1 : -1;
             });
         this.channelConversations = this.allConversations //
-            .filter((conversation) => isChannelDto(conversation) && !conversation.isFavorite)
+            .filter((conversation) => isChannelDTO(conversation) && !conversation.isFavorite)
             .map((channel) => channel as Channel)
             .sort((a, b) => a.name!.localeCompare(b.name!));
         this.oneToOneChats = this.allConversations

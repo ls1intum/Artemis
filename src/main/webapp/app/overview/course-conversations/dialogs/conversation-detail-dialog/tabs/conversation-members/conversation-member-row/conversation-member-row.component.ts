@@ -10,7 +10,7 @@ import { canGrantChannelModeratorRole, canRemoveUsersFromConversation, canRevoke
 import { defaultSecondLayerDialogOptions, getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { TranslateService } from '@ngx-translate/core';
 import { GenericConfirmationDialogComponent } from 'app/overview/course-conversations/dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { onError } from 'app/shared/util/global.utils';
@@ -63,7 +63,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     faEllipsis = faEllipsis;
     faUserGear = faUserGear;
 
-    isChannel = isChannelDto;
+    isChannel = isChannelDTO;
 
     canGrantChannelModeratorRole = canGrantChannelModeratorRole;
     canRevokeChannelModeratorRole = canRevokeChannelModeratorRole;
@@ -92,7 +92,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
                 this.setUserAuthorityIconAndTooltip();
                 // the creator of a channel can not be removed from the channel
                 this.canBeRemovedFromConversation = !this.isCurrentUser && this.canRemoveUsersFromConversation(this.activeConversation);
-                if (isChannelDto(this.activeConversation)) {
+                if (isChannelDTO(this.activeConversation)) {
                     // the creator of a channel can not be removed from the channel
                     this.canBeRemovedFromConversation = this.canBeRemovedFromConversation && !this.isCreator && !this.activeConversation.isCourseWide;
                     this.canBeGrantedChannelModeratorRole = this.canGrantChannelModeratorRole(this.activeConversation) && !this.conversationMember.isChannelModerator;
@@ -111,7 +111,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
 
     openGrantChannelModeratorRoleDialog(event: MouseEvent) {
         event.stopPropagation();
-        const channel = getAsChannelDto(this.activeConversation);
+        const channel = getAsChannelDTO(this.activeConversation);
         if (!channel) {
             return;
         }
@@ -131,7 +131,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
 
     openRevokeChannelModeratorRoleDialog(event: MouseEvent) {
         event.stopPropagation();
-        const channel = getAsChannelDto(this.activeConversation);
+        const channel = getAsChannelDTO(this.activeConversation);
         if (!channel) {
             return;
         }
@@ -151,7 +151,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
 
     openRemoveFromChannelDialog(event: MouseEvent) {
         event.stopPropagation();
-        const channel = getAsChannelDto(this.activeConversation);
+        const channel = getAsChannelDTO(this.activeConversation);
         if (!channel) {
             return;
         }
@@ -229,7 +229,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     }
 
     openRemoveFromConversationDialog(event: MouseEvent) {
-        if (isChannelDto(this.activeConversation)) {
+        if (isChannelDTO(this.activeConversation)) {
             this.openRemoveFromChannelDialog(event);
         } else if (isGroupChatDTO(this.activeConversation)) {
             this.openRemoveFromGroupChatDialog(event);

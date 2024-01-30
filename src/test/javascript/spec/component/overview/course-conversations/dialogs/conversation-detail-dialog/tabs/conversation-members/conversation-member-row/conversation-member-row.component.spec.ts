@@ -16,7 +16,7 @@ import { ConversationUserDTO } from 'app/entities/metis/conversation/conversatio
 import { User } from 'app/core/user/user.model';
 import { GenericConfirmationDialogComponent } from 'app/overview/course-conversations/dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
-import { ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
@@ -104,7 +104,7 @@ examples.forEach((activeConversation) => {
             expect(component).toBeTruthy();
             expect(component.canBeRemovedFromConversation).toEqual(canRemoveUsersFromConversation());
 
-            if (isChannelDto(activeConversation)) {
+            if (isChannelDTO(activeConversation)) {
                 expect(component.canBeGrantedChannelModeratorRole).toBeFalse(); // is already moderator
                 expect(component.canBeRevokedChannelModeratorRole).toBeTrue();
             }
@@ -124,7 +124,7 @@ examples.forEach((activeConversation) => {
             fixture.detectChanges();
             tick();
             fixture.detectChanges();
-            if (isChannelDto(activeConversation)) {
+            if (isChannelDTO(activeConversation)) {
                 expect(component.canBeRemovedFromConversation).toEqual(canRemoveUsersFromConversation());
                 checkRemoveMemberButton(component.canBeRemovedFromConversation);
             }
@@ -135,7 +135,7 @@ examples.forEach((activeConversation) => {
             fixture.detectChanges();
             tick();
             fixture.detectChanges();
-            if (isChannelDto(activeConversation) || isGroupChatDTO(activeConversation)) {
+            if (isChannelDTO(activeConversation) || isGroupChatDTO(activeConversation)) {
                 expect(component.canBeRemovedFromConversation).toBeFalse();
                 checkRemoveMemberButton(false);
             }
@@ -145,7 +145,7 @@ examples.forEach((activeConversation) => {
             fixture.detectChanges();
             tick();
             fixture.detectChanges();
-            if (isChannelDto(activeConversation)) {
+            if (isChannelDTO(activeConversation)) {
                 expect(component.canBeGrantedChannelModeratorRole).toBeFalse(); // is already moderator
                 expect(component.canBeRevokedChannelModeratorRole).toBeTrue();
                 checkRevokeModeratorButton(true);
@@ -154,7 +154,7 @@ examples.forEach((activeConversation) => {
         }));
 
         it('should show grant moderator button if user is not yet moderator', fakeAsync(() => {
-            if (isChannelDto(activeConversation)) {
+            if (isChannelDTO(activeConversation)) {
                 component.conversationMember.isChannelModerator = false;
                 fixture.detectChanges();
                 tick();
@@ -198,7 +198,7 @@ examples.forEach((activeConversation) => {
             fixture.detectChanges();
             tick();
             fixture.detectChanges();
-            if (isChannelDto(activeConversation)) {
+            if (isChannelDTO(activeConversation)) {
                 const channelService = TestBed.inject(ChannelService);
                 const changesPerformedSpy = jest.spyOn(component.changePerformed, 'emit');
                 const grantChannelModeratorRoleSpy = jest
@@ -215,7 +215,7 @@ examples.forEach((activeConversation) => {
             fixture.detectChanges();
             tick();
             fixture.detectChanges();
-            if (isChannelDto(activeConversation)) {
+            if (isChannelDTO(activeConversation)) {
                 const channelService = TestBed.inject(ChannelService);
                 const changesPerformedSpy = jest.spyOn(component.changePerformed, 'emit');
                 const revokeChannelModeratorRoleSpy = jest
@@ -232,7 +232,7 @@ examples.forEach((activeConversation) => {
             fixture.detectChanges();
             tick();
             fixture.detectChanges();
-            if (isChannelDto(activeConversation)) {
+            if (isChannelDTO(activeConversation)) {
                 const channelService = TestBed.inject(ChannelService);
                 const changesPerformedSpy = jest.spyOn(component.changePerformed, 'emit');
                 const deregisterUsersFromChannelSpy = jest

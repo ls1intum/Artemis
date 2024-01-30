@@ -15,7 +15,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { ChannelDTO, ChannelSubType, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, ChannelSubType, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 @Component({
     selector: 'jhi-course-discussion',
@@ -274,7 +274,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
 
     private subscribeToConversationsOfUser() {
         this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
-            this.courseWideChannels = conversations?.filter((conv) => isChannelDto(conv) && conv.isCourseWide) ?? [];
+            this.courseWideChannels = conversations?.filter((conv) => isChannelDTO(conv) && conv.isCourseWide) ?? [];
             this.categorizedChannels = {};
             this.availableChannelSubtypes = [];
             const subTypeDisplayOrder = [ChannelSubType.GENERAL, ChannelSubType.EXERCISE, ChannelSubType.LECTURE, ChannelSubType.EXAM];

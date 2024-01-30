@@ -29,7 +29,7 @@ import {
     metisExam,
     metisExercise,
     metisLecture,
-    metisLectureChannelDto,
+    metisLectureChannelDTO,
     metisPostExerciseUser1,
     metisPostInChannel,
     metisReactionUser2,
@@ -591,8 +591,8 @@ describe('Metis Service', () => {
         }));
 
         it('should return current conversation', () => {
-            metisService.getFilteredPosts({ conversationId: metisLectureChannelDto.id } as PostContextFilter, false, metisLectureChannelDto);
-            expect(metisService.getCurrentConversation()).toBe(metisLectureChannelDto);
+            metisService.getFilteredPosts({ conversationId: metisLectureChannelDTO.id } as PostContextFilter, false, metisLectureChannelDTO);
+            expect(metisService.getCurrentConversation()).toBe(metisLectureChannelDTO);
         });
     });
 });

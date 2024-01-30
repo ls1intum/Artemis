@@ -6,7 +6,7 @@ import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/c
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
@@ -44,7 +44,7 @@ export class ConversationService {
         if (!conversation) {
             return '';
         }
-        if (isChannelDto(conversation)) {
+        if (isChannelDTO(conversation)) {
             let channelName = conversation.name ?? '';
             if (conversation.isArchived) {
                 channelName += ' (' + this.translationService.instant('artemisApp.conversationsLayout.archived') + ')';

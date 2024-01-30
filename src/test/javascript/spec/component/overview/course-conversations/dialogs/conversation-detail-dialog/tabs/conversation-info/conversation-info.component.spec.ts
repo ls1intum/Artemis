@@ -9,7 +9,7 @@ import { GroupChatService } from 'app/shared/metis/conversations/group-chat.serv
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../helpers/conversationExampleModels';
 import { Course } from 'app/entities/course.model';
-import { ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { GroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -72,7 +72,7 @@ examples.forEach((activeConversation) => {
         });
 
         it('should hide certain sections of the info component depending on the type of the conversation', () => {
-            if (isChannelDto(activeConversation)) {
+            if (isChannelDTO(activeConversation)) {
                 checkThatSectionExistsInTemplate('name');
                 checkThatSectionExistsInTemplate('topic');
                 checkThatSectionExistsInTemplate('description');
@@ -94,7 +94,7 @@ examples.forEach((activeConversation) => {
         });
 
         it('should hide the action buttons if the user is missing the permissions', () => {
-            if (isChannelDto(activeConversation)) {
+            if (isChannelDTO(activeConversation)) {
                 checkThatActionButtonOfSectionExistsInTemplate('name');
                 checkThatActionButtonOfSectionExistsInTemplate('topic');
                 checkThatActionButtonOfSectionExistsInTemplate('description');
@@ -115,7 +115,7 @@ examples.forEach((activeConversation) => {
         });
 
         it('should open the edit name dialog when the respective action button is clicked', fakeAsync(() => {
-            if (isChannelDto(activeConversation) || isGroupChatDTO(activeConversation)) {
+            if (isChannelDTO(activeConversation) || isGroupChatDTO(activeConversation)) {
                 genericEditPropertyDialogTest('name', {
                     propertyName: 'name',
                     maxPropertyLength: 30,
@@ -126,7 +126,7 @@ examples.forEach((activeConversation) => {
         }));
 
         it('should open the edit topic dialog when the respective action button is clicked', fakeAsync(() => {
-            if (isChannelDto(activeConversation)) {
+            if (isChannelDTO(activeConversation)) {
                 genericEditPropertyDialogTest('topic', {
                     propertyName: 'topic',
                     maxPropertyLength: 250,
@@ -137,7 +137,7 @@ examples.forEach((activeConversation) => {
         }));
 
         it('should open the edit description dialog when the respective action button is clicked', fakeAsync(() => {
-            if (isChannelDto(activeConversation)) {
+            if (isChannelDTO(activeConversation)) {
                 genericEditPropertyDialogTest('description', {
                     propertyName: 'description',
                     maxPropertyLength: 250,
@@ -200,7 +200,7 @@ examples.forEach((activeConversation) => {
                     expect(updateGroupChatSpy).toHaveBeenCalledWith(course.id, activeConversation.id, expectedUpdateDTO);
                 }
 
-                if (isChannelDto(activeConversation)) {
+                if (isChannelDTO(activeConversation)) {
                     const expectedUpdateDTO = new ChannelDTO();
                     expectedUpdateDTO[expectedComponentInstance['propertyName']] = 'updated';
                     expect(updateChannelSpy).toHaveBeenCalledOnce();

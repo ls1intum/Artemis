@@ -4,7 +4,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { faArrowLeft, faChevronLeft, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
-import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 @Component({
     selector: 'jhi-conversation-thread-sidebar',
@@ -17,7 +17,7 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
     @Input()
     set activeConversation(conversation: ConversationDTO) {
         this.conversation = conversation;
-        this.hasChannelModerationRights = getAsChannelDto(this.conversation)?.hasChannelModerationRights ?? false;
+        this.hasChannelModerationRights = getAsChannelDTO(this.conversation)?.hasChannelModerationRights ?? false;
     }
     @Input()
     set activePost(activePost: Post) {

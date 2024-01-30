@@ -8,7 +8,7 @@ import {
     ConversationDetailDialogComponent,
     ConversationDetailTabs,
 } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
-import { ChannelDTO, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { EMPTY, Subject, from, takeUntil } from 'rxjs';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
@@ -64,7 +64,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     private subscribeToActiveConversation() {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
             this.activeConversation = conversation;
-            this.activeConversationAsChannel = getAsChannelDto(conversation);
+            this.activeConversationAsChannel = getAsChannelDTO(conversation);
             this.channelSubTypeReferenceTranslationKey = getChannelSubTypeReferenceTranslationKey(this.activeConversationAsChannel?.subType);
             this.channelSubTypeReferenceRouterLink = this.metisService.getLinkForChannelSubType(this.activeConversationAsChannel);
         });

@@ -4,7 +4,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, take, takeUntil } from 'rxjs';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Course } from 'app/entities/course.model';
 import { PageType } from 'app/shared/metis/metis.util';
@@ -36,7 +36,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         private metisService: MetisService,
     ) {}
 
-    getAsChannel = getAsChannelDto;
+    getAsChannel = getAsChannelDTO;
 
     private subscribeToMetis() {
         this.metisService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {

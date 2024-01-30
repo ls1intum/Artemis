@@ -1,5 +1,5 @@
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
-import { ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { GroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { Course } from 'app/entities/course.model';
 import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
@@ -11,7 +11,7 @@ export function canAddUsersToConversation(conversation: ConversationDTO): boolea
     const groupChatCheck = (groupChat: GroupChatDTO): boolean => !!groupChat.isMember;
     const channelCheck = (channel: ChannelDTO): boolean => !channel.isCourseWide && hasChannelModerationRights(channel);
 
-    if (isChannelDto(conversation)) {
+    if (isChannelDTO(conversation)) {
         return channelCheck(conversation);
     } else if (isGroupChatDTO(conversation)) {
         return groupChatCheck(conversation);
@@ -33,7 +33,7 @@ export function canCreateNewMessageInConversation(conversation: ConversationDTO)
     const channelCheck = (channel: ChannelDTO): boolean =>
         !!channel.isMember && !channel.isArchived && (!channel.isAnnouncementChannel || (channel.isAnnouncementChannel && !!channel.hasChannelModerationRights));
 
-    if (isChannelDto(conversation)) {
+    if (isChannelDTO(conversation)) {
         return channelCheck(conversation);
     } else if (isGroupChatDTO(conversation)) {
         return groupChatCheck(conversation);
@@ -59,7 +59,7 @@ export function canRemoveUsersFromConversation(conversation: ConversationDTO): b
     const groupChatCheck = (groupChat: GroupChatDTO): boolean => !!groupChat.isMember;
     const channelCheck = (channel: ChannelDTO): boolean => !!channel.hasChannelModerationRights;
 
-    if (isChannelDto(conversation)) {
+    if (isChannelDTO(conversation)) {
         return channelCheck(conversation);
     } else if (isGroupChatDTO(conversation)) {
         return groupChatCheck(conversation);
@@ -80,7 +80,7 @@ export function canLeaveConversation(conversation: ConversationDTO): boolean {
     }
     // the creator of a channel can not leave it
     // if the channel is course-wide, you also cannot leave it
-    if (isChannelDto(conversation) && (conversation?.isCreator || conversation?.isCourseWide)) {
+    if (isChannelDTO(conversation) && (conversation?.isCreator || conversation?.isCourseWide)) {
         return false;
     }
     if (isOneToOneChatDto(conversation)) {

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { ChannelDTO, getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -59,7 +59,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.canLeaveConversation = canLeaveConversation(this.activeConversation);
 
-        this.conversationAsChannel = getAsChannelDto(this.activeConversation);
+        this.conversationAsChannel = getAsChannelDTO(this.activeConversation);
         this.canChangeChannelArchivalState = this.conversationAsChannel ? canChangeChannelArchivalState(this.conversationAsChannel) : false;
         this.canDeleteChannel = this.conversationAsChannel ? canDeleteChannel(this.course, this.conversationAsChannel) : false;
     }
@@ -74,7 +74,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
                     this.conversationLeave.emit();
                 });
             return;
-        } else if (isChannelDto(this.activeConversation)) {
+        } else if (isChannelDTO(this.activeConversation)) {
             this.channelService
                 .deregisterUsersFromChannel(this.course.id!, this.activeConversation.id!)
                 .pipe(takeUntil(this.ngUnsubscribe))
@@ -92,7 +92,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     }
 
     openArchivalModal(event: MouseEvent) {
-        const channel = getAsChannelDto(this.activeConversation);
+        const channel = getAsChannelDTO(this.activeConversation);
         if (!channel) {
             return;
         }
@@ -131,7 +131,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     }
 
     openUnArchivalModal(event: MouseEvent) {
-        const channel = getAsChannelDto(this.activeConversation);
+        const channel = getAsChannelDTO(this.activeConversation);
         if (!channel) {
             return;
         }
@@ -173,7 +173,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     }
 
     deleteChannel() {
-        const channel = getAsChannelDto(this.activeConversation);
+        const channel = getAsChannelDTO(this.activeConversation);
         if (!channel) {
             return;
         }

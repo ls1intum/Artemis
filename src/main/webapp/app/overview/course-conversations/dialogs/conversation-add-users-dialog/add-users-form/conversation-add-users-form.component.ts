@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angu
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
-import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 export interface AddUsersFormData {
     selectedUsers?: UserPublicInfoDTO[];
@@ -26,7 +26,7 @@ export class ConversationAddUsersFormComponent implements OnInit, OnChanges {
 
     form: FormGroup;
 
-    getAsChannel = getAsChannelDto;
+    getAsChannel = getAsChannelDTO;
 
     mode: 'individual' | 'group' = 'individual';
     constructor(private fb: FormBuilder) {}

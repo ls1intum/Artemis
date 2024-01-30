@@ -17,7 +17,7 @@ import { ChannelIconComponent } from 'app/overview/course-conversations/other/ch
 import { GroupChatIconComponent } from 'app/overview/course-conversations/other/group-chat-icon/group-chat-icon.component';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { By } from '@angular/platform-browser';
-import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -84,7 +84,7 @@ examples.forEach((activeConversation) => {
             };
             const form: ConversationAddUsersFormStubComponent = fixture.debugElement.query(By.directive(ConversationAddUsersFormStubComponent)).componentInstance;
 
-            if (isChannelDto(activeConversation)) {
+            if (isChannelDTO(activeConversation)) {
                 const channelService = TestBed.inject(ChannelService);
                 const activeModal = TestBed.inject(NgbActiveModal);
                 jest.spyOn(activeModal, 'close');

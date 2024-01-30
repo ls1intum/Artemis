@@ -11,7 +11,7 @@ import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -60,7 +60,7 @@ examples.forEach((activeConversation) => {
             fixture.detectChanges();
             expect(fixture.nativeElement.querySelector('.leave-conversation')).toBeFalsy();
 
-            if (isChannelDto(activeConversation)) {
+            if (isChannelDTO(activeConversation)) {
                 expect(fixture.nativeElement.querySelector('.archive')).toBeTruthy();
                 expect(fixture.nativeElement.querySelector('.delete')).toBeTruthy();
 
@@ -79,7 +79,7 @@ examples.forEach((activeConversation) => {
         });
 
         it('should call the correct service depending on conversation type when leave conversation is requested', () => {
-            if (isChannelDto(activeConversation)) {
+            if (isChannelDTO(activeConversation)) {
                 const channelService = TestBed.inject(ChannelService);
                 const leaveConversationSpy = jest.spyOn(component.conversationLeave, 'emit');
                 jest.spyOn(channelService, 'deregisterUsersFromChannel').mockReturnValue(of(new HttpResponse({ status: 200 }) as HttpResponse<void>));
@@ -103,7 +103,7 @@ examples.forEach((activeConversation) => {
         });
 
         it('should open archive dialog when button is pressed', fakeAsync(() => {
-            if (isChannelDto(activeConversation)) {
+            if (isChannelDTO(activeConversation)) {
                 const channelService = TestBed.inject(ChannelService);
                 const archiveSpy = jest.spyOn(channelService, 'archive').mockReturnValue(of(new HttpResponse({ status: 200 }) as HttpResponse<void>));
                 const archiveButton = fixture.debugElement.nativeElement.querySelector('.archive');
@@ -117,7 +117,7 @@ examples.forEach((activeConversation) => {
         }));
 
         it('should open unarchive dialog when button is pressed', fakeAsync(() => {
-            if (isChannelDto(activeConversation)) {
+            if (isChannelDTO(activeConversation)) {
                 (component.activeConversation as ChannelDTO).isArchived = true;
                 fixture.detectChanges();
                 const channelService = TestBed.inject(ChannelService);
@@ -133,7 +133,7 @@ examples.forEach((activeConversation) => {
         }));
 
         it('should call delete channel when callback is called', fakeAsync(() => {
-            if (isChannelDto(activeConversation)) {
+            if (isChannelDTO(activeConversation)) {
                 const channelService = TestBed.inject(ChannelService);
                 const deleteSpy = jest.spyOn(channelService, 'delete').mockReturnValue(of(new HttpResponse({ status: 200 }) as HttpResponse<void>));
                 component.deleteChannel();

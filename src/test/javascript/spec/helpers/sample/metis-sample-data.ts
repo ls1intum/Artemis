@@ -283,7 +283,7 @@ export const metisPostInChannel = {
     conversation: metisChannel,
 } as Post;
 
-export const metisGeneralChannelDto = {
+export const metisGeneralChannelDTO = {
     id: 17,
     type: ConversationType.CHANNEL,
     subType: ChannelSubType.GENERAL,
@@ -291,7 +291,7 @@ export const metisGeneralChannelDto = {
     name: 'general-channel',
 } as ChannelDTO;
 
-export const metisExerciseChannelDto = {
+export const metisExerciseChannelDTO = {
     id: 14,
     type: ConversationType.CHANNEL,
     subType: ChannelSubType.EXERCISE,
@@ -301,7 +301,7 @@ export const metisExerciseChannelDto = {
     name: 'exercise-channel',
 } as ChannelDTO;
 
-export const metisLectureChannelDto = {
+export const metisLectureChannelDTO = {
     id: 15,
     type: ConversationType.CHANNEL,
     subType: ChannelSubType.LECTURE,
@@ -310,7 +310,7 @@ export const metisLectureChannelDto = {
     name: 'lecture-channel',
 } as ChannelDTO;
 
-export const metisExamChannelDto = {
+export const metisExamChannelDTO = {
     id: 20,
     type: ConversationType.CHANNEL,
     subType: ChannelSubType.EXAM,

@@ -29,7 +29,7 @@ import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import dayjs from 'dayjs/esm';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
-import { ChannelDTO, ChannelSubType, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 
@@ -533,7 +533,7 @@ export class MetisService implements OnDestroy {
         let queryParams = undefined;
         let displayName = '';
         if (post.conversation) {
-            displayName = getAsChannelDto(post.conversation)?.name ?? '';
+            displayName = getAsChannelDTO(post.conversation)?.name ?? '';
             routerLinkComponents = ['/courses', this.courseId, 'messages'];
             queryParams = { conversationId: post.conversation.id! };
         }
@@ -578,7 +578,7 @@ export class MetisService implements OnDestroy {
         const postIsNotFromCurrentConversation = this.currentPostContextFilter.conversationId && postConvId !== this.currentPostContextFilter.conversationId;
         const postIsNotFromSelectedCourseWideChannels =
             this.currentPostContextFilter.courseWideChannelIds?.length && postConvId && !this.currentPostContextFilter.courseWideChannelIds.includes(postConvId);
-        const postIsNotCourseWide = !getAsChannelDto(postDTO.post.conversation)?.isCourseWide;
+        const postIsNotCourseWide = !getAsChannelDTO(postDTO.post.conversation)?.isCourseWide;
 
         if (postIsNotFromCurrentConversation || postIsNotFromSelectedCourseWideChannels || postIsNotCourseWide) {
             return;

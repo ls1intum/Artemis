@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
-import { ChannelDTO, getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { defaultSecondLayerDialogOptions, getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { Course } from 'app/entities/course.model';
@@ -29,14 +29,14 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
 
     isGroupChat = isGroupChatDTO;
-    isChannel = isChannelDto;
-    getAsChannel = getAsChannelDto;
+    isChannel = isChannelDTO;
+    getAsChannel = getAsChannelDTO;
     getUserLabel = getUserLabel;
     canChangeChannelProperties = canChangeChannelProperties;
     canChangeGroupChatProperties = canChangeGroupChatProperties;
 
     getAsChannelOrGroupChat(conversation: ConversationDTO): ChannelDTO | GroupChatDTO | undefined {
-        return getAsChannelDto(conversation) || getAsGroupChatDTO(conversation);
+        return getAsChannelDTO(conversation) || getAsGroupChatDTO(conversation);
     }
 
     @Input()
@@ -58,8 +58,8 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         if (this.activeConversation) {
-            if (getAsChannelDto(this.activeConversation)) {
-                this.readOnlyMode = !!getAsChannelDto(this.activeConversation)?.isArchived;
+            if (getAsChannelDTO(this.activeConversation)) {
+                this.readOnlyMode = !!getAsChannelDTO(this.activeConversation)?.isArchived;
             }
         }
     }
@@ -93,7 +93,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     }
 
     openEditTopicModal(event: MouseEvent) {
-        const channel = getAsChannelDto(this.activeConversation);
+        const channel = getAsChannelDTO(this.activeConversation);
         if (!channel) {
             return;
         }
@@ -112,7 +112,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     }
 
     openDescriptionTopicModal(event: MouseEvent) {
-        const channel = getAsChannelDto(this.activeConversation);
+        const channel = getAsChannelDTO(this.activeConversation);
         if (!channel) {
             return;
         }
@@ -161,7 +161,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
                 } else {
                     updateValue = '';
                 }
-                if (isChannelDto(channelOrGroupChat)) {
+                if (isChannelDTO(channelOrGroupChat)) {
                     this.updateChannel(channelOrGroupChat, propertyName, updateValue);
                 } else {
                     this.updateGroupChat(channelOrGroupChat, propertyName, updateValue);

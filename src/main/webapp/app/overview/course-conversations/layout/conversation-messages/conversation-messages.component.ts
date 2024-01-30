@@ -20,7 +20,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
 import { PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { Channel, getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { Channel, getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { GroupChat, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
@@ -51,7 +51,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     @Input()
     course?: Course;
 
-    getAsChannel = getAsChannelDto;
+    getAsChannel = getAsChannelDTO;
 
     canCreateNewMessageInConversation = canCreateNewMessageInConversation;
 
@@ -193,7 +193,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             return undefined;
         }
         let conversation: Conversation;
-        if (isChannelDto(this._activeConversation)) {
+        if (isChannelDTO(this._activeConversation)) {
             const channel = new Channel();
             channel.isAnnouncementChannel = this._activeConversation.isAnnouncementChannel;
             conversation = channel;
