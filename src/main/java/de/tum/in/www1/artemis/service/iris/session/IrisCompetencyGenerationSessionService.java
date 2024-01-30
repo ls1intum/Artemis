@@ -70,17 +70,19 @@ public class IrisCompetencyGenerationSessionService implements IrisButtonBasedFe
      * @return The Iris session for the course
      */
     public IrisCompetencyGenerationSession getOrCreateSession(Course course, User user) {
-        var existingSessions = irisCompetencyGenerationSessionRepository.findByCourseIdAndUserIdOrderByCreationDateDesc(course.getId(), user.getId());
+        var existingSession = irisCompetencyGenerationSessionRepository.findFirstByCourseIdAndUserIdOrderByCreationDateDesc(course.getId(), user.getId());
         // Return the newest session if there is one and it is not older than 1 hour
-        if (!existingSessions.isEmpty() && existingSessions.get(0).getCreationDate().plusHours(1).isAfter(ZonedDateTime.now())) {
-            checkHasAccessTo(user, existingSessions.get(0));
-            return existingSessions.get(0);
+        if (!(existingSession == null) && existingSession.getCreationDate().plusHours(1).isAfter(ZonedDateTime.now())) {
+            checkHasAccessTo(user, existingSession);
+            checkIsFeatureActivatedFor(existingSession);
+            return existingSession;
         }
 
         var irisSession = new IrisCompetencyGenerationSession();
         irisSession.setCourse(course);
         irisSession.setUser(user);
         checkHasAccessTo(user, irisSession);
+        checkIsFeatureActivatedFor(irisSession);
         irisSession = irisSessionRepository.save(irisSession);
         return irisSession;
     }
