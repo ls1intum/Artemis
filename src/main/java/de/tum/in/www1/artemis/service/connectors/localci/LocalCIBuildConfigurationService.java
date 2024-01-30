@@ -37,6 +37,7 @@ public class LocalCIBuildConfigurationService {
      * The build script is used to build the programming exercise in a Docker container.
      *
      * @param participation the participation for which to create the build script
+     * @return the build script
      */
     public String createBuildScript(ProgrammingExerciseParticipation participation) {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
@@ -89,23 +90,6 @@ public class LocalCIBuildConfigurationService {
 
         }
         return buildScript.toString();
-    }
-
-    /**
-     * Deletes the build script for a given programming exercise.
-     * The build script is stored in a file in the local-ci-scripts directory.
-     *
-     * @param buildJobId the id of the build job for which to delete the build script
-     */
-    public void deleteScriptFile(String buildJobId) {
-        Path scriptsPath = Path.of(localCIBuildScriptBasePath);
-        Path buildScriptPath = scriptsPath.resolve(buildJobId + "-build.sh").toAbsolutePath();
-        try {
-            Files.deleteIfExists(buildScriptPath);
-        }
-        catch (IOException e) {
-            throw new LocalCIException("Failed to delete build script file", e);
-        }
     }
 
 }

@@ -79,6 +79,9 @@ public class LocalCIResultProcessingService {
         this.resultQueue.removeItemListener(this.listenerId);
     }
 
+    /**
+     * Processes the build job results published by the build agents, notifies the user about the result and saves the result to the database.
+     */
     public void processResult() {
 
         lock.lock();

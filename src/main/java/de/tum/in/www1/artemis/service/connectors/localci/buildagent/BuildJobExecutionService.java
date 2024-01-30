@@ -37,7 +37,6 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCIBuildConfigurationService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localci.scaparser.exception.UnsupportedToolException;
@@ -61,8 +60,6 @@ public class BuildJobExecutionService {
 
     private final BuildJobContainerService buildJobContainerService;
 
-    private final LocalCIBuildConfigurationService localCIBuildConfigurationService;
-
     /**
      * Instead of creating a new XMLInputFactory for every build job, it is created once and provided as a Bean (see {@link LocalCIConfiguration#localCIXMLInputFactory()}).
      */
@@ -82,10 +79,8 @@ public class BuildJobExecutionService {
     @Value("${artemis.continuous-integration.local-cis-build-scripts-path}")
     private String localCIBuildScriptBasePath;
 
-    public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, LocalCIBuildConfigurationService localCIBuildConfigurationService,
-            XMLInputFactory localCIXMLInputFactory, GitService gitService) {
+    public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, XMLInputFactory localCIXMLInputFactory, GitService gitService) {
         this.buildJobContainerService = buildJobContainerService;
-        this.localCIBuildConfigurationService = localCIBuildConfigurationService;
         this.localCIXMLInputFactory = localCIXMLInputFactory;
         this.gitService = gitService;
     }
@@ -209,9 +204,6 @@ public class BuildJobExecutionService {
         }
         finally {
             buildJobContainerService.stopContainer(containerName);
-
-            // Delete script file from host system
-            localCIBuildConfigurationService.deleteScriptFile(buildJob.id());
 
             // Delete cloned repository
             if (buildJob.buildConfig().commitHash() != null && !isPushToTestRepository) {

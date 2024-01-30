@@ -82,6 +82,7 @@ public class BuildJobContainerService {
      *
      * @param containerName the name of the container to be created
      * @param image         the Docker image to use for the container
+     * @param buildScript   the build script to be executed in the container
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
     public CreateContainerResponse configureContainer(String containerName, String image, String buildScript) {
@@ -200,7 +201,6 @@ public class BuildJobContainerService {
      * @param solutionRepositoryPath                 the path to the solution repository
      * @param auxiliaryRepositoriesPaths             the paths to the auxiliary repositories
      * @param auxiliaryRepositoryCheckoutDirectories the names of the auxiliary repositories
-     * @param buildScriptPath                        the path to the build script
      * @param programmingLanguage                    the programming language of the exercise
      */
     public void populateBuildJobContainer(String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath, Path solutionRepositoryPath,
