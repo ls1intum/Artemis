@@ -31,6 +31,7 @@ import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise
 import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -43,6 +44,11 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     @ViewChild('editForm') editForm: NgForm;
     @ViewChild('bonusPoints') bonusPoints: NgModel;
     @ViewChild('points') points: NgModel;
+    @ViewChild('solutionPublicationDate') solutionPublicationDateField?: FormDateTimePickerComponent;
+    @ViewChild('releaseDate') releaseDateField?: FormDateTimePickerComponent;
+    @ViewChild('startDate') startDateField?: FormDateTimePickerComponent;
+    @ViewChild('dueDate') dueDateField?: FormDateTimePickerComponent;
+    @ViewChild('assessmentDueDate') assessmentDateField?: FormDateTimePickerComponent;
     @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelNameComponent: ExerciseTitleChannelNameComponent;
     @ViewChild(ExerciseUpdatePlagiarismComponent) exerciseUpdatePlagiarismComponent: ExerciseUpdatePlagiarismComponent;
     @ViewChild(TeamConfigFormGroupComponent) teamConfigFormGroupComponent: TeamConfigFormGroupComponent;
@@ -202,7 +208,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                 { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.textExercise.problemStatement },
                 {
                     title: 'artemisApp.exercise.sections.solution',
-                    valid: Boolean(this.isExamMode || !this.textExercise.exampleSolutionPublicationDateError),
+                    valid: Boolean(this.isExamMode || (!this.textExercise.exampleSolutionPublicationDateError && this.solutionPublicationDateField?.dateInput.valid)),
                     empty: !this.textExercise.exampleSolution || (!this.isExamMode && !this.textExercise.exampleSolutionPublicationDate),
                 },
                 {
@@ -211,7 +217,14 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                         this.exerciseUpdatePlagiarismComponent.formValid &&
                             this.points.valid &&
                             this.bonusPoints.valid &&
-                            (this.isExamMode || (!this.textExercise.startDateError && !this.textExercise.dueDateError && !this.textExercise.assessmentDueDateError)),
+                            (this.isExamMode ||
+                                (!this.textExercise.startDateError &&
+                                    !this.textExercise.dueDateError &&
+                                    !this.textExercise.assessmentDueDateError &&
+                                    this.releaseDateField?.dateInput.valid &&
+                                    this.startDateField?.dateInput.valid &&
+                                    this.dueDateField?.dateInput.valid &&
+                                    this.assessmentDateField?.dateInput.valid)),
                     ),
                     empty:
                         !this.isExamMode && (!this.textExercise.startDate || !this.textExercise.dueDate || !this.textExercise.assessmentDueDate || !this.textExercise.releaseDate),

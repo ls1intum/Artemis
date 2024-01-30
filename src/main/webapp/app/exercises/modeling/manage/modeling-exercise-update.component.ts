@@ -32,6 +32,7 @@ import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise
 import { NgModel } from '@angular/forms';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -45,6 +46,11 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     modelingEditor?: ModelingEditorComponent;
     @ViewChild('bonusPoints') bonusPoints: NgModel;
     @ViewChild('points') points: NgModel;
+    @ViewChild('solutionPublicationDate') solutionPublicationDateField?: FormDateTimePickerComponent;
+    @ViewChild('releaseDate') releaseDateField?: FormDateTimePickerComponent;
+    @ViewChild('startDate') startDateField?: FormDateTimePickerComponent;
+    @ViewChild('dueDate') dueDateField?: FormDateTimePickerComponent;
+    @ViewChild('assessmentDueDate') assessmentDateField?: FormDateTimePickerComponent;
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly documentationType: DocumentationType = 'Model';
@@ -213,7 +219,11 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.modelingExercise.problemStatement },
             {
                 title: 'artemisApp.exercise.sections.solution',
-                valid: Boolean(!isEmpty(this.modelingEditor?.getCurrentModel()?.elements) && (this.isExamMode || !this.modelingExercise.exampleSolutionPublicationDateError)),
+                valid: Boolean(this.isExamMode || !this.modelingExercise.exampleSolutionPublicationDateError),
+                empty:
+                    isEmpty(this.modelingEditor?.getCurrentModel()?.elements) ||
+                    (!this.isExamMode && !this.modelingExercise.exampleSolutionPublicationDate) ||
+                    !this.modelingExercise.exampleSolutionExplanation,
             },
             {
                 title: 'artemisApp.exercise.sections.grading',
@@ -221,7 +231,14 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                     this.exerciseUpdatePlagiarismComponent?.formValid &&
                         this.points.valid &&
                         this.bonusPoints.valid &&
-                        (this.isExamMode || (!this.modelingExercise.startDateError && !this.modelingExercise.dueDateError && !this.modelingExercise.assessmentDueDateError)),
+                        (this.isExamMode ||
+                            (!this.modelingExercise.startDateError &&
+                                !this.modelingExercise.dueDateError &&
+                                !this.modelingExercise.assessmentDueDateError &&
+                                this.releaseDateField?.dateInput.valid &&
+                                this.startDateField?.dateInput.valid &&
+                                this.dueDateField?.dateInput.valid &&
+                                this.assessmentDateField?.dateInput.valid)),
                 ),
                 empty:
                     !this.isExamMode &&

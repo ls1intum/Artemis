@@ -71,6 +71,7 @@
                     class="markdown-editor background-editor-color"
                     [domainCommands]="domainCommandsSampleSolution"
                     [(markdown)]="modelingExercise.exampleSolutionExplanation"
+                    (markdownChange)="calculateFormSectionStatus()"
                     [editorMode]="EditorMode.LATEX"
                 ></jhi-markdown-editor>
             </div>
@@ -78,6 +79,7 @@
         @if (!isExamMode) {
             <div class="form-group">
                 <jhi-date-time-picker
+                    #solutionPublicationDate
                     class="form-element"
                     name="exampleSolutionPublicationDate"
                     labelName="{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}"
@@ -97,6 +99,7 @@
             <div class="d-flex">
                 <div class="form-group flex-grow-1">
                     <jhi-date-time-picker
+                        #releaseDate
                         class="form-element"
                         id="pick-releaseDate"
                         labelName="{{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}"
@@ -108,6 +111,7 @@
                 </div>
                 <div class="form-group flex-grow-1 ms-3">
                     <jhi-date-time-picker
+                        #startDate
                         class="form-element"
                         id="pick-startDate"
                         name="startDate"
@@ -126,6 +130,7 @@
             <div class="d-flex">
                 <div class="form-group flex-grow-1">
                     <jhi-date-time-picker
+                        #dueDate
                         class="form-element"
                         id="pick-dueDate"
                         name="dueDate"
@@ -140,6 +145,7 @@
                 </div>
                 <div class="form-group flex-grow-1 ms-3">
                     <jhi-date-time-picker
+                        #assessmentDueDate
                         class="form-element"
                         id="pick-assessmentDueDate"
                         name="assessmentDueDate"
