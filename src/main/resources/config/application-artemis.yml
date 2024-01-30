@@ -109,3 +109,6 @@ artemis:
 
     plagiarism-checks:
         plagiarism-results-limit: 100
+
+    science:
+        enable-on-start: false # Set this to true to enable the feature toggle for the science module on startup.
