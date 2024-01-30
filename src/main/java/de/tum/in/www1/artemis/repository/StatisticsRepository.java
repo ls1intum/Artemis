@@ -187,8 +187,8 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 e.dueDate, COUNT(e.id)
             )
             FROM Exercise e
-            WHERE e.releaseDate >= :startDate
-                AND e.releaseDate <= :endDate
+            WHERE e.dueDate >= :startDate
+                AND e.dueDate <= :endDate
                 AND e.course.testCourse IS FALSE
             GROUP BY e.dueDate
             ORDER BY e.dueDate ASC
@@ -200,8 +200,8 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 e.dueDate, count(e.id)
             )
             FROM Exercise e
-            WHERE e.releaseDate >= :startDate
-                AND e.releaseDate <= :endDate
+            WHERE e.dueDate >= :startDate
+                AND e.dueDate <= :endDate
                 AND e.id IN :exerciseIds
             GROUP BY e.dueDate
             ORDER BY e.dueDate ASC
