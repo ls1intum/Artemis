@@ -118,7 +118,7 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     Optional<ProgrammingSubmission> findByResultId(@Param("resultId") Long resultId);
 
     @Query("""
-            SELECT s
+            SELECT DISTINCT s
             FROM ProgrammingSubmission s
                 LEFT JOIN FETCH s.results r
             WHERE s.participation.id = :participationId
