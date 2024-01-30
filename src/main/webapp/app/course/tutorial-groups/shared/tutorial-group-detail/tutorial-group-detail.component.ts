@@ -80,20 +80,6 @@ export class TutorialGroupDetailComponent implements OnChanges {
         const tutorialDetails: Detail[] = [
             { type: DetailType.Link, title: 'artemisApp.entities.tutorialGroup.course', data: { text: tutorialGroup.courseTitle, routerLink: ['../..'] } },
             { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.title', data: { text: tutorialGroup.title } },
-        ];
-
-        if (tutorialGroup.channel && isMessagingEnabled(this.course)) {
-            tutorialDetails.push({
-                type: DetailType.Link,
-                title: 'artemisApp.entities.tutorialGroup.channel',
-                data: {
-                    text: tutorialGroup.channel.name,
-                    routerLink: tutorialGroup.channel.isMember && ['/courses', this.course.id!, 'messages'],
-                    queryParams: { conversationId: tutorialGroup.channel.id },
-                },
-            });
-        }
-        tutorialDetails.push(
             { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.teachingAssistant', data: { text: tutorialGroup.teachingAssistantName } },
             {
                 type: DetailType.Text,
@@ -114,20 +100,36 @@ export class TutorialGroupDetailComponent implements OnChanges {
             { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.campus', data: { text: tutorialGroup.campus } },
             { type: DetailType.Markdown, title: 'artemisApp.entities.tutorialGroup.additionalInformation', data: { innerHtml: this.formattedAdditionalInformation } },
             { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.schedule', data: { text: this.getTutorialTimeSlotString() } },
-        );
+        ];
+
+        // inserting optional details in reversed order, so no index calculation is needed
         if (tutorialGroup.isOnline) {
-            tutorialDetails.push({
+            tutorialDetails.splice(12, 0, {
                 type: DetailType.Text,
                 title: 'artemisApp.forms.scheduleForm.locationInput.labelOnline',
                 data: { text: tutorialGroup.tutorialGroupSchedule?.location },
             });
         } else {
-            tutorialDetails.push({
+            tutorialDetails.splice(12, 0, {
                 type: DetailType.Text,
                 title: 'artemisApp.forms.scheduleForm.locationInput.labelOffline',
                 data: { text: tutorialGroup.tutorialGroupSchedule?.location },
             });
         }
+
+        if (tutorialGroup.channel && isMessagingEnabled(this.course)) {
+            // index 2
+            tutorialDetails.splice(2, 0, {
+                type: DetailType.Link,
+                title: 'artemisApp.entities.tutorialGroup.channel',
+                data: {
+                    text: tutorialGroup.channel.name,
+                    routerLink: tutorialGroup.channel.isMember && ['/courses', this.course.id!, 'messages'],
+                    queryParams: { conversationId: tutorialGroup.channel.id },
+                },
+            });
+        }
+
         this.tutorialDetailSections = [
             {
                 headline: 'artemisApp.pages.courseTutorialGroupDetail.sections.general',

@@ -118,55 +118,51 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         const generalDetails: Detail[] = [
             { type: DetailType.Text, title: 'artemisApp.course.title', data: { text: this.course.title } },
             { type: DetailType.Text, title: 'artemisApp.course.shortName', data: { text: this.course.shortName } },
+            {
+                type: DetailType.Link,
+                title: 'artemisApp.course.studentGroupName',
+                data: {
+                    text: `${this.course.studentGroupName} (${this.course.numberOfStudents ?? 0})`,
+                    routerLink: this.course.isAtLeastInstructor && ['/course-management', this.course.id, 'groups', 'students'],
+                },
+            },
+            {
+                type: DetailType.Link,
+                title: 'artemisApp.course.teachingAssistantGroupName',
+                data: {
+                    text: `${this.course.teachingAssistantGroupName} (${this.course.numberOfTeachingAssistants ?? 0})`,
+                    routerLink: this.course.isAtLeastInstructor && ['/course-management', this.course.id, 'groups', 'tutors'],
+                },
+            },
+            {
+                type: DetailType.Link,
+                title: 'artemisApp.course.editorGroupName',
+                data: {
+                    text: `${this.course.editorGroupName} (${this.course.numberOfEditors ?? 0})`,
+                    routerLink: this.course.isAtLeastInstructor && ['/course-management', this.course.id, 'groups', 'editors'],
+                },
+            },
+            {
+                type: DetailType.Link,
+                title: 'artemisApp.course.instructorGroupName',
+                data: {
+                    text: `${this.course.instructorGroupName} (${this.course.numberOfInstructors ?? 0})`,
+                    routerLink: this.course.isAtLeastInstructor && ['/course-management', this.course.id, 'groups', 'instructors'],
+                },
+            },
+            { type: DetailType.Date, title: 'artemisApp.course.startDate', data: { date: this.course.startDate } },
+            { type: DetailType.Date, title: 'artemisApp.course.endDate', data: { date: this.course.endDate } },
+            { type: DetailType.Text, title: 'artemisApp.course.semester', data: { text: this.course.semester } },
         ];
 
         if (this.course.organizations?.length) {
-            generalDetails.push({
+            // insert detail after shortName
+            generalDetails.splice(2, 0, {
                 type: DetailType.Text,
                 title: 'artemisApp.course.organizations',
                 data: { text: this.course.organizations.map((orga) => orga.name).join(', ') },
             });
         }
-
-        generalDetails.push(
-            ...[
-                {
-                    type: DetailType.Link,
-                    title: 'artemisApp.course.studentGroupName',
-                    data: {
-                        text: `${this.course.studentGroupName} (${this.course.numberOfStudents ?? 0})`,
-                        routerLink: this.course.isAtLeastInstructor && ['/course-management', this.course.id, 'groups', 'students'],
-                    },
-                },
-                {
-                    type: DetailType.Link,
-                    title: 'artemisApp.course.teachingAssistantGroupName',
-                    data: {
-                        text: `${this.course.teachingAssistantGroupName} (${this.course.numberOfTeachingAssistants ?? 0})`,
-                        routerLink: this.course.isAtLeastInstructor && ['/course-management', this.course.id, 'groups', 'tutors'],
-                    },
-                },
-                {
-                    type: DetailType.Link,
-                    title: 'artemisApp.course.editorGroupName',
-                    data: {
-                        text: `${this.course.editorGroupName} (${this.course.numberOfEditors ?? 0})`,
-                        routerLink: this.course.isAtLeastInstructor && ['/course-management', this.course.id, 'groups', 'editors'],
-                    },
-                },
-                {
-                    type: DetailType.Link,
-                    title: 'artemisApp.course.instructorGroupName',
-                    data: {
-                        text: `${this.course.instructorGroupName} (${this.course.numberOfInstructors ?? 0})`,
-                        routerLink: this.course.isAtLeastInstructor && ['/course-management', this.course.id, 'groups', 'instructors'],
-                    },
-                },
-                { type: DetailType.Date, title: 'artemisApp.course.startDate', data: { date: this.course.startDate } },
-                { type: DetailType.Date, title: 'artemisApp.course.endDate', data: { date: this.course.endDate } },
-                { type: DetailType.Text, title: 'artemisApp.course.semester', data: { text: this.course.semester } },
-            ],
-        );
         return {
             headline: 'artemisApp.course.detail.sections.general',
             details: generalDetails,
@@ -250,32 +246,38 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
                 title: 'artemisApp.course.testCourse.title',
                 data: { boolean: this.course.testCourse },
             },
+            ...complaintsDetails,
+            ...irisDetails,
         ];
 
-        if (this.ltiEnabled) {
-            details.push({
-                type: DetailType.Boolean,
-                title: 'artemisApp.course.onlineCourse.title',
-                data: { boolean: this.course.onlineCourse },
+        // inserting optional details in reversed order, so that no index calculation is needed
+        if (this.course.requestMoreFeedbackEnabled) {
+            // insert detail after the complaintDetails
+            details.splice(4 + complaintsDetails?.length ?? 0, 0, {
+                type: DetailType.Text,
+                title: 'artemisApp.course.maxRequestMoreFeedbackTimeDays.title',
+                data: { text: this.course.maxRequestMoreFeedbackTimeDays },
             });
         }
+
         if (this.tutorialEnabled) {
-            details.push({
+            // insert tutorial detail after lti detail
+            details.splice(4, 0, {
                 type: DetailType.Text,
                 title: 'artemisApp.forms.configurationForm.timeZoneInput.label',
                 titleHelpText: 'artemisApp.forms.configurationForm.timeZoneInput.beta',
                 data: { text: this.course.timeZone },
             });
         }
-        details.push(...complaintsDetails);
-        if (this.course.requestMoreFeedbackEnabled) {
-            details.push({
-                type: DetailType.Text,
-                title: 'artemisApp.course.maxRequestMoreFeedbackTimeDays.title',
-                data: { text: this.course.maxRequestMoreFeedbackTimeDays },
+
+        if (this.ltiEnabled) {
+            // insert lti detail after testCourse detail
+            details.splice(4, 0, {
+                type: DetailType.Boolean,
+                title: 'artemisApp.course.onlineCourse.title',
+                data: { boolean: this.course.onlineCourse },
             });
         }
-        details.push(...irisDetails);
 
         return {
             headline: 'artemisApp.course.detail.sections.mode',
@@ -284,10 +286,16 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     }
 
     getEnrollmentDetailSection(): DetailOverviewSection {
-        const enrollmentDetails: Detail[] = [{ type: DetailType.Boolean, title: 'artemisApp.course.registrationEnabled.title', data: { boolean: this.course.enrollmentEnabled } }];
+        const enrollmentDetails: Detail[] = [
+            { type: DetailType.Boolean, title: 'artemisApp.course.registrationEnabled.title', data: { boolean: this.course.enrollmentEnabled } },
+            { type: DetailType.Boolean, title: 'artemisApp.course.unenrollmentEnabled.title', data: { boolean: this.course.unenrollmentEnabled } },
+        ];
 
         if (this.course.enrollmentEnabled) {
-            enrollmentDetails.push(
+            // insert enrollment details after enrollmentEnabled detail
+            enrollmentDetails.splice(
+                1,
+                0,
                 { type: DetailType.Date, title: 'artemisApp.course.enrollmentStartDate', data: { date: this.course.enrollmentStartDate } },
                 { type: DetailType.Date, title: 'artemisApp.course.enrollmentEndDate', data: { date: this.course.enrollmentEndDate } },
                 {
@@ -298,9 +306,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             );
         }
 
-        enrollmentDetails.push({ type: DetailType.Boolean, title: 'artemisApp.course.unenrollmentEnabled.title', data: { boolean: this.course.unenrollmentEnabled } });
-
         if (this.course.unenrollmentEnabled) {
+            // insert unenrollment detail after unenrollmentEnabled detail
             enrollmentDetails.push({ type: DetailType.Date, title: 'artemisApp.course.unenrollmentEndDate', data: { date: this.course.unenrollmentEndDate } });
         }
         return {
