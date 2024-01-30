@@ -9,7 +9,7 @@
                         [isAnnouncementChannel]="conversationAsChannel.isAnnouncementChannel ?? false"
                     ></jhi-channel-icon>
                 }
-                @if (getAsGroupChat(conversation); as groupChatDto) {
+                @if (getAsGroupChat(conversation); as groupChatDTO) {
                     <jhi-group-chat-icon></jhi-group-chat-icon>
                 }
                 {{ conversationService.getConversationName(conversation) }}

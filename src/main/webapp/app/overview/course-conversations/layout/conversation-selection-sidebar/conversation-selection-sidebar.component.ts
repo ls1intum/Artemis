@@ -195,7 +195,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
             });
         this.groupChats = this.allConversations
             .filter((conversation) => isGroupChatDTO(conversation) && !conversation.isFavorite)
-            .map((groupChatDto) => groupChatDto as GroupChatDTO)
+            .map((groupChatDTO) => groupChatDTO as GroupChatDTO)
             .sort((a, b) => {
                 // sort by last message date
                 const aLastMessageDate = a.lastMessageDate ? a.lastMessageDate : a.creationDate;
