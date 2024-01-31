@@ -12,6 +12,6 @@ import java.time.ZonedDateTime;
  * @param isMuted                   true if the conversation is marked as muted
  * @param lastRead                  the last date the participant read the messages in the conversation
  */
-public record ConversationParticipantSettingsView(Long conversationParticipantId, Boolean isModerator, Boolean isFavorite, Boolean isHidden, boolean isMuted,
+public record ConversationParticipantSettingsView(Long conversationParticipantId, Boolean isModerator, Boolean isFavorite, Boolean isHidden, Boolean isMuted,
         ZonedDateTime lastRead) {
 }
