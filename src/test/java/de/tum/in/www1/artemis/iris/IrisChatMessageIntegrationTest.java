@@ -292,7 +292,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var body2 = new IrisMessageDTO(messageToSend2, new IrisClientArgumentsDTO());
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", body2, IrisMessage.class, HttpStatus.TOO_MANY_REQUESTS);
         var irisMessage = irisMessageService.saveMessage(messageToSend2, irisSession, IrisMessageSender.USER);
-        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, IrisMessage.class,
+        var body3 = new IrisClientArgumentsDTO();
+        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", body3, IrisMessage.class,
                 HttpStatus.TOO_MANY_REQUESTS);
 
         verifyWebsocketActivityWasExactly(irisSession, messageDTO(messageToSend1.getContent()), messageDTO("Hello World"));
