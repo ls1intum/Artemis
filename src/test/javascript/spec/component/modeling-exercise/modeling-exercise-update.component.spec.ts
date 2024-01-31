@@ -13,7 +13,7 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exam } from 'app/entities/exam.model';
-import dayjs from 'dayjs/esm';
+import dayjs, { Dayjs } from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -295,17 +295,21 @@ describe('ModelingExerciseUpdateComponent', () => {
 
     it('should subscribe and unsubscribe to input element changes', () => {
         const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
-        comp.modelingExercise = {} as ModelingExercise;
-        comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { formValidChanges: new Subject() } } as ExerciseTitleChannelNameComponent;
-        comp.exerciseUpdatePlagiarismComponent = { formValidChanges: new Subject() } as ExerciseUpdatePlagiarismComponent;
-        comp.teamConfigFormGroupComponent = { formValidChanges: new Subject() } as TeamConfigFormGroupComponent;
-        comp.bonusPoints = { valueChanges: new Subject() } as any as NgModel;
-        comp.points = { valueChanges: new Subject() } as any as NgModel;
+        comp.modelingExercise = { startDate: new Dayjs(), dueDate: new Dayjs(), assessmentDueDate: new Dayjs(), releaseDate: new Dayjs() } as ModelingExercise;
+        comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { formValidChanges: new Subject(), formValid: true } } as ExerciseTitleChannelNameComponent;
+        comp.exerciseUpdatePlagiarismComponent = { formValidChanges: new Subject(), formValid: true } as ExerciseUpdatePlagiarismComponent;
+        comp.teamConfigFormGroupComponent = { formValidChanges: new Subject(), formValid: true } as TeamConfigFormGroupComponent;
+        comp.bonusPoints = { valueChanges: new Subject(), valid: true } as any as NgModel;
+        comp.points = { valueChanges: new Subject(), valid: true } as any as NgModel;
 
         comp.ngAfterViewInit();
 
         (comp.points.valueChanges as Subject<boolean>).next(false);
-        expect(calculateValidSpy).toHaveBeenCalledOnce();
+        (comp.bonusPoints.valueChanges as Subject<boolean>).next(false);
+        comp.teamConfigFormGroupComponent.formValidChanges.next(false);
+        comp.exerciseUpdatePlagiarismComponent.formValidChanges.next(false);
+        comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValidChanges.next(false);
+        expect(calculateValidSpy).toHaveBeenCalledTimes(5);
 
         comp.ngOnDestroy();
 
