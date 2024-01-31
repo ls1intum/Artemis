@@ -19,7 +19,7 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     @Input() initChannelName = true;
 
     @ViewChild('field_title') field_title: NgModel;
-    @ViewChild('field_channel_name') field_channel_name: NgModel;
+    @ViewChild('field_channel_name') field_channel_name?: NgModel;
 
     @Output() titleChange = new EventEmitter<string>();
     @Output() channelNameChange = new EventEmitter<string>();
@@ -48,7 +48,7 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
 
     ngAfterViewInit() {
         this.fieldTitleSubscription = this.field_title.valueChanges?.subscribe(() => this.calculateFormValid());
-        this.fieldChannelNameSubscription = this.field_channel_name.valueChanges?.subscribe(() => this.calculateFormValid());
+        this.fieldChannelNameSubscription = this.field_channel_name?.valueChanges?.subscribe(() => this.calculateFormValid());
     }
 
     ngOnDestroy() {
@@ -57,7 +57,7 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     }
 
     calculateFormValid(): void {
-        this.formValid = Boolean(this.field_title.valid && (this.hideChannelName || this.field_channel_name.valid));
+        this.formValid = Boolean(this.field_title.valid && (this.hideChannelName || this.field_channel_name?.valid));
         this.formValidChanges.next(this.formValid);
     }
 
