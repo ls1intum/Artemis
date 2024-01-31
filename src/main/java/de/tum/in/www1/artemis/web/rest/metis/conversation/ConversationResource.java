@@ -91,7 +91,7 @@ public class ConversationResource extends ConversationManagementResource {
      */
     @PostMapping("/{courseId}/conversations/{conversationId}/favorite")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> updateIsFavorite(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isFavorite) {
+    public ResponseEntity<Void> updateIsFavorite(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam boolean isFavorite) {
         checkMessagingOrCommunicationEnabledElseThrow(courseId);
         var requestingUser = this.userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
@@ -109,7 +109,7 @@ public class ConversationResource extends ConversationManagementResource {
      */
     @PostMapping("/{courseId}/conversations/{conversationId}/hidden")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> updateIsHidden(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isHidden) {
+    public ResponseEntity<Void> updateIsHidden(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam boolean isHidden) {
         checkMessagingOrCommunicationEnabledElseThrow(courseId);
         var requestingUser = this.userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
