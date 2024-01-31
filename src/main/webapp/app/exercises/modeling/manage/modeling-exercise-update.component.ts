@@ -219,7 +219,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.modelingExercise.problemStatement },
             {
                 title: 'artemisApp.exercise.sections.solution',
-                valid: Boolean(this.isExamMode || !this.modelingExercise.exampleSolutionPublicationDateError),
+                valid: Boolean(this.isExamMode || (!this.modelingExercise.exampleSolutionPublicationDateError && this.solutionPublicationDateField?.dateInput.valid)),
                 empty:
                     isEmpty(this.modelingEditor?.getCurrentModel()?.elements) ||
                     (!this.isExamMode && !this.modelingExercise.exampleSolutionPublicationDate) ||
