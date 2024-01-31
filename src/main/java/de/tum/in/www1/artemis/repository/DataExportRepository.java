@@ -47,6 +47,7 @@ public interface DataExportRepository extends JpaRepository<DataExport, Long> {
     /**
      * Find all data exports that need to be deleted. This includes all data exports that have a creation date older than 7 days
      *
+     * @param thresholdDate the date to filter data exports, typically 7 days before today.
      * @return a set of data exports that need to be deleted
      */
     @Query("""
