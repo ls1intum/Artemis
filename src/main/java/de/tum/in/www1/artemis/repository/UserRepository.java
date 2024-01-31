@@ -129,7 +129,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 user.lastName,
                 user.langKey,
                 user.email,
-                cp.isMuted,
+                CASE WHEN cp.isMuted = true THEN true ELSE false END,
                 CASE WHEN cp.isHidden = true THEN true ELSE false END,
                 CASE WHEN ug.group = :teachingAssistantGroupName OR ug.group = :editorGroupName OR ug.group = :instructorGroupName THEN true ELSE false END
             )
