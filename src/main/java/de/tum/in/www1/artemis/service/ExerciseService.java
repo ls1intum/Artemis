@@ -753,7 +753,7 @@ public class ExerciseService {
      * @param exercises  set of exercises
      * @param competency competency to remove
      */
-    public void removeCompetency(Set<Exercise> exercises, Competency competency) {
+    public void removeCompetency(@NotNull Set<Exercise> exercises, @NotNull Competency competency) {
         exercises.forEach(exercise -> exercise.getCompetencies().remove(competency));
         exerciseRepository.saveAll(exercises);
     }

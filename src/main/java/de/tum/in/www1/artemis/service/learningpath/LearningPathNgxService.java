@@ -79,7 +79,7 @@ public class LearningPathNgxService {
 
         // generate nodes and edges for lecture units
         competency.getLectureUnits().forEach(lectureUnit -> {
-            currentCluster.add(new NgxLearningPathDTO.Node(getLectureUnitNodeId(competency.getId(), lectureUnit.getId()), NgxLearningPathDTO.NodeType.LECTURE_UNIT,
+            currentCluster.add(NgxLearningPathDTO.Node.of(getLectureUnitNodeId(competency.getId(), lectureUnit.getId()), NgxLearningPathDTO.NodeType.LECTURE_UNIT,
                     lectureUnit.getId(), lectureUnit.getLecture().getId(), lectureUnit.isCompletedFor(learningPath.getUser()), lectureUnit.getName()));
             edges.add(new NgxLearningPathDTO.Edge(getLectureUnitInEdgeId(competency.getId(), lectureUnit.getId()), startNodeId,
                     getLectureUnitNodeId(competency.getId(), lectureUnit.getId())));
@@ -283,7 +283,7 @@ public class LearningPathNgxService {
 
     private static void addNodeForLearningObject(Competency competency, LearningObject learningObject, Set<NgxLearningPathDTO.Node> nodes) {
         if (learningObject instanceof LectureUnit lectureUnit) {
-            nodes.add(new NgxLearningPathDTO.Node(getLectureUnitNodeId(competency.getId(), lectureUnit.getId()), NgxLearningPathDTO.NodeType.LECTURE_UNIT, lectureUnit.getId(),
+            nodes.add(NgxLearningPathDTO.Node.of(getLectureUnitNodeId(competency.getId(), lectureUnit.getId()), NgxLearningPathDTO.NodeType.LECTURE_UNIT, lectureUnit.getId(),
                     lectureUnit.getLecture().getId(), false, lectureUnit.getName()));
         }
         else if (learningObject instanceof Exercise exercise) {

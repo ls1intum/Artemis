@@ -12,8 +12,12 @@ public record NgxLearningPathDTO(Set<Node> nodes, Set<Edge> edges) {
 
     public record Node(String id, NodeType type, Long linkedResource, Long linkedResourceParent, boolean completed, String label) {
 
+        public static Node of(String id, NodeType type, Long linkedResource, Long linkedResourceParent, boolean completed, String label) {
+            return new Node(id, type, linkedResource, linkedResourceParent, completed, label);
+        }
+
         public static Node of(String id, NodeType type, Long linkedResource, boolean completed, String label) {
-            return new Node(id, type, linkedResource, null, completed, label);
+            return of(id, type, linkedResource, null, completed, label);
         }
 
         public static Node of(String id, NodeType type, Long linkedResource, String label) {

@@ -668,7 +668,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private static NgxLearningPathDTO.Node getNodeForLectureUnit(Competency competency, LectureUnit lectureUnit) {
-        return new NgxLearningPathDTO.Node(LearningPathNgxService.getLectureUnitNodeId(competency.getId(), lectureUnit.getId()), NgxLearningPathDTO.NodeType.LECTURE_UNIT,
+        return NgxLearningPathDTO.Node.of(LearningPathNgxService.getLectureUnitNodeId(competency.getId(), lectureUnit.getId()), NgxLearningPathDTO.NodeType.LECTURE_UNIT,
                 lectureUnit.getId(), lectureUnit.getLecture().getId(), false, lectureUnit.getName());
     }
 
