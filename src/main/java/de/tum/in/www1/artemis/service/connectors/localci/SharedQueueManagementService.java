@@ -68,7 +68,6 @@ public class SharedQueueManagementService {
     }
 
     public List<LocalCIBuildAgentInformation> getBuildAgentInformation() {
-        // Remove build agent information of offline nodes
         return buildAgentInformation.values().stream().toList();
     }
 
