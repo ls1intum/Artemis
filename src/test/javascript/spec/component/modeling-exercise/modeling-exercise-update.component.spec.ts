@@ -6,7 +6,7 @@ import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { ArtemisTestModule } from '../../test.module';
 import { ModelingExerciseUpdateComponent } from 'app/exercises/modeling/manage/modeling-exercise-update.component';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
@@ -22,6 +22,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
+import { UMLDiagramType } from '@ls1intum/apollon';
 
 describe('ModelingExerciseUpdateComponent', () => {
     let comp: ModelingExerciseUpdateComponent;
