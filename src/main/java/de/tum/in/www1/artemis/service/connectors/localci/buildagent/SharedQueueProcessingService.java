@@ -52,6 +52,8 @@ public class SharedQueueProcessingService {
 
     private final IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
 
+    private final List<LocalCIBuildJobQueueItem> recentBuildJobs = new ArrayList<>();
+
     private final AtomicInteger localProcessingJobs = new AtomicInteger(0);
 
     /**
@@ -161,10 +163,7 @@ public class SharedQueueProcessingService {
         if (buildJob != null) {
             String hazelcastMemberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
 
-            JobTimingInfo jobTimingInfo = new JobTimingInfo(buildJob.jobTimingInfo().submissionDate(), ZonedDateTime.now(), null);
-
-            LocalCIBuildJobQueueItem processingJob = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), hazelcastMemberAddress, buildJob.participationId(),
-                    buildJob.courseId(), buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), null, buildJob.repositoryInfo(), jobTimingInfo, buildJob.buildConfig());
+            LocalCIBuildJobQueueItem processingJob = new LocalCIBuildJobQueueItem(buildJob, hazelcastMemberAddress);
 
             processingJobs.put(processingJob.id(), processingJob);
             localProcessingJobs.incrementAndGet();
@@ -182,8 +181,8 @@ public class SharedQueueProcessingService {
         int numberOfCurrentBuildJobs = processingJobsOfMember.size();
         int maxNumberOfConcurrentBuilds = localCIBuildExecutorService.getMaximumPoolSize();
         boolean active = numberOfCurrentBuildJobs > 0;
-        LocalCIBuildAgentInformation info = new LocalCIBuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, active);
-        buildAgentInformation.put(memberAddress, info);
+        LocalCIBuildAgentInformation info = new LocalCIBuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, active,
+                recentBuildJobs);
     }
 
     private List<LocalCIBuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
@@ -229,6 +228,7 @@ public class SharedQueueProcessingService {
             // after processing a build job, remove it from the processing jobs
             processingJobs.remove(buildJob.id());
             localProcessingJobs.decrementAndGet();
+            addToRecentBuildJobs(buildJob);
             updateLocalBuildAgentInformation();
 
             // process next build job if node is available
@@ -256,11 +256,24 @@ public class SharedQueueProcessingService {
 
             processingJobs.remove(buildJob.id());
             localProcessingJobs.decrementAndGet();
-            updateLocalBuildAgentInformation();
+            addToRecentBuildJobs(buildJob);
 
             checkAvailabilityAndProcessNextBuild();
             return null;
         });
+    }
+
+    /**
+     * Add a build job to the list of recent build jobs. Only the last 5 build jobs are needed.
+     *
+     * @param buildJob The build job to add to the list of recent build jobs
+     */
+    private void addToRecentBuildJobs(LocalCIBuildJobQueueItem buildJob) {
+        if (recentBuildJobs.size() >= 5) {
+            recentBuildJobs.remove(0);
+        }
+        recentBuildJobs.add(buildJob);
+        updateLocalBuildAgentInformation();
     }
 
     /**
