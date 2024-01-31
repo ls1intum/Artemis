@@ -204,7 +204,8 @@ public class CourseService {
      * @return A wrapper object containing a list of all found courses and the total number of pages
      */
     public SearchResultPageDTO<Course> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
-        final var pageable = PageUtil.createCoursePageRequest(search);
+        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.COURSE);
+
         final var searchTerm = search.getSearchTerm();
         final Page<Course> coursePage;
         if (authCheckService.isAdmin(user)) {
