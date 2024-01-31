@@ -229,7 +229,7 @@ public class SharedQueueProcessingService {
             // after processing a build job, remove it from the processing jobs
             processingJobs.remove(buildJob.id());
             localProcessingJobs.decrementAndGet();
-            addToRecentBuildJobs(buildJob);
+            addToRecentBuildJobs(finishedJob);
             updateLocalBuildAgentInformation();
 
             // process next build job if node is available
@@ -257,7 +257,7 @@ public class SharedQueueProcessingService {
 
             processingJobs.remove(buildJob.id());
             localProcessingJobs.decrementAndGet();
-            addToRecentBuildJobs(buildJob);
+            addToRecentBuildJobs(job);
 
             checkAvailabilityAndProcessNextBuild();
             return null;
