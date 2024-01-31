@@ -183,6 +183,7 @@ public class SharedQueueProcessingService {
         boolean active = numberOfCurrentBuildJobs > 0;
         LocalCIBuildAgentInformation info = new LocalCIBuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, active,
                 recentBuildJobs);
+        buildAgentInformation.put(memberAddress, info);
     }
 
     private List<LocalCIBuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
