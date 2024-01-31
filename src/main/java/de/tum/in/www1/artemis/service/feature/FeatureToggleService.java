@@ -17,8 +17,8 @@ public class FeatureToggleService {
 
     private static final String TOPIC_FEATURE_TOGGLES = "/topic/management/feature-toggles";
 
-    @Value("${artemis.science.enable-on-start:false}")
-    private Boolean scienceEnabledOnStart;
+    @Value("${artemis.science.event-logging.enable:false}")
+    private boolean scienceEnabledOnStart;
 
     private final WebsocketMessagingService websocketMessagingService;
 
