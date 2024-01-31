@@ -4,6 +4,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { BuildJob } from 'app/entities/build-job.model';
 import { Subscription } from 'rxjs';
+import { faCircleCheck, faExclamationCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-build-agents',
@@ -15,6 +16,9 @@ export class BuildAgentsComponent implements OnInit, OnDestroy {
     channel: string = '/topic/admin/build-agents';
     websocketSubscription: Subscription;
     restSubscription: Subscription;
+    faCircleCheck = faCircleCheck;
+    faExclamationCircle = faExclamationCircle;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(
         private websocketService: JhiWebsocketService,
