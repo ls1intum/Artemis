@@ -12,6 +12,7 @@ export class BuildJob implements StringBaseEntity {
     public exerciseId?: number;
     public retryCount?: number;
     public priority?: number;
+    public status?: string;
     public repositoryInfo?: RepositoryInfo;
     public jobTimingInfo?: JobTimingInfo;
     public buildConfig?: BuildConfig;

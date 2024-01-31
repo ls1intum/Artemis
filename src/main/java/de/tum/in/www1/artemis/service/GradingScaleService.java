@@ -64,7 +64,7 @@ public class GradingScaleService {
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
     public SearchResultPageDTO<GradingScale> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
-        final var pageable = PageUtil.createGradingScalePageRequest(search);
+        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.GRADING_SCALE);
         final var searchTerm = search.getSearchTerm();
         final Page<GradingScale> gradingScalePage;
         if (authCheckService.isAdmin(user)) {

@@ -576,11 +576,14 @@ export class MetisService implements OnDestroy {
     private handleNewOrUpdatedMessage = (postDTO: MetisPostDTO): void => {
         const postConvId = postDTO.post.conversation?.id;
         const postIsNotFromCurrentConversation = this.currentPostContextFilter.conversationId && postConvId !== this.currentPostContextFilter.conversationId;
+        const postIsNotFromCurrentPlagiarismCase =
+            this.currentPostContextFilter.plagiarismCaseId && postDTO.post.plagiarismCase?.id !== this.currentPostContextFilter.plagiarismCaseId;
         const postIsNotFromSelectedCourseWideChannels =
-            this.currentPostContextFilter.courseWideChannelIds?.length && postConvId && !this.currentPostContextFilter.courseWideChannelIds.includes(postConvId);
-        const postIsNotCourseWide = !getAsChannelDTO(postDTO.post.conversation)?.isCourseWide;
+            this.currentPostContextFilter.courseWideChannelIds?.length !== undefined &&
+            (!getAsChannelDTO(postDTO.post.conversation)?.isCourseWide ||
+                (this.currentPostContextFilter.courseWideChannelIds.length > 0 && postConvId && !this.currentPostContextFilter.courseWideChannelIds.includes(postConvId)));
 
-        if (postIsNotFromCurrentConversation || postIsNotFromSelectedCourseWideChannels || postIsNotCourseWide) {
+        if (postIsNotFromCurrentConversation || postIsNotFromSelectedCourseWideChannels || postIsNotFromCurrentPlagiarismCase) {
             return;
         }
 
@@ -597,7 +600,7 @@ export class MetisService implements OnDestroy {
                     this.currentPostContextFilter.searchText?.length &&
                     !postDTO.post.content?.toLowerCase().includes(this.currentPostContextFilter.searchText.toLowerCase().trim());
 
-                if (!postConvId || doesNotMatchOwnFilter || doesNotMatchReactedFilter || doesNotMatchSearchString) {
+                if (doesNotMatchOwnFilter || doesNotMatchReactedFilter || doesNotMatchSearchString) {
                     break;
                 }
                 // we can add the received conversation message to the cached messages without violating the current context filter setting
