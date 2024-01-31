@@ -407,7 +407,7 @@ public class ConversationService {
      * @param requestingUser the user that wants to switch the muted status
      * @param isMuted        the new muted status
      */
-    public void setIsMuted(Long conversationId, User requestingUser, Boolean isMuted) {
+    public void setIsMuted(Long conversationId, User requestingUser, boolean isMuted) {
         var conversationParticipant = getOrCreateConversationParticipant(conversationId, requestingUser);
         conversationParticipant.setIsMuted(isMuted);
         conversationParticipantRepository.save(conversationParticipant);

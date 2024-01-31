@@ -127,7 +127,7 @@ public class ConversationResource extends ConversationManagementResource {
      */
     @PostMapping("/{courseId}/conversations/{conversationId}/muted")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> updateIsMuted(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isMuted) {
+    public ResponseEntity<Void> updateIsMuted(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam boolean isMuted) {
         checkMessagingOrCommunicationEnabledElseThrow(courseId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
