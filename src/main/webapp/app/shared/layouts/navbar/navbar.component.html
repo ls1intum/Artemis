@@ -262,6 +262,14 @@
                             </a>
                         </li>
                     }
+                    @if (localCIActive) {
+                        <li>
+                            <a class="dropdown-item" routerLink="/admin/build-agents" routerLinkActive="active" (click)="collapseNavbar()">
+                                <fa-icon [icon]="faGears" [fixedWidth]="true"></fa-icon>
+                                <span jhiTranslate="artemisApp.buildAgents.title">Build Agents</span>
+                            </a>
+                        </li>
+                    }
                     @if (openApiEnabled) {
                         <li>
                             <a class="dropdown-item" href="api.html" target="_blank" rel="noreferrer noopener" (click)="collapseNavbar()">
@@ -277,6 +285,12 @@
                                 <span jhiTranslate="global.menu.admin.iris">Iris Settings</span>
                             </a>
                         </li>
+                    }
+                    @if (ltiEnabled) {
+                        <a class="dropdown-item" routerLink="/admin/lti-configuration" routerLinkActive="active" (click)="collapseNavbar()">
+                            <fa-icon [icon]="faPuzzlePiece" [fixedWidth]="true"></fa-icon>
+                            <span jhiTranslate="global.menu.admin.lti">LTI Configuration</span>
+                        </a>
                     }
                     <!-- jhipster-needle-add-element-to-admin-menu - JHipster will add entities to the admin menu here -->
                 </ul>

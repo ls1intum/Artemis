@@ -1,22 +1,29 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.text.ParseException;
+import java.util.List;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.google.gson.JsonObject;
 import com.nimbusds.jwt.SignedJWT;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiDeepLinkingService;
-import de.tum.in.www1.artemis.service.connectors.lti.LtiDynamicRegistrationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -27,32 +34,27 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @Profile("lti")
 public class LtiResource {
 
-    private final LtiDynamicRegistrationService ltiDynamicRegistrationService;
-
     private final LtiDeepLinkingService ltiDeepLinkingService;
 
     private final CourseRepository courseRepository;
 
     private final AuthorizationCheckService authCheckService;
 
-    public static final String LOGIN_REDIRECT_CLIENT_PATH = "/lti/launch";
+    private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
 
-    public LtiResource(LtiDynamicRegistrationService ltiDynamicRegistrationService, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
-            LtiDeepLinkingService ltiDeepLinkingService) {
-        this.ltiDynamicRegistrationService = ltiDynamicRegistrationService;
+    /**
+     * Constructor for LtiResource.
+     *
+     * @param courseRepository      Repository for course data access.
+     * @param authCheckService      Service for authorization checks.
+     * @param ltiDeepLinkingService Service for LTI deep linking.
+     */
+    public LtiResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, LtiDeepLinkingService ltiDeepLinkingService,
+            LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
         this.ltiDeepLinkingService = ltiDeepLinkingService;
-    }
-
-    @PostMapping("/lti13/dynamic-registration/{courseId}")
-    @EnforceAtLeastInstructor
-    public void lti13DynamicRegistration(@PathVariable Long courseId, @RequestParam(name = "openid_configuration") String openIdConfiguration,
-            @RequestParam(name = "registration_token", required = false) String registrationToken) {
-
-        Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        ltiDynamicRegistrationService.performDynamicRegistration(course, openIdConfiguration, registrationToken);
+        this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
     }
 
     /**
@@ -85,5 +87,17 @@ public class LtiResource {
         JsonObject json = new JsonObject();
         json.addProperty("targetLinkUri", targetLink);
         return ResponseEntity.ok(json.toString());
+    }
+
+    /**
+     * GET lti platforms : Get all configured lti platforms
+     *
+     * @return ResponseEntity containing a list of all lti platforms with status 200 (OK)
+     */
+    @GetMapping("lti-platforms")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<List<LtiPlatformConfiguration>> getAllConfiguredLtiPlatforms() {
+        List<LtiPlatformConfiguration> platforms = ltiPlatformConfigurationRepository.findAll();
+        return ResponseEntity.ok(platforms);
     }
 }

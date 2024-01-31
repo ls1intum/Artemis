@@ -43,18 +43,32 @@
             "manageCompetencies": {
                 "title": "Competency Management",
                 "import": "Import competency",
+                "importAll": "Import all competencies from another course",
                 "create": "Create competency"
             },
-            "importCompetency": {
-                "title": "Import a Competency",
+            "import": {
+                "label": "Import a Competency",
                 "search": "Search for a competency:",
                 "loading": "Loading...",
                 "table": {
-                    "title": "Title",
-                    "course": "Course",
-                    "semester": "Semester",
-                    "doSelect": "Select"
+                    "TITLE": "Title",
+                    "COURSE_TITLE": "Course",
+                    "SEMESTER": "Semester",
+                    "doImport": "Select"
                 }
+            },
+            "importAll": {
+                "title": "Import all Competencies from another course",
+                "search": "Search for a course:",
+                "importRelations": "Import Relations?",
+                "table": {
+                    "TITLE": "Title",
+                    "SEMESTER": "Semester",
+                    "SHORT_NAME": "Short Name",
+                    "doImport": "Select"
+                },
+                "success": "Imported {{ noOfCompetencies }} competencies from course \"{{ courseTitle }}\".",
+                "warning": "No competencies were found for course \"{{ courseTitle }}\"."
             },
             "createCompetency": {
                 "title": "Create a new competency",
@@ -122,14 +136,14 @@
                     "select": "Select Prerequisite"
                 },
                 "import": {
-                    "title": "Add prerequisites",
+                    "label": "Add prerequisites",
                     "table": {
-                        "title": "Title",
-                        "course": "Course",
-                        "semester": "Semester",
-                        "doSelect": "Select"
+                        "TITLE": "Title",
+                        "COURSE_TITLE": "Course",
+                        "SEMESTER": "Semester",
+                        "doImport": "Select"
                     },
-                    "searchCompetency": "Search competency:",
+                    "search": "Search competency:",
                     "loading": "Loading..."
                 }
             },
