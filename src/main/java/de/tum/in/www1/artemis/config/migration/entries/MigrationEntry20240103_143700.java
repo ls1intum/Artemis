@@ -40,7 +40,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
 
     private static final int BATCH_SIZE = 100;
 
-    private static final int MAX_THREAD_COUNT = 10;
+    private static final int MAX_THREAD_COUNT = 32;
 
     private static final String ERROR_MESSAGE = "Failed to migrate programming exercises within nine hours. Aborting migration.";
 
@@ -309,6 +309,10 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         if (localVCService.isEmpty() || bitbucketService.isEmpty() || bitbucketLocalVCMigrationService.isEmpty()) {
             log.error("Failed to clone repository from Bitbucket: {}", repositoryUrl);
             return null;
+        }
+        if (repositoryUrl.startsWith(bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl().toString())) {
+            log.info("Repository {} is already in local VC", repositoryUrl);
+            return repositoryUrl;
         }
         var repositoryName = uriService.getRepositorySlugFromRepositoryUriString(repositoryUrl);
         var projectKey = exercise.getProjectKey();
