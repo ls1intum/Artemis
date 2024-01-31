@@ -50,7 +50,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     @ViewChild('dueDate') dueDateField?: FormDateTimePickerComponent;
     @ViewChild('assessmentDueDate') assessmentDateField?: FormDateTimePickerComponent;
     @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelNameComponent: ExerciseTitleChannelNameComponent;
-    @ViewChild(ExerciseUpdatePlagiarismComponent) exerciseUpdatePlagiarismComponent: ExerciseUpdatePlagiarismComponent;
+    @ViewChild(ExerciseUpdatePlagiarismComponent) exerciseUpdatePlagiarismComponent?: ExerciseUpdatePlagiarismComponent;
     @ViewChild(TeamConfigFormGroupComponent) teamConfigFormGroupComponent: TeamConfigFormGroupComponent;
 
     examCourseId?: number;
@@ -112,7 +112,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         );
         this.pointsSubscription = this.points?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.bonusPointsSubscription = this.bonusPoints?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
-        this.plagiarismSubscription = this.exerciseUpdatePlagiarismComponent.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
+        this.plagiarismSubscription = this.exerciseUpdatePlagiarismComponent?.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
         this.teamSubscription = this.teamConfigFormGroupComponent.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
     }
 
@@ -214,11 +214,11 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                 {
                     title: 'artemisApp.exercise.sections.grading',
                     valid: Boolean(
-                        this.exerciseUpdatePlagiarismComponent.formValid &&
-                            this.points.valid &&
+                        this.points.valid &&
                             this.bonusPoints.valid &&
                             (this.isExamMode ||
-                                (!this.textExercise.startDateError &&
+                                (this.exerciseUpdatePlagiarismComponent?.formValid &&
+                                    !this.textExercise.startDateError &&
                                     !this.textExercise.dueDateError &&
                                     !this.textExercise.assessmentDueDateError &&
                                     this.releaseDateField?.dateInput.valid &&

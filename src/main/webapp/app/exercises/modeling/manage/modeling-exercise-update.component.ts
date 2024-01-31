@@ -40,7 +40,7 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 })
 export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
     @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelNameComponent: ExerciseTitleChannelNameComponent;
-    @ViewChild(ExerciseUpdatePlagiarismComponent) exerciseUpdatePlagiarismComponent: ExerciseUpdatePlagiarismComponent;
+    @ViewChild(ExerciseUpdatePlagiarismComponent) exerciseUpdatePlagiarismComponent?: ExerciseUpdatePlagiarismComponent;
     @ViewChild(TeamConfigFormGroupComponent) teamConfigFormGroupComponent?: TeamConfigFormGroupComponent;
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor?: ModelingEditorComponent;
@@ -115,7 +115,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         );
         this.pointsSubscription = this.points?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.bonusPointsSubscription = this.bonusPoints?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
-        this.plagiarismSubscription = this.exerciseUpdatePlagiarismComponent.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
+        this.plagiarismSubscription = this.exerciseUpdatePlagiarismComponent?.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
         this.teamSubscription = this.teamConfigFormGroupComponent?.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
     }
 
@@ -228,11 +228,11 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             {
                 title: 'artemisApp.exercise.sections.grading',
                 valid: Boolean(
-                    this.exerciseUpdatePlagiarismComponent?.formValid &&
-                        this.points.valid &&
+                    this.points.valid &&
                         this.bonusPoints.valid &&
                         (this.isExamMode ||
-                            (!this.modelingExercise.startDateError &&
+                            (this.exerciseUpdatePlagiarismComponent?.formValid &&
+                                !this.modelingExercise.startDateError &&
                                 !this.modelingExercise.dueDateError &&
                                 !this.modelingExercise.assessmentDueDateError &&
                                 this.releaseDateField?.dateInput.valid &&
