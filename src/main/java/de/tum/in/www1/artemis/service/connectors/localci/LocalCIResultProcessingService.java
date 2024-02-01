@@ -84,77 +84,73 @@ public class LocalCIResultProcessingService {
      */
     public void processResult() {
 
+        // set lock to prevent multiple nodes from processing the same build job
         lock.lock();
-        try {
-            ResultQueueItem resultQueueItem = resultQueue.poll();
-            if (resultQueueItem == null) {
-                return;
-            }
-            log.info("Processing build job result");
+        ResultQueueItem resultQueueItem = resultQueue.poll();
+        lock.unlock();
 
-            LocalCIBuildJobQueueItem buildJob = resultQueueItem.buildJobQueueItem();
-            LocalCIBuildResult buildResult = resultQueueItem.buildResult();
-            Throwable ex = resultQueueItem.exception();
+        if (resultQueueItem == null) {
+            return;
+        }
+        log.info("Processing build job result");
 
-            SecurityUtils.setAuthorizationObject();
-            Optional<Participation> participationOptional = participationRepository.findById(buildJob.participationId());
+        LocalCIBuildJobQueueItem buildJob = resultQueueItem.buildJobQueueItem();
+        LocalCIBuildResult buildResult = resultQueueItem.buildResult();
+        Throwable ex = resultQueueItem.exception();
 
-            if (buildResult != null) {
-                if (participationOptional.isPresent()) {
-                    ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
+        SecurityUtils.setAuthorizationObject();
+        Optional<Participation> participationOptional = participationRepository.findById(buildJob.participationId());
 
-                    // In case the participation does not contain the exercise, we have to load it from the database
-                    if (participation.getProgrammingExercise() == null) {
-                        participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
-                    }
+        if (buildResult != null) {
+            if (participationOptional.isPresent()) {
+                ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
 
-                    SecurityUtils.setAuthorizationObject();
-                    Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, resultQueueItem.buildResult());
-                    if (result != null) {
-                        programmingMessagingService.notifyUserAboutNewResult(result, participation);
-                    }
-                    else {
-                        programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
-                                new BuildTriggerWebsocketError("Result could not be processed", participation.getId()));
-                    }
+                // In case the participation does not contain the exercise, we have to load it from the database
+                if (participation.getProgrammingExercise() == null) {
+                    participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
+                }
+
+                Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, resultQueueItem.buildResult());
+                if (result != null) {
+                    programmingMessagingService.notifyUserAboutNewResult(result, participation);
                 }
                 else {
-                    log.warn("Participation with id {} has been deleted. Cancelling the processing of the build result.", buildJob.participationId());
+                    programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
+                            new BuildTriggerWebsocketError("Result could not be processed", participation.getId()));
                 }
-                // save build job to database
-                saveFinishedBuildJob(buildJob, BuildJobResult.SUCCESSFUL);
             }
             else {
-                if (ex.getCause() instanceof CancellationException && ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
+                log.warn("Participation with id {} has been deleted. Cancelling the processing of the build result.", buildJob.participationId());
+            }
+            // save build job to database
+            saveFinishedBuildJob(buildJob, BuildJobResult.SUCCESSFUL);
+        }
+        else {
+            if (ex.getCause() instanceof CancellationException && ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
 
-                    if (participationOptional.isPresent()) {
-                        ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
-                        programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
-                                new BuildTriggerWebsocketError("Build job was cancelled", participation.getId()));
-                    }
+                if (participationOptional.isPresent()) {
+                    ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
+                    programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
+                            new BuildTriggerWebsocketError("Build job was cancelled", participation.getId()));
+                }
 
-                    saveFinishedBuildJob(buildJob, BuildJobResult.CANCELLED);
+                saveFinishedBuildJob(buildJob, BuildJobResult.CANCELLED);
+            }
+            else {
+                log.error("Error while processing build job: {}", buildJob, ex);
+
+                if (participationOptional.isPresent()) {
+                    ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
+                    programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
+                            new BuildTriggerWebsocketError(ex.getMessage(), participation.getId()));
                 }
                 else {
-                    log.error("Error while processing build job: {}", buildJob, ex);
-
-                    if (participationOptional.isPresent()) {
-                        ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
-                        programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
-                                new BuildTriggerWebsocketError(ex.getMessage(), participation.getId()));
-                    }
-                    else {
-                        log.warn("Participation with id {} has been deleted. Cancelling the requeueing of the build job.", buildJob.participationId());
-                    }
-
-                    saveFinishedBuildJob(buildJob, BuildJobResult.FAILED);
+                    log.warn("Participation with id {} has been deleted. Cancelling the requeueing of the build job.", buildJob.participationId());
                 }
 
+                saveFinishedBuildJob(buildJob, BuildJobResult.FAILED);
             }
 
-        }
-        finally {
-            lock.unlock();
         }
     }
 
@@ -166,23 +162,7 @@ public class LocalCIResultProcessingService {
      */
     public void saveFinishedBuildJob(LocalCIBuildJobQueueItem queueItem, BuildJobResult result) {
         try {
-            BuildJob buildJob = new BuildJob();
-            buildJob.setName(queueItem.name());
-            buildJob.setExerciseId(queueItem.exerciseId());
-            buildJob.setCourseId(queueItem.courseId());
-            buildJob.setParticipationId(queueItem.participationId());
-            buildJob.setBuildAgentAddress(queueItem.buildAgentAddress());
-            buildJob.setBuildStartDate(queueItem.jobTimingInfo().buildStartDate());
-            buildJob.setBuildCompletionDate(queueItem.jobTimingInfo().buildCompletionDate());
-            buildJob.setRepositoryType(queueItem.repositoryInfo().repositoryType());
-            buildJob.setRepositoryName(queueItem.repositoryInfo().repositoryName());
-            buildJob.setCommitHash(queueItem.buildConfig().commitHash());
-            buildJob.setRetryCount(queueItem.retryCount());
-            buildJob.setPriority(queueItem.priority());
-            buildJob.setTriggeredByPushTo(queueItem.repositoryInfo().triggeredByPushTo());
-            buildJob.setBuildJobResult(result);
-            buildJob.setDockerImage(queueItem.buildConfig().dockerImage());
-
+            BuildJob buildJob = new BuildJob(queueItem, result);
             buildJobRepository.save(buildJob);
         }
         catch (Exception e) {
@@ -194,7 +174,7 @@ public class LocalCIResultProcessingService {
 
         @Override
         public void itemAdded(ItemEvent<ResultQueueItem> event) {
-            log.info("Build job result added to queue");
+            log.debug("Result of build job with id {} added to queue", event.getItem().buildJobQueueItem().id());
             processResult();
         }
 

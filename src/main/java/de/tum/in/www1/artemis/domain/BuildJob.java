@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.BuildJobResult;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 
 @Entity
 @Table(name = "build_job")
@@ -61,6 +62,27 @@ public class BuildJob extends DomainObject {
 
     @Column(name = "docker_image")
     private String dockerImage;
+
+    public BuildJob() {
+    }
+
+    public BuildJob(LocalCIBuildJobQueueItem queueItem, BuildJobResult result) {
+        this.name = queueItem.name();
+        this.exerciseId = queueItem.exerciseId();
+        this.courseId = queueItem.courseId();
+        this.participationId = queueItem.participationId();
+        this.buildAgentAddress = queueItem.buildAgentAddress();
+        this.buildStartDate = queueItem.jobTimingInfo().buildStartDate();
+        this.buildCompletionDate = queueItem.jobTimingInfo().buildCompletionDate();
+        this.repositoryType = queueItem.repositoryInfo().repositoryType();
+        this.repositoryName = queueItem.repositoryInfo().repositoryName();
+        this.commitHash = queueItem.buildConfig().commitHash();
+        this.retryCount = queueItem.retryCount();
+        this.priority = queueItem.priority();
+        this.triggeredByPushTo = queueItem.repositoryInfo().triggeredByPushTo();
+        this.buildJobResult = result;
+        this.dockerImage = queueItem.buildConfig().dockerImage();
+    }
 
     public String getName() {
         return name;
