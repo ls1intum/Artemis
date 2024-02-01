@@ -224,6 +224,16 @@ export const courseManagementState: Routes = [
                                 },
                                 canActivate: [UserRouteAccessService],
                             },
+                            {
+                                path: 'import',
+                                //TODO: change to import component
+                                component: CreateCompetencyComponent,
+                                data: {
+                                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                                    pageTitle: 'artemisApp.competency.import.title',
+                                },
+                                canActivate: [UserRouteAccessService],
+                            },
                         ],
                     },
                     {

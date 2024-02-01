@@ -1,0 +1,19 @@
+<div class="container">
+    <h3>{{ 'artemisApp.competency.import.title' | artemisTranslate }}</h3>
+    <div>
+        <span>TODO search text</span>
+        <input />
+        <!-- TODO: search input -->
+        <button>TODO: search button</button>
+    </div>
+    <jhi-competency-search />
+    <h3>{{ 'artemisApp.competency.import.searchTableHeader' | artemisTranslate }}</h3>
+    <!-- TODO: table 1 (pageable) -->
+    <h3>{{ 'artemisApp.competency.import.selectedTableHeader' | artemisTranslate }}</h3>
+    <!-- TODO: table 2 (not pageable(?))-->
+    <!-- TODO: maybe make a re-usable footer: discuss with UX Team. -->
+    <div>
+        <jhi-button id="cancelButton" [btnType]="ButtonType.SECONDARY" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="onCancel()" [shouldSubmit]="false" />
+        <jhi-button id="saveButton" [title]="'entity.action.import'" [icon]="faSave" [disabled]="!isSubmitPossible" [isLoading]="isLoading" />
+    </div>
+</div>

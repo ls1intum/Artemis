@@ -47,8 +47,12 @@
                 "create": "Create competency"
             },
             "import": {
+                "title": "Import Competencies",
+                "searchTableHeader": "Search Competencies",
+                "selectedTableHeader": "Selected Competencies",
+                "search": "Search by competency title",
+                "old": "TODO: UNDER HERE IS OLD",
                 "label": "Import a Competency",
-                "search": "Search for a competency:",
                 "loading": "Loading...",
                 "table": {
                     "TITLE": "Title",
