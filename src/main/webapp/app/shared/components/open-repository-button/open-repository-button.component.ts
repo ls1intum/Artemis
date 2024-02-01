@@ -3,7 +3,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { Exercise } from 'app/entities/exercise.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
+import { faCodeBranch } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-open-repository-button',
@@ -29,7 +29,7 @@ export class OpenRepositoryButtonComponent {
     isPracticeMode: boolean | undefined;
 
     // Icons
-    faArrowUpRightFromSquare = faArrowUpRightFromSquare;
+    faCodeBranch = faCodeBranch;
 
     constructor(private participationService: ParticipationService) {}
 

@@ -3,7 +3,7 @@
         <button
             jhi-exercise-action-button
             [id]="'open-repository-' + exercise.id!"
-            [buttonIcon]="faArrowUpRightFromSquare"
+            [buttonIcon]="faCodeBranch"
             class="open-repository"
             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
             [buttonLabel]="'artemisApp.exerciseActions.openRepository' | artemisTranslate"
@@ -16,7 +16,7 @@
     @if (participations?.length && participations.length! > 1) {
         <button
             jhi-exercise-action-button
-            [buttonIcon]="faArrowUpRightFromSquare"
+            [buttonIcon]="faCodeBranch"
             class="open-repository"
             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
             [buttonLabel]="'artemisApp.exerciseActions.openRepository' | artemisTranslate"
@@ -32,7 +32,7 @@
         <button
             jhi-exercise-action-button
             [id]="'open-exercise-popover-' + exercise.id!"
-            [buttonIcon]="faArrowUpRightFromSquare"
+            [buttonIcon]="faCodeBranch"
             class="open-repository"
             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
             [buttonLabel]="'artemisApp.exerciseActions.openRepository' | artemisTranslate"
