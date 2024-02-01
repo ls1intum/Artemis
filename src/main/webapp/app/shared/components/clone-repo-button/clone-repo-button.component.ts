@@ -122,7 +122,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
      *
      * In case the token could not be retrieved, we prompt the student to reload the page.
      */
-    private getVSCToken() {
+    getVSCToken() {
         this.currentlyLoadingToken = true;
         this.accountService
             .identity(true)
