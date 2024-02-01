@@ -102,7 +102,7 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
                 LEFT JOIN FETCH lecture.attachments
             WHERE lecture.id = :lectureId
             """)
-    Optional<Lecture> findByIdWithLectureUnitsAndSlidesAndAttachments(@Param("lectureId") Long lectureId);
+    Optional<Lecture> findByIdWithLectureUnitsAndSlidesAndAttachments(@Param("lectureId") long lectureId);
 
     @SuppressWarnings("PMD.MethodNamingConventions")
     Page<Lecture> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
@@ -161,7 +161,7 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     }
 
     @NotNull
-    default Lecture findByIdWithLectureUnitsAndSlidesAndAttachmentsElseThrow(Long lectureId) {
+    default Lecture findByIdWithLectureUnitsAndSlidesAndAttachmentsElseThrow(long lectureId) {
         return findByIdWithLectureUnitsAndSlidesAndAttachments(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
     }
 

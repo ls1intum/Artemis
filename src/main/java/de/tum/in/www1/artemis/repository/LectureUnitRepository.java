@@ -41,7 +41,7 @@ public interface LectureUnitRepository extends JpaRepository<LectureUnit, Long> 
                 LEFT JOIN FETCH lu.slides
             WHERE lu.id = :lectureUnitId
             """)
-    Optional<LectureUnit> findWithCompetenciesAndSlidesById(@Param("lectureUnitId") Long lectureUnitId);
+    Optional<LectureUnit> findWithCompetenciesAndSlidesById(@Param("lectureUnitId") long lectureUnitId);
 
     @Query("""
             SELECT lu

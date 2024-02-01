@@ -70,7 +70,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 LEFT JOIN FETCH e.competencies
             WHERE e.id = :exerciseId
             """)
-    Optional<Exercise> findWithCompetenciesById(@Param("exerciseId") Long exerciseId);
+    Optional<Exercise> findWithCompetenciesById(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT e FROM Exercise e
@@ -444,7 +444,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     }
 
     @NotNull
-    default Exercise findWithCompetenciesByIdElseThrow(Long exerciseId) throws EntityNotFoundException {
+    default Exercise findWithCompetenciesByIdElseThrow(long exerciseId) throws EntityNotFoundException {
         return findWithCompetenciesById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
 
