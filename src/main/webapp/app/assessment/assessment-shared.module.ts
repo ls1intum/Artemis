@@ -16,6 +16,8 @@ import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/unrefere
 import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
 import { ArtemisFeedbackModule } from 'app/exercises/shared/feedback/feedback.module';
 import { AssessmentNoteComponent } from 'app/assessment/assessment-note/assessment-note.component';
+import { FeedbackContentPipe } from 'app/shared/pipes/feedback-content.pipe';
+import { QuotePipe } from 'app/shared/pipes/quote.pipe';
 
 const ENTITY_STATES = [...assessmentLocksRoute];
 
@@ -28,6 +30,8 @@ const ENTITY_STATES = [...assessmentLocksRoute];
         ArtemisMarkdownModule,
         ArtemisGradingInstructionLinkIconModule,
         ArtemisFeedbackModule,
+        FeedbackContentPipe,
+        QuotePipe,
     ],
     declarations: [
         AssessmentHeaderComponent,
