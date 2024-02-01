@@ -1,7 +1,11 @@
 {
     "artemisApp": {
         "repository": {
-            "title": "Repository"
+            "title": "Repository",
+            "commitHistory": {
+                "title": "Commit History",
+                "openCommitHistory": "Open Commit History"
+            }
         }
     }
 }

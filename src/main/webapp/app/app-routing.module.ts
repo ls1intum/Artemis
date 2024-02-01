@@ -85,6 +85,10 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./exercises/programming/participate/programming-repository.module').then((m) => m.ArtemisProgrammingRepositoryModule),
                 },
                 {
+                    path: 'courses/:courseId/programming-exercises/:exerciseId/repository/:participation/commit-history',
+                    loadChildren: () => import('./exercises/programming/participate/programming-repository.module').then((m) => m.ArtemisProgrammingRepositoryModule),
+                },
+                {
                     path: 'courses/:courseId/modeling-exercises/:exerciseId',
                     loadChildren: () => import('./exercises/modeling/participate/modeling-participation.module').then((m) => m.ArtemisModelingParticipationModule),
                 },

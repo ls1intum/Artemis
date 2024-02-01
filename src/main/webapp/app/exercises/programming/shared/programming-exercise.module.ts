@@ -14,7 +14,6 @@ import { ProgrammingExerciseResetButtonDirective } from 'app/exercises/programmi
 import { ProgrammingExerciseResetDialogComponent } from 'app/exercises/programming/manage/reset/programming-exercise-reset-dialog.component';
 import { ProgrammingExerciseCreateButtonsComponent } from 'app/exercises/programming/manage/programming-exercise-create-buttons.component';
 import { CommitsInfoComponent } from './commits-info/commits-info.component';
-import { CommitsInfoDropdownComponent } from 'app/exercises/programming/shared/commits-info/commits-info-dropdown.component';
 
 @NgModule({
     imports: [
@@ -35,7 +34,6 @@ import { CommitsInfoDropdownComponent } from 'app/exercises/programming/shared/c
         ProgrammingExerciseResetButtonDirective,
         ProgrammingExerciseResetDialogComponent,
         CommitsInfoComponent,
-        CommitsInfoDropdownComponent,
     ],
     exports: [
         ProgrammingExerciseComponent,
@@ -43,7 +41,6 @@ import { CommitsInfoDropdownComponent } from 'app/exercises/programming/shared/c
         OrionProgrammingExerciseComponent,
         ProgrammingExerciseResetButtonDirective,
         CommitsInfoComponent,
-        CommitsInfoDropdownComponent,
     ],
 })
 export class ArtemisProgrammingExerciseModule {}

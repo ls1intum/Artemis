@@ -1,21 +1,33 @@
 <ng-container>
     @if (!loadingParticipation && !participationCouldNotBeFetched) {
-        <jhi-commits-info-dropdown
-            [submissions]="submissions"
-            [participationId]="participation?.id"
-            [exerciseProjectKey]="exercise?.projectKey"
-            (commitSelected)="onCommitSelected($event)"
-        >
-        </jhi-commits-info-dropdown>
+        <div style="display: flex; justify-content: space-between; align-items: center">
+            <h1>Source</h1>
+            <div style="text-align: right">
+                <button
+                    jhi-exercise-action-button
+                    [id]="'commit-history' + participation.id!"
+                    [buttonIcon]="faClockRotateLeft"
+                    class="commit-history"
+                    [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                    [buttonLabel]="'artemisApp.repository.commitHistory.openCommitHistory' | artemisTranslate"
+                    [buttonLoading]="!!exercise.loading"
+                    [smallButton]="false"
+                    [hideLabelMobile]="false"
+                    [routerLink]="routeCommitHistory"
+                ></button>
+                @if (exercise?.allowOfflineIde) {
+                    <jhi-clone-repo-button [loading]="!!exercise.loading" [smallButtons]="false" [participations]="[participation]" [exercise]="exercise"> </jhi-clone-repo-button>
+                }
+                <jhi-result [result]="result" [showUngradedResults]="true" [showBadge]="true" [exercise]="exercise" style="padding-left: 20px"> </jhi-result>
+            </div>
+        </div>
         <jhi-code-editor-container
             [editable]="false"
+            [buildable]="false"
             [participation]="participation"
             [showEditorInstructions]="showEditorInstructions"
             [isTutorAssessment]="true"
-            [highlightFileChanges]="true"
-            [highlightDifferences]="highlightDifferences"
             [course]="getCourseFromExercise(exercise)"
-            (onFileLoad)="onFileLoad($event)"
         >
             <jhi-programming-exercise-instructions
                 editorSidebar
