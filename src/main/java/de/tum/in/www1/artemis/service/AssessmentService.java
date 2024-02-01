@@ -212,11 +212,7 @@ public class AssessmentService {
      * This function is used for submitting a manual assessment/result. It gets the result that belongs to the given resultId, updates the completion date, sets the assessment type
      * to MANUAL and sets the assessor attribute. Afterward, it saves the update result in the database again.
      * <p>
-     * <<<<<<< Updated upstream
      * For programming exercises we use a different approach see {@link ResultRepository#submitManualAssessment(Result)}.
-     * =======
-     * For programming exercises we use a different approach see {@link ResultRepository#submitManualAssessment)})}
-     * >>>>>>> Stashed changes
      *
      * @param resultId the id of the result that should be submitted
      * @param exercise the exercise the assessment belongs to
