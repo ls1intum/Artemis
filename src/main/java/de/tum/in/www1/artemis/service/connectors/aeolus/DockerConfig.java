@@ -46,4 +46,19 @@ public class DockerConfig {
     public void setParameters(List<String> parameters) {
         this.parameters = parameters;
     }
+
+    /**
+     * Returns the full image name including the tag
+     *
+     * @return the full image name including the tag
+     */
+    public String getFullImageName() {
+        if (tag == null) {
+            if (!image.contains(":")) {
+                return image + ":" + "latest";
+            }
+            return image;
+        }
+        return image + ":" + tag;
+    }
 }
