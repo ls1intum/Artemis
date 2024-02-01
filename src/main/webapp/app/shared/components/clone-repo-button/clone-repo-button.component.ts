@@ -13,6 +13,8 @@ import { PROFILE_LOCALVC } from 'app/app.constants';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { faDownload, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/core/util/alert.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { from, zip } from 'rxjs';
 
 @Component({
     selector: 'jhi-clone-repo-button',
@@ -64,31 +66,38 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     ) {}
 
     ngOnInit() {
-        this.accountService.identity().then((user) => {
-            this.user = user!;
-        });
+        const userObservable = from(this.accountService.identity());
+        const profileInfoObservable = this.profileService.getProfileInfo();
+        const userProfileInfoZip = zip(userObservable, profileInfoObservable);
+        userProfileInfoZip.subscribe((userAndProfileInfo) => {
+            const user = userAndProfileInfo[0];
+            const profileInfo = userAndProfileInfo[1];
 
-        // Get ssh information from the user
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.sshKeysUrl = profileInfo.sshKeysURL;
-            this.sshTemplateUrl = profileInfo.sshCloneURLTemplate;
-            this.sshEnabled = !!this.sshTemplateUrl;
-            if (profileInfo.versionControlUrl) {
-                this.versionControlUrl = profileInfo.versionControlUrl;
+            this.user = user!;
+            this.setProfileInfo(profileInfo);
+            if (this.versionControlAccessTokenRequired && !this.user.vcsAccessToken) {
+                this.getVSCToken();
             }
-            this.versionControlAccessTokenRequired = profileInfo.versionControlAccessToken;
-            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
 
         this.useSsh = this.localStorage.retrieve('useSsh') || false;
         this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
-
-        this.getVSCTokenIfNotPresent();
     }
 
     public setUseSSH(useSsh: boolean) {
         this.useSsh = useSsh;
         this.localStorage.store('useSsh', this.useSsh);
+    }
+
+    public setProfileInfo(profileInfo: ProfileInfo) {
+        this.sshKeysUrl = profileInfo.sshKeysURL;
+        this.sshTemplateUrl = profileInfo.sshCloneURLTemplate;
+        this.sshEnabled = !!this.sshTemplateUrl;
+        if (profileInfo.versionControlUrl) {
+            this.versionControlUrl = profileInfo.versionControlUrl;
+        }
+        this.versionControlAccessTokenRequired = profileInfo.versionControlAccessToken;
+        this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
     }
 
     ngOnChanges() {
@@ -113,22 +122,20 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
      *
      * In case the token could not be retrieved, we prompt the student to reload the page.
      */
-    getVSCTokenIfNotPresent() {
-        if (this.versionControlAccessTokenRequired && !this.user.vcsAccessToken) {
-            this.currentlyLoadingToken = true;
-            this.accountService
-                .identity(true)
-                .then((user) => {
-                    this.user = user ?? this.user;
-                    this.currentlyLoadingToken = false;
-                    if (!this.user.vcsAccessToken) {
-                        this.alertService.error('artemisApp.exerciseActions.fetchVCSAccessTokenError');
-                    }
-                })
-                .catch(() => {
+    private getVSCToken() {
+        this.currentlyLoadingToken = true;
+        this.accountService
+            .identity(true)
+            .then((user) => {
+                this.user = user ?? this.user;
+                this.currentlyLoadingToken = false;
+                if (!this.user.vcsAccessToken) {
                     this.alertService.error('artemisApp.exerciseActions.fetchVCSAccessTokenError');
-                });
-        }
+                }
+            })
+            .catch(() => {
+                this.alertService.error('artemisApp.exerciseActions.fetchVCSAccessTokenError');
+            });
     }
 
     private getRepositoryUri() {
