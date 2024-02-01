@@ -42,7 +42,7 @@ describe('ScienceService', () => {
 
     it('should send a request to the server to log event', () => {
         const type = ScienceEventType.LECTURE__OPEN;
-        scienceService.logEvent(type).subscribe();
+        scienceService.logEvent(type);
         const event = new ScienceEventDTO();
         event.type = type;
         expect(putStub).toHaveBeenCalledExactlyOnceWith('api/science', event, { observe: 'response' });
