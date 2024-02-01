@@ -27,7 +27,7 @@ public class MigrationEntry20240104_195600 extends MigrationEntry {
 
     private static final int BATCH_SIZE = 100;
 
-    private static final int MAX_THREAD_COUNT = 1;
+    private static final int MAX_THREAD_COUNT = 10;
 
     private static final String ERROR_MESSAGE = "Failed to migrate programming exercises within nine hours. Aborting migration.";
 
@@ -35,7 +35,7 @@ public class MigrationEntry20240104_195600 extends MigrationEntry {
 
     private static final List<String> MIGRATABLE_PROFILES = List.of("bamboo", "localci", "aeolus");
 
-    private final Logger log = LoggerFactory.getLogger(MigrationEntry20240104_195600.class);
+    private static final Logger log = LoggerFactory.getLogger(MigrationEntry20240104_195600.class);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
