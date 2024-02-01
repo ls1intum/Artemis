@@ -44,8 +44,8 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     @ViewChild(TeamConfigFormGroupComponent) teamConfigFormGroupComponent?: TeamConfigFormGroupComponent;
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor?: ModelingEditorComponent;
-    @ViewChild('bonusPoints') bonusPoints: NgModel;
-    @ViewChild('points') points: NgModel;
+    @ViewChild('bonusPoints') bonusPoints?: NgModel;
+    @ViewChild('points') points?: NgModel;
     @ViewChild('solutionPublicationDate') solutionPublicationDateField?: FormDateTimePickerComponent;
     @ViewChild('releaseDate') releaseDateField?: FormDateTimePickerComponent;
     @ViewChild('startDate') startDateField?: FormDateTimePickerComponent;
@@ -228,8 +228,8 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             {
                 title: 'artemisApp.exercise.sections.grading',
                 valid: Boolean(
-                    this.points.valid &&
-                        this.bonusPoints.valid &&
+                    this.points?.valid &&
+                        this.bonusPoints?.valid &&
                         (this.isExamMode ||
                             (this.exerciseUpdatePlagiarismComponent?.formValid &&
                                 !this.modelingExercise.startDateError &&
