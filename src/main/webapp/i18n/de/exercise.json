@@ -242,12 +242,12 @@
                     "customMax": "Die Bonuspunkte dürfen höchstens 9999 betragen!"
                 },
                 "minTeamSize": {
-                    "min": "Die untere Schranke für die minimale Teamgröße ist eine Person.",
-                    "max": "Die obere Schranke für die minimale Teamgröße sind 99 Personen."
+                    "min": "Die minimale Teamgröße darf nicht weniger als eine Person betragen.",
+                    "max": "Die minimale Teamgröße darf nicht mehr als 99 Personen betragen."
                 },
                 "maxTeamSize": {
-                    "min": "Die untere Schranke für die maximale Teamgröße ist eine Person.",
-                    "max": "Die obere Schranke für die maximale Teamgröße sind 99 Personen."
+                    "min": "Die maximale Teamgröße darf nicht weniger als eine Person betragen.",
+                    "max": "Die maximale Teamgröße darf nicht mehr als 99 Personen betragen."
                 },
                 "maxPenalty": {
                     "pattern": "Der maximale prozentuale Punktabzug muss zwischen 0 und 100 liegen!"
