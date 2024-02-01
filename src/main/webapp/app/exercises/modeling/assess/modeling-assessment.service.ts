@@ -8,6 +8,7 @@ import { map } from 'rxjs/operators';
 import { convertDateFromServer } from 'app/utils/date.utils';
 
 export type EntityResponseType = HttpResponse<Result>;
+type ModelingAssessmentDTO = { feedbacks: Feedback[]; assessmentNote?: string };
 
 @Injectable({ providedIn: 'root' })
 export class ModelingAssessmentService {
@@ -17,13 +18,14 @@ export class ModelingAssessmentService {
 
     constructor(private http: HttpClient) {}
 
-    saveAssessment(resultId: number, feedbacks: Feedback[], submissionId: number, submit = false): Observable<Result> {
+    saveAssessment(resultId: number, feedbacks: Feedback[], submissionId: number, assessmentNote?: string, submit = false): Observable<Result> {
         let params = new HttpParams();
         if (submit) {
             params = params.set('submit', 'true');
         }
+        const body: ModelingAssessmentDTO = { feedbacks, assessmentNote };
         const url = `${this.resourceUrl}/modeling-submissions/${submissionId}/result/${resultId}/assessment`;
-        return this.http.put<Result>(url, feedbacks, { params }).pipe(map((res: Result) => this.convertResult(res)));
+        return this.http.put<Result>(url, body, { params }).pipe(map((res: Result) => this.convertResult(res)));
     }
 
     saveExampleAssessment(feedbacks: Feedback[], exampleSubmissionId: number): Observable<Result> {

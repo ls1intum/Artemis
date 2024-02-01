@@ -347,7 +347,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      */
     save(): void {
         this.saveBusy = true;
-        this.assessmentsService.save(this.participation!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback, this.result?.assessmentNote?.note).subscribe({
+        this.assessmentsService.save(this.participation!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback, this.result!.assessmentNote?.note).subscribe({
             next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
             error: (error: HttpErrorResponse) => this.handleError(error),
         });
