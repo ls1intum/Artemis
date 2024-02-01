@@ -89,7 +89,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
         this.localStorage.store('useSsh', this.useSsh);
     }
 
-    public setProfileInfo(profileInfo: ProfileInfo) {
+    private setProfileInfo(profileInfo: ProfileInfo) {
         this.sshKeysUrl = profileInfo.sshKeysURL;
         this.sshTemplateUrl = profileInfo.sshCloneURLTemplate;
         this.sshEnabled = !!this.sshTemplateUrl;
