@@ -350,7 +350,7 @@ describe('CloneRepoButtonComponent', () => {
         component.user.vcsAccessToken = undefined;
         component.versionControlAccessTokenRequired = true;
         expect(component.currentlyLoadingToken).toBeFalse();
-        component.getVSCToken();
+        component.getVCSAccessToken();
         expect(component.currentlyLoadingToken).toBeTrue();
         tick();
         expect(component.currentlyLoadingToken).toBeFalse();
@@ -359,7 +359,7 @@ describe('CloneRepoButtonComponent', () => {
     it('should retrieve user from the server when VCS access token is missing', fakeAsync(() => {
         component.user.vcsAccessToken = undefined;
         component.versionControlAccessTokenRequired = true;
-        component.getVSCToken();
+        component.getVCSAccessToken();
         expect(accountServiceIdentityStub).toHaveBeenCalledWith(true);
     }));
 
@@ -367,7 +367,7 @@ describe('CloneRepoButtonComponent', () => {
         component.user.vcsAccessToken = undefined;
         component.versionControlAccessTokenRequired = true;
         accountServiceIdentityStub.mockReturnValue(Promise.resolve(undefined));
-        component.getVSCToken();
+        component.getVCSAccessToken();
         tick();
         expect(alertServiceErrorStub).toHaveBeenCalledWith('artemisApp.exerciseActions.fetchVCSAccessTokenError');
     }));
@@ -378,7 +378,7 @@ describe('CloneRepoButtonComponent', () => {
 
         // new User() doesn't contain access token
         accountServiceIdentityStub.mockReturnValue(Promise.resolve(new User()));
-        component.getVSCToken();
+        component.getVCSAccessToken();
         tick();
         expect(alertServiceErrorStub).toHaveBeenCalledWith('artemisApp.exerciseActions.fetchVCSAccessTokenError');
     }));

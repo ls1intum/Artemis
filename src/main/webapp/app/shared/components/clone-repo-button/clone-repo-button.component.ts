@@ -76,7 +76,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
             this.user = user!;
             this.setProfileInfo(profileInfo);
             if (this.versionControlAccessTokenRequired && !this.user.vcsAccessToken) {
-                this.getVSCToken();
+                this.getVCSAccessToken();
             }
         });
 
@@ -122,7 +122,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
      *
      * In case the token could not be retrieved, we prompt the student to reload the page.
      */
-    getVSCToken() {
+    getVCSAccessToken() {
         this.currentlyLoadingToken = true;
         this.accountService
             .identity(true)
