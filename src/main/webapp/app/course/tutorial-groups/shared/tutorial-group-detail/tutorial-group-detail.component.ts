@@ -118,7 +118,6 @@ export class TutorialGroupDetailComponent implements OnChanges {
         }
 
         if (tutorialGroup.channel && isMessagingEnabled(this.course)) {
-            // index 2
             tutorialDetails.splice(2, 0, {
                 type: DetailType.Link,
                 title: 'artemisApp.entities.tutorialGroup.channel',
