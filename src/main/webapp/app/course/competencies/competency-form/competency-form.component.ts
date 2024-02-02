@@ -133,7 +133,7 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
     }
 
     get taxonomyControl() {
-        return this.form.get('taxonomy') as FormControl<CompetencyTaxonomy | undefined>;
+        return this.form.get('taxonomy') as FormControl;
     }
 
     /**

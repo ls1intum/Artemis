@@ -15,7 +15,7 @@ export class TaxonomySelectComponent {
     /**
      * Form control for the selected taxonomy
      */
-    @Input() form: FormControl<CompetencyTaxonomy | undefined>;
+    @Input() form: FormControl;
 
     protected readonly competencyTaxonomy = CompetencyTaxonomy;
 
