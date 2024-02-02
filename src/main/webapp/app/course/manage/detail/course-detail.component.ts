@@ -301,7 +301,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
                 {
                     type: DetailType.Markdown,
                     title: 'artemisApp.course.registrationConfirmationMessage',
-                    data: { innerHtm: this.markdownService.safeHtmlForMarkdown(this.course.enrollmentConfirmationMessage) },
+                    data: { innerHtml: this.markdownService.safeHtmlForMarkdown(this.course.enrollmentConfirmationMessage) },
                 },
             );
         }
