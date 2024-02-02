@@ -22,20 +22,20 @@
             "masteredStudents": "Mastered students",
             "mastered": "Mastered",
             "taxonomies": {
-                "remember": "Remember",
-                "understand": "Understand",
-                "apply": "Apply",
-                "analyze": "Analyze",
-                "evaluate": "Evaluate",
-                "create": "Create"
+                "REMEMBER": "Remember",
+                "UNDERSTAND": "Understand",
+                "APPLY": "Apply",
+                "ANALYZE": "Analyze",
+                "EVALUATE": "Evaluate",
+                "CREATE": "Create"
             },
             "keywords": {
-                "remember": "define, duplicate, list, note, repeat, recognize, reproduce, name",
-                "understand": "classify, describe, discuss, explain, identify, locate, recognize, report, restate, select, translate",
-                "apply": "execute, implement, solve, use, demonstrate, illustrate, operate, schedule, show, sketch",
-                "analyze": "differentiate, examine, experiment, question, relate, test, break down, contrast, distinguish",
-                "evaluate": "appraise, argue, choose, defend, judge, select, support, value, critique",
-                "create": "design, formulate, hypothesize, invent, plan, propose, write, assemble, construct, develop"
+                "REMEMBER": "define, duplicate, list, note, repeat, recognize, reproduce, name",
+                "UNDERSTAND": "classify, describe, discuss, explain, identify, locate, recognize, report, restate, select, translate",
+                "APPLY": "execute, implement, solve, use, demonstrate, illustrate, operate, schedule, show, sketch",
+                "ANALYZE": "differentiate, examine, experiment, question, relate, test, break down, contrast, distinguish",
+                "EVALUATE": "appraise, argue, choose, defend, judge, select, support, value, critique",
+                "CREATE": "design, formulate, hypothesize, invent, plan, propose, write, assemble, construct, develop"
             },
             "table": {
                 "panelHeader": "Your advancement"

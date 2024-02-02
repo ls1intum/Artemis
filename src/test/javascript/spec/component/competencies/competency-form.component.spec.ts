@@ -139,7 +139,7 @@ describe('CompetencyFormComponent', () => {
 
         expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledTimes(12);
-        expect(competencyFormComponent.suggestedTaxonomies).toEqual(['artemisApp.competency.taxonomies.remember', 'artemisApp.competency.taxonomies.understand']);
+        expect(competencyFormComponent.suggestedTaxonomies).toEqual(['artemisApp.competency.taxonomies.REMEMBER', 'artemisApp.competency.taxonomies.UNDERSTAND']);
     });
 
     it('should suggest taxonomy when description changes', () => {
@@ -151,15 +151,15 @@ describe('CompetencyFormComponent', () => {
 
         expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledTimes(12);
-        expect(competencyFormComponent.suggestedTaxonomies).toEqual(['artemisApp.competency.taxonomies.remember', 'artemisApp.competency.taxonomies.understand']);
+        expect(competencyFormComponent.suggestedTaxonomies).toEqual(['artemisApp.competency.taxonomies.REMEMBER', 'artemisApp.competency.taxonomies.UNDERSTAND']);
     });
 
     function createTranslateSpy() {
         return jest.spyOn(translateService, 'instant').mockImplementation((key) => {
             switch (key) {
-                case 'artemisApp.competency.keywords.remember':
+                case 'artemisApp.competency.keywords.REMEMBER':
                     return 'Something';
-                case 'artemisApp.competency.keywords.understand':
+                case 'artemisApp.competency.keywords.UNDERSTAN':
                     return 'invent, build';
                 default:
                     return key;
