@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
@@ -29,7 +28,6 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
-import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildPlanService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildScriptGenerationService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusRepository;
@@ -59,9 +57,6 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
     @Autowired
     AeolusBuildScriptGenerationService aeolusBuildScriptGenerationService;
-
-    @SpyBean
-    ResourceLoaderService resourceLoaderService;
 
     /**
      * Initializes aeolusRequestMockProvider
