@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
+import org.hibernate.Hibernate;
 import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,7 @@ import com.hazelcast.scheduledexecutor.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -75,9 +77,12 @@ public class QuizScheduleService {
 
     private final Optional<LtiNewResultService> ltiNewResultService;
 
+    private final TeamRepository teamRepository;
+
     public QuizScheduleService(WebsocketMessagingService websocketMessagingService, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
             QuizSubmissionRepository quizSubmissionRepository, HazelcastInstance hazelcastInstance, QuizExerciseRepository quizExerciseRepository,
-            QuizMessagingService quizMessagingService, QuizStatisticService quizStatisticService, Optional<LtiNewResultService> ltiNewResultService) {
+            QuizMessagingService quizMessagingService, QuizStatisticService quizStatisticService, Optional<LtiNewResultService> ltiNewResultService,
+            TeamRepository teamRepository) {
         this.websocketMessagingService = websocketMessagingService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.userRepository = userRepository;
@@ -89,6 +94,7 @@ public class QuizScheduleService {
         this.threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_QUIZ_SCHEDULER);
         this.quizCache = new QuizCache(hazelcastInstance);
         this.ltiNewResultService = ltiNewResultService;
+        this.teamRepository = teamRepository;
     }
 
     /**
@@ -495,9 +501,10 @@ public class QuizScheduleService {
                             log.error("Participation is missing student (or student is missing username): {}", participation);
                         }
                         else {
-                            if(ltiNewResultService.isPresent()) {
-                                ltiNewResultService.get().onNewResult(participation);
+                            if (participation.getParticipant() instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
+                                participation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
                             }
+                            ltiNewResultService.ifPresent(newResultService->newResultService.onNewResult(participation));
                            sendQuizResultToUser(quizExerciseId, participation);
                            cachedQuiz.getParticipations().remove(entry.getKey());
                         }

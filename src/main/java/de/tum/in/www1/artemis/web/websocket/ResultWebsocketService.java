@@ -7,13 +7,16 @@ import java.time.ZonedDateTime;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
@@ -34,12 +37,15 @@ public class ResultWebsocketService {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final TeamRepository teamRepository;
+
     public ResultWebsocketService(WebsocketMessagingService websocketMessagingService, ExamDateService examDateService, ExerciseDateService exerciseDateService,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, TeamRepository teamRepository) {
         this.websocketMessagingService = websocketMessagingService;
         this.examDateService = examDateService;
         this.exerciseDateService = exerciseDateService;
         this.authCheckService = authCheckService;
+        this.teamRepository = teamRepository;
     }
 
     /**
@@ -52,6 +58,9 @@ public class ResultWebsocketService {
      */
     public void broadcastNewResult(Participation participation, Result result) {
         if (participation instanceof StudentParticipation studentParticipation) {
+            if (studentParticipation.getParticipant() instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
+                studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
+            }
             broadcastNewResultToParticipants(studentParticipation, result);
         }
 

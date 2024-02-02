@@ -306,7 +306,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     private void scheduleParticipationTasks(final ProgrammingExercise exercise, final ZonedDateTime now) {
         final boolean isScoreUpdateNeeded = isScoreUpdateAfterDueDateNeeded(exercise);
 
-        final List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationRepository.findByExerciseId(exercise.getId());
+        final List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationRepository
+                .findWithSubmissionsAndTeamStudentsByExerciseId(exercise.getId());
         for (final var participation : participations) {
             if (exercise.getDueDate() == null || participation.getIndividualDueDate() == null) {
                 scheduleService.cancelAllScheduledParticipationTasks(exercise.getId(), participation.getId());

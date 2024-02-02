@@ -601,7 +601,7 @@ public class ParticipationService {
     public List<StudentParticipation> findByExerciseAndStudentId(Exercise exercise, Long studentId) {
         if (exercise.isTeamMode()) {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), studentId);
-            return optionalTeam.map(team -> studentParticipationRepository.findAllByExerciseIdAndTeamId(exercise.getId(), team.getId())).orElse(List.of());
+            return optionalTeam.map(team -> studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamId(exercise.getId(), team.getId())).orElse(List.of());
         }
         return studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), studentId);
     }

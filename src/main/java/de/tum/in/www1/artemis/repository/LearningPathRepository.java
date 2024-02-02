@@ -83,7 +83,8 @@ public interface LearningPathRepository extends JpaRepository<LearningPath, Long
                     ON exercises.id = studentParticipations.exercise.id AND studentParticipations.student.id = learningPath.user.id
             WHERE learningPath.id = :learningPathId
             """)
-    @EntityGraph(type = LOAD, attributePaths = { "competencies.userProgress", "competencies.lectureUnits.completedUsers", "competencies.exercises.studentParticipations" })
+    @EntityGraph(type = LOAD, attributePaths = { "competencies.userProgress", "competencies.lectureUnits.completedUsers",
+            "competencies.exercises.studentParticipations.team.students" })
     Optional<LearningPath> findWithEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsersById(@Param("learningPathId") long learningPathId);
 
     default LearningPath findWithEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsersByIdElseThrow(long learningPathId) {

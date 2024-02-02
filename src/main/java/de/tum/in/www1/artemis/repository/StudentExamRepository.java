@@ -171,6 +171,8 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
                 LEFT JOIN FETCH se.exam exam
                 LEFT JOIN FETCH se.exercises e
                 LEFT JOIN FETCH e.studentParticipations sp
+                LEFT JOIN FETCH sp.team t
+                LEFT JOIN FETCH t.students
                 LEFT JOIN FETCH sp.submissions s
                 LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH r.feedbacks f

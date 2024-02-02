@@ -116,7 +116,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param resultId the id of the result to load from the database
      * @return an optional containing the result with submission, feedback list and assessor, or an empty optional if no result could be found for the given id
      */
-    @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.results", "feedbacks", "assessor" })
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.results", "feedbacks", "assessor", "participation.team.students" })
     Optional<Result> findWithEagerSubmissionAndFeedbackAndAssessorById(Long resultId);
 
     /**
@@ -141,7 +141,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param resultId the id of the result to load from the database
      * @return an optional containing the result with submission and feedback list, or an empty optional if no result could be found for the given id
      */
-    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "participation.team.students" })
     Optional<Result> findWithEagerSubmissionAndFeedbackById(long resultId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "feedbacks.testCase" })
@@ -552,11 +552,12 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         // Set score according to maxPoints, to establish results with score > 100%
         result.setScore(totalPoints, maxPoints, exercise.getCourseViaExerciseGroupOrCourseMember());
 
-        // Workaround to prevent the assessor turning into a proxy object after saving
-        var assessor = result.getAssessor();
-        result = save(result);
-        result.setAssessor(assessor);
-        return result;
+        Result savedResult = save(result);
+        // Workaround to prevent the assessor or participant turning into a proxy object after saving
+        savedResult.setAssessor(result.getAssessor());
+        // Workaround to prevent the team students of a student participation turning into a proxy object after saving
+        savedResult.setParticipation(result.getParticipation());
+        return savedResult;
     }
 
     /**

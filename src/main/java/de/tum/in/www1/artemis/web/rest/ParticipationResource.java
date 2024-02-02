@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -335,8 +336,10 @@ public class ParticipationResource {
         // The participations due date is a flag showing that a feedback request is sent
         participation.setIndividualDueDate(currentDate);
 
-        participation = programmingExerciseStudentParticipationRepository.save(participation);
-        programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, participation);
+        var savedParticipation = programmingExerciseStudentParticipationRepository.save(participation);
+        // Circumvent lazy loading after save
+        savedParticipation.setParticipant(participation.getParticipant());
+        programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, savedParticipation);
 
         // Set all past results to automatic to reset earlier feedback request assessments
         var participationResults = studentParticipation.getResults();
@@ -349,7 +352,7 @@ public class ParticipationResource {
 
         groupNotificationService.notifyTutorGroupAboutNewFeedbackRequest(programmingExercise);
 
-        return ResponseEntity.ok().body(participation);
+        return ResponseEntity.ok().body(savedParticipation);
     }
 
     /**
@@ -499,11 +502,21 @@ public class ParticipationResource {
             instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExercise.getId());
 
             // when changing the individual due date after the regular due date, the repository might already have been locked
-            updatedParticipations.stream().filter(exerciseDateService::isBeforeDueDate).forEach(
-                    participation -> programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation((ProgrammingExerciseStudentParticipation) participation));
+            updatedParticipations.stream().filter(exerciseDateService::isBeforeDueDate).forEach(participation -> {
+                var studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
+                if (studentParticipation.getParticipant() instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
+                    studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
+                }
+                programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation((ProgrammingExerciseStudentParticipation) participation);
+            });
             // the new due date may be in the past, students should no longer be able to make any changes
-            updatedParticipations.stream().filter(exerciseDateService::isAfterDueDate).forEach(participation -> programmingExerciseParticipationService
-                    .lockStudentRepositoryAndParticipation(programmingExercise, (ProgrammingExerciseStudentParticipation) participation));
+            updatedParticipations.stream().filter(exerciseDateService::isAfterDueDate).forEach(participation -> {
+                var studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
+                if (studentParticipation.getParticipant() instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
+                    studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
+                }
+                programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, studentParticipation);
+            });
         }
 
         return ResponseEntity.ok().body(updatedParticipations);

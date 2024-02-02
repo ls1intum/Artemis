@@ -392,10 +392,12 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
             WHERE p.exercise.id = :exerciseId
                 AND p.team.id = :teamId
             """)
-    List<StudentParticipation> findAllByExerciseIdAndTeamId(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
+    List<StudentParticipation> findAllWithTeamStudentsByExerciseIdAndTeamId(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
     @Query("""
             SELECT DISTINCT p

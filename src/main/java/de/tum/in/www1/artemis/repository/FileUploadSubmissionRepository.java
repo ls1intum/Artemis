@@ -45,6 +45,9 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "participation", "participation.results" })
     Optional<FileUploadSubmission> findWithResultsFeedbacksAssessorAndParticipationResultsById(Long submissionId);
 
+    @EntityGraph(type = LOAD, attributePaths = "participation.team.students")
+    Optional<FileUploadSubmission> findWithTeamStudentsById(long submissionId);
+
     /**
      * Get the file upload submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
      * result. Throws an EntityNotFoundException if no submission could be found for the given id.
@@ -78,5 +81,17 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
     @NotNull
     default FileUploadSubmission findByIdElseThrow(Long submissionId) {
         return findById(submissionId).orElseThrow(() -> new EntityNotFoundException("File Upload Submission", submissionId));
+    }
+
+    /**
+     * Get the file upload submission with the given id from the database. The submission is loaded together with its participation and the team of the participation. Throws an
+     * EntityNotFoundException if no submission could be found for the given id.
+     *
+     * @param submissionId the id of the submission that should be loaded from the database
+     * @return the file upload submission with the given id
+     */
+    @NotNull
+    default FileUploadSubmission findWithTeamStudentsByIdElseThrow(long submissionId) {
+        return findWithTeamStudentsById(submissionId).orElseThrow(() -> new EntityNotFoundException("File Upload Submission", submissionId));
     }
 }

@@ -300,7 +300,7 @@ public class LocalCISharedBuildJobQueueService {
             ZonedDateTime buildCompletionDate = ZonedDateTime.now();
 
             // Do not process the result if the participation has been deleted in the meantime
-            Optional<Participation> participationOptional = participationRepository.findById(buildJob.participationId());
+            Optional<Participation> participationOptional = participationRepository.findWithEagerSubmissionsByIdWithTeamStudents(buildJob.participationId());
             if (participationOptional.isPresent()) {
                 ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
 
