@@ -460,6 +460,10 @@
         {
             "fullName": "Raphael Stief",
             "photoDirectory": "public/images/about/Raphael_Stief.jpg"
+        },
+        {
+            "fullName": "Jonathan Ostertag",
+            "photoDirectory": "public/images/about/Jonathan_Ostertag.jpg"
         }
     ]
 }
