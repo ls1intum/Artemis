@@ -4,8 +4,8 @@ import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MockPipe } from 'ng-mocks';
-import { KeyValuePipe } from '@angular/common';
 import { CompetencyTaxonomy } from 'app/entities/competency.model';
+import { By } from '@angular/platform-browser';
 
 describe('TaxonomySelectComponent', () => {
     let componentFixture: ComponentFixture<TaxonomySelectComponent>;
@@ -13,7 +13,7 @@ describe('TaxonomySelectComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ReactiveFormsModule, MockPipe(KeyValuePipe)],
+            imports: [ArtemisTestModule, ReactiveFormsModule],
             declarations: [TaxonomySelectComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [],
         })
@@ -32,5 +32,15 @@ describe('TaxonomySelectComponent', () => {
     it('should initialize', () => {
         componentFixture.detectChanges();
         expect(component).toBeDefined();
+    });
+
+    it('should set taxonomy correcty', () => {
+        const select = componentFixture.debugElement.query(By.css('.form-select')).nativeElement;
+        expect(select.value).toBe('');
+
+        component.form.setValue(CompetencyTaxonomy.ANALYZE);
+        componentFixture.detectChanges();
+
+        expect(select.value).toContain(CompetencyTaxonomy.ANALYZE);
     });
 });
