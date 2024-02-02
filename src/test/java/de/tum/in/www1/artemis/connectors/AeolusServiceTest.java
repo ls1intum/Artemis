@@ -5,9 +5,11 @@ import static de.tum.in.www1.artemis.config.Constants.SOLUTION_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,12 +17,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.connector.AeolusRequestMockProvider;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -28,6 +32,7 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.*;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 
@@ -51,6 +56,12 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
     @Autowired
     AeolusBuildScriptGenerationService aeolusBuildScriptGenerationService;
+
+    @SpyBean
+    ResourceLoaderService resourceLoaderService;
+
+    @Autowired
+    ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
     /**
      * Initializes aeolusRequestMockProvider
@@ -199,5 +210,24 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         programmingExercise.setTestwiseCoverageEnabled(true);
         String script = aeolusBuildScriptGenerationService.getScript(programmingExercise);
         assertThat(script).isNull();
+    }
+
+    @Test
+    void testgetWindfileFor() throws IOException {
+        Windfile windfile = aeolusTemplateService.getWindfileFor(ProgrammingLanguage.JAVA, Optional.empty(), false, false, false);
+        assertThat(windfile).isNotNull();
+        assertThat(windfile.getActions()).isNotNull();
+        assertThat(windfile.getActions()).hasSize(1);
+    }
+
+    @Test
+    void testgetDefaultWindfileFor() {
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.HASKELL);
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExercise.setSequentialTestRuns(true);
+        programmingExercise.setTestwiseCoverageEnabled(true);
+        Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
+        assertThat(windfile).isNull();
     }
 }

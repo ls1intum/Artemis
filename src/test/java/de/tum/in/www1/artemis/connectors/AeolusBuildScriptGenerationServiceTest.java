@@ -109,4 +109,19 @@ class AeolusBuildScriptGenerationServiceTest extends AbstractSpringIntegrationLo
         assertThat(script).isNotNull();
         assertThat(script).isEqualTo("imagine a result here");
     }
+
+    @Test
+    void testFailedBuildPlanPublish() {
+        aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.CLI);
+        String key = aeolusBuildPlanService.publishBuildPlan(getWindfile(), AeolusTarget.CLI);
+        assertThat(key).isNull();
+    }
+
+    @Test
+    void testNoAuthRestCall() {
+        ReflectionTestUtils.setField(aeolusBuildPlanService, "token", "secret-token");
+        aeolusRequestMockProvider.mockAuthenticatedRequest(aeolusUrl + "/publish/" + AeolusTarget.CLI.getName(), "secret-token");
+        String key = aeolusBuildPlanService.publishBuildPlan(getWindfile(), AeolusTarget.CLI);
+        assertThat(key).isNull();
+    }
 }

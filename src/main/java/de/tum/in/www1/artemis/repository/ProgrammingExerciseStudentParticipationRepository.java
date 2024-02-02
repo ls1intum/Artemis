@@ -194,7 +194,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             """)
     Page<ProgrammingExerciseStudentParticipation> findAllWithRepositoryUriOrBuildPlanId(Pageable pageable);
 
-    @Transactional
+    @Transactional // ok because of modifying query
     @Modifying
     @Query("""
             UPDATE ProgrammingExerciseStudentParticipation p
