@@ -12,7 +12,7 @@
         <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
     </div>
     <jhi-form-status-bar [formStatusSections]="formStatusSections" />
-    <h3 jhiTranslate="artemisApp.exercise.sections.general">General Information</h3>
+    <h3 jhiTranslate="artemisApp.exercise.sections.general" id="artemisApp.exercise.sections.general">General Information</h3>
     <div>
         <div class="form-group" [hidden]="!fileUploadExercise.id || isImport">
             <label for="id" jhiTranslate="global.field.id">ID</label>
@@ -32,7 +32,7 @@
                 <jhi-category-selector [categories]="exerciseCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)" />
             </div>
         }
-        <h3 jhiTranslate="artemisApp.exercise.sections.mode">Mode</h3>
+        <h3 jhiTranslate="artemisApp.exercise.sections.mode" id="artemisApp.exercise.sections.mode">Mode</h3>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty">Difficulty</label>
             <div>
@@ -40,7 +40,7 @@
             </div>
         </div>
         <jhi-team-config-form-group class="form-element" [exercise]="fileUploadExercise" [isImport]="isImport"></jhi-team-config-form-group>
-        <h3 jhiTranslate="artemisApp.exercise.sections.problem">Problem Statement</h3>
+        <h3 jhiTranslate="artemisApp.exercise.sections.problem" id="artemisApp.exercise.sections.problem">Problem Statement</h3>
         <div class="form-group" id="field_problemStatement">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
             <jhi-markdown-editor
@@ -51,7 +51,7 @@
                 [editorMode]="EditorMode.LATEX"
             ></jhi-markdown-editor>
         </div>
-        <h3 jhiTranslate="artemisApp.exercise.sections.solution">Example Solution</h3>
+        <h3 jhiTranslate="artemisApp.exercise.sections.solution" id="artemisApp.exercise.sections.solution">Example Solution</h3>
         <!-- TODO we want to have a file upload here and store a PDF, not a text. We could allow to add text in the sample_solution_explanation field -->
         <div class="form-group" id="field_exampleSolution">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.exampleSolution" for="field_exampleSolution">Example Solution</label>
@@ -81,7 +81,7 @@
                 }
             </div>
         }
-        <h3 jhiTranslate="artemisApp.exercise.sections.grading">Grading</h3>
+        <h3 jhiTranslate="artemisApp.exercise.sections.grading" id="artemisApp.exercise.sections.grading">Grading</h3>
         @if (!isExamMode) {
             <div class="d-flex">
                 <div class="form-group flex-grow-1">
