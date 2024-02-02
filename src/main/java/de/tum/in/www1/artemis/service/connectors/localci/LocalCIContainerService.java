@@ -82,6 +82,7 @@ public class LocalCIContainerService {
      *
      * @param containerName the name of the container to be created
      * @param image         the Docker image to use for the container
+     * @param buildScript   the script that is to be executed in the container
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
     public CreateContainerResponse configureContainer(String containerName, String image, String buildScript) {
