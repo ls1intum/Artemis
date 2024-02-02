@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.connectors;
 
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
-import static de.tum.in.www1.artemis.config.Constants.SOLUTION_REPO_NAME;
-import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
@@ -32,7 +30,13 @@ import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
-import de.tum.in.www1.artemis.service.connectors.aeolus.*;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildPlanService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildScriptGenerationService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusRepository;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.ScriptAction;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
+import de.tum.in.www1.artemis.service.connectors.aeolus.WindfileMetadata;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 
 class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {

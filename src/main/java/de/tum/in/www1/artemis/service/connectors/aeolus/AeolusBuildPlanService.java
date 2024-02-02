@@ -1,18 +1,23 @@
 package de.tum.in.www1.artemis.service.connectors.aeolus;
 
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
-import static de.tum.in.www1.artemis.config.Constants.SOLUTION_REPO_NAME;
-import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.net.URL;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;

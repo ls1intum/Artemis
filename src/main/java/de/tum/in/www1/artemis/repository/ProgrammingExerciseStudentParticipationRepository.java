@@ -194,6 +194,14 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             """)
     Page<ProgrammingExerciseStudentParticipation> findAllWithRepositoryUriOrBuildPlanId(Pageable pageable);
 
+    /**
+     * Remove the build plan id from all participations of the given exercise.
+     * This is used when the build plan is changed for an exercise and we want to remove the old build plan id from all participations.
+     * By deleting the build plan in the CI platform and unsetting the build plan id in the participations, the build plan is effectively removed
+     * and will be regenerated/recreated on the next submission.
+     *
+     * @param exerciseId the id of the exercise for which the build plan id should be removed
+     */
     @Transactional // ok because of modifying query
     @Modifying
     @Query("""

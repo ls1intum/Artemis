@@ -8,7 +8,13 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import de.tum.in.www1.artemis.service.connectors.aeolus.*;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusRepository;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusResult;
+import de.tum.in.www1.artemis.service.connectors.aeolus.DockerConfig;
+import de.tum.in.www1.artemis.service.connectors.aeolus.PlatformAction;
+import de.tum.in.www1.artemis.service.connectors.aeolus.ScriptAction;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
+import de.tum.in.www1.artemis.service.connectors.aeolus.WindfileMetadata;
 
 class AeolusTest {
 

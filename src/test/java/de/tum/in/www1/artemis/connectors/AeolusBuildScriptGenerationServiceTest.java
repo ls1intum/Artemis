@@ -22,7 +22,12 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
-import de.tum.in.www1.artemis.service.connectors.aeolus.*;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildPlanService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildScriptGenerationService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.ScriptAction;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
+import de.tum.in.www1.artemis.service.connectors.aeolus.WindfileMetadata;
 
 class AeolusBuildScriptGenerationServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
