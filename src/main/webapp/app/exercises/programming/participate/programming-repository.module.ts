@@ -16,7 +16,8 @@ import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programm
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { FormsModule } from '@angular/forms';
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
-import { CommitHistoryComponent } from 'app/localvc/repository-view/commit-history/commit-history.component';
+import { CommitHistoryComponent } from 'app/localvc/commit-history/commit-history.component';
+import { CommitDetailsViewComponent } from 'app/localvc/commit-details-view/commit-details-view.component';
 
 @NgModule({
     imports: [
@@ -37,6 +38,6 @@ import { CommitHistoryComponent } from 'app/localvc/repository-view/commit-histo
         SubmissionResultStatusModule,
         ArtemisProgrammingExerciseModule,
     ],
-    declarations: [RepositoryViewComponent, CommitHistoryComponent],
+    declarations: [RepositoryViewComponent, CommitHistoryComponent, CommitDetailsViewComponent],
 })
 export class ArtemisProgrammingRepositoryModule {}

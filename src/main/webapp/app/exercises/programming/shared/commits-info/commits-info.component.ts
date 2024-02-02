@@ -6,6 +6,9 @@ import { createCommitUrl } from 'app/exercises/programming/shared/utils/programm
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { Subscription } from 'rxjs';
+import { Result } from 'app/entities/result.model';
+import { RepositoryViewComponent } from 'app/localvc/repository-view/repository-view.component';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'jhi-commits-info',
@@ -18,17 +21,27 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     @Input() participationId?: number;
     @Input() submissions?: ProgrammingSubmission[];
     @Input() exerciseProjectKey?: string;
+    @Input() results?: Result[];
+    @Input() isRepositoryView = false;
     private commitHashURLTemplate: string;
     private commitsInfoSubscription: Subscription;
     private profileInfoSubscription: Subscription;
     localVC = false;
+    courseId: number;
+    exerciseId: number;
+    paramSub: Subscription;
 
     constructor(
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private profileService: ProfileService,
+        private route: ActivatedRoute,
     ) {}
 
     ngOnInit(): void {
+        this.paramSub = this.route.params.subscribe((params) => {
+            this.courseId = Number(params['courseId']);
+            this.exerciseId = Number(params['exerciseId']);
+        });
         if (!this.commits) {
             if (this.participationId) {
                 this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(this.participationId).subscribe((commits) => {
@@ -46,6 +59,7 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         this.commitsInfoSubscription?.unsubscribe();
         this.profileInfoSubscription?.unsubscribe();
+        this.paramSub.unsubscribe();
     }
 
     sortCommitsByTimestampDesc(commitInfos: CommitInfo[]) {
@@ -57,7 +71,13 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
         return createCommitUrl(this.commitHashURLTemplate, this.exerciseProjectKey, submission?.participation, submission);
     }
 
+    getCommitUrlForRepositoryView(commitInfo: CommitInfo) {
+        return `/courses/${this.courseId}/programming-exercises/${this.exerciseId}/repository/${this.participationId}/commit-history/commit-details/` + commitInfo.hash;
+    }
+
     private findSubmissionForCommit(commitInfo: CommitInfo, submissions: ProgrammingSubmission[] | undefined) {
         return submissions?.find((submission) => submission.commitHash === commitInfo.hash);
     }
+
+    protected readonly RepositoryViewComponent = RepositoryViewComponent;
 }

@@ -596,7 +596,8 @@
                 "previousSubmission": "Previous Submission",
                 "currentSubmission": "Current Submission",
                 "template": "Template",
-                "history": "Commit History"
+                "history": "Commit History",
+                "result": "Result"
             }
         },
         "error": {

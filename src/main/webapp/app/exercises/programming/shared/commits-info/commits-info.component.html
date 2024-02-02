@@ -7,6 +7,7 @@
                 <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.commitHash' | artemisTranslate }}</th>
                 <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.author' | artemisTranslate }}</th>
                 <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.date' | artemisTranslate }}</th>
+                <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.result' | artemisTranslate }}</th>
                 <th scope="col">{{ 'artemisApp.programmingExercise.commitInfo.message' | artemisTranslate }}</th>
             </tr>
         </thead>
@@ -16,9 +17,13 @@
                     <th scope="row">{{ i + 1 }}</th>
                     <td>
                         @if (localVC) {
-                            <span>
-                                {{ commit.hash }}
-                            </span>
+                            @if (isRepositoryView) {
+                                <a [href]="getCommitUrlForRepositoryView(commit)"> {{ commit.hash }} </a>
+                            } @else {
+                                <span>
+                                    {{ commit.hash }}
+                                </span>
+                            }
                         } @else {
                             <a [href]="getCommitUrl(commit)"> {{ commit.hash }} </a>
                         }
@@ -29,6 +34,13 @@
                     <td>
                         {{ commit.timestamp | artemisDate: 'long' : true }}
                     </td>
+                    @if (isRepositoryView) {
+                        <td>
+                            @if (results) {
+                                <jhi-result [result]="results[i]" [showUngradedResults]="true" [showBadge]="true" style="padding-left: 20px"> </jhi-result>
+                            }
+                        </td>
+                    }
                     <td>
                         {{ commit.message }}
                         @if (currentSubmissionHash === commit.hash) {

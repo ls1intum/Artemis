@@ -4,7 +4,14 @@
             "title": "Repository",
             "commitHistory": {
                 "title": "Commit Historie",
-                "openCommitHistory": "Commit Historie öffnen"
+                "openCommitHistory": "Commit Historie öffnen",
+                "commitDetails": {
+                    "title": "Commit Details",
+                    "commitMessage": "Commit Nachricht",
+                    "commitId": "Commit ID",
+                    "author": "Autor",
+                    "date": "Datum"
+                }
             }
         }
     }
