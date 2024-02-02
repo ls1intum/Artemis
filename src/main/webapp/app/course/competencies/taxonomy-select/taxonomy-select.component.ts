@@ -17,6 +17,12 @@ export class TaxonomySelectComponent {
      */
     @Input({ required: true }) form: FormControl;
 
+    /**
+     * increasing indentation for the select options
+     * @protected
+     */
+    protected readonly indent = Object.keys(CompetencyTaxonomy).map((_, i) => '\xA0'.repeat(i));
+
     protected readonly competencyTaxonomy = CompetencyTaxonomy;
 
     /**
