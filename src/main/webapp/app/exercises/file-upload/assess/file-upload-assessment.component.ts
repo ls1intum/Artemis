@@ -293,7 +293,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     onSaveAssessment() {
         this.isLoading = true;
         this.fileUploadAssessmentService
-            .saveAssessment(this.assessments, this.submission!.id!)
+            .saveAssessment(this.assessments, this.submission!.id!, this.result?.assessmentNote?.note)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe({
                 next: (result: Result) => {
@@ -316,7 +316,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         }
         this.isLoading = true;
         this.fileUploadAssessmentService
-            .saveAssessment(this.assessments, this.submission!.id!, true)
+            .saveAssessment(this.assessments, this.submission!.id!, this.result?.assessmentNote?.note, true)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe({
                 next: (result: Result) => {
