@@ -213,7 +213,7 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     @Test
-    void testgetWindfileFor() throws IOException {
+    void testGetWindfileFor() throws IOException {
         Windfile windfile = aeolusTemplateService.getWindfileFor(ProgrammingLanguage.JAVA, Optional.empty(), false, false, false);
         assertThat(windfile).isNotNull();
         assertThat(windfile.getActions()).isNotNull();
@@ -221,7 +221,7 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     @Test
-    void testgetDefaultWindfileFor() {
+    void testGetDefaultWindfileFor() {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.HASKELL);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
