@@ -84,13 +84,14 @@ public class LocalCIContainerService {
      * @param image         the Docker image to use for the container
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
-    public CreateContainerResponse configureContainer(String containerName, String image) {
+    public CreateContainerResponse configureContainer(String containerName, String image, String buildScript) {
         List<String> envVars = new ArrayList<>();
         if (useSystemProxy) {
             envVars.add("HTTP_PROXY=" + httpProxy);
             envVars.add("HTTPS_PROXY=" + httpsProxy);
             envVars.add("NO_PROXY=" + noProxy);
         }
+        envVars.add("SCRIPT=" + buildScript);
         return dockerClient.createContainerCmd(image).withName(containerName).withHostConfig(hostConfig).withEnv(envVars)
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
                 // container from exiting until it finishes.
@@ -199,11 +200,10 @@ public class LocalCIContainerService {
      * @param solutionRepositoryPath                 the path to the solution repository
      * @param auxiliaryRepositoriesPaths             the paths to the auxiliary repositories
      * @param auxiliaryRepositoryCheckoutDirectories the names of the auxiliary repositories
-     * @param buildScriptPath                        the path to the build script
      * @param programmingLanguage                    the programming language of the exercise
      */
     public void populateBuildJobContainer(String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath, Path solutionRepositoryPath,
-            Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryCheckoutDirectories, Path buildScriptPath, ProgrammingLanguage programmingLanguage) {
+            Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryCheckoutDirectories, ProgrammingLanguage programmingLanguage) {
         String testCheckoutPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
         String assignmentCheckoutPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
 
@@ -222,8 +222,12 @@ public class LocalCIContainerService {
         }
         convertDosFilesToUnix(LOCALCI_WORKING_DIRECTORY + "/testing-dir/", buildJobContainerId);
 
-        addAndPrepareDirectory(buildJobContainerId, buildScriptPath, LOCALCI_WORKING_DIRECTORY + "/script.sh");
-        convertDosFilesToUnix(LOCALCI_WORKING_DIRECTORY + "/script.sh", buildJobContainerId);
+        createScriptFile(buildJobContainerId);
+    }
+
+    private void createScriptFile(String buildJobContainerId) {
+        executeDockerCommand(buildJobContainerId, false, false, true, "bash", "-c", "echo \"$SCRIPT\" > " + LOCALCI_WORKING_DIRECTORY + "/script.sh");
+        executeDockerCommand(buildJobContainerId, false, false, true, "bash", "-c", "chmod +x " + LOCALCI_WORKING_DIRECTORY + "/script.sh");
     }
 
     private void addAndPrepareDirectory(String containerId, Path repositoryPath, String newDirectoryName) {
