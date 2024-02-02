@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
 import { ScienceEventDTO, ScienceEventType } from 'app/shared/science/science.model';
 import { ScienceSettingsService } from 'app/shared/user-settings/science-settings/science-settings.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -35,12 +34,15 @@ export class ScienceService {
         return this.featureToggleActive && this.scienceSettingsService.eventLoggingAllowed();
     }
 
-    logEvent(type: ScienceEventType, resourceId?: number): Observable<HttpResponse<void>> {
+    logEvent(type: ScienceEventType, resourceId?: number): void {
+        if (!this.eventLoggingActive()) {
+            return;
+        }
         const event = new ScienceEventDTO();
         event.type = type;
         if (resourceId) {
             event.resourceId = resourceId;
         }
-        return this.httpClient.put<void>(`${this.resourceURL}/science`, event, { observe: 'response' });
+        this.httpClient.put<void>(`${this.resourceURL}/science`, event, { observe: 'response' }).subscribe();
     }
 }
