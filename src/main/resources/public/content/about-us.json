@@ -456,6 +456,10 @@
         {
             "fullName": "Xinyao Liu",
             "photoDirectory": "public/images/about/Xinyao_Liu.jpg"
+        },
+        {
+            "fullName": "Raphael Stief",
+            "photoDirectory": "public/images/about/Raphael_Stief.jpg"
         }
     ]
 }
