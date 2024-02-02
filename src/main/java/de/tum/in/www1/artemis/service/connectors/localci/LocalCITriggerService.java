@@ -118,7 +118,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         BuildConfig buildConfig = getBuildConfig(participation, commitHash);
 
         LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(buildJobId, participation.getBuildPlanId(), null, participation.getId(), courseId,
-                programmingExercise.getId(), 0, priority, repositoryInfo, jobTimingInfo, buildConfig);
+                programmingExercise.getId(), 0, priority, null, repositoryInfo, jobTimingInfo, buildConfig);
 
         localCIBuildConfigurationService.createBuildScript(participation, buildJobId);
 

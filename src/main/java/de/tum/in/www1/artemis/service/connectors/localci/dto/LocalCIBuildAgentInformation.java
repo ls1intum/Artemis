@@ -5,7 +5,7 @@ import java.io.Serializable;
 import java.util.List;
 
 public record LocalCIBuildAgentInformation(String name, int maxNumberOfConcurrentBuildJobs, int numberOfCurrentBuildJobs, List<LocalCIBuildJobQueueItem> runningBuildJobs,
-        boolean status) implements Serializable {
+        boolean status, List<LocalCIBuildJobQueueItem> recentBuildJobs) implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
