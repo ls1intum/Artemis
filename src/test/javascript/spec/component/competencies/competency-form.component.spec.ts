@@ -18,6 +18,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import dayjs from 'dayjs/esm';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
+import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
 
 describe('CompetencyFormComponent', () => {
     let competencyFormComponentFixture: ComponentFixture<CompetencyFormComponent>;
@@ -34,6 +35,7 @@ describe('CompetencyFormComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(KeysPipe),
                 MockComponent(FormDateTimePickerComponent),
+                MockComponent(TaxonomySelectComponent),
             ],
             providers: [MockProvider(CompetencyService), MockProvider(LectureUnitService), { provide: TranslateService, useClass: MockTranslateService }],
         })
@@ -159,7 +161,7 @@ describe('CompetencyFormComponent', () => {
             switch (key) {
                 case 'artemisApp.competency.keywords.REMEMBER':
                     return 'Something';
-                case 'artemisApp.competency.keywords.UNDERSTAN':
+                case 'artemisApp.competency.keywords.UNDERSTAND':
                     return 'invent, build';
                 default:
                     return key;

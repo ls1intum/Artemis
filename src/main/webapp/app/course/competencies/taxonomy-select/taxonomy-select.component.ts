@@ -10,12 +10,12 @@ export class TaxonomySelectComponent {
     /**
      * id given of the select, to be referenced by labels (for)
      */
-    @Input() selectId: string;
+    @Input() selectId = '';
 
     /**
      * Form control for the selected taxonomy
      */
-    @Input() form: FormControl;
+    @Input({ required: true }) form: FormControl;
 
     protected readonly competencyTaxonomy = CompetencyTaxonomy;
 
