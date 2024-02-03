@@ -1,1 +1,8 @@
-<p>Felix is a QTπ</p>
+@if (report && leftCommitFileContentByPath && rightCommitFileContentByPath) {
+    <jhi-git-diff-report
+        [report]="report"
+        [diffForTemplateAndSolution]="diffForTemplateAndSolution"
+        [templateFileContentByPath]="leftCommitFileContentByPath"
+        [solutionFileContentByPath]="rightCommitFileContentByPath"
+    ></jhi-git-diff-report>
+}

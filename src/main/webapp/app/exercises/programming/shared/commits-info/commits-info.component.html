@@ -29,7 +29,13 @@
                         }
                     </td>
                     <td>
-                        {{ commit.author }}
+                        @if (isRepositoryView) {
+                            @if (users) {
+                                {{ users.get(commit.author!)?.name ?? commit.author }} {{ users.get(commit.author!)?.email ?? '' }}
+                            }
+                        } @else {
+                            {{ commit.author }}
+                        }
                     </td>
                     <td>
                         {{ commit.timestamp | artemisDate: 'long' : true }}

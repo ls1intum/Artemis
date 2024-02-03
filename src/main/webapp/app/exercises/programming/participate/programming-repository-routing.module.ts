@@ -31,7 +31,7 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':participationId/commit-history/commit-details/:commitId',
+        path: ':participationId/commit-history/:commitHash',
         component: CommitDetailsViewComponent,
         data: {
             authorities: [Authority.USER],

@@ -69,6 +69,8 @@ export class CommitHistoryComponent {
     availableExerciseHints: ExerciseHint[];
     activatedExerciseHints: ExerciseHint[];
     irisSettings?: IrisSettings;
+    users: Map<string, User> = new Map<string, User>();
+    participationId: number;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
@@ -99,6 +101,7 @@ export class CommitHistoryComponent {
         this.route.params.subscribe((params) => {
             this.exerciseId = parseInt(params['exerciseId'], 10);
             this.courseId = parseInt(params['courseId'], 10);
+            this.participationId = Number(params['participationId']);
             this.courseService.find(this.courseId).subscribe((courseResponse) => (this.course = courseResponse.body!));
             this.accountService.identity().then((user: User) => {
                 this.currentUser = user;
@@ -172,6 +175,11 @@ export class CommitHistoryComponent {
         }
 
         this.subscribeForNewResults();
+        this.exercise.studentParticipations?.forEach((participation) => {
+            if (participation.student) {
+                this.users.set(participation.student.name!, participation.student);
+            }
+        });
     }
 
     /**
@@ -188,7 +196,9 @@ export class CommitHistoryComponent {
     sortResults() {
         if (this.studentParticipations?.length) {
             this.studentParticipations.forEach((participation) => participation.results?.sort(this.resultSortFunction));
-            this.sortedHistoryResults = this.studentParticipations.flatMap((participation) => participation.results ?? []).sort(this.resultSortFunction);
+            this.sortedHistoryResults = this.studentParticipations
+                .flatMap((participation) => participation.results ?? [])
+                .sort((a, b) => (dayjs(b.completionDate).isAfter(dayjs(a.completionDate)) ? 1 : -1));
         }
     }
 

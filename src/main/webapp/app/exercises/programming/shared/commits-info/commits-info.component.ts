@@ -9,6 +9,7 @@ import { Subscription } from 'rxjs';
 import { Result } from 'app/entities/result.model';
 import { RepositoryViewComponent } from 'app/localvc/repository-view/repository-view.component';
 import { ActivatedRoute } from '@angular/router';
+import { User } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-commits-info',
@@ -16,6 +17,7 @@ import { ActivatedRoute } from '@angular/router';
 })
 export class CommitsInfoComponent implements OnInit, OnDestroy {
     @Input() commits?: CommitInfo[];
+    @Input() users: Map<string, User>;
     @Input() currentSubmissionHash?: string;
     @Input() previousSubmissionHash?: string;
     @Input() participationId?: number;
@@ -49,6 +51,7 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
                 });
             }
         }
+        this.results = this.results?.sort((a, b) => (dayjs(b.completionDate).isAfter(dayjs(a.completionDate)) ? 1 : -1));
         // Get active profiles, to distinguish between Bitbucket and GitLab, and to check if localVC is enabled
         this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.commitHashURLTemplate = profileInfo.commitHashURLTemplate;
@@ -72,7 +75,7 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     }
 
     getCommitUrlForRepositoryView(commitInfo: CommitInfo) {
-        return `/courses/${this.courseId}/programming-exercises/${this.exerciseId}/repository/${this.participationId}/commit-history/commit-details/` + commitInfo.hash;
+        return `/courses/${this.courseId}/programming-exercises/${this.exerciseId}/repository/${this.participationId}/commit-history/` + commitInfo.hash;
     }
 
     private findSubmissionForCommit(commitInfo: CommitInfo, submissions: ProgrammingSubmission[] | undefined) {
