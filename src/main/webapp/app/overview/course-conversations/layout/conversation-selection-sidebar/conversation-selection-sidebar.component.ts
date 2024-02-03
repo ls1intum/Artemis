@@ -179,7 +179,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
                 // newest messages at the top of the list
                 return bLastMessageDate!.isAfter(aLastMessageDate!) ? 1 : -1;
             });
-        this.channelConversations = this.allConversations //
+        this.channelConversations = this.allConversations
             .filter((conversation) => isChannelDTO(conversation) && !conversation.isFavorite)
             .map((channel) => channel as Channel)
             .sort((a, b) => a.name!.localeCompare(b.name!));

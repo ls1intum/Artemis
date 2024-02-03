@@ -119,9 +119,11 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
             });
     }
 
-    ngOnInit(): void {
+    private updateConversationIsFavorite() {
         this.favorite$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((isFavorite) => {
-            this.conversationService.updateIsFavorite(this.course.id!, this.conversation.id!, isFavorite).subscribe({
+            if (this.course.id === undefined || this.conversation.id === undefined) return;
+
+            this.conversationService.updateIsFavorite(this.course.id, this.conversation.id, isFavorite).subscribe({
                 next: () => {
                     this.conversation.isFavorite = isFavorite;
                     this.conversationIsFavoriteDidChange.emit();
@@ -129,8 +131,13 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
         });
+    }
+
+    private updateConversationIsHidden() {
         this.hide$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((isHidden) => {
-            this.conversationService.updateIsHidden(this.course.id!, this.conversation.id!, isHidden).subscribe({
+            if (this.course.id === undefined || this.conversation.id === undefined) return;
+
+            this.conversationService.updateIsHidden(this.course.id, this.conversation.id, isHidden).subscribe({
                 next: () => {
                     this.conversation.isHidden = isHidden;
                     this.conversationIsHiddenDidChange.emit();
@@ -138,8 +145,13 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
         });
+    }
+
+    private updateConversationIsMuted() {
         this.mute$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((isMuted) => {
-            this.conversationService.updateIsMuted(this.course.id!, this.conversation.id!, isMuted).subscribe({
+            if (this.course.id === undefined || this.conversation.id === undefined) return;
+
+            this.conversationService.updateIsMuted(this.course.id, this.conversation.id, isMuted).subscribe({
                 next: () => {
                     this.conversation.isMuted = isMuted;
                     this.conversationIsMutedDidChange.emit();
@@ -147,13 +159,25 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
         });
+    }
+
+    private updateConversationShouldNotifyRecipient() {
         this.conversationIsHiddenDidChange.pipe(mergeWith(this.conversationIsMutedDidChange), takeUntil(this.ngUnsubscribe)).subscribe(() => {
+            if (this.conversation.id === undefined) return;
+
             if (shouldNotifyRecipient(this.conversation)) {
-                this.notificationService.unmuteNotificationsForConversation(this.conversation.id!);
+                this.notificationService.unmuteNotificationsForConversation(this.conversation.id);
             } else {
-                this.notificationService.muteNotificationsForConversation(this.conversation.id!);
+                this.notificationService.muteNotificationsForConversation(this.conversation.id);
             }
         });
+    }
+
+    ngOnInit(): void {
+        this.updateConversationIsFavorite();
+        this.updateConversationIsHidden();
+        this.updateConversationIsMuted();
+        this.updateConversationShouldNotifyRecipient();
         this.conversationAsChannel = getAsChannelDTO(this.conversation);
         this.channelSubTypeReferenceTranslationKey = getChannelSubTypeReferenceTranslationKey(this.conversationAsChannel?.subType);
         this.channelSubTypeReferenceRouterLink = this.metisService.getLinkForChannelSubType(this.conversationAsChannel);
