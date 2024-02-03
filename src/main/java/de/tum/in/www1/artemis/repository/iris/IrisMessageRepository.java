@@ -47,5 +47,5 @@ public interface IrisMessageRepository extends JpaRepository<IrisMessage, Long> 
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "content" })
-    IrisMessage findFirstWithContentBySessionIdAndSenderOrderBySentAtDesc(long sessionId, IrisMessageSender sender);
+    IrisMessage findFirstWithContentBySessionIdAndSenderOrderBySentAtDesc(long sessionId, @NotNull IrisMessageSender sender);
 }

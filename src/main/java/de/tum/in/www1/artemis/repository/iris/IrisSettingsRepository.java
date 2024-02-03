@@ -41,7 +41,7 @@ public interface IrisSettingsRepository extends JpaRepository<IrisSettings, Long
                 LEFT JOIN FETCH irisSettings.irisCompetencyGenerationSettings icgs
             WHERE irisSettings.course.id = :courseId
             """)
-    Optional<IrisCourseSettings> findCourseSettings(Long courseId);
+    Optional<IrisCourseSettings> findCourseSettings(long courseId);
 
     /**
      * Retrieves Iris exercise settings for a given exercise ID.
@@ -55,7 +55,7 @@ public interface IrisSettingsRepository extends JpaRepository<IrisSettings, Long
                 LEFT JOIN FETCH irisSettings.irisChatSettings ics
             WHERE irisSettings.exercise.id = :exerciseId
             """)
-    Optional<IrisExerciseSettings> findExerciseSettings(Long exerciseId);
+    Optional<IrisExerciseSettings> findExerciseSettings(long exerciseId);
 
     default IrisSettings findByIdElseThrow(long existingSettingsId) {
         return findById(existingSettingsId).orElseThrow(() -> new EntityNotFoundException("Iris Settings", existingSettingsId));
