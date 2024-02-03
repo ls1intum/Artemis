@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 
 @Entity
-@Table(name = "learning_goal")
+@Table(name = "competency")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class Competency extends DomainObject {
 
@@ -65,12 +65,12 @@ public class Competency extends DomainObject {
      * A set of courses for which this competency is a prerequisite for.
      */
     @ManyToMany
-    @JoinTable(name = "learning_goal_course", joinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "course_id", referencedColumnName = "id"))
+    @JoinTable(name = "competency_course", joinColumns = @JoinColumn(name = "competency_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "course_id", referencedColumnName = "id"))
     @JsonIgnoreProperties({ "competencies", "prerequisites" })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Course> consecutiveCourses = new HashSet<>();
 
-    @OneToMany(mappedBy = "learningGoal", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(mappedBy = "competency", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties({ "user", "competency" })
     private Set<CompetencyProgress> userProgress = new HashSet<>();
 
@@ -233,20 +233,5 @@ public class Competency extends DomainObject {
     @PreUpdate
     public void prePersistOrUpdate() {
         this.lectureUnits.removeIf(lectureUnit -> lectureUnit instanceof ExerciseUnit);
-    }
-
-    public enum CompetencySearchColumn {
-
-        ID("id"), TITLE("title"), COURSE_TITLE("course.title"), SEMESTER("course.semester");
-
-        private final String mappedColumnName;
-
-        CompetencySearchColumn(String mappedColumnName) {
-            this.mappedColumnName = mappedColumnName;
-        }
-
-        public String getMappedColumnName() {
-            return mappedColumnName;
-        }
     }
 }
