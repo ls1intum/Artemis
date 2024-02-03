@@ -1,4 +1,8 @@
-<h5>{{ 'artemisApp.programmingExercise.commitInfo.title' | artemisTranslate }}</h5>
+@if (isRepositoryView) {
+    <h3>{{ 'artemisApp.programmingExercise.commitInfo.history' | artemisTranslate }}</h3>
+} @else {
+    <h5>{{ 'artemisApp.programmingExercise.commitInfo.title' | artemisTranslate }}</h5>
+}
 <div style="overflow-x: auto">
     <table class="table table-responsive">
         <thead>
@@ -17,7 +21,7 @@
                     <th scope="row">{{ i + 1 }}</th>
                     <td>
                         @if (localVC) {
-                            @if (isRepositoryView) {
+                            @if (isRepositoryView && i !== commits?.length! - 1) {
                                 <a [href]="getCommitUrlForRepositoryView(commit)"> {{ commit.hash }} </a>
                             } @else {
                                 <span>
@@ -31,7 +35,7 @@
                     <td>
                         @if (isRepositoryView) {
                             @if (users) {
-                                {{ users.get(commit.author!)?.name ?? commit.author }} {{ users.get(commit.author!)?.email ?? '' }}
+                                {{ users.get(commit.author!)?.name ?? commit.author }}, <span class="text-primary">{{ users.get(commit.author!)?.email ?? '' }}</span>
                             }
                         } @else {
                             {{ commit.author }}

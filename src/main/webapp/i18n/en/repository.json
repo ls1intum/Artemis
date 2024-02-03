@@ -8,9 +8,10 @@
                 "commitDetails": {
                     "title": "Commit Details",
                     "commitMessage": "Commit Message",
-                    "commitId": "Commit ID",
+                    "commitHash": "Commit Hash",
                     "author": "Author",
-                    "date": "Date"
+                    "date": "Date",
+                    "commit": "Commit"
                 }
             }
         }

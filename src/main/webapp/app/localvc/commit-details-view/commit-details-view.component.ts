@@ -9,6 +9,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import dayjs from 'dayjs';
+import { User } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-commit-details-view',
@@ -29,6 +30,9 @@ export class CommitDetailsViewComponent {
     commits: CommitInfo[] = [];
     currentSubmission: ProgrammingSubmission;
     previousSubmission: ProgrammingSubmission;
+    currentCommit: CommitInfo;
+    previousCommit: CommitInfo;
+    user: User;
 
     private templateRepoFilesSubscription: Subscription;
     private solutionRepoFilesSubscription: Subscription;
@@ -61,35 +65,39 @@ export class CommitDetailsViewComponent {
                             this.currentSubmission = submissions[i];
                             if (i > 0) {
                                 this.previousSubmission = submissions[i - 1];
-                            } else {
-                                this.previousSubmission = submissions[i];
                             }
                         }
                     }
                 }
-                console.error(this.previousSubmission);
-                console.error(this.currentSubmission);
-                this.programmingExerciseService.getDiffReportForSubmissions(exerciseId, this.previousSubmission.id!, this.currentSubmission.id!).subscribe((report) => {
-                    this.report = report!;
-                    this.report.programmingExercise = this.exercise;
-                    this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(participationId).subscribe((commits) => {
-                        this.commits = this.sortCommitsByTimestampDesc(commits);
+                this.user = this.exercise.studentParticipations?.find((participation) => participation.id === participationId)?.student!;
+                this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(participationId).subscribe((commits) => {
+                    this.commits = this.sortCommitsByTimestampDesc(commits);
+                    this.currentCommit = this.commits.find((commit) => commit.hash === this.currentSubmission.commitHash)!;
+                    if (this.previousSubmission !== undefined) {
+                        this.previousCommit = this.commits.find((commit) => commit.hash === this.previousSubmission.commitHash)!;
+                    }
+                });
+                if (this.previousSubmission === undefined) {
+                    this.programmingExerciseService.getDiffReportForSubmissionWithTemplate(exerciseId, this.currentSubmission.id!).subscribe((report) => {
+                        this.report = report!;
+                        this.report.programmingExercise = this.exercise;
+                        this.report.leftCommitHash = this.commits[this.commits.length - 1].hash;
+                        this.report.participationIdForLeftCommit = participationId;
                         this.report.rightCommitHash = this.currentSubmission.commitHash;
                         this.report.participationIdForRightCommit = participationId;
-                        if (this.commits.length > 1) {
-                            this.report.leftCommitHash = this.previousSubmission.commitHash;
-                            this.report.participationIdForLeftCommit = participationId;
-                        } else {
-                            this.report.leftCommitHash = this.report.templateRepositoryCommitHash;
-                            this.report.participationIdForLeftCommit = participationId;
-                        }
-                        if (this.diffForTemplateAndSolution) {
-                            this.loadFilesForTemplateAndSolution();
-                        } else {
-                            this.loadRepositoryFilesForParticipationsFromCacheIfAvailable();
-                        }
+                        this.loadRepositoryFilesForParticipationsFromCacheIfAvailable();
                     });
-                });
+                } else {
+                    this.programmingExerciseService.getDiffReportForSubmissions(exerciseId, this.previousSubmission.id!, this.currentSubmission.id!).subscribe((report) => {
+                        this.report = report!;
+                        this.report.programmingExercise = this.exercise;
+                        this.report.rightCommitHash = this.currentSubmission.commitHash;
+                        this.report.participationIdForRightCommit = participationId;
+                        this.report.leftCommitHash = this.previousSubmission.commitHash;
+                        this.report.participationIdForLeftCommit = participationId;
+                        this.loadRepositoryFilesForParticipationsFromCacheIfAvailable();
+                    });
+                }
             });
         });
     }
@@ -105,22 +113,6 @@ export class CommitDetailsViewComponent {
         this.participationRepoFilesAtRightCommitSubscription?.unsubscribe();
         this.paramSub?.unsubscribe();
         this.commitsInfoSubscription?.unsubscribe();
-    }
-
-    private loadFilesForTemplateAndSolution() {
-        this.fetchTemplateRepoFiles();
-        this.fetchSolutionRepoFiles();
-    }
-
-    private fetchSolutionRepoFiles() {
-        this.solutionRepoFilesSubscription = this.programmingExerciseService.getSolutionRepositoryTestFilesWithContent(this.report.programmingExercise.id!).subscribe({
-            next: (response: Map<string, string>) => {
-                this.rightCommitFileContentByPath = response;
-            },
-            error: () => {
-                this.errorWhileFetchingRepos = true;
-            },
-        });
     }
 
     private loadRepositoryFilesForParticipationsFromCacheIfAvailable() {
