@@ -38,6 +38,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     readonly CHAT = IrisSubSettingsType.CHAT;
     readonly HESTIA = IrisSubSettingsType.HESTIA;
     readonly CODE_EDITOR = IrisSubSettingsType.CODE_EDITOR;
+    readonly COMPETENCY_GENERATION = IrisSubSettingsType.COMPETENCY_GENERATION;
 
     courseDTO: CourseManagementDetailViewDto;
     activeStudents?: number[];
@@ -49,6 +50,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     irisChatEnabled = false;
     irisHestiaEnabled = false;
     irisCodeEditorEnabled = false;
+    irisCompetencyGenerationEnabled = false;
     ltiEnabled = false;
 
     isAdmin = false;
@@ -89,6 +91,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
                     this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
                     this.irisHestiaEnabled = settings?.irisHestiaSettings?.enabled ?? false;
                     this.irisCodeEditorEnabled = settings?.irisCodeEditorSettings?.enabled ?? false;
+                    this.irisCompetencyGenerationEnabled = settings?.irisCompetencyGenerationSettings?.enabled ?? false;
                 });
             }
         });

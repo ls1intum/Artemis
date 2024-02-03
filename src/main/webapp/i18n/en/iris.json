@@ -58,7 +58,8 @@
                         "off": "Disabled",
                         "chat": "Iris Chat",
                         "codeEditor": "Programming Exercise Creation Chat",
-                        "hestia": "Hestia Integration"
+                        "hestia": "Hestia Integration",
+                        "competencyGeneration": "Competency Generation"
                     },
                     "disabled": {
                         "course": "IRIS is disabled in course IRIS settings",
