@@ -48,7 +48,7 @@
             ></jhi-programming-exercise-update-wizard>
         }
         @if (!isShowingWizardMode) {
-            <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)">
+            <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)" style="flex-grow">
                 <div class="update-programming-exercise">
                     <div class="form-group" [hidden]="isImportFromExistingExercise || !programmingExercise.id">
                         <label for="id" jhiTranslate="global.field.id">ID</label>

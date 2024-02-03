@@ -38,5 +38,25 @@
 
 .section {
     display: flex;
+    flex-wrap: wrap;
+}
+
+/* columns */
+.section > * {
+    width: 100%;
+}
+
+/* tablet breakpoint */
+@media (min-width: 768px) {
+    .section > *:nth-child(1) {
+        width: calc(100% / 4 * 3);
+    }
+    .section > *:nth-child(2) {
+        width: calc(100% / 4);
+    }
+}
+
+.flexbox {
+    display: flex;
     justify-content: space-around;
 }
