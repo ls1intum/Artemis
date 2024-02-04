@@ -132,6 +132,46 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void create_partialOverlapsWithExistingScheduledSession_shouldCancelSession_PeriodWithinDay() throws Exception {
+        // given
+        TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule(this.exampleCourseId, "tutor1");
+        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
+
+        var dto = createTutorialGroupFreePeriodDTO(firstAugustMondayMorningPeriod, firstAugustMondayMidday, "Holiday");
+        // when
+        var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
+        // then
+        var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
+        var firstMondayOfAugustSession = sessions.get(0);
+        assertScheduledSessionIsCancelledOnDate(firstMondayOfAugustSession, firstAugustMondayMorning.toLocalDate(), tutorialGroup.getId(), persistedSchedule);
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());
+        tutorialGroupFreePeriodRepository.deleteById(createdPeriod.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void create_noOverlapsWithExistingScheduledSessionOnSameDay_shouldNotCancelSession_PeriodWithinDay() throws Exception {
+        // given
+        TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule(this.exampleCourseId, "tutor1");
+        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
+
+        var dto = createTutorialGroupFreePeriodDTO(firstAugustMondayMidday, firstAugustMondayAfternoon, "Holiday");
+        // when
+        var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
+        // then
+        var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
+        var firstMondayOfAugustSession = sessions.get(0);
+        assertScheduledSessionIsActiveOnDate(firstMondayOfAugustSession, firstAugustMondayMorning.toLocalDate(), tutorialGroup.getId(), persistedSchedule);
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());
+        tutorialGroupFreePeriodRepository.deleteById(createdPeriod.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void create_overlapsWithExistingIndividualSession_shouldCancelSession() throws Exception {
         // given
         this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, firstAugustMondayMorning);

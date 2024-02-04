@@ -100,7 +100,13 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
 
     LocalDateTime firstAugustMondayMorning = LocalDateTime.of(2022, 8, 1, 0, 0, 0);
 
+    LocalDateTime firstAugustMondayMorningPeriod = LocalDateTime.of(2022, 8, 1, 10, 0, 0);
+
     LocalDateTime firstAugustMondayEvening = LocalDateTime.of(2022, 8, 1, 23, 59);
+
+    LocalDateTime firstAugustMondayMidday = LocalDateTime.of(2022, 8, 1, 13, 00);
+
+    LocalDateTime firstAugustMondayAfternoon = LocalDateTime.of(2022, 8, 1, 18, 00);
 
     LocalDateTime secondAugustMonday = LocalDateTime.of(2022, 8, 8, 0, 0, 0);
 

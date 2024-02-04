@@ -28,9 +28,6 @@ describe('TutorialFreePeriodFormComponent', () => {
     const validEndDateBerlinFreeDay = new Date(validEndDateUTCFreeDay.toLocaleString('de-DE', { timeZone: 'Europe/Berlin' }));
     validEndDateBerlinFreeDay.setHours(23, 59, 59);
 
-    // const validStartTime = new Date(Date.UTC(2021, 1, 1, 0, 0, 0));
-    // const validEndTime = new Date(Date.UTC(2021, 1, 1, 23, 59, 59));
-
     const validReason = 'Holiday';
 
     let clickSubmit: (expectSubmitEvent: boolean) => void;
