@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Rating;
@@ -14,6 +15,7 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 /**
  * Service Implementation for managing {@link de.tum.in.www1.artemis.domain.Rating}.
  */
+@Profile("core")
 @Service
 public class RatingService {
 

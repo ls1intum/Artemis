@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
@@ -27,6 +28,7 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile("core")
 @Service
 public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSubmission> {
 

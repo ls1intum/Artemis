@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.StudentsAppearMultipleTimesException;
 import de.tum.in.www1.artemis.web.rest.errors.StudentsNotFoundException;
 
+@Profile("core")
 @Service
 public class TeamService {
 

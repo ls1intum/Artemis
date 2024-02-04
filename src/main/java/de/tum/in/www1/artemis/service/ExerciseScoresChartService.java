@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -26,6 +27,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
  * <p>
  * This services uses the participant scores tables for performance reason
  */
+@Profile("core")
 @Service
 public class ExerciseScoresChartService {
 

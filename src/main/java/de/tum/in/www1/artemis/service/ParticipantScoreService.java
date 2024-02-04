@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.Stream;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -19,6 +20,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.dto.ScoreDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile("core")
 @Service
 public class ParticipantScoreService {
 

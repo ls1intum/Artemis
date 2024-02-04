@@ -4,6 +4,7 @@ import javax.persistence.criteria.Join;
 import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Predicate;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup_;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
+@Profile("core")
 @Service
 public class ExerciseSpecificationService {
 

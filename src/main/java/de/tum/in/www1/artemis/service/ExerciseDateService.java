@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -11,6 +12,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 
+@Profile("core")
 @Service
 public class ExerciseDateService {
 

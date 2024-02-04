@@ -11,6 +11,7 @@ import org.hibernate.persister.entity.EntityPersister;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -26,6 +27,7 @@ import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
  * Listens to Hibernate events and invalidates the cached titles of an entity if the title changed.
  * This is used in endpoints that return only the title of an entity which are consumed by breadcrumbs in the client.
  */
+@Profile("core")
 @Service
 public class TitleCacheEvictionService implements PostUpdateEventListener, PostDeleteEventListener {
 

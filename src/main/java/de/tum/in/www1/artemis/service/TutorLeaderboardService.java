@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -19,6 +20,7 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 
+@Profile("core")
 @Service
 public class TutorLeaderboardService {
 

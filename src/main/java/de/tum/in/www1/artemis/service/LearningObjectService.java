@@ -4,6 +4,7 @@ import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -21,6 +22,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
  * @see LectureUnit
  * @see Exercise
  */
+@Profile("core")
 @Service
 public class LearningObjectService {
 

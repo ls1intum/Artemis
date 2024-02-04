@@ -12,10 +12,12 @@ import org.apache.commons.io.FilenameUtils;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 
 /**
  * Service for handling file operations for entities.
  */
+@Profile("core")
 @Service
 public class EntityFileService {
 

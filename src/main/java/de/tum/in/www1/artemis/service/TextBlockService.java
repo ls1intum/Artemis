@@ -5,12 +5,14 @@ import static java.lang.Integer.compare;
 import java.text.BreakIterator;
 import java.util.*;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 
+@Profile("core")
 @Service
 public class TextBlockService {
 

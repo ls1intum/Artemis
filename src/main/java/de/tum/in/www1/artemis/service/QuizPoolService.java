@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -31,6 +32,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * This service contains the functions to manage QuizPool entity.
  */
+@Profile("core")
 @Service
 public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQuestionsGenerator {
 

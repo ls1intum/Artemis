@@ -10,6 +10,7 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Imprint;
@@ -23,6 +24,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 /**
  * Service class responsible for providing and managing legal documents (privacy statment, imprint).
  */
+@Profile("core")
 @Service
 public class LegalDocumentService {
 

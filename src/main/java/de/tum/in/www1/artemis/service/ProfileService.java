@@ -2,12 +2,14 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import tech.jhipster.config.JHipsterConstants;
 
+@Profile("core")
 @Service
 public class ProfileService {
 

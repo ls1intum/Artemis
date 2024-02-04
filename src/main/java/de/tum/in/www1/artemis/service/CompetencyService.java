@@ -4,6 +4,7 @@ import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,7 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
+@Profile("core")
 @Service
 public class CompetencyService {
 

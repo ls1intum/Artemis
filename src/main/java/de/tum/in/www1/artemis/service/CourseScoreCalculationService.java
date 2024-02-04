@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 import org.hibernate.Hibernate;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -29,6 +30,7 @@ import de.tum.in.www1.artemis.web.rest.dto.*;
  * Service Implementation for calculating course scores.
  * Adapted from the implementation at course-score-calculation.service.ts.
  */
+@Profile("core")
 @Service
 public class CourseScoreCalculationService {
 

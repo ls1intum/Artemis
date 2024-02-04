@@ -9,6 +9,7 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -19,6 +20,7 @@ import de.tum.in.www1.artemis.exception.QuizJoinException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 
+@Profile("core")
 @Service
 public class QuizBatchService {
 

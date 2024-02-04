@@ -6,8 +6,11 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
+import org.springframework.context.annotation.Profile;
+
 import com.hazelcast.nio.serialization.ByteArraySerializer;
 
+@Profile("core")
 public class HazelcastPathSerializer implements ByteArraySerializer<Path> {
 
     @Override

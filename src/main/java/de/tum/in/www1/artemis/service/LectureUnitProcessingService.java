@@ -16,6 +16,7 @@ import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,6 +29,7 @@ import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
+@Profile("core")
 @Service
 public class LectureUnitProcessingService {
 

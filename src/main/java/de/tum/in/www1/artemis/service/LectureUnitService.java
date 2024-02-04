@@ -5,6 +5,7 @@ import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,7 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 
+@Profile("core")
 @Service
 public class LectureUnitService {
 

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -17,6 +18,7 @@ import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 /**
  * Service for checking if a user has access to a repository.
  */
+@Profile("core")
 @Service
 public class RepositoryAccessService {
 

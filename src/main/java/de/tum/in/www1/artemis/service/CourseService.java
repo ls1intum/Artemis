@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -64,6 +65,7 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 /**
  * Service Implementation for managing Course.
  */
+@Profile("core")
 @Service
 public class CourseService {
 

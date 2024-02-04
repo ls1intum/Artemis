@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.notification.SystemNotification;
@@ -10,6 +11,7 @@ import de.tum.in.www1.artemis.repository.SystemNotificationRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
+@Profile("core")
 @Service
 public class SystemNotificationService {
 

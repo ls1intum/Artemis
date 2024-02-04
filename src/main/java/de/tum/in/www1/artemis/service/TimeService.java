@@ -3,8 +3,10 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+@Profile("core")
 @Service
 public class TimeService {
 

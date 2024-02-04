@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -17,6 +18,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ScoreDTO;
 /**
  * Service for calculating the presentation points for a course or student.
  */
+@Profile("core")
 @Service
 public class PresentationPointsCalculationService {
 

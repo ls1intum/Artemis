@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -26,6 +27,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Service Implementation for managing Participation.
  */
+@Profile("core")
 @Service
 public class ParticipationService {
 

@@ -8,6 +8,7 @@ import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -29,6 +30,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 /**
  * Service Implementation for managing Exercise.
  */
+@Profile("core")
 @Service
 public class ExerciseDeletionService {
 

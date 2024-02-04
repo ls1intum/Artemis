@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,7 @@ import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.notifications.MailService;
 
+@Profile("core")
 @Service
 public class EmailSummaryService {
 

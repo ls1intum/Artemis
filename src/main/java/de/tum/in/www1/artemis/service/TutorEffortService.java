@@ -6,6 +6,7 @@ import static java.util.stream.Collectors.groupingBy;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
@@ -15,6 +16,7 @@ import de.tum.in.www1.artemis.repository.TextAssessmentEventRepository;
 /**
  * Contains business logic needed to calculate tutor efforts.
  */
+@Profile("core")
 @Service
 public class TutorEffortService {
 

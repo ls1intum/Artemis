@@ -8,6 +8,7 @@ import java.util.concurrent.ScheduledFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.service.util.Tuple;
 
+@Profile("core")
 @Service
 public class ExerciseLifecycleService {
 

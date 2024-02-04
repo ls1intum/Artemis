@@ -8,6 +8,7 @@ import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -27,6 +28,7 @@ import de.tum.in.www1.artemis.service.connectors.athena.AthenaSubmissionSelectio
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
+@Profile("core")
 @Service
 public class ModelingSubmissionService extends SubmissionService {
 

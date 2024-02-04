@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -20,6 +21,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 /**
  * Service for managing complaints.
  */
+@Profile("core")
 @Service
 public class ComplaintService {
 

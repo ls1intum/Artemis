@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -26,6 +27,7 @@ import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseManagementStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile("core")
 @Service
 public class StatisticsService {
 
