@@ -14,6 +14,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
+import com.hazelcast.map.listener.EntryUpdatedListener;
 
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
@@ -31,8 +32,6 @@ public class LocalCIQueueWebsocketService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIQueueWebsocketService.class);
 
-    private final HazelcastInstance hazelcastInstance;
-
     private final IQueue<LocalCIBuildJobQueueItem> queue;
 
     private final IMap<Long, LocalCIBuildJobQueueItem> processingJobs;
@@ -41,23 +40,22 @@ public class LocalCIQueueWebsocketService {
 
     private final LocalCIWebsocketMessagingService localCIWebsocketMessagingService;
 
-    private final LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService;
+    private final SharedQueueManagementService sharedQueueManagementService;
 
     /**
      * Instantiates a new Local ci queue websocket service.
      *
-     * @param hazelcastInstance                 the hazelcast instance
-     * @param localCIWebsocketMessagingService  the local ci build queue websocket service
-     * @param localCISharedBuildJobQueueService the local ci shared build job queue service
+     * @param hazelcastInstance                the hazelcast instance
+     * @param localCIWebsocketMessagingService the local ci build queue websocket service
+     * @param sharedQueueManagementService     the local ci shared build job queue service
      */
     public LocalCIQueueWebsocketService(HazelcastInstance hazelcastInstance, LocalCIWebsocketMessagingService localCIWebsocketMessagingService,
-            LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService) {
-        this.hazelcastInstance = hazelcastInstance;
+            SharedQueueManagementService sharedQueueManagementService) {
         this.localCIWebsocketMessagingService = localCIWebsocketMessagingService;
-        this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
-        this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
-        this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
-        this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
+        this.sharedQueueManagementService = sharedQueueManagementService;
+        this.queue = hazelcastInstance.getQueue("buildJobQueue");
+        this.processingJobs = hazelcastInstance.getMap("processingJobs");
+        this.buildAgentInformation = hazelcastInstance.getMap("buildAgentInformation");
     }
 
     /**
@@ -71,17 +69,17 @@ public class LocalCIQueueWebsocketService {
     }
 
     private void sendQueuedJobsOverWebsocket(long courseId) {
-        localCIWebsocketMessagingService.sendQueuedBuildJobs(localCISharedBuildJobQueueService.getQueuedJobs());
-        localCIWebsocketMessagingService.sendQueuedBuildJobsForCourse(courseId, localCISharedBuildJobQueueService.getQueuedJobsForCourse(courseId));
+        localCIWebsocketMessagingService.sendQueuedBuildJobs(sharedQueueManagementService.getQueuedJobs());
+        localCIWebsocketMessagingService.sendQueuedBuildJobsForCourse(courseId, sharedQueueManagementService.getQueuedJobsForCourse(courseId));
     }
 
     private void sendProcessingJobsOverWebsocket(long courseId) {
-        localCIWebsocketMessagingService.sendRunningBuildJobs(localCISharedBuildJobQueueService.getProcessingJobs());
-        localCIWebsocketMessagingService.sendRunningBuildJobsForCourse(courseId, localCISharedBuildJobQueueService.getProcessingJobsForCourse(courseId));
+        localCIWebsocketMessagingService.sendRunningBuildJobs(sharedQueueManagementService.getProcessingJobs());
+        localCIWebsocketMessagingService.sendRunningBuildJobsForCourse(courseId, sharedQueueManagementService.getProcessingJobsForCourse(courseId));
     }
 
     private void sendBuildAgentInformationOverWebsocket() {
-        localCIWebsocketMessagingService.sendBuildAgentInformation(localCISharedBuildJobQueueService.getBuildAgentInformation());
+        localCIWebsocketMessagingService.sendBuildAgentInformation(sharedQueueManagementService.getBuildAgentInformation());
     }
 
     private class QueuedBuildJobItemListener implements ItemListener<LocalCIBuildJobQueueItem> {
@@ -112,7 +110,8 @@ public class LocalCIQueueWebsocketService {
         }
     }
 
-    private class BuildAgentListener implements EntryAddedListener<String, LocalCIBuildAgentInformation>, EntryRemovedListener<String, LocalCIBuildAgentInformation> {
+    private class BuildAgentListener implements EntryAddedListener<String, LocalCIBuildAgentInformation>, EntryRemovedListener<String, LocalCIBuildAgentInformation>,
+            EntryUpdatedListener<String, LocalCIBuildAgentInformation> {
 
         @Override
         public void entryAdded(com.hazelcast.core.EntryEvent<String, LocalCIBuildAgentInformation> event) {
@@ -123,6 +122,12 @@ public class LocalCIQueueWebsocketService {
         @Override
         public void entryRemoved(com.hazelcast.core.EntryEvent<String, LocalCIBuildAgentInformation> event) {
             log.debug("Build agent removed: {}", event.getOldValue());
+            sendBuildAgentInformationOverWebsocket();
+        }
+
+        @Override
+        public void entryUpdated(com.hazelcast.core.EntryEvent<String, LocalCIBuildAgentInformation> event) {
+            log.debug("Build agent updated: {}", event.getValue());
             sendBuildAgentInformationOverWebsocket();
         }
     }

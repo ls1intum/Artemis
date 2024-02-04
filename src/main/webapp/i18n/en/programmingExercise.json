@@ -109,6 +109,7 @@
             "templateBuildPlanId": "Template Build Plan Id",
             "solutionBuildPlanId": "Solution Build Plan Id",
             "repositories": "Repositories",
+            "openRepository": "Open Repository",
             "buildplans": "Build Plans",
             "buildplan": "Build Plan",
             "buildPlanEditor": "Build Plan Editor",
@@ -322,7 +323,7 @@
                 "notReleasedTooltip": "The programming exercise is not yet released or is released but does not yet have any student results. You may change the grading configuration without having to trigger existing student submissions with the updated settings."
             },
             "export": {
-                "downloadRepo": "Download Repo",
+                "downloadRepo": "Download Repository",
                 "downloadExampleSolution": "Download Example Solution",
                 "downloadTests": "Download tests",
                 "downloadTestsWithExampleSolution": "Download tests with example solution",

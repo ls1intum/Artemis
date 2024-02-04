@@ -23,7 +23,6 @@
                     "chatSettings": "Chat Settings",
                     "hestiaSettings": "Hestia Settings",
                     "codeEditorSettings": "Code Editor Settings",
-                    "enabled-disabled": "Enabled/Disabled",
                     "models": {
                         "title": "Models",
                         "allowedModels": {
@@ -58,6 +57,10 @@
                         "chat": "Iris Chat",
                         "codeEditor": "Programming Exercise Creation Chat",
                         "hestia": "Hestia Integration"
+                    },
+                    "disabled": {
+                        "course": "IRIS is disabled in course IRIS settings",
+                        "global": "IRIS is disabled in global IRIS settings"
                     }
                 },
                 "title": {
