@@ -74,6 +74,9 @@ public class SharedQueueProcessingService {
         this.buildJobManagementService = buildJobManagementService;
     }
 
+    /**
+     * Initialize relevant data from hazelcast
+     */
     @PostConstruct
     public void init() {
         this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");

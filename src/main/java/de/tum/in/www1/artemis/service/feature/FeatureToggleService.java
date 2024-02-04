@@ -27,6 +27,9 @@ public class FeatureToggleService {
         this.hazelcastInstance = hazelcastInstance;
     }
 
+    /**
+     * Initialize relevant data from hazelcast
+     */
     @PostConstruct
     public void init() {
         // The map will automatically be distributed between all instances by Hazelcast.
