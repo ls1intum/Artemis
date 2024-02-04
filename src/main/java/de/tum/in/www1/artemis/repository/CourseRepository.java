@@ -32,25 +32,50 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface CourseRepository extends JpaRepository<Course, Long> {
 
-    @Query("select distinct course.instructorGroupName from Course course")
+    @Query("""
+            SELECT DISTINCT course.instructorGroupName
+            FROM Course course
+            """)
     Set<String> findAllInstructorGroupNames();
 
-    @Query("select distinct course.editorGroupName from Course course")
+    @Query("""
+            SELECT DISTINCT course.editorGroupName
+            FROM Course course
+            """)
     Set<String> findAllEditorGroupNames();
 
-    @Query("select distinct course.teachingAssistantGroupName from Course course")
+    @Query("""
+            SELECT DISTINCT course.teachingAssistantGroupName
+            FROM Course course
+            """)
     Set<String> findAllTeachingAssistantGroupNames();
 
-    @Query("select distinct course from Course course where course.instructorGroupName like :name")
+    @Query("""
+            SELECT DISTINCT course
+            FROM Course course
+            WHERE course.instructorGroupName LIKE :name
+            """)
     Course findCourseByInstructorGroupName(@Param("name") String name);
 
-    @Query("select distinct course from Course course where course.editorGroupName like :name")
+    @Query("""
+            SELECT DISTINCT course
+            FROM Course course
+            WHERE course.editorGroupName LIKE :name
+            """)
     Course findCourseByEditorGroupName(@Param("name") String name);
 
-    @Query("select distinct course from Course course where course.teachingAssistantGroupName like :name")
+    @Query("""
+            SELECT DISTINCT course
+            FROM Course course
+            WHERE course.teachingAssistantGroupName LIKE :name
+            """)
     Course findCourseByTeachingAssistantGroupName(@Param("name") String name);
 
-    @Query("select distinct course from Course course where course.studentGroupName like :name")
+    @Query("""
+            SELECT DISTINCT course
+            FROM Course course
+            WHERE course.studentGroupName LIKE :name
+            """)
     Course findCourseByStudentGroupName(@Param("name") String name);
 
     @Query("""
@@ -75,10 +100,10 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     List<Course> findCoursesByStudentGroupName(@Param("name") String name);
 
     @Query("""
-            SELECT CASE WHEN (count(c) > 0) THEN true ELSE false END
+            SELECT COUNT(c) > 0
             FROM Course c
-            WHERE c.id = :#{#courseId}
-                AND c.courseInformationSharingConfiguration IN :#{#values}
+            WHERE c.id = :courseId
+                AND c.courseInformationSharingConfiguration IN :values
             """)
     boolean informationSharingConfigurationIsOneOf(@Param("courseId") long courseId, @Param("values") Set<CourseInformationSharingConfiguration> values);
 
@@ -95,17 +120,18 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             FROM Course c
             WHERE (c.startDate <= :now OR c.startDate IS NULL)
                 AND (c.endDate >= :now OR c.endDate IS NULL)
-                AND c.testCourse = false
+                AND c.testCourse IS FALSE
             """)
     List<Course> findAllActiveWithoutTestCourses(@Param("now") ZonedDateTime now);
 
     @Query("""
-            SELECT DISTINCT c FROM Course c
+            SELECT DISTINCT c
+            FROM Course c
                 LEFT JOIN FETCH c.organizations organizations
                 LEFT JOIN FETCH c.prerequisites prerequisites
-            WHERE (c.enrollmentEnabled = true)
-                AND (c.enrollmentStartDate <= :now)
-                AND (c.enrollmentEndDate >= :now)
+            WHERE c.enrollmentEnabled IS TRUE
+                AND c.enrollmentStartDate <= :now
+                AND c.enrollmentEndDate >= :now
             """)
     List<Course> findAllEnrollmentActiveWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
 
@@ -138,29 +164,29 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(long courseId);
 
     @Query("""
-                SELECT course
-                FROM Course course
-                    LEFT JOIN FETCH course.organizations organizations
-                    LEFT JOIN FETCH course.prerequisites prerequisites
-                WHERE course.id = :courseId
+            SELECT course
+            FROM Course course
+                LEFT JOIN FETCH course.organizations organizations
+                LEFT JOIN FETCH course.prerequisites prerequisites
+            WHERE course.id = :courseId
             """)
     Optional<Course> findSingleWithOrganizationsAndPrerequisites(@Param("courseId") long courseId);
 
     @Query("""
-                SELECT course
-                FROM Course course
-                    LEFT JOIN FETCH course.organizations
-                WHERE course.id = :courseId
+            SELECT course
+            FROM Course course
+                LEFT JOIN FETCH course.organizations
+            WHERE course.id = :courseId
             """)
     Optional<Course> findWithEagerOrganizations(@Param("courseId") long courseId);
 
     @Query("""
-                SELECT course
-                FROM Course course
-                    LEFT JOIN FETCH course.organizations
-                    LEFT JOIN FETCH course.competencies
-                    LEFT JOIN FETCH course.learningPaths
-                WHERE course.id = :courseId
+            SELECT course
+            FROM Course course
+                LEFT JOIN FETCH course.organizations
+                LEFT JOIN FETCH course.competencies
+                LEFT JOIN FETCH course.learningPaths
+            WHERE course.id = :courseId
             """)
     Optional<Course> findWithEagerOrganizationsAndCompetenciesAndLearningPaths(@Param("courseId") long courseId);
 
@@ -206,8 +232,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             SELECT DISTINCT c
             FROM Course c
                 LEFT JOIN FETCH c.exercises e
-            WHERE (c.instructorGroupName IN :userGroups OR c.editorGroupName IN :userGroups)
-                AND TYPE(e) = QuizExercise
+            WHERE TYPE(e) = QuizExercise
+                AND (c.instructorGroupName IN :userGroups OR c.editorGroupName IN :userGroups)
             """)
     List<Course> getCoursesWithQuizExercisesForWhichUserHasAtLeastEditorAccess(@Param("userGroups") List<String> userGroups);
 
@@ -229,14 +255,15 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      */
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                substring(cast(s.submissionDate as string), 1, 10), p.student.login
-                )
+                SUBSTRING(CAST(s.submissionDate as string), 1, 10),
+                p.student.login
+            )
             FROM StudentParticipation p
                 JOIN p.submissions s
             WHERE p.exercise.id IN :exerciseIds
-                AND s.submissionDate >= cast(:startDate as timestamp)
-                AND s.submissionDate <= cast(:endDate as timestamp)
-            GROUP BY substring(cast(s.submissionDate as string), 1, 10), p.student.login
+                AND s.submissionDate >= :startDate
+                AND s.submissionDate <= :endDate
+            GROUP BY SUBSTRING(CAST(s.submissionDate as string), 1, 10), p.student.login
             """)
     List<StatisticsEntry> getActiveStudents(@Param("exerciseIds") Set<Long> exerciseIds, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
@@ -251,8 +278,16 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("""
             SELECT c
             FROM Course c
-            WHERE (c.endDate IS NULL OR cast(:now as timestamp) IS NULL OR c.endDate >= cast(:now as timestamp))
-                AND (:isAdmin = TRUE OR c.teachingAssistantGroupName IN :userGroups OR c.editorGroupName IN :userGroups OR c.instructorGroupName IN :userGroups)
+            WHERE (
+                c.endDate IS NULL
+                OR CAST(:now as timestamp) IS NULL
+                OR c.endDate >= CAST(:now as timestamp)
+            ) AND (
+                :isAdmin IS TRUE
+                OR c.teachingAssistantGroupName IN :userGroups
+                OR c.editorGroupName IN :userGroups
+                OR c.instructorGroupName IN :userGroups
+            )
             """)
     List<Course> getAllCoursesForManagementOverview(@Param("now") ZonedDateTime now, @Param("isAdmin") boolean isAdmin, @Param("userGroups") List<String> userGroups);
 
@@ -266,8 +301,11 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("""
             SELECT COUNT(DISTINCT ug.userId)
             FROM Course c
-            JOIN UserGroup ug
-            ON c.studentGroupName = ug.group OR c.teachingAssistantGroupName = ug.group OR c.editorGroupName = ug.group OR c.instructorGroupName = ug.group
+                JOIN UserGroup ug
+                    ON c.studentGroupName = ug.group
+                        OR c.teachingAssistantGroupName = ug.group
+                        OR c.editorGroupName = ug.group
+                        OR c.instructorGroupName = ug.group
             WHERE c.id = :courseId
             """)
     Integer countCourseMembers(@Param("courseId") Long courseId);
