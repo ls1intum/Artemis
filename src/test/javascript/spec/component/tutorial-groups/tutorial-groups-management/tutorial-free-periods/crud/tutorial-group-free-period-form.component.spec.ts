@@ -120,6 +120,45 @@ describe('TutorialFreePeriodFormComponent', () => {
         setTimeFrameAndCheckValues(TimeFrame.Day, validStartDateBerlin, undefined, undefined, undefined);
     });
 
+    it('should set timeFrame initial correctly when editing an existing free period', () => {
+        component.isEditMode = true;
+        component.formData = {
+            startDate: validStartDateBerlin,
+            endDate: validEndDateBerlinFreePeriod,
+            startTime: undefined,
+            endTime: undefined,
+            reason: validReason,
+        };
+        component.ngOnChanges();
+        expect(component.timeFrameControl).toBe(TimeFrame.Period);
+    });
+
+    it('should set timeFrame initial correctly when editing an existing free day', () => {
+        component.isEditMode = true;
+        component.formData = {
+            startDate: validStartDateBerlin,
+            endDate: undefined,
+            startTime: undefined,
+            endTime: undefined,
+            reason: validReason,
+        };
+        component.ngOnChanges();
+        expect(component.timeFrameControl).toBe(TimeFrame.Day);
+    });
+
+    it('should set timeFrame initial correctly when editing an existing free period within day', () => {
+        component.isEditMode = true;
+        component.formData = {
+            startDate: validStartDateBerlin,
+            endDate: undefined,
+            startTime: validStartTimeBerlin,
+            endTime: validEndTimeBerlin,
+            reason: validReason,
+        };
+        component.ngOnChanges();
+        expect(component.timeFrameControl).toBe(TimeFrame.PeriodWithinDay);
+    });
+
     // === helper functions ===
     const setFormValues = (startDate: Date | undefined, endDate: Date | undefined, startTime: Date | undefined, endTime: Date | undefined, reason: string) => {
         component.startDateControl!.setValue(startDate);

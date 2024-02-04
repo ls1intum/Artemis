@@ -84,21 +84,18 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     }
 
     get isFreeDay(): boolean {
-        // debugger
         return this.timeFrame == TimeFrame.Day;
     }
 
     get isFreePeriod(): boolean {
-        // debugger
         return this.timeFrame == TimeFrame.Period;
     }
 
     get isFreePeriodWithinDay(): boolean {
-        // debugger
         return this.timeFrame == TimeFrame.PeriodWithinDay;
     }
 
-    get TimeFrameControl(): TimeFrame {
+    get timeFrameControl(): TimeFrame {
         return this.timeFrame;
     }
 
