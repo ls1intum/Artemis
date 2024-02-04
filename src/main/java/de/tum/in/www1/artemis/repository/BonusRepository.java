@@ -29,6 +29,6 @@ public interface BonusRepository extends JpaRepository<Bonus, Long> {
             """)
     Set<Bonus> findAllByBonusToExamId(@Param("examId") Long examId);
 
-    boolean existsByBonusToGradingScaleId(@Param("bonusToGradingScaleId") Long bonusToGradingScaleId);
+    boolean existsByBonusToGradingScaleId(Long bonusToGradingScaleId);
 
 }

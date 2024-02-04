@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.SlideRepository;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Profile("core")
 @Service
@@ -89,7 +89,7 @@ public class AttachmentUnitService {
 
         Attachment existingAttachment = existingAttachmentUnit.getAttachment();
         if (existingAttachment == null) {
-            throw new ConflictException("Attachment unit must be associated to an attachment", "AttachmentUnit", "attachmentMissing");
+            throw new BadRequestAlertException("Attachment unit must be associated to an attachment", "AttachmentUnit", "attachmentMissing");
         }
 
         updateAttachment(existingAttachment, updateAttachment, savedAttachmentUnit);

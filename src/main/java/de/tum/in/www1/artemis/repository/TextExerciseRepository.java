@@ -54,7 +54,7 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
             LEFT JOIN FETCH e.gradingCriteria
             WHERE e.id = :exerciseId
             """)
-    Optional<TextExercise> findByIdWithGradingCriteria(long exerciseId);
+    Optional<TextExercise> findByIdWithGradingCriteria(@Param("exerciseId") long exerciseId);
 
     @NotNull
     default TextExercise findByIdWithGradingCriteriaElseThrow(long exerciseId) {

@@ -18,14 +18,16 @@ import de.tum.in.www1.artemis.domain.lecture.TextUnit;
 public interface TextUnitRepository extends JpaRepository<TextUnit, Long> {
 
     @Query("""
-            SELECT tu FROM TextUnit tu
+            SELECT tu
+            FROM TextUnit tu
                 LEFT JOIN FETCH tu.competencies
             WHERE tu.id = :textUnitId
             """)
     Optional<TextUnit> findByIdWithCompetencies(@Param("textUnitId") Long textUnitId);
 
     @Query("""
-            SELECT tu FROM TextUnit tu
+            SELECT tu
+            FROM TextUnit tu
                 LEFT JOIN FETCH tu.competencies c
                 LEFT JOIN FETCH c.lectureUnits
             WHERE tu.id = :textUnitId

@@ -38,7 +38,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface StudentParticipationRepository extends JpaRepository<StudentParticipation, Long> {
 
-    Set<StudentParticipation> findByExerciseId(@Param("exerciseId") Long exerciseId);
+    Set<StudentParticipation> findByExerciseId(Long exerciseId);
 
     @Query("""
             SELECT DISTINCT p
@@ -1107,7 +1107,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                   LEFT JOIN FETCH p.submissions s
             WHERE p.exercise.id = :exerciseId
             """)
-    Set<StudentParticipation> findByExerciseIdWithEagerSubmissions(long exerciseId);
+    Set<StudentParticipation> findByExerciseIdWithEagerSubmissions(@Param("exerciseId") long exerciseId);
 
     /**
      * Helper interface to map the result of the {@link #sumPresentationScoreByStudentIdsAndCourseId(long, Set)} query to a map.

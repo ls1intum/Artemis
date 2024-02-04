@@ -167,15 +167,14 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     }
 
     @Query("""
-            select
-            new de.tum.in.www1.artemis.web.rest.dto.CourseContentCount(
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.CourseContentCount(
                 COUNT(l.id),
                 l.course.id
-                )
+            )
             FROM Lecture l
             WHERE l.course.id IN :courseIds
                 AND (l.visibleDate IS NULL OR l.visibleDate <= :now)
             GROUP BY l.course.id
             """)
-    Set<CourseContentCount> countVisibleLectures(Set<Long> courseIds, @Param("now") ZonedDateTime now);
+    Set<CourseContentCount> countVisibleLectures(@Param("courseIds") Set<Long> courseIds, @Param("now") ZonedDateTime now);
 }

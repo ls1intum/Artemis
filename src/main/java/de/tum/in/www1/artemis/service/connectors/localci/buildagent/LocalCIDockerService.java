@@ -90,6 +90,7 @@ public class LocalCIDockerService {
     }
 
     // Todo: Avoid using the database to find the image information. ALternative: store information in hazelcast map and retrieve from there
+
     /**
      * Deletes all docker images that have not been used for more than {@link #imageExpiryDays} days on a schedule
      * If not otherwise specified, the schedule is set to 3:00 AM every day

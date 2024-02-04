@@ -20,8 +20,8 @@ public interface ExerciseUnitRepository extends JpaRepository<ExerciseUnit, Long
     @Query("""
             SELECT eu
             FROM ExerciseUnit eu
-            WHERE
-            eu.lecture.id = :#{#lectureId}""")
+            WHERE eu.lecture.id = :lectureId
+            """)
     List<ExerciseUnit> findByLectureId(@Param("lectureId") Long lectureId);
 
     List<ExerciseUnit> removeAllByExerciseId(Long exerciseId);
@@ -29,9 +29,9 @@ public interface ExerciseUnitRepository extends JpaRepository<ExerciseUnit, Long
     @Query("""
             SELECT exerciseUnit
             FROM ExerciseUnit exerciseUnit
-            LEFT JOIN FETCH exerciseUnit.competencies c
-            LEFT JOIN FETCH c.lectureUnits
-            WHERE exerciseUnit.exercise.id = :#{#exerciseId}
+                LEFT JOIN FETCH exerciseUnit.competencies c
+                LEFT JOIN FETCH c.lectureUnits
+            WHERE exerciseUnit.exercise.id = :exerciseId
             """)
     List<ExerciseUnit> findByIdWithCompetenciesBidirectional(@Param("exerciseId") Long exerciseId);
 }

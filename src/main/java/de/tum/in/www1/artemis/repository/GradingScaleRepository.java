@@ -96,7 +96,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @param courseId the id of the course
      * @return a list of grading scales for the course
      */
-    List<GradingScale> findAllByCourseId(@Param("courseId") Long courseId);
+    List<GradingScale> findAllByCourseId(Long courseId);
 
     /**
      * Finds a grading scale for exam by id or throws an exception if no such grading scale exists.
@@ -123,7 +123,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @param examId the id of the exam
      * @return a list of grading scales for the exam
      */
-    List<GradingScale> findAllByExamId(@Param("examId") Long examId);
+    List<GradingScale> findAllByExamId(Long examId);
 
     /**
      * Query which fetches all the grading scales with BONUS grade type for which the user is instructor in the course and matching the search criteria.
@@ -180,10 +180,10 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
     Set<GradingScale> findAllByCourseIds(@Param("courseIds") Set<Long> courseIds);
 
     @EntityGraph(type = LOAD, attributePaths = "bonusFrom")
-    Optional<GradingScale> findWithEagerBonusFromByBonusFromId(@Param("bonusId") Long bonusId);
+    Optional<GradingScale> findWithEagerBonusFromByBonusFromId(Long bonusId);
 
     @EntityGraph(type = LOAD, attributePaths = "bonusFrom")
-    Optional<GradingScale> findWithEagerBonusFromByExamId(@Param("examId") Long examId);
+    Optional<GradingScale> findWithEagerBonusFromByExamId(Long examId);
 
     /**
      * Maps a grade percentage to a valid grade step within the grading scale or throws an exception if no match was found

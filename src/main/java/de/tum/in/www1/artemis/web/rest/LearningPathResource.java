@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Profile("core")
 @RestController
@@ -229,7 +229,7 @@ public class LearningPathResource {
             throw new AccessForbiddenException("You are not a student in this course.");
         }
         if (!course.getLearningPathsEnabled()) {
-            throw new ConflictException("Learning paths are not enabled for this course.", "LearningPath", "learningPathsNotEnabled");
+            throw new BadRequestAlertException("Learning paths are not enabled for this course.", "LearningPath", "learningPathsNotEnabled");
         }
 
         // generate learning path if missing

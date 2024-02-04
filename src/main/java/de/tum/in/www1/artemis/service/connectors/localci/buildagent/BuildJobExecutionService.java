@@ -76,6 +76,7 @@ public class BuildJobExecutionService {
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
+
     public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, XMLInputFactory localCIXMLInputFactory, GitService gitService) {
         this.buildJobContainerService = buildJobContainerService;
         this.localCIXMLInputFactory = localCIXMLInputFactory;

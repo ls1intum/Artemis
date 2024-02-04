@@ -6,6 +6,7 @@ import java.util.Set;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.DataExport;
@@ -74,7 +75,7 @@ public interface DataExportRepository extends JpaRepository<DataExport, Long> {
             WHERE dataExport.user.id = :userId
             ORDER BY dataExport.createdDate DESC
             """)
-    List<DataExport> findAllDataExportsByUserIdOrderByRequestDateDesc(long userId);
+    List<DataExport> findAllDataExportsByUserIdOrderByRequestDateDesc(@Param("userId") long userId);
 
     @Query("""
             SELECT dataExport

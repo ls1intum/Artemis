@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Profile("core")
 @RestController
@@ -27,6 +27,8 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 public class ExerciseUnitResource {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseUnitResource.class);
+
+    private static final String ENTITY_NAME = "exerciseUnit";
 
     private final AuthorizationCheckService authorizationCheckService;
 
@@ -57,7 +59,7 @@ public class ExerciseUnitResource {
         }
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
-            throw new ConflictException("Specified lecture is not part of a course", "ExerciseUnit", "courseMissing");
+            throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
         }
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, lecture, null);
 
@@ -84,7 +86,7 @@ public class ExerciseUnitResource {
         log.debug("REST request to get all exercise units for lecture : {}", lectureId);
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lectureId);
         if (lecture.getCourse() == null) {
-            throw new ConflictException("Specified lecture is not part of a course", "ExerciseUnit", "courseMissing");
+            throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
         }
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, lecture, null);
         List<ExerciseUnit> exerciseUnitsOfLecture = exerciseUnitRepository.findByLectureId(lectureId);
