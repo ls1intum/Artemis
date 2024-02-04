@@ -7,7 +7,8 @@ import static org.assertj.core.api.Fail.fail;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -22,9 +23,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -40,6 +42,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.DockerClient;
@@ -52,7 +56,10 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -525,20 +532,21 @@ public class LocalVCLocalCITestService {
             int expectedCodeIssueCount) {
         // wait for result to be persisted
         await().until(() -> resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId).isPresent());
-        // Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
         log.info("Expected commit hash: " + expectedCommitHash);
         for (ProgrammingSubmission submission : submissions) {
             log.info("Submission with commit hash: " + submission.getCommitHash());
         }
-        var start = System.currentTimeMillis();
-        await().timeout(Duration.of(2, ChronoUnit.MINUTES)).untilAsserted(() -> assertThat(
-                programmingSubmissionRepository.findAllByParticipationIdOrderByLegalSubmissionDateDesc(participationId).stream().findFirst().orElseThrow().getLatestResult())
-                .isNotNull());
-        var end = System.currentTimeMillis();
-        log.info("RESCH: Time to wait for result to be persisted: " + (end - start) + "ms");
-        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findAllByParticipationIdOrderByLegalSubmissionDateDesc(participationId).stream().findFirst()
+        await().until(() -> {
+            // get the latest valid submission (!ILLEGAL and with results) of the participation
+            SecurityContextHolder.getContext().setAuthentication(auth);
+            var submission = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(participationId);
+            return submission.orElseThrow().getLatestResult() != null;
+        });
+        // get the latest valid submission (!ILLEGAL and with results) of the participation
+        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(participationId)
                 .orElseThrow();
         if (expectedCommitHash != null) {
             assertThat(programmingSubmission.getCommitHash()).isEqualTo(expectedCommitHash);
