@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository.hestia;
 
 import java.util.*;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -16,6 +17,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the CoverageReport entity.
  */
+@Profile("core")
 @Repository
 public interface CoverageReportRepository extends JpaRepository<CoverageReport, Long> {
 

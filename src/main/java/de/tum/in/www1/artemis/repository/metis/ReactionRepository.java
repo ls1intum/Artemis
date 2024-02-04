@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository.metis;
 
 import java.util.List;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,6 +12,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data repository for the Reaction entity.
  */
+@Profile("core")
 @Repository
 public interface ReactionRepository extends JpaRepository<Reaction, Long> {
 

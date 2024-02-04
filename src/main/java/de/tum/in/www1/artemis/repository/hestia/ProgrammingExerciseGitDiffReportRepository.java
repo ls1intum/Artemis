@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository.hestia;
 
 import java.util.List;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
@@ -13,6 +14,7 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
  * Spring Data JPA repository for the ProgrammingExerciseGitDiffReport entity.
  */
 @Repository
+@Profile("core")
 public interface ProgrammingExerciseGitDiffReportRepository extends JpaRepository<ProgrammingExerciseGitDiffReport, Long> {
 
     /**
