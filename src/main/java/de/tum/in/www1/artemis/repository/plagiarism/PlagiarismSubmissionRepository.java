@@ -18,6 +18,10 @@ public interface PlagiarismSubmissionRepository extends JpaRepository<Plagiarism
 
     @Modifying
     @Transactional // ok because of modifying query
-    @Query("UPDATE PlagiarismSubmission submission set submission.plagiarismCase = :#{#plagiarismCase} where submission.id = :#{#submissionId}")
+    @Query("""
+            UPDATE PlagiarismSubmission submission
+            SET submission.plagiarismCase = :plagiarismCase
+            WHERE submission.id = :submissionId
+            """)
     void updatePlagiarismCase(@Param("submissionId") Long submissionId, @Param("plagiarismCase") PlagiarismCase plagiarismCase);
 }

@@ -199,7 +199,7 @@ export class ExamNavigationBarComponent implements OnInit {
         }
 
         // start with a yellow status (edit icon)
-        // TODO: it's a bit weired, that it works that multiple icons (one per exercise) are hold in the same instance variable of the component
+        // TODO: it's a bit weird, that it works that multiple icons (one per exercise) are hold in the same instance variable of the component
         //  we should definitely refactor this and e.g. use the same ExamExerciseOverviewItem as in exam-exercise-overview-page.component.ts !
         this.icon = faEdit;
         const exercise = this.exercises[exerciseIndex];
