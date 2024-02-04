@@ -8,11 +8,13 @@ import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
  * This class describes SAML2 properties.
  */
+@Profile("core")
 @Component
 @ConfigurationProperties("saml2")
 public class SAML2Properties {

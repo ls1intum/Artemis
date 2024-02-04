@@ -10,6 +10,7 @@ import javax.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.CacheControl;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -20,6 +21,7 @@ import tech.jhipster.config.JHipsterProperties;
 /**
  * Configures serving of static resources from /public from both the resources folder and the host file system.
  */
+@Profile("core")
 @Configuration
 public class PublicResourcesConfiguration implements WebMvcConfigurer {
 

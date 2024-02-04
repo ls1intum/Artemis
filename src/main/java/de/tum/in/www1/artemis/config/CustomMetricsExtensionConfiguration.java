@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 
 import de.tum.in.www1.artemis.web.rest.CustomMetricsExtension;
@@ -17,6 +18,7 @@ import tech.jhipster.config.metric.JHipsterMetricsEndpoint;
  * CustomMetricsExtensionConfiguration.
  * Configuration for custom Artemis metrics.
  */
+@Profile("core")
 public class CustomMetricsExtensionConfiguration {
 
     @Configuration

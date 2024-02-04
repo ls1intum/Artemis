@@ -9,6 +9,7 @@ import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
@@ -37,6 +38,7 @@ import de.tum.in.www1.artemis.service.user.PasswordService;
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 @Import(SecurityProblemSupport.class)
+@Profile("core")
 // ToDo: currently this cannot be replaced as recommended by
 // https://spring.io/blog/2022/02/21/spring-security-without-the-websecurityconfigureradapter
 // as that would break the SAML2 login functionality. For more information, see

@@ -6,6 +6,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Profile;
 
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
@@ -14,6 +15,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
  * This configuration file provides functions to get the configured Docker Images for {@link ProgrammingLanguage ProgrammingLanguages}.
  */
 @ConfigurationProperties(prefix = "artemis.continuous-integration.build")
+@Profile("core")
 public class ProgrammingLanguageConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingLanguageConfiguration.class);

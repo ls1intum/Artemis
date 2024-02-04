@@ -6,12 +6,14 @@ import java.util.Map;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
+@Profile("core")
 @Component
 @EnableConfigurationProperties
 @ConfigurationProperties(prefix = "info.guided-tour")
