@@ -159,12 +159,10 @@ public class LocalCIBuildJobExecutionService {
             throw new LocalCIException("Could not find last commit hash for test repository " + testsRepoUri.repositorySlug(), e);
         }
 
-        CreateContainerResponse container = localCIContainerService.configureContainer(containerName, buildJob.buildConfig().dockerImage());
-
-        Path buildScriptPath = Path.of(localCIBuildScriptBasePath).toAbsolutePath().resolve(buildJob.id() + "-build.sh");
+        CreateContainerResponse container = localCIContainerService.configureContainer(containerName, buildJob.buildConfig().dockerImage(), buildJob.buildConfig().buildScript());
 
         return runScriptAndParseResults(buildJob, containerName, container.getId(), assignmentRepoUri, assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath,
-                auxiliaryRepositoriesPaths, buildScriptPath, isPushToTestOrAuxRepository, assignmentCommitHash, testCommitHash);
+                auxiliaryRepositoriesPaths, isPushToTestOrAuxRepository, assignmentCommitHash, testCommitHash);
     }
 
     /**
@@ -177,8 +175,8 @@ public class LocalCIBuildJobExecutionService {
      * @throws LocalCIException if something went wrong while running the build job.
      */
     private LocalCIBuildResult runScriptAndParseResults(LocalCIBuildJobQueueItem buildJob, String containerName, String containerId, VcsRepositoryUri assignmentRepositoryUri,
-            Path assignmentRepositoryPath, Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths, Path buildScriptPath,
-            boolean isPushToTestRepository, String assignmentRepoCommitHash, String testRepoCommitHash) {
+            Path assignmentRepositoryPath, Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths, boolean isPushToTestRepository,
+            String assignmentRepoCommitHash, String testRepoCommitHash) {
 
         long timeNanoStart = System.nanoTime();
 
@@ -187,7 +185,7 @@ public class LocalCIBuildJobExecutionService {
         log.info("Started container for build job {}", containerName);
 
         localCIContainerService.populateBuildJobContainer(containerId, assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths,
-                buildJob.repositoryInfo().auxiliaryRepositoryCheckoutDirectories(), buildScriptPath, buildJob.buildConfig().programmingLanguage());
+                buildJob.repositoryInfo().auxiliaryRepositoryCheckoutDirectories(), buildJob.buildConfig().programmingLanguage());
 
         List<BuildLogEntry> buildLogEntries = localCIContainerService.runScriptInContainer(containerId);
 
