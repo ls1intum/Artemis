@@ -1,4 +1,4 @@
-name: End To End Tests
+name: Android E2E Tests
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ on:
       - 'SECURITY.md'
       - 'docs/**'
       - '.github/**'
-      - '!.github/workflows/test.yml'
+      - '!.github/workflows/test-android.yml'
   push:
     branches:
       - develop
@@ -25,14 +25,14 @@ on:
       - 'SECURITY.md'
       - 'docs/**'
       - '.github/**'
-      - '!.github/workflows/test.yml'
+      - '!.github/workflows/test-android.yml'
   release:
     types:
       - created
 
 jobs:
-  end-to-end-tests:
-    name: Android End To End Tests
+  e2e-tests:
+    name: Android E2E Tests
     runs-on: [self-hosted, ase-large-android-sdk-34]
     timeout-minutes: 60
 
@@ -48,6 +48,9 @@ jobs:
           repository: ls1intum/artemis-android
           path: android-repo
 
+      - name: Gradle Wrapper Verification
+        uses: gradle/wrapper-validation-action@v1
+
         # sanity cleanup
       - name: Stop mysql server
         run: docker stop artemis-mysql
@@ -59,12 +62,6 @@ jobs:
 
       - name: Launch mysql docker container
         run: docker compose -f main-repo/docker/mysql.yml up -d mysql
-
-      - name: JDK setup
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'zulu'
-          java-version: 17
 
         # Run artemis server in a detached mode, and store the pid in variable steps.run-artemis.outputs.pid
       - name: Run Artemis Server
@@ -91,15 +88,6 @@ jobs:
         # Necessary to build the android app
       - name: Set local.properties
         run: echo "sdk.dir=/usr/lib/android-sdk" > android-repo/local.properties
-
-      - name: Gradle Wrapper Verification
-        uses: gradle/wrapper-validation-action@v1
-
-      - name: JDK setup
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'zulu'
-          java-version: 17
 
         # Run the tests. We use 4 workers -> 4 parallel tasks. --rerun-tasks forces to rerun the tests even if gradle thinks they are still up-to-date.
       - name: run tests

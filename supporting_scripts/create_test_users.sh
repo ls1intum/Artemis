@@ -20,5 +20,14 @@ do
   curl -X POST http://"$serverUrl"/api/admin/users \
   -H "Content-Type: application/json" \
   -H "Cookie: jwt=${adminJwt};" \
-  -d '{"authorities":["ROLE_USER"],"login":"aa0'${i}'aaa","email":"test_user'${i}'@example.com","firstName":"Test","lastName":"User'${i}'","guidedTourSettings":[],"groups":["default"],"password":"test_user_'${i}'_password"}'
+  -d '{
+    "authorities":["ROLE_USER"],
+    "login":"aa0'${i}'aaa",
+    "email":"test_user'${i}'@example.com",
+    "firstName":"Test",
+    "lastName":"User'${i}'",
+    "guidedTourSettings":[],
+    "groups":["default"],
+    "password":"test_user_'${i}'_password"
+    }'
 done
