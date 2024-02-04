@@ -77,12 +77,12 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
                 AND s.id = (
                     SELECT MAX(s2.id)
                     FROM ProgrammingSubmission s2
-                        WHERE s2.participation.id = :participationId
-                            AND (s2.type <> 'ILLEGAL' or s2.type is null)
+                    WHERE s2.participation.id = :participationId
+                        AND (s2.type <> 'ILLEGAL' or s2.type is null)
                 )
             ORDER BY s.submissionDate DESC
             """)
-    List<ProgrammingSubmission> findAllByParticipationIdOrderByLegalSubmissionDateDesc(@Param("participationId") long participationId);
+    List<ProgrammingSubmission> findAllByParticipationIdOrderByLegalSubmissionDateDesc(@Param("participationId") Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = "results")
     Optional<ProgrammingSubmission> findFirstByParticipationIdOrderBySubmissionDateDesc(Long participationId);
