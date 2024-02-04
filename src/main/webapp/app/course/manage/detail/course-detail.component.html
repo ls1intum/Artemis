@@ -289,15 +289,6 @@
                         </dd>
                     </div>
                 }
-                <!-- TODO: Enable in future PR -->
-                @if (false && irisEnabled && irisCompetencyGenerationEnabled) {
-                    <div>
-                        <dt><span jhiTranslate="artemisApp.iris.settings.subSettings.enabled.competencyGeneration">Iris Competency Generation</span></dt>
-                        <dd>
-                            <jhi-iris-enabled [course]="course" [irisSubSettingsType]="COMPETENCY_GENERATION" [disabled]="!isAdmin"></jhi-iris-enabled>
-                        </dd>
-                    </div>
-                }
             </dl>
         </div>
     }
