@@ -48,7 +48,8 @@ public class DockerConfig {
     }
 
     /**
-     * Returns the full image name including the tag
+     * Returns the full image name including the tag, if a tag is defined within the image, that tag is used
+     * instead of the tag
      *
      * @return the full image name including the tag
      */
@@ -57,6 +58,8 @@ public class DockerConfig {
             if (!image.contains(":")) {
                 return image + ":" + "latest";
             }
+        }
+        if (image.contains(":")) {
             return image;
         }
         return image + ":" + tag;

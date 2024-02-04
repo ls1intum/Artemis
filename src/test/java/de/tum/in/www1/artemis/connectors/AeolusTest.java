@@ -155,4 +155,17 @@ class AeolusTest {
         aeolusRepository.setPath("path");
         assertThat(aeolusRepository.getPath()).isEqualTo("path");
     }
+
+    @Test
+    void testImageTagCombinations() {
+        DockerConfig dockerConfig = new DockerConfig();
+        dockerConfig.setImage("image");
+        dockerConfig.setTag("tag");
+        assertThat(dockerConfig.getFullImageName()).isEqualTo("image:tag");
+        dockerConfig.setTag(null);
+        assertThat(dockerConfig.getFullImageName()).isEqualTo("image:latest");
+        dockerConfig.setImage("image:tag");
+        dockerConfig.setTag("notshown");
+        assertThat(dockerConfig.getFullImageName()).isEqualTo("image:tag");
+    }
 }
