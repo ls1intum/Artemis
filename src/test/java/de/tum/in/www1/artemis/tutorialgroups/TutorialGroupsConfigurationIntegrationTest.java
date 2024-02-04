@@ -115,6 +115,9 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void create_asInstructor_shouldCreateTutorialGroupsConfiguration() throws Exception {
         // when
+        var temp = getTutorialGroupsConfigurationPath(courseId);
+        var temp2 = buildExampleConfiguration(courseId);
+
         var configurationFromRequest = request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId), buildExampleConfiguration(courseId),
                 TutorialGroupsConfiguration.class, HttpStatus.CREATED);
         // then
@@ -153,7 +156,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, firstAugustMondayMorning.toLocalDate(), firstSeptemberMonday.toLocalDate());
 
         // when
-        configuration.setTutorialPeriodEndInclusive(firstSeptemberMonday.toString());
+        configuration.setTutorialPeriodEndInclusive(firstSeptemberMonday.toLocalDate().toString());
         request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId) + configuration.getId(), configuration, TutorialGroupsConfiguration.class, HttpStatus.OK);
         // then
         configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(configuration.getId());

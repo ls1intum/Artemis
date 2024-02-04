@@ -123,7 +123,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     }
 
     get isSubmitPossible() {
-        if (!this.form.get('startDate')) {
+        if (!this.startDateControl || this.startDateControl.invalid) {
             return false;
         }
 
@@ -159,7 +159,14 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     ngOnChanges(): void {
         this.initializeForm();
         if (this.isEditMode && this.formData) {
-            this.setFormValues(this.formData);
+            // this.setFormValues(this.formData);
+            this.form.patchValue({
+                startDate: this.formData.startDate,
+                endDate: this.formData.endDate || undefined,
+                startTime: this.formData.startTime || undefined,
+                endTime: this.formData.endTime || undefined,
+                reason: this.formData.reason,
+            });
             this.setFirstTimeFrameInEditMode(this.formData);
         }
     }

@@ -58,7 +58,6 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
         return this.tutorialGroupFreePeriods.filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreeDay(tutorialGroupFreePeriod));
     }
     public static isFreeDay(tutorialGroupFreePeriod: TutorialGroupFreePeriod): boolean {
-        // debugger;
         const isMidnight: boolean = tutorialGroupFreePeriod.start!.hour() === 0 && tutorialGroupFreePeriod.start!.minute() === 0;
 
         return tutorialGroupFreePeriod.start!.isSame(tutorialGroupFreePeriod.end!, 'day') && isMidnight;

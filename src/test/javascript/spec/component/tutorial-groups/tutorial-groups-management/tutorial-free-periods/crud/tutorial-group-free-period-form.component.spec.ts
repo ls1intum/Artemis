@@ -17,7 +17,17 @@ describe('TutorialFreePeriodFormComponent', () => {
     let fixture: ComponentFixture<TutorialGroupFreePeriodFormComponent>;
     let component: TutorialGroupFreePeriodFormComponent;
 
-    const validDate = new Date(Date.UTC(2021, 1, 1));
+    const validStartDateUTC = new Date(Date.UTC(2021, 1, 1));
+    const validStartDateBerlin = new Date(validStartDateUTC.toLocaleString('de-DE', { timeZone: 'Europe/Berlin' }));
+    validStartDateBerlin.setHours(0, 0);
+
+    const validEndDateUTCFreeDay = new Date(Date.UTC(2021, 1, 1));
+    const validEndDateBerlinFreeDay = new Date(validEndDateUTCFreeDay.toLocaleString('de-DE', { timeZone: 'Europe/Berlin' }));
+    validEndDateBerlinFreeDay.setHours(23, 59, 59);
+
+    // const validStartTime = new Date(Date.UTC(2021, 1, 1, 0, 0, 0));
+    // const validEndTime = new Date(Date.UTC(2021, 1, 1, 23, 59, 59));
+
     const validReason = 'Holiday';
 
     let clickSubmit: (expectSubmitEvent: boolean) => void;
@@ -35,7 +45,10 @@ describe('TutorialFreePeriodFormComponent', () => {
                 fixture.detectChanges();
 
                 clickSubmit = generateClickSubmitButton(component, fixture, {
-                    date: validDate,
+                    startDate: validStartDateBerlin,
+                    endDate: undefined,
+                    startTime: undefined,
+                    endTime: undefined,
                     reason: validReason,
                 });
 
@@ -51,18 +64,29 @@ describe('TutorialFreePeriodFormComponent', () => {
         expect(component).not.toBeNull();
     });
 
-    it('should correctly set form values in edit mode', () => {
+    it('should correctly set form values in edit mode for freeDay', () => {
         component.isEditMode = true;
         const formData: TutorialGroupFreePeriodFormData = {
-            startDate: validDate,
+            startDate: validStartDateBerlin,
+            endDate: validEndDateBerlinFreeDay,
+            startTime: undefined,
+            endTime: undefined,
             reason: validReason,
         };
         component.formData = formData;
         component.ngOnChanges();
 
-        const formControlNames = ['date', 'reason'];
+        // For a Free Day, the end date should be undefined
+        formData.endDate = undefined;
+        const formControlNames = ['startDate', 'endDate', 'startTime', 'endTime', 'reason'];
         formControlNames.forEach((control) => {
-            expect(component.form.get(control)!.value).toEqual(formData[control]);
+            const formValue = component.form.get(control)!.value;
+            const expectedValue = formData[control];
+            if (formValue === null && expectedValue === undefined) {
+                expect(formValue).toBeNull();
+            } else {
+                expect(formValue).toEqual(expectedValue);
+            }
         });
     });
 
@@ -75,7 +99,7 @@ describe('TutorialFreePeriodFormComponent', () => {
     }));
 
     it('should block submit when required property is missing', fakeAsync(() => {
-        const requiredControlNames = ['date'];
+        const requiredControlNames = ['startDate'];
         for (const controlName of requiredControlNames) {
             testFormIsInvalidOnMissingRequiredProperty(controlName);
         }
@@ -84,7 +108,10 @@ describe('TutorialFreePeriodFormComponent', () => {
     // === helper functions ===
 
     const setValidFormValues = () => {
-        component.dateControl!.setValue(validDate);
+        component.startDateControl!.setValue(validStartDateBerlin);
+        component.endDateControl!.setValue(undefined);
+        component.startTimeControl!.setValue(undefined);
+        component.endTimeControl!.setValue(undefined);
         component.reasonControl!.setValue(validReason);
     };
 });

@@ -56,6 +56,26 @@ public class TutorialGroupDateUtil {
     }
 
     /**
+     * Check if a string follows the ISO 8601 format for dateTime
+     *
+     * @param timeString the string to check
+     * @return true if the string follows the ISO 8601 format for time or if null
+     */
+    public static boolean isIso8601DateTimeString(String timeString) {
+        if (timeString == null) {
+            return true;
+        }
+
+        try {
+            LocalDateTime.parse(timeString);
+            return true;
+        }
+        catch (DateTimeParseException e) {
+            return false;
+        }
+    }
+
+    /**
      * Convert a LocalDate and LocalTime to a ZonedDateTime by interpreting them in a specific time zone
      *
      * @param localDate date to convert

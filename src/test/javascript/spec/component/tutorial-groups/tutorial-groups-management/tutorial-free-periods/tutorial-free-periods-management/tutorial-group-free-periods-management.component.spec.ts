@@ -116,7 +116,7 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
             result: of(),
         };
         const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
-        const openDialogSpy = jest.spyOn(component, 'openCreateFreeDayDialog');
+        const openDialogSpy = jest.spyOn(component, 'openCreateFreePeriodDialog');
 
         const button = fixture.debugElement.nativeElement.querySelector('#create-tutorial-free-day');
         button.click();

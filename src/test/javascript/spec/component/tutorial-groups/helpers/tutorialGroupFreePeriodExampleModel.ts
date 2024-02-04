@@ -2,6 +2,7 @@ import dayjs from 'dayjs/esm';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { TutorialGroupFreePeriodFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
 import { TutorialGroupFreePeriodDTO } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
+import { TutorialGroupFreePeriodsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component';
 
 export const generateExampleTutorialGroupFreePeriod = ({
     id = 1,
@@ -19,15 +20,37 @@ export const generateExampleTutorialGroupFreePeriod = ({
 };
 
 export const tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData = (entity: TutorialGroupFreePeriod, tz: string): TutorialGroupFreePeriodFormData => {
-    return {
-        startDate: entity.start!.tz(tz).toDate(),
-        reason: entity.reason,
-    };
+    if (TutorialGroupFreePeriodsManagementComponent.isFreeDay(entity)) {
+        return {
+            startDate: entity.start!.tz(tz).toDate(),
+            endDate: entity.end!.tz(tz).toDate(),
+            startTime: undefined,
+            endTime: undefined,
+            reason: entity.reason,
+        };
+    } else if (TutorialGroupFreePeriodsManagementComponent.isFreePeriod(entity)) {
+        return {
+            startDate: entity.start!.tz(tz).toDate(),
+            endDate: entity.end!.tz(tz).toDate(),
+            startTime: undefined,
+            endTime: undefined,
+            reason: entity.reason,
+        };
+    } else {
+        return {
+            startDate: entity.start!.tz(tz).toDate(),
+            endDate: undefined,
+            startTime: entity.start!.tz(tz).toDate(),
+            endTime: entity.end!.tz(tz).toDate(),
+            reason: entity.reason,
+        };
+    }
 };
 
 export const formDataToTutorialGroupFreePeriodDTO = (formData: TutorialGroupFreePeriodFormData): TutorialGroupFreePeriodDTO => {
     return {
         startDate: formData.startDate,
+        endDate: formData.endDate,
         reason: formData.reason,
     };
 };

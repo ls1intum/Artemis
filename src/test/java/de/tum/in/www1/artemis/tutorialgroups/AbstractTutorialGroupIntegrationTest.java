@@ -162,8 +162,8 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
     TutorialGroupsConfiguration buildExampleConfiguration(Long courseId) {
         TutorialGroupsConfiguration tutorialGroupsConfiguration = new TutorialGroupsConfiguration();
         tutorialGroupsConfiguration.setCourse(courseRepository.findById(courseId).orElseThrow());
-        tutorialGroupsConfiguration.setTutorialPeriodStartInclusive(firstAugustMondayMorning.toString());
-        tutorialGroupsConfiguration.setTutorialPeriodEndInclusive(firstSeptemberMonday.toString());
+        tutorialGroupsConfiguration.setTutorialPeriodStartInclusive(firstAugustMondayMorning.toLocalDate().toString());
+        tutorialGroupsConfiguration.setTutorialPeriodEndInclusive(firstSeptemberMonday.toLocalDate().toString());
         tutorialGroupsConfiguration.setUseTutorialGroupChannels(true);
         tutorialGroupsConfiguration.setUsePublicTutorialGroupChannels(true);
         return tutorialGroupsConfiguration;
