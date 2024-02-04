@@ -6,20 +6,23 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import '@angular/localize/init';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import {
+    TimeFrame,
     TutorialGroupFreePeriodFormComponent,
     TutorialGroupFreePeriodFormData,
 } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
 import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from '../../../helpers/tutorialGroupFormsUtils';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
+import dayjs from 'dayjs/esm';
 
 describe('TutorialFreePeriodFormComponent', () => {
     let fixture: ComponentFixture<TutorialGroupFreePeriodFormComponent>;
     let component: TutorialGroupFreePeriodFormComponent;
 
-    const validStartDateUTC = new Date(Date.UTC(2021, 1, 1));
-    const validStartDateBerlin = new Date(validStartDateUTC.toLocaleString('de-DE', { timeZone: 'Europe/Berlin' }));
-    validStartDateBerlin.setHours(0, 0);
+    const validStartDateBerlin = dayjs('2021-01-01T00:00:00').tz('Europe/Berlin').toDate();
+    const validEndDateBerlinFreePeriod = dayjs('2021-01-07T00:00:00').tz('Europe/Berlin').toDate();
+    const validStartTimeBerlin = dayjs('2021-01-01T10:00:00').tz('Europe/Berlin').toDate();
+    const validEndTimeBerlin = dayjs('2021-01-01T12:00:00').tz('Europe/Berlin').toDate();
 
     const validEndDateUTCFreeDay = new Date(Date.UTC(2021, 1, 1));
     const validEndDateBerlinFreeDay = new Date(validEndDateUTCFreeDay.toLocaleString('de-DE', { timeZone: 'Europe/Berlin' }));
@@ -91,7 +94,7 @@ describe('TutorialFreePeriodFormComponent', () => {
     });
 
     it('should submit valid form', fakeAsync(() => {
-        setValidFormValues();
+        setFormValues(validStartDateBerlin, undefined, undefined, undefined, validReason);
         runOnPushChangeDetection(fixture);
         expect(component.form.valid).toBeTrue();
         expect(component.isSubmitPossible).toBeTrue();
@@ -105,7 +108,26 @@ describe('TutorialFreePeriodFormComponent', () => {
         }
     }));
 
+    it('should reset unused form values when time frame changes', () => {
+        setFormValues(validStartDateBerlin, validEndDateBerlinFreePeriod, undefined, undefined, validReason);
+        setTimeFrameAndCheckValues(TimeFrame.Day, validStartDateBerlin, undefined, undefined, undefined);
+        setFormValues(validStartDateBerlin, validEndDateBerlinFreePeriod, undefined, undefined, validReason);
+        setTimeFrameAndCheckValues(TimeFrame.PeriodWithinDay, validStartDateBerlin, undefined, undefined, undefined);
+
+        setFormValues(validStartDateBerlin, undefined, validStartTimeBerlin, validEndTimeBerlin, validReason);
+        setTimeFrameAndCheckValues(TimeFrame.Period, validStartDateBerlin, undefined, undefined, undefined);
+        setFormValues(validStartDateBerlin, undefined, validStartTimeBerlin, validEndTimeBerlin, validReason);
+        setTimeFrameAndCheckValues(TimeFrame.Day, validStartDateBerlin, undefined, undefined, undefined);
+    });
+
     // === helper functions ===
+    const setFormValues = (startDate: Date | undefined, endDate: Date | undefined, startTime: Date | undefined, endTime: Date | undefined, reason: string) => {
+        component.startDateControl!.setValue(startDate);
+        component.endDateControl!.setValue(endDate);
+        component.startTimeControl!.setValue(startTime);
+        component.endTimeControl!.setValue(endTime);
+        component.reasonControl!.setValue(reason);
+    };
 
     const setValidFormValues = () => {
         component.startDateControl!.setValue(validStartDateBerlin);
@@ -113,5 +135,32 @@ describe('TutorialFreePeriodFormComponent', () => {
         component.startTimeControl!.setValue(undefined);
         component.endTimeControl!.setValue(undefined);
         component.reasonControl!.setValue(validReason);
+    };
+
+    const setTimeFrameAndCheckValues = (timeFrame: TimeFrame, startDate: Date | undefined, endDate: Date | undefined, startTime: Date | undefined, endTime: Date | undefined) => {
+        component.setTimeFrame(timeFrame);
+        if (startDate) {
+            expect(component.form.get('startDate')!.value).toBe(startDate);
+        } else {
+            expect(component.form.get('startDate')!.value).toBeFalsy();
+        }
+
+        if (endDate) {
+            expect(component.form.get('endDate')!.value).toBe(endDate);
+        } else {
+            expect(component.form.get('endDate')!.value).toBeFalsy();
+        }
+
+        if (startTime) {
+            expect(component.form.get('startTime')!.value).toBe(startTime);
+        } else {
+            expect(component.form.get('startTime')!.value).toBeFalsy();
+        }
+
+        if (endTime) {
+            expect(component.form.get('endTime')!.value).toBe(endTime);
+        } else {
+            expect(component.form.get('endTime')!.value).toBeFalsy();
+        }
     };
 });

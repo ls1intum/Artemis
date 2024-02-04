@@ -53,7 +53,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
 
     // Todo: TimeFrame getter/setter. Reset endDate when switching back to single Day
     setTimeFrame(timeFrame: TimeFrame) {
-        if (timeFrame == TimeFrame.Day && this.formData.endDate != undefined) {
+        if (timeFrame === TimeFrame.Day) {
             this.resetDateControl('endDate');
             this.resetDateControl('endTime');
             this.resetDateControl('startTime');
