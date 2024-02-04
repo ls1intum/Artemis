@@ -84,10 +84,10 @@ public class IrisMessageResource {
         irisSessionService.checkHasAccessToIrisSession(session, user);
         irisSessionService.checkRateLimit(session, user);
 
-        var savedMessage = irisMessageService.saveMessage(dto.message(), session, IrisMessageSender.USER);
-        savedMessage.setMessageDifferentiator(dto.message().getMessageDifferentiator());
-        irisSessionService.sendOverWebsocket(savedMessage);
-        irisSessionService.requestMessageFromIris(session, dto.extraParams());
+        var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
+        savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
+        irisSessionService.sendOverWebsocket(savedMessage, session);
+        irisSessionService.requestMessageFromIris(session);
 
         var uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
         return ResponseEntity.created(new URI(uriString)).body(savedMessage);

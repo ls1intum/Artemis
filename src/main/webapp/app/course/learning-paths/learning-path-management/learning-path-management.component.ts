@@ -179,7 +179,7 @@ export class LearningPathManagementComponent implements OnInit {
             .pipe(
                 debounceTime(debounce),
                 tap(() => (this.searchLoading = true)),
-                switchMap(() => this.pagingService.searchForLearningPaths(this.state, this.courseId)),
+                switchMap(() => this.pagingService.search(this.state, { courseId: this.courseId })),
             )
             .subscribe((resp) => {
                 this.content = resp;

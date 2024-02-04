@@ -6,7 +6,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,15 +18,11 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CompetencyProgressService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @RestController
 @RequestMapping("/api")
 public class TextUnitResource {
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     private static final Logger log = LoggerFactory.getLogger(TextUnitResource.class);
 
@@ -66,7 +61,7 @@ public class TextUnitResource {
         }
         TextUnit textUnit = optionalTextUnit.get();
         if (textUnit.getLecture() == null || textUnit.getLecture().getCourse() == null || !textUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException("Input data not valid", ENTITY_NAME, "inputInvalid");
+            throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, textUnit.getLecture(), null);
         return ResponseEntity.ok().body(textUnit);
@@ -90,7 +85,7 @@ public class TextUnitResource {
         var textUnit = textUnitRepository.findByIdWithCompetenciesBidirectional(textUnitForm.getId()).orElseThrow();
 
         if (textUnit.getLecture() == null || textUnit.getLecture().getCourse() == null || !textUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException("Input data not valid", ENTITY_NAME, "inputInvalid");
+            throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, textUnit.getLecture(), null);
 
@@ -122,7 +117,7 @@ public class TextUnitResource {
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
 
         if (lecture.getCourse() == null || (textUnit.getLecture() != null && !lecture.getId().equals(textUnit.getLecture().getId()))) {
-            throw new ConflictException("Input data not valid", ENTITY_NAME, "inputInvalid");
+            throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, lecture, null);
 

@@ -107,7 +107,7 @@ public class LearningPathService {
      * @return A wrapper object containing a list of all found learning paths and the total number of pages
      */
     public SearchResultPageDTO<LearningPathInformationDTO> getAllOfCourseOnPageWithSize(@NotNull PageableSearchDTO<String> search, @NotNull Course course) {
-        final var pageable = PageUtil.createLearningPathPageRequest(search);
+        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.LEARNING_PATH);
         final var searchTerm = search.getSearchTerm();
         final Page<LearningPath> learningPathPage = learningPathRepository.findByLoginOrNameInCourse(searchTerm, course.getId(), pageable);
         final List<LearningPathInformationDTO> contentDTOs = learningPathPage.getContent().stream().map(LearningPathInformationDTO::new).toList();
@@ -126,6 +126,23 @@ public class LearningPathService {
         learningPaths.forEach(learningPath -> learningPath.addCompetency(competency));
         learningPathRepository.saveAll(learningPaths);
         log.debug("Linked competency (id={}) to learning paths", competency.getId());
+    }
+
+    /**
+     * Links a list of competencies to all learning paths of the course.
+     *
+     * @param competencies The list of competencies that should be added
+     * @param courseId     course id that the learning paths belong to
+     */
+    public void linkCompetenciesToLearningPathsOfCourse(@NotNull List<Competency> competencies, long courseId) {
+        if (competencies.isEmpty()) {
+            return;
+        }
+        var course = courseRepository.findWithEagerLearningPathsAndCompetenciesByIdElseThrow(courseId);
+        var learningPaths = course.getLearningPaths();
+        learningPaths.forEach(learningPath -> learningPath.addCompetencies(new HashSet<>(competencies)));
+        learningPathRepository.saveAll(learningPaths);
+        log.debug("Linked {} competencies to learning paths", competencies.size());
     }
 
     /**

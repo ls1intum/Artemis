@@ -10,7 +10,7 @@ import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { Feedback } from 'app/entities/feedback.model';
-import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise.utils';
+import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 
 @Component({
@@ -43,13 +43,9 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
     }
 
     protected computeTotalScore(assessments: Feedback[]): number {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-        const maxPoints = this.exercise?.maxPoints! + this.exercise?.bonusPoints! ?? 0.0;
-        let totalScore = this.structuredGradingCriterionService.computeTotalScore(assessments);
-
-        // Cap totalScore to maxPoints
-        totalScore = getPositiveAndCappedTotalScore(totalScore, maxPoints);
-        return totalScore;
+        const maxPoints = getTotalMaxPoints(this.exercise);
+        const totalScore = this.structuredGradingCriterionService.computeTotalScore(assessments);
+        return getPositiveAndCappedTotalScore(totalScore, maxPoints);
     }
 
     protected handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {

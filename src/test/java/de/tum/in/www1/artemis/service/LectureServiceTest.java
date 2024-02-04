@@ -123,7 +123,7 @@ class LectureServiceTest extends AbstractSpringIntegrationIndependentTest {
         lecture = lectureRepository.findByIdElseThrow(lecture.getId());
 
         PageableSearchDTO<String> pageable = pageableSearchUtilService.configureLectureSearch(lecture.getTitle());
-        pageable.setSortedColumn(Lecture.LectureSearchColumn.ID.name());
+        pageable.setSortedColumn("ID");
         pageable.setPageSize(1);
 
         SearchResultPageDTO<Lecture> result1 = lectureService.getAllOnPageWithSize(pageable, editor);
