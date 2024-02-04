@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.exam;
 
 import java.time.ZonedDateTime;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -19,6 +20,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 /**
  * Service implementation to check student exam access.
  */
+@Profile("core")
 @Service
 public class StudentExamAccessService {
 

@@ -11,6 +11,7 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
  * This service is responsible for downloading, deleting data exports and checking if a data export can be requested.
  * For creating data exports, see {@link DataExportCreationService}.
  */
+@Profile("core")
 @Service
 public class DataExportService {
 

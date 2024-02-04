@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,7 @@ import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
  * Service for exporting Exercises with the student submissions.
  */
 // We cannot remove the abstract as this breaks the Spring Dependency Injection because then Spring doesn't know which bean to inject
+@Profile("core")
 @Service
 public abstract class ExerciseWithSubmissionsExportService {
 

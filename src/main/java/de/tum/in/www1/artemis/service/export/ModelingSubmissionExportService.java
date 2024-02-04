@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.export;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -12,6 +13,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ZipFileService;
 
+@Profile("core")
 @Service
 public class ModelingSubmissionExportService extends SubmissionExportService {
 

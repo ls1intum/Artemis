@@ -5,10 +5,12 @@ import java.util.Map;
 
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import com.hazelcast.core.HazelcastInstance;
 
+@Profile("core || buildagent")
 @Component
 public class HazelcastHealthIndicator implements HealthIndicator {
 

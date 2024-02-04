@@ -4,8 +4,10 @@ import java.util.Optional;
 
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+@Profile("core")
 @Component
 public class ContinuousIntegrationServerHealthIndicator implements HealthIndicator {
 

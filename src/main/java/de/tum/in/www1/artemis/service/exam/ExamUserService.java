@@ -11,6 +11,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripperByArea;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,6 +28,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 /**
  * Service Implementation for managing Exam Users.
  */
+@Profile("core")
 @Service
 public class ExamUserService {
 

@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -27,6 +28,7 @@ import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
  * Additionally, the results can be included in the export if the due date is over.
  * This service is also used to export the student submissions for archival.
  */
+@Profile("core")
 @Service
 public class DataExportQuizExerciseCreationService {
 

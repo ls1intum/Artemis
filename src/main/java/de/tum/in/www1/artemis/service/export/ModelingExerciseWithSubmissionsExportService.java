@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.export;
 import java.nio.file.Path;
 import java.util.List;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +15,8 @@ import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 /**
  * Service for exporting Modeling Exercises with the student submissions.
  */
+
+@Profile("core")
 @Service
 public class ModelingExerciseWithSubmissionsExportService extends ExerciseWithSubmissionsExportService {
 

@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -29,6 +30,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
  * This includes exercise participations and general information such as working time.
  * Results are only included if the results are already published.
  */
+@Profile("core")
 @Service
 public class DataExportExamCreationService {
 

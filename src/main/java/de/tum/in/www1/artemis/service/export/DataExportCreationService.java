@@ -15,6 +15,7 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.DataExport;
@@ -34,6 +35,7 @@ import de.tum.in.www1.artemis.service.user.UserService;
  * This service is responsible for creating the data export, delegating most tasks to the {@link DataExportExerciseCreationService} and {@link DataExportExamCreationService}
  * and notifying the user about the creation.
  */
+@Profile("core")
 @Service
 public class DataExportCreationService {
 
