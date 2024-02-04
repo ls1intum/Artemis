@@ -18,7 +18,6 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.topic.ITopic;
 
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.service.connectors.localci.*;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 
@@ -39,8 +38,6 @@ public class BuildJobManagementService {
     private final BuildJobContainerService buildJobContainerService;
 
     private final LocalCIDockerService localCIDockerService;
-
-    private final LocalCIBuildConfigurationService localCIBuildConfigurationService;
 
     @Value("${artemis.continuous-integration.timeout-seconds:120}")
     private int timeoutSeconds;
@@ -67,13 +64,12 @@ public class BuildJobManagementService {
     private final ITopic<String> canceledBuildJobsTopic;
 
     public BuildJobManagementService(HazelcastInstance hazelcastInstance, BuildJobExecutionService buildJobExecutionService, ExecutorService localCIBuildExecutorService,
-            BuildJobContainerService buildJobContainerService, LocalCIDockerService localCIDockerService, LocalCIBuildConfigurationService localCIBuildConfigurationService) {
+            BuildJobContainerService buildJobContainerService, LocalCIDockerService localCIDockerService) {
         this.buildJobExecutionService = buildJobExecutionService;
         this.localCIBuildExecutorService = localCIBuildExecutorService;
         this.buildJobContainerService = buildJobContainerService;
         this.localCIDockerService = localCIDockerService;
         this.canceledBuildJobsTopic = hazelcastInstance.getTopic("canceledBuildJobsTopic");
-        this.localCIBuildConfigurationService = localCIBuildConfigurationService;
     }
 
     /**

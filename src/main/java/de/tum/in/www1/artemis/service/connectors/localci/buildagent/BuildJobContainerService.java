@@ -36,8 +36,6 @@ import com.github.dockerjava.api.model.HostConfig;
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.service.connectors.BuildScriptProvider;
-import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
 
 /**
@@ -66,15 +64,9 @@ public class BuildJobContainerService {
     @Value("${artemis.continuous-integration.proxies.default.no-proxy:}")
     private String noProxy;
 
-    AeolusTemplateService aeolusTemplateService;
-
-    BuildScriptProvider buildScriptProvider;
-
-    public BuildJobContainerService(DockerClient dockerClient, HostConfig hostConfig, AeolusTemplateService aeolusTemplateService, BuildScriptProvider buildScriptProvider) {
+    public BuildJobContainerService(DockerClient dockerClient, HostConfig hostConfig) {
         this.dockerClient = dockerClient;
         this.hostConfig = hostConfig;
-        this.aeolusTemplateService = aeolusTemplateService;
-        this.buildScriptProvider = buildScriptProvider;
     }
 
     /**
