@@ -46,7 +46,8 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
                 AND s.commitHash = :commitHash
             ORDER BY s.id DESC
             """)
-    List<ProgrammingSubmission> findByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(Long participationId, String commitHash);
+    List<ProgrammingSubmission> findByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(@Param("participationId") Long participationId,
+            @Param("commitHash") String commitHash);
 
     default ProgrammingSubmission findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(Long participationId, String commitHash) {
         return findByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participationId, commitHash).stream().findFirst().orElse(null);
