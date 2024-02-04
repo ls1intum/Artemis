@@ -92,7 +92,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the number of currently locked submissions for a specific user in the given course
      */
     @Query("""
-            SELECT COUNT (DISTINCT s)
+            SELECT COUNT(DISTINCT s)
             FROM Submission s
                 LEFT JOIN s.results r
             WHERE r.assessor.id = :userId
@@ -108,8 +108,9 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the number of currently locked submissions for the given course
      */
     @Query("""
-            SELECT COUNT (DISTINCT s)
-            FROM Submission s LEFT JOIN s.results r
+            SELECT COUNT(DISTINCT s)
+            FROM Submission s
+                LEFT JOIN s.results r
             WHERE r.completionDate IS NULL
                 AND s.participation.exercise.course.id = :courseId
             """)
@@ -124,8 +125,9 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the number of currently locked submissions for a specific user in the given course
      */
     @Query("""
-            SELECT COUNT (DISTINCT s)
-            FROM Submission s LEFT JOIN s.results r
+            SELECT COUNT(DISTINCT s)
+            FROM Submission s
+                LEFT JOIN s.results r
             WHERE r.assessor.id = :userId
                 AND r.completionDate IS NULL
                 AND s.participation.exercise.exerciseGroup.exam.id = :examId
@@ -140,8 +142,9 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the number of currently locked submissions for a specific user in the given course
      */
     @Query("""
-            SELECT COUNT (DISTINCT s)
-            FROM Submission s LEFT JOIN s.results r
+            SELECT COUNT(DISTINCT s)
+            FROM Submission s
+                LEFT JOIN s.results r
             WHERE r.assessor.id IS NOT NULL
                 AND r.completionDate IS NULL
                 AND s.participation.exercise.exerciseGroup.exam.id = :examId
@@ -156,8 +159,9 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the number of currently locked submissions for a specific user in the given course
      */
     @Query("""
-            SELECT COUNT (DISTINCT s)
-            FROM Submission s LEFT JOIN s.results r
+            SELECT COUNT(DISTINCT s)
+            FROM Submission s
+                LEFT JOIN s.results r
             WHERE r.assessor.id IS NOT NULL
                 AND r.completionDate IS NULL
                 AND s.participation.exercise.id = :exerciseId
@@ -217,7 +221,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      *         due date at all
      */
     @Query("""
-            SELECT COUNT (DISTINCT s)
+            SELECT COUNT(DISTINCT s)
             FROM Submission s
                 JOIN s.participation p
                 JOIN p.exercise e
@@ -236,7 +240,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      *         due date at all
      */
     @Query("""
-            SELECT COUNT (DISTINCT submission)
+            SELECT COUNT(DISTINCT submission)
             FROM Submission submission
             WHERE TYPE(submission) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
                 AND submission.participation.exercise.exerciseGroup.exam.id = :examId
@@ -252,7 +256,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the number of submissions belonging to the course, which have the submitted flag set to true and the submission date after the exercise due date
      */
     @Query("""
-            SELECT COUNT (DISTINCT s)
+            SELECT COUNT(DISTINCT s)
             FROM Submission s
                 JOIN s.participation p
                 JOIN p.exercise e
@@ -270,7 +274,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      *         exercise due date at all
      */
     @Query("""
-            SELECT COUNT (DISTINCT p)
+            SELECT COUNT(DISTINCT p)
             FROM StudentParticipation p
                 JOIN p.exercise e
                 JOIN p.submissions s
@@ -289,7 +293,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      *         exercise due date at all
      */
     @Query("""
-            SELECT COUNT (DISTINCT p)
+            SELECT COUNT(DISTINCT p)
             FROM StudentParticipation p
                 JOIN p.submissions s
                 JOIN p.exercise e
@@ -331,7 +335,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true
      */
     @Query("""
-            SELECT COUNT (DISTINCT p)
+            SELECT COUNT(DISTINCT p)
             FROM StudentParticipation p
                 JOIN p.submissions s
             WHERE p.exercise.id = :exerciseId
@@ -347,7 +351,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the number of submissions belonging to the exercise and student id
      */
     @Query("""
-            SELECT COUNT (DISTINCT s)
+            SELECT COUNT(DISTINCT s)
             FROM StudentParticipation p
                 JOIN p.submissions s
             WHERE p.exercise.id = :exerciseId
@@ -362,7 +366,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
                 e.id,
-                count(DISTINCT p)
+                COUNT(DISTINCT p)
             )
             FROM StudentParticipation p
                 JOIN p.submissions s
