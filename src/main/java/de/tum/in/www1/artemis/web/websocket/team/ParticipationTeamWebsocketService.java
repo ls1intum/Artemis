@@ -79,6 +79,9 @@ public class ParticipationTeamWebsocketService {
         this.hazelcastInstance = hazelcastInstance;
     }
 
+    /**
+     * Initialize relevant data from hazelcast
+     */
     @PostConstruct
     public void init() {
         // participationId-username -> timestamp

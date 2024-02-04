@@ -66,6 +66,9 @@ public class InstanceMessageReceiveService {
         this.hazelcastInstance = hazelcastInstance;
     }
 
+    /**
+     * Initialize all topic listeners from hazelcast
+     */
     @PostConstruct
     public void init() {
         hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_SCHEDULE.toString()).addMessageListener(message -> {
