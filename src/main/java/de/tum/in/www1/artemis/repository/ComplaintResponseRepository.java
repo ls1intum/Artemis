@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -18,6 +19,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 /**
  * Spring Data JPA repository for the ComplaintResponse entity.
  */
+@Profile("core")
 @Repository
 public interface ComplaintResponseRepository extends JpaRepository<ComplaintResponse, Long> {
 

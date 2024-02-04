@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -21,6 +22,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the Competency entity.
  */
+@Profile("core")
 @Repository
 public interface CompetencyRepository extends JpaRepository<Competency, Long> {
 

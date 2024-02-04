@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import java.util.*;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 
+@Profile("core")
 @Repository
 public interface CompetencyProgressRepository extends JpaRepository<CompetencyProgress, Long> {
 

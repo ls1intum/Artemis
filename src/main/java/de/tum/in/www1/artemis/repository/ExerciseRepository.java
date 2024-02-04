@@ -9,6 +9,7 @@ import java.util.*;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -22,6 +23,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the Exercise entity.
  */
+@Profile("core")
 @Repository
 public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
