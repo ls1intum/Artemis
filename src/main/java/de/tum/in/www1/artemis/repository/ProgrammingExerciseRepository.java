@@ -623,7 +623,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     }
 
     /**
-     * Find a programming exercise by its id, with eagerly loaded objects required for the creation of a programming exercise
+     * Find a programming exercise by its id, with eagerly loaded objects required for the creation of a programming exercise.
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
@@ -637,6 +637,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * Saves the given programming exercise to the database.
+     <p>
      * When saving a programming exercise Hibernates returns an exercise with references to proxy objects.
      * Thus, we need to load the objects referenced by the programming exercise again.
      *
