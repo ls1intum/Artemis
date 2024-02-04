@@ -5,6 +5,7 @@ import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,6 +15,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@Profile("core")
 @Repository
 public interface ParticipationRepository extends JpaRepository<Participation, Long> {
 

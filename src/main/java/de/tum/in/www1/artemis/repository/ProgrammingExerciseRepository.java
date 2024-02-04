@@ -14,6 +14,7 @@ import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -31,6 +32,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the ProgrammingExercise entity.
  */
+@Profile("core")
 @Repository
 public interface ProgrammingExerciseRepository extends JpaRepository<ProgrammingExercise, Long>, JpaSpecificationExecutor<ProgrammingExercise> {
 
