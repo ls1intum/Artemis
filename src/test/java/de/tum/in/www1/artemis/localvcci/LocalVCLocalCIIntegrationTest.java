@@ -657,7 +657,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
     }
 
-    @Test
+    @RepeatedTest(50)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_instructorExamTestRun() throws Exception {
         Exam exam = examUtilService.addExamWithExerciseGroup(course, true);

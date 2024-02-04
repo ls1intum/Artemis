@@ -51,15 +51,37 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     default ProgrammingSubmission findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(Long participationId, String commitHash) {
         return findByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participationId, commitHash).stream().findFirst().orElse(null);
     }
+    /*
+     * @Query("""
+     * SELECT s
+     * FROM ProgrammingSubmission s
+     * LEFT JOIN FETCH s.results
+     * WHERE (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
+     * AND s.participation.id = :participationId
+     * AND s.id = (
+     * SELECT MAX(s2.id)
+     * FROM ProgrammingSubmission s2
+     * WHERE s2.participation.id = :participationId
+     * AND (s2.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s2.type IS NULL)
+     * )
+     * """)
+     */
 
     @Query("""
-            SELECT s FROM ProgrammingSubmission s
-            LEFT JOIN FETCH s.results
+            SELECT s
+            FROM ProgrammingSubmission s
+                LEFT JOIN FETCH s.results
             WHERE (s.type <> 'ILLEGAL' or s.type is null)
-            AND s.participation.id = :#{#participationId}
-            AND s.id = (SELECT max(s2.id) FROM ProgrammingSubmission s2 WHERE s2.participation.id = :#{#participationId} AND (s2.type <> 'ILLEGAL' or s2.type is null))
+                AND s.participation.id = :participationId
+                AND s.id = (
+                    SELECT MAX(s2.id)
+                    FROM ProgrammingSubmission s2
+                        WHERE s2.participation.id = :participationId
+                            AND (s2.type <> 'ILLEGAL' or s2.type is null)
+                )
+            ORDER BY s.submissionDate DESC
             """)
-    Optional<ProgrammingSubmission> findFirstByParticipationIdOrderByLegalSubmissionDateDesc(@Param("participationId") Long participationId);
+    List<ProgrammingSubmission> findAllByParticipationIdOrderByLegalSubmissionDateDesc(@Param("participationId") long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = "results")
     Optional<ProgrammingSubmission> findFirstByParticipationIdOrderBySubmissionDateDesc(Long participationId);
@@ -94,7 +116,11 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     Optional<ProgrammingSubmission> findByResultId(@Param("resultId") Long resultId);
 
     @EntityGraph(type = LOAD, attributePaths = "results")
-    @Query("select s from ProgrammingSubmission s where s.participation.id = :#{#participationId}")
+    @Query("""
+             SELECT s
+             FROM ProgrammingSubmission s
+             WHERE s.participation.id = :participationId
+            """)
     List<ProgrammingSubmission> findAllByParticipationIdWithResults(@Param("participationId") Long participationId);
 
     /**

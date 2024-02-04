@@ -22,6 +22,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -38,8 +40,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.DockerClient;
@@ -525,19 +525,21 @@ public class LocalVCLocalCITestService {
             int expectedCodeIssueCount) {
         // wait for result to be persisted
         await().until(() -> resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId).isPresent());
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        // Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
         log.info("Expected commit hash: " + expectedCommitHash);
         for (ProgrammingSubmission submission : submissions) {
             log.info("Submission with commit hash: " + submission.getCommitHash());
         }
-        await().until(() -> {
-            SecurityContextHolder.getContext().setAuthentication(auth);
-            return programmingSubmissionRepository.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participationId).orElseThrow().getLatestResult() != null;
-        });
-
-        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participationId).orElseThrow();
+        var start = System.currentTimeMillis();
+        await().timeout(Duration.of(2, ChronoUnit.MINUTES)).untilAsserted(() -> assertThat(
+                programmingSubmissionRepository.findAllByParticipationIdOrderByLegalSubmissionDateDesc(participationId).stream().findFirst().orElseThrow().getLatestResult())
+                .isNotNull());
+        var end = System.currentTimeMillis();
+        log.info("RESCH: Time to wait for result to be persisted: " + (end - start) + "ms");
+        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findAllByParticipationIdOrderByLegalSubmissionDateDesc(participationId).stream().findFirst()
+                .orElseThrow();
         if (expectedCommitHash != null) {
             assertThat(programmingSubmission.getCommitHash()).isEqualTo(expectedCommitHash);
         }

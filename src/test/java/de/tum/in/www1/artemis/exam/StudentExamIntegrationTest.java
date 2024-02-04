@@ -1359,7 +1359,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                     bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
                     request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
                     Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository
-                            .findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participation.getId());
+                            .findAllByParticipationIdOrderByLegalSubmissionDateDesc(participation.getId()).stream().findFirst();
                     assertThat(programmingSubmission).isPresent();
                     assertSensitiveInformationWasFilteredProgrammingExercise(programmingExercise);
                     participation.getSubmissions().add(programmingSubmission.get());
@@ -1918,7 +1918,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
                 request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
                 Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository
-                        .findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participation.getId());
+                        .findAllByParticipationIdOrderByLegalSubmissionDateDesc(participation.getId()).stream().findFirst();
                 programmingSubmission.ifPresent(submission -> participation.getSubmissions().add(submission));
                 continue;
             }
