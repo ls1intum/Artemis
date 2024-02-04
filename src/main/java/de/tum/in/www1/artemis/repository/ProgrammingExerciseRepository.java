@@ -151,12 +151,15 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @return List of the exercises that should be scheduled
      */
     @Query("""
-            select distinct pe from ProgrammingExercise pe
-            left join pe.studentParticipations participation
-            where pe.releaseDate > :now
-                or pe.buildAndTestStudentSubmissionsAfterDueDate > :now
-                or pe.dueDate > :now
-                or (participation.individualDueDate is not null and participation.individualDueDate > :now)
+            SELECT DISTINCT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN FETCH pe.studentParticipations participation
+                LEFT JOIN FETCH participation.team team
+                LEFT JOIN FETCH team.students
+            WHERE pe.releaseDate > :now
+                OR pe.buildAndTestStudentSubmissionsAfterDueDate > :now
+                OR pe.dueDate > :now
+                OR (participation.individualDueDate IS NOT NULL AND participation.individualDueDate > :now)
             """)
     List<ProgrammingExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);
 
@@ -211,20 +214,22 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             """)
     Optional<ProgrammingExercise> findWithEagerTemplateAndSolutionParticipationsById(@Param("exerciseId") Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = "studentParticipations")
+    @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.team", "studentParticipations.team.students" })
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsById(Long exerciseId);
 
     @Query("""
             SELECT pe FROM ProgrammingExercise pe
             LEFT JOIN FETCH pe.studentParticipations pep
             LEFT JOIN FETCH pep.student
+            LEFT JOIN FETCH pep.team t
+            LEFT JOIN FETCH t.students
             LEFT JOIN FETCH pep.submissions s
             WHERE pe.id = :#{#exerciseId}
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(@Param("exerciseId") Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations" })
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations.team.students" })
     Optional<ProgrammingExercise> findWithAllParticipationsById(Long exerciseId);
 
     @Query("""
