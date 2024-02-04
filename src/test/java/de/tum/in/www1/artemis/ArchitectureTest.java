@@ -17,6 +17,7 @@ import org.eclipse.jgit.api.Git;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.slf4j.Logger;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 import com.tngtech.archunit.base.DescribedPredicate;
@@ -137,6 +138,11 @@ class ArchitectureTest extends AbstractArchitectureTest {
         jsonParser.check(allClasses);
     }
 
+    @Test
+    void testJPQLStyle() {
+        methods().that().areAnnotatedWith(Query.class).should(useUpperCaseSQLStyle()).check(allClasses);
+    }
+
     // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes
 
     private DescribedPredicate<? super JavaAnnotation<?>> simpleNameAnnotation(String name) {
@@ -155,6 +161,30 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 boolean satisfied = item.getParameterAnnotations().stream().flatMap(Collection::stream).noneMatch(annotationPredicate);
                 if (!satisfied) {
                     events.add(violated(item, String.format("Method %s has parameter violating %s", item.getFullName(), annotationPredicate.getDescription())));
+                }
+            }
+        };
+    }
+
+    private ArchCondition<JavaMethod> useUpperCaseSQLStyle() {
+        return new ArchCondition<>("@Query content should follow the style guide") {
+
+            @Override
+            public void check(JavaMethod item, ConditionEvents events) {
+                var queryAnnotation = item.getAnnotations().stream().filter(simpleNameAnnotation("Query")).findAny();
+                if (queryAnnotation.isEmpty()) {
+                    return;
+                }
+                Object valueProperty = queryAnnotation.get().getExplicitlyDeclaredProperty("value");
+                if (!(valueProperty instanceof String query)) {
+                    return;
+                }
+                var checkedKeyword = Set.of("select", "distinct", "exists", "from", "where", "join", "fetch", "and", "order by", "count", "false", "true", "null", "like");
+                String lowerCaseQuery = query.toLowerCase(Locale.ROOT);
+                for (var keyword : checkedKeyword) {
+                    if (lowerCaseQuery.contains(keyword) && !query.contains(keyword.toUpperCase())) {
+                        events.add(violated(item, "In the Query of %s the keyword %s should be written in upper case.".formatted(item.getFullName(), keyword)));
+                    }
                 }
             }
         };
