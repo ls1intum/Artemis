@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.jgit.api.Git;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -179,10 +180,9 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 if (!(valueProperty instanceof String query)) {
                     return;
                 }
-                var checkedKeyword = Set.of("select", "distinct", "exists", "from", "where", "join", "fetch", "and", "order by", "count", "false", "true", "null", "like");
-                String lowerCaseQuery = query.toLowerCase(Locale.ROOT);
+                var checkedKeyword = Set.of("SELECT", "DISTINCT", "EXISTS", "FROM", "WHERE", "JOIN", "FETCH", "AND", "ORDER BY", "COUNT", "FALSE", "TRUE", "NULL", "LIKE");
                 for (var keyword : checkedKeyword) {
-                    if (lowerCaseQuery.contains(keyword) && !query.contains(keyword.toUpperCase())) {
+                    if (StringUtils.containsIgnoreCase(query, keyword) && !query.contains(keyword)) {
                         events.add(violated(item, "In the Query of %s the keyword %s should be written in upper case.".formatted(item.getFullName(), keyword)));
                     }
                 }
