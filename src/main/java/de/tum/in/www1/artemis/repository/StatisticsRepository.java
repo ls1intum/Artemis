@@ -116,10 +116,10 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 LEFT JOIN p.submissions submission
             WHERE submission.submissionDate >= :startDate
                 AND submission.submissionDate <= :endDate
-                AND p.student.login not like '%test%'
+                AND p.student.login NOT LIKE '%test%'
                 AND (
                     p.exercise.exerciseGroup IS NOT NULL
-                    OR p.exercise.course.testCourse IS fALSE
+                    OR p.exercise.course.testCourse IS FALSE
                 )
             """)
     Long countActiveUsers(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
