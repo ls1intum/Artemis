@@ -4,6 +4,7 @@ import java.util.*;
 
 import javax.annotation.Nullable;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -13,6 +14,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.web.websocket.dto.TeamAssignmentPayload;
 
+@Profile("core")
 @Controller
 public class TeamWebsocketService {
 

@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.service.dto.ConsistencyErrorDTO;
  */
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 public class ConsistencyCheckResource {
 
     private static final Logger log = LoggerFactory.getLogger(ConsistencyCheckResource.class);

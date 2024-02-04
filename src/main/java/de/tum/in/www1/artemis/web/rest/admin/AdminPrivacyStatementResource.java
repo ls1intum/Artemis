@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.service.LegalDocumentService;
 /**
  * REST controller for editing the Privacy Statement as an admin.
  */
-@Profile("admin")
+@Profile("core")
 @RestController
 @RequestMapping("api/admin/")
 public class AdminPrivacyStatementResource {

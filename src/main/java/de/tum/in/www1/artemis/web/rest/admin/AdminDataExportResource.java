@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.web.rest.dto.RequestDataExportDTO;
 /**
  * REST controller for requesting data exports for another user as admin.
  */
-@Profile("admin")
+@Profile("core")
 @RestController
 @RequestMapping("api/admin/")
 public class AdminDataExportResource {

@@ -52,7 +52,7 @@ import tech.jhipster.web.util.ResponseUtil;
  */
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 public class UserResource {
 
     private static final Logger log = LoggerFactory.getLogger(UserResource.class);

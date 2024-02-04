@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.service.LegalDocumentService;
 /**
  * REST controller for editing the imprint as an admin.
  */
-@Profile("admin")
+@Profile("core")
 @RestController
 @RequestMapping("api/admin")
 public class AdminImprintResource {

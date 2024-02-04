@@ -40,7 +40,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  */
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
     private static final String ENTITY_NAME = "fileUploadSubmission";

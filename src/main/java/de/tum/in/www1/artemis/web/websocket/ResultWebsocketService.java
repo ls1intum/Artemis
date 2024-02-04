@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -24,6 +25,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
  * This service is responsible for sending websocket notifications when a new result got created.
  */
 @Service
+@Profile("core")
 public class ResultWebsocketService {
 
     private final WebsocketMessagingService websocketMessagingService;

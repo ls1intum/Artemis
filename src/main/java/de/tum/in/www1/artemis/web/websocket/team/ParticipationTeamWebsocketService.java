@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -38,6 +39,7 @@ import de.tum.in.www1.artemis.web.websocket.dto.OnlineTeamStudentDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.SubmissionSyncPayload;
 
 @Controller
+@Profile("core")
 public class ParticipationTeamWebsocketService {
 
     private static final Logger log = LoggerFactory.getLogger(ParticipationTeamWebsocketService.class);

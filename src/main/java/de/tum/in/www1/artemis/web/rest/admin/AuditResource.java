@@ -24,7 +24,7 @@ import tech.jhipster.web.util.ResponseUtil;
 /**
  * REST controller for getting the audit events.
  */
-@Profile("admin")
+@Profile("core")
 @RestController
 @RequestMapping("api/admin/")
 public class AuditResource {

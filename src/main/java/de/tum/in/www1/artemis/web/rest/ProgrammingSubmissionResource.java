@@ -38,7 +38,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 public class ProgrammingSubmissionResource {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionResource.class);

@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
  */
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 public class OrganizationResource {
 
     private static final Logger log = LoggerFactory.getLogger(OrganizationResource.class);

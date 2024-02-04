@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.service.StatisticsService;
 /**
  * REST controller for administrating statistics.
  */
-@Profile("admin")
+@Profile("core")
 @RestController
 @RequestMapping("api/admin/")
 public class AdminStatisticsResource {

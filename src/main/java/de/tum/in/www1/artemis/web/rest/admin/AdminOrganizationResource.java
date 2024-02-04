@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 /**
  * REST controller for administrating the Organization entities
  */
-@Profile("admin")
+@Profile("core")
 @RestController
 @RequestMapping("api/admin/")
 public class AdminOrganizationResource {

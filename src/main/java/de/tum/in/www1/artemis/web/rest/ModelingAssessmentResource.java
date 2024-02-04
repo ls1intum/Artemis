@@ -30,7 +30,7 @@ import io.swagger.annotations.ApiResponses;
  */
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 public class ModelingAssessmentResource extends AssessmentResource {
 
     private static final Logger log = LoggerFactory.getLogger(ModelingAssessmentResource.class);

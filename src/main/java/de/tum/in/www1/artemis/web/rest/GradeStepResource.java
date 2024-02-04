@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
  */
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 public class GradeStepResource {
 
     private static final Logger log = LoggerFactory.getLogger(GradeStepResource.class);

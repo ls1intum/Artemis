@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 /**
  * REST controller for administrating Exercise.
  */
-@Profile("admin")
+@Profile("core")
 @RestController
 @RequestMapping("api/admin/")
 public class AdminExerciseResource {

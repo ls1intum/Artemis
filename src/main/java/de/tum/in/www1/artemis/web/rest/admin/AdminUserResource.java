@@ -58,7 +58,7 @@ import tech.jhipster.web.util.PaginationUtil;
  * <p>
  * Another option would be to have a specific JPA entity graph to handle this case.
  */
-@Profile("admin")
+@Profile("core")
 @RestController
 @RequestMapping("api/admin/")
 public class AdminUserResource {

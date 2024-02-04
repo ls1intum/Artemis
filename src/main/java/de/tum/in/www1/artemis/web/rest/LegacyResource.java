@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.web.rest.open.PublicResultResource;
  */
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 @Deprecated(forRemoval = true)
 public class LegacyResource {
 

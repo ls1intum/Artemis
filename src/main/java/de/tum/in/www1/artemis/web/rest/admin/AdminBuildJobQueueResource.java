@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.LocalCISharedBuildJobQu
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 
-@Profile("admin & localci")
+@Profile("localci")
 @RestController
 @RequestMapping("api/admin/")
 public class AdminBuildJobQueueResource {

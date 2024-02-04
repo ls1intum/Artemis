@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private static final String ENTITY_NAME = "programmingAssessment";

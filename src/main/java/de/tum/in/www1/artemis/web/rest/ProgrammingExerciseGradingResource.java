@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsD
  */
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 public class ProgrammingExerciseGradingResource {
 
     public static final String RE_EVALUATE = "/programming-exercises/{exerciseId}/grading/re-evaluate";

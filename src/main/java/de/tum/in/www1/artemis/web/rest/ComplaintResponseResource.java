@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
  */
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 public class ComplaintResponseResource {
 
     private static final Logger log = LoggerFactory.getLogger(ComplaintResponseResource.class);

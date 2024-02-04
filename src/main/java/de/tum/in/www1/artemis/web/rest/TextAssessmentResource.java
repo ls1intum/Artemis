@@ -39,7 +39,7 @@ import io.swagger.annotations.ApiResponses;
  */
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 public class TextAssessmentResource extends AssessmentResource {
 
     @Value("${jhipster.clientApp.name}")

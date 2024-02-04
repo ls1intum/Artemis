@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.security.annotations.ManualConfig;
 
+@Profile("core")
 @Controller
 public class ClientForwardResource {
 

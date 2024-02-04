@@ -4,6 +4,7 @@ import java.security.Principal;
 
 import javax.validation.Valid;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -16,6 +17,7 @@ import de.tum.in.www1.artemis.service.QuizSubmissionService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
 @Controller
+@Profile("core")
 public class QuizSubmissionWebsocketService {
 
     private final QuizSubmissionService quizSubmissionService;

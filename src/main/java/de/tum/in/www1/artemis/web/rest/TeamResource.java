@@ -43,7 +43,7 @@ import de.tum.in.www1.artemis.web.websocket.team.TeamWebsocketService;
  */
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 public class TeamResource {
 
     private static final Logger log = LoggerFactory.getLogger(TeamResource.class);

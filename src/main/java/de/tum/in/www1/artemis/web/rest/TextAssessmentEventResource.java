@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
  */
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 public class TextAssessmentEventResource {
 
     private static final Logger log = LoggerFactory.getLogger(TextAssessmentEventResource.class);

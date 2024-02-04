@@ -51,7 +51,7 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
  */
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 public class ModelingExerciseResource {
 
     private static final Logger log = LoggerFactory.getLogger(ModelingExerciseResource.class);

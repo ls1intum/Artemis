@@ -40,7 +40,7 @@ import io.swagger.annotations.ApiResponses;
  */
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private static final Logger log = LoggerFactory.getLogger(ModelingSubmissionResource.class);

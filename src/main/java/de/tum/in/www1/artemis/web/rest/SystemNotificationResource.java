@@ -27,7 +27,7 @@ import tech.jhipster.web.util.ResponseUtil;
  */
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 public class SystemNotificationResource {
 
     private static final Logger log = LoggerFactory.getLogger(SystemNotificationResource.class);

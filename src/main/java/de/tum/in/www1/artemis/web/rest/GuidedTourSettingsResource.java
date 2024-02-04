@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.service.user.UserService;
  */
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 public class GuidedTourSettingsResource {
 
     private static final Logger log = LoggerFactory.getLogger(GuidedTourSettingsResource.class);
