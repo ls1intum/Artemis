@@ -229,10 +229,6 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         // Todo: If build agent does not have access to filesystem, we need to send the build script to the build agent and execute it there.
         String buildScript = localCIBuildConfigurationService.createBuildScript(participation);
 
-        if (buildScript == null) {
-            log.error("Build script could not be retrieved");
-        }
-
         return new BuildConfig(buildScript, dockerImage, commitHash, branch, programmingLanguage, projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled,
                 testwiseCoverageEnabled, resultPaths);
     }
