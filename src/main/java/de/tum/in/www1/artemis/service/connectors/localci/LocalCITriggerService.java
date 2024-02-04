@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import javax.annotation.PostConstruct;
+
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +44,8 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 @Profile("localci")
 public class LocalCITriggerService implements ContinuousIntegrationTriggerService {
 
+    private static final Logger log = LoggerFactory.getLogger(LocalCITriggerService.class);
+
     private final HazelcastInstance hazelcastInstance;
 
     private final AeolusTemplateService aeolusTemplateService;
@@ -58,9 +62,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final LocalCIBuildConfigurationService localCIBuildConfigurationService;
 
-    private final IQueue<LocalCIBuildJobQueueItem> queue;
-
-    private static final Logger log = LoggerFactory.getLogger(LocalCITriggerService.class);
+    private IQueue<LocalCIBuildJobQueueItem> queue;
 
     public LocalCITriggerService(HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
@@ -75,6 +77,10 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         this.versionControlService = versionControlService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.localCIBuildConfigurationService = localCIBuildConfigurationService;
+    }
+
+    @PostConstruct
+    public void init() {
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
     }
 

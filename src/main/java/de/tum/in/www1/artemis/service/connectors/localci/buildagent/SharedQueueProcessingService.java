@@ -37,20 +37,9 @@ public class SharedQueueProcessingService {
 
     private final HazelcastInstance hazelcastInstance;
 
-    private final IQueue<LocalCIBuildJobQueueItem> queue;
-
-    private final IQueue<ResultQueueItem> resultQueue;
-
     private final ThreadPoolExecutor localCIBuildExecutorService;
 
     private final BuildJobManagementService buildJobManagementService;
-
-    /**
-     * Map of build jobs currently being processed across all nodes
-     */
-    private final IMap<String, LocalCIBuildJobQueueItem> processingJobs;
-
-    private final IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
 
     private final List<LocalCIBuildJobQueueItem> recentBuildJobs = new ArrayList<>();
 
@@ -59,7 +48,18 @@ public class SharedQueueProcessingService {
     /**
      * Lock to prevent multiple nodes from processing the same build job.
      */
-    private final FencedLock sharedLock;
+    private FencedLock sharedLock;
+
+    private IQueue<LocalCIBuildJobQueueItem> queue;
+
+    private IQueue<ResultQueueItem> resultQueue;
+
+    /**
+     * Map of build jobs currently being processed across all nodes
+     */
+    private IMap<String, LocalCIBuildJobQueueItem> processingJobs;
+
+    private IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
 
     /**
      * Lock for operations on single instance.
@@ -72,15 +72,15 @@ public class SharedQueueProcessingService {
         this.hazelcastInstance = hazelcastInstance;
         this.localCIBuildExecutorService = (ThreadPoolExecutor) localCIBuildExecutorService;
         this.buildJobManagementService = buildJobManagementService;
+    }
+
+    @PostConstruct
+    public void init() {
         this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
         this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
         this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
-    }
-
-    @PostConstruct
-    public void addListener() {
         this.listenerId = this.queue.addItemListener(new SharedQueueProcessingService.QueuedBuildJobItemListener(), true);
     }
 
@@ -238,18 +238,12 @@ public class SharedQueueProcessingService {
         }).exceptionally(ex -> {
             JobTimingInfo jobTimingInfo = new JobTimingInfo(buildJob.jobTimingInfo().submissionDate(), buildJob.jobTimingInfo().buildStartDate(), ZonedDateTime.now());
 
-            LocalCIBuildJobQueueItem job;
+            LocalCIBuildJobQueueItem job = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(), buildJob.participationId(),
+                    buildJob.courseId(), buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildJobResult.CANCELLED, buildJob.repositoryInfo(), jobTimingInfo,
+                    buildJob.buildConfig());
 
-            if (ex.getCause() instanceof CancellationException && ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
-                job = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(), buildJob.participationId(), buildJob.courseId(),
-                        buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildJobResult.CANCELLED, buildJob.repositoryInfo(), jobTimingInfo,
-                        buildJob.buildConfig());
-            }
-            else {
+            if (!(ex.getCause() instanceof CancellationException) || !ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
                 log.error("Error while processing build job: {}", buildJob, ex);
-                job = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(), buildJob.participationId(), buildJob.courseId(),
-                        buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildJobResult.CANCELLED, buildJob.repositoryInfo(), jobTimingInfo,
-                        buildJob.buildConfig());
             }
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(null, job, ex);

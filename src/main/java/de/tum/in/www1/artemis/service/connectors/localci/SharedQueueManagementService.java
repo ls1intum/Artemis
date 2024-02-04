@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 
 import java.util.*;
 
+import javax.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -26,24 +28,28 @@ public class SharedQueueManagementService {
 
     private final HazelcastInstance hazelcastInstance;
 
-    private final IQueue<LocalCIBuildJobQueueItem> queue;
+    private IQueue<LocalCIBuildJobQueueItem> queue;
 
     /**
      * Map of build jobs currently being processed across all nodes
      */
-    private final IMap<String, LocalCIBuildJobQueueItem> processingJobs;
+    private IMap<String, LocalCIBuildJobQueueItem> processingJobs;
 
-    private final IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
+    private IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
 
     /**
      * Lock to prevent multiple nodes from processing the same build job.
      */
-    private final FencedLock sharedLock;
+    private FencedLock sharedLock;
 
-    private final ITopic<String> canceledBuildJobsTopic;
+    private ITopic<String> canceledBuildJobsTopic;
 
     public SharedQueueManagementService(HazelcastInstance hazelcastInstance) {
         this.hazelcastInstance = hazelcastInstance;
+    }
+
+    @PostConstruct
+    public void init() {
         this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
         this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");

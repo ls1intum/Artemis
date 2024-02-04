@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.service.feature;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.PostConstruct;
+
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
@@ -16,11 +18,17 @@ public class FeatureToggleService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final Map<Feature, Boolean> features;
+    private final HazelcastInstance hazelcastInstance;
+
+    private Map<Feature, Boolean> features;
 
     public FeatureToggleService(WebsocketMessagingService websocketMessagingService, HazelcastInstance hazelcastInstance) {
         this.websocketMessagingService = websocketMessagingService;
+        this.hazelcastInstance = hazelcastInstance;
+    }
 
+    @PostConstruct
+    public void init() {
         // The map will automatically be distributed between all instances by Hazelcast.
         features = hazelcastInstance.getMap("features");
 
