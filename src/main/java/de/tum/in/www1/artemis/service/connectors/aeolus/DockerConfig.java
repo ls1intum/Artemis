@@ -54,6 +54,9 @@ public class DockerConfig {
      * @return the full image name including the tag
      */
     public String getFullImageName() {
+        if (image == null) {
+            return null;
+        }
         if (tag == null) {
             if (!image.contains(":")) {
                 return image + ":" + "latest";
