@@ -9,6 +9,7 @@ import java.util.Set;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import de.tum.in.www1.artemis.domain.iris.settings.IrisCourseSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisExerciseSettings;
@@ -38,7 +39,7 @@ public interface IrisSettingsRepository extends JpaRepository<IrisSettings, Long
             FROM IrisCourseSettings irisSettings
             WHERE irisSettings.course.id = :courseId
             """)
-    Optional<IrisCourseSettings> findCourseSettings(long courseId);
+    Optional<IrisCourseSettings> findCourseSettings(@Param("courseId") long courseId);
 
     /**
      * Retrieves Iris exercise settings for a given exercise ID.
@@ -52,7 +53,7 @@ public interface IrisSettingsRepository extends JpaRepository<IrisSettings, Long
             FROM IrisExerciseSettings irisSettings
             WHERE irisSettings.exercise.id = :exerciseId
             """)
-    Optional<IrisExerciseSettings> findExerciseSettings(long exerciseId);
+    Optional<IrisExerciseSettings> findExerciseSettings(@Param("exerciseId") long exerciseId);
 
     default IrisSettings findByIdElseThrow(long existingSettingsId) {
         return findById(existingSettingsId).orElseThrow(() -> new EntityNotFoundException("Iris Settings", existingSettingsId));
