@@ -34,8 +34,6 @@ import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
-import de.tum.in.www1.artemis.service.dto.iris.codeeditor.IrisCodeEditorChatDTO;
-import de.tum.in.www1.artemis.service.dto.iris.codeeditor.IrisCodeEditorGenerationDTO;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisNoResponseException;
 import de.tum.in.www1.artemis.service.iris.exception.IrisParseResponseException;
@@ -151,6 +149,16 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
         irisCodeEditorWebsocketService.sendMessage(message);
     }
 
+    // @formatter:off
+    public record CodeEditorChatDTO(
+            String problemStatement,
+            Map<String, String> solutionRepository,
+            Map<String, String> templateRepository,
+            Map<String, String> testRepository,
+            List<IrisMessage> chatHistory
+    ) {}
+    // @formatter:on
+
     /**
      * Sends a request containing the current state of the exercise repositories in the code editor and the entire
      * conversation history to the LLM, and handles the response.
@@ -166,7 +174,7 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
         var exercise = session.getExercise();
 
         // @formatter:off
-        var dto = new IrisCodeEditorChatDTO(
+        var dto = new CodeEditorChatDTO(
                 exercise.getProblemStatement(),
                 filterFiles(read(solutionRepository(exercise))),
                 filterFiles(read(templateRepository(exercise))),
@@ -277,6 +285,16 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
         return exercisePlan;
     }
 
+    // @formatter:off
+    public record CodeEditorChangeDTO(
+            String problemStatement,
+            Map<String, String> solutionRepository,
+            Map<String, String> templateRepository,
+            Map<String, String> testRepository,
+            String instructions
+    ) {}
+    // @formatter:on
+
     /**
      * Requests exercise changes from the Iris model for the given session and exercise plan. This method sends a
      * request to the Iris model for each component in the exercise plan, and handles the response to extract the
@@ -299,7 +317,7 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
         };
 
         // @formatter:off
-        var dto = new IrisCodeEditorGenerationDTO(
+        var dto = new CodeEditorChangeDTO(
                 exercise.getProblemStatement(),
                 filterFiles(read(solutionRepository(exercise))),
                 filterFiles(read(templateRepository(exercise))),

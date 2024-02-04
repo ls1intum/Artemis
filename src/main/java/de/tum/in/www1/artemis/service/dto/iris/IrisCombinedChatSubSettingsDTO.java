@@ -1,12 +1,16 @@
-package de.tum.in.www1.artemis.service.dto.iris.settings;
+package de.tum.in.www1.artemis.service.dto.iris;
 
 import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 
-public class IrisCombinedHestiaSubSettingsDTO implements IrisCombinedSubSettingsInterface {
+public class IrisCombinedChatSubSettingsDTO implements IrisCombinedSubSettingsInterface {
 
     private boolean enabled;
+
+    private Integer rateLimit;
+
+    private Integer rateLimitTimeframeHours;
 
     private Set<String> allowedModels;
 
@@ -20,6 +24,22 @@ public class IrisCombinedHestiaSubSettingsDTO implements IrisCombinedSubSettings
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public Integer getRateLimit() {
+        return rateLimit;
+    }
+
+    public void setRateLimit(Integer rateLimit) {
+        this.rateLimit = rateLimit;
+    }
+
+    public Integer getRateLimitTimeframeHours() {
+        return rateLimitTimeframeHours;
+    }
+
+    public void setRateLimitTimeframeHours(Integer rateLimitTimeframeHours) {
+        this.rateLimitTimeframeHours = rateLimitTimeframeHours;
     }
 
     public Set<String> getAllowedModels() {

@@ -32,7 +32,6 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
-import de.tum.in.www1.artemis.service.dto.iris.chat.IrisChatRequestDTO;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisNoResponseException;
@@ -143,6 +142,20 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
     public void checkRateLimit(User user) {
         rateLimitService.checkRateLimitElseThrow(user);
     }
+
+    // @formatter:off
+    public record IrisChatRequestDTO(
+            ProgrammingExercise exercise,
+            Course course,
+            ProgrammingSubmission latestSubmission,
+            boolean buildFailed,
+            List<BuildLogEntry> buildLog,
+            IrisChatSession session,
+            String gitDiff,
+            Map<String, String> templateRepository,
+            Map<String, String> studentRepository
+    ) {}
+    // @formatter:on
 
     /**
      * Sends all messages of the session to an LLM and handles the response by saving the message
