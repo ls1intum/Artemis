@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.management;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 
 @Service
+@Profile("core")
 public class SecurityMetersService {
 
     public static final String INVALID_TOKENS_METER_NAME = "security.authentication.invalid-tokens";
