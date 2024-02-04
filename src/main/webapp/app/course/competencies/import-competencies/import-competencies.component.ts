@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faFileImport, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
 
 @Component({
@@ -8,19 +8,29 @@ import { ButtonType } from 'app/shared/components/button.component';
 })
 export class ImportCompetenciesComponent {
     isLoading = false;
+    importRelations = true;
+    searchTermTitle = '';
+    showAdvancedSearch = false;
 
     //Icons
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
+    protected readonly faFileImport = faFileImport;
     protected readonly ButtonType = ButtonType;
 
     constructor() {}
 
-    protected isSubmitPossible() {
+    isSubmitPossible() {
         return true;
     }
 
-    protected onSubmit() {}
+    onSubmit() {}
 
-    protected onCancel() {}
+    onCancel() {}
+
+    search() {}
+
+    toggleAdvancedSearch() {
+        this.showAdvancedSearch = !this.showAdvancedSearch;
+    }
 }

@@ -24,6 +24,7 @@ import { CourseManagementTabBarComponent } from 'app/course/manage/course-manage
 import { LearningPathManagementComponent } from 'app/course/learning-paths/learning-path-management/learning-path-management.component';
 import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
 import { LocalCIGuard } from 'app/localci/build-queue/localci-guard.service';
+import { ImportCompetenciesComponent } from 'app/course/competencies/import-competencies/import-competencies.component';
 
 export const courseManagementState: Routes = [
     {
@@ -226,8 +227,7 @@ export const courseManagementState: Routes = [
                             },
                             {
                                 path: 'import',
-                                //TODO: change to import component
-                                component: CreateCompetencyComponent,
+                                component: ImportCompetenciesComponent,
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'artemisApp.competency.import.title',

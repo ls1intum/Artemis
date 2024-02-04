@@ -6,4 +6,12 @@ import { Component } from '@angular/core';
 })
 export class CompetencySearchComponent {
     constructor() {}
+
+    reset() {}
+
+    sendUpdate() {}
+
+    courseTitleSearch: string;
+    courseSemesterSearch: string;
+    competencyDescriptionSearch: string;
 }

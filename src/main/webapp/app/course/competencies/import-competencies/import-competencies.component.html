@@ -1,19 +1,33 @@
 <div class="container">
     <h3>{{ 'artemisApp.competency.import.title' | artemisTranslate }}</h3>
-    <div>
-        <span>TODO search text</span>
-        <input />
-        <!-- TODO: search input -->
-        <button>TODO: search button</button>
+    <div class="form-group form-inline">
+        <label for="competency-title-search-input" class="me-2">{{ 'artemisApp.competency.import.labelCompetencyTitle' | artemisTranslate }}</label>
+        <!-- TODO rename search term title and labels -->
+        <input
+            [(ngModel)]="searchTermTitle"
+            class="form-control me-2"
+            type="text"
+            id="competency-title-search-input"
+            [placeholder]="'artemisApp.competency.import.fieldCompetencyTitle' | artemisTranslate"
+        />
+        <jhi-button (onClick)="search()" [isLoading]="isLoading" [title]="'entity.action.search'" />
+        <!-- TODO: align this to the right/change how advanced search expands. -->
+        <jhi-button
+            (onClick)="toggleAdvancedSearch()"
+            [title]="showAdvancedSearch ? 'artemisApp.competency.import.hideAdvancedSearch' : 'artemisApp.competency.import.showAdvancedSearch'"
+        />
     </div>
-    <jhi-competency-search />
+    @if (showAdvancedSearch) {
+        <jhi-competency-search />
+    }
     <h3>{{ 'artemisApp.competency.import.searchTableHeader' | artemisTranslate }}</h3>
-    <!-- TODO: table 1 (pageable) -->
+    <jhi-data-table />
     <h3>{{ 'artemisApp.competency.import.selectedTableHeader' | artemisTranslate }}</h3>
-    <!-- TODO: table 2 (not pageable(?))-->
-    <!-- TODO: maybe make a re-usable footer: discuss with UX Team. -->
+    <jhi-data-table />
+    <span class="ms-3">{{ 'artemisApp.competency.importAll.importRelations' | artemisTranslate }}</span>
+    <input type="checkbox" class="ms-2" [(ngModel)]="importRelations" name="importRelations" />
     <div>
         <jhi-button id="cancelButton" [btnType]="ButtonType.SECONDARY" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="onCancel()" [shouldSubmit]="false" />
-        <jhi-button id="saveButton" [title]="'entity.action.import'" [icon]="faSave" [disabled]="!isSubmitPossible" [isLoading]="isLoading" />
+        <jhi-button id="saveButton" [title]="'entity.action.import'" [icon]="faFileImport" [disabled]="!isSubmitPossible" [isLoading]="isLoading" />
     </div>
 </div>

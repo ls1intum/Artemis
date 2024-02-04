@@ -42,7 +42,7 @@
             },
             "manageCompetencies": {
                 "title": "Competency Management",
-                "import": "Import competency",
+                "import": "Import competencies",
                 "importAll": "Import all competencies from another course",
                 "create": "Create competency"
             },
@@ -50,15 +50,18 @@
                 "title": "Import Competencies",
                 "searchTableHeader": "Search Competencies",
                 "selectedTableHeader": "Selected Competencies",
-                "search": "Search by competency title",
-                "old": "TODO: UNDER HERE IS OLD",
-                "label": "Import a Competency",
-                "loading": "Loading...",
-                "table": {
-                    "TITLE": "Title",
-                    "COURSE_TITLE": "Course",
-                    "SEMESTER": "Semester",
-                    "doImport": "Select"
+                "labelCompetencyTitle": "Search by competency title:",
+                "fieldCompetencyTitle": "Competency Title",
+                "showAdvancedSearch": "Show advanced search",
+                "hideAdvancedSearch": "Hide advanced search",
+                "search": {
+                    "cardTitle": "Advanced Search",
+                    "labelCourseTitle": "Search by course title",
+                    "fieldCourseTitle": "Course title",
+                    "labelCourseSemester": "Search by semester",
+                    "fieldCourseSemester": "Semester",
+                    "labelCompetencyDescription": "Search by competency description",
+                    "fieldCompetencyDescription": "Competency Description"
                 }
             },
             "importAll": {

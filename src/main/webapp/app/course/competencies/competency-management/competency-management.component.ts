@@ -21,7 +21,6 @@ import { faFileImport, faPencilAlt, faPlus, faTrash } from '@fortawesome/free-so
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PrerequisiteImportComponent } from 'app/course/competencies/competency-management/prerequisite-import.component';
 import { Edge, Node } from '@swimlane/ngx-graph';
-import { CompetencyImportComponent } from 'app/course/competencies/competency-management/competency-import.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { CompetencyImportCourseComponent, ImportAllFromCourseResult } from 'app/course/competencies/competency-management/competency-import-course.component';
 
@@ -208,28 +207,6 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
                 .subscribe({
                     next: (res: Competency) => {
                         this.prerequisites.push(res);
-                    },
-                    error: (res: HttpErrorResponse) => onError(this.alertService, res),
-                });
-        });
-    }
-
-    /**
-     * Opens a modal for selecting a competency to import to the current course.
-     */
-    openImportModal() {
-        const modalRef = this.modalService.open(CompetencyImportComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.disabledIds = this.competencies.concat(this.prerequisites).map((competency) => competency.id);
-        modalRef.result.then((selectedCompetency: Competency) => {
-            this.competencyService
-                .import(selectedCompetency, this.courseId)
-                .pipe(
-                    filter((res: HttpResponse<Competency>) => res.ok),
-                    map((res: HttpResponse<Competency>) => res.body),
-                )
-                .subscribe({
-                    next: (res: Competency) => {
-                        this.competencies.push(res);
                     },
                     error: (res: HttpErrorResponse) => onError(this.alertService, res),
                 });

@@ -12,13 +12,13 @@ import { CompetenciesPopoverComponent } from './competencies-popover/competencie
 import { PrerequisiteImportComponent } from 'app/course/competencies/competency-management/prerequisite-import.component';
 import { NgxGraphModule } from '@swimlane/ngx-graph';
 import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
-import { CompetencyImportComponent } from 'app/course/competencies/competency-management/competency-import.component';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { CompetencyImportCourseComponent } from 'app/course/competencies/competency-management/competency-import-course.component';
 import { ImportCompetenciesComponent } from 'app/course/competencies/import-competencies/import-competencies.component';
 import { CompetencySearchComponent } from 'app/course/competencies/import-competencies/competency-search.component';
+import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 
 @NgModule({
     imports: [
@@ -31,6 +31,7 @@ import { CompetencySearchComponent } from 'app/course/competencies/import-compet
         FormDateTimePickerModule,
         NgbAccordionModule,
         ArtemisMarkdownModule,
+        ArtemisDataTableModule,
     ],
     declarations: [
         CompetencyFormComponent,
@@ -43,7 +44,6 @@ import { CompetencySearchComponent } from 'app/course/competencies/import-compet
         CompetencyCardComponent,
         CompetenciesPopoverComponent,
         PrerequisiteImportComponent,
-        CompetencyImportComponent,
         CompetencyImportCourseComponent,
     ],
     exports: [CompetencyCardComponent, CompetenciesPopoverComponent, CompetencyFormComponent, CompetencyRingsComponent],

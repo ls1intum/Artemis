@@ -43,19 +43,26 @@
             },
             "manageCompetencies": {
                 "title": "Kompetenzmanagement",
-                "import": "Kompetenz importieren",
+                "import": "Kompetenzen importieren",
                 "importAll": "Alle Kompetenzen eines Kurses importieren",
                 "create": "Kompetenz erstellen"
             },
             "import": {
-                "label": "Kompetenz importieren",
-                "search": "Suche nach einer Kompetenz:",
-                "loading": "Lade...",
-                "table": {
-                    "TITLE": "Titel",
-                    "COURSE_TITLE": "Kurs",
-                    "SEMESTER": "Semester",
-                    "doImport": "Auswählen"
+                "title": "Kompetenzen importieren",
+                "searchTableHeader": "Nach Kompetenzen suchen",
+                "selectedTableHeader": "Ausgewählte Kompetenzen",
+                "labelCompetencyTitle": "Suche nach Kompetenztitel:",
+                "fieldCompetencyTitle": "Kompetenztitel",
+                "showAdvancedSearch": "Erweiterte Suche anzeigen",
+                "hideAdvancedSearch": "Erweiterte Suche ausblenden",
+                "search": {
+                    "cardTitle": "Erweiterte Suche",
+                    "labelCourseTitle": "Suche nach Kurstitel",
+                    "fieldCourseTitle": "Kurstitel",
+                    "labelCourseSemester": "Suche nach Semester",
+                    "fieldCourseSemester": "Semester",
+                    "labelCompetencyDescription": "Suche nach Kompetenzbeschreibung",
+                    "fieldCompetencyDescription": "Kompetenzbeschreibung"
                 }
             },
             "importAll": {
