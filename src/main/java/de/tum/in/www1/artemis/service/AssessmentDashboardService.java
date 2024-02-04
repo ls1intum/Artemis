@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
@@ -20,6 +21,7 @@ import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 /**
  * Service Implementation for managing Tutor-Assessment-Dashboard.
  */
+@Profile("core")
 @Service
 public class AssessmentDashboardService {
 

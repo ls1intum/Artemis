@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -13,6 +14,7 @@ import de.tum.in.www1.artemis.web.rest.open.PublicAccountResource;
 /**
  * Service class for {@link AccountResource} and {@link PublicAccountResource}.
  */
+@Profile("core")
 @Service
 public class AccountService {
 

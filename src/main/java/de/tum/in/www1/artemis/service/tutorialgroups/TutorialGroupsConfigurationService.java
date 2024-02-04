@@ -5,6 +5,7 @@ import java.util.Set;
 
 import javax.transaction.Transactional;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -16,6 +17,7 @@ import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupFreePeriodR
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupScheduleRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
 
+@Profile("core")
 @Service
 public class TutorialGroupsConfigurationService {
 

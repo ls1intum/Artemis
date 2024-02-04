@@ -6,10 +6,12 @@ import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.boot.actuate.info.InfoContributor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.config.Constants;
 
+@Profile("core")
 @Component
 public class UserManagementInfoContributor implements InfoContributor {
 

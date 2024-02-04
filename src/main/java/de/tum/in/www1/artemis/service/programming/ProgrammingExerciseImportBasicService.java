@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.programming;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,7 @@ import de.tum.in.www1.artemis.service.hestia.ExerciseHintService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
+@Profile("core")
 @Service
 public class ProgrammingExerciseImportBasicService {
 

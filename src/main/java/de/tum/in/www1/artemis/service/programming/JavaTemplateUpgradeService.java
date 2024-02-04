@@ -15,6 +15,7 @@ import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +32,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 /**
  * Service for upgrading of Java template files
  */
+@Profile("core")
 @Service
 public class JavaTemplateUpgradeService implements TemplateUpgradeService {
 

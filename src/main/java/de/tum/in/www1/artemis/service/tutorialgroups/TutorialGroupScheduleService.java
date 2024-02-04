@@ -7,6 +7,7 @@ import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -20,6 +21,7 @@ import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepo
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.errors.ScheduleOverlapsWithSessionException;
 
+@Profile("core")
 @Service
 public class TutorialGroupScheduleService {
 

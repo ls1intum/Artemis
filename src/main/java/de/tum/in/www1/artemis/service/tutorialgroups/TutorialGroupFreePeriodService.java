@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.tutorialgroups;
 
 import java.util.Optional;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -11,6 +12,7 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupFreePeriodRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
 
+@Profile("core")
 @Service
 public class TutorialGroupFreePeriodService {
 

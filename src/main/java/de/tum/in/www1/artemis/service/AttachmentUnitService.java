@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import java.util.Objects;
 
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,6 +17,7 @@ import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.SlideRepository;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
+@Profile("core")
 @Service
 public class AttachmentUnitService {
 

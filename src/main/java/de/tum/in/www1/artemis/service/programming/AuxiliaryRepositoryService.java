@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
@@ -18,6 +19,7 @@ import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceErrorKeys;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
+@Profile("core")
 @Service
 public class AuxiliaryRepositoryService {
 
