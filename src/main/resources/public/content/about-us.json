@@ -464,6 +464,10 @@
         {
             "fullName": "Jonathan Ostertag",
             "photoDirectory": "public/images/about/Jonathan_Ostertag.jpg"
+        },
+        {
+            "fullName": "Michael Dyer",
+            "photoDirectory": "public/images/about/Michael_Dyer.jpg"
         }
     ]
 }
