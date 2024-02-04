@@ -462,7 +462,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             LEFT JOIN FETCH e.gradingCriteria
             WHERE e.id = :exerciseId
             """)
-    Optional<ProgrammingExercise> findByIdWithGradingCriteria(long exerciseId);
+    Optional<ProgrammingExercise> findByIdWithGradingCriteria(@Param("exerciseId") long exerciseId);
 
     /**
      * Finds all programming exercises with eager template participation and the given programming language.

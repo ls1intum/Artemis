@@ -27,12 +27,12 @@ import de.tum.in.www1.artemis.web.rest.errors.StudentsAlreadyAssignedException;
 public interface TeamRepository extends JpaRepository<Team, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = "students")
-    List<Team> findAllByExerciseId(@Param("exerciseId") Long exerciseId);
+    List<Team> findAllByExerciseId(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "students")
-    List<Team> findAllWithStudentsByIdIn(@Param("teamIds") List<Long> teamIds);
+    List<Team> findAllWithStudentsByIdIn(List<Long> teamIds);
 
-    List<Team> findAllByExerciseCourseIdAndShortName(@Param("courseId") Long courseId, @Param("shortName") String shortName);
+    List<Team> findAllByExerciseCourseIdAndShortName(Long courseId, String shortName);
 
     /**
      * Fetches the number of teams created for an exercise
@@ -57,7 +57,7 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
             """)
     List<Team> findAllByCourseIdAndUserIdOrderByIdDesc(@Param("courseId") long courseId, @Param("userId") long userId);
 
-    boolean existsByExerciseCourseIdAndShortName(@Param("courseId") Long courseId, @Param("shortName") String shortName);
+    boolean existsByExerciseCourseIdAndShortName(Long courseId, String shortName);
 
     @Query("""
             SELECT team
@@ -104,7 +104,7 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     List<Team> findAllByExerciseIdAndTeamOwnerIdWithEagerStudents(@Param("exerciseId") long exerciseId, @Param("teamOwnerId") long teamOwnerId);
 
     @EntityGraph(type = LOAD, attributePaths = "students")
-    Optional<Team> findWithStudentsById(@Param("teamId") Long teamId);
+    Optional<Team> findWithStudentsById(Long teamId);
 
     /**
      * Returns all teams for an exercise (optionally filtered for a specific tutor who owns the teams)
