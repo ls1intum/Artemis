@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.localci;
+package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
 
@@ -42,13 +42,13 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService
 
 /**
  * This service contains methods that are used to interact with the Docker containers when executing build jobs in the local CI system.
- * It is closely related to the {@link LocalCIBuildJobExecutionService} which contains the methods that are used to execute the build jobs.
+ * It is closely related to the {@link BuildJobExecutionService} which contains the methods that are used to execute the build jobs.
  */
 @Service
-@Profile("localci")
-public class LocalCIContainerService {
+@Profile("buildagent")
+public class BuildJobContainerService {
 
-    private static final Logger log = LoggerFactory.getLogger(LocalCIContainerService.class);
+    private static final Logger log = LoggerFactory.getLogger(BuildJobContainerService.class);
 
     private final DockerClient dockerClient;
 
@@ -70,7 +70,7 @@ public class LocalCIContainerService {
 
     BuildScriptProvider buildScriptProvider;
 
-    public LocalCIContainerService(DockerClient dockerClient, HostConfig hostConfig, AeolusTemplateService aeolusTemplateService, BuildScriptProvider buildScriptProvider) {
+    public BuildJobContainerService(DockerClient dockerClient, HostConfig hostConfig, AeolusTemplateService aeolusTemplateService, BuildScriptProvider buildScriptProvider) {
         this.dockerClient = dockerClient;
         this.hostConfig = hostConfig;
         this.aeolusTemplateService = aeolusTemplateService;
@@ -82,15 +82,17 @@ public class LocalCIContainerService {
      *
      * @param containerName the name of the container to be created
      * @param image         the Docker image to use for the container
+     * @param buildScript   the build script to be executed in the container
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
-    public CreateContainerResponse configureContainer(String containerName, String image) {
+    public CreateContainerResponse configureContainer(String containerName, String image, String buildScript) {
         List<String> envVars = new ArrayList<>();
         if (useSystemProxy) {
             envVars.add("HTTP_PROXY=" + httpProxy);
             envVars.add("HTTPS_PROXY=" + httpsProxy);
             envVars.add("NO_PROXY=" + noProxy);
         }
+        envVars.add("SCRIPT=" + buildScript);
         return dockerClient.createContainerCmd(image).withName(containerName).withHostConfig(hostConfig).withEnv(envVars)
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
                 // container from exiting until it finishes.
@@ -199,11 +201,10 @@ public class LocalCIContainerService {
      * @param solutionRepositoryPath                 the path to the solution repository
      * @param auxiliaryRepositoriesPaths             the paths to the auxiliary repositories
      * @param auxiliaryRepositoryCheckoutDirectories the names of the auxiliary repositories
-     * @param buildScriptPath                        the path to the build script
      * @param programmingLanguage                    the programming language of the exercise
      */
     public void populateBuildJobContainer(String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath, Path solutionRepositoryPath,
-            Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryCheckoutDirectories, Path buildScriptPath, ProgrammingLanguage programmingLanguage) {
+            Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryCheckoutDirectories, ProgrammingLanguage programmingLanguage) {
         String testCheckoutPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
         String assignmentCheckoutPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
 
@@ -222,8 +223,12 @@ public class LocalCIContainerService {
         }
         convertDosFilesToUnix(LOCALCI_WORKING_DIRECTORY + "/testing-dir/", buildJobContainerId);
 
-        addAndPrepareDirectory(buildJobContainerId, buildScriptPath, LOCALCI_WORKING_DIRECTORY + "/script.sh");
-        convertDosFilesToUnix(LOCALCI_WORKING_DIRECTORY + "/script.sh", buildJobContainerId);
+        createScriptFile(buildJobContainerId);
+    }
+
+    private void createScriptFile(String buildJobContainerId) {
+        executeDockerCommand(buildJobContainerId, false, false, true, "bash", "-c", "echo \"$SCRIPT\" > " + LOCALCI_WORKING_DIRECTORY + "/script.sh");
+        executeDockerCommand(buildJobContainerId, false, false, true, "bash", "-c", "chmod +x " + LOCALCI_WORKING_DIRECTORY + "/script.sh");
     }
 
     private void addAndPrepareDirectory(String containerId, Path repositoryPath, String newDirectoryName) {
