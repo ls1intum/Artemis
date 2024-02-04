@@ -16,12 +16,12 @@ import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 public interface QuizPoolRepository extends JpaRepository<QuizPool, Long> {
 
     @Query("""
-                    SELECT qe
-                    FROM QuizPool qe
-                        JOIN qe.exam e
-                        LEFT JOIN FETCH qe.quizQuestions qeq
-                        LEFT JOIN FETCH qeq.quizQuestionStatistic
-                    WHERE e.id = :examId
+            SELECT qe
+            FROM QuizPool qe
+                JOIN qe.exam e
+                LEFT JOIN FETCH qe.quizQuestions qeq
+                LEFT JOIN FETCH qeq.quizQuestionStatistic
+            WHERE e.id = :examId
             """)
     Optional<QuizPool> findWithEagerQuizQuestionsByExamId(Long examId);
 
