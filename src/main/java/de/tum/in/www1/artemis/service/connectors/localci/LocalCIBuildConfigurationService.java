@@ -3,12 +3,10 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -38,10 +36,10 @@ public class LocalCIBuildConfigurationService {
      * The build script is stored in a file in the local-ci-scripts directory.
      * The build script is used to build the programming exercise in a Docker container.
      *
-     * @param buildJobId    the id of the build job for which to create the build script
      * @param participation the participation for which to create the build script
+     * @return the build script
      */
-    public void createBuildScript(ProgrammingExerciseParticipation participation, String buildJobId) {
+    public String createBuildScript(ProgrammingExerciseParticipation participation) {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
 
         Path scriptsPath = Path.of(localCIBuildScriptBasePath);
@@ -54,9 +52,6 @@ public class LocalCIBuildConfigurationService {
                 throw new LocalCIException("Failed to create directory for local CI scripts", e);
             }
         }
-
-        // We use the container name as part of the file name to avoid conflicts when multiple build jobs are running at the same time.
-        Path buildScriptPath = scriptsPath.toAbsolutePath().resolve(buildJobId + "-build.sh");
 
         StringBuilder buildScript = new StringBuilder();
         buildScript.append("#!/bin/bash\n");
@@ -94,12 +89,7 @@ public class LocalCIBuildConfigurationService {
             });
 
         }
-        try {
-            FileUtils.writeStringToFile(buildScriptPath.toFile(), buildScript.toString(), StandardCharsets.UTF_8);
-        }
-        catch (IOException e) {
-            throw new LocalCIException("Failed to create build script file", e);
-        }
+        return buildScript.toString();
     }
 
     /**
