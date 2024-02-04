@@ -68,7 +68,7 @@ describe('TutorialFreePeriodFormComponent', () => {
         component.isEditMode = true;
         const formData: TutorialGroupFreePeriodFormData = {
             startDate: validStartDateBerlin,
-            endDate: validEndDateBerlinFreeDay,
+            endDate: undefined,
             startTime: undefined,
             endTime: undefined,
             reason: validReason,

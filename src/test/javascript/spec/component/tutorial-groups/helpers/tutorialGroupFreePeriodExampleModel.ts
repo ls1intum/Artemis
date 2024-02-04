@@ -23,7 +23,7 @@ export const tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData = (entity:
     if (TutorialGroupFreePeriodsManagementComponent.isFreeDay(entity)) {
         return {
             startDate: entity.start!.tz(tz).toDate(),
-            endDate: entity.end!.tz(tz).toDate(),
+            endDate: undefined,
             startTime: undefined,
             endTime: undefined,
             reason: entity.reason,
@@ -48,9 +48,19 @@ export const tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData = (entity:
 };
 
 export const formDataToTutorialGroupFreePeriodDTO = (formData: TutorialGroupFreePeriodFormData): TutorialGroupFreePeriodDTO => {
-    return {
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        reason: formData.reason,
-    };
+    if (formData.endDate) {
+        return {
+            startDate: formData.startDate,
+            endDate: formData.endDate,
+            reason: formData.reason,
+        };
+    } else {
+        const res = {
+            startDate: formData.startDate,
+            endDate: formData.startDate,
+            reason: formData.reason,
+        };
+        res.endDate!.setHours(23, 59);
+        return res;
+    }
 };

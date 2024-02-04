@@ -62,7 +62,7 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         expect(component).not.toBeNull();
     });
 
-    it('should set form data correctly', () => {
+    it('should set form data correctly for editing free days', () => {
         const formStub: TutorialGroupFreePeriodFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormStubComponent)).componentInstance;
         expect(component.formData).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(examplePeriod, 'Europe/Berlin'));
         expect(formStub.formData).toEqual(component.formData);
@@ -85,7 +85,7 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         const sessionForm: TutorialGroupFreePeriodFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormStubComponent)).componentInstance;
 
         const formData = {
-            date: dayjs('2021-01-01T00:00:00').tz('Europe/Berlin').toDate(),
+            startDate: dayjs('2021-01-01T00:00:00').tz('Europe/Berlin').toDate(),
             reason: 'Changed',
         };
 

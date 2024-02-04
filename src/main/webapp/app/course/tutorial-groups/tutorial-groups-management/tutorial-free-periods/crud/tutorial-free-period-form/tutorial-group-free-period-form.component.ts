@@ -181,20 +181,28 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     }
 
     private setFirstTimeFrameInEditMode(formData: TutorialGroupFreePeriodFormData) {
-        const tempFreePeriod = this.createTutorialGroupFreePeriodFromFormData(formData);
-        if (TutorialGroupFreePeriodsManagementComponent.isFreeDay(tempFreePeriod)) {
+        // const tempFreePeriod = this.createTutorialGroupFreePeriodFromFormData(formData);
+        if (formData.endDate === undefined && formData.startTime === undefined && formData.endTime === undefined) {
             this.setTimeFrame(TimeFrame.Day);
-            formData.endDate = undefined;
-            formData.startTime = undefined;
-            formData.endTime = undefined;
-        } else if (TutorialGroupFreePeriodsManagementComponent.isFreePeriod(tempFreePeriod)) {
-            this.setTimeFrame(TimeFrame.Period);
-            formData.startTime = undefined;
-            formData.endTime = undefined;
-        } else if (TutorialGroupFreePeriodsManagementComponent.isFreePeriodWithinDay(tempFreePeriod)) {
+        } else if (formData.endDate === undefined && formData.startTime !== undefined && formData.endTime !== undefined) {
             this.setTimeFrame(TimeFrame.PeriodWithinDay);
-            formData.endDate = undefined;
+        } else {
+            this.setTimeFrame(TimeFrame.Period);
         }
+
+        // if (TutorialGroupFreePeriodsManagementComponent.isFreeDay(tempFreePeriod)) {
+        //     this.setTimeFrame(TimeFrame.Day);
+        //     formData.endDate = undefined;
+        //     formData.startTime = undefined;
+        //     formData.endTime = undefined;
+        // } else if (TutorialGroupFreePeriodsManagementComponent.isFreePeriod(tempFreePeriod)) {
+        //     this.setTimeFrame(TimeFrame.Period);
+        //     formData.startTime = undefined;
+        //     formData.endTime = undefined;
+        // } else if (TutorialGroupFreePeriodsManagementComponent.isFreePeriodWithinDay(tempFreePeriod)) {
+        //     this.setTimeFrame(TimeFrame.PeriodWithinDay);
+        //     formData.endDate = undefined;
+        // }
     }
 
     private createTutorialGroupFreePeriodFromFormData(formData: TutorialGroupFreePeriodFormData): TutorialGroupFreePeriod {
