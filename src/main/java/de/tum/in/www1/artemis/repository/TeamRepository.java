@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -23,6 +24,7 @@ import de.tum.in.www1.artemis.web.rest.errors.StudentsAlreadyAssignedException;
 /**
  * Spring Data repository for the Team entity.
  */
+@Profile("core")
 @Repository
 public interface TeamRepository extends JpaRepository<Team, Long> {
 

@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -36,6 +37,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * If you don't need deleted user entities, add `WHERE user.isDeleted = false` to your query.
  * </p>
  */
+@Profile("core")
 @Repository
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 

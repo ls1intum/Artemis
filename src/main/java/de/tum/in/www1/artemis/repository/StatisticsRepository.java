@@ -9,6 +9,7 @@ import java.util.*;
 
 import javax.annotation.Nullable;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,6 +26,7 @@ import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 /**
  * Spring Data JPA repository for the statistics pages
  */
+@Profile("core")
 @Repository
 public interface StatisticsRepository extends JpaRepository<User, Long> {
 

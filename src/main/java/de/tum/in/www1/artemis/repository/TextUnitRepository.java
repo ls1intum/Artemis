@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import java.util.Optional;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,6 +13,7 @@ import de.tum.in.www1.artemis.domain.lecture.TextUnit;
 /**
  * Spring Data JPA repository for the Text Unit entity.
  */
+@Profile("core")
 @Repository
 public interface TextUnitRepository extends JpaRepository<TextUnit, Long> {
 

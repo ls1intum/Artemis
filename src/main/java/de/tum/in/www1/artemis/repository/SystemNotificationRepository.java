@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,6 +14,7 @@ import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 /**
  * Spring Data repository for the Notification entity.
  */
+@Profile("core")
 @Repository
 public interface SystemNotificationRepository extends JpaRepository<SystemNotification, Long> {
 

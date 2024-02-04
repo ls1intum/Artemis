@@ -4,6 +4,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.List;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -18,6 +19,7 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 /**
  * Spring Data JPA repository for the TutorParticipation entity.
  */
+@Profile("core")
 @Repository
 public interface TutorParticipationRepository extends JpaRepository<TutorParticipation, Long> {
 
