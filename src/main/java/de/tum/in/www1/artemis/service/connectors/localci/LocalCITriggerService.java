@@ -216,7 +216,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         String dockerImage;
         try {
             windfile = programmingExercise.getWindfile();
-            dockerImage = windfile.getMetadata().getDocker().getImage();
+            dockerImage = windfile.getMetadata().getDocker().getFullImageName();
         }
         catch (NullPointerException e) {
             log.warn("Could not retrieve windfile for programming exercise {}. Using default windfile instead.", programmingExercise.getId());
