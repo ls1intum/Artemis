@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -18,6 +19,7 @@ import de.tum.in.www1.artemis.domain.User;
 /**
  * Spring Data repository for the NotificationSetting entity.
  */
+@Profile("core")
 @Repository
 public interface NotificationSettingRepository extends JpaRepository<NotificationSetting, Long> {
 

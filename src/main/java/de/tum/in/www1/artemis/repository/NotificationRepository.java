@@ -5,6 +5,7 @@ import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,6 +18,7 @@ import de.tum.in.www1.artemis.domain.notification.Notification;
 /**
  * Spring Data repository for the Notification entity.
  */
+@Profile("core")
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
