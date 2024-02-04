@@ -16,7 +16,7 @@
     <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
     <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
     <DebugAllEnabled>false</DebugAllEnabled>
+    <RunAsTests>false</RunAsTests>
     <method v="2" />
-    <RunAsTest>false</RunAsTest>
   </configuration>
 </component>
