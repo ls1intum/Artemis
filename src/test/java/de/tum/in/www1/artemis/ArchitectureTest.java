@@ -180,7 +180,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 if (!(valueProperty instanceof String query)) {
                     return;
                 }
-                var checkedKeyword = Set.of("SELECT", "DISTINCT", "EXISTS", "FROM", "WHERE", "JOIN", "FETCH", "AND", "ORDER BY", "COUNT", "FALSE", "TRUE", "NULL", "LIKE");
+                var checkedKeyword = Set.of("SELECT", "DISTINCT", "EXISTS", "FROM", "WHERE", "JOIN", "FETCH", "TREAT", "AND", "ORDER BY", "GROUP BY", "COUNT", "FALSE", "TRUE",
+                        "NULL", "LIKE");
                 for (var keyword : checkedKeyword) {
                     if (StringUtils.containsIgnoreCase(query, keyword) && !query.contains(keyword)) {
                         events.add(violated(item, "In the Query of %s the keyword %s should be written in upper case.".formatted(item.getFullName(), keyword)));
