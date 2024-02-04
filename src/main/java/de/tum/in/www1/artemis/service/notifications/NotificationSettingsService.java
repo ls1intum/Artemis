@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.f
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
@@ -16,6 +17,7 @@ import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 
+@Profile("core")
 @Service
 public class NotificationSettingsService {
 

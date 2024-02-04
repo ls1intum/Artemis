@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 import javax.validation.constraints.NotNull;
 
 import org.jgrapht.alg.util.UnionFind;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -24,6 +25,7 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 /**
  * Service Implementation for the generation of ngx representations of learning paths.
  */
+@Profile("core")
 @Service
 public class LearningPathNgxService {
 

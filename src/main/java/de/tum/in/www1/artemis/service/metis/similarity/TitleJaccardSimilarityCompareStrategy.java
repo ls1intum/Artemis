@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.metis.similarity;
 
 import org.apache.commons.text.similarity.JaccardSimilarity;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -13,6 +14,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
  * documents.
  * We use the JaccardSimilarity implementation provided by the org.apache.commons.text.similarity package.
  */
+@Profile("core")
 @Primary
 @Component
 public class TitleJaccardSimilarityCompareStrategy implements PostSimilarityComparisonStrategy {

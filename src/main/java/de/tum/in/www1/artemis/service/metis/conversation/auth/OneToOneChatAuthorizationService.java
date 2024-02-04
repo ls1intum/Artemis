@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.domain.metis.conversation.ConversationSetti
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -15,6 +16,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
+@Profile("core")
 @Service
 public class OneToOneChatAuthorizationService extends ConversationAuthorizationService {
 

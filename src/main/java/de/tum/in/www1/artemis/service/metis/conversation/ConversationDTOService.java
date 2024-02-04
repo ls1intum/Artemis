@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import javax.persistence.Persistence;
 import javax.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -22,6 +23,7 @@ import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.*;
 
+@Profile("core")
 @Service
 public class ConversationDTOService {
 

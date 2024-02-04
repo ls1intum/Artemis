@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -20,6 +21,7 @@ import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupNotificatio
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
+@Profile("core")
 @Service
 public class TutorialGroupNotificationService {
 

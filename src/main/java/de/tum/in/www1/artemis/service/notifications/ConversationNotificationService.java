@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -24,6 +25,7 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ConversationNotifica
 /**
  * Service for sending notifications about new messages in conversations.
  */
+@Profile("core")
 @Service
 public class ConversationNotificationService {
 

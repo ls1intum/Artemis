@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,7 @@ import de.tum.in.www1.artemis.service.ResourceLoaderService;
 /**
  * Service that loads default Iris templates from the resources/templates/iris folder.
  */
+@Profile("core")
 @Component
 public final class IrisDefaultTemplateService {
 

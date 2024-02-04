@@ -7,6 +7,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -23,6 +24,7 @@ import de.tum.in.www1.artemis.service.*;
 /**
  * Service Implementation for the recommendation of competencies and learning objects in learning paths.
  */
+@Profile("core")
 @Service
 public class LearningPathRecommendationService {
 

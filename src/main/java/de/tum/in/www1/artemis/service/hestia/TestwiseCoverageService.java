@@ -7,6 +7,7 @@ import java.util.stream.IntStream;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +30,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
  * Service for managing testwise coverage data and interacts with both CoverageReport, CoverageFileReport
  * and TestwiseCoverageReportEntry
  */
+@Profile("core")
 @Service
 public class TestwiseCoverageService {
 

@@ -2,8 +2,10 @@ package de.tum.in.www1.artemis.service.feature;
 
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.boot.actuate.info.InfoContributor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+@Profile("core")
 @Component
 public class FeatureToggleInfoContributor implements InfoContributor {
 

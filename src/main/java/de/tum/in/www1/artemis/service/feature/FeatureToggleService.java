@@ -3,12 +3,14 @@ package de.tum.in.www1.artemis.service.feature;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
+@Profile("core")
 @Service
 public class FeatureToggleService {
 

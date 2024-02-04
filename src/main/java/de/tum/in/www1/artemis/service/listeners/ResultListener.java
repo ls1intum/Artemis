@@ -6,6 +6,7 @@ import javax.persistence.PreRemove;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.domain.Result;
@@ -18,6 +19,7 @@ import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
  *
  * @see ParticipantScoreScheduleService
  */
+@Profile("core")
 @Component
 public class ResultListener {
 
