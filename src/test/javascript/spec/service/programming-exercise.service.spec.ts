@@ -389,6 +389,9 @@ describe('ProgrammingExercise Service', () => {
     }));
 
     it.each([
+        { uri: 'template-files-content', method: 'getTemplateRepositoryTestFilesWithContent' },
+        { uri: 'solution-files-content', method: 'getSolutionRepositoryTestFilesWithContent' },
+        { uri: 'with-participations', method: 'findWithTemplateAndSolutionParticipationAndResults' },
         { uri: 'check-plagiarism', method: 'checkPlagiarism' },
         { uri: 'plagiarism-result', method: 'getLatestPlagiarismResult' },
         { uri: 'test-case-state', method: 'getProgrammingExerciseTestCaseState' },
