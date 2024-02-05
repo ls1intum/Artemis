@@ -16,9 +16,9 @@ Some general aspects:
 .. WARNING::
     **Never invoke methods from the html template. The automatic change tracking in Angular will kill the application performance!**
 
-    This also includes getter functions. The only exception is the use of `signals <https://angular.io/guide/signals>`_ .
+    This also includes getter functions. The only exception is the use of `signals <https://angular.io/guide/signals>`_.
 
-    If you need more information/examples or methods to avoid function calls, have a look at this `article <https://dev.to/sandrocagara/angular-avoid-function-calls-in-templates-1mfa>`_
+    If you need more information/examples or methods to avoid function calls, have a look at this `article <https://dev.to/sandrocagara/angular-avoid-function-calls-in-templates-1mfa>`_.
 
 1. Names
 ========
