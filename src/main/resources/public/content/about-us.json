@@ -468,6 +468,10 @@
         {
             "fullName": "Michael Dyer",
             "photoDirectory": "public/images/about/Michael_Dyer.jpg"
+        },
+        {
+            "fullName": "Mateus Messias Mendes",
+            "photoDirectory": "public/images/about/Mateus_Messias_Mendes.jpg"
         }
     ]
 }
