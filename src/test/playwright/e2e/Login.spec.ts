@@ -1,7 +1,7 @@
 import { expect } from '@playwright/test';
 import { test } from '../support/fixtures';
 import { studentOne } from '../support/users';
-import { BASE_API } from '../../cypress/support/constants';
+import { BASE_API } from '../support/constants';
 
 test.describe('Login page tests', () => {
     test('Logs in via the UI', async ({ page, loginPage }) => {

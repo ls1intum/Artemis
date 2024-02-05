@@ -42,6 +42,6 @@ export class CourseOverviewPage {
     }
 
     async openExam(examId: number): Promise<void> {
-        await this.page.locator('#exam-' + examId).click();
+        await this.page.locator(`#exam-${examId} .clickable`).click();
     }
 }

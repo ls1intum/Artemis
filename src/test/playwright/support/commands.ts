@@ -1,5 +1,5 @@
 import { UserCredentials } from './users';
-import { BASE_API } from '../../cypress/support/constants';
+import { BASE_API } from './constants';
 import { Page, expect } from '@playwright/test';
 
 /**
@@ -46,5 +46,20 @@ export class Commands {
 
     static logout = async (page: Page): Promise<void> => {
         await page.request.post(BASE_API + 'public/logout');
+    };
+
+    static reloadUntilFound = async (page: Page, selector: string, interval = 2000, timeout = 20000) => {
+        const startTime = Date.now();
+
+        while (Date.now() - startTime < timeout) {
+            try {
+                await page.waitForSelector(selector, { timeout: interval });
+                return;
+            } catch (error) {
+                await page.reload();
+            }
+        }
+
+        throw new Error(`Timed out finding an element matching the "${selector}" selector`);
     };
 }

@@ -92,6 +92,14 @@ export class CourseManagementPage {
         await this.page.locator('.dropdown-item', { hasText: `(${credentials.username})` }).click();
     }
 
+    /**
+     * Opens the exams of a course.
+     */
+    async openExamsOfCourse(courseID: number) {
+        await this.getCourse(courseID).locator('#course-card-open-exams').click();
+        await this.page.waitForURL(/\/exams/);
+    }
+
     /*
      * Helper methods to get information about the course
      */

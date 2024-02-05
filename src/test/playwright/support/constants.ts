@@ -1,3 +1,6 @@
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ProgrammingExerciseSubmission } from './pageobjects/exercises/programming/OnlineEditorPage';
+
 // Constants which are used in the test specs
 
 // Requests
@@ -65,3 +68,22 @@ export enum CourseWideContext {
     RANDOM = 'RANDOM',
     ANNOUNCEMENT = 'ANNOUNCEMENT',
 }
+
+// AdditionalData
+export class AdditionalData {
+    quizExerciseID?: number;
+    submission?: ProgrammingExerciseSubmission;
+    expectedScore?: number;
+    textFixture?: string;
+    practiceMode?: boolean;
+    progExerciseAssessmentType?: ProgrammingExerciseAssessmentType;
+}
+
+// Exercise
+export type Exercise = {
+    title: string;
+    type: ExerciseType;
+    id: number;
+    additionalData?: AdditionalData;
+    exerciseGroup?: ExerciseGroup;
+};

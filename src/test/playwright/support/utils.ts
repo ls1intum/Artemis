@@ -1,14 +1,14 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { v4 as uuidv4 } from 'uuid';
-import { Page, expect } from '@playwright/test';
+import { Locator, Page, expect } from '@playwright/test';
 import { TIME_FORMAT } from './constants';
 
 // Add utc plugin to use the utc timezone
 dayjs.extend(utc);
 
 /*
- * This file contains all the global utility functions not directly related to playwright.
+ * This file contains all the global utility functions.
  */
 
 /**
@@ -64,6 +64,16 @@ export function titleCaseWord(str: string) {
 }
 
 /**
+ * Retrieves the DOM element representing the exercise with the specified ID.
+ * @param page - Playwright Page instance used during the test.
+ * @param exerciseId - The ID of the exercise for which to retrieve the DOM element.
+ * @returns Locator that yields the DOM element representing the exercise.
+ */
+export function getExercise(page: Page, exerciseId: number) {
+    return page.locator(`#exercise-${exerciseId}`);
+}
+
+/**
  * Converts a title to lowercase and replaces spaces with hyphens.
  * @param title - The title to be converted to lowercase with hyphens.
  * @returns The converted title in lowercase with hyphens.
@@ -79,4 +89,9 @@ export function titleLowercase(title: string) {
  */
 export function convertBooleanToYesNo(boolean: boolean) {
     return boolean ? 'Yes' : 'No';
+}
+
+export async function clearTextField(textField: Locator) {
+    await textField.selectText();
+    await textField.press('Backspace');
 }

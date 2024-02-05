@@ -1,6 +1,7 @@
 import { BASE_API, USER_ID_SELECTOR } from './constants';
 import { User } from 'app/core/user/user.model';
-import { Page } from '@playwright/test';
+import { APIRequestContext, Page } from '@playwright/test';
+import { Account } from 'app/core/user/account.model';
 
 export interface UserCredentials {
     username: string;
@@ -101,6 +102,15 @@ export class PlaywrightUserManagement {
      */
     private getPasswordTemplate(): string {
         return process.env.PASSWORD ?? 'password_' + USER_ID_SELECTOR;
+    }
+
+    /**
+     * Provides the entire account info for the user that is currently logged in
+     * Use like this: artemis.users.getAccountInfo((account) => { someFunction(account); });
+     * */
+    public async getAccountInfo(request: APIRequestContext): Promise<Account> {
+        const response = await request.get(BASE_API + 'public/account');
+        return response.json();
     }
 
     public async getUserInfo(username: string, page: Page): Promise<User> {

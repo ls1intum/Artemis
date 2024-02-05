@@ -5,9 +5,10 @@ import { Course, CourseInformationSharingConfiguration } from 'app/entities/cour
 import { Lecture } from 'app/entities/lecture.model';
 import { generateUUID, titleLowercase } from '../utils';
 import lectureTemplate from '../../fixtures/lecture/template.json';
-import { BASE_API, COURSE_ADMIN_BASE, COURSE_BASE } from '../constants';
+import { BASE_API, COURSE_ADMIN_BASE, COURSE_BASE, Exercise } from '../constants';
 import { UserCredentials } from '../users';
 import { Commands } from '../commands';
+import { Exam } from 'app/entities/exam.model';
 
 /**
  * A class which encapsulates all API requests related to course management.
@@ -186,5 +187,17 @@ export class CourseManagementAPIRequests {
      */
     async deleteLecture(lectureId: number) {
         await this.page.request.delete(`${BASE_API}lectures/${lectureId}`);
+    }
+
+    async createExamTestRun(exam: Exam, exercises: Array<Exercise>) {
+        const data = {
+            workingTime: 120,
+            exam,
+            exercises,
+            ended: false,
+            numberOfExamSessions: 0,
+        };
+        const response = await this.page.request.post(`${BASE_API}courses/${exam.course!.id}/exams/${exam.id}/test-run`, { data });
+        return response.json();
     }
 }

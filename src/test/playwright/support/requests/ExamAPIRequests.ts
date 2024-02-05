@@ -5,6 +5,9 @@ import { dayjsToString, generateUUID, titleLowercase } from '../utils';
 import examTemplate from '../../fixtures/exam/template.json';
 import { Page } from '@playwright/test';
 import { COURSE_BASE } from '../constants';
+import { Exercise } from 'app/entities/exercise.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { UserCredentials } from '../users';
 
 /**
  * A class which encapsulates all API requests related to exams.
@@ -105,5 +108,66 @@ export class ExamAPIRequests {
      * */
     async deleteExam(exam: Exam) {
         await this.page.request.delete(COURSE_BASE + exam.course!.id + '/exams/' + exam.id);
+    }
+
+    /**
+     * Register the student for the exam
+     * @param exam the exam object
+     */
+    async registerStudentForExam(exam: Exam, student: UserCredentials) {
+        await this.page.request.post(`${COURSE_BASE}${exam.course!.id}/exams/${exam.id}/students/${student.username}`);
+    }
+
+    /**
+     * Creates an exam test run with the provided settings.
+     * @param exam the exam object
+     * @param exerciseArray an array of exercises
+     * @param workingTime the working time in seconds
+     */
+    async createExamTestRun(exam: Exam, exerciseArray: Array<Exercise>, workingTime = 1080) {
+        const courseId = exam.course!.id;
+        const examId = exam.id!;
+        const data = {
+            exam,
+            exerciseArray,
+            workingTime,
+        };
+        await this.page.request.post(`${COURSE_BASE}${courseId}/exams/${examId}/test-run`, { data });
+    }
+
+    /**
+     * Adds an exercise group for the exam
+     * @param exam the exam to which the group is added
+     * @param title the title of the group
+     * @param mandatory if the exercise group is mandatory
+     * @returns Promise<ExerciseGroup> representing the exercise group added for the exam.
+     * */
+    async addExerciseGroupForExam(exam: Exam, title = 'Group ' + generateUUID(), mandatory = true): Promise<ExerciseGroup> {
+        const exerciseGroup = new ExerciseGroup();
+        exerciseGroup.exam = exam;
+        exerciseGroup.title = title;
+        exerciseGroup.isMandatory = mandatory;
+        const response = await this.page.request.post(`${COURSE_BASE}${exam.course!.id}/exams/${exam.id}/exerciseGroups`, { data: exerciseGroup });
+        return response.json();
+    }
+
+    async deleteExerciseGroupForExam(exam: Exam, exerciseGroup: ExerciseGroup) {
+        await this.page.request.delete(`${COURSE_BASE}${exam.course!.id}/exams/${exam.id}/exerciseGroups/${exerciseGroup.id}`);
+    }
+
+    /**
+     * Generate all missing individual exams
+     * @param exam the exam for which the missing exams are generated
+     */
+    async generateMissingIndividualExams(exam: Exam) {
+        await this.page.request.post(`${COURSE_BASE}${exam.course!.id}/exams/${exam.id}/generate-missing-student-exams`);
+    }
+
+    /**
+     * Prepares individual exercises for exam start
+     * @param exam the exam for which the exercises are prepared
+     */
+    async prepareExerciseStartForExam(exam: Exam) {
+        await this.page.request.post(`${COURSE_BASE}${exam.course!.id}/exams/${exam.id}/student-exams/start-exercises`);
     }
 }

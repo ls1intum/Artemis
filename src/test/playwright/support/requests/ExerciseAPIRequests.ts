@@ -9,15 +9,105 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
 import quizExerciseTemplate from '../../fixtures/exercise/quiz/template.json';
 import modelingExerciseTemplate from '../../fixtures/exercise/modeling/template.json';
-import { MODELING_EXERCISE_BASE, QUIZ_EXERCISE_BASE, TEXT_EXERCISE_BASE } from '../constants';
+import cProgrammingExerciseTemplate from '../../fixtures/exercise/programming/c/template.json';
+import javaProgrammingExerciseTemplate from '../../fixtures/exercise/programming/java/template.json';
+import pythonProgrammingExerciseTemplate from '../../fixtures/exercise/programming/python/template.json';
+import { MODELING_EXERCISE_BASE, PROGRAMMING_EXERCISE_BASE, ProgrammingExerciseAssessmentType, ProgrammingLanguage, QUIZ_EXERCISE_BASE, TEXT_EXERCISE_BASE } from '../constants';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 export class ExerciseAPIRequests {
     private readonly page: Page;
 
     constructor(page: Page) {
         this.page = page;
+    }
+
+    /**
+     * Creates a programming exercise with the specified title and other data
+     * @param options An object containing the options for creating the programming exercise
+     *   - course: The course the exercise will be added to
+     *   - exerciseGroup: The exercise group the exercise will be added to
+     *   - scaMaxPenalty: The max percentage (0-100) static code analysis can reduce from the points
+     *                    If sca should be disabled, pass null or omit this property
+     *   - recordTestwiseCoverage: Enable testwise coverage analysis for this exercise
+     *   - releaseDate: When the programming exercise should be available
+     *   - dueDate: When the programming exercise should be due
+     *   - title: The title of the programming exercise
+     *   - programmingShortName: The short name of the programming exercise
+     *   - programmingLanguage: The programming language for the exercise
+     *   - packageName: The package name of the programming exercise
+     *   - assessmentDate: The due date of the assessment
+     *   - assessmentType: The assessment type of the exercise
+     * @returns Promise<ProgrammingExercise> representing the programming exercise created.
+     */
+    async createProgrammingExercise(options: {
+        course?: Course;
+        exerciseGroup?: ExerciseGroup;
+        scaMaxPenalty?: number | null;
+        recordTestwiseCoverage?: boolean;
+        releaseDate?: dayjs.Dayjs;
+        dueDate?: dayjs.Dayjs;
+        title?: string;
+        programmingShortName?: string;
+        programmingLanguage?: ProgrammingLanguage;
+        packageName?: string;
+        assessmentDate?: dayjs.Dayjs;
+        assessmentType?: ProgrammingExerciseAssessmentType;
+    }): Promise<ProgrammingExercise> {
+        const {
+            course,
+            exerciseGroup,
+            scaMaxPenalty = null,
+            recordTestwiseCoverage = false,
+            releaseDate = dayjs(),
+            dueDate = dayjs().add(1, 'day'),
+            title = 'Programming ' + generateUUID(),
+            programmingShortName = 'programming' + generateUUID(),
+            programmingLanguage = ProgrammingLanguage.JAVA,
+            packageName = 'de.test',
+            assessmentDate = dayjs().add(2, 'days'),
+            assessmentType = ProgrammingExerciseAssessmentType.AUTOMATIC,
+        } = options;
+
+        let programmingExerciseTemplate = {};
+
+        if (programmingLanguage == ProgrammingLanguage.PYTHON) {
+            programmingExerciseTemplate = pythonProgrammingExerciseTemplate;
+        } else if (programmingLanguage == ProgrammingLanguage.C) {
+            programmingExerciseTemplate = cProgrammingExerciseTemplate;
+        } else if (programmingLanguage == ProgrammingLanguage.JAVA) {
+            programmingExerciseTemplate = javaProgrammingExerciseTemplate;
+        }
+
+        const exercise = {
+            ...programmingExerciseTemplate,
+            title,
+            shortName: programmingShortName,
+            packageName,
+            channelName: 'exercise-' + titleLowercase(title),
+            assessmentType: ProgrammingExerciseAssessmentType[assessmentType],
+            ...(course ? { course } : {}),
+            ...(exerciseGroup ? { exerciseGroup } : {}),
+        } as ProgrammingExercise;
+
+        if (!exerciseGroup) {
+            exercise.releaseDate = releaseDate;
+            exercise.dueDate = dueDate;
+            exercise.assessmentDueDate = assessmentDate;
+        }
+
+        if (scaMaxPenalty) {
+            exercise.staticCodeAnalysisEnabled = true;
+            exercise.maxStaticCodeAnalysisPenalty = scaMaxPenalty;
+        }
+
+        exercise.programmingLanguage = programmingLanguage;
+        exercise.testwiseCoverageEnabled = recordTestwiseCoverage;
+
+        const response = await this.page.request.post(PROGRAMMING_EXERCISE_BASE + 'setup', { data: exercise });
+        return response.json();
     }
 
     /**
