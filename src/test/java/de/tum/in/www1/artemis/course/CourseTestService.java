@@ -5,7 +5,6 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.*;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.mockStatic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -44,6 +43,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.assessment.ComplaintUtilService;
@@ -92,9 +92,7 @@ import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.team.TeamUtilService;
 import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.FileUtils;
-import de.tum.in.www1.artemis.util.RequestUtilService;
-import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
+import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.dto.user.UserNameAndLoginDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -146,9 +144,6 @@ public class CourseTestService {
     private CourseExamExportService courseExamExportService;
 
     @Autowired
-    private FilePathService filePathService;
-
-    @Autowired
     private FileUploadExerciseRepository fileUploadExerciseRepository;
 
     @Autowired
@@ -171,6 +166,9 @@ public class CourseTestService {
 
     @Autowired
     private OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
+
+    @Autowired
+    private LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -231,6 +229,9 @@ public class CourseTestService {
 
     @Autowired
     private QuizExerciseUtilService quizExerciseUtilService;
+
+    @Autowired
+    private PageableSearchUtilService pageableSearchUtilService;
 
     private static final int numberOfStudents = 8;
 
@@ -940,10 +941,6 @@ public class CourseTestService {
             assertThat(receivedCourse).isNotNull();
             if (i == 0) {
                 assertThat(receivedCourse.getExams()).isEmpty();
-            }
-            else if (i == 1) {
-                assertThat(receivedCourse.getExams()).hasSize(0);
-                assertThat(receivedCourse.getNumberOfExams()).isEqualTo(3);
             }
             else {
                 assertThat(receivedCourse.getExams()).hasSize(0);
@@ -2952,14 +2949,20 @@ public class CourseTestService {
 
         // Active Users
         int periodIndex = 0;
+        int periodSize = 8;
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("periodIndex", Integer.toString(periodIndex));
+        parameters.add("periodSize", Integer.toString(periodSize));
 
-        var activeStudents = request.get("/api/courses/" + course1.getId() + "/statistics", HttpStatus.OK, Integer[].class, parameters);
+        Integer[] activeStudents = request.get("/api/courses/" + course1.getId() + "/statistics", HttpStatus.OK, Integer[].class, parameters);
 
         assertThat(activeStudents).isNotNull();
         assertThat(activeStudents).hasSize(3);
 
+        course1.setStartDate(now.plusWeeks(10));
+        course1.setEndDate(now.plusWeeks(20));
+        activeStudents = request.get("/api/courses/" + course1.getId() + "/statistics", HttpStatus.OK, Integer[].class, parameters);
+        assertThat(activeStudents).isNotNull();
     }
 
     // Test
@@ -3169,6 +3172,46 @@ public class CourseTestService {
         assertThat(response).usingRecursiveComparison().ignoringFields("id").isEqualTo(ocConfiguration);
     }
 
+    /**
+     * Tests fetching online courses for an LTI dashboard using a client ID.
+     * Verifies the response matches the expected course details.
+     *
+     * @throws Exception if any error occurs during the test execution.
+     */
+    public void testFindAllOnlineCoursesForLtiDashboard() throws Exception {
+        LtiPlatformConfiguration ltiPlatformConfiguration = new LtiPlatformConfiguration();
+        ltiPlatformConfiguration.setRegistrationId("registrationId");
+        ltiPlatformConfiguration.setClientId("clientId");
+        ltiPlatformConfiguration.setAuthorizationUri("authUri");
+        ltiPlatformConfiguration.setTokenUri("tokenUri");
+        ltiPlatformConfiguration.setJwkSetUri("jwkUri");
+        ltiPlatformConfigurationRepository.save(ltiPlatformConfiguration);
+
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        course.setOnlineCourse(true);
+        OnlineCourseConfiguration onlineCourseConfiguration = CourseFactory.generateOnlineCourseConfiguration(course, "key", "secret", "prefix", "url");
+        onlineCourseConfiguration.setLtiPlatformConfiguration(ltiPlatformConfiguration);
+
+        course = courseRepo.save(course);
+        onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
+
+        OnlineCourseConfiguration ocConfiguration = course.getOnlineCourseConfiguration();
+        String clientId = ocConfiguration.getLtiPlatformConfiguration().getRegistrationId();
+
+        String jsonResponse = request.get("/api/courses/for-lti-dashboard?clientId=" + clientId, HttpStatus.OK, String.class);
+        List<OnlineCourseDTO> receivedCourseForDashboard = objectMapper.readValue(jsonResponse, new TypeReference<List<OnlineCourseDTO>>() {
+            // This empty block is necessary to provide type information for JSON deserialization
+        });
+
+        assertThat(receivedCourseForDashboard).hasSize(1);
+
+        OnlineCourseDTO dto = receivedCourseForDashboard.get(0);
+        assertThat(dto.id()).isEqualTo(course.getId());
+        assertThat(dto.title()).isEqualTo(course.getTitle());
+        assertThat(dto.shortName()).isEqualTo(course.getShortName());
+        assertThat(dto.registrationId()).isEqualTo(clientId);
+    }
+
     public MockHttpServletRequestBuilder buildCreateCourse(@NotNull Course course) throws JsonProcessingException {
         return buildCreateCourse(course, null);
     }
@@ -3263,5 +3306,30 @@ public class CourseTestService {
         assertThat(updatedCourse.getLearningPathsEnabled()).isTrue();
         final var learningPath = learningPathRepository.findByCourseIdAndUserId(course.getId(), student.getId());
         assertThat(learningPath).as("enable learning paths triggers generation").isPresent();
+    }
+
+    // Test
+    public void testGetCoursesForImportWithoutPermission() throws Exception {
+        request.getList("/api/courses/for-import", HttpStatus.FORBIDDEN, CourseForImportDTO.class);
+    }
+
+    // Test
+    public void testGetCoursesForImport() throws Exception {
+        List<Course> coursesExpected = new ArrayList<>();
+        for (int i = 1; i < 3; i++) {
+            coursesExpected.add(courseUtilService.createCourse((long) i));
+        }
+        var searchTerm = pageableSearchUtilService.configureSearch("");
+
+        SearchResultPageDTO<CourseForImportDTO> result = request.getSearchResult("/api/courses/for-import", HttpStatus.OK, CourseForImportDTO.class,
+                pageableSearchUtilService.searchMapping(searchTerm));
+
+        List<CourseForImportDTO> courses = result.getResultsOnPage();
+
+        for (Course course : coursesExpected) {
+            Optional<CourseForImportDTO> found = courses.stream().filter(c -> Objects.equals(c.id(), course.getId())).findFirst();
+            assertThat(found).as("Course is available").isPresent();
+            CourseForImportDTO courseFound = found.orElseThrow();
+        }
     }
 }

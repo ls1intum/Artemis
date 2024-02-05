@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 public interface IrisMessageRepository extends JpaRepository<IrisMessage, Long> {
 
-    List<IrisMessage> findAllBySessionId(@Param("sessionId") Long sessionId);
+    List<IrisMessage> findAllBySessionId(Long sessionId);
 
     /**
      * Counts the number of LLM responses the user got within the given timeframe.
@@ -30,10 +30,9 @@ public interface IrisMessageRepository extends JpaRepository<IrisMessage, Long> 
     @Query("""
             SELECT COUNT(DISTINCT m)
             FROM IrisMessage m
-                LEFT JOIN m.session as s
-            WHERE type(s) = de.tum.in.www1.artemis.domain.iris.session.IrisChatSession
-                AND s.user.id = :userId
-                AND m.sender = 'LLM'
+                JOIN TREAT (m.session as IrisChatSession) s
+            WHERE s.user.id = :userId
+                AND m.sender = de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender.LLM
                 AND m.sentAt BETWEEN :start AND :end
             """)
     int countLlmResponsesOfUserWithinTimeframe(@Param("userId") Long userId, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);

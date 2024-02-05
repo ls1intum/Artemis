@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.localvcci;
 
-import static de.tum.in.www1.artemis.service.connectors.localci.LocalCIContainerService.RESULTS_DIRECTORY;
-import static de.tum.in.www1.artemis.service.connectors.localci.LocalCIContainerService.WORKING_DIRECTORY;
+import static de.tum.in.www1.artemis.config.Constants.LOCALCI_RESULTS_DIRECTORY;
+import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;
@@ -11,9 +11,8 @@ import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.nio.file.Path;
+import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,6 +49,8 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     private LocalRepository studentAssignmentRepository;
 
+    private LocalRepository testsRepository;
+
     private String commitHash;
 
     @BeforeEach
@@ -57,19 +58,24 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         studentAssignmentRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, assignmentRepositorySlug);
         commitHash = localVCLocalCITestService.commitFile(studentAssignmentRepository.localRepoFile.toPath(), studentAssignmentRepository.localGit);
         studentAssignmentRepository.localGit.push().call();
+
+        testsRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, testsRepositorySlug);
+        localVCLocalCITestService.commitFile(testsRepository.localRepoFile.toPath(), testsRepository.localGit);
+        testsRepository.localGit.push().call();
+
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
-        localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, WORKING_DIRECTORY + RESULTS_DIRECTORY);
-        localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, WORKING_DIRECTORY + RESULTS_DIRECTORY);
+        localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commit hash for the tests repository.
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, LOCALCI_WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
                 Map.of("testCommitHash", DUMMY_COMMIT_HASH), Map.of("testCommitHash", DUMMY_COMMIT_HASH));
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, LOCALCI_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
                 Map.of("commitHash", commitHash), Map.of("commitHash", commitHash));
     }
 
     @AfterEach
     void removeRepositories() throws IOException {
         studentAssignmentRepository.resetLocalRepo();
+        testsRepository.resetLocalRepo();
     }
 
     @Test
@@ -103,7 +109,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         assertThat(buildJob.getCourseId()).isEqualTo(course.getId());
         assertThat(buildJob.getExerciseId()).isEqualTo(programmingExercise.getId());
         assertThat(buildJob.getParticipationId()).isEqualTo(studentParticipation.getId());
-        assertThat(buildJob.getDockerImage()).isEqualTo(programmingExercise.getWindfile().getMetadata().getDocker().getImage());
+        assertThat(buildJob.getDockerImage()).isEqualTo(programmingExercise.getWindfile().getMetadata().getDocker().getFullImageName());
         assertThat(buildJob.getRepositoryName()).isEqualTo(assignmentRepositorySlug);
         assertThat(buildJob.getBuildAgentAddress()).isNotEmpty();
         assertThat(buildJob.getPriority()).isEqualTo(2);
@@ -215,31 +221,6 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
         localVCLocalCITestService.testLatestSubmission(participation.getId(), commitHash, 1, false);
-
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCannotRetrieveCommitHash() {
-        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
-
-        // An IO Exception happens when trying to retrieve the commit hash for the test repository. This should lead to a build result that indicates a failed build.
-
-        // Return an InputStream from dockerClient.copyArchiveFromContainerCmd().exec() such that repositoryTarInputStream.getNextTarEntry() throws an IOException.
-        CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = mock(CopyArchiveFromContainerCmd.class);
-        ArgumentMatcher<String> expectedPathMatcher = path -> path.matches(WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+");
-        doReturn(copyArchiveFromContainerCmd).when(dockerClient).copyArchiveFromContainerCmd(anyString(), argThat(expectedPathMatcher));
-        when(copyArchiveFromContainerCmd.exec()).thenReturn(new InputStream() {
-
-            @Override
-            public int read() throws IOException {
-                throw new IOException("Cannot read from this dummy InputStream");
-            }
-        });
-
-        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
-        // Should return a build result that indicates that the build failed.
-        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), null, 0, true);
     }
 
     @Test
@@ -249,7 +230,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         // Should return a build result that indicates that the build failed.
         CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = mock(CopyArchiveFromContainerCmd.class);
-        ArgumentMatcher<String> expectedPathMatcher = path -> path.matches(WORKING_DIRECTORY + RESULTS_DIRECTORY);
+        ArgumentMatcher<String> expectedPathMatcher = path -> path.matches(LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
         doReturn(copyArchiveFromContainerCmd).when(dockerClient).copyArchiveFromContainerCmd(anyString(), argThat(expectedPathMatcher));
         when(copyArchiveFromContainerCmd.exec()).thenThrow(new NotFoundException("Cannot find results"));
 
@@ -265,7 +246,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         // Return an InputStream from dockerClient.copyArchiveFromContainerCmd().exec() such that repositoryTarInputStream.getNextTarEntry() throws an IOException.
         CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = mock(CopyArchiveFromContainerCmd.class);
-        ArgumentMatcher<String> expectedPathMatcher = path -> path.matches(WORKING_DIRECTORY + RESULTS_DIRECTORY);
+        ArgumentMatcher<String> expectedPathMatcher = path -> path.matches(LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
         doReturn(copyArchiveFromContainerCmd).when(dockerClient).copyArchiveFromContainerCmd(anyString(), argThat(expectedPathMatcher));
         when(copyArchiveFromContainerCmd.exec()).thenReturn(new InputStream() {
 
@@ -280,7 +261,8 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         await().untilAsserted(() -> verify(programmingMessagingService).notifyUserAboutSubmissionError(Mockito.eq(studentParticipation), any()));
 
         // Should notify the user.
-        verifyUserNotification(studentParticipation, "de.tum.in.www1.artemis.exception.LocalCIException: Error while parsing test results");
+        verifyUserNotification(studentParticipation,
+                "java.util.concurrent.ExecutionException: de.tum.in.www1.artemis.exception.LocalCIException: Error while parsing test results");
     }
 
     @Test
@@ -288,12 +270,34 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     void testFaultyResultFiles() throws IOException {
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-        localVCLocalCITestService.mockTestResults(dockerClient, FAULTY_FILES_TEST_RESULTS_PATH, WORKING_DIRECTORY + RESULTS_DIRECTORY);
+        localVCLocalCITestService.mockTestResults(dockerClient, FAULTY_FILES_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
         localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
         await().untilAsserted(() -> verify(programmingMessagingService).notifyUserAboutSubmissionError(Mockito.eq(studentParticipation), any()));
 
         // Should notify the user.
-        verifyUserNotification(studentParticipation, "de.tum.in.www1.artemis.exception.LocalCIException: Error while parsing test results");
+        verifyUserNotification(studentParticipation,
+                "java.util.concurrent.ExecutionException: de.tum.in.www1.artemis.exception.LocalCIException: Error while parsing test results");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testStaticCodeAnalysis() throws IOException {
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExerciseRepository.save(programmingExercise);
+
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        List<Path> resultPaths = new ArrayList<>();
+        resultPaths.add(SPOTBUGS_RESULTS_PATH);
+        resultPaths.add(CHECKSTYLE_RESULTS_PATH);
+        resultPaths.add(PMD_RESULTS_PATH);
+        resultPaths.add(PARTLY_SUCCESSFUL_TEST_RESULTS_PATH);
+
+        localVCLocalCITestService.mockTestResults(dockerClient, resultPaths, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
+
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+
+        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false, true, 15);
     }
 
     private void verifyUserNotification(Participation participation, String errorMessage) {

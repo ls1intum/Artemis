@@ -8,14 +8,15 @@ import { CourseExercisesGroupedByWeekComponent, WEEK_EXERCISE_GROUP_FORMAT_STRIN
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { ExerciseFilter, SortingAttribute } from 'app/overview/course-exercises/course-exercises.component';
-import { Exercise } from 'app/entities/exercise.model';
+import { ExerciseFilter, ExerciseWithDueDate, SortingAttribute } from 'app/overview/course-exercises/course-exercises.component';
+import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
+import { UMLDiagramType } from '@ls1intum/apollon';
 
 const currentExercise_1 = {
     id: 3,

@@ -21,7 +21,7 @@ describe('Profile Service', () => {
             ['de', ''],
         ]),
         useExternal: false,
-        contact: 'artemis.in@tum.de',
+        contact: 'artemis@xcit.tum.de',
         imprint: 'https://ase.in.tum.de/lehrstuhl_1/component/content/article/179-imprint',
         'guided-tour': {
             courseShortName: 'artemistutorial',
@@ -186,7 +186,7 @@ describe('Profile Service', () => {
         sshKeysURL: 'https://artemistest2gitlab.ase.in.tum.de/profile/keys',
         externalUserManagementName: '',
         externalUserManagementURL: '',
-        contact: 'artemis.in@tum.de',
+        contact: 'artemis@xcit.tum.de',
         registrationEnabled: true,
         needsToAcceptTerms: false,
         allowedEmailPattern: '([a-zA-Z0-9_\\-\\.\\+]+)@((tum\\.de)|(in\\.tum\\.de)|(mytum\\.de))',

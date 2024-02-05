@@ -72,7 +72,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     private String gradingInstructions;
 
     @ManyToMany
-    @JoinTable(name = "learning_goal_exercise", joinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"))
+    @JoinTable(name = "competency_exercise", joinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "competency_id", referencedColumnName = "id"))
     @JsonIgnoreProperties({ "exercises", "course" })
     @JsonView(QuizView.Before.class)
     private Set<Competency> competencies = new HashSet<>();
@@ -477,13 +477,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
                     // => if we find one, we can return immediately
                     return Set.of(participation);
                 }
-                else if (participation.getInitializationState() == InitializationState.INACTIVE) {
-                    // InitializationState INACTIVE is also ok
-                    // => if we can't find INITIALIZED, we return that one
-                    relevantParticipation = participation;
-                }
+                // InitializationState INACTIVE is also ok
+                // => if we can't find INITIALIZED, we return that one
+                // or
                 // this case handles FINISHED participations which typically happen when manual results are involved
-                else if (exercise instanceof ModelingExercise || exercise instanceof TextExercise || exercise instanceof FileUploadExercise
+                else if (participation.getInitializationState() == InitializationState.INACTIVE || exercise instanceof ModelingExercise || exercise instanceof TextExercise
+                        || exercise instanceof FileUploadExercise
                         || (exercise instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
                     relevantParticipation = participation;
                 }
@@ -524,11 +523,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             boolean programmingAfterAssessmentOrAutomatic = isProgrammingExercise && ((result.isManual() && isAssessmentOver) || result.isAutomatic());
             if (ratedOrPractice && (noProgrammingAndAssessmentOver || programmingAfterAssessmentOrAutomatic)) {
                 // take the first found result that fulfills the above requirements
-                if (latestSubmission == null) {
-                    latestSubmission = submission;
-                }
+                // or
                 // take newer results and thus disregard older ones
-                else if (latestSubmission.getLatestResult().getCompletionDate().isBefore(result.getCompletionDate())) {
+                if (latestSubmission == null || latestSubmission.getLatestResult().getCompletionDate().isBefore(result.getCompletionDate())) {
                     latestSubmission = submission;
                 }
             }
@@ -988,25 +985,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     private void validateExamExerciseIncludedInScoreCompletely() {
         if (isExamExercise() && includedInOverallScore == IncludedInOverallScore.NOT_INCLUDED) {
             throw new BadRequestAlertException("An exam exercise must be included in the score.", getTitle(), "examExerciseNotIncludedInScore");
-        }
-    }
-
-    /**
-     * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.TextExerciseService#getAllOnPageWithSize(PageableSearchDTO, User)}}
-     * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
-     */
-    public enum ExerciseSearchColumn {
-
-        ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title"), EXAM_TITLE("exerciseGroup.exam.title");
-
-        private final String mappedColumnName;
-
-        ExerciseSearchColumn(String mappedColumnName) {
-            this.mappedColumnName = mappedColumnName;
-        }
-
-        public String getMappedColumnName() {
-            return mappedColumnName;
         }
     }
 
