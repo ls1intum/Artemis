@@ -34,4 +34,14 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long> {
             """)
     Set<DockerImageBuild> findLastBuildDatesForDockerImages(@Param("dockerImageNames") List<String> dockerImageNames);
 
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild(
+                b.dockerImage,
+                max(b.buildStartDate)
+            )
+            FROM BuildJob b
+            GROUP BY b.dockerImage
+            """)
+    Set<DockerImageBuild> findAllLastBuildDatesForDockerImages();
+
 }
