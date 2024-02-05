@@ -216,7 +216,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         String dockerImage;
         try {
             windfile = programmingExercise.getWindfile();
-            dockerImage = windfile.getMetadata().getDocker().getImage();
+            dockerImage = windfile.getMetadata().getDocker().getFullImageName();
         }
         catch (NullPointerException e) {
             log.warn("Could not retrieve windfile for programming exercise {}. Using default windfile instead.", programmingExercise.getId());
@@ -228,10 +228,6 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         // Todo: If build agent does not have access to filesystem, we need to send the build script to the build agent and execute it there.
         String buildScript = localCIBuildConfigurationService.createBuildScript(participation);
-
-        if (buildScript == null) {
-            log.error("Build script could not be retrieved");
-        }
 
         return new BuildConfig(buildScript, dockerImage, commitHash, branch, programmingLanguage, projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled,
                 testwiseCoverageEnabled, resultPaths);
