@@ -46,36 +46,38 @@ Some general aspects:
 4. Within a file, type definitions should come first.
 5. Interfaces and types offer almost the same functionality. To ensure consistency, choose ``interface`` over ``type`` whenever possible
 
-..code-block:: ts
+.. code-block:: ts
 
-// Dont do
-type AngularLink = {
-text: string;
-routerLink: (string | number) [];
-}
+    // Dont do
+    type AngularLink = {
+        text: string;
+        routerLink: (string | number) [];
+    }
 
-// Do
-interface AngularLink {
-    text: string;
-    routerLink: (string | number) [];
-}
+    // Do
+    interface AngularLink {
+        text: string;
+        routerLink: (string | number) [];
+    }
 
-// And this is also allowed
-type RouterLinkPart = string | number;
+    // And this is also allowed (because interface is not possible here)
+    type RouterLinkPart = string | number;
 
 
 
 6. Use strict typing to avoid type errors: Do not use ``any``.
 
 7. Don't use anonymous data structures
-..code-block:: ts
+
+.. code-block:: ts
+
     interface AngularLink {
         text: string;
         routerLink: (string | number) [];
     }
 
     // Dont do, because the type error will not be recognized during compile time.
-    const link = { text: "I am a Link", routerLink: 4 } as AngularLink
+    const link = { text: 'I am a Link', routerLink: 4 } as AngularLink;
 
 4. ``null`` and ``undefined``
 =============================
