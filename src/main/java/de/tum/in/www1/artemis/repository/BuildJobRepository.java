@@ -25,7 +25,7 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long> {
     @Query("""
             SELECT new de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild(
                 b.dockerImage,
-                max(b.buildStartDate)
+                MAX(b.buildStartDate)
             )
             FROM BuildJob b
             GROUP BY b.dockerImage
