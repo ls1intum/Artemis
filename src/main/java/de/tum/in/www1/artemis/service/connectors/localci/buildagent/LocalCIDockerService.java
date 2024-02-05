@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.localci;
+package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild;
  * Service for Docker related operations in local CI
  */
 @Service
-@Profile("localci")
+@Profile("buildagent")
 
 public class LocalCIDockerService {
 

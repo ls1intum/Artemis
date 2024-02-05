@@ -155,7 +155,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("""
             SELECT DISTINCT pe
             FROM ProgrammingExercise pe
-                LEFT JOIN pe.studentParticipations participation
+                LEFT JOIN FETCH pe.studentParticipations participation
+                LEFT JOIN FETCH participation.team team
+                LEFT JOIN FETCH team.students
             WHERE pe.releaseDate > :now
                 OR pe.buildAndTestStudentSubmissionsAfterDueDate > :now
                 OR pe.dueDate > :now
@@ -220,7 +222,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             """)
     Optional<ProgrammingExercise> findWithEagerTemplateAndSolutionParticipationsById(@Param("exerciseId") Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = "studentParticipations")
+    @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.team", "studentParticipations.team.students" })
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsById(Long exerciseId);
 
     @Query("""
@@ -228,13 +230,15 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             FROM ProgrammingExercise pe
                 LEFT JOIN FETCH pe.studentParticipations pep
                 LEFT JOIN FETCH pep.student
-                LEFT JOIN FETCH pep.submissions s
+                LEFT JOIN FETCH pep.team t
+            LEFT JOIN FETCH t.students
+            LEFT JOIN FETCH pep.submissions s
             WHERE pe.id = :exerciseId
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(@Param("exerciseId") Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations" })
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations.team.students" })
     Optional<ProgrammingExercise> findWithAllParticipationsById(Long exerciseId);
 
     @Query("""
@@ -478,7 +482,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
                 LEFT JOIN FETCH e.gradingCriteria
             WHERE e.id = :exerciseId
             """)
-    Optional<ProgrammingExercise> findByIdWithGradingCriteria(long exerciseId);
+    Optional<ProgrammingExercise> findByIdWithGradingCriteria(@Param("exerciseId") long exerciseId);
 
     /**
      * Finds all programming exercises with eager template participation and the given programming language.
