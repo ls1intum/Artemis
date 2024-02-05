@@ -130,7 +130,9 @@ public class MigrationEntry20240104_195600 extends MigrationEntry {
             try {
                 Windfile windfile = aeolusBuildScriptGenerationService.get().translateBuildPlan(solutionParticipation.getBuildPlanId());
                 if (windfile.getMetadata().getDocker() == null) {
-                    throw new RuntimeException("Failed to migrate solution participation because the docker image is null.");
+                    log.info(
+                            "Migrating solution participation with id {} but the docker image is null, the build plan will be translated but not be functional as an instructor needs to add a docker image",
+                            solutionParticipation.getId());
                 }
                 windfile.setRepositories(null);
                 windfile.setId(null);

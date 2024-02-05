@@ -122,8 +122,6 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(buildJobId, participation.getBuildPlanId(), null, participation.getId(), courseId,
                 programmingExercise.getId(), 0, priority, null, repositoryInfo, jobTimingInfo, buildConfig);
 
-        localCIBuildConfigurationService.createBuildScript(participation, buildJobId);
-
         queue.add(buildJobQueueItem);
     }
 
@@ -220,7 +218,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         String dockerImage;
         try {
             windfile = programmingExercise.getWindfile();
-            dockerImage = windfile.getMetadata().getDocker().getImage();
+            dockerImage = windfile.getMetadata().getDocker().getFullImageName();
         }
         catch (NullPointerException e) {
             log.warn("Could not retrieve windfile for programming exercise {}. Using default windfile instead.", programmingExercise.getId());
@@ -230,7 +228,10 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         List<String> resultPaths = getTestResultPaths(windfile);
 
-        return new BuildConfig(dockerImage, commitHash, branch, programmingLanguage, projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled, testwiseCoverageEnabled,
-                resultPaths);
+        // Todo: If build agent does not have access to filesystem, we need to send the build script to the build agent and execute it there.
+        String buildScript = localCIBuildConfigurationService.createBuildScript(participation);
+
+        return new BuildConfig(buildScript, dockerImage, commitHash, branch, programmingLanguage, projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled,
+                testwiseCoverageEnabled, resultPaths);
     }
 }
