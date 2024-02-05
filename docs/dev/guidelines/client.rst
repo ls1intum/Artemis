@@ -44,7 +44,7 @@ Some general aspects:
 2. Do not introduce new types/values to the global namespace.
 3. Shared types/interfaces should be defined in 'types.ts'.
 4. Within a file, type definitions should come first.
-5. Interfaces and types offer almost the same functionality. To ensure consistency, choose ``interface`` over ``type`` whenever possible
+5. Interfaces and types offer almost the same functionality. To ensure consistency, choose ``interface`` over ``type`` whenever possible.
 
     .. code-block:: ts
 
@@ -67,7 +67,7 @@ Some general aspects:
 
 6. Use strict typing to avoid type errors: Do not use ``any``.
 
-7. Don't use anonymous data structures
+7. Do not use anonymous data structures.
 
     .. code-block:: ts
 
@@ -76,10 +76,10 @@ Some general aspects:
             routerLink: string [];
         }
 
-        // Dont do, because the type error will not be recognized during compile time.
+        // Do not do this because the type error will not be recognized during compile time.
         const link = { text: 'I am a Link', routerLink: 4 } as AngularLink;
 
-        // Instead do (this will throw a type error during compilation because 4 ist not a string)
+        // Instead do this (it will throw a type error during compilation because 4 ist not a string)
         const link: AngularLink = { text: 'I am a Link', routerLink: 4 };
 
 4. ``null`` and ``undefined``
