@@ -73,11 +73,14 @@ Some general aspects:
 
     interface AngularLink {
         text: string;
-        routerLink: (string | number) [];
+        routerLink: string [];
     }
 
     // Dont do, because the type error will not be recognized during compile time.
     const link = { text: 'I am a Link', routerLink: 4 } as AngularLink;
+
+    // Instead do (this will throw a type error during compilation because 4 ist not a string)
+    const link: AngularLink = { text: 'I am a Link', routerLink: 4 };
 
 4. ``null`` and ``undefined``
 =============================
