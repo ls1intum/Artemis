@@ -48,9 +48,9 @@ public class GroupNotificationFactory {
             title = NotificationConstants.ATTACHMENT_CHANGE_TITLE;
             text = NotificationConstants.ATTACHMENT_CHANGE_TEXT;
             textIsPlaceholder = true;
-            placeholderValues = new String[] {
-                    attachment.getExercise() != null ? attachment.getExercise().getCourseViaExerciseGroupOrCourseMember().getTitle() : lecture.getCourse().getTitle(),
-                    attachment.getName(), attachment.getExercise() != null ? attachment.getExercise().getTitle() : lecture.getTitle() };
+            String courseTitle = attachment.getExercise() != null ? attachment.getExercise().getCourseViaExerciseGroupOrCourseMember().getTitle() : lecture.getCourse().getTitle();
+            String entityTitle = attachment.getExercise() != null ? attachment.getExercise().getTitle() : lecture.getTitle();
+            placeholderValues = new String[] { courseTitle, attachment.getName(), entityTitle };
         }
         else {
             throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);

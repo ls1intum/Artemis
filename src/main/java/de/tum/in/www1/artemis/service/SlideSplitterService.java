@@ -37,12 +37,9 @@ public class SlideSplitterService {
 
     private final SlideRepository slideRepository;
 
-    private final FilePathService filePathService;
-
-    public SlideSplitterService(FileService fileService, SlideRepository slideRepository, FilePathService filePathService) {
+    public SlideSplitterService(FileService fileService, SlideRepository slideRepository) {
         this.fileService = fileService;
         this.slideRepository = slideRepository;
-        this.filePathService = filePathService;
     }
 
     /**
