@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCISharedBuildJobQueueService;
+import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
@@ -23,14 +23,13 @@ public class BuildJobQueueResource {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobQueueResource.class);
 
-    private final LocalCISharedBuildJobQueueService localCIBuildJobQueueService;
+    private final SharedQueueManagementService localCIBuildJobQueueService;
 
     private final AuthorizationCheckService authorizationCheckService;
 
     private final CourseRepository courseRepository;
 
-    public BuildJobQueueResource(LocalCISharedBuildJobQueueService localCIBuildJobQueueService, AuthorizationCheckService authorizationCheckService,
-            CourseRepository courseRepository) {
+    public BuildJobQueueResource(SharedQueueManagementService localCIBuildJobQueueService, AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository) {
         this.localCIBuildJobQueueService = localCIBuildJobQueueService;
         this.authorizationCheckService = authorizationCheckService;
         this.courseRepository = courseRepository;
