@@ -121,7 +121,7 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
 
     private updateConversationIsFavorite() {
         this.favorite$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((isFavorite) => {
-            if (this.course.id === undefined || this.conversation.id === undefined) return;
+            if (!this.course.id || !this.conversation.id) return;
 
             this.conversationService.updateIsFavorite(this.course.id, this.conversation.id, isFavorite).subscribe({
                 next: () => {
@@ -135,7 +135,7 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
 
     private updateConversationIsHidden() {
         this.hide$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((isHidden) => {
-            if (this.course.id === undefined || this.conversation.id === undefined) return;
+            if (!this.course.id || !this.conversation.id) return;
 
             this.conversationService.updateIsHidden(this.course.id, this.conversation.id, isHidden).subscribe({
                 next: () => {
@@ -149,7 +149,7 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
 
     private updateConversationIsMuted() {
         this.mute$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((isMuted) => {
-            if (this.course.id === undefined || this.conversation.id === undefined) return;
+            if (!this.course.id || !this.conversation.id) return;
 
             this.conversationService.updateIsMuted(this.course.id, this.conversation.id, isMuted).subscribe({
                 next: () => {
@@ -163,7 +163,7 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
 
     private updateConversationShouldNotifyRecipient() {
         this.conversationIsHiddenDidChange.pipe(mergeWith(this.conversationIsMutedDidChange), takeUntil(this.ngUnsubscribe)).subscribe(() => {
-            if (this.conversation.id === undefined) return;
+            if (!this.conversation.id) return;
 
             if (shouldNotifyRecipient(this.conversation)) {
                 this.notificationService.unmuteNotificationsForConversation(this.conversation.id);
