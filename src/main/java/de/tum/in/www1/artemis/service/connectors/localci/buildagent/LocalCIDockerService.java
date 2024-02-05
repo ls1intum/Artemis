@@ -52,7 +52,7 @@ public class LocalCIDockerService {
     @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
     private String buildContainerPrefix;
 
-    public LocalCIDockerService(DockerClient dockerClient, BuildJobRepository buildJobRepository) {
+    public LocalCIDockerService(DockerClient dockerClient, HazelcastInstance hazelcastInstance) {
         this.dockerClient = dockerClient;
         this.hazelcastInstance = hazelcastInstance;
     }
