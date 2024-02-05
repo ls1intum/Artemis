@@ -55,17 +55,17 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     }
 
     default Optional<ProgrammingSubmission> findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(Long participationId) {
-        return findFirstByTypeNotAndTypeNotNullAndParticipationIdAndResultsNotNullOrderBySubmissionDateDesc(SubmissionType.ILLEGAL, participationId);
+        return findFirstByTypeNotOrTypeIsNullAndParticipationIdAndResultsNotNullOrderBySubmissionDateDesc(SubmissionType.ILLEGAL, participationId);
     }
 
     @EntityGraph(type = LOAD, attributePaths = "results")
-    Optional<ProgrammingSubmission> findFirstByTypeNotAndTypeNotNullAndParticipationIdAndResultsNotNullOrderBySubmissionDateDesc(SubmissionType type, Long participationId);
+    Optional<ProgrammingSubmission> findFirstByTypeNotOrTypeIsNullAndParticipationIdAndResultsNotNullOrderBySubmissionDateDesc(SubmissionType type, Long participationId);
 
     default Optional<ProgrammingSubmission> findFirstByParticipationIdOrderByLegalSubmissionDateDesc(Long participationId) {
-        return findFirstByTypeNotAndTypeNotNullAndParticipationIdOrderBySubmissionDateDesc(SubmissionType.ILLEGAL, participationId);
+        return findFirstByTypeNotOrTypeIsNullAndParticipationIdOrderBySubmissionDateDesc(SubmissionType.ILLEGAL, participationId);
     }
 
-    Optional<ProgrammingSubmission> findFirstByTypeNotAndTypeNotNullAndParticipationIdOrderBySubmissionDateDesc(SubmissionType type, Long participationId);
+    Optional<ProgrammingSubmission> findFirstByTypeNotOrTypeIsNullAndParticipationIdOrderBySubmissionDateDesc(SubmissionType type, Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = "results")
     Optional<ProgrammingSubmission> findFirstByParticipationIdOrderBySubmissionDateDesc(Long participationId);
