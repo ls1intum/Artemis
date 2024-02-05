@@ -29,6 +29,7 @@ import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../../../../../helpers/mocks/service/mock-notification.service';
+import { Course } from 'app/entities/course.model';
 
 const examples: (() => ConversationDTO)[] = [
     () => generateOneToOneChatDTO({}),
@@ -38,6 +39,33 @@ const examples: (() => ConversationDTO)[] = [
     () => generateExampleChannelDTO({ subType: ChannelSubType.LECTURE, subTypeReferenceId: 1 }),
     () => generateExampleChannelDTO({ subType: ChannelSubType.EXAM, subTypeReferenceId: 1 }),
 ];
+
+const configureTestBed = () => {
+    TestBed.configureTestingModule({
+        imports: [
+            NgbDropdownMocksModule,
+            RouterTestingModule.withRoutes([
+                { path: 'courses/:courseId/lectures/:lectureId', component: CourseLectureDetailsComponent },
+                { path: 'courses/:courseId/exercises/:exerciseId', component: CourseExerciseDetailsComponent },
+                { path: 'courses/:courseId/exams/:examId', component: ExamDetailComponent },
+            ]),
+        ],
+        declarations: [
+            ConversationSidebarEntryComponent,
+            MockPipe(ArtemisTranslatePipe),
+            MockComponent(FaIconComponent),
+            MockComponent(ChannelIconComponent),
+            MockComponent(GroupChatIconComponent),
+        ],
+        providers: [
+            MockProvider(ConversationService),
+            MockProvider(AlertService),
+            MockProvider(NgbModal),
+            { provide: MetisService, useClass: MockMetisService },
+            { provide: NotificationService, useClass: MockNotificationService },
+        ],
+    }).compileComponents();
+};
 
 examples.forEach((conversation) => {
     const testDescription = conversation();
@@ -54,32 +82,7 @@ examples.forEach((conversation) => {
         const course = { id: 1 } as any;
         const activeConversation = generateExampleGroupChatDTO({ id: 99 });
 
-        beforeEach(waitForAsync(() => {
-            TestBed.configureTestingModule({
-                imports: [
-                    NgbDropdownMocksModule,
-                    RouterTestingModule.withRoutes([
-                        { path: 'courses/:courseId/lectures/:lectureId', component: CourseLectureDetailsComponent },
-                        { path: 'courses/:courseId/exercises/:exerciseId', component: CourseExerciseDetailsComponent },
-                        { path: 'courses/:courseId/exams/:examId', component: ExamDetailComponent },
-                    ]),
-                ],
-                declarations: [
-                    ConversationSidebarEntryComponent,
-                    MockPipe(ArtemisTranslatePipe),
-                    MockComponent(FaIconComponent),
-                    MockComponent(ChannelIconComponent),
-                    MockComponent(GroupChatIconComponent),
-                ],
-                providers: [
-                    MockProvider(ConversationService),
-                    MockProvider(AlertService),
-                    MockProvider(NgbModal),
-                    { provide: MetisService, useClass: MockMetisService },
-                    { provide: NotificationService, useClass: MockNotificationService },
-                ],
-            }).compileComponents();
-        }));
+        beforeEach(waitForAsync(configureTestBed));
 
         beforeEach(() => {
             fixture = TestBed.createComponent(ConversationSidebarEntryComponent);
@@ -186,4 +189,54 @@ examples.forEach((conversation) => {
             );
         }
     });
+});
+
+describe('ConversationSidebarEntryComponent without conversation.id', () => {
+    let component: ConversationSidebarEntryComponent;
+    let fixture: ComponentFixture<ConversationSidebarEntryComponent>;
+    let conversationService: ConversationService;
+    let updateIsFavoriteSpy: jest.SpyInstance;
+    let updateIsHiddenSpy: jest.SpyInstance;
+    let updateIsMutedSpy: jest.SpyInstance;
+
+    beforeEach(waitForAsync(configureTestBed));
+
+    beforeEach(() => {
+        fixture = TestBed.createComponent(ConversationSidebarEntryComponent);
+        conversationService = TestBed.inject(ConversationService);
+        updateIsFavoriteSpy = jest.spyOn(conversationService, 'updateIsFavorite').mockReturnValue(of(new HttpResponse<void>()));
+        updateIsHiddenSpy = jest.spyOn(conversationService, 'updateIsHidden').mockReturnValue(of(new HttpResponse<void>()));
+        updateIsMutedSpy = jest.spyOn(conversationService, 'updateIsMuted').mockReturnValue(of(new HttpResponse<void>()));
+
+        component = fixture.componentInstance;
+        component.conversation = new ChannelDTO();
+        component.activeConversation = component.conversation;
+        component.course = new Course();
+        fixture.detectChanges();
+    });
+
+    it('should create', () => {
+        expect(component).toBeTruthy();
+    });
+
+    it('should not call updateIsFavorite when button is clicked', fakeAsync(() => {
+        const button = fixture.debugElement.nativeElement.querySelector('.favorite');
+        button.click();
+        tick(501);
+        expect(updateIsFavoriteSpy).not.toHaveBeenCalled();
+    }));
+
+    it('should not call updateIsHidden when button is clicked', fakeAsync(() => {
+        const button = fixture.debugElement.nativeElement.querySelector('.hide');
+        button.click();
+        tick(501);
+        expect(updateIsHiddenSpy).not.toHaveBeenCalled();
+    }));
+
+    it('should not call updateIsMuted when button is clicked', fakeAsync(() => {
+        const button = fixture.debugElement.nativeElement.querySelector('.mute');
+        button.click();
+        tick(501);
+        expect(updateIsMutedSpy).not.toHaveBeenCalled();
+    }));
 });
