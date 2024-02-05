@@ -41,8 +41,7 @@ public interface AttachmentUnitRepository extends JpaRepository<AttachmentUnit, 
      * @throws EntityNotFoundException if no results are found
      */
     @NotNull
-    default List<AttachmentUnit> findAllByLectureIdAndAttachmentTypeElseThrow(@Param("lectureId") Long lectureId, @Param("attachmentType") AttachmentType attachmentType)
-            throws EntityNotFoundException {
+    default List<AttachmentUnit> findAllByLectureIdAndAttachmentTypeElseThrow(Long lectureId, AttachmentType attachmentType) throws EntityNotFoundException {
         List<AttachmentUnit> attachmentUnits = findAllByLectureIdAndAttachmentType(lectureId, attachmentType);
         if (attachmentUnits.isEmpty()) {
             throw new EntityNotFoundException("AttachmentUnit");
