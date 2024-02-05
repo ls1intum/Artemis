@@ -116,11 +116,11 @@ public class LocalCIDockerService {
         // Filter out images that are in use
         List<Image> unusedImages = allImages.stream().filter(image -> !imageIdsInUse.contains(image.getId())).toList();
 
-        List<String> imageNames = new ArrayList<>();
+        Set<String> imageNames = new HashSet<>();
         for (Image image : unusedImages) {
             String[] imageRepoTags = image.getRepoTags();
             if (imageRepoTags != null) {
-                imageNames.addAll(Arrays.asList(imageRepoTags));
+                Collections.addAll(imageNames, imageRepoTags);
             }
         }
 
