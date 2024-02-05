@@ -560,14 +560,6 @@ export class ProgrammingExerciseService {
     }
 
     /**
-     * Gets the testwise coverage report of a programming exercise for the latest solution submission without the actual reports
-     * @param exerciseId The id of a programming exercise
-     */
-    getLatestTestwiseCoverageReport(exerciseId: number): Observable<CoverageReport> {
-        return this.http.get<CoverageReport>(`${this.resourceUrl}/${exerciseId}/full-testwise-coverage-report`);
-    }
-
-    /**
      * Gets all files from the last solution participation repository
      */
     getSolutionRepositoryTestFilesWithContent(exerciseId: number): Observable<Map<string, string> | undefined> {
