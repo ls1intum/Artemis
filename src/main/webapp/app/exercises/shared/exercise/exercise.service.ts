@@ -402,7 +402,7 @@ export class ExerciseService {
         return exercise;
     }
 
-    isIncludedInScore(exercise: Exercise | undefined) {
+    isIncludedInScore(exercise?: Exercise) {
         if (!exercise?.includedInOverallScore) {
             return '';
         }
@@ -464,7 +464,7 @@ export class ExerciseService {
         return res;
     }
 
-    public sendExerciseTitleToTitleService(exercise: Exercise | undefined) {
+    public sendExerciseTitleToTitleService(exercise?: Exercise) {
         // we only want to show the exercise group name as exercise name to the student for exam exercises.
         // for tutors and more privileged users, we want to show the exercise title
         if (exercise?.exerciseGroup && !exercise?.isAtLeastTutor) {
@@ -477,7 +477,7 @@ export class ExerciseService {
         }
     }
 
-    private setBuildPlanUrlToParticipations(exercise: Exercise | undefined) {
+    private setBuildPlanUrlToParticipations(exercise?: Exercise) {
         if (exercise?.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).publishBuildPlanUrl) {
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
                 const programmingParticipations = exercise?.studentParticipations as ProgrammingExerciseStudentParticipation[];
