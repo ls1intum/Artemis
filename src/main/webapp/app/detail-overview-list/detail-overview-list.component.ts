@@ -10,6 +10,7 @@ import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-setting
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
+import { Router } from '@angular/router';
 
 export interface DetailOverviewSection {
     headline: string;
@@ -69,13 +70,17 @@ export class DetailOverviewListComponent implements OnInit {
     faArrowUpRightFromSquare = faArrowUpRightFromSquare;
     faCodeBranch = faCodeBranch;
 
+    routerLink: string;
+
     constructor(
         private modalService: NgbModal,
         private modelingExerciseService: ModelingExerciseService,
         private alertService: AlertService,
+        private router: Router,
     ) {}
 
     ngOnInit() {
+        this.routerLink = this.router.url;
         this.headlines = this.sections.map((section) => {
             return {
                 id: section.headline.replaceAll('.', '-'),

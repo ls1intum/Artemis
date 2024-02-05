@@ -15,7 +15,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { Participation } from 'app/entities/participation/participation.model';
-import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
+
 @Component({
     selector: 'jhi-repository-view',
     templateUrl: './repository-view.component.html',
@@ -23,7 +23,6 @@ import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programmi
 })
 export class RepositoryViewComponent implements OnInit, OnDestroy {
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
-    @ViewChild(ProgrammingExerciseInstructionComponent, { static: false }) programmingExerciseInstruction: ProgrammingExerciseInstructionComponent;
 
     PROGRAMMING = ExerciseType.PROGRAMMING;
     protected readonly FeatureToggle = FeatureToggle;
@@ -81,7 +80,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
 
     loadDifferentParticipation(repositoryType: string, exerciseId: number) {
         this.differentParticipationSub = this.programmingExerciseService
-            .findWithTemplateAndSolutionParticipationAndResults(exerciseId)
+            .findWithTemplateAndSolutionParticipationAndLatestResults(exerciseId)
             .pipe(
                 tap((exerciseResponse) => {
                     this.exercise = exerciseResponse.body!;
