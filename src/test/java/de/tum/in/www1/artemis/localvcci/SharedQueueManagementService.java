@@ -28,7 +28,7 @@ class SharedQueueManagementServiceTest extends AbstractSpringIntegrationLocalCIL
     private HazelcastInstance hazelcastInstance;
 
     @BeforeEach
-    void tearDown() {
+    void clearBuildJobs() {
         buildJobRepository.deleteAll();
     }
 
