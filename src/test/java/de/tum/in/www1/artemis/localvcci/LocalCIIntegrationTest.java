@@ -109,7 +109,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         assertThat(buildJob.getCourseId()).isEqualTo(course.getId());
         assertThat(buildJob.getExerciseId()).isEqualTo(programmingExercise.getId());
         assertThat(buildJob.getParticipationId()).isEqualTo(studentParticipation.getId());
-        assertThat(buildJob.getDockerImage()).isEqualTo(programmingExercise.getWindfile().getMetadata().getDocker().getImage());
+        assertThat(buildJob.getDockerImage()).isEqualTo(programmingExercise.getWindfile().getMetadata().getDocker().getFullImageName());
         assertThat(buildJob.getRepositoryName()).isEqualTo(assignmentRepositorySlug);
         assertThat(buildJob.getBuildAgentAddress()).isNotEmpty();
         assertThat(buildJob.getPriority()).isEqualTo(2);
