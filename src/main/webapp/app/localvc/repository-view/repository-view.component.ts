@@ -14,7 +14,6 @@ import { Result } from 'app/entities/result.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { Participation } from 'app/entities/participation/participation.model';
 
 @Component({
     selector: 'jhi-repository-view',
@@ -30,7 +29,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     readonly getCourseFromExercise = getCourseFromExercise;
 
     paramSub: Subscription;
-    participation: Participation;
+    participation: ProgrammingExerciseStudentParticipation;
     exercise: ProgrammingExercise;
     userId: number;
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
@@ -38,6 +37,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     participationCouldNotBeFetched = false;
     showEditorInstructions = true;
     routeCommitHistory: string;
+    repositoryUri: string;
 
     result: Result;
 
@@ -87,11 +87,14 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
                     if (repositoryType === 'TEMPLATE') {
                         this.participation = this.exercise.templateParticipation!;
                         this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.templateParticipation!]);
+                        this.repositoryUri = this.participation.repositoryUri!;
                     } else if (repositoryType === 'SOLUTION') {
                         this.participation = this.exercise.solutionParticipation!;
                         this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.solutionParticipation!]);
+                        this.repositoryUri = this.participation.repositoryUri!;
                     } else if (repositoryType === 'TESTS') {
                         this.domainService.setDomain([DomainType.TEST_REPOSITORY, this.exercise]);
+                        this.repositoryUri = this.exercise.testRepositoryUri!;
                     }
                 }),
             )
@@ -114,6 +117,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
                     this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
                     this.participation = participationWithResults;
                     this.exercise = this.participation.exercise as ProgrammingExercise;
+                    this.repositoryUri = this.participation.repositoryUri!;
                 }),
             )
             .subscribe({
