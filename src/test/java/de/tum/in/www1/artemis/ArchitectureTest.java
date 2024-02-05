@@ -189,6 +189,25 @@ class ArchitectureTest extends AbstractArchitectureTest {
         };
     }
 
+    private ArchCondition<JavaMethod> haveAllParametersAnnotatedWithUnless(DescribedPredicate<? super JavaAnnotation<?>> annotationPredicate,
+            DescribedPredicate<JavaClass> exception) {
+        return new ArchCondition<>("have all parameters annotated with " + annotationPredicate.getDescription()) {
+
+            @Override
+            public void check(JavaMethod item, ConditionEvents events) {
+                boolean satisfied = item.getParameters().stream()
+                        // Ignore annotations of the Pageable parameter
+                        .filter(javaParameter -> !exception.test(javaParameter.getRawType())).map(JavaParameter::getAnnotations)
+                        // Else, one of the annotations should match the given predicate
+                        // This allows parameters with multiple annotations (e.g. @NonNull @Param)
+                        .allMatch(annotations -> annotations.stream().anyMatch(annotationPredicate));
+                if (!satisfied) {
+                    events.add(violated(item, String.format("Method %s has parameter violating %s", item.getFullName(), annotationPredicate.getDescription())));
+                }
+            }
+        };
+    }
+
     private ArchCondition<JavaMethod> useUpperCaseSQLStyle() {
         return new ArchCondition<>("@Query content should follow the style guide") {
 
@@ -208,25 +227,6 @@ class ArchitectureTest extends AbstractArchitectureTest {
                     if (StringUtils.containsIgnoreCase(query, keyword) && !query.contains(keyword)) {
                         events.add(violated(item, "In the Query of %s the keyword %s should be written in upper case.".formatted(item.getFullName(), keyword)));
                     }
-                }
-            }
-        };
-    }
-
-    private ArchCondition<JavaMethod> haveAllParametersAnnotatedWithUnless(DescribedPredicate<? super JavaAnnotation<?>> annotationPredicate,
-            DescribedPredicate<JavaClass> exception) {
-        return new ArchCondition<>("have all parameters annotated with " + annotationPredicate.getDescription()) {
-
-            @Override
-            public void check(JavaMethod item, ConditionEvents events) {
-                boolean satisfied = item.getParameters().stream()
-                        // Ignore annotations of the Pageable parameter
-                        .filter(javaParameter -> !exception.test(javaParameter.getRawType())).map(JavaParameter::getAnnotations)
-                        // Else, one of the annotations should match the given predicate
-                        // This allows parameters with multiple annotations (e.g. @NonNull @Param)
-                        .allMatch(annotations -> annotations.stream().anyMatch(annotationPredicate));
-                if (!satisfied) {
-                    events.add(violated(item, String.format("Method %s has parameter violating %s", item.getFullName(), annotationPredicate.getDescription())));
                 }
             }
         };
