@@ -2,7 +2,7 @@ import { Component, ContentChild, OnDestroy, OnInit, TemplateRef } from '@angula
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, combineLatest } from 'rxjs';
 import { filter, switchMap } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
@@ -103,16 +103,14 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     availableExerciseHints: ExerciseHint[];
     activatedExerciseHints: ExerciseHint[];
     irisSettings?: IrisSettings;
+    paramsSubscription: Subscription;
+    isProduction = true;
+    isTestServer = false;
 
     exampleSolutionInfo?: ExampleSolutionInfo;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
-
-    /**
-     * variables are only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
-     */
-    public inProductionEnvironment: boolean;
 
     // Icons
     faBook = faBook;
@@ -149,13 +147,16 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     }
 
     ngOnInit() {
-        this.route.params.subscribe((params) => {
-            const didExerciseChange = this.exerciseId !== parseInt(params['exerciseId'], 10);
-            const didCourseChange = this.courseId !== parseInt(params['courseId'], 10);
+        const courseIdParams$ = this.route.pathFromRoot[1].params;
+        const exerciseIdParams$ = this.route.params;
+        this.paramsSubscription = combineLatest([courseIdParams$, exerciseIdParams$]).subscribe(([courseIdParams, exerciseIdParams]) => {
+            const didExerciseChange = this.exerciseId !== parseInt(exerciseIdParams.exerciseId, 10);
+            const didCourseChange = this.courseId !== parseInt(courseIdParams.courseId, 10);
+
             // if learningPathMode is enabled these attributes will be set by the parent
             if (!this.learningPathMode) {
-                this.exerciseId = parseInt(params['exerciseId'], 10);
-                this.courseId = parseInt(params['courseId'], 10);
+                this.exerciseId = parseInt(exerciseIdParams.exerciseId, 10);
+                this.courseId = parseInt(courseIdParams.courseId, 10);
             }
             this.courseService.find(this.courseId).subscribe((courseResponse) => (this.course = courseResponse.body!));
             this.accountService.identity().then((user: User) => {
@@ -172,11 +173,9 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
             this.logEvent();
         });
 
-        // Checks if the current environment is production
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                this.inProductionEnvironment = profileInfo.inProduction;
-            }
+        this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
+            this.isProduction = profileInfo.inProduction;
+            this.isTestServer = profileInfo.testServer ?? false;
         });
     }
 
@@ -189,12 +188,9 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
                 });
             }
         }
-        if (this.teamAssignmentUpdateListener) {
-            this.teamAssignmentUpdateListener.unsubscribe();
-        }
-        if (this.submissionSubscription) {
-            this.submissionSubscription.unsubscribe();
-        }
+        this.teamAssignmentUpdateListener?.unsubscribe();
+        this.submissionSubscription?.unsubscribe();
+        this.paramsSubscription?.unsubscribe();
     }
 
     loadExercise() {

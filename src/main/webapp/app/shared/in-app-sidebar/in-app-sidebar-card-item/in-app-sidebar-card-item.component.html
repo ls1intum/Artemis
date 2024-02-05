@@ -1,0 +1,30 @@
+<div class="mx-1 mb-1">
+    <div class="d-flex justify-content-between mb-1 align-items-baseline">
+        <span class="small fw-semibold text-truncate me-2">
+            @if (entityItem.type) {
+                <fa-icon [fixedWidth]="true" [icon]="entityIcon" />
+            }
+            {{ entityItem.title }}</span
+        >
+    </div>
+    <div class="d-flex justify-content-between align-items-baseline small">
+        <small class="me-2 text-truncate">
+            @if (entityItem.dueDate) {
+                <span>{{ 'artemisApp.courseOverview.exerciseList.shortDueDate' | artemisTranslate }}: </span>
+                {{ entityItem.dueDate | date: 'mediumDate' }}
+            } @else {
+                <div>{{ 'artemisApp.courseOverview.exerciseList.noDueDate' | artemisTranslate }}</div>
+            }
+        </small>
+        <small class="text-truncate d-inline">
+            <jhi-submission-result-status
+                class="text-truncate"
+                [exercise]="entityItem"
+                [studentParticipation]="gradedStudentParticipation"
+                [triggerLastGraded]="false"
+                class="result"
+                [isInSidebarCard]="true"
+            />
+        </small>
+    </div>
+</div>

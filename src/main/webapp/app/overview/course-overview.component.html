@@ -1,11 +1,11 @@
 <div class="sidebar-wrapper">
-    <div class="vw-100 bg-body pb-3">
+    <div class="vw-100 bg-body">
         <mat-sidenav-container class="vw-100" [ngClass]="{ 'sidenav-height-dev': !isProduction || isTestServer, 'container-closed': isCollapsed }">
-            <mat-sidenav #sidenav [ngClass]="{ 'sidenav-height-dev': !isProduction || isTestServer }" class="module-bg rounded-end rounded-3" opened="true" mode="side" @slideIn>
+            <mat-sidenav #sidenav [ngClass]="{ 'sidenav-height-dev': !isProduction || isTestServer }" class="module-bg rounded-end rounded-3" opened="true" mode="side">
                 <div class="sidebar-container d-flex h-100 justify-content-between flex-column" [ngClass]="{ collapsed: isCollapsed }">
                     <!-- NavItems -->
                     <div>
-                        <a class="d-flex p-3 align-items-center text-decoration-none">
+                        <div class="d-flex p-3 align-items-center text-decoration-none">
                             @if (course && course.courseIcon) {
                                 <div class="me-3">
                                     <jhi-secured-image [src]="course.courseIcon" class="rounded-circle" />
@@ -18,7 +18,7 @@
                             @if (!isCollapsed) {
                                 <div class="h6 mb-0 fw-bold text-body">{{ course?.title }}</div>
                             }
-                        </a>
+                        </div>
                         <hr class="mt-0" />
                         <ul class="navbar-nav justify-content-end flex-grow-1 text-decoration-none">
                             @for (sidebarItem of sidebarItems; track sidebarItem) {
@@ -60,23 +60,37 @@
                             }
                         </ul>
                     </div>
-                    <!-- Collapse Chevron -->
-                    <div
-                        class="double-arrow mb-2"
-                        [ngClass]="{ 'menu-closed': isCollapsed }"
-                        [ngbTooltip]="(isCollapsed ? 'Expand' : 'Collapse') + ' Menu'"
-                        (click)="isCollapsed = !isCollapsed"
-                    >
-                        <div [attr.aria-expanded]="!isCollapsed" aria-controls="collapseBasic">
-                            <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
-                            <fa-icon class="fa-xs" [icon]="faChevronRight" />
+                    <!-- Course Action Items  -->
+                    <div>
+                        @if (courseActionItems?.length) {
+                            <div ngbDropdown placement="top" class="navbar-nav mb-3">
+                                <li class="nav-item">
+                                    @for (courseActionItem of courseActionItems; track courseActionItem) {
+                                        <a class="nav-link nav-link-sidebar px-3" [ngClass]="{ collapsed: isCollapsed }" (click)="courseActionItemClick(courseActionItem)">
+                                            <ng-template *ngTemplateOutlet="navIconAndText; context: { $implicit: courseActionItem }" />
+                                        </a>
+                                    }
+                                </li>
+                            </div>
+                        }
+                        <!-- Collapse Chevron -->
+                        <div
+                            class="double-arrow mb-2"
+                            [ngClass]="{ 'menu-closed': isCollapsed }"
+                            [ngbTooltip]="(isCollapsed ? 'Expand' : 'Collapse') + ' Menu'"
+                            (click)="isCollapsed = !isCollapsed"
+                        >
+                            <div [attr.aria-expanded]="!isCollapsed" aria-controls="collapseBasic">
+                                <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
+                                <fa-icon class="fa-xs" [icon]="faChevronRight" />
+                            </div>
                         </div>
                     </div>
                 </div>
             </mat-sidenav>
             <mat-sidenav-content [ngClass]="{ 'sidenav-height-dev': !isProduction || isTestServer }">
                 @if (course) {
-                    <div class="h5 module-bg m-3 mt-0 px-3 py-2 rounded rounded-3 d-flex justify-content-between">
+                    <div class="h5 module-bg m-3 mt-0 px-3 py-2 rounded rounded-3 d-flex justify-content-between sticky-top">
                         <div class="align-self-center">{{ 'artemisApp.courseOverview.menu.' + pageTitle | artemisTranslate }}</div>
 
                         <div class="d-flex">
@@ -93,8 +107,10 @@
                             </button>
                         </div>
                     </div>
-                    <div class="course-body-container module-bg mx-3 p-3 rounded rounded-3">
-                        <ng-container class="d-flex ms-auto" #controlsViewContainer />
+                    <div class="course-body-container mx-3" [ngClass]="{ 'module-bg p-3 rounded rounded-3': !hasSidebar }">
+                        @if (!hasSidebar) {
+                            <ng-container class="d-flex ms-auto" #controlsViewContainer />
+                        }
                         <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()" />
                         <div class="refresh-overlay" [class.active]="refreshingCourse">
                             <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true" />
@@ -111,6 +127,6 @@
         <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" class="ms-2 me-3" />
     }
     @if (!isCollapsed) {
-        <span [jhiTranslate]="sidebarItem.translation">{{ sidebarItem.name }}</span>
+        <span [jhiTranslate]="sidebarItem.translation"></span>
     }
 </ng-template>

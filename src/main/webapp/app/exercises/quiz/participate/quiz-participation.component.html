@@ -34,7 +34,7 @@
         </div>
     }
     @if (quizExercise) {
-        <div class="quiz-content container">
+        <div class="quiz-content container mb-3">
             @for (question of quizExercise.quizQuestions; track question; let i = $index) {
                 <div>
                     <!-- TODO: Map vs Array consistency -->

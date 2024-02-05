@@ -1,0 +1,14 @@
+<div
+    class="pointer rounded-3 col-12 px-1 pt-2 pb-1 border-start border-5 mb-2 highlight-card bg-module"
+    [ngClass]="{
+        'border-success': entityItem?.difficulty === DifficultyLevel.EASY,
+        'border-warning': entityItem?.difficulty === DifficultyLevel.MEDIUM,
+        'border-danger': entityItem?.difficulty === DifficultyLevel.HARD,
+        'border-module': !entityItem?.difficulty,
+        'bg-selected border-selected': isSelected
+    }"
+    [routerLink]="noExerciseSelected ? './' + entityItem.id : '../' + entityItem.id"
+    (click)="storeLastSelectedExercise(entityItem.id)"
+>
+    <jhi-in-app-sidebar-card-item [entityItem]="entityItem" />
+</div>

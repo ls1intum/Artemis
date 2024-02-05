@@ -1,0 +1,35 @@
+<div class="d-flex in-app-sidebar rounded-3 px-3 sidebar-width" [ngClass]="{ 'sidebar-height-dev': !isProduction || isTestServer, collapsed: isCollapsed }">
+    <div class="w-100 bg-module">
+        <div class="sidebar-content" [ngClass]="{ collapsed: isCollapsed }">
+            @if (searchFieldEnabled) {
+                <div class="mt-3 mb-2">
+                    <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="mb-2" />
+                </div>
+            }
+            @if (!entityData || !(entityData | searchFilter: ['title', 'type'] : searchValue)?.length) {
+                <div class="mt-2 text-center scrollable-content">No data found.</div>
+            } @else {
+                <div class="scrollable-content my-2" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
+                    @if (groupByCategory) {
+                        <jhi-in-app-sidebar-accordion [searchValue]="searchValue" [entityData]="entityData" [routeParams]="routeParams" />
+                    } @else {
+                        @for (entityItem of entityData | searchFilter: ['title', 'type'] : searchValue; track entityItem) {
+                            <jhi-in-app-sidebar-card [entityItem]="entityItem" />
+                        }
+                    }
+                </div>
+            }
+        </div>
+        <div
+            class="double-arrow my-2"
+            [ngClass]="{ 'menu-closed': isCollapsed }"
+            [ngbTooltip]="(isCollapsed ? 'Expand' : 'Collapse') + ' Sidebar'"
+            (click)="isCollapsed = !isCollapsed"
+        >
+            <div [attr.aria-expanded]="!isCollapsed" aria-controls="collapseBasic">
+                <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
+                <fa-icon class="fa-xs" [icon]="faChevronRight" />
+            </div>
+        </div>
+    </div>
+</div>

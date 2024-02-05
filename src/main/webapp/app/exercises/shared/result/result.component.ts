@@ -50,6 +50,7 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() showUngradedResults = false;
     @Input() showBadge = false;
     @Input() showIcon = true;
+    @Input() isInSidebarCard = false;
     @Input() missingResultInfo = MissingResultInformation.NONE;
     @Input() exercise?: Exercise;
 

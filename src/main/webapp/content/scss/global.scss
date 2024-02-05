@@ -48,6 +48,10 @@ a {
     text-decoration: none !important;
 }
 
+.pointer {
+    cursor: pointer;
+}
+
 a:not(.btn):not(.tab-link):hover {
     text-decoration: underline !important;
 }
@@ -706,11 +710,12 @@ Course Info Bar
 .course-info-bar {
     background-color: $artemis-dark;
     padding: 0.5rem 1rem;
-    margin: -1rem -1rem 0 -1rem;
+    margin: 0rem -1rem 0 -1rem;
     display: flex;
     color: $white;
     flex-direction: column;
     justify-content: center;
+    border-radius: 0.25rem 0.25rem 0 0;
 }
 
 /* ==========================================================================
