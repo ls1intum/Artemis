@@ -1,55 +1,71 @@
 <div class="card">
     <div class="card-header">
-        <!-- TODO: translations -->
-        <!-- TODO: extract to own component ...-->
+        <!-- TODO: extract to own component ?-->
         <h5 class="mb-0">{{ 'artemisApp.competency.import.search.cardTitle' | artemisTranslate }}</h5>
     </div>
     <div class="card-body">
+        <!-- TODO: add title search here aswell-->
+        <!-- TODO: make the rest collapsible ngb-collapsible? -->
         <div class="form-group">
-            <label for="course-title-search-input">
-                {{ 'artemisApp.competency.import.search.labelCourseTitle' | artemisTranslate }}
+            <label for="competency-title-search-input">
+                {{ 'artemisApp.competency.import.search.labelCompetencyTitle' | artemisTranslate }}
             </label>
             <input
-                id="course-title-search-input"
-                type="search"
+                id="competency-title-search-input"
                 class="form-control"
-                [placeholder]="'artemisApp.competency.import.search.fieldCourseTitle' | artemisTranslate"
-                [(ngModel)]="courseTitleSearch"
-                (keydown.enter)="sendUpdate()"
+                [placeholder]="'artemisApp.competency.import.search.fieldCompetencyTitle' | artemisTranslate"
+                [(ngModel)]="search.courseTitleSearch"
+                (keydown.enter)="performSearch()"
             />
         </div>
-        <div class="form-group">
-            <label for="course-semester-search-input">
-                {{ 'artemisApp.competency.import.search.labelCourseSemester' | artemisTranslate }}
-            </label>
-            <input
-                id="course-semester-search-input"
-                type="search"
-                class="form-control"
-                [placeholder]="'artemisApp.competency.import.search.fieldCourseSemester' | artemisTranslate"
-                [(ngModel)]="courseSemesterSearch"
-                (keydown.enter)="sendUpdate()"
-            />
+        <div [ngbCollapse]="isCollapsed">
+            <div class="form-group">
+                <label for="competency-description-search-input">
+                    {{ 'artemisApp.competency.import.search.labelCompetencyDescription' | artemisTranslate }}
+                </label>
+                <textarea
+                    id="competency-description-search-input"
+                    rows="3"
+                    class="form-control"
+                    [placeholder]="'artemisApp.competency.import.search.fieldCompetencyDescription' | artemisTranslate"
+                    [(ngModel)]="search.competencyDescriptionSearch"
+                    (keydown.enter)="performSearch()"
+                ></textarea>
+            </div>
+            <div class="form-group">
+                <label for="course-title-search-input">
+                    {{ 'artemisApp.competency.import.search.labelCourseTitle' | artemisTranslate }}
+                </label>
+                <input
+                    id="course-title-search-input"
+                    class="form-control"
+                    [placeholder]="'artemisApp.competency.import.search.fieldCourseTitle' | artemisTranslate"
+                    [(ngModel)]="search.courseTitleSearch"
+                    (keydown.enter)="performSearch()"
+                />
+            </div>
+            <div class="form-group">
+                <label for="course-semester-search-input">
+                    {{ 'artemisApp.competency.import.search.labelCourseSemester' | artemisTranslate }}
+                </label>
+                <input
+                    id="course-semester-search-input"
+                    class="form-control"
+                    [placeholder]="'artemisApp.competency.import.search.fieldCourseSemester' | artemisTranslate"
+                    [(ngModel)]="search.courseSemesterSearch"
+                    (keydown.enter)="performSearch()"
+                />
+            </div>
         </div>
-        <div class="form-group">
-            <label for="competency-description-search-input">
-                {{ 'artemisApp.competency.import.search.labelCompetencyDescription' | artemisTranslate }}
-            </label>
-            <!-- TODO: replace with text field -->
-            <input
-                id="competency-description-search-input"
-                type="search"
-                class="form-control"
-                [placeholder]="'artemisApp.competency.import.search.fieldCompetencyDescription' | artemisTranslate"
-                [(ngModel)]="competencyDescriptionSearch"
-                (keydown.enter)="sendUpdate()"
-            />
+        <div>
+            <!-- TODO: add chevron ^ v -->
+            <!-- TODO: add span -->
         </div>
         <div class="gap-2 d-flex">
             <button id="resetFilterButton" class="btn btn-secondary offset-6 col-3" type="button" (click)="reset()">
                 {{ 'entity.action.reset' | artemisTranslate }}
             </button>
-            <button id="saveFilterButton" class="btn btn-primary col-3" type="button" (click)="sendUpdate()">
+            <button id="saveFilterButton" class="btn btn-primary col-3" type="button" (click)="performSearch()">
                 {{ 'entity.action.search' | artemisTranslate }}
             </button>
         </div>
