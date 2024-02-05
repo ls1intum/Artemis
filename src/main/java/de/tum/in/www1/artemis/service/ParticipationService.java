@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCISharedBuildJobQueueService;
+import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -65,7 +65,7 @@ public class ParticipationService {
 
     private final TeamScoreRepository teamScoreRepository;
 
-    private final Optional<LocalCISharedBuildJobQueueService> localCISharedBuildJobQueueService;
+    private final Optional<SharedQueueManagementService> localCISharedBuildJobQueueService;
 
     public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
@@ -73,7 +73,7 @@ public class ParticipationService {
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ResultService resultService,
             CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
             ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
-            Optional<LocalCISharedBuildJobQueueService> localCISharedBuildJobQueueService) {
+            Optional<SharedQueueManagementService> localCISharedBuildJobQueueService) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;

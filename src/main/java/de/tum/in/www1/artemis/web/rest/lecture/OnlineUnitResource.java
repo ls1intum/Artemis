@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.web.rest.dto.OnlineResourceDTO;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 @RestController
@@ -35,6 +35,8 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 public class OnlineUnitResource {
 
     private static final Logger log = LoggerFactory.getLogger(OnlineUnitResource.class);
+
+    private static final String ENTITY_NAME = "onlineUnit";
 
     private final OnlineUnitRepository onlineUnitRepository;
 
@@ -114,7 +116,7 @@ public class OnlineUnitResource {
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
-            throw new ConflictException("Specified lecture is not part of a course", "onlineUnit", "courseMissing");
+            throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
@@ -211,10 +213,10 @@ public class OnlineUnitResource {
      */
     private void checkOnlineUnitCourseAndLecture(OnlineUnit onlineUnit, Long lectureId) {
         if (onlineUnit.getLecture() == null || onlineUnit.getLecture().getCourse() == null) {
-            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "onlineUnit", "lectureOrCourseMissing");
+            throw new BadRequestAlertException("Lecture unit must be associated to a lecture of a course", ENTITY_NAME, "lectureOrCourseMissing");
         }
         if (!onlineUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "onlineUnit", "lectureIdMismatch");
+            throw new BadRequestAlertException("Requested lecture unit is not part of the specified lecture", ENTITY_NAME, "lectureIdMismatch");
         }
     }
 }
