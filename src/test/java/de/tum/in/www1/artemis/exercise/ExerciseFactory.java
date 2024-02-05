@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.exercise;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
@@ -68,7 +66,7 @@ public class ExerciseFactory {
         exercise.setCourse(null);
         if (!(exercise instanceof QuizExercise)) {
             exercise.setGradingInstructions("Grading instructions");
-            exercise.setGradingCriteria(List.of(new GradingCriterion()));
+            exercise.setGradingCriteria(Set.of(new GradingCriterion()));
         }
         return exercise;
     }

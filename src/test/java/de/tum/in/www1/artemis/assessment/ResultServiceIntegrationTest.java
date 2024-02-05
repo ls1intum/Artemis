@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.GradingCriterionUtil;
 import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseFactory;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseFactory;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
@@ -317,8 +318,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::result).toList();
         assertThat(resultWithPoints2).containsExactlyInAnyOrderElementsOf(results);
 
-        final GradingCriterion criterion1 = getGradingCriterionByTitle(fileUploadExercise, "test title");
-        final GradingCriterion criterion2 = getGradingCriterionByTitle(fileUploadExercise, "test title2");
+        final GradingCriterion criterion1 = GradingCriterionUtil.findGradingCriterionByTitle(fileUploadExercise, "test title");
+        final GradingCriterion criterion2 = GradingCriterionUtil.findGradingCriterionByTitle(fileUploadExercise, "test title2");
 
         for (final var resultWithPoints : resultsWithPoints) {
             final Map<Long, Double> points = resultWithPoints.pointsPerCriterion();
@@ -367,16 +368,18 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     private void addFeedbacksWithGradingCriteriaToExercise(FileUploadExercise fileUploadExercise) {
-        List<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
+        Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
         fileUploadExerciseRepository.save(fileUploadExercise);
 
-        final GradingCriterion criterion1 = getGradingCriterionByTitle(fileUploadExercise, "test title");
-        final GradingCriterion criterion2 = getGradingCriterionByTitle(fileUploadExercise, "test title2");
+        final GradingCriterion criterion1 = GradingCriterionUtil.findGradingCriterionByTitle(fileUploadExercise, "test title");
+        final GradingCriterion criterion2 = GradingCriterionUtil.findGradingCriterionByTitle(fileUploadExercise, "test title2");
 
-        final GradingInstruction instruction1a = criterion1.getStructuredGradingInstructions().get(0);
-        final GradingInstruction instruction1b = criterion1.getStructuredGradingInstructions().get(1);
-        final GradingInstruction instruction2 = criterion2.getStructuredGradingInstructions().get(0);
+        final List<GradingInstruction> gradingInstructions1 = List.copyOf(criterion1.getStructuredGradingInstructions());
+        final GradingInstruction instruction1a = gradingInstructions1.get(0);
+        final GradingInstruction instruction1b = gradingInstructions1.get(1);
+        final List<GradingInstruction> gradingInstructions2 = List.copyOf(criterion2.getStructuredGradingInstructions());
+        final GradingInstruction instruction2 = gradingInstructions2.get(0);
 
         for (final var participation : fileUploadExercise.getStudentParticipations()) {
             for (final var result : participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream()).toList()) {
@@ -413,10 +416,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 }
             }
         }
-    }
-
-    private GradingCriterion getGradingCriterionByTitle(Exercise exercise, String title) {
-        return exercise.getGradingCriteria().stream().filter(criteria -> title.equals(criteria.getTitle())).findFirst().orElseThrow();
     }
 
     @Test
