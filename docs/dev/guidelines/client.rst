@@ -67,7 +67,7 @@ Some general aspects:
 
 6. Use strict typing to avoid type errors: Do not use ``any``.
 
-7. Don't use anonymous data structures
+7. Do not use anonymous data structures.
 
 .. code-block:: ts
 
