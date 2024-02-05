@@ -133,7 +133,7 @@ public class LocalCIDockerService {
                         dockerClient.removeImageCmd(dockerImage).exec();
                     }
                     catch (NotFoundException e) {
-                        log.warn("Docker image {} not found", dockerImage);
+                        log.warn("Docker image {} not found during cleanup", dockerImage);
                     }
                 }
             }
