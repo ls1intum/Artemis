@@ -55,6 +55,9 @@ public class SharedQueueManagementService {
         this.hazelcastInstance = hazelcastInstance;
     }
 
+    /**
+     * Initialize all hazelcast data structures used by the shared queue management service.
+     */
     @PostConstruct
     public void init() {
         this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
@@ -65,6 +68,9 @@ public class SharedQueueManagementService {
         this.dockerImageCleanupInfo = this.hazelcastInstance.getMap("dockerImageCleanupInfo");
     }
 
+    /**
+     * Pushes the last build dates for all docker images to the hazelcast map dockerImageCleanupInfo.
+     */
     @PostConstruct
     public void pushDockerImageCleanupInfo() {
         Set<DockerImageBuild> lastBuildDatesForDockerImages = buildJobRepository.findAllLastBuildDatesForDockerImages();
