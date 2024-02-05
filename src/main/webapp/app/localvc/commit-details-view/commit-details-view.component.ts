@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
-import { CachedRepositoryFilesService } from 'app/exercises/programming/manage/services/cached-repository-files.service';
 import { Subscription } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ActivatedRoute } from '@angular/router';
@@ -20,12 +19,13 @@ export class CommitDetailsViewComponent {
     exercise: ProgrammingExercise;
     report: ProgrammingExerciseGitDiffReport;
     diffForTemplateAndSolution = false;
-    cachedRepositoryFiles: Map<string, Map<string, string>> = new Map<string, Map<string, string>>();
+    exerciseId: number;
+    participationId: number;
+    commitHash: string;
 
     errorWhileFetchingRepos = false;
     leftCommitFileContentByPath: Map<string, string>;
     rightCommitFileContentByPath: Map<string, string>;
-    isLoading = false;
     commitsInfoSubscription: Subscription;
     commits: CommitInfo[] = [];
     currentSubmission: ProgrammingSubmission;
@@ -44,67 +44,9 @@ export class CommitDetailsViewComponent {
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private cachedRepositoryFilesService: CachedRepositoryFilesService,
         private route: ActivatedRoute,
         private exerciseService: ExerciseService,
     ) {}
-
-    ngOnInit(): void {
-        this.paramSub = this.route.params.subscribe((params) => {
-            const exerciseId = Number(params['exerciseId']);
-            const participationId = Number(params['participationId']);
-            const commitHash = params['commitHash'];
-            this.exerciseService.getExerciseDetails(exerciseId).subscribe((res) => {
-                this.exercise = res.body!;
-                const submissions = this.exercise.studentParticipations
-                    ?.find((participation) => participation.id === participationId)
-                    ?.submissions?.map((submission) => submission as ProgrammingSubmission);
-                if (submissions && submissions.length > 0) {
-                    for (let i = 0; i < submissions.length; i++) {
-                        if (submissions[i].commitHash === commitHash) {
-                            this.currentSubmission = submissions[i];
-                            if (i > 0) {
-                                this.previousSubmission = submissions[i - 1];
-                            }
-                        }
-                    }
-                }
-                this.user = this.exercise.studentParticipations?.find((participation) => participation.id === participationId)?.student!;
-                this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(participationId).subscribe((commits) => {
-                    this.commits = this.sortCommitsByTimestampDesc(commits);
-                    this.currentCommit = this.commits.find((commit) => commit.hash === this.currentSubmission.commitHash)!;
-                    if (this.previousSubmission !== undefined) {
-                        this.previousCommit = this.commits.find((commit) => commit.hash === this.previousSubmission.commitHash)!;
-                    }
-                });
-                if (this.previousSubmission === undefined) {
-                    this.programmingExerciseService.getDiffReportForSubmissionWithTemplate(exerciseId, this.currentSubmission.id!).subscribe((report) => {
-                        this.report = report!;
-                        this.report.programmingExercise = this.exercise;
-                        this.report.leftCommitHash = this.commits[this.commits.length - 1].hash;
-                        this.report.participationIdForLeftCommit = participationId;
-                        this.report.rightCommitHash = this.currentSubmission.commitHash;
-                        this.report.participationIdForRightCommit = participationId;
-                        this.loadRepositoryFilesForParticipationsFromCacheIfAvailable();
-                    });
-                } else {
-                    this.programmingExerciseService.getDiffReportForSubmissions(exerciseId, this.previousSubmission.id!, this.currentSubmission.id!).subscribe((report) => {
-                        this.report = report!;
-                        this.report.programmingExercise = this.exercise;
-                        this.report.rightCommitHash = this.currentSubmission.commitHash;
-                        this.report.participationIdForRightCommit = participationId;
-                        this.report.leftCommitHash = this.previousSubmission.commitHash;
-                        this.report.participationIdForLeftCommit = participationId;
-                        this.loadRepositoryFilesForParticipationsFromCacheIfAvailable();
-                    });
-                }
-            });
-        });
-    }
-
-    sortCommitsByTimestampDesc(commitInfos: CommitInfo[]) {
-        return commitInfos.sort((a, b) => (dayjs(b.timestamp!).isAfter(dayjs(a.timestamp!)) ? 1 : -1));
-    }
 
     ngOnDestroy(): void {
         this.templateRepoFilesSubscription?.unsubscribe();
@@ -115,68 +57,85 @@ export class CommitDetailsViewComponent {
         this.commitsInfoSubscription?.unsubscribe();
     }
 
-    private loadRepositoryFilesForParticipationsFromCacheIfAvailable() {
-        if (this.report.participationIdForLeftCommit) {
-            const key = this.report.leftCommitHash!;
-            if (this.cachedRepositoryFiles.has(key)) {
-                this.leftCommitFileContentByPath = this.cachedRepositoryFiles.get(key)!;
-                this.loadParticipationRepoFilesAtRightCommitFromCacheIfAvailable();
-            } else {
-                this.fetchParticipationRepoFilesAtLeftCommit();
+    ngOnInit(): void {
+        this.paramSub = this.route.params.subscribe((params) => {
+            this.exerciseId = Number(params['exerciseId']);
+            this.participationId = Number(params['participationId']);
+            this.commitHash = params['commitHash'];
+            this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((res) => {
+                this.exercise = res.body!;
+                this.handleSubmissions();
+                this.user = this.exercise.studentParticipations?.find((participation) => participation.id === this.participationId)?.student!;
+                this.retrieveAndHandleCommits();
+                if (this.previousSubmission && this.currentSubmission) {
+                    this.programmingExerciseService.getDiffReportForSubmissions(this.exerciseId, this.previousSubmission.id!, this.currentSubmission.id!).subscribe((report) => {
+                        this.handleNewReport(report!);
+                    });
+                } else if (this.currentSubmission) {
+                    this.programmingExerciseService.getDiffReportForSubmissionWithTemplate(this.exerciseId, this.currentSubmission.id!).subscribe((report) => {
+                        this.handleNewReport(report!);
+                    });
+                }
+            });
+        });
+    }
+
+    handleSubmissions() {
+        const submissions = this.exercise.studentParticipations
+            ?.find((participation) => participation.id === this.participationId)
+            ?.submissions?.map((submission) => submission as ProgrammingSubmission);
+        if (submissions && submissions.length > 0) {
+            for (let i = 0; i < submissions.length; i++) {
+                if (submissions[i].commitHash === this.commitHash) {
+                    this.currentSubmission = submissions[i];
+                    if (i > 0) {
+                        this.previousSubmission = submissions[i - 1];
+                    }
+                }
             }
-        } else {
-            // if there is no left commit, we want to see the diff between the current submission and the template
-            this.loadTemplateRepoFilesFromCacheIfAvailable();
-            this.loadParticipationRepoFilesAtRightCommitFromCacheIfAvailable();
         }
     }
 
-    private fetchParticipationRepoFilesAtLeftCommit() {
+    retrieveAndHandleCommits() {
+        this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(this.participationId).subscribe((commits) => {
+            this.commits = commits.sort((a, b) => (dayjs(b.timestamp!).isAfter(dayjs(a.timestamp!)) ? 1 : -1));
+            if (this.currentSubmission !== undefined) {
+                this.currentCommit = this.commits.find((commit) => commit.hash === this.currentSubmission.commitHash)!;
+            } else {
+                // choose template commit
+                this.currentCommit = this.commits[commits.length - 1];
+            }
+            if (this.previousSubmission !== undefined) {
+                // choose template commit
+                this.previousCommit = this.commits.find((commit) => commit.hash === this.previousSubmission.commitHash)!;
+            } else {
+                this.previousCommit = this.commits[commits.length - 1];
+            }
+        });
+    }
+
+    handleNewReport(report: ProgrammingExerciseGitDiffReport) {
+        this.report = report;
+        this.report.programmingExercise = this.exercise;
+        this.report.leftCommitHash = this.previousCommit.hash;
+        this.report.rightCommitHash = this.currentCommit.hash;
+        this.report.participationIdForLeftCommit = this.participationId;
+        this.report.participationIdForRightCommit = this.participationId;
+        this.fetchParticipationRepoFiles();
+    }
+
+    private fetchParticipationRepoFiles() {
         this.participationRepoFilesAtLeftCommitSubscription = this.programmingExerciseParticipationService
             .getParticipationRepositoryFilesWithContentAtCommit(this.report.participationIdForLeftCommit!, this.report.leftCommitHash!)
             .subscribe({
                 next: (filesWithContent: Map<string, string>) => {
                     this.leftCommitFileContentByPath = filesWithContent;
-                    this.cachedRepositoryFiles.set(this.report.leftCommitHash!, filesWithContent);
-                    this.cachedRepositoryFilesService.emitCachedRepositoryFiles(this.cachedRepositoryFiles);
-                    this.loadParticipationRepoFilesAtRightCommitFromCacheIfAvailable();
+                    this.fetchParticipationRepoFilesAtRightCommit();
                 },
                 error: () => {
                     this.errorWhileFetchingRepos = true;
                 },
             });
-    }
-
-    private loadTemplateRepoFilesFromCacheIfAvailable() {
-        const key = this.calculateTemplateMapKey();
-        if (this.cachedRepositoryFiles.has(key)) {
-            this.leftCommitFileContentByPath = this.cachedRepositoryFiles.get(key)!;
-        } else {
-            this.fetchTemplateRepoFiles();
-        }
-    }
-
-    private loadParticipationRepoFilesAtRightCommitFromCacheIfAvailable() {
-        const key = this.report.rightCommitHash!;
-        if (this.cachedRepositoryFiles.has(key)) {
-            this.rightCommitFileContentByPath = this.cachedRepositoryFiles.get(key)!;
-        } else {
-            this.fetchParticipationRepoFilesAtRightCommit();
-        }
-    }
-
-    private fetchTemplateRepoFiles() {
-        const key = this.calculateTemplateMapKey();
-        this.templateRepoFilesSubscription = this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(this.report.programmingExercise.id!).subscribe({
-            next: (response: Map<string, string>) => {
-                this.leftCommitFileContentByPath = response;
-                this.cachedRepositoryFiles.set(key, response);
-                this.cachedRepositoryFilesService.emitCachedRepositoryFiles(this.cachedRepositoryFiles);
-            },
-            error: () => {
-                this.errorWhileFetchingRepos = true;
-            },
-        });
     }
 
     private fetchParticipationRepoFilesAtRightCommit() {
@@ -185,16 +144,10 @@ export class CommitDetailsViewComponent {
             .subscribe({
                 next: (filesWithContent: Map<string, string>) => {
                     this.rightCommitFileContentByPath = filesWithContent;
-                    this.cachedRepositoryFiles.set(this.report.rightCommitHash!, filesWithContent);
-                    this.cachedRepositoryFilesService.emitCachedRepositoryFiles(this.cachedRepositoryFiles);
                 },
                 error: () => {
                     this.errorWhileFetchingRepos = true;
                 },
             });
-    }
-
-    private calculateTemplateMapKey() {
-        return this.report.programmingExercise.id! + '-template';
     }
 }

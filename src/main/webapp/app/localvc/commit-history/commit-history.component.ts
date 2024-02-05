@@ -29,6 +29,7 @@ export class CommitHistoryComponent {
     studentParticipations: StudentParticipation[] = [];
     users: Map<string, User> = new Map<string, User>();
     participationId: number;
+    paramSub: Subscription;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -38,7 +39,7 @@ export class CommitHistoryComponent {
     ) {}
 
     ngOnInit() {
-        this.route.params.subscribe((params) => {
+        this.paramSub = this.route.params.subscribe((params) => {
             this.exerciseId = Number(params['exerciseId']);
             this.participationId = Number(params['participationId']);
             this.loadExercise();
@@ -46,17 +47,14 @@ export class CommitHistoryComponent {
     }
 
     ngOnDestroy() {
-        if (this.participationUpdateListener) {
-            this.participationUpdateListener.unsubscribe();
-            if (this.studentParticipations) {
-                this.studentParticipations.forEach((participation) => {
-                    this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participation.id!, this.exercise!);
-                });
-            }
+        this.participationUpdateListener?.unsubscribe();
+        if (this.studentParticipations) {
+            this.studentParticipations.forEach((participation) => {
+                this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participation.id!, this.exercise!);
+            });
         }
-        if (this.submissionSubscription) {
-            this.submissionSubscription.unsubscribe();
-        }
+        this.submissionSubscription?.unsubscribe();
+        this.paramSub?.unsubscribe();
     }
 
     loadExercise() {

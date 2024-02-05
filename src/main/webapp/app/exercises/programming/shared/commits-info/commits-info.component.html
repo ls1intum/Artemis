@@ -21,7 +21,7 @@
                     <th scope="row">{{ i + 1 }}</th>
                     <td>
                         @if (localVC) {
-                            @if (isRepositoryView && i !== commits?.length! - 1) {
+                            @if (isRepositoryView) {
                                 <a [href]="getCommitUrlForRepositoryView(commit)"> {{ commit.hash }} </a>
                             } @else {
                                 <span>
