@@ -637,7 +637,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * Saves the given programming exercise to the database.
-     <p>
+     * <p>
      * When saving a programming exercise Hibernates returns an exercise with references to proxy objects.
      * Thus, we need to load the objects referenced by the programming exercise again.
      *
