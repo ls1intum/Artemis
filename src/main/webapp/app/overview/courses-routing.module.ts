@@ -28,7 +28,6 @@ const routes: Routes = [
         path: 'courses/:courseId/register',
         loadChildren: () => import('./course-registration/course-registration-detail/course-registration-detail.module').then((m) => m.CourseRegistrationDetailModule),
     },
-    // General course subpages for course-registered users
     {
         path: 'courses/:courseId',
         component: CourseOverviewComponent,
@@ -44,9 +43,22 @@ const routes: Routes = [
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.exercises',
+                    hasSidebar: true,
                 },
                 canActivate: [UserRouteAccessService],
             },
+            {
+                path: 'exercises/:exerciseId',
+                component: CourseExercisesComponent,
+                data: {
+                    authorities: [Authority.USER],
+                    pageTitle: 'overview.exercises',
+                    hasSidebar: true,
+                },
+                canActivate: [UserRouteAccessService],
+                loadChildren: () => import('../overview/exercise-details/course-exercise-details.module').then((m) => m.CourseExerciseDetailsModule),
+            },
+
             {
                 path: 'lectures',
                 component: CourseLecturesComponent,

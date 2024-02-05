@@ -77,6 +77,7 @@ a:not(.btn):not(.tab-link):hover {
 }
 
 .nav-link {
+    white-space: nowrap;
     color: var(--bs-body-color);
 }
 
@@ -175,4 +176,9 @@ jhi-secured-image {
     background-color: var(--course-image-bg);
     border-radius: 50%;
     display: inline-block;
+}
+
+.max-width-collapsed {
+    max-width: 44px !important;
+    min-width: 44px !important;
 }

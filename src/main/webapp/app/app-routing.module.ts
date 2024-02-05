@@ -37,11 +37,6 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./overview/course-lectures/course-lecture-details.module').then((m) => m.ArtemisCourseLectureDetailsModule),
                 },
                 {
-                    // TODO: check that the LTI integration still works correctly (if not, we should implement it differently)
-                    path: 'courses/:courseId/exercises/:exerciseId',
-                    loadChildren: () => import('./overview/exercise-details/course-exercise-details.module').then((m) => m.CourseExerciseDetailsModule),
-                },
-                {
                     path: 'courses/:courseId/competencies/:competencyId',
                     loadChildren: () => import('./overview/course-competencies/course-competencies-details.module').then((m) => m.ArtemisCourseCompetenciesDetailsModule),
                 },

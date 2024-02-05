@@ -13,14 +13,14 @@
         @case (ResultTemplateStatus.HAS_RESULT) {
             @if (result) {
                 @if (showIcon) {
-                    <fa-icon class="result-score-icon" [ngClass]="textColorClass" [icon]="resultIconClass" size="lg" />
+                    <fa-icon class="result-score-icon" [class]="textColorClass" [icon]="resultIconClass" size="lg" />
                 }
                 <span
-                    [ngClass]="textColorClass"
+                    [class]="textColorClass"
                     class="guided-tour result"
-                    [class.clickable-result]="exercise?.type !== ExerciseType.QUIZ"
+                    [ngClass]="{ 'clickable-result': !isInSidebarCard && exercise?.type !== ExerciseType.QUIZ }"
                     id="result-score"
-                    (click)="showDetails(result!)"
+                    (click)="!isInSidebarCard ? showDetails(result!) : ''"
                 >
                     <span [ngbTooltip]="resultTooltip | artemisTranslate">
                         {{ resultString }}
@@ -30,7 +30,9 @@
                             <fa-icon id="code-issue-warnings-icon" class="result-orange" [icon]="faExclamationTriangle" />
                         </span>
                     }
-                    <span [ngbTooltip]="result!.completionDate | artemisDate"> ({{ result!.completionDate | artemisTimeAgo }}) </span>
+                    @if (!isInSidebarCard) {
+                        <span [ngbTooltip]="result!.completionDate | artemisDate"> ({{ result!.completionDate | artemisTimeAgo }}) </span>
+                    }
                 </span>
                 @if (hasBuildArtifact() && participation.type === ParticipationType.PROGRAMMING) {
                     <span>
@@ -48,7 +50,7 @@
             }
         }
         @case (ResultTemplateStatus.LATE) {
-            <span [ngClass]="textColorClass">
+            <span [class]="textColorClass">
                 <fa-icon [icon]="resultIconClass" size="lg" />
                 <span class="score"> {{ resultString }}, </span>
                 <span class="text-body-secondary">{{ 'artemisApp.courseOverview.exerciseList.exerciseLateFeedback' | artemisTranslate }}</span>
@@ -79,7 +81,7 @@
                     }
                 }
                 @if (result && exercise?.type !== ExerciseType.QUIZ) {
-                    <span class="result clickable-result" (click)="showDetails(result)">
+                    <span [ngClass]="{ 'clickable-result': !isInSidebarCard }" class="result" (click)="showDetails(result)">
                         {{ 'artemisApp.result.missing.viewPrevious' | artemisTranslate }}
                     </span>
                 }
@@ -87,7 +89,6 @@
         }
         @default {
             <span class="text-body-secondary">
-                <fa-icon [icon]="farCircle" size="lg" />&nbsp;
                 <span> {{ (showUngradedResults ? 'artemisApp.result.noResult' : 'artemisApp.result.noGradedResult') | artemisTranslate }}</span>
             </span>
         }
