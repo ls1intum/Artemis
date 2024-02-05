@@ -42,6 +42,18 @@ const routes: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    {
+        path: ':repositoryType',
+        component: RepositoryViewComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            pageTitle: 'artemisApp.repository.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [UserRouteAccessService],
+    },
 ];
 
 @NgModule({

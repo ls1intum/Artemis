@@ -75,6 +75,11 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     path: 'course-management/:courseId/text-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
                     loadChildren: () => import('./exercises/text/manage/example-text-submission/example-text-submission.module').then((m) => m.ArtemisExampleTextSubmissionModule),
                 },
+                {
+                    path: 'course-management/:courseId/programming-exercises/:exerciseId/repository/:repositoryType',
+                    loadChildren: () =>
+                        import('./exercises/programming/manage/programming-exercise-management-routing.module').then((m) => m.ArtemisProgrammingExerciseManagementRoutingModule),
+                },
                 // ===== COURSES =====
                 {
                     path: 'courses/:courseId/programming-exercises/:exerciseId/code-editor',
@@ -82,10 +87,6 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 },
                 {
                     path: 'courses/:courseId/programming-exercises/:exerciseId/repository',
-                    loadChildren: () => import('./exercises/programming/participate/programming-repository.module').then((m) => m.ArtemisProgrammingRepositoryModule),
-                },
-                {
-                    path: 'courses/:courseId/programming-exercises/:exerciseId/repository/:participation/commit-history',
                     loadChildren: () => import('./exercises/programming/participate/programming-repository.module').then((m) => m.ArtemisProgrammingRepositoryModule),
                 },
                 {

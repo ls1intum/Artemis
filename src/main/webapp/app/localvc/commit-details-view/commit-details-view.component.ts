@@ -83,7 +83,8 @@ export class CommitDetailsViewComponent {
     handleSubmissions() {
         const submissions = this.exercise.studentParticipations
             ?.find((participation) => participation.id === this.participationId)
-            ?.submissions?.map((submission) => submission as ProgrammingSubmission);
+            ?.submissions?.map((submission) => submission as ProgrammingSubmission)
+            .sort((a, b) => (dayjs(b.submissionDate!).isAfter(dayjs(a.submissionDate!)) ? -1 : 1));
         if (submissions && submissions.length > 0) {
             for (let i = 0; i < submissions.length; i++) {
                 if (submissions[i].commitHash === this.commitHash) {

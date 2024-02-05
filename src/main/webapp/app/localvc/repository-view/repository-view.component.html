@@ -3,22 +3,33 @@
         <div style="display: flex; justify-content: space-between; align-items: center">
             <h1>Source</h1>
             <div style="text-align: right">
-                <button
-                    jhi-exercise-action-button
-                    [id]="'commit-history' + participation.id!"
-                    [buttonIcon]="faClockRotateLeft"
-                    class="commit-history"
-                    [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                    [buttonLabel]="'artemisApp.repository.commitHistory.openCommitHistory' | artemisTranslate"
-                    [buttonLoading]="!!exercise.loading"
-                    [smallButton]="false"
-                    [hideLabelMobile]="false"
-                    [routerLink]="routeCommitHistory"
-                ></button>
-                @if (exercise?.allowOfflineIde) {
-                    <jhi-clone-repo-button [loading]="!!exercise.loading" [smallButtons]="false" [participations]="[participation]" [exercise]="exercise"> </jhi-clone-repo-button>
+                @if (result) {
+                    <jhi-result [result]="result" [showUngradedResults]="true" [showBadge]="true" [exercise]="exercise" style="padding-right: 20px"> </jhi-result>
                 }
-                <jhi-result [result]="result" [showUngradedResults]="true" [showBadge]="true" [exercise]="exercise" style="padding-left: 20px"> </jhi-result>
+                @if (routeCommitHistory) {
+                    <button
+                        jhi-exercise-action-button
+                        [id]="'commit-history' + participation.id!"
+                        [buttonIcon]="faClockRotateLeft"
+                        class="commit-history"
+                        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                        [buttonLabel]="'artemisApp.repository.commitHistory.openCommitHistory' | artemisTranslate"
+                        [buttonLoading]="!!exercise.loading"
+                        [smallButton]="false"
+                        [hideLabelMobile]="false"
+                        [routerLink]="routeCommitHistory"
+                    ></button>
+                }
+                @if (exercise?.allowOfflineIde) {
+                    <jhi-clone-repo-button
+                        [loading]="!!exercise.loading"
+                        [smallButtons]="false"
+                        [participations]="[participation]"
+                        [exercise]="exercise"
+                        style="padding-left: 15px"
+                    >
+                    </jhi-clone-repo-button>
+                }
             </div>
         </div>
         <jhi-code-editor-container
@@ -31,7 +42,6 @@
         >
             <jhi-programming-exercise-instructions
                 editorSidebar
-                (onNoInstructionsAvailable)="showEditorInstructions = false"
                 [exercise]="exercise"
                 [participation]="participation"
                 [personalParticipation]="true"

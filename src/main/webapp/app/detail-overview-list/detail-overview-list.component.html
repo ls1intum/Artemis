@@ -68,6 +68,16 @@
                                         <span jhiTranslate="artemisApp.programmingExercise.openRepository">Open Repository</span>
                                     </a>
                                 }
+                                <button
+                                    jhi-exercise-action-button
+                                    [id]="'open-repository-' + detail.data.exerciseId + '-' + detail.data.type"
+                                    [buttonIcon]="faCodeBranch"
+                                    class="open-repository ms-2"
+                                    [buttonLabel]="'artemisApp.exerciseActions.openRepository' | artemisTranslate"
+                                    [smallButton]="true"
+                                    [hideLabelMobile]="false"
+                                    [routerLink]="['repository', detail.data.type]"
+                                ></button>
                             </div>
                         } @else {
                             <ng-container *ngTemplateOutlet="noData" />

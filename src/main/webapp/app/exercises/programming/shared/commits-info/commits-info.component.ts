@@ -7,7 +7,6 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { Subscription } from 'rxjs';
 import { Result } from 'app/entities/result.model';
-import { RepositoryViewComponent } from 'app/localvc/repository-view/repository-view.component';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 
@@ -81,6 +80,4 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     private findSubmissionForCommit(commitInfo: CommitInfo, submissions: ProgrammingSubmission[] | undefined) {
         return submissions?.find((submission) => submission.commitHash === commitInfo.hash);
     }
-
-    protected readonly RepositoryViewComponent = RepositoryViewComponent;
 }
