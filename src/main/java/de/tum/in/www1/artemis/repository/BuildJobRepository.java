@@ -7,14 +7,12 @@ import java.util.Set;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild;
 
-// Todo: Remove builagent profile as soon as database access for buildagent is unnecessary
-@Profile("core || buildagent")
+@Profile("core")
 @Repository
 public interface BuildJobRepository extends JpaRepository<BuildJob, Long> {
 
@@ -31,12 +29,11 @@ public interface BuildJobRepository extends JpaRepository<BuildJob, Long> {
     @Query("""
             SELECT new de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild(
                 b.dockerImage,
-                max(b.buildStartDate)
+                MAX(b.buildStartDate)
             )
             FROM BuildJob b
-            WHERE b.dockerImage IN :#{#dockerImageNames}
             GROUP BY b.dockerImage
             """)
-    Set<DockerImageBuild> findLastBuildDatesForDockerImages(@Param("dockerImageNames") List<String> dockerImageNames);
+    Set<DockerImageBuild> findAllLastBuildDatesForDockerImages();
 
 }

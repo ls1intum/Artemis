@@ -22,10 +22,10 @@ import com.github.dockerjava.api.exception.BadRequestException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.repository.BuildJobRepository;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild;
 
 /**
  * Service for Docker related operations in local CI
@@ -41,7 +41,7 @@ public class LocalCIDockerService {
 
     private final DockerClient dockerClient;
 
-    private final BuildJobRepository buildJobRepository;
+    private final HazelcastInstance hazelcastInstance;
 
     @Value("${artemis.continuous-integration.image-cleanup.enabled:false}")
     private Boolean imageCleanupEnabled;
@@ -54,7 +54,7 @@ public class LocalCIDockerService {
 
     public LocalCIDockerService(DockerClient dockerClient, BuildJobRepository buildJobRepository) {
         this.dockerClient = dockerClient;
-        this.buildJobRepository = buildJobRepository;
+        this.hazelcastInstance = hazelcastInstance;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -110,8 +110,6 @@ public class LocalCIDockerService {
         }
     }
 
-    // Todo: Avoid using the database to find the image information. ALternative: store information in hazelcast map and retrieve from there
-
     /**
      * Deletes all docker images that have not been used for more than {@link #imageExpiryDays} days on a schedule
      * If not otherwise specified, the schedule is set to 3:00 AM every day
@@ -123,6 +121,9 @@ public class LocalCIDockerService {
             log.info("Docker image cleanup is disabled");
             return;
         }
+
+        // Get map of docker images and their last build dates
+        IMap<String, ZonedDateTime> dockerImageCleanupInfo = hazelcastInstance.getMap("dockerImageCleanupInfo");
 
         // Get list of all running containers
         List<Container> containers = dockerClient.listContainersCmd().exec();
@@ -136,25 +137,25 @@ public class LocalCIDockerService {
         // Filter out images that are in use
         List<Image> unusedImages = allImages.stream().filter(image -> !imageIdsInUse.contains(image.getId())).toList();
 
-        List<String> imageName = new ArrayList<>();
+        Set<String> imageNames = new HashSet<>();
         for (Image image : unusedImages) {
             String[] imageRepoTags = image.getRepoTags();
             if (imageRepoTags != null) {
-                imageName.addAll(Arrays.asList(imageRepoTags));
+                Collections.addAll(imageNames, imageRepoTags);
             }
         }
 
-        Set<DockerImageBuild> lastBuildDatesForDockerImages = buildJobRepository.findLastBuildDatesForDockerImages(imageName);
-
         // Delete images that have not been used for more than imageExpiryDays days
-        for (DockerImageBuild dockerImageBuild : lastBuildDatesForDockerImages) {
-            if (dockerImageBuild.lastBuildCompletionDate().isBefore(ZonedDateTime.now().minus(imageExpiryDays, ChronoUnit.DAYS))) {
-                log.info("Deleting docker image {}", dockerImageBuild.dockerImage());
-                try {
-                    dockerClient.removeImageCmd(dockerImageBuild.dockerImage()).exec();
-                }
-                catch (NotFoundException e) {
-                    log.warn("Docker image {} not found", dockerImageBuild.dockerImage());
+        for (String dockerImage : dockerImageCleanupInfo.keySet()) {
+            if (imageNames.contains(dockerImage)) {
+                if (dockerImageCleanupInfo.get(dockerImage).isBefore(ZonedDateTime.now().minus(imageExpiryDays, ChronoUnit.DAYS))) {
+                    log.info("Deleting docker image {}", dockerImage);
+                    try {
+                        dockerClient.removeImageCmd(dockerImage).exec();
+                    }
+                    catch (NotFoundException e) {
+                        log.warn("Docker image {} not found", dockerImage);
+                    }
                 }
             }
         }
