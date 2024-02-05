@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -27,14 +27,16 @@ class SharedQueueManagementServiceTest extends AbstractSpringIntegrationLocalCIL
     @Autowired
     private HazelcastInstance hazelcastInstance;
 
-    @AfterEach
+    @BeforeEach
     void tearDown() {
         buildJobRepository.deleteAll();
     }
 
     @Test
     void testPushDockerImageCleanupInfo() {
-        buildJobRepository.deleteAll();
+
+        IMap<String, ZonedDateTime> dockerImageCleanupInfo = hazelcastInstance.getMap("dockerImageCleanupInfo");
+        dockerImageCleanupInfo.clear();
 
         ZonedDateTime now = ZonedDateTime.now();
 
@@ -54,8 +56,6 @@ class SharedQueueManagementServiceTest extends AbstractSpringIntegrationLocalCIL
         buildJobRepository.save(b3);
 
         sharedQueueManagementService.pushDockerImageCleanupInfo();
-
-        IMap<String, ZonedDateTime> dockerImageCleanupInfo = hazelcastInstance.getMap("dockerImageCleanupInfo");
 
         // Verify that the dockerImageCleanupInfo map contains three entries
         assertThat(dockerImageCleanupInfo.size()).isEqualTo(3);
