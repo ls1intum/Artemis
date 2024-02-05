@@ -42,7 +42,7 @@ public interface NotificationSettingRepository extends JpaRepository<Notificatio
             SELECT setting
             FROM NotificationSetting setting
             WHERE setting.settingId = :settingId
-                AND setting.email = TRUE
+                AND setting.email IS TRUE
             """)
     Set<NotificationSetting> findAllNotificationSettingsForUsersWhoEnabledSpecifiedEmailSettingWithEagerGroupsAndAuthorities(@Param("settingId") String settingId);
 
