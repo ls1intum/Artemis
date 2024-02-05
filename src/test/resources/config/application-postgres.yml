@@ -4,7 +4,8 @@ spring:
     jpa:
         database-platform: org.hibernate.dialect.PostgreSQL10Dialect
         database: POSTGRESQL
-
+        hibernate:
+          ddl-auto: none
 zonky:
     test:
         database:
