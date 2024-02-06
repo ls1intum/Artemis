@@ -1717,7 +1717,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportExamWithQuizExercise_sucessfulWithQuestions() throws Exception {
+    void testImportExamWithQuizExercise_successfulWithQuestions() throws Exception {
         Exam exam = examUtilService.addExamWithExerciseGroup(course1, false);
         ExerciseGroup quizGroup = exam.getExerciseGroups().get(0);
         QuizExercise quiz = QuizExerciseFactory.generateQuizExerciseForExam(quizGroup);
