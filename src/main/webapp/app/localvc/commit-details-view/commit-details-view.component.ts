@@ -107,9 +107,9 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
                 this.currentCommit = this.commits[commits.length - 1];
             }
             if (this.previousSubmission !== undefined) {
-                // choose template commit
                 this.previousCommit = this.commits.find((commit) => commit.hash === this.previousSubmission.commitHash)!;
             } else {
+                // choose template commit
                 this.previousCommit = this.commits[commits.length - 1];
             }
         });

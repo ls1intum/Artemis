@@ -10,6 +10,7 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 
 @Component({
     selector: 'jhi-commit-history',
@@ -26,7 +27,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     users: Map<string, User> = new Map<string, User>();
     participationId: number;
     paramSub: Subscription;
-    isLoading = false;
+    resultsMap: Map<string, Result> = new Map<string, Result>();
 
     constructor(
         private exerciseService: ExerciseService,
@@ -60,7 +61,6 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     handleNewExercise(newExercise: Exercise) {
         this.exercise = newExercise;
         this.studentParticipation = this.exercise.studentParticipations!.find((participation) => participation.id === this.participationId)!;
-        this.filterUnfinishedResults();
         this.mergeResultsAndSubmissionsForParticipations();
         this.sortResults();
         this.subscribeForNewResults();
@@ -68,13 +68,12 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
         if (this.studentParticipation.team) {
             this.studentParticipation.team.students!.forEach((student) => this.users.set(student.name!, student));
         }
-    }
-
-    /**
-     * Filters out any unfinished Results
-     */
-    private filterUnfinishedResults() {
-        this.studentParticipation.results = this.studentParticipation.results?.filter((result) => result.completionDate);
+        this.studentParticipation.results?.forEach((result) => {
+            const submission = result.submission as ProgrammingSubmission;
+            if (submission) {
+                this.resultsMap.set(submission.commitHash!, result);
+            }
+        });
     }
 
     sortResults() {
@@ -82,8 +81,8 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     }
 
     private resultSortFunction = (a: Result, b: Result) => {
-        const aValue = dayjs(a.completionDate!).valueOf();
-        const bValue = dayjs(b.completionDate!).valueOf();
+        const aValue = dayjs(a.submission!.submissionDate).valueOf();
+        const bValue = dayjs(b.submission!.submissionDate).valueOf();
         return aValue - bValue;
     };
 

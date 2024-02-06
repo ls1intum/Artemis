@@ -10,6 +10,7 @@ import { Result } from 'app/entities/result.model';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { Router } from '@angular/router';
+import { faCircle } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-commits-info',
@@ -23,7 +24,7 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     @Input() participationId?: number;
     @Input() submissions?: ProgrammingSubmission[];
     @Input() exerciseProjectKey?: string;
-    @Input() results?: Result[];
+    @Input() resultsMap?: Map<string, Result>;
     @Input() isRepositoryView = false;
     private commitHashURLTemplate: string;
     private commitsInfoSubscription: Subscription;
@@ -33,6 +34,8 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     exerciseId: number;
     paramSub: Subscription;
     routerLink: string;
+
+    faCircle = faCircle;
 
     constructor(
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
@@ -54,7 +57,6 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
                 });
             }
         }
-        this.results = this.results?.sort((a, b) => (dayjs(b.completionDate).isAfter(dayjs(a.completionDate)) ? 1 : -1));
         // Get active profiles, to distinguish between Bitbucket and GitLab, and to check if localVC is enabled
         this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.commitHashURLTemplate = profileInfo.commitHashURLTemplate;
