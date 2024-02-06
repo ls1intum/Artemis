@@ -7,7 +7,6 @@ import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { Participation } from 'app/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -21,15 +20,13 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly dayjs = dayjs;
 
-    private exerciseId: number;
     private exercise?: Exercise;
     private participationUpdateListener: Subscription;
-    private submissionSubscription: Subscription;
-    sortedHistoryResults: Result[];
-    studentParticipations: StudentParticipation[] = [];
+    studentParticipation: StudentParticipation;
     users: Map<string, User> = new Map<string, User>();
     participationId: number;
     paramSub: Subscription;
+    isLoading = false;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -40,60 +37,48 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => {
-            this.exerciseId = Number(params['exerciseId']);
             this.participationId = Number(params['participationId']);
-            this.loadExercise();
+            const exerciseId = Number(params['exerciseId']);
+            this.loadExercise(exerciseId);
         });
     }
 
     ngOnDestroy() {
         this.participationUpdateListener?.unsubscribe();
-        if (this.studentParticipations) {
-            this.studentParticipations.forEach((participation) => {
-                this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participation.id!, this.exercise!);
-            });
+        if (this.studentParticipation) {
+            this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.studentParticipation.id!, this.exercise!);
         }
-        this.submissionSubscription?.unsubscribe();
         this.paramSub?.unsubscribe();
     }
 
-    loadExercise() {
-        this.studentParticipations = this.participationWebsocketService.getParticipationsForExercise(this.exerciseId);
-        this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
+    loadExercise(exerciseId: number) {
+        this.exerciseService.getExerciseDetails(exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             this.handleNewExercise(exerciseResponse.body!);
         });
     }
 
     handleNewExercise(newExercise: Exercise) {
         this.exercise = newExercise;
-        this.filterUnfinishedResults(this.exercise.studentParticipations);
+        this.studentParticipation = this.exercise.studentParticipations!.find((participation) => participation.id === this.participationId)!;
+        this.filterUnfinishedResults();
         this.mergeResultsAndSubmissionsForParticipations();
+        this.sortResults();
         this.subscribeForNewResults();
-        this.exercise.studentParticipations?.forEach((participation) => {
-            if (participation.student) {
-                this.users.set(participation.student.name!, participation.student);
-            }
-        });
+        this.users.set(this.studentParticipation.student!.name!, this.studentParticipation.student!);
+        if (this.studentParticipation.team) {
+            this.studentParticipation.team.students!.forEach((student) => this.users.set(student.name!, student));
+        }
     }
 
     /**
      * Filters out any unfinished Results
      */
-    private filterUnfinishedResults(participations?: StudentParticipation[]) {
-        participations?.forEach((participation: Participation) => {
-            if (participation.results) {
-                participation.results = participation.results.filter((result: Result) => result.completionDate);
-            }
-        });
+    private filterUnfinishedResults() {
+        this.studentParticipation.results = this.studentParticipation.results?.filter((result) => result.completionDate);
     }
 
     sortResults() {
-        if (this.studentParticipations?.length) {
-            this.studentParticipations.forEach((participation) => participation.results?.sort(this.resultSortFunction));
-            this.sortedHistoryResults = this.studentParticipations
-                .flatMap((participation) => participation.results ?? [])
-                .sort((a, b) => (dayjs(b.completionDate).isAfter(dayjs(a.completionDate)) ? 1 : -1));
-        }
+        this.studentParticipation.results = this.studentParticipation.results?.sort(this.resultSortFunction);
     }
 
     private resultSortFunction = (a: Result, b: Result) => {
@@ -103,35 +88,22 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     };
 
     mergeResultsAndSubmissionsForParticipations() {
-        // if there are new student participation(s) from the server, we need to update this.studentParticipation
-        if (this.exercise?.studentParticipations?.length) {
-            this.studentParticipations = this.participationService.mergeStudentParticipations(this.exercise.studentParticipations);
-            this.exercise.studentParticipations = this.studentParticipations;
-            this.sortResults();
-            // Add exercise to studentParticipation, as the result component is dependent on its existence.
-            this.studentParticipations.forEach((participation) => (participation.exercise = this.exercise));
-        } else if (this.studentParticipations?.length && this.exercise) {
-            // otherwise we make sure that the student participation in exercise is correct
-            this.exercise.studentParticipations = this.studentParticipations;
-        }
+        this.studentParticipation = this.participationService
+            .mergeStudentParticipations([this.studentParticipation])
+            .find((participation) => participation.id === this.participationId)!;
+        // Add exercise to studentParticipation, as the result component is dependent on its existence.
+        this.studentParticipation.exercise = this.exercise;
     }
 
     subscribeForNewResults() {
-        if (this.exercise && this.studentParticipations?.length) {
-            this.studentParticipations.forEach((participation) => {
-                this.participationWebsocketService.addParticipation(participation, this.exercise);
-            });
+        if (this.exercise && this.studentParticipation) {
+            this.participationWebsocketService.addParticipation(this.studentParticipation, this.exercise);
         }
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
             if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
-                if (this.studentParticipations?.some((participation) => participation.id === changedParticipation.id)) {
-                    this.exercise.studentParticipations = this.studentParticipations.map((participation) =>
-                        participation.id === changedParticipation.id ? changedParticipation : participation,
-                    );
-                } else {
-                    this.exercise.studentParticipations = [...this.studentParticipations, changedParticipation];
+                if (this.studentParticipation.id === changedParticipation.id) {
+                    this.studentParticipation = changedParticipation;
                 }
-                this.mergeResultsAndSubmissionsForParticipations();
             }
         });
     }

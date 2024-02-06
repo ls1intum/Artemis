@@ -445,8 +445,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     break;
             }
         }
-        console.log('segment', segment);
-        console.log('lastRouteUrlSegment', this.lastRouteUrlSegment);
         switch (this.lastRouteUrlSegment) {
             // Displays the path segment as breadcrumb (no other title exists)
             case 'system-notification-management':
@@ -549,8 +547,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 return;
             }
         }
-        console.log('segment', segment);
-        console.log('lastRouteUrlSegment', this.lastRouteUrlSegment);
         // When we're not dealing with an ID we need to translate the current part
         // The translation might still depend on the previous parts
         switch (segment) {

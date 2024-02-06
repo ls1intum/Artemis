@@ -1,3 +1,3 @@
-@if (participationId && users && sortedHistoryResults) {
-    <jhi-commits-info [participationId]="participationId" [users]="users" [results]="sortedHistoryResults" [isRepositoryView]="true"> </jhi-commits-info>
+@if (!isLoading && studentParticipation && users && studentParticipation.results) {
+    <jhi-commits-info [participationId]="studentParticipation.id" [users]="users" [results]="studentParticipation.results" [isRepositoryView]="true"> </jhi-commits-info>
 }
