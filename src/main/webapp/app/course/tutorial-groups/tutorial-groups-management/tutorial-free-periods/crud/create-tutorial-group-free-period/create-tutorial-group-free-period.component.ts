@@ -69,10 +69,11 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
     }
 
     public static combineDateAndTimeWithAlternativeDate(date?: Date, time?: Date, alternativeDate?: Date): Date {
-        if (date == undefined) {
-            if (alternativeDate == undefined) {
+        // If date is undefined, the resulting date is the endDate of a tutorialFreeDay
+        if (!date) {
+            if (!alternativeDate) {
                 throw new Error('date and time are undefined');
-            } else if (time == undefined) {
+            } else if (!time) {
                 const resDate = new Date(alternativeDate);
                 resDate.setHours(23, 59);
                 return resDate;
@@ -81,10 +82,16 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
                 resDate.setHours(time.getHours(), time.getMinutes());
                 return resDate;
             }
-        } else if (time == undefined) {
+        } else if (alternativeDate) {
+            // if there is a date and an alternative date, the resulting date is the endDate of a tutorialFreePeriod
+            date.setHours(23, 59);
+            return date;
+        } else if (!time) {
+            // if there is a date and no time, the resulting date is the startDate of a tutorialFreeDay or a tutorialFreePeriod
             date.setHours(0, 0, 0);
             return date;
         } else {
+            // if there is a date and a time, the resulting date is the startDate or endDate of a tutorialFreePeriodWithinDay
             date.setHours(time.getHours(), time.getMinutes());
             return date;
         }
