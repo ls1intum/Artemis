@@ -133,6 +133,24 @@
                     </ngx-datatable-column>
                 }
                 @if (exercise?.type === ExerciseType.PROGRAMMING) {
+                    <ngx-datatable-column [minWidth]="120" [width]="120">
+                        <ng-template ngx-datatable-header-template>
+                            <span class="datatable-header-cell-wrapper">
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.repository.title">Repository</span>
+                            </span>
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-row="row">
+                            <jhi-open-repository-button
+                                [participations]="[row]"
+                                [smallButtons]="true"
+                                [exercise]="exercise"
+                                [courseAndExerciseNavigationUrlSegment]="['repository']"
+                            >
+                            </jhi-open-repository-button>
+                        </ng-template>
+                    </ngx-datatable-column>
+                }
+                @if (exercise?.type === ExerciseType.PROGRAMMING) {
                     <ngx-datatable-column [minWidth]="100" [width]="100">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildPlanId')">

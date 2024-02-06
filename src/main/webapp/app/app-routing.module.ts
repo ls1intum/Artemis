@@ -76,7 +76,7 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./exercises/text/manage/example-text-submission/example-text-submission.module').then((m) => m.ArtemisExampleTextSubmissionModule),
                 },
                 {
-                    path: 'course-management/:courseId/programming-exercises/:exerciseId/repository/:repositoryType',
+                    path: 'course-management/:courseId/programming-exercises/:exerciseId',
                     loadChildren: () =>
                         import('./exercises/programming/manage/programming-exercise-management-routing.module').then((m) => m.ArtemisProgrammingExerciseManagementRoutingModule),
                 },

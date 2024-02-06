@@ -15,6 +15,8 @@ import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exe
 import { CodeHintGenerationOverviewComponent } from 'app/exercises/programming/hestia/generation-overview/code-hint-generation-overview/code-hint-generation-overview.component';
 import { BuildPlanEditorComponent } from 'app/exercises/programming/manage/build-plan-editor.component';
 import { RepositoryViewComponent } from 'app/localvc/repository-view/repository-view.component';
+import { CommitHistoryComponent } from 'app/localvc/commit-history/commit-history.component';
+import { CommitDetailsViewComponent } from 'app/localvc/commit-details-view/commit-details-view.component';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
@@ -159,6 +161,42 @@ export const routes: Routes = [
     {
         path: ':courseId/programming-exercises/:exerciseId/repository/:repositoryType',
         component: RepositoryViewComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
+            pageTitle: 'artemisApp.repository.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/programming-exercises/:exerciseId/participations/repository/:participationId',
+        component: RepositoryViewComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
+            pageTitle: 'artemisApp.repository.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/programming-exercises/:exerciseId/participations/repository/:participationId/commit-history',
+        component: CommitHistoryComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
+            pageTitle: 'artemisApp.repository.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/programming-exercises/:exerciseId/participations/repository/:participationId/commit-history/:commitHash',
+        component: CommitDetailsViewComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
             pageTitle: 'artemisApp.repository.title',

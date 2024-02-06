@@ -14,6 +14,7 @@ import { Result } from 'app/entities/result.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'jhi-repository-view',
@@ -51,6 +52,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private programmingExerciseService: ProgrammingExerciseService,
+        private router: Router,
     ) {}
 
     /**
@@ -65,12 +67,11 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
         this.paramSub = this.route.params.subscribe((params) => {
             this.loadingParticipation = true;
             this.participationCouldNotBeFetched = false;
-            const courseId = Number(params['courseId']);
             const exerciseId = Number(params['exerciseId']);
             const participationId = Number(params['participationId']);
 
             if (participationId) {
-                this.loadStudentParticipation(participationId, courseId, exerciseId);
+                this.loadStudentParticipation(participationId);
             } else {
                 const repositoryType = params['repositoryType'];
                 this.loadDifferentParticipation(repositoryType, exerciseId);
@@ -109,8 +110,8 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
             });
     }
 
-    loadStudentParticipation(participationId: number, courseId: number, exerciseId: number) {
-        this.routeCommitHistory = this.routeCommitHistory = `/courses/${courseId}/programming-exercises/${exerciseId}/repository/${participationId}/commit-history`;
+    loadStudentParticipation(participationId: number) {
+        this.routeCommitHistory = this.router.url + '/commit-history';
         this.participationWithLatestResultSub = this.loadParticipationWithLatestResult(participationId)
             .pipe(
                 tap((participationWithResults) => {

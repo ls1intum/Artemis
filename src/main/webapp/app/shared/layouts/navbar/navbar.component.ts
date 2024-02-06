@@ -348,6 +348,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         build_agents: 'artemisApp.buildAgents.title',
         commit_history: 'artemisApp.repository.commitHistory.title',
         commit_details: 'artemisApp.repository.commitHistory.commitDetails.title',
+        repository: 'artemisApp.repository.title',
     };
 
     studentPathBreadcrumbTranslations = {

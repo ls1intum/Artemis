@@ -9,6 +9,7 @@ import { Subscription } from 'rxjs';
 import { Result } from 'app/entities/result.model';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'jhi-commits-info',
@@ -36,6 +37,7 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private profileService: ProfileService,
         private route: ActivatedRoute,
+        private router: Router,
     ) {}
 
     ngOnInit(): void {
@@ -74,7 +76,7 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     }
 
     getCommitUrlForRepositoryView(commitInfo: CommitInfo) {
-        return `/courses/${this.courseId}/programming-exercises/${this.exerciseId}/repository/${this.participationId}/commit-history/` + commitInfo.hash;
+        return this.router.url + '/' + commitInfo.hash;
     }
 
     private findSubmissionForCommit(commitInfo: CommitInfo, submissions: ProgrammingSubmission[] | undefined) {
