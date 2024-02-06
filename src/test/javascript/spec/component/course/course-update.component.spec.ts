@@ -484,10 +484,10 @@ describe('Course Management Update Component', () => {
         it('should get semesters around current year', () => {
             const years = dayjs().year() - 2018 + 1;
             const semesters = comp.getSemesters();
-            expect(semesters[0]).toBe('');
+            expect(semesters.last()).toBe('');
             for (let i = 0; i <= years; i++) {
-                expect(semesters[2 * i + 1]).toBe('SS' + (18 + i));
-                expect(semesters[2 * i + 2]).toBe('WS' + (18 + i) + '/' + (19 + i));
+                expect(semesters[2 * i]).toBe('WS' + (18 + years - i) + '/' + (19 + years - i));
+                expect(semesters[2 * i + 1]).toBe('SS' + (18 + years - i));
             }
         });
     });

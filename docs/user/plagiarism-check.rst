@@ -198,6 +198,49 @@ The following activity diagram depicts the CPC flow described above.
 
 |cpc-activity-diagram|
 
+
+Videos below show the full CPC process from student's and instructor's perspective.
+
+Creating a new exercise with the CPC enabled.
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/42153?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
+Reviewing check's results by an instructor.
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/42154?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
+Reviewing check's results by a student.
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/42155?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
+Fixing submissions marked as a significant similarity.
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/42156?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
+Responding to a significant similarity plagiarism case that persisted after the exercise due date and adding a verdict to it.
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/42157?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
 Instructors
 ^^^^^^^^^^^
 
