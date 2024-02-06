@@ -29,13 +29,13 @@
                                 </span>
                             }
                         } @else {
-                            <a [href]="getCommitUrl(commit)"> {{ commit.hash }} </a>
+                            <a [href]="commit.commitUrl"> {{ commit.hash }} </a>
                         }
                     </td>
                     <td>
                         @if (isRepositoryView) {
-                            @if (users) {
-                                {{ users.get(commit.author!)?.name ?? commit.author }}, <span class="text-primary">{{ users.get(commit.author!)?.email ?? '' }}</span>
+                            @if (commit.user) {
+                                {{ commit.user.name }}, <span class="text-primary">{{ commit.user.email }}</span>
                             }
                         } @else {
                             {{ commit.author }}
@@ -46,8 +46,8 @@
                     </td>
                     @if (isRepositoryView) {
                         <td>
-                            @if (resultsMap && resultsMap.get(commit.hash!)) {
-                                <jhi-result [result]="resultsMap.get(commit.hash!)" [showUngradedResults]="true" [showBadge]="true"> </jhi-result>
+                            @if (commit.result) {
+                                <jhi-result [result]="commit.result" [showUngradedResults]="true" [showBadge]="true"> </jhi-result>
                             } @else {
                                 <span class="text-body-secondary">
                                     <fa-icon [icon]="faCircle" size="lg"></fa-icon>&nbsp;

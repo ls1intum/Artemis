@@ -18,7 +18,7 @@ import { faCircle } from '@fortawesome/free-regular-svg-icons';
 })
 export class CommitsInfoComponent implements OnInit, OnDestroy {
     @Input() commits?: CommitInfo[];
-    @Input() users: Map<string, User>;
+    @Input() users?: Map<string, User>;
     @Input() currentSubmissionHash?: string;
     @Input() previousSubmissionHash?: string;
     @Input() participationId?: number;
@@ -54,6 +54,7 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
             if (this.participationId) {
                 this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(this.participationId).subscribe((commits) => {
                     this.commits = this.sortCommitsByTimestampDesc(commits);
+                    this.setCommitDetails();
                 });
             }
         }
@@ -70,13 +71,17 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
         this.paramSub.unsubscribe();
     }
 
-    sortCommitsByTimestampDesc(commitInfos: CommitInfo[]) {
-        return commitInfos.sort((a, b) => (dayjs(b.timestamp!).isAfter(dayjs(a.timestamp!)) ? 1 : -1));
+    private setCommitDetails() {
+        for (const commit of this.commits!) {
+            commit.user = this.users?.get(commit.author!);
+            commit.result = this.resultsMap?.get(commit.hash!);
+            const submission = this.findSubmissionForCommit(commit, this.submissions);
+            commit.commitUrl = createCommitUrl(this.commitHashURLTemplate, this.exerciseProjectKey, submission?.participation, submission);
+        }
     }
 
-    getCommitUrl(commitInfo: CommitInfo) {
-        const submission = this.findSubmissionForCommit(commitInfo, this.submissions);
-        return createCommitUrl(this.commitHashURLTemplate, this.exerciseProjectKey, submission?.participation, submission);
+    private sortCommitsByTimestampDesc(commitInfos: CommitInfo[]) {
+        return commitInfos.sort((a, b) => (dayjs(b.timestamp!).isAfter(dayjs(a.timestamp!)) ? 1 : -1));
     }
 
     private findSubmissionForCommit(commitInfo: CommitInfo, submissions: ProgrammingSubmission[] | undefined) {
