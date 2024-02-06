@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.web.client.HttpClientErrorException;
 
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
@@ -128,6 +129,26 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         // cleanup
         tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());
         tutorialGroupFreePeriodRepository.deleteById(createdPeriod.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void create_startDateIsBeforeEndDate_shouldNotCreateSession() throws Exception {
+        // given
+        TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule(this.exampleCourseId, "tutor1");
+        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
+
+        var dto = createTutorialGroupFreePeriodDTO(firstAugustMondayEvening, firstAugustMondayMorning, "Holiday");
+        // when
+        var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, HttpClientErrorException.BadRequest.class, HttpStatus.BAD_REQUEST);
+        // then
+        assertThat(createdPeriod).isNull();
+        var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
+        var firstMondayOfAugustSession = sessions.get(0);
+        assertScheduledSessionIsActiveOnDate(firstMondayOfAugustSession, firstAugustMondayMorning.toLocalDate(), tutorialGroup.getId(), persistedSchedule);
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());
     }
 
     @Test

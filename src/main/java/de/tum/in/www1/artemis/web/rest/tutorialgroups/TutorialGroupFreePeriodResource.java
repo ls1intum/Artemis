@@ -92,6 +92,9 @@ public class TutorialGroupFreePeriodResource {
             @PathVariable Long tutorialGroupFreePeriodId, @RequestBody @Valid TutorialGroupFreePeriodDTO tutorialGroupFreePeriod) throws URISyntaxException {
         log.debug("REST request to update TutorialGroupFreePeriod: {} for tutorial group configuration: {} of course: {}", tutorialGroupFreePeriodId, tutorialGroupsConfigurationId,
                 courseId);
+        if (!isStartBeforeEnd(tutorialGroupFreePeriod.startDate, tutorialGroupFreePeriod.endDate)) {
+            throw new BadRequestException("The start date must be before the end date");
+        }
         var existingFreePeriod = tutorialGroupFreePeriodRepository.findByIdElseThrow(tutorialGroupFreePeriodId);
         checkEntityIdMatchesPathIds(existingFreePeriod, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingFreePeriod.getTutorialGroupsConfiguration().getCourse(), null);
@@ -138,9 +141,11 @@ public class TutorialGroupFreePeriodResource {
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupFreePeriod> create(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
             @RequestBody @Valid TutorialGroupFreePeriodDTO tutorialGroupFreePeriod) throws URISyntaxException {
-
         log.debug("REST request to create TutorialGroupFreePeriod: {} for tutorial group configuration: {} of course: {}", tutorialGroupFreePeriod, tutorialGroupsConfigurationId,
                 courseId);
+        if (!isStartBeforeEnd(tutorialGroupFreePeriod.startDate, tutorialGroupFreePeriod.endDate)) {
+            throw new BadRequestException("The start date must be before the end date");
+        }
         TutorialGroupsConfiguration tutorialGroupsConfiguration = tutorialGroupsConfigurationRepository
                 .findByIdWithEagerTutorialGroupFreePeriodsElseThrow(tutorialGroupsConfigurationId);
         if (tutorialGroupsConfiguration.getCourse().getTimeZone() == null) {
@@ -221,6 +226,10 @@ public class TutorialGroupFreePeriodResource {
             throw new BadRequestAlertException("The given tutorial group free period overlaps with another tutorial group free period in the same course", ENTITY_NAME,
                     "overlapping");
         }
+    }
+
+    private boolean isStartBeforeEnd(LocalDateTime start, LocalDateTime end) {
+        return start.isBefore(end);
     }
 
     private void trimStringFields(TutorialGroupFreePeriod tutorialGroupFreePeriod) {
