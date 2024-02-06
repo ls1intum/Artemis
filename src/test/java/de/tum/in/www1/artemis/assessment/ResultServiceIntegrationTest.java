@@ -376,6 +376,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         final GradingCriterion criterion2 = GradingCriterionUtil.findGradingCriterionByTitle(fileUploadExercise, "test title2");
 
         final List<GradingInstruction> gradingInstructions1 = List.copyOf(criterion1.getStructuredGradingInstructions());
+        // as long as credits are equal we can choose any two here
+        assertThat(gradingInstructions1).allMatch(instruction -> instruction.getCredits() == 1);
         final GradingInstruction instruction1a = gradingInstructions1.get(0);
         final GradingInstruction instruction1b = gradingInstructions1.get(1);
         final Set<GradingInstruction> gradingInstructions2 = criterion2.getStructuredGradingInstructions();
