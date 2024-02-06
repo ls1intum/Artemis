@@ -6,11 +6,11 @@
     </div>
     <div class="card-body pb-1">
         <div class="form-group">
-            <label for="competency-title-search-input">
+            <label for="competency-title-input">
                 {{ 'artemisApp.competency.import.search.labelCompetencyTitle' | artemisTranslate }}
             </label>
             <input
-                id="competency-title-search-input"
+                id="competency-title-input"
                 class="form-control"
                 [placeholder]="'artemisApp.competency.import.search.fieldCompetencyTitle' | artemisTranslate"
                 [(ngModel)]="filter.competencyTitleSearch"
@@ -19,11 +19,11 @@
         </div>
         <div [ngbCollapse]="!advancedSearchEnabled">
             <div class="form-group">
-                <label for="competency-description-search-input">
+                <label for="competency-description-input">
                     {{ 'artemisApp.competency.import.search.labelCompetencyDescription' | artemisTranslate }}
                 </label>
                 <textarea
-                    id="competency-description-search-input"
+                    id="competency-description-input"
                     rows="3"
                     class="form-control"
                     [placeholder]="'artemisApp.competency.import.search.fieldCompetencyDescription' | artemisTranslate"
@@ -31,29 +31,29 @@
                     (keydown.enter)="performSearch()"
                 ></textarea>
             </div>
-            <div class="form-group">
-                <label for="course-title-search-input">
-                    {{ 'artemisApp.competency.import.search.labelCourseTitle' | artemisTranslate }}
-                </label>
-                <input
-                    id="course-title-search-input"
-                    class="form-control"
-                    [placeholder]="'artemisApp.competency.import.search.fieldCourseTitle' | artemisTranslate"
-                    [(ngModel)]="filter.courseTitleSearch"
-                    (keydown.enter)="performSearch()"
-                />
-            </div>
-            <div class="form-group">
-                <label for="course-semester-search-input">
-                    {{ 'artemisApp.competency.import.search.labelCourseSemester' | artemisTranslate }}
-                </label>
-                <input
-                    id="course-semester-search-input"
-                    class="form-control"
-                    [placeholder]="'artemisApp.competency.import.search.fieldCourseSemester' | artemisTranslate"
-                    [(ngModel)]="filter.courseSemesterSearch"
-                    (keydown.enter)="performSearch()"
-                />
+            <div class="row">
+                <div class="form-group col">
+                    <label for="course-title-input">
+                        {{ 'artemisApp.competency.import.search.labelCourseTitle' | artemisTranslate }}
+                    </label>
+                    <input
+                        id="course-title-input"
+                        class="form-control"
+                        [placeholder]="'artemisApp.competency.import.search.fieldCourseTitle' | artemisTranslate"
+                        [(ngModel)]="filter.courseTitleSearch"
+                        (keydown.enter)="performSearch()"
+                    />
+                </div>
+                <div class="form-group col">
+                    <label for="course-semester-select">
+                        {{ 'artemisApp.competency.import.search.labelCourseSemester' | artemisTranslate }}
+                    </label>
+                    <select id="course-semester-select" class="form-select" [(ngModel)]="filter.courseSemesterSearch" (keydown.enter)="performSearch()">
+                        @for (semester of semesters; track semester) {
+                            <option [value]="semester">{{ semester }}</option>
+                        }
+                    </select>
+                </div>
             </div>
         </div>
         <div class="d-flex justify-content-end flex-wrap">

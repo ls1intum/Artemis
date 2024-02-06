@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Output } from '@angular/core';
 import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
+import { getSemesters } from 'app/utils/semester-utils';
 
 export class CompetencyFilter {
     competencyTitleSearch: string;
@@ -32,6 +33,7 @@ export class CompetencySearchComponent {
 
     //Other constants
     protected readonly ButtonType = ButtonType;
+    protected readonly semesters = getSemesters();
 
     toggleAdvancedSearch() {
         this.advancedSearchEnabled = !this.advancedSearchEnabled;
