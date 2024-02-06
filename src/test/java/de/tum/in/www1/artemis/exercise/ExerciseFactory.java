@@ -103,10 +103,10 @@ public class ExerciseFactory {
      * @param criterion                The grading criterion of the instructions.
      * @param numberOfTestInstructions The number of instructions that should be created.
      * @param usageCount               The usage count of each instruction.
-     * @return List of generated grading instructions.
+     * @return Set of generated grading instructions.
      */
-    public static List<GradingInstruction> generateGradingInstructions(GradingCriterion criterion, int numberOfTestInstructions, int usageCount) {
-        var instructions = new ArrayList<GradingInstruction>();
+    public static Set<GradingInstruction> generateGradingInstructions(GradingCriterion criterion, int numberOfTestInstructions, int usageCount) {
+        var instructions = new HashSet<GradingInstruction>();
         while (numberOfTestInstructions > 0) {
             var exampleInstruction1 = new GradingInstruction();
             exampleInstruction1.setGradingCriterion(criterion);

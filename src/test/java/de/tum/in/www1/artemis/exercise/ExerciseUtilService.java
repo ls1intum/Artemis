@@ -114,20 +114,21 @@ public class ExerciseUtilService {
      */
     public Set<GradingCriterion> addGradingInstructionsToExercise(Exercise exercise) {
         GradingCriterion emptyCriterion = ExerciseFactory.generateGradingCriterion(null);
-        List<GradingInstruction> instructionWithNoCriteria = ExerciseFactory.generateGradingInstructions(emptyCriterion, 1, 0);
-        instructionWithNoCriteria.get(0).setCredits(1);
-        instructionWithNoCriteria.get(0).setUsageCount(0);
+        Set<GradingInstruction> instructionWithNoCriteria = ExerciseFactory.generateGradingInstructions(emptyCriterion, 1, 0);
+        assertThat(instructionWithNoCriteria).hasSize(1);
+        GradingInstruction instructionWithNoCriterion = instructionWithNoCriteria.stream().findFirst().orElseThrow();
+        instructionWithNoCriterion.setCredits(1);
+        instructionWithNoCriterion.setUsageCount(0);
         emptyCriterion.setExercise(exercise);
-        // new HashSet instead of Set.of: needs to be mutable
-        emptyCriterion.setStructuredGradingInstructions(new HashSet<>(instructionWithNoCriteria));
+        emptyCriterion.setStructuredGradingInstructions(instructionWithNoCriteria);
 
         GradingCriterion testCriterion = ExerciseFactory.generateGradingCriterion("test title");
-        List<GradingInstruction> instructions = ExerciseFactory.generateGradingInstructions(testCriterion, 3, 1);
-        testCriterion.setStructuredGradingInstructions(new HashSet<>(instructions));
+        Set<GradingInstruction> instructions = ExerciseFactory.generateGradingInstructions(testCriterion, 3, 1);
+        testCriterion.setStructuredGradingInstructions(instructions);
 
         GradingCriterion testCriterion2 = ExerciseFactory.generateGradingCriterion("test title2");
-        List<GradingInstruction> instructionsWithBigLimit = ExerciseFactory.generateGradingInstructions(testCriterion2, 1, 4);
-        testCriterion2.setStructuredGradingInstructions(new HashSet<>(instructionsWithBigLimit));
+        Set<GradingInstruction> instructionsWithBigLimit = ExerciseFactory.generateGradingInstructions(testCriterion2, 1, 4);
+        testCriterion2.setStructuredGradingInstructions(instructionsWithBigLimit);
 
         testCriterion.setExercise(exercise);
         Set<GradingCriterion> criteria = new HashSet<>();
