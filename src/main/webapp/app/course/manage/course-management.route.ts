@@ -25,6 +25,7 @@ import { LearningPathManagementComponent } from 'app/course/learning-paths/learn
 import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
 import { LocalCIGuard } from 'app/localci/build-queue/localci-guard.service';
 import { ImportCompetenciesComponent } from 'app/course/competencies/import-competencies/import-competencies.component';
+import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 
 export const courseManagementState: Routes = [
     {
@@ -233,6 +234,7 @@ export const courseManagementState: Routes = [
                                     pageTitle: 'artemisApp.competency.import.title',
                                 },
                                 canActivate: [UserRouteAccessService],
+                                canDeactivate: [PendingChangesGuard],
                             },
                         ],
                     },

@@ -1,11 +1,10 @@
 <div class="card">
     <div class="card-header">
         <!-- TODO: extract to own component ?-->
-        <h5 class="mb-0">{{ 'artemisApp.competency.import.search.cardTitle' | artemisTranslate }}</h5>
+        <!-- TODO: re-order groups? -->
+        <h5 class="mb-0">{{ 'artemisApp.competency.import.search.title' | artemisTranslate }}</h5>
     </div>
-    <div class="card-body">
-        <!-- TODO: add title search here aswell-->
-        <!-- TODO: make the rest collapsible ngb-collapsible? -->
+    <div class="card-body pb-1">
         <div class="form-group">
             <label for="competency-title-search-input">
                 {{ 'artemisApp.competency.import.search.labelCompetencyTitle' | artemisTranslate }}
@@ -14,11 +13,11 @@
                 id="competency-title-search-input"
                 class="form-control"
                 [placeholder]="'artemisApp.competency.import.search.fieldCompetencyTitle' | artemisTranslate"
-                [(ngModel)]="search.courseTitleSearch"
+                [(ngModel)]="filter.competencyTitleSearch"
                 (keydown.enter)="performSearch()"
             />
         </div>
-        <div [ngbCollapse]="isCollapsed">
+        <div [ngbCollapse]="!advancedSearchEnabled">
             <div class="form-group">
                 <label for="competency-description-search-input">
                     {{ 'artemisApp.competency.import.search.labelCompetencyDescription' | artemisTranslate }}
@@ -28,7 +27,7 @@
                     rows="3"
                     class="form-control"
                     [placeholder]="'artemisApp.competency.import.search.fieldCompetencyDescription' | artemisTranslate"
-                    [(ngModel)]="search.competencyDescriptionSearch"
+                    [(ngModel)]="filter.competencyDescriptionSearch"
                     (keydown.enter)="performSearch()"
                 ></textarea>
             </div>
@@ -40,7 +39,7 @@
                     id="course-title-search-input"
                     class="form-control"
                     [placeholder]="'artemisApp.competency.import.search.fieldCourseTitle' | artemisTranslate"
-                    [(ngModel)]="search.courseTitleSearch"
+                    [(ngModel)]="filter.courseTitleSearch"
                     (keydown.enter)="performSearch()"
                 />
             </div>
@@ -52,22 +51,22 @@
                     id="course-semester-search-input"
                     class="form-control"
                     [placeholder]="'artemisApp.competency.import.search.fieldCourseSemester' | artemisTranslate"
-                    [(ngModel)]="search.courseSemesterSearch"
+                    [(ngModel)]="filter.courseSemesterSearch"
                     (keydown.enter)="performSearch()"
                 />
             </div>
         </div>
-        <div>
-            <!-- TODO: add chevron ^ v -->
-            <!-- TODO: add span -->
+        <div class="d-flex justify-content-end flex-wrap">
+            <jhi-button id="resetFilterButton" class="me-2" [btnType]="ButtonType.SECONDARY" [title]="'entity.action.reset'" (click)="reset()" />
+            <jhi-button id="saveFilterButton" [btnType]="ButtonType.PRIMARY" [title]="'entity.action.search'" (click)="performSearch()" />
         </div>
-        <div class="gap-2 d-flex">
-            <button id="resetFilterButton" class="btn btn-secondary offset-6 col-3" type="button" (click)="reset()">
-                {{ 'entity.action.reset' | artemisTranslate }}
-            </button>
-            <button id="saveFilterButton" class="btn btn-primary col-3" type="button" (click)="performSearch()">
-                {{ 'entity.action.search' | artemisTranslate }}
-            </button>
+        <div class="d-flex flex-row justify-content-center">
+            <div class="clickable" (click)="toggleAdvancedSearch()">
+                <fa-icon [icon]="advancedSearchEnabled ? faChevronUp : faChevronDown"></fa-icon>
+                <span>{{
+                    (advancedSearchEnabled ? 'artemisApp.competency.import.search.hideAdvancedSearch' : 'artemisApp.competency.import.search.showAdvancedSearch') | artemisTranslate
+                }}</span>
+            </div>
         </div>
     </div>
 </div>

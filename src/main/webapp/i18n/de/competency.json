@@ -38,8 +38,7 @@
                 "create": "entwerfen, formulieren, postulieren, erfinden, planen, bieten, schreiben, konstruieren, entwickeln"
             },
             "table": {
-                "panelHeader": "Deine Fortentwicklung",
-                "panelDescription": "Dein Weg zum Erwerb dieser Kompetenz."
+                "panelHeader": "Deine Fortentwicklung"
             },
             "manageCompetencies": {
                 "title": "Kompetenzmanagement",
@@ -51,24 +50,24 @@
                 "title": "Kompetenzen importieren",
                 "searchTableHeader": "Nach Kompetenzen suchen",
                 "selectedTableHeader": "Ausgewählte Kompetenzen",
-                "labelCompetencyTitle": "Suche nach Kompetenztitel:",
-                "fieldCompetencyTitle": "Kompetenztitel",
-                "showAdvancedSearch": "Erweiterte Suche anzeigen",
-                "hideAdvancedSearch": "Erweiterte Suche ausblenden",
+                "importRelations": "Relationen importieren?",
                 "search": {
-                    "cardTitle": "Erweiterte Suche",
-                    "labelCourseTitle": "Suche nach Kurstitel",
+                    "title": "Kompetenzen durchsuchen",
+                    "labelCompetencyTitle": "Kompetenztitel",
+                    "fieldCompetencyTitle": "Kompetenztitel",
+                    "labelCompetencyDescription": "Kompetenzbeschreibung",
+                    "fieldCompetencyDescription": "Kompetenzbeschreibung",
+                    "labelCourseTitle": "Kurstitel",
                     "fieldCourseTitle": "Kurstitel",
-                    "labelCourseSemester": "Suche nach Semester",
+                    "labelCourseSemester": "Semester",
                     "fieldCourseSemester": "Semester",
-                    "labelCompetencyDescription": "Suche nach Kompetenzbeschreibung",
-                    "fieldCompetencyDescription": "Kompetenzbeschreibung"
+                    "showAdvancedSearch": "Erweiterte Suche anzeigen",
+                    "hideAdvancedSearch": "Erweiterte Suche ausblenden"
                 }
             },
             "importAll": {
                 "title": "Alle Kompetenzen eines Kurses importieren",
                 "search": "Suche nach einem Kurs:",
-                "importRelations": "Relationen importieren?",
                 "table": {
                     "TITLE": "Titel",
                     "SEMESTER": "Semester",

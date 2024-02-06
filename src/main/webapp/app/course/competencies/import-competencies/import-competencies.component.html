@@ -1,33 +1,18 @@
 <div class="container">
-    <h3>{{ 'artemisApp.competency.import.title' | artemisTranslate }}</h3>
-    <div class="form-group form-inline">
-        <label for="competency-title-search-input" class="me-2">{{ 'artemisApp.competency.import.labelCompetencyTitle' | artemisTranslate }}</label>
-        <!-- TODO rename search term title and labels -->
-        <input
-            [(ngModel)]="searchTermTitle"
-            class="form-control me-2"
-            type="text"
-            id="competency-title-search-input"
-            [placeholder]="'artemisApp.competency.import.fieldCompetencyTitle' | artemisTranslate"
-        />
-        <jhi-button (onClick)="search()" [isLoading]="isLoading" [title]="'entity.action.search'" />
-        <!-- TODO: align this to the right/change how advanced search expands. -->
-        <jhi-button
-            (onClick)="toggleAdvancedSearch()"
-            [title]="showAdvancedSearch ? 'artemisApp.competency.import.hideAdvancedSearch' : 'artemisApp.competency.import.showAdvancedSearch'"
-        />
-    </div>
-    @if (showAdvancedSearch) {
-        <jhi-competency-search />
-    }
-    <h3>{{ 'artemisApp.competency.import.searchTableHeader' | artemisTranslate }}</h3>
+    <h2 id="page-heading">{{ 'artemisApp.competency.import.title' | artemisTranslate }}</h2>
+    <jhi-competency-search (search)="search($event)" />
+    <h3 class="mt-2">{{ 'artemisApp.competency.import.searchTableHeader' | artemisTranslate }}</h3>
     <jhi-data-table />
-    <h3>{{ 'artemisApp.competency.import.selectedTableHeader' | artemisTranslate }}</h3>
+    <h3 class="mt-2">{{ 'artemisApp.competency.import.selectedTableHeader' | artemisTranslate }}</h3>
     <jhi-data-table />
-    <span class="ms-3">{{ 'artemisApp.competency.importAll.importRelations' | artemisTranslate }}</span>
-    <input type="checkbox" class="ms-2" [(ngModel)]="importRelations" name="importRelations" />
-    <div>
-        <jhi-button id="cancelButton" [btnType]="ButtonType.SECONDARY" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="onCancel()" [shouldSubmit]="false" />
-        <jhi-button id="saveButton" [title]="'entity.action.import'" [icon]="faFileImport" [disabled]="!isSubmitPossible" [isLoading]="isLoading" />
+    <div class="mt-2">
+        <div class="mb-1 d-flex">
+            <span>{{ 'artemisApp.competency.import.importRelations' | artemisTranslate }}</span>
+            <input type="checkbox" class="ms-2" [(ngModel)]="importRelations" name="importRelations" />
+        </div>
+        <div>
+            <jhi-button id="cancelButton" [btnType]="ButtonType.SECONDARY" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="onCancel()" [shouldSubmit]="false" />
+            <jhi-button id="saveButton" [title]="'entity.action.import'" [icon]="faFileImport" [disabled]="!isSubmitPossible" [isLoading]="isLoading" />
+        </div>
     </div>
 </div>

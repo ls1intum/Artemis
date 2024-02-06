@@ -50,24 +50,24 @@
                 "title": "Import Competencies",
                 "searchTableHeader": "Search Competencies",
                 "selectedTableHeader": "Selected Competencies",
-                "labelCompetencyTitle": "Search by competency title:",
-                "fieldCompetencyTitle": "Competency Title",
-                "showAdvancedSearch": "Show advanced search",
-                "hideAdvancedSearch": "Hide advanced search",
+                "importRelations": "Import Relations?",
                 "search": {
-                    "cardTitle": "Advanced Search",
-                    "labelCourseTitle": "Search by course title",
+                    "title": "Competency Search",
+                    "labelCompetencyTitle": "Competency Title",
+                    "fieldCompetencyTitle": "Competency Title",
+                    "labelCompetencyDescription": "Competency Description",
+                    "fieldCompetencyDescription": "Competency Description",
+                    "labelCourseTitle": "Course title",
                     "fieldCourseTitle": "Course title",
-                    "labelCourseSemester": "Search by semester",
+                    "labelCourseSemester": "Semester",
                     "fieldCourseSemester": "Semester",
-                    "labelCompetencyDescription": "Search by competency description",
-                    "fieldCompetencyDescription": "Competency Description"
+                    "showAdvancedSearch": "Show advanced search",
+                    "hideAdvancedSearch": "Hide advanced search"
                 }
             },
             "importAll": {
                 "title": "Import all Competencies from another course",
                 "search": "Search for a course:",
-                "importRelations": "Import Relations?",
                 "table": {
                     "TITLE": "Title",
                     "SEMESTER": "Semester",
