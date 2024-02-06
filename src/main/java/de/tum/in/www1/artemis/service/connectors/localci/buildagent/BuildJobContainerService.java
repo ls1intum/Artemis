@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.localci;
+package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
 
@@ -42,13 +42,13 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService
 
 /**
  * This service contains methods that are used to interact with the Docker containers when executing build jobs in the local CI system.
- * It is closely related to the {@link LocalCIBuildJobExecutionService} which contains the methods that are used to execute the build jobs.
+ * It is closely related to the {@link BuildJobExecutionService} which contains the methods that are used to execute the build jobs.
  */
 @Service
-@Profile("localci")
-public class LocalCIContainerService {
+@Profile("buildagent")
+public class BuildJobContainerService {
 
-    private static final Logger log = LoggerFactory.getLogger(LocalCIContainerService.class);
+    private static final Logger log = LoggerFactory.getLogger(BuildJobContainerService.class);
 
     private final DockerClient dockerClient;
 
@@ -70,7 +70,7 @@ public class LocalCIContainerService {
 
     BuildScriptProvider buildScriptProvider;
 
-    public LocalCIContainerService(DockerClient dockerClient, HostConfig hostConfig, AeolusTemplateService aeolusTemplateService, BuildScriptProvider buildScriptProvider) {
+    public BuildJobContainerService(DockerClient dockerClient, HostConfig hostConfig, AeolusTemplateService aeolusTemplateService, BuildScriptProvider buildScriptProvider) {
         this.dockerClient = dockerClient;
         this.hostConfig = hostConfig;
         this.aeolusTemplateService = aeolusTemplateService;
@@ -82,7 +82,7 @@ public class LocalCIContainerService {
      *
      * @param containerName the name of the container to be created
      * @param image         the Docker image to use for the container
-     * @param buildScript   the script that is to be executed in the container
+     * @param buildScript   the build script to be executed in the container
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
     public CreateContainerResponse configureContainer(String containerName, String image, String buildScript) {

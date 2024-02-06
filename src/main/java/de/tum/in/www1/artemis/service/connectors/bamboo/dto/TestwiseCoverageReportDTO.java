@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo.dto;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class TestwiseCoverageReportDTO {
+public class TestwiseCoverageReportDTO implements Serializable {
 
     @JsonProperty("uniformPath")
     private String uniformPath;
@@ -54,7 +55,7 @@ public class TestwiseCoverageReportDTO {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static final class CoveredPathsPerTestDTO {
+    public static final class CoveredPathsPerTestDTO implements Serializable {
 
         @JsonProperty("path")
         private String path;
@@ -80,7 +81,7 @@ public class TestwiseCoverageReportDTO {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static final class CoveredFilesPerTestDTO {
+    public static final class CoveredFilesPerTestDTO implements Serializable {
 
         @JsonProperty("fileName")
         private String fileName;
