@@ -364,7 +364,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         discussion: 'artemisApp.metis.communication.label',
         messages: 'artemisApp.conversationsLayout.breadCrumbLabel',
         code_editor: 'artemisApp.editor.breadCrumbTitle',
-        repository: 'artemisApp.repository.title',
         participate: 'artemisApp.submission.detail.title',
         live: 'artemisApp.submission.detail.title',
         courses: 'artemisApp.course.home.title',
@@ -430,6 +429,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             switch (this.lastRouteUrlSegment) {
                 case 'code-editor':
                 case 'test-exam':
+                case 'repository':
                 case 'participate':
                     this.addTranslationAsCrumb(currentPath, this.lastRouteUrlSegment);
                     return;
@@ -445,11 +445,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     break;
             }
         }
-
+        console.log('segment', segment);
+        console.log('lastRouteUrlSegment', this.lastRouteUrlSegment);
         switch (this.lastRouteUrlSegment) {
             // Displays the path segment as breadcrumb (no other title exists)
             case 'system-notification-management':
             case 'teams':
+            case 'repository':
             case 'code-editor':
                 this.addBreadcrumb(currentPath, segment, false);
                 break;
@@ -538,13 +540,17 @@ export class NavbarComponent implements OnInit, OnDestroy {
         const isStudentPath = currentPath.startsWith('/courses');
 
         if (isStudentPath) {
+            if (segment === 'repository') {
+                return;
+            }
             const exercisesMatcher = segment?.match(/.+-exercises/);
             if (exercisesMatcher) {
                 this.addTranslationAsCrumb(currentPath.replace(exercisesMatcher[0], 'exercises'), 'exercises');
                 return;
             }
         }
-
+        console.log('segment', segment);
+        console.log('lastRouteUrlSegment', this.lastRouteUrlSegment);
         // When we're not dealing with an ID we need to translate the current part
         // The translation might still depend on the previous parts
         switch (segment) {

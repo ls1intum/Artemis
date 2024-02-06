@@ -24,7 +24,6 @@ import { ExerciseImportTabsComponent } from 'app/exercises/shared/import/exercis
 import { ExerciseImportFromFileComponent } from 'app/exercises/shared/import/from-file/exercise-import-from-file.component';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
-import { OpenRepositoryButtonComponent } from 'app/shared/components/open-repository-button/open-repository-button.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisCoursesRoutingModule, FeatureToggleModule, ClipboardModule],
@@ -40,7 +39,6 @@ import { OpenRepositoryButtonComponent } from 'app/shared/components/open-reposi
         CopyIconButtonComponent,
         StartPracticeModeButtonComponent,
         OpenCodeEditorButtonComponent,
-        OpenRepositoryButtonComponent,
         ExerciseActionButtonComponent,
         CourseExamArchiveButtonComponent,
         NotReleasedTagComponent,
@@ -63,7 +61,6 @@ import { OpenRepositoryButtonComponent } from 'app/shared/components/open-reposi
         CopyIconButtonComponent,
         StartPracticeModeButtonComponent,
         OpenCodeEditorButtonComponent,
-        OpenRepositoryButtonComponent,
         ExerciseActionButtonComponent,
         CourseExamArchiveButtonComponent,
         NotReleasedTagComponent,
