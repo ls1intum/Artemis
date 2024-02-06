@@ -14,6 +14,7 @@ import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
 import { Channel, ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { Exam } from 'app/entities/exam.model';
+import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 
 export const metisSlide1 = { id: 1, slideNumber: 1, slideImagePath: 'directory/attachments/slides/Metis-Slide-1.png' } as Slide;
 export const metisAttachment = { id: 1, name: 'Metis Attachment', link: 'directory/attachments/Metis-Attachment.pdf' } as Attachment;
@@ -281,6 +282,14 @@ export const metisPostInChannel = {
     content: 'metisPostOrganization',
     creationDate: undefined,
     conversation: metisChannel,
+} as Post;
+
+export const plagiarismPost = {
+    id: 11,
+    author: metisUser1,
+    title: 'title',
+    content: 'plagiarism Case',
+    plagiarismCase: { id: 1 } as PlagiarismCase,
 } as Post;
 
 export const metisGeneralChannelDto = {

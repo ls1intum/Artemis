@@ -1,4 +1,4 @@
-@if (headlines) {
+@if (headlines?.length && headlines.length > 1) {
     <jhi-detail-overview-navigation-bar [sectionHeadlines]="headlines" />
 }
 @for (section of sections; track section) {
@@ -7,7 +7,7 @@
         @for (detail of section.details; track detail) {
             @if (detail !== false && detail !== undefined) {
                 @if (detail.title) {
-                    <dt>
+                    <dt id="detail-title-{{ detail.title }}">
                         <span>{{ detail.title | artemisTranslate: detail.titleTranslationProps }}</span>
                         @if (detail.titleHelpText) {
                             <jhi-help-icon text="{{ detail.titleHelpText }}" />
@@ -16,7 +16,7 @@
                 }
                 @switch (detail.type) {
                     @case (DetailType.Text) {
-                        <dd>
+                        <dd id="detail-value-{{ detail.title }}">
                             @if (detail.data.text) {
                                 {{ detail.data.text }}
                             } @else {
@@ -25,7 +25,7 @@
                         </dd>
                     }
                     @case (DetailType.Date) {
-                        <dd>
+                        <dd id="detail-value-{{ detail.title }}">
                             @if (detail.data.date) {
                                 {{ detail.data.date | artemisDate }}
                             } @else {
@@ -34,10 +34,10 @@
                         </dd>
                     }
                     @case (DetailType.Link) {
-                        <dd>
+                        <dd id="detail-value-{{ detail.title }}">
                             @if (detail.data.text) {
                                 @if (detail.data.routerLink?.length) {
-                                    <a [routerLink]="detail.data.routerLink">
+                                    <a [routerLink]="detail.data.routerLink" [queryParams]="detail.data.queryParams">
                                         {{ detail.data.text }}
                                     </a>
                                 } @else if (detail.data.href) {
@@ -53,18 +53,18 @@
                         </dd>
                     }
                     @case (DetailType.Boolean) {
-                        <dd>
+                        <dd id="detail-value-{{ detail.title }}">
                             <jhi-checklist-check [checkAttribute]="detail.data.boolean" />
                         </dd>
                     }
                     @case (DetailType.ProgrammingRepositoryButtons) {
-                        <dd>
+                        <dd id="detail-value-{{ detail.title }}">
                             @if (detail.data.participation?.repositoryUri && detail.data.exerciseId) {
                                 <div class="clone-buttons">
-                                    <jhi-clone-repo-button [smallButtons]="true" [repositoryUri]="detail.data.participation?.repositoryUri" />
+                                    <jhi-clone-repo-button [smallButtons]="true" [repositoryUri]="detail.data.participation?.repositoryUri!" />
                                     <jhi-programming-exercise-instructor-repo-download class="ms-2" [exerciseId]="detail.data.exerciseId" [repositoryType]="detail.data.type" />
                                     @if (detail.data.showOpenLink) {
-                                        <a [href]="detail.data.participation?.repositoryUri" target="”_blank”" class="btn btn-sm btn-info ms-2">
+                                        <a [href]="detail.data.participation?.repositoryUri!" target="”_blank”" class="btn btn-sm btn-info ms-2">
                                             <fa-icon [icon]="faArrowUpRightFromSquare" />
                                             <span jhiTranslate="artemisApp.programmingExercise.openRepository">Open Repository</span>
                                         </a>
@@ -76,7 +76,7 @@
                         </dd>
                     }
                     @case (DetailType.ProgrammingAuxiliaryRepositoryButtons) {
-                        <dd>
+                        <dd id="detail-value-{{ detail.title }}">
                             <ul>
                                 @for (auxiliaryRepository of detail.data.auxiliaryRepositories; track auxiliaryRepository) {
                                     @if (auxiliaryRepository.id && auxiliaryRepository.repositoryUri && detail.data.exerciseId) {
@@ -113,13 +113,13 @@
                         </dd>
                     }
                     @case (DetailType.ProgrammingTestStatus) {
-                        <dd>
+                        <dd id="detail-value-{{ detail.title }}">
                             @if (detail.data.participation) {
                                 <div class="d-flex align-items-center">
                                     @if (!detail.data.loading) {
                                         <jhi-updating-result
                                             [exercise]="detail.data.exercise"
-                                            [participation]="detail.data.participation!"
+                                            [participation]="detail.data.participation"
                                             [showUngradedResults]="true"
                                             [personalParticipation]="false"
                                             [short]="false"
@@ -131,13 +131,13 @@
                                         <jhi-programming-exercise-instructor-status
                                             class="repository-status-icon me-2"
                                             [participationType]="detail.data.type"
-                                            [participation]="detail.data.participation!"
+                                            [participation]="detail.data.participation"
                                             [exercise]="detail.data.exercise"
                                         />
                                         @if (detail.data.exercise.isAtLeastEditor) {
                                             <jhi-programming-exercise-instructor-trigger-build-button
                                                 [exercise]="detail.data.exercise"
-                                                [participation]="detail.data.participation!"
+                                                [participation]="detail.data.participation"
                                             />
                                         }
                                     }
@@ -158,7 +158,7 @@
                         </dd>
                     }
                     @case (DetailType.ProgrammingDiffReport) {
-                        <dd>
+                        <dd id="detail-value-{{ detail.title }}">
                             <div class="fw-bold">
                                 <jhi-git-diff-line-stat
                                     [addedLineCount]="detail.data.addedLineCount"
@@ -182,7 +182,7 @@
                     }
                     @case (DetailType.ProgrammingProblemStatement) {
                         @if (detail.data.exercise?.templateParticipation) {
-                            <dd class="p-3 border">
+                            <dd class="p-3 border" id="detail-value-{{ detail.title }}">
                                 <jhi-programming-exercise-instructions
                                     [exercise]="detail.data.exercise"
                                     [participation]="detail.data.exercise.templateParticipation!"
@@ -192,26 +192,26 @@
                         }
                     }
                     @case (DetailType.ProgrammingTimeline) {
-                        <dd>
+                        <dd id="detail-value-{{ detail.title }}">
                             <jhi-programming-exercise-lifecycle [isExamMode]="detail.data.isExamMode ?? false" [exercise]="detail.data.exercise" [readOnly]="true" />
                         </dd>
                     }
                     @case (DetailType.Markdown) {
-                        <dd>
+                        <dd id="detail-value-{{ detail.title }}">
                             @if (detail.data.innerHtml) {
-                                <div class="p-3 border" [innerHTML]="detail.data.innerHtml"></div>
+                                <div class="p-3 border markdown-preview" [innerHTML]="detail.data.innerHtml"></div>
                             } @else {
                                 <ng-container *ngTemplateOutlet="noData" />
                             }
                         </dd>
                     }
                     @case (DetailType.GradingCriteria) {
-                        <dd class="col-md-6 mt-4">
+                        <dd class="col-md-6 mt-4" id="detail-value-{{ detail.title }}">
                             <jhi-structured-grading-instructions-assessment-layout [readonly]="true" [criteria]="detail.data.gradingCriteria || []" />
                         </dd>
                     }
                     @case (DetailType.ProgrammingBuildStatistics) {
-                        <dd>
+                        <dd id="detail-value-{{ detail.title }}">
                             <table class="table table-striped">
                                 <thead>
                                     <tr>
@@ -249,12 +249,17 @@
                         </dd>
                     }
                     @case (DetailType.ProgrammingIrisEnabled) {
-                        <dd>
-                            <jhi-iris-enabled [exercise]="detail.data.exercise" [irisSubSettingsType]="CHAT" [disabled]="!detail.data.exercise?.isAtLeastInstructor" />
+                        <dd id="detail-value-{{ detail.title }}">
+                            <jhi-iris-enabled
+                                [exercise]="detail.data.exercise"
+                                [course]="detail.data.course"
+                                [irisSubSettingsType]="detail.data.subSettingsType"
+                                [disabled]="detail.data.disabled"
+                            />
                         </dd>
                     }
                     @case (DetailType.ModelingEditor) {
-                        <dd>
+                        <dd id="detail-value-{{ detail.title }}">
                             @if (!!detail.data.umlModel?.elements?.length && detail.data.isApollonProfileActive) {
                                 <button
                                     (click)="downloadApollonDiagramAsPDf(detail.data.umlModel, detail.data.title)"

@@ -15,7 +15,7 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCIDockerService;
+import de.tum.in.www1.artemis.service.connectors.localci.buildagent.LocalCIDockerService;
 
 class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 

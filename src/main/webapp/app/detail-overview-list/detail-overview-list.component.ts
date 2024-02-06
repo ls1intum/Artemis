@@ -10,8 +10,8 @@ import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-setting
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
-import { UMLModel } from '@ls1intum/apollon';
 import { Detail } from 'app/detail-overview-list/detail.model';
+import { UMLModel } from '@ls1intum/apollon';
 
 export interface DetailOverviewSection {
     headline: string;

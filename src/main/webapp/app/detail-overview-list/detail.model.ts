@@ -1,5 +1,4 @@
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
-import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
@@ -10,8 +9,10 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programmin
 import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-log-statistics-dto';
 import { DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { SafeHtml } from '@angular/platform-browser';
-import { UMLModel } from '@ls1intum/apollon/lib/es6/typings';
+import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import dayjs from 'dayjs/esm';
+import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { Course } from 'app/entities/course.model';
 
 export type Detail = NotShownDetail | ShownDetail;
 
@@ -53,7 +54,7 @@ interface DateDetail extends DetailBase {
 
 interface LinkDetail extends DetailBase {
     type: DetailType.Link;
-    data: { text?: string | number; href?: string | false; routerLink?: (string | number | undefined)[] };
+    data: { text?: string | number; href?: string | false; routerLink?: (string | number | undefined)[]; queryParams?: Record<string, string | number | undefined> };
 }
 
 interface BooleanDetail extends DetailBase {
@@ -63,7 +64,7 @@ interface BooleanDetail extends DetailBase {
 
 interface MarkdownDetail extends DetailBase {
     type: DetailType.Markdown;
-    data: { innerHtml: SafeHtml | null };
+    data: { innerHtml?: SafeHtml | null };
 }
 
 interface GradingCriteriaDetail extends DetailBase {
@@ -78,7 +79,7 @@ interface ModelingEditorDetail extends DetailBase {
 
 interface ProgrammingIrisEnabledDetail extends DetailBase {
     type: DetailType.ProgrammingIrisEnabled;
-    data: { exercise: ProgrammingExercise };
+    data: { exercise?: ProgrammingExercise; course?: Course; disabled: boolean; subSettingsType: IrisSubSettingsType };
 }
 
 interface ProgrammingRepositoryButtonsDetail extends DetailBase {
