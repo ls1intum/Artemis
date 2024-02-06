@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
@@ -55,17 +54,14 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     }
 
     default Optional<ProgrammingSubmission> findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(Long participationId) {
-        return findFirstByParticipationIdAndTypeNotAndResultsNotNullOrderBySubmissionDateDesc(participationId, SubmissionType.ILLEGAL);
+        Set<SubmissionType> types = new HashSet<>(List.of(SubmissionType.values()));
+        types.remove(SubmissionType.ILLEGAL);
+        types.add(null);
+        return findFirstByParticipationIdAndTypeInOrderBySubmissionDateDesc(participationId, types);
     }
 
     @EntityGraph(type = LOAD, attributePaths = "results")
-    Optional<ProgrammingSubmission> findFirstByParticipationIdAndTypeNotAndResultsNotNullOrderBySubmissionDateDesc(Long participation_id, SubmissionType type);
-
-    default Optional<ProgrammingSubmission> findFirstByParticipationIdOrderByLegalSubmissionDateDesc(Long participationId) {
-        return findFirstByParticipationIdAndTypeNotOrderBySubmissionDateDesc(participationId, SubmissionType.ILLEGAL);
-    }
-
-    Optional<ProgrammingSubmission> findFirstByParticipationIdAndTypeNotOrderBySubmissionDateDesc(Long participationId, SubmissionType type);
+    Optional<ProgrammingSubmission> findFirstByParticipationIdAndTypeInOrderBySubmissionDateDesc(Long participationId, Collection<SubmissionType> type);
 
     @EntityGraph(type = LOAD, attributePaths = "results")
     Optional<ProgrammingSubmission> findFirstByParticipationIdOrderBySubmissionDateDesc(Long participationId);
