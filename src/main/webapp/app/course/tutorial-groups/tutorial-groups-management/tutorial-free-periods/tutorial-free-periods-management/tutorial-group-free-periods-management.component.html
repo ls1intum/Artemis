@@ -25,10 +25,12 @@
                     <table class="table table-sm table-hover">
                         <thead>
                             <tr>
-                                <th>{{ 'global.field.id' | artemisTranslate }}</th>
-                                <th>{{ 'artemisApp.entities.tutorialFreePeriod.startDate' | artemisTranslate }}</th>
-                                <th>{{ 'artemisApp.entities.tutorialFreePeriod.endDate' | artemisTranslate }}</th>
-                                <th>{{ 'artemisApp.entities.tutorialFreePeriod.reason' | artemisTranslate }}</th>
+                                <th class="col-0">{{ 'global.field.id' | artemisTranslate }}</th>
+                                <th class="col-1-2">{{ 'artemisApp.entities.tutorialFreePeriod.startDate' | artemisTranslate }}</th>
+                                <th class="col-1-2">{{ 'artemisApp.entities.tutorialFreePeriod.endDate' | artemisTranslate }}</th>
+                                <th class="col-3-4">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStartTime' | artemisTranslate }}</th>
+                                <th class="col-3-4">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEndTime' | artemisTranslate }}</th>
+                                <th class="col-5">{{ 'artemisApp.entities.tutorialFreePeriod.reason' | artemisTranslate }}</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -43,6 +45,12 @@
                                     </td>
                                     <td>
                                         {{ freePeriod.end | artemisDate: 'long-date' : false : course.timeZone : true }}
+                                    </td>
+                                    <td>
+                                        {{ freePeriod.start | artemisDate: 'time' : false : course.timeZone : false }}
+                                    </td>
+                                    <td>
+                                        {{ freePeriod.end | artemisDate: 'time' : false : course.timeZone : false }}
                                     </td>
                                     <td>
                                         <span class="d-inline-block text-truncate long-text"> {{ freePeriod.reason }} </span>
@@ -73,23 +81,32 @@
                     <table class="table table-sm table-hover">
                         <thead>
                             <tr>
-                                <th>{{ 'global.field.id' | artemisTranslate }}</th>
-                                <th>{{ 'artemisApp.entities.tutorialFreePeriod.date' | artemisTranslate }}</th>
-                                <th>{{ 'artemisApp.entities.tutorialFreePeriod.reason' | artemisTranslate }}</th>
+                                <th class="col-0">{{ 'global.field.id' | artemisTranslate }}</th>
+                                <th class="col-1-2">{{ 'artemisApp.entities.tutorialFreePeriod.startDate' | artemisTranslate }}</th>
+                                <th class="col-1-2">{{ 'artemisApp.entities.tutorialFreePeriod.endDate' | artemisTranslate }}</th>
+                                <th class="col-3-4">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStartTime' | artemisTranslate }}</th>
+                                <th class="col-3-4">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEndTime' | artemisTranslate }}</th>
+                                <th class="col-5">{{ 'artemisApp.entities.tutorialFreePeriod.reason' | artemisTranslate }}</th>
                                 <th></th>
                             </tr>
                         </thead>
                         <tbody>
-                            @for (freeDay of freeDays; track freeDay) {
+                            @for (freeDay of freePeriodsWithinDay; track freeDay) {
                                 <tr [ngClass]="{ 'opacity-50': isInThePast(freeDay) }" class="free-period-row">
                                     <td>
                                         {{ freeDay.id }}
                                     </td>
-                                    <!-- Only support for one day right now, so only show "start" date -->
-
-                                    <!-- Todo: Adjust UI To also show the endDate as it is supported now.-->
                                     <td>
                                         {{ freeDay.start | artemisDate: 'long-date' : false : course.timeZone : true }}
+                                    </td>
+                                    <td>
+                                        {{ freeDay.end | artemisDate: 'long-date' : false : course.timeZone : true }}
+                                    </td>
+                                    <td>
+                                        {{ freeDay.start | artemisDate: 'time' : false : course.timeZone : false }}
+                                    </td>
+                                    <td>
+                                        {{ freeDay.end | artemisDate: 'time' : false : course.timeZone : false }}
                                     </td>
                                     <td>
                                         <span class="d-inline-block text-truncate long-text"> {{ freeDay.reason }} </span>
@@ -113,7 +130,6 @@
                 </div>
             }
 
-            <!-- Todo: Adjust UI To also show the endDate as it is supported now.-->
             <!-- FreePeriodWithinDay -->
             @if (freePeriodsWithinDay && freePeriodsWithinDay.length > 0) {
                 <label class="form-label">{{ 'artemisApp.forms.tutorialFreePeriodForm.timeFrame.periodWithinDay' | artemisTranslate }}</label>
@@ -121,11 +137,12 @@
                     <table class="table table-sm table-hover">
                         <thead>
                             <tr>
-                                <th>{{ 'global.field.id' | artemisTranslate }}</th>
-                                <th>{{ 'artemisApp.entities.tutorialFreePeriod.date' | artemisTranslate }}</th>
-                                <th>{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStartTime' | artemisTranslate }}</th>
-                                <th>{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEndTime' | artemisTranslate }}</th>
-                                <th>{{ 'artemisApp.entities.tutorialFreePeriod.reason' | artemisTranslate }}</th>
+                                <th class="col-0">{{ 'global.field.id' | artemisTranslate }}</th>
+                                <th class="col-1-2">{{ 'artemisApp.entities.tutorialFreePeriod.startDate' | artemisTranslate }}</th>
+                                <th class="col-1-2">{{ 'artemisApp.entities.tutorialFreePeriod.endDate' | artemisTranslate }}</th>
+                                <th class="col-3-4">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStartTime' | artemisTranslate }}</th>
+                                <th class="col-3-4">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEndTime' | artemisTranslate }}</th>
+                                <th class="col-5">{{ 'artemisApp.entities.tutorialFreePeriod.reason' | artemisTranslate }}</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -137,6 +154,9 @@
                                     </td>
                                     <td>
                                         {{ freePeriodWithinDay.start | artemisDate: 'long-date' : false : course.timeZone : true }}
+                                    </td>
+                                    <td>
+                                        {{ freePeriodWithinDay.end | artemisDate: 'long-date' : false : course.timeZone : true }}
                                     </td>
                                     <td>
                                         {{ freePeriodWithinDay.start | artemisDate: 'time' : false : course.timeZone : false }}

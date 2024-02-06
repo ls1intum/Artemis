@@ -58,9 +58,10 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
         return this.tutorialGroupFreePeriods.filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreeDay(tutorialGroupFreePeriod));
     }
     public static isFreeDay(tutorialGroupFreePeriod: TutorialGroupFreePeriod): boolean {
-        const isMidnight: boolean = tutorialGroupFreePeriod.start!.hour() === 0 && tutorialGroupFreePeriod.start!.minute() === 0;
+        const startIsMidnight: boolean = tutorialGroupFreePeriod.start!.hour() === 0 && tutorialGroupFreePeriod.start!.minute() === 0;
+        const endIsMidnight: boolean = tutorialGroupFreePeriod.end!.hour() === 23 && tutorialGroupFreePeriod.end!.minute() === 59;
 
-        return tutorialGroupFreePeriod.start!.isSame(tutorialGroupFreePeriod.end!, 'day') && isMidnight;
+        return tutorialGroupFreePeriod.start!.isSame(tutorialGroupFreePeriod.end!, 'day') && startIsMidnight && endIsMidnight;
     }
 
     get freePeriods(): TutorialGroupFreePeriod[] {
@@ -81,7 +82,7 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
     }
 
     public isInThePast(tutorialGroupFreeDay: TutorialGroupFreePeriod): boolean {
-        return tutorialGroupFreeDay.start!.isBefore(this.getCurrentDate());
+        return tutorialGroupFreeDay.end!.isBefore(this.getCurrentDate());
     }
 
     public getCurrentDate(): dayjs.Dayjs {
