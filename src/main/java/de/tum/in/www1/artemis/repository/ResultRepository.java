@@ -34,18 +34,18 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 LEFT JOIN FETCH r.assessor
             WHERE r.id = :resultId
             """)
-    Optional<Result> findByIdWithEagerAssessor(@Param("resultId") Long resultId);
+    Optional<Result> findByIdWithEagerAssessor(@Param("resultId") long resultId);
 
-    List<Result> findByParticipationIdOrderByCompletionDateDesc(Long participationId);
-
-    @EntityGraph(type = LOAD, attributePaths = "submission")
-    List<Result> findAllByParticipationIdOrderByCompletionDateDesc(Long participationId);
+    List<Result> findByParticipationIdOrderByCompletionDateDesc(long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = "submission")
-    List<Result> findByParticipationExerciseIdOrderByCompletionDateAsc(Long exerciseId);
+    List<Result> findAllByParticipationIdOrderByCompletionDateDesc(long participationId);
+
+    @EntityGraph(type = LOAD, attributePaths = "submission")
+    List<Result> findByParticipationExerciseIdOrderByCompletionDateAsc(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
-    List<Result> findWithEagerSubmissionAndFeedbackByParticipationExerciseId(Long exerciseId);
+    List<Result> findWithEagerSubmissionAndFeedbackByParticipationExerciseId(long exerciseId);
 
     /**
      * Get the latest results for each programming exercise student participation in an exercise from the database together with the list of feedback items.
@@ -71,24 +71,24 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND sp.student IS NOT NULL
             ORDER BY r.completionDate ASC
             """)
-    List<Result> findLatestAutomaticResultsWithEagerFeedbacksForExercise(@Param("exerciseId") Long exerciseId);
+    List<Result> findLatestAutomaticResultsWithEagerFeedbacksForExercise(@Param("exerciseId") long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase" })
-    Optional<Result> findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(Long participationId);
+    Optional<Result> findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "feedbacks.testCase" })
-    Optional<Result> findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(Long participationId);
+    Optional<Result> findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = "submission")
-    Optional<Result> findFirstByParticipationIdOrderByCompletionDateDesc(Long participationId);
+    Optional<Result> findFirstByParticipationIdOrderByCompletionDateDesc(long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = "submission")
-    Optional<Result> findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(Long participationId, boolean rated);
+    Optional<Result> findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(long participationId, boolean rated);
 
-    Optional<Result> findDistinctBySubmissionId(Long submissionId);
+    Optional<Result> findDistinctBySubmissionId(long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = "feedbacks")
-    Optional<Result> findDistinctWithFeedbackBySubmissionId(Long submissionId);
+    Optional<Result> findDistinctWithFeedbackBySubmissionId(long submissionId);
 
     @Query("""
             SELECT r
@@ -97,7 +97,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 LEFT JOIN FETCH f.testCase
             WHERE r.id = :resultId
             """)
-    Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long resultId);
+    Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") long resultId);
 
     @Query("""
             SELECT r
@@ -107,14 +107,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 LEFT JOIN FETCH r.assessor
             WHERE r.id = :resultId
             """)
-    Optional<Result> findByIdWithEagerFeedbacksAndAssessor(@Param("resultId") Long resultId);
+    Optional<Result> findByIdWithEagerFeedbacksAndAssessor(@Param("resultId") long resultId);
 
-    @Query("""
-            SELECT r
-            FROM Result r
-            WHERE r.participation.exercise.id = :exerciseId
-            """)
-    List<Result> findAllByExerciseId(@Param("exerciseId") Long exerciseId);
+    Set<Result> findAllByParticipationExerciseId(long exerciseId);
 
     /**
      * Load a result from the database by its id together with the associated submission, the list of feedback items and the assessor.
@@ -123,7 +118,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @return an optional containing the result with submission, feedback list and assessor, or an empty optional if no result could be found for the given id
      */
     @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.results", "feedbacks", "assessor" })
-    Optional<Result> findWithEagerSubmissionAndFeedbackAndAssessorById(Long resultId);
+    Optional<Result> findWithEagerSubmissionAndFeedbackAndAssessorById(long resultId);
 
     /**
      * counts the number of assessments of a course, which are either rated or not rated
@@ -167,7 +162,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND p.lastResult IS NOT NULL
                 AND p.lastResult.assessor IS NOT NULL
             """)
-    long countNumberOfRatedResultsForExercise(@Param("exerciseId") Long exerciseId);
+    long countNumberOfRatedResultsForExercise(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT COUNT(DISTINCT p)
@@ -182,7 +177,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND r.completionDate IS NOT NULL
                 AND (e.dueDate IS NULL OR r.submission.submissionDate <= e.dueDate)
             """)
-    long countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
+    long countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
     /**
      * @param exerciseId id of exercise
@@ -201,7 +196,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND r.assessor IS NOT NULL
             GROUP BY p.id
             """)
-    List<Long> countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
+    List<Long> countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT r
@@ -214,7 +209,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND r.completionDate IS NULL
                 AND r.assessor.id <> :tutorId
             """)
-    List<Result> countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("tutorId") Long tutorId);
+    List<Result> countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(@Param("exerciseId") long exerciseId, @Param("tutorId") long tutorId);
 
     /**
      * count the number of finished assessments of an exam with given examId
@@ -235,10 +230,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND r.assessor IS NOT NULL
             GROUP BY p.id
             """)
-    List<Long> countNumberOfFinishedAssessmentsByExamIdIgnoreTestRuns(@Param("examId") Long examId);
+    List<Long> countNumberOfFinishedAssessmentsByExamIdIgnoreTestRuns(@Param("examId") long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks" })
-    Set<Result> findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(Long exerciseId);
+    Set<Result> findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(long exerciseId);
 
     @Query("""
             SELECT COUNT(DISTINCT p)
@@ -251,7 +246,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND r.completionDate IS NOT NULL
                 AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)
               """)
-    long countNumberOfAssessmentsByTypeForExerciseBeforeDueDate(@Param("exerciseId") Long exerciseId, @Param("types") List<AssessmentType> types);
+    long countNumberOfAssessmentsByTypeForExerciseBeforeDueDate(@Param("exerciseId") long exerciseId, @Param("types") List<AssessmentType> types);
 
     @Query("""
             SELECT COUNT(DISTINCT p)
@@ -265,7 +260,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND p.exercise.dueDate IS NOT NULL
                 AND r.submission.submissionDate > p.exercise.dueDate
             """)
-    long countNumberOfAssessmentsByTypeForExerciseAfterDueDate(@Param("exerciseId") Long exerciseId, @Param("types") List<AssessmentType> types);
+    long countNumberOfAssessmentsByTypeForExerciseAfterDueDate(@Param("exerciseId") long exerciseId, @Param("types") List<AssessmentType> types);
 
     @Query("""
             SELECT r
@@ -280,7 +275,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
-    List<Result> getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
+    List<Result> getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
     @Query("""
             SELECT r
@@ -295,7 +290,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
-    List<Result> getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
+    List<Result> getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
 
     @Query("""
             SELECT r
@@ -311,7 +306,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
-    List<Result> getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
+    List<Result> getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
     @Query("""
             SELECT r
@@ -327,7 +322,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
-    List<Result> getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
+    List<Result> getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
 
     List<Result> findAllByLastModifiedDateAfter(Instant lastModifiedDate);
 
@@ -401,7 +396,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param numberOfCorrectionRounds - the correction round we want finished assessments for
      * @return an array of the number of assessments for the exercise for a given correction round
      */
-    default DueDateStat[] countNumberOfFinishedAssessmentsForExamForCorrectionRounds(Long examId, int numberOfCorrectionRounds) {
+    default DueDateStat[] countNumberOfFinishedAssessmentsForExamForCorrectionRounds(long examId, int numberOfCorrectionRounds) {
 
         // here we receive a list which contains an entry for each student participation of the exam.
         // the entry simply is the number of already created and submitted manual results, so the number is either 1 or 2
@@ -440,7 +435,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param exerciseId the exercise we are interested in
      * @return number of assessments for the exercise
      */
-    default DueDateStat countNumberOfAutomaticAssistedAssessmentsForExercise(Long exerciseId) {
+    default DueDateStat countNumberOfAutomaticAssistedAssessmentsForExercise(long exerciseId) {
         List<AssessmentType> automaticAssessmentTypes = asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC);
         return new DueDateStat(countNumberOfAssessmentsByTypeForExerciseBeforeDueDate(exerciseId, automaticAssessmentTypes),
                 countNumberOfAssessmentsByTypeForExerciseAfterDueDate(exerciseId, automaticAssessmentTypes));
@@ -452,7 +447,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param exerciseId - the exercise we are interested in
      * @return a number of assessments for the exercise
      */
-    default DueDateStat countNumberOfFinishedAssessmentsForExercise(Long exerciseId) {
+    default DueDateStat countNumberOfFinishedAssessmentsForExercise(long exerciseId) {
         return new DueDateStat(countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(exerciseId), 0L);
     }
 
@@ -676,7 +671,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param withSubmission  determines whether the submission should also be fetched
      * @return an optional result (might exist or not).
      */
-    default Optional<Result> findLatestResultWithFeedbacksForParticipation(Long participationId, boolean withSubmission) {
+    default Optional<Result> findLatestResultWithFeedbacksForParticipation(long participationId, boolean withSubmission) {
         if (withSubmission) {
             return findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId);
         }

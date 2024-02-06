@@ -40,7 +40,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
             FROM GradingScale gradingScale
             WHERE gradingScale.course.id = :courseId
             """)
-    Optional<GradingScale> findByCourseId(@Param("courseId") Long courseId);
+    Optional<GradingScale> findByCourseId(@Param("courseId") long courseId);
 
     /**
      * Find a grading scale for exam by id
@@ -53,7 +53,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
             FROM GradingScale gradingScale
             WHERE gradingScale.exam.id = :examId
             """)
-    Optional<GradingScale> findByExamId(@Param("examId") Long examId);
+    Optional<GradingScale> findByExamId(@Param("examId") long examId);
 
     /**
      * Find a grading scale for exam by id with applied bonus
@@ -67,7 +67,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
                 LEFT JOIN FETCH gradingScale.bonusFrom
             WHERE gradingScale.exam.id = :examId
             """)
-    Optional<GradingScale> findByExamIdWithBonusFrom(@Param("examId") Long examId);
+    Optional<GradingScale> findByExamIdWithBonusFrom(@Param("examId") long examId);
 
     /**
      * Finds a grading scale for course by id or throws an exception if no such grading scale exists.
@@ -79,7 +79,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @return the found grading scale
      */
     @NotNull
-    default GradingScale findByCourseIdOrElseThrow(Long courseId) {
+    default GradingScale findByCourseIdOrElseThrow(long courseId) {
         try {
             return findByCourseId(courseId).orElseThrow(() -> new EntityNotFoundException("Grading scale with course ID " + courseId + " doesn't exist"));
         }
@@ -94,7 +94,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @param courseId the id of the course
      * @return a list of grading scales for the course
      */
-    List<GradingScale> findAllByCourseId(Long courseId);
+    List<GradingScale> findAllByCourseId(long courseId);
 
     /**
      * Finds a grading scale for exam by id or throws an exception if no such grading scale exists.
@@ -106,7 +106,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @return the found grading scale
      */
     @NotNull
-    default GradingScale findByExamIdOrElseThrow(Long examId) {
+    default GradingScale findByExamIdOrElseThrow(long examId) {
         try {
             return findByExamId(examId).orElseThrow(() -> new EntityNotFoundException("Grading scale with exam ID " + examId + " doesn't exist"));
         }
@@ -121,7 +121,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @param examId the id of the exam
      * @return a list of grading scales for the exam
      */
-    List<GradingScale> findAllByExamId(Long examId);
+    List<GradingScale> findAllByExamId(long examId);
 
     /**
      * Query which fetches all the grading scales with BONUS grade type for which the user is instructor in the course and matching the search criteria.
@@ -181,10 +181,10 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
     Set<GradingScale> findAllByCourseIds(@Param("courseIds") Set<Long> courseIds);
 
     @EntityGraph(type = LOAD, attributePaths = "bonusFrom")
-    Optional<GradingScale> findWithEagerBonusFromByBonusFromId(Long bonusId);
+    Optional<GradingScale> findWithEagerBonusFromByBonusFromId(long bonusId);
 
     @EntityGraph(type = LOAD, attributePaths = "bonusFrom")
-    Optional<GradingScale> findWithEagerBonusFromByExamId(Long examId);
+    Optional<GradingScale> findWithEagerBonusFromByExamId(long examId);
 
     /**
      * Maps a grade percentage to a valid grade step within the grading scale or throws an exception if no match was found
@@ -193,7 +193,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @param gradingScaleId the identifier for the grading scale
      * @return grade step corresponding to the given percentage
      */
-    default GradeStep matchPercentageToGradeStep(double percentage, Long gradingScaleId) {
+    default GradeStep matchPercentageToGradeStep(double percentage, long gradingScaleId) {
         Set<GradeStep> gradeSteps = findById(gradingScaleId).orElseThrow().getGradeSteps();
         return this.matchPercentageToGradeStep(percentage, gradeSteps);
     }
@@ -202,7 +202,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @param percentage the grade percentage to be mapped
      * @param gradeSteps the grade steps of a grading scale
      * @return grade step corresponding to the given percentage
-     * @see #matchPercentageToGradeStep(double, Long)
+     * @see #matchPercentageToGradeStep(double, long)
      */
     private GradeStep matchPercentageToGradeStep(double percentage, Set<GradeStep> gradeSteps) {
         if (percentage < 0) {
@@ -227,7 +227,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @param isExam   determines if the method is handling a grading scale for course or exam
      * @return the only remaining grading scale for the course/exam
      */
-    default GradingScale deleteExcessiveGradingScales(Long entityId, boolean isExam) {
+    default GradingScale deleteExcessiveGradingScales(long entityId, boolean isExam) {
         List<GradingScale> gradingScales;
         if (isExam) {
             gradingScales = findAllByExamId(entityId);

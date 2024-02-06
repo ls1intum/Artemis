@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface BonusRepository extends JpaRepository<Bonus, Long> {
 
-    default Bonus findByIdElseThrow(Long bonusId) throws EntityNotFoundException {
+    default Bonus findByIdElseThrow(long bonusId) throws EntityNotFoundException {
         return findById(bonusId).orElseThrow(() -> new EntityNotFoundException("Bonus", bonusId));
     }
 
@@ -25,8 +25,8 @@ public interface BonusRepository extends JpaRepository<Bonus, Long> {
             FROM GradingScale gs
             WHERE gs.exam.id = :examId
             """)
-    Set<Bonus> findAllByBonusToExamId(@Param("examId") Long examId);
+    Set<Bonus> findAllByBonusToExamId(@Param("examId") long examId);
 
-    boolean existsByBonusToGradingScaleId(Long bonusToGradingScaleId);
+    boolean existsByBonusToGradingScaleId(long bonusToGradingScaleId);
 
 }

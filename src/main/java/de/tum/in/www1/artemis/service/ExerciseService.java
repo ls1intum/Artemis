@@ -167,7 +167,7 @@ public class ExerciseService {
      * @return an object node with the stats
      */
     public StatsForDashboardDTO populateCommonStatistics(Exercise exercise, boolean examMode) {
-        final Long exerciseId = exercise.getId();
+        final long exerciseId = exercise.getId();
         StatsForDashboardDTO stats = new StatsForDashboardDTO();
 
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();

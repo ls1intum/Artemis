@@ -1207,7 +1207,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         createTestParticipationsWithMultipleResults();
         // this method is tested. It should probably be improved as there is an inner query
         var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(programmingExerciseSCAEnabled.getId());
-        var allResults = resultRepository.findAllByExerciseId(programmingExerciseSCAEnabled.getId());
+        var allResults = resultRepository.findAllByParticipationExerciseId(programmingExerciseSCAEnabled.getId());
         assertThat(results).hasSize(5);
         assertThat(allResults).hasSize(6);
     }
