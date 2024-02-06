@@ -32,6 +32,7 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     courseId: number;
     exerciseId: number;
     paramSub: Subscription;
+    routerLink: string;
 
     constructor(
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
@@ -41,6 +42,7 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit(): void {
+        this.routerLink = this.router.url;
         this.paramSub = this.route.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
             this.exerciseId = Number(params['exerciseId']);
@@ -73,10 +75,6 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     getCommitUrl(commitInfo: CommitInfo) {
         const submission = this.findSubmissionForCommit(commitInfo, this.submissions);
         return createCommitUrl(this.commitHashURLTemplate, this.exerciseProjectKey, submission?.participation, submission);
-    }
-
-    getCommitUrlForRepositoryView(commitInfo: CommitInfo) {
-        return this.router.url + '/' + commitInfo.hash;
     }
 
     private findSubmissionForCommit(commitInfo: CommitInfo, submissions: ProgrammingSubmission[] | undefined) {

@@ -171,7 +171,7 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/programming-exercises/:exerciseId/participations/repository/:participationId',
+        path: ':courseId/programming-exercises/:exerciseId/participations/:participationId/repository',
         component: RepositoryViewComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
@@ -183,7 +183,7 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/programming-exercises/:exerciseId/participations/repository/:participationId/commit-history',
+        path: ':courseId/programming-exercises/:exerciseId/participations/:participationId/repository/commit-history',
         component: CommitHistoryComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
@@ -195,7 +195,7 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/programming-exercises/:exerciseId/participations/repository/:participationId/commit-history/:commitHash',
+        path: ':courseId/programming-exercises/:exerciseId/participations/:participationId/repository/commit-history/:commitHash',
         component: CommitDetailsViewComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],

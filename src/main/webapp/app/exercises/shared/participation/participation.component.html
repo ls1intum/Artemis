@@ -140,13 +140,10 @@
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-row="row">
-                            <jhi-open-repository-button
-                                [participations]="[row]"
-                                [smallButtons]="true"
-                                [exercise]="exercise"
-                                [courseAndExerciseNavigationUrlSegment]="['repository']"
-                            >
-                            </jhi-open-repository-button>
+                            <a [href]="routerLink + '/' + row.id + '/repository'" class="btn btn-sm btn-primary ms-2">
+                                <fa-icon [icon]="faCodeBranch" />
+                                <span jhiTranslate="artemisApp.exerciseActions.openRepository">Open Repository</span>
+                            </a>
                         </ng-template>
                     </ngx-datatable-column>
                 }

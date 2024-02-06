@@ -430,7 +430,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             switch (this.lastRouteUrlSegment) {
                 case 'code-editor':
                 case 'test-exam':
-                case 'repository':
                 case 'participate':
                     this.addTranslationAsCrumb(currentPath, this.lastRouteUrlSegment);
                     return;
@@ -452,9 +451,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'system-notification-management':
             case 'teams':
             case 'code-editor':
-                this.addBreadcrumb(currentPath, segment, false);
-                break;
-            case 'repository':
                 this.addBreadcrumb(currentPath, segment, false);
                 break;
             case 'course-management':
@@ -556,7 +552,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'reset':
             case 'groups':
             case 'code-editor':
-            case 'repository':
             case 'admin':
             case 'ide':
             case 'text-units':

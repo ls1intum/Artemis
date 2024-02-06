@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -17,7 +17,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
     templateUrl: './commit-history.component.html',
     styleUrl: './commit-history.component.scss',
 })
-export class CommitHistoryComponent {
+export class CommitHistoryComponent implements OnInit, OnDestroy {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly dayjs = dayjs;
 
@@ -69,6 +69,11 @@ export class CommitHistoryComponent {
         this.filterUnfinishedResults(this.exercise.studentParticipations);
         this.mergeResultsAndSubmissionsForParticipations();
         this.subscribeForNewResults();
+        this.exercise.studentParticipations?.forEach((participation) => {
+            if (participation.student) {
+                this.users.set(participation.student.name!, participation.student);
+            }
+        });
     }
 
     /**

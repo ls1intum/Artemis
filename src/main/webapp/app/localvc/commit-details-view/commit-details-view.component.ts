@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
@@ -15,7 +15,7 @@ import { User } from 'app/core/user/user.model';
     templateUrl: './commit-details-view.component.html',
     styleUrl: './commit-details-view.component.scss',
 })
-export class CommitDetailsViewComponent {
+export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     exercise: ProgrammingExercise;
     report: ProgrammingExerciseGitDiffReport;
     diffForTemplateAndSolution = false;
