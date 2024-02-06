@@ -378,8 +378,9 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         final List<GradingInstruction> gradingInstructions1 = List.copyOf(criterion1.getStructuredGradingInstructions());
         final GradingInstruction instruction1a = gradingInstructions1.get(0);
         final GradingInstruction instruction1b = gradingInstructions1.get(1);
-        final List<GradingInstruction> gradingInstructions2 = List.copyOf(criterion2.getStructuredGradingInstructions());
-        final GradingInstruction instruction2 = gradingInstructions2.get(0);
+        final Set<GradingInstruction> gradingInstructions2 = criterion2.getStructuredGradingInstructions();
+        assertThat(gradingInstructions2).hasSize(1);
+        final GradingInstruction instruction2 = gradingInstructions2.stream().findFirst().orElseThrow();
 
         for (final var participation : fileUploadExercise.getStudentParticipations()) {
             for (final var result : participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream()).toList()) {
