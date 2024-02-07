@@ -68,16 +68,14 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
             .findAllParticipationsByExercise(this.exercise!.id!)
             .pipe(
                 tap((participationsResponse) => {
-                    const participations = participationsResponse.body!;
-                    this.studentParticipation = participations?.find((participation) => {
-                        return participation.id === this.participationId;
-                    })!;
+                    const participation = participationsResponse.body?.find((participation) => participation.id === this.participationId);
+                    this.studentParticipation = participation!;
                     this.studentParticipation.exercise = this.exercise;
                     this.studentParticipation = this.studentParticipation.exercise?.studentParticipations?.find((participation) => {
                         return participation.id === this.participationId;
                     })!;
                     this.studentParticipation.results?.forEach((result) => {
-                        result.participation = this.studentParticipation;
+                        result.participation = participation!;
                     });
                 }),
             )
