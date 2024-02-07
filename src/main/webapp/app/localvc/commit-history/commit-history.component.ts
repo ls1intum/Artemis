@@ -59,6 +59,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     loadExercise(exerciseId: number) {
         this.exerciseService.getExerciseDetails(exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             this.exercise = exerciseResponse.body!;
+            console.log(this.exercise);
             this.handleParticipations();
         });
     }
@@ -68,15 +69,19 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
             .findAllParticipationsByExercise(this.exercise!.id!)
             .pipe(
                 tap((participationsResponse) => {
+                    console.log(participationsResponse.body);
                     const participation = participationsResponse.body?.find((participation) => participation.id === this.participationId);
+                    console.log(participation);
                     this.studentParticipation = participation!;
                     this.studentParticipation.exercise = this.exercise;
                     this.studentParticipation = this.studentParticipation.exercise?.studentParticipations?.find((participation) => {
                         return participation.id === this.participationId;
                     })!;
-                    this.studentParticipation.results?.forEach((result) => {
-                        result.participation = participation!;
-                    });
+                    if (this.studentParticipation.results) {
+                        this.studentParticipation.results?.forEach((result) => {
+                            result.participation = participation!;
+                        });
+                    }
                 }),
             )
             .subscribe({
