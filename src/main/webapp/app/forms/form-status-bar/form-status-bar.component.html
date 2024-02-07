@@ -4,7 +4,10 @@
         @for (formStatusSection of formStatusSections; track formStatusSection.title) {
             <div class="d-flex flex-column align-items-center gap-2">
                 <div class="d-flex align-items-center justify-content-center border rounded-circle border-secondary form-status-circle">
-                    <jhi-checklist-check [checkAttribute]="formStatusSection.valid" />
+                    <jhi-checklist-check
+                        [checkAttribute]="formStatusSection.valid"
+                        [iconColor]="formStatusSection.empty && formStatusSection.valid ? 'var(--bs-gray)' : undefined"
+                    />
                 </div>
                 <a (click)="scrollToHeadline(formStatusSection.title)" class="link-primary">{{ formStatusSection.title | artemisTranslate }}</a>
             </div>
