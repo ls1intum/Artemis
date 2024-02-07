@@ -11,6 +11,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Component({
     selector: 'jhi-commit-history',
@@ -21,7 +22,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly dayjs = dayjs;
 
-    private exercise?: Exercise;
+    private exercise?: ProgrammingExercise;
     private participationUpdateListener: Subscription;
     studentParticipation: StudentParticipation;
     users: Map<string, User> = new Map<string, User>();
@@ -59,8 +60,10 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     }
 
     handleNewExercise(newExercise: Exercise) {
-        this.exercise = newExercise;
+        this.exercise = newExercise as ProgrammingExercise;
+        console.log(this.exercise.studentParticipations!);
         this.studentParticipation = this.exercise.studentParticipations!.find((participation) => participation.id === this.participationId)!;
+        console.log(this.studentParticipation);
         this.mergeResultsAndSubmissionsForParticipations();
         this.sortResults();
         this.subscribeForNewResults();
