@@ -12,6 +12,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+import { tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-commit-history',
@@ -27,7 +28,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     studentParticipation: StudentParticipation;
     participationId: number;
     paramSub: Subscription;
-    commits: CommitInfo[] = [];
+    commits: CommitInfo[];
     commitsInfoSubscription: Subscription;
 
     constructor(
@@ -57,48 +58,82 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
 
     loadExercise(exerciseId: number) {
         this.exerciseService.getExerciseDetails(exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
-            this.handleNewExercise(exerciseResponse.body!);
-        });
-    }
-
-    handleNewExercise(newExercise: Exercise) {
-        console.log(newExercise);
-        console.log(newExercise.studentParticipations);
-        this.exercise = newExercise as ProgrammingExercise;
-        this.exercise.studentParticipations = newExercise.studentParticipations;
-        console.log(this.exercise);
-        console.log(this.exercise.studentParticipations);
-        this.handleParticipations();
-        console.log(this.exercise);
-        console.log(this.participationId);
-        console.log(this.exercise.studentParticipations);
-        this.exercise.studentParticipations?.forEach((participation) => {
-            console.log(participation);
-        });
-        this.studentParticipation = this.exercise.studentParticipations?.find((participation) => {
-            console.log(participation);
-            return participation.id === this.participationId;
-        })!;
-
-        console.log(this.studentParticipation);
-        this.mergeResultsAndSubmissionsForParticipations();
-        this.sortResults();
-        this.subscribeForNewResults();
-        this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(this.participationId).subscribe((commits) => {
-            this.commits = commits.filter((commit) =>
-                this.studentParticipation.submissions?.some((submission) => {
-                    const programmingSubmission = submission as ProgrammingSubmission;
-                    return programmingSubmission.commitHash === commit.hash;
-                }),
-            );
-            this.commits = this.sortCommitsByTimestampDesc(this.commits);
-            this.setCommitDetails();
+            this.exercise = exerciseResponse.body!;
+            this.handleParticipations();
         });
     }
 
     private handleParticipations() {
-        this.participationService.findAllParticipationsByExercise(this.exercise!.id!).subscribe((participations) => {
-            this.exercise!.studentParticipations = participations.body!;
+        this.participationService
+            .findAllParticipationsByExercise(this.exercise!.id!)
+            .pipe(
+                tap((participationsResponse) => {
+                    const participations = participationsResponse.body!;
+                    this.studentParticipation = participations?.find((participation) => {
+                        return participation.id === this.participationId;
+                    })!;
+                    this.studentParticipation.exercise = this.exercise;
+                    this.studentParticipation = this.studentParticipation.exercise?.studentParticipations?.find((participation) => {
+                        return participation.id === this.participationId;
+                    })!;
+                }),
+            )
+            .subscribe({
+                next: () => {
+                    this.mergeResultsAndSubmissionsForParticipations();
+                    this.sortResults();
+                    this.subscribeForNewResults();
+                    this.handleCommits();
+                },
+            });
+    }
+
+    mergeResultsAndSubmissionsForParticipations() {
+        this.studentParticipation = this.participationService
+            .mergeStudentParticipations([this.studentParticipation])
+            .find((participation) => participation.id === this.participationId)!;
+        // Add exercise to studentParticipation, as the result component is dependent on its existence.
+        this.studentParticipation.exercise = this.exercise;
+    }
+
+    sortResults() {
+        this.studentParticipation.results = this.studentParticipation.results?.sort(this.resultSortFunction);
+    }
+
+    private resultSortFunction = (a: Result, b: Result) => {
+        const aValue = dayjs(a.submission!.submissionDate).valueOf();
+        const bValue = dayjs(b.submission!.submissionDate).valueOf();
+        return aValue - bValue;
+    };
+
+    subscribeForNewResults() {
+        if (this.exercise && this.studentParticipation) {
+            this.participationWebsocketService.addParticipation(this.studentParticipation, this.exercise);
+        }
+        this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
+            if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
+                if (this.studentParticipation.id === changedParticipation.id) {
+                    this.studentParticipation = changedParticipation;
+                }
+            }
+        });
+    }
+
+    handleCommits() {
+        this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(this.participationId).subscribe((commits) => {
+            this.commits = [];
+            for (let i = 0; i < commits.length - 1; i++) {
+                const hasSubmission = this.studentParticipation.submissions?.some((submission) => {
+                    const programmingSubmission = submission as ProgrammingSubmission;
+                    return programmingSubmission.commitHash === commits[i].hash;
+                });
+                if (hasSubmission) {
+                    this.commits.push(commits[i]);
+                }
+            }
+            this.commits.push(commits[commits.length - 1]);
+            this.commits = this.sortCommitsByTimestampDesc(this.commits);
+            this.setCommitDetails();
         });
     }
 
@@ -125,37 +160,5 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
 
     private sortCommitsByTimestampDesc(commitInfos: CommitInfo[]) {
         return commitInfos.sort((a, b) => (dayjs(b.timestamp!).isAfter(dayjs(a.timestamp!)) ? 1 : -1));
-    }
-
-    sortResults() {
-        this.studentParticipation.results = this.studentParticipation.results?.sort(this.resultSortFunction);
-    }
-
-    private resultSortFunction = (a: Result, b: Result) => {
-        const aValue = dayjs(a.submission!.submissionDate).valueOf();
-        const bValue = dayjs(b.submission!.submissionDate).valueOf();
-        return aValue - bValue;
-    };
-
-    mergeResultsAndSubmissionsForParticipations() {
-        console.log(this.studentParticipation);
-        this.studentParticipation = this.participationService
-            .mergeStudentParticipations([this.studentParticipation])
-            .find((participation) => participation.id === this.participationId)!;
-        // Add exercise to studentParticipation, as the result component is dependent on its existence.
-        this.studentParticipation.exercise = this.exercise;
-    }
-
-    subscribeForNewResults() {
-        if (this.exercise && this.studentParticipation) {
-            this.participationWebsocketService.addParticipation(this.studentParticipation, this.exercise);
-        }
-        this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
-            if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
-                if (this.studentParticipation.id === changedParticipation.id) {
-                    this.studentParticipation = changedParticipation;
-                }
-            }
-        });
     }
 }
