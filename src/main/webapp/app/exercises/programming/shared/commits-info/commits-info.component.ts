@@ -57,6 +57,8 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
                     this.setCommitDetails();
                 });
             }
+        } else {
+            this.setCommitDetails();
         }
         // Get active profiles, to distinguish between Bitbucket and GitLab, and to check if localVC is enabled
         this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
