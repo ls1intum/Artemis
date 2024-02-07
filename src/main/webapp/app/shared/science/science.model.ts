@@ -6,6 +6,7 @@
 export enum ScienceEventType {
     LECTURE__OPEN = 'LECTURE__OPEN',
     LECTURE__OPEN_UNIT = 'LECTURE__OPEN_UNIT',
+    EXERCISE__OPEN = 'EXERCISE__OPEN',
 }
 
 export class ScienceEventDTO {
