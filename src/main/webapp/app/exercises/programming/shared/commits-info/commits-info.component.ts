@@ -70,9 +70,11 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     }
 
     private setCommitDetails() {
-        for (const commit of this.commits!) {
-            const submission = this.findSubmissionForCommit(commit, this.submissions);
-            commit.commitUrl = createCommitUrl(this.commitHashURLTemplate, this.exerciseProjectKey, submission?.participation, submission);
+        if (this.commits) {
+            for (const commit of this.commits) {
+                const submission = this.findSubmissionForCommit(commit, this.submissions);
+                commit.commitUrl = createCommitUrl(this.commitHashURLTemplate, this.exerciseProjectKey, submission?.participation, submission);
+            }
         }
     }
 
