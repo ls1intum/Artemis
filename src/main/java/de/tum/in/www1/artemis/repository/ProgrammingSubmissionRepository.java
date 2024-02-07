@@ -3,10 +3,8 @@ package de.tum.in.www1.artemis.repository;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
@@ -74,11 +72,11 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
      * @return the latest legal submission for the participation
      */
     default Optional<ProgrammingSubmission> findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(Long participationId) {
-        Set<SubmissionType> types = new HashSet<>(List.of(SubmissionType.values()));
-        types.remove(SubmissionType.ILLEGAL);
-        types.add(null);
-        return findFirstByParticipationIdAndTypeInOrderBySubmissionDateDesc(participationId, types);
+        return findFirstByTypeNotAndTypeNotNullAndParticipationIdAndResultsNotNullOrderBySubmissionDateDesc(SubmissionType.ILLEGAL, participationId);
     }
+
+    @EntityGraph(type = LOAD, attributePaths = "results")
+    Optional<ProgrammingSubmission> findFirstByTypeNotAndTypeNotNullAndParticipationIdAndResultsNotNullOrderBySubmissionDateDesc(SubmissionType type, Long participationId);
 
     /**
      * Get the latest submission for a participation with specific types.
