@@ -66,7 +66,10 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
         console.log(this.exercise);
         this.handleParticipations();
         console.log(this.exercise);
-        this.studentParticipation = this.exercise!.studentParticipations!.find((participation) => participation.id === this.participationId)!;
+        this.studentParticipation = this.exercise!.studentParticipations!.find((participation) => {
+            console.log(participation);
+            return participation.id === this.participationId;
+        })!;
         console.log(this.studentParticipation);
         this.mergeResultsAndSubmissionsForParticipations();
         this.sortResults();

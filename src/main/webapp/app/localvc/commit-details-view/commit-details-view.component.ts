@@ -85,12 +85,9 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
             ?.find((participation) => participation.id === this.participationId)
             ?.submissions?.map((submission) => submission as ProgrammingSubmission)
             .sort((a, b) => (dayjs(b.submissionDate!).isAfter(dayjs(a.submissionDate!)) ? -1 : 1));
-        console.log(submissions);
         if (submissions && submissions.length > 0) {
             for (let i = 0; i < submissions.length; i++) {
                 if (submissions[i].commitHash === this.commitHash) {
-                    console.log(this.commitHash);
-                    console.log(submissions[i].commitHash);
                     this.currentSubmission = submissions[i];
                     if (i > 0) {
                         this.previousSubmission = submissions[i - 1];
