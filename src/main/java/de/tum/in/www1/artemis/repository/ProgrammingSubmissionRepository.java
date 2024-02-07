@@ -66,6 +66,13 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
             """)
     Optional<ProgrammingSubmission> findFirstByParticipationIdOrderByLegalSubmissionDateDesc(@Param("participationId") Long participationId);
 
+    /**
+     * Get the latest legal submission for a participation (ignoring illegal submissions).
+     * The type of the submission can also be null, so that the query also returns submissions without a type.
+     *
+     * @param participationId the id of the participation
+     * @return the latest legal submission for the participation
+     */
     default Optional<ProgrammingSubmission> findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(Long participationId) {
         Set<SubmissionType> types = new HashSet<>(List.of(SubmissionType.values()));
         types.remove(SubmissionType.ILLEGAL);
