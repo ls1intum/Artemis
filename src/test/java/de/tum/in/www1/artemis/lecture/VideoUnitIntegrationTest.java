@@ -114,12 +114,12 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateVideoUnit_withoutLecture_shouldReturnConflict() throws Exception {
+    void updateVideoUnit_withoutLecture_shouldReturnBadRequest() throws Exception {
         persistVideoUnitWithLecture();
 
         this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
         this.videoUnit.setLecture(null);
-        request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/video-units", this.videoUnit, VideoUnit.class, HttpStatus.CONFLICT);
+        request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/video-units", this.videoUnit, VideoUnit.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
