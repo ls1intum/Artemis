@@ -80,6 +80,13 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
         return findFirstByParticipationIdAndTypeInOrderBySubmissionDateDesc(participationId, types);
     }
 
+    /**
+     * Get the latest submission for a participation with specific types.
+     *
+     * @param participationId the id of the participation
+     * @param type            the type of the submission
+     * @return the latest submission for the participation with one of the given types
+     */
     @EntityGraph(type = LOAD, attributePaths = "results")
     Optional<ProgrammingSubmission> findFirstByParticipationIdAndTypeInOrderBySubmissionDateDesc(Long participationId, Collection<SubmissionType> type);
 
