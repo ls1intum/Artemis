@@ -1721,7 +1721,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         Exam exam = examUtilService.addExamWithExerciseGroup(course1, false);
         ExerciseGroup quizGroup = exam.getExerciseGroups().get(0);
         QuizExercise quiz = QuizExerciseFactory.generateQuizExerciseForExam(quizGroup);
-        QuizExerciseFactory.addAllQuestionTypesToQuizExercise(quiz);
+        quiz.addQuestions(QuizExerciseFactory.createMultipleChoiceQuestionWithAllTypesOfAnswerOptions());
+        quiz.addQuestions(QuizExerciseFactory.createShortAnswerQuestionWithRealisticText());
+        quiz.addQuestions(QuizExerciseFactory.createSingleChoiceQuestion());
         quizGroup.addExercise(quiz);
         exerciseRepository.save(quiz);
 
@@ -1738,7 +1740,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         exercise = quizExerciseRepository.findWithEagerQuestionsByIdOrElseThrow(exercise.getId());
         // Quiz questions should get imported into the exam
-        assertThat(exercise.getQuizQuestions()).hasSize(4);
+        assertThat(exercise.getQuizQuestions()).hasSize(3);
     }
 
     @Test
