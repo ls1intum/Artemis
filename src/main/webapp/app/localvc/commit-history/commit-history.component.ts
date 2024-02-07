@@ -64,6 +64,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     handleNewExercise(newExercise: Exercise) {
         this.exercise = newExercise as ProgrammingExercise;
         console.log(this.exercise);
+        console.log(this.exercise.studentParticipations);
         this.handleParticipations();
         console.log(this.exercise);
         console.log(this.participationId);
