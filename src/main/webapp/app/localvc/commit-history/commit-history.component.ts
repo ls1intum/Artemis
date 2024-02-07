@@ -64,6 +64,8 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     handleNewExercise(newExercise: Exercise) {
         this.exercise = newExercise as ProgrammingExercise;
         console.log(this.exercise);
+        this.handleParticipations();
+        console.log(this.exercise);
         console.log(this.participationId);
         console.log(this.exercise.studentParticipations);
         this.exercise.studentParticipations?.forEach((participation) => {
@@ -87,6 +89,12 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
             );
             this.commits = this.sortCommitsByTimestampDesc(this.commits);
             this.setCommitDetails();
+        });
+    }
+
+    private handleParticipations() {
+        this.participationService.findAllParticipationsByExercise(this.exercise!.id!).subscribe((participations) => {
+            this.exercise!.studentParticipations = participations.body!;
         });
     }
 
