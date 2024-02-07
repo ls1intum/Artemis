@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -540,7 +539,7 @@ public class LocalVCLocalCITestService {
         for (ProgrammingSubmission submission : submissions) {
             log.info("Submission with commit hash: " + submission.getCommitHash());
         }
-        await().timeout(10, TimeUnit.MINUTES).until(() -> {
+        await().until(() -> {
             // get the latest valid submission (!ILLEGAL and with results) of the participation
             SecurityContextHolder.getContext().setAuthentication(auth);
             var submission = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(participationId);
