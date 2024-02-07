@@ -5,7 +5,6 @@ import { Subscription } from 'rxjs';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -24,7 +23,6 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     readonly dayjs = dayjs;
 
     private exercise?: ProgrammingExercise;
-    private participationUpdateListener: Subscription;
     studentParticipation: StudentParticipation;
     participationId: number;
     paramSub: Subscription;
@@ -33,7 +31,6 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
 
     constructor(
         private exerciseService: ExerciseService,
-        private participationWebsocketService: ParticipationWebsocketService,
         private participationService: ParticipationService,
         private route: ActivatedRoute,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
@@ -48,10 +45,6 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.participationUpdateListener?.unsubscribe();
-        if (this.studentParticipation) {
-            this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.studentParticipation.id!, this.exercise!);
-        }
         this.paramSub?.unsubscribe();
         this.commitsInfoSubscription?.unsubscribe();
     }
@@ -69,9 +62,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
             .findAllParticipationsByExercise(this.exercise!.id!)
             .pipe(
                 tap((participationsResponse) => {
-                    console.log(participationsResponse.body);
                     const participation = participationsResponse.body?.find((participation) => participation.id === this.participationId);
-                    console.log(participation);
                     this.studentParticipation = participation!;
                     this.studentParticipation.exercise = this.exercise;
                     this.studentParticipation = this.studentParticipation.exercise?.studentParticipations?.find((participation) => {
@@ -87,7 +78,6 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: () => {
                     this.sortResults();
-                    this.subscribeForNewResults();
                     this.handleCommits();
                 },
             });
@@ -102,19 +92,6 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
         const bValue = dayjs(b.submission!.submissionDate).valueOf();
         return aValue - bValue;
     };
-
-    subscribeForNewResults() {
-        if (this.exercise && this.studentParticipation) {
-            this.participationWebsocketService.addParticipation(this.studentParticipation, this.exercise);
-        }
-        this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
-            if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
-                if (this.studentParticipation.id === changedParticipation.id) {
-                    this.studentParticipation = changedParticipation;
-                }
-            }
-        });
-    }
 
     handleCommits() {
         this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(this.participationId).subscribe((commits) => {
