@@ -150,6 +150,15 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
+            WHERE p.id = :participationId
+            """)
+    Optional<StudentParticipation> findByIdWithEagerTeamStudents(@Param("participationId") Long participationId);
+
+    @Query("""
+            SELECT DISTINCT p
+            FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results
             WHERE p.exercise.id = :exerciseId
@@ -808,6 +817,11 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @NotNull
     default StudentParticipation findByIdWithLegalSubmissionsElseThrow(long participationId) {
         return findWithEagerLegalSubmissionsById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+    }
+
+    @NotNull
+    default StudentParticipation findByIdWithEagerTeamStudentsElseThrow(long participationId) {
+        return findByIdWithEagerTeamStudents(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
     }
 
     /**
