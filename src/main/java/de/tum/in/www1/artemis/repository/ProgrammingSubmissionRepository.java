@@ -57,6 +57,15 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
         return findByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participationId, commitHash).stream().findFirst().orElse(null);
     }
 
+    @Query("""
+            SELECT s FROM ProgrammingSubmission s
+            LEFT JOIN FETCH s.results
+            WHERE (s.type <> 'ILLEGAL' or s.type is null)
+            AND s.participation.id = :#{#participationId}
+            AND s.id = (SELECT max(s2.id) FROM ProgrammingSubmission s2 WHERE s2.participation.id = :#{#participationId} AND (s2.type <> 'ILLEGAL' or s2.type is null))
+            """)
+    Optional<ProgrammingSubmission> findFirstByParticipationIdOrderByLegalSubmissionDateDesc(@Param("participationId") Long participationId);
+
     default Optional<ProgrammingSubmission> findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(Long participationId) {
         Set<SubmissionType> types = new HashSet<>(List.of(SubmissionType.values()));
         types.remove(SubmissionType.ILLEGAL);
