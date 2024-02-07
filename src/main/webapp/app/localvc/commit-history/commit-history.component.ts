@@ -69,33 +69,25 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
             .pipe(
                 tap((participationsResponse) => {
                     const participations = participationsResponse.body!;
-                    console.log(participations);
                     this.studentParticipation = participations?.find((participation) => {
                         return participation.id === this.participationId;
                     })!;
-                    console.log(this.studentParticipation);
                     this.studentParticipation.exercise = this.exercise;
                     this.studentParticipation = this.studentParticipation.exercise?.studentParticipations?.find((participation) => {
                         return participation.id === this.participationId;
                     })!;
+                    this.studentParticipation.results?.forEach((result) => {
+                        result.participation = this.studentParticipation;
+                    });
                 }),
             )
             .subscribe({
                 next: () => {
-                    this.mergeResultsAndSubmissionsForParticipations();
                     this.sortResults();
                     this.subscribeForNewResults();
                     this.handleCommits();
                 },
             });
-    }
-
-    mergeResultsAndSubmissionsForParticipations() {
-        this.studentParticipation = this.participationService
-            .mergeStudentParticipations([this.studentParticipation])
-            .find((participation) => participation.id === this.participationId)!;
-        // Add exercise to studentParticipation, as the result component is dependent on its existence.
-        this.studentParticipation.exercise = this.exercise;
     }
 
     sortResults() {
