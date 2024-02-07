@@ -99,6 +99,6 @@ describe('OnlineUnitComponent', () => {
         });
         onlineUnitComponentFixture.detectChanges(); // ngInit
         onlineUnitComponent.openLink(new Event('click'));
-        expect(logEventStub).toHaveBeenCalledExactlyOnceWith(ScienceEventType.LECTURE__ONLINE_UNIT_OPEN, onlineUnit.id!);
+        expect(logEventStub).toHaveBeenCalledExactlyOnceWith(ScienceEventType.LECTURE__OPEN_UNIT, onlineUnit.id!);
     });
 });

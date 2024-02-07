@@ -110,6 +110,6 @@ describe('VideoUnitComponent', () => {
         videoUnitComponent.isCollapsed = true;
         videoUnitComponentFixture.detectChanges(); // ngInit
         videoUnitComponent.handleCollapse(new Event('click'));
-        expect(logEventStub).toHaveBeenCalledExactlyOnceWith(ScienceEventType.LECTURE__VIDEO_UNIT_OPEN, videoUnit.id!);
+        expect(logEventStub).toHaveBeenCalledExactlyOnceWith(ScienceEventType.LECTURE__OPEN_UNIT, videoUnit.id!);
     });
 });

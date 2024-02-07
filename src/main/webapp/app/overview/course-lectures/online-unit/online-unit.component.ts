@@ -26,7 +26,7 @@ export class OnlineUnitComponent extends AbstractScienceComponent {
     faSquareCheck = faSquareCheck;
 
     constructor(scienceService: ScienceService) {
-        super(scienceService, ScienceEventType.LECTURE__ONLINE_UNIT_OPEN);
+        super(scienceService, ScienceEventType.LECTURE__OPEN_UNIT);
     }
 
     handleCollapse(event: Event) {

@@ -125,6 +125,6 @@ describe('AttachmentUnitComponent', () => {
     it('should log event on download', () => {
         attachmentUnitComponentFixture.detectChanges(); // ngInit
         attachmentUnitComponent.downloadAttachment(new Event('click'));
-        expect(logEventStub).toHaveBeenCalledExactlyOnceWith(ScienceEventType.LECTURE__FILE_UNIT_DOWNLOAD, attachmentUnit.id!);
+        expect(logEventStub).toHaveBeenCalledExactlyOnceWith(ScienceEventType.LECTURE__OPEN_UNIT, attachmentUnit.id!);
     });
 });

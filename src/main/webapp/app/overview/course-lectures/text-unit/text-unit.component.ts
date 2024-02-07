@@ -34,7 +34,7 @@ export class TextUnitComponent extends AbstractScienceComponent implements OnIni
         private artemisMarkdown: ArtemisMarkdownService,
         scienceService: ScienceService,
     ) {
-        super(scienceService, ScienceEventType.LECTURE__TEXT_UNIT_OPEN);
+        super(scienceService, ScienceEventType.LECTURE__OPEN_UNIT);
     }
 
     ngOnInit(): void {

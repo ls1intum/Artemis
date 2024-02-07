@@ -117,6 +117,6 @@ describe('TextUnitFormComponent', () => {
         textUnitComponent.isCollapsed = true;
         textUnitComponentFixture.detectChanges(); // ngInit
         textUnitComponent.handleCollapse(new Event('click'));
-        expect(logEventStub).toHaveBeenCalledExactlyOnceWith(ScienceEventType.LECTURE__TEXT_UNIT_OPEN, textUnit.id!);
+        expect(logEventStub).toHaveBeenCalledExactlyOnceWith(ScienceEventType.LECTURE__OPEN_UNIT, textUnit.id!);
     });
 });

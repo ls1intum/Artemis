@@ -43,7 +43,7 @@ export class AttachmentUnitComponent extends AbstractScienceComponent {
         private fileService: FileService,
         scienceService: ScienceService,
     ) {
-        super(scienceService, ScienceEventType.LECTURE__FILE_UNIT_DOWNLOAD);
+        super(scienceService, ScienceEventType.LECTURE__OPEN_UNIT);
     }
 
     handleCollapse(event: Event) {
