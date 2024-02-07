@@ -5,7 +5,6 @@ import dayjs from 'dayjs/esm';
  * Starts from 2018 and goes one year into the future
  */
 export function getSemesters() {
-    // 2018 is the first year we offer semesters for and go one year into the future
     const startYear = 2018;
     const futureYears = 1;
     const years = dayjs().year() - startYear + futureYears;
@@ -13,9 +12,9 @@ export function getSemesters() {
 
     const semesters: string[] = [];
     for (let i = 0; i <= years; i++) {
-        const currentYear = startYearShort + years - i;
-        semesters.push('WS' + currentYear + '/' + (currentYear + 1));
-        semesters.push('SS' + currentYear);
+        const currentYear = startYearShort + i;
+        semesters.unshift('SS' + currentYear);
+        semesters.unshift('WS' + currentYear + '/' + (currentYear + 1));
     }
     // Add an empty semester as default value
     semesters.push('');
