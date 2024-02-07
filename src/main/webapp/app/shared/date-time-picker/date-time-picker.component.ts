@@ -1,5 +1,5 @@
-import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, forwardRef } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Component, EventEmitter, Input, Output, ViewChild, forwardRef } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import { faCalendarAlt, faClock, faGlobe, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 
@@ -16,7 +16,7 @@ import dayjs from 'dayjs/esm';
     ],
 })
 export class FormDateTimePickerComponent implements ControlValueAccessor {
-    @ViewChild('dateInput', { static: false }) dateInput: ElementRef;
+    @ViewChild('dateInput', { static: false }) dateInput: NgModel;
     @Input() labelName: string;
     @Input() labelTooltip: string;
     @Input() value: any;
