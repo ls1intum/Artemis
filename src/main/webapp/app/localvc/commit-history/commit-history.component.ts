@@ -4,14 +4,14 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
-import { User } from 'app/core/user/user.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 
 @Component({
     selector: 'jhi-commit-history',
@@ -25,16 +25,17 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     private exercise?: ProgrammingExercise;
     private participationUpdateListener: Subscription;
     studentParticipation: StudentParticipation;
-    users: Map<string, User> = new Map<string, User>();
     participationId: number;
     paramSub: Subscription;
-    resultsMap: Map<string, Result> = new Map<string, Result>();
+    commits: CommitInfo[] = [];
+    commitsInfoSubscription: Subscription;
 
     constructor(
         private exerciseService: ExerciseService,
         private participationWebsocketService: ParticipationWebsocketService,
         private participationService: ParticipationService,
         private route: ActivatedRoute,
+        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
     ) {}
 
     ngOnInit() {
@@ -51,6 +52,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
             this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.studentParticipation.id!, this.exercise!);
         }
         this.paramSub?.unsubscribe();
+        this.commitsInfoSubscription?.unsubscribe();
     }
 
     loadExercise(exerciseId: number) {
@@ -62,19 +64,42 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     handleNewExercise(newExercise: Exercise) {
         this.exercise = newExercise as ProgrammingExercise;
         this.handleParticipations();
+        console.log(this.exercise);
         this.studentParticipation = this.exercise!.studentParticipations!.find((participation) => participation.id === this.participationId)!;
+        console.log(this.studentParticipation);
         this.mergeResultsAndSubmissionsForParticipations();
         this.sortResults();
         this.subscribeForNewResults();
-        this.users.set(this.studentParticipation.student!.name!, this.studentParticipation.student!);
-        if (this.studentParticipation.team) {
-            this.studentParticipation.team.students!.forEach((student) => this.users.set(student.name!, student));
-        }
-        this.studentParticipation.results?.forEach((result) => {
-            const submission = result.submission as ProgrammingSubmission;
-            if (submission) {
-                this.resultsMap.set(submission.commitHash!, result);
+        this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(this.participationId).subscribe((commits) => {
+            this.commits.filter((commit) =>
+                this.studentParticipation.submissions?.some((submission) => {
+                    const programmingSubmission = submission as ProgrammingSubmission;
+                    return programmingSubmission.commitHash === commit.hash;
+                }),
+            );
+            this.commits = this.sortCommitsByTimestampDesc(commits);
+            this.setCommitDetails();
+        });
+    }
+
+    private setCommitDetails() {
+        this.commits.forEach((commit) => {
+            if (this.studentParticipation.student?.name! === commit.author) {
+                commit.user = this.studentParticipation.student!;
             }
+            this.studentParticipation.team?.students?.forEach((student) => {
+                if (student.name! === commit.author) {
+                    commit.user = student;
+                }
+            });
+            this.studentParticipation.results?.forEach((result) => {
+                const submission = result.submission as ProgrammingSubmission;
+                if (submission) {
+                    if (submission.commitHash === commit.hash) {
+                        commit.result = result;
+                    }
+                }
+            });
         });
     }
 
@@ -82,6 +107,10 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
         this.participationService.findAllParticipationsByExercise(this.exercise!.id!).subscribe((participations) => {
             this.exercise!.studentParticipations = participations.body!;
         });
+    }
+
+    private sortCommitsByTimestampDesc(commitInfos: CommitInfo[]) {
+        return commitInfos.sort((a, b) => (dayjs(b.timestamp!).isAfter(dayjs(a.timestamp!)) ? 1 : -1));
     }
 
     sortResults() {
@@ -95,6 +124,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     };
 
     mergeResultsAndSubmissionsForParticipations() {
+        console.log(this.studentParticipation);
         this.studentParticipation = this.participationService
             .mergeStudentParticipations([this.studentParticipation])
             .find((participation) => participation.id === this.participationId)!;

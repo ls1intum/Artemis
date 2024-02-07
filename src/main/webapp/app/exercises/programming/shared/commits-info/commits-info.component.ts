@@ -6,9 +6,7 @@ import { createCommitUrl } from 'app/exercises/programming/shared/utils/programm
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { Subscription } from 'rxjs';
-import { Result } from 'app/entities/result.model';
 import { ActivatedRoute } from '@angular/router';
-import { User } from 'app/core/user/user.model';
 import { Router } from '@angular/router';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
 
@@ -18,13 +16,11 @@ import { faCircle } from '@fortawesome/free-regular-svg-icons';
 })
 export class CommitsInfoComponent implements OnInit, OnDestroy {
     @Input() commits?: CommitInfo[];
-    @Input() users?: Map<string, User>;
     @Input() currentSubmissionHash?: string;
     @Input() previousSubmissionHash?: string;
     @Input() participationId?: number;
     @Input() submissions?: ProgrammingSubmission[];
     @Input() exerciseProjectKey?: string;
-    @Input() resultsMap?: Map<string, Result>;
     @Input() isRepositoryView = false;
     private commitHashURLTemplate: string;
     private commitsInfoSubscription: Subscription;
@@ -75,8 +71,6 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
 
     private setCommitDetails() {
         for (const commit of this.commits!) {
-            commit.user = this.users?.get(commit.author!);
-            commit.result = this.resultsMap?.get(commit.hash!);
             const submission = this.findSubmissionForCommit(commit, this.submissions);
             commit.commitUrl = createCommitUrl(this.commitHashURLTemplate, this.exerciseProjectKey, submission?.participation, submission);
         }
