@@ -68,33 +68,26 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
             });
     }
 
+    /**
+     * This static method combines a date and time into a single Date object. If the date is not provided, it uses an alternative date.
+     * It is used to handle the start and end date of a freePeriod, a freeDay or a freePeriodWithinDay.
+     *
+     * @param {Date} date - The date to be combined with the time. If not provided, the method uses the alternative date. If the provided Date is the startDate, the alternativeDate should be left undefined
+     * @param {Date} time - The time to be combined with the date. If not provided, the method sets the time to 23:59 for the alternative date or 0:00 for the date.
+     * @param {Date} alternativeDate - The alternative date to be used if the date is not provided.
+     * @returns {Date} - The combined date and time as a Date object.
+     * @throws {Error} - Throws an error if both date and time are undefined.
+     */
     public static combineDateAndTimeWithAlternativeDate(date?: Date, time?: Date, alternativeDate?: Date): Date {
-        // If date is undefined, the resulting date is the endDate of a tutorialFreeDay
         if (!date) {
-            if (!alternativeDate) {
-                throw new Error('date and time are undefined');
-            } else if (!time) {
-                const resDate = new Date(alternativeDate);
-                resDate.setHours(23, 59);
-                return resDate;
-            } else {
-                const resDate = new Date(alternativeDate);
-                resDate.setHours(time.getHours(), time.getMinutes());
-                return resDate;
-            }
-        } else if (alternativeDate) {
-            // if there is a date and an alternative date, the resulting date is the endDate of a tutorialFreePeriod
-            date.setHours(23, 59);
-            return date;
-        } else if (!time) {
-            // if there is a date and no time, the resulting date is the startDate of a tutorialFreeDay or a tutorialFreePeriod
-            date.setHours(0, 0, 0);
-            return date;
-        } else {
-            // if there is a date and a time, the resulting date is the startDate or endDate of a tutorialFreePeriodWithinDay
-            date.setHours(time.getHours(), time.getMinutes());
-            return date;
+            // This is the case it is the endDate of a freeDay or a freePeriodWithinDay
+            if (!alternativeDate) throw new Error('date and time are undefined');
+            const resDate = new Date(alternativeDate);
+            resDate.setHours(time ? time.getHours() : 23, time ? time.getMinutes() : 59);
+            return resDate;
         }
+        date.setHours(time ? time.getHours() : alternativeDate ? 23 : 0, time ? time.getMinutes() : 0);
+        return date;
     }
 
     clear() {
