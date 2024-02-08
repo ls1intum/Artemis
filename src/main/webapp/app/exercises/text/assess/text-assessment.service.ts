@@ -50,9 +50,11 @@ export class TextAssessmentService {
      * @param resultId of the corresponding result of type {number}
      * @param feedbacks made during assessment of type {Feedback[]}
      * @param textBlocks of type {TextBlock[]}
+     * @param assessmentNote of the result
      */
-    public submit(participationId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
+    public submit(participationId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[], assessmentNote?: string): Observable<EntityResponseType> {
         const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
+        body.assessmentNote = assessmentNote;
         return this.http
             .post<Result>(`${this.resourceUrl}/participations/${participationId}/results/${resultId}/submit-text-assessment`, body, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertResultEntityResponseTypeFromServer(res)));
@@ -91,12 +93,14 @@ export class TextAssessmentService {
         complaintResponse: ComplaintResponse,
         submissionId: number,
         participationId: number,
+        assessmentNote?: string,
     ): Observable<EntityResponseType> {
         const url = `${this.resourceUrl}/participations/${participationId}/submissions/${submissionId}/text-assessment-after-complaint`;
         const assessmentUpdate = {
             feedbacks,
             textBlocks,
             complaintResponse,
+            assessmentNote,
         };
         return this.http.put<Result>(url, assessmentUpdate, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertResultEntityResponseTypeFromServer(res)));
     }

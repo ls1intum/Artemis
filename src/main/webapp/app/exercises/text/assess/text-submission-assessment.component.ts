@@ -167,7 +167,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             }
             this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun);
         });
-        this.activatedRoute.data.subscribe(({ studentParticipation }) => this.setPropertiesFromServerResponse(studentParticipation));
+        this.activatedRoute.data.subscribe(({ studentParticipation }) => {
+            this.setPropertiesFromServerResponse(studentParticipation);
+            this.validateFeedback();
+        });
     }
 
     ngOnDestroy(): void {
@@ -367,7 +370,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         }
 
         this.submitBusy = true;
-        this.assessmentsService.submit(this.participation!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback).subscribe({
+        this.assessmentsService.submit(this.participation!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback, this.result!.assessmentNote?.note).subscribe({
             next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
             error: (error: HttpErrorResponse) => this.handleError(error),
         });
@@ -422,6 +425,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                 assessmentAfterComplaint.complaintResponse,
                 this.submission?.id!, // eslint-disable-line @typescript-eslint/no-non-null-asserted-optional-chain
                 this.participation?.id!, // eslint-disable-line @typescript-eslint/no-non-null-asserted-optional-chain
+                this.result?.assessmentNote?.note,
             )
             .subscribe({
                 next: (response) => {

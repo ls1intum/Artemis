@@ -417,9 +417,10 @@ public class SubmissionService {
      * This method is used to create a new result, after a complaint has been accepted.
      * The new result contains the updated feedback of the result the complaint belongs to.
      *
-     * @param submission the submission where the original result and the result after the complaintResponse belong to
-     * @param oldResult  the original result, before the response
-     * @param feedbacks  the new feedbacks after the response
+     * @param submission         the submission where the original result and the result after the complaintResponse belong to
+     * @param oldResult          the original result, before the response
+     * @param feedbacks          the new feedbacks after the response
+     * @param assessmentNoteText the new text of the assessment note
      * @return the newly created result
      */
     public Result createResultAfterComplaintResponse(Submission submission, Result oldResult, List<Feedback> feedbacks, String assessmentNoteText) {

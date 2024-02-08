@@ -251,7 +251,7 @@ public class TextAssessmentResource extends AssessmentResource {
             @RequestBody TextAssessmentUpdateDTO assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        TextSubmission textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submissionId);
+        TextSubmission textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocksAndAssessmentNote(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
         if (!studentParticipation.getId().equals(participationId)) {
             throw new BadRequestAlertException("participationId in Submission of submissionId " + submissionId + " doesn't match the paths participationId!", "participationId",
