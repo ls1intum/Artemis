@@ -1,15 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { tap } from 'rxjs/operators';
 
@@ -22,7 +19,6 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly dayjs = dayjs;
 
-    private exercise?: ProgrammingExercise;
     studentParticipation: StudentParticipation;
     participationId: number;
     paramSub: Subscription;
@@ -39,8 +35,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => {
             this.participationId = Number(params['participationId']);
-            const exerciseId = Number(params['exerciseId']);
-            this.loadExercise(exerciseId);
+            this.loadParticipation();
         });
     }
 
@@ -49,66 +44,40 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
         this.commitsInfoSubscription?.unsubscribe();
     }
 
-    loadExercise(exerciseId: number) {
-        this.exerciseService.getExerciseDetails(exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
-            this.exercise = exerciseResponse.body!;
-            this.handleParticipations();
-        });
-        this.programmingExerciseParticipationService.getStudentParticipationWithAllResults(this.participationId).subscribe((participation) => {
-            console.log(participation);
-        });
-    }
-
-    private handleParticipations() {
-        this.participationService
-            .findAllParticipationsByExercise(this.exercise!.id!)
+    loadParticipation() {
+        this.programmingExerciseParticipationService
+            .getStudentParticipationWithAllResults(this.participationId)
             .pipe(
-                tap((participationsResponse) => {
-                    const participation = participationsResponse.body?.find((participation) => participation.id === this.participationId);
-                    this.studentParticipation = participation!;
-                    this.studentParticipation.exercise = this.exercise;
-                    this.studentParticipation = this.studentParticipation.exercise?.studentParticipations?.find((participation) => {
-                        return participation.id === this.participationId;
-                    })!;
-                    if (this.studentParticipation.results) {
-                        this.studentParticipation.results?.forEach((result) => {
-                            result.participation = participation!;
-                        });
-                    }
+                tap((participation) => {
+                    this.studentParticipation = participation;
+                    this.studentParticipation.results?.forEach((result) => {
+                        result.participation = participation!;
+                    });
+                    console.log('participation', participation);
                 }),
             )
             .subscribe({
                 next: () => {
-                    this.sortResults();
                     this.handleCommits();
                 },
             });
     }
 
-    sortResults() {
-        this.studentParticipation.results = this.studentParticipation.results?.sort(this.resultSortFunction);
-    }
-
-    private resultSortFunction = (a: Result, b: Result) => {
-        const aValue = dayjs(a.submission!.submissionDate).valueOf();
-        const bValue = dayjs(b.submission!.submissionDate).valueOf();
-        return aValue - bValue;
-    };
-
     handleCommits() {
         this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(this.participationId).subscribe((commits) => {
             this.commits = [];
-            for (let i = 0; i < commits.length - 1; i++) {
+            const sortedCommits = this.sortCommitsByTimestampDesc(commits);
+            for (let i = 0; i < sortedCommits.length - 1; i++) {
                 const hasSubmission = this.studentParticipation.submissions?.some((submission) => {
                     const programmingSubmission = submission as ProgrammingSubmission;
-                    return programmingSubmission.commitHash === commits[i].hash;
+                    return programmingSubmission.commitHash === sortedCommits[i].hash;
                 });
                 if (hasSubmission) {
-                    this.commits.push(commits[i]);
+                    this.commits.push(sortedCommits[i]);
                 }
             }
-            this.commits.push(commits[commits.length - 1]);
-            this.commits = this.sortCommitsByTimestampDesc(this.commits);
+            // push template commit extra as it has no submission
+            this.commits.push(sortedCommits[sortedCommits.length - 1]);
             this.setCommitDetails();
         });
     }

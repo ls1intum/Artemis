@@ -54,7 +54,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
                 LEFT JOIN FETCH p.results pr
                 LEFT JOIN FETCH pr.feedbacks f
                 LEFT JOIN FETCH f.testCase
-                LEFT JOIN FETCH pr.submission
+                LEFT JOIN FETCH p.submissions
             WHERE p.id = :participationId
              """)
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndFeedbacksAndRelatedSubmissions(@Param("participationId") Long participationId);
