@@ -38,11 +38,11 @@ import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-hea
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { MockFileService } from '../../../helpers/mocks/service/mock-file.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { NgbCollapse, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ScienceService } from 'app/shared/science/science.service';
 
-describe('CourseLectureDetails', () => {
+describe('CourseLectureDetailsComponent', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
     let courseLecturesDetailsComponent: CourseLectureDetailsComponent;
     let lecture: Lecture;
@@ -116,7 +116,6 @@ describe('CourseLectureDetails', () => {
                 MockProvider(LectureUnitService),
                 MockProvider(AlertService),
                 { provide: FileService, useClass: MockFileService },
-                { provide: Router, useValue: MockRouter },
                 { provide: TranslateService, useClass: MockTranslateService },
                 {
                     provide: ActivatedRoute,
@@ -125,8 +124,8 @@ describe('CourseLectureDetails', () => {
                     },
                 },
                 MockProvider(Router),
+                MockProvider(ScienceService),
             ],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {
