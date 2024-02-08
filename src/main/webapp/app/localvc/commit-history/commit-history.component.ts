@@ -59,7 +59,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     }
 
     private handleCommits() {
-        this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(this.participationId).subscribe((commits) => {
+        this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.participationId).subscribe((commits) => {
             this.commits = [];
             const sortedCommits = this.sortCommitsByTimestampDesc(commits);
             for (let i = 0; i < sortedCommits.length - 1; i++) {
