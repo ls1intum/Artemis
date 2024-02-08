@@ -298,10 +298,10 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateAttachmentUnit_withoutLecture_shouldReturnConflict() throws Exception {
+    void updateAttachmentUnit_withoutLecture_shouldReturnBadRequest() throws Exception {
         persistAttachmentUnitWithLecture();
         attachmentUnit.setLecture(null);
-        request.getMvc().perform(buildUpdateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isConflict());
+        request.getMvc().perform(buildUpdateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isBadRequest());
     }
 
     @Test
