@@ -500,11 +500,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     ngAfterViewInit() {
-        this.inputFieldSubscriptions.push(this.exerciseInfoComponent?.formValidChanges.subscribe(() => this.calculateFormStatusSections()));
-        this.inputFieldSubscriptions.push(this.exerciseDifficultyComponent?.teamConfigComponent.formValidChanges.subscribe(() => this.calculateFormStatusSections()));
-        this.inputFieldSubscriptions.push(this.exerciseLanguageComponent?.formValidChanges.subscribe(() => this.calculateFormStatusSections()));
-        this.inputFieldSubscriptions.push(this.exerciseGradingComponent?.formValidChanges.subscribe(() => this.calculateFormStatusSections()));
-        this.inputFieldSubscriptions.push(this.exercisePlagiarismComponent?.formValidChanges.subscribe(() => this.calculateFormStatusSections()));
+        this.inputFieldSubscriptions.push(this.exerciseInfoComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
+        this.inputFieldSubscriptions.push(this.exerciseDifficultyComponent?.teamConfigComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
+        this.inputFieldSubscriptions.push(this.exerciseLanguageComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
+        this.inputFieldSubscriptions.push(this.exerciseGradingComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
+        this.inputFieldSubscriptions.push(this.exercisePlagiarismComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
     }
 
     ngOnDestroy() {

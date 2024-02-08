@@ -66,6 +66,7 @@ import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiari
 import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -116,6 +117,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 MockComponent(ProgrammingExerciseGradingComponent),
                 MockComponent(ProgrammingExerciseProblemComponent),
                 MockComponent(DocumentationButtonComponent),
+                MockComponent(FormStatusBarComponent),
                 MockPipe(RemoveKeysPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(CustomMinDirective),

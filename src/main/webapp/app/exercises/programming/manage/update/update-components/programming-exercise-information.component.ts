@@ -34,7 +34,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     protected readonly ProjectType = ProjectType;
 
     ngAfterViewInit() {
-        this.inputFieldSubscriptions.push(this.exerciseTitleChannelComponent.titleChannelNameComponent.formValidChanges.subscribe(() => this.calculateFormValid()));
+        this.inputFieldSubscriptions.push(this.exerciseTitleChannelComponent.titleChannelNameComponent?.formValidChanges.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.shortNameField.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.checkoutSolutionRepositoryField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.recreateBuildPlansField?.valueChanges?.subscribe(() => this.calculateFormValid()));
@@ -56,7 +56,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         const isUpdateTemplateFilesValid = this.isUpdateTemplateFilesValid();
         const areAuxiliaryRepositoriesValid = this.areAuxiliaryRepositoriesValid();
         this.formValid = Boolean(
-            this.exerciseTitleChannelComponent.titleChannelNameComponent.formValid &&
+            this.exerciseTitleChannelComponent.titleChannelNameComponent?.formValid &&
                 this.shortNameField.valid &&
                 isCheckoutSolutionRepositoryValid &&
                 isRecreateBuildPlansValid &&

@@ -46,7 +46,7 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
         this.inputFieldSubscriptions.push(this.maxScoreField.valueChanges?.subscribe(() => this.calculateFormStatus()));
         this.inputFieldSubscriptions.push(this.bonusPointsField.valueChanges?.subscribe(() => this.calculateFormStatus()));
         this.inputFieldSubscriptions.push(this.maxPenaltyField?.valueChanges?.subscribe(() => this.calculateFormStatus()));
-        this.inputFieldSubscriptions.push(this.submissionPolicyUpdateComponent.form.valueChanges?.subscribe(() => this.calculateFormStatus()));
+        this.inputFieldSubscriptions.push(this.submissionPolicyUpdateComponent.form?.valueChanges?.subscribe(() => this.calculateFormStatus()));
         this.inputFieldSubscriptions.push(this.lifecycleComponent.formValidChanges?.subscribe(() => this.calculateFormStatus()));
         this.setEditPolicyPageLink();
     }
@@ -62,7 +62,7 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
             this.maxScoreField.valid &&
                 this.bonusPointsField.valid &&
                 (this.maxPenaltyField?.valid || !this.programmingExercise.staticCodeAnalysisEnabled) &&
-                (this.submissionPolicyUpdateComponent.form.disabled || this.submissionPolicyUpdateComponent.form.valid) &&
+                (this.submissionPolicyUpdateComponent.form?.disabled || this.submissionPolicyUpdateComponent.form?.valid) &&
                 this.lifecycleComponent.formValid,
         );
         this.formEmpty = this.lifecycleComponent.formEmpty;
