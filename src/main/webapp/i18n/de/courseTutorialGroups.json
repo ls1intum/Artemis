@@ -11,7 +11,10 @@
                 "registeredFilter": "Meine Übungsgruppen anzeigen"
             },
             "courseTutorialGroupDetail": {
-                "title": "Übungsgruppen-Details"
+                "title": "Übungsgruppen-Details",
+                "sections": {
+                    "general": "Informationen"
+                }
             },
             "courseTutorialGroupOverview": {
                 "title": "Übungsgruppen-Übersicht",
