@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 
 import javax.annotation.PostConstruct;
@@ -15,6 +16,7 @@ import com.hazelcast.cp.lock.FencedLock;
 import com.hazelcast.map.IMap;
 import com.hazelcast.topic.ITopic;
 
+import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.*;
 
 /**
@@ -25,6 +27,8 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.*;
 public class SharedQueueManagementService {
 
     private static final Logger log = LoggerFactory.getLogger(SharedQueueManagementService.class);
+
+    private final BuildJobRepository buildJobRepository;
 
     private final HazelcastInstance hazelcastInstance;
 
@@ -37,6 +41,8 @@ public class SharedQueueManagementService {
 
     private IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
 
+    private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
+
     /**
      * Lock to prevent multiple nodes from processing the same build job.
      */
@@ -44,7 +50,8 @@ public class SharedQueueManagementService {
 
     private ITopic<String> canceledBuildJobsTopic;
 
-    public SharedQueueManagementService(HazelcastInstance hazelcastInstance) {
+    public SharedQueueManagementService(BuildJobRepository buildJobRepository, HazelcastInstance hazelcastInstance) {
+        this.buildJobRepository = buildJobRepository;
         this.hazelcastInstance = hazelcastInstance;
     }
 
@@ -58,6 +65,19 @@ public class SharedQueueManagementService {
         this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
         this.canceledBuildJobsTopic = hazelcastInstance.getTopic("canceledBuildJobsTopic");
+        this.dockerImageCleanupInfo = this.hazelcastInstance.getMap("dockerImageCleanupInfo");
+    }
+
+    /**
+     * Pushes the last build dates for all docker images to the hazelcast map dockerImageCleanupInfo.
+     */
+    @PostConstruct
+    public void pushDockerImageCleanupInfo() {
+        Set<DockerImageBuild> lastBuildDatesForDockerImages = buildJobRepository.findAllLastBuildDatesForDockerImages();
+
+        for (DockerImageBuild dockerImageBuild : lastBuildDatesForDockerImages) {
+            dockerImageCleanupInfo.put(dockerImageBuild.dockerImage(), dockerImageBuild.lastBuildCompletionDate());
+        }
     }
 
     public List<LocalCIBuildJobQueueItem> getQueuedJobs() {

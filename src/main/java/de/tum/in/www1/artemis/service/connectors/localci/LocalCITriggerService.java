@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
@@ -64,6 +65,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private IQueue<LocalCIBuildJobQueueItem> queue;
 
+    private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
+
     public LocalCITriggerService(HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, Optional<VersionControlService> versionControlService,
@@ -82,6 +85,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     @PostConstruct
     public void init() {
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
+        this.dockerImageCleanupInfo = this.hazelcastInstance.getMap("dockerImageCleanupInfo");
     }
 
     /**
@@ -127,6 +131,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
                 programmingExercise.getId(), 0, priority, null, repositoryInfo, jobTimingInfo, buildConfig);
 
         queue.add(buildJobQueueItem);
+
+        dockerImageCleanupInfo.put(buildConfig.dockerImage(), jobTimingInfo.submissionDate());
     }
 
     // -------Helper methods for triggerBuild()-------
