@@ -84,7 +84,7 @@
                         <div class="alert alert-danger">
                             {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredEndDateError' | artemisTranslate }}
                         </div>
-                    } @else if (endDateControl?.dirty && !isStartBeforeEnd) {
+                    } @else if ((endDateControl?.dirty || startDateControl?.dirty) && !isStartBeforeEnd) {
                         <div class="alert alert-danger">
                             {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError' | artemisTranslate }}
                         </div>
@@ -123,7 +123,7 @@
                         />
                         <owl-date-time [pickerType]="'timer'" #endTime [pickerMode]="'dialog'"></owl-date-time>
                     </div>
-                    @if ((endTimeControl?.dirty || startTimeControl?.dirty) && startTimeControl?.dirty && !isStartBeforeEnd) {
+                    @if ((endTimeControl?.dirty || startTimeControl?.dirty) && startTimeControl && !isStartBeforeEnd) {
                         <div class="alert alert-danger">
                             {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError' | artemisTranslate }}
                         </div>

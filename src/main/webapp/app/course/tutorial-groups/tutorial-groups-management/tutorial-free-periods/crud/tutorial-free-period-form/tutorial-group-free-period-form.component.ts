@@ -1,9 +1,6 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
-import { TutorialGroupFreePeriodsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component';
-import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
-import dayjs from 'dayjs/esm';
 
 export interface TutorialGroupFreePeriodFormData {
     startDate?: Date;
@@ -87,7 +84,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
      * Checks if the start date/time is before the end date/time based on the current time frame.
      * @returns {boolean} - Returns true if the start time/date is before the end time/date, otherwise returns true.
      */
-    get isStartBeforeEnd() {
+    get isStartBeforeEnd(): boolean {
         if (this.timeFrame == TimeFrame.PeriodWithinDay && this.endTimeControl && this.startTimeControl) {
             return this.endTimeControl.value > this.startTimeControl.value;
         } else if (this.timeFrame == TimeFrame.Period && this.endDateControl && this.startDateControl) {
@@ -133,30 +130,20 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         return this.form.get('reason');
     }
 
-    get isSubmitPossible() {
-        if (!this.startDateControl || this.startDateControl.invalid) {
+    /**
+     * This getter method checks if the form submission is possible based on the validity of the form controls and the selected time frame.
+     * @returns {boolean} - Returns true if the form submission is possible, otherwise returns false.
+     */
+    get isSubmitPossible(): boolean {
+        if (!this.startDateControl?.valid) {
             return false;
         }
-
         if (this.timeFrame == TimeFrame.Day) {
-            return !this.isStartDateInvalid;
+            return true;
         } else if (this.timeFrame == TimeFrame.Period) {
-            if (!this.endDateControl) {
-                return false;
-            }
-            return !this.isStartDateInvalid && !this.isEndDateInvalid && !this.endDateControl.invalid && this.isStartBeforeEnd;
+            return !!this.endDateControl?.valid && this.isStartBeforeEnd;
         } else if (this.timeFrame == TimeFrame.PeriodWithinDay) {
-            if (!this.startTimeControl || !this.endTimeControl) {
-                return false;
-            }
-            return (
-                !this.isStartDateInvalid &&
-                !this.isStartTimeInvalid &&
-                !this.isEndTimeInvalid &&
-                !this.startTimeControl.invalid &&
-                !this.endTimeControl.invalid &&
-                this.isStartBeforeEnd
-            );
+            return !!this.startTimeControl?.valid && !!this.endTimeControl?.valid && this.isStartBeforeEnd && this.isStartTimeInvalid && this.isEndTimeInvalid;
         }
         return false;
     }
@@ -170,14 +157,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     ngOnChanges(): void {
         this.initializeForm();
         if (this.isEditMode && this.formData) {
-            // this.setFormValues(this.formData);
-            this.form.patchValue({
-                startDate: this.formData.startDate,
-                endDate: this.formData.endDate || undefined,
-                startTime: this.formData.startTime || undefined,
-                endTime: this.formData.endTime || undefined,
-                reason: this.formData.reason,
-            });
+            this.setFormValues(this.formData);
             this.setFirstTimeFrameInEditMode(this.formData);
         }
     }
@@ -187,12 +167,21 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         this.formSubmitted.emit(tutorialGroupFreePeriodFormData);
     }
 
+    /**
+     * Sets the form values based on the provided form data.
+     * @param {TutorialGroupFreePeriodFormData} formData - The form data to set.
+     */
     private setFormValues(formData: TutorialGroupFreePeriodFormData) {
-        this.form.patchValue(formData);
+        this.form.patchValue({
+            startDate: formData.startDate,
+            endDate: formData.endDate || undefined,
+            startTime: formData.startTime || undefined,
+            endTime: formData.endTime || undefined,
+            reason: formData.reason,
+        });
     }
 
     private setFirstTimeFrameInEditMode(formData: TutorialGroupFreePeriodFormData) {
-        // const tempFreePeriod = this.createTutorialGroupFreePeriodFromFormData(formData);
         if (formData.endDate === undefined && formData.startTime === undefined && formData.endTime === undefined) {
             this.setTimeFrame(TimeFrame.Day);
         } else if (formData.endDate === undefined && formData.startTime !== undefined && formData.endTime !== undefined) {
@@ -200,14 +189,6 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         } else {
             this.setTimeFrame(TimeFrame.Period);
         }
-    }
-
-    private createTutorialGroupFreePeriodFromFormData(formData: TutorialGroupFreePeriodFormData): TutorialGroupFreePeriod {
-        const tutorialGroupFreePeriod = new TutorialGroupFreePeriod();
-        tutorialGroupFreePeriod.start = formData.startDate ? dayjs(formData.startDate) : undefined;
-        tutorialGroupFreePeriod.end = formData.endDate ? dayjs(formData.endDate) : undefined;
-        tutorialGroupFreePeriod.reason = formData.reason;
-        return tutorialGroupFreePeriod;
     }
 
     private initializeForm() {
@@ -273,14 +254,9 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
 
     get isEndTimeInvalid() {
         if (this.endTimeControl) {
-            // if (this.startTimeControl && this.startTimeControl.value.minutes >= this.endTimeControl.value.minutes) {
-            //     return true;
-            // }
             return this.endTimeControl.invalid && (this.endTimeControl.touched || this.endTimeControl.dirty);
         } else {
             return false;
         }
     }
-
-    protected readonly TutorialGroupFreePeriodsManagementComponent = TutorialGroupFreePeriodsManagementComponent;
 }
