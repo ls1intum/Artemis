@@ -4,10 +4,12 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { NotificationSetting, notificationSettingsStructure } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { Setting, SettingGroup, UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
+import { ScienceSetting, scienceSettingsStructure } from 'app/shared/user-settings/science-settings/science-settings-structure';
 
 @Injectable({ providedIn: 'root' })
 export class UserSettingsService {
     public notificationSettingsResourceUrl = 'api/notification-settings';
+    public scienceSettingsResourceUrl = 'api/science-settings';
     private applyNewChangesSource = new Subject<string>();
     userSettingsChangeEvent = this.applyNewChangesSource.asObservable();
     error?: string;
@@ -26,6 +28,9 @@ export class UserSettingsService {
         switch (category) {
             case UserSettingsCategory.NOTIFICATION_SETTINGS: {
                 return this.http.get<NotificationSetting[]>(this.notificationSettingsResourceUrl, { observe: 'response' });
+            }
+            case UserSettingsCategory.SCIENCE_SETTINGS: {
+                return this.http.get<ScienceSetting[]>(this.scienceSettingsResourceUrl, { observe: 'response' });
             }
         }
     }
@@ -68,6 +73,9 @@ export class UserSettingsService {
         switch (category) {
             case UserSettingsCategory.NOTIFICATION_SETTINGS: {
                 return this.http.put<Setting[]>(this.notificationSettingsResourceUrl, settings, { observe: 'response' });
+            }
+            case UserSettingsCategory.SCIENCE_SETTINGS: {
+                return this.http.put<Setting[]>(this.scienceSettingsResourceUrl, settings, { observe: 'response' });
             }
         }
     }
@@ -129,6 +137,9 @@ export class UserSettingsService {
         switch (category) {
             case UserSettingsCategory.NOTIFICATION_SETTINGS: {
                 return notificationSettingsStructure;
+            }
+            case UserSettingsCategory.SCIENCE_SETTINGS: {
+                return scienceSettingsStructure;
             }
         }
     }
