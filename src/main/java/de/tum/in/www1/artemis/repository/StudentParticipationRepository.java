@@ -36,7 +36,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface StudentParticipationRepository extends JpaRepository<StudentParticipation, Long> {
 
-    Set<StudentParticipation> findByExerciseId(@Param("exerciseId") Long exerciseId);
+    Set<StudentParticipation> findByExerciseId(Long exerciseId);
 
     @Query("""
             SELECT DISTINCT p
@@ -146,6 +146,15 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsAndTeamStudentsByExerciseIdAndTeamId(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
+
+    @Query("""
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
+            WHERE p.id = :participationId
+            """)
+    Optional<StudentParticipation> findByIdWithEagerTeamStudents(@Param("participationId") Long participationId);
 
     @Query("""
             SELECT DISTINCT p
@@ -815,6 +824,11 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
         return findWithEagerLegalSubmissionsById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
     }
 
+    @NotNull
+    default StudentParticipation findByIdWithEagerTeamStudentsElseThrow(long participationId) {
+        return findByIdWithEagerTeamStudents(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+    }
+
     /**
      * Get all participations belonging to exam with submissions and their relevant results.
      *
@@ -1104,7 +1118,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH p.submissions s
             WHERE p.exercise.id = :exerciseId
             """)
-    Set<StudentParticipation> findByExerciseIdWithEagerSubmissions(long exerciseId);
+    Set<StudentParticipation> findByExerciseIdWithEagerSubmissions(@Param("exerciseId") long exerciseId);
 
     /**
      * Helper interface to map the result of the {@link #sumPresentationScoreByStudentIdsAndCourseId(long, Set)} query to a map.

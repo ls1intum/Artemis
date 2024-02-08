@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import de.tum.in.www1.artemis.domain.iris.settings.IrisCourseSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisExerciseSettings;
@@ -39,7 +40,7 @@ public interface IrisSettingsRepository extends JpaRepository<IrisSettings, Long
                 LEFT JOIN FETCH irisSettings.irisCodeEditorSettings ices
             WHERE irisSettings.course.id = :courseId
             """)
-    Optional<IrisCourseSettings> findCourseSettings(Long courseId);
+    Optional<IrisCourseSettings> findCourseSettings(@Param("courseId") Long courseId);
 
     /**
      * Retrieves Iris exercise settings for a given exercise ID.
@@ -53,7 +54,7 @@ public interface IrisSettingsRepository extends JpaRepository<IrisSettings, Long
                 LEFT JOIN FETCH irisSettings.irisChatSettings ics
             WHERE irisSettings.exercise.id = :exerciseId
             """)
-    Optional<IrisExerciseSettings> findExerciseSettings(Long exerciseId);
+    Optional<IrisExerciseSettings> findExerciseSettings(@Param("exerciseId") Long exerciseId);
 
     default IrisSettings findByIdElseThrow(long existingSettingsId) {
         return findById(existingSettingsId).orElseThrow(() -> new EntityNotFoundException("Iris Settings", existingSettingsId));
