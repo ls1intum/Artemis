@@ -1,5 +1,10 @@
 <section class="mb-5">
-    <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle">General Information</h3>
+    <h3
+        jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle"
+        id="artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle"
+    >
+        General Information
+    </h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepMessage">Add some general information about the new exercise</p>
     <div class="form-group">
         <div>
@@ -135,6 +140,7 @@
             <div class="form-check">
                 <label class="form-check-label" for="field_checkoutSolutionRepository">
                     <input
+                        #checkoutSolutionRepository="ngModel"
                         class="form-check-input"
                         type="checkbox"
                         name="checkoutSolutionRepository"
@@ -150,6 +156,7 @@
             <div class="form-check">
                 <label class="form-check-label" for="field_recreateBuildPlans">
                     <input
+                        #recreateBuildPlans="ngModel"
                         class="form-check-input"
                         type="checkbox"
                         name="recreateBuildPlans"
@@ -170,6 +177,7 @@
             <div class="form-check">
                 <label class="form-check-label" for="field_updateTemplateFiles">
                     <input
+                        #updateTemplateFiles="ngModel"
                         class="form-check-input"
                         type="checkbox"
                         name="updateTemplateFiles"

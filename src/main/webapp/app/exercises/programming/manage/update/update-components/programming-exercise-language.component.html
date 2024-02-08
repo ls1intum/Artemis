@@ -1,14 +1,16 @@
 <section class="mb-5">
-    <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle">Language</h3>
+    <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle" id="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle">
+        Language
+    </h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepMessage">Set language.</p>
     <div class="form-group">
         <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.programmingLanguage" for="field_programmingLanguage">Programming Language</label>
         <select
-            #select
+            #select="ngModel"
             required
             class="form-select"
             [ngModel]="programmingExerciseCreationConfig.selectedProgrammingLanguage"
-            (ngModelChange)="select.value = programmingExerciseCreationConfig.onProgrammingLanguageChange($event)"
+            (ngModelChange)="programmingExerciseCreationConfig.selectedProgrammingLanguage = programmingExerciseCreationConfig.onProgrammingLanguageChange($event)"
             name="programmingLanguage"
             id="field_programmingLanguage"
             [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || !!programmingExercise.id || programmingExerciseCreationConfig.isImportFromFile"

@@ -6,7 +6,7 @@
                     @if (!isImportFromExistingExercise && !isImportFromFile && !programmingExercise.id) {
                         <h2 id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.createLabel">Create Programming Exercise</h2>
                     }
-                    <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+                    <jhi-documentation-button [type]="documentationType" />
                 </div>
                 @if (!isEdit && !isExamMode && !isImportFromExistingExercise) {
                     <div class="flex-grow-1 ms-3">
@@ -46,6 +46,7 @@
         ></jhi-programming-exercise-update-wizard>
     }
     @if (!isShowingWizardMode) {
+        <jhi-form-status-bar [formStatusSections]="formStatusSections" />
         <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)">
             <div class="update-programming-exercise">
                 <div class="form-group" [hidden]="isImportFromExistingExercise || !programmingExercise.id">
@@ -58,30 +59,26 @@
                     [isExamMode]="isExamMode"
                     [isImport]="isImportFromExistingExercise || isImportFromFile"
                 />
-                <jhi-programming-exercise-difficulty
-                    [programmingExercise]="programmingExercise"
-                    [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
-                ></jhi-programming-exercise-difficulty>
-                <jhi-programming-exercise-language [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()">
-                </jhi-programming-exercise-language>
+                <jhi-programming-exercise-difficulty [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()" />
+                <jhi-programming-exercise-language [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()" />
                 <jhi-programming-exercise-problem
                     [(exercise)]="programmingExercise"
                     [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
-                ></jhi-programming-exercise-problem>
+                    (problemStatementChange)="calculateFormStatusSections()"
+                />
                 <jhi-programming-exercise-grading
                     class="form-step"
                     [programmingExercise]="programmingExercise"
                     [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
-                ></jhi-programming-exercise-grading>
+                />
+                @if (!isExamMode) {
+                    <jhi-exercise-update-plagiarism [exercise]="programmingExercise" />
+                }
                 <jhi-exercise-update-notification
                     [exercise]="programmingExercise"
                     [isImport]="isImportFromExistingExercise || isImportFromFile"
                     [(notificationText)]="notificationText"
-                >
-                </jhi-exercise-update-notification>
-                @if (!isExamMode) {
-                    <jhi-exercise-update-plagiarism [exercise]="programmingExercise"> </jhi-exercise-update-plagiarism>
-                }
+                />
                 <div class="update-programming-exercise-footer">
                     <div class="update-programming-exercise-footer-content">
                         @if (isSaving) {
@@ -112,8 +109,7 @@
                             [icon]="faSave"
                             [title]="submitButtonTitle"
                             (onClick)="save()"
-                        >
-                        </jhi-button>
+                        />
                     </div>
                 </div>
             </div>

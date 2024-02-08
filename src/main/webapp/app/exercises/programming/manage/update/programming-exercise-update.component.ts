@@ -1,8 +1,8 @@
 import { ActivatedRoute, Params } from '@angular/router';
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, Subscription } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingDates } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from '../services/programming-exercise.service';
@@ -32,13 +32,25 @@ import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/man
 import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exercises/course-utils';
 import { PROFILE_AEOLUS, PROFILE_LOCALCI } from 'app/app.constants';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
+import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
+import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-information.component';
+import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-difficulty.component';
+import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-language.component';
+import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
+import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
     templateUrl: './programming-exercise-update.component.html',
     styleUrls: ['../programming-exercise-form.scss'],
 })
-export class ProgrammingExerciseUpdateComponent implements OnInit {
+export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
+    @ViewChild(ProgrammingExerciseInformationComponent) exerciseInfoComponent?: ProgrammingExerciseInformationComponent;
+    @ViewChild(ProgrammingExerciseDifficultyComponent) exerciseDifficultyComponent?: ProgrammingExerciseDifficultyComponent;
+    @ViewChild(ProgrammingExerciseLanguageComponent) exerciseLanguageComponent?: ProgrammingExerciseLanguageComponent;
+    @ViewChild(ProgrammingExerciseGradingComponent) exerciseGradingComponent?: ProgrammingExerciseGradingComponent;
+    @ViewChild(ExerciseUpdatePlagiarismComponent) exercisePlagiarismComponent?: ExerciseUpdatePlagiarismComponent;
+
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly FeatureToggle = FeatureToggle;
     readonly ProgrammingLanguage = ProgrammingLanguage;
@@ -54,6 +66,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     categoriesChanged = (categories: ExerciseCategory[]) => this.updateCategories(categories);
     projectTypeChanged = (projectType: ProjectType) => this.onProjectTypeChange(projectType);
     staticCodeAnalysisChanged = () => this.onStaticCodeAnalysisChanged();
+    repositoryNameChanged = (editedRepository: AuxiliaryRepository) => this.updateRepositoryName(editedRepository);
     currentWizardModeStep = 1;
 
     auxiliaryRepositoryDuplicateNames: boolean;
@@ -110,6 +123,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
+
+    formStatusSections: FormSectionStatus[];
+
+    inputFieldSubscriptions: (Subscription | undefined)[] = [];
 
     public inProductionEnvironment: boolean;
 
@@ -480,6 +497,37 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             }
         });
         this.defineSupportedProgrammingLanguages();
+    }
+
+    ngAfterViewInit() {
+        this.inputFieldSubscriptions.push(this.exerciseInfoComponent?.formValidChanges.subscribe(() => this.calculateFormStatusSections()));
+        this.inputFieldSubscriptions.push(this.exerciseDifficultyComponent?.teamConfigComponent.formValidChanges.subscribe(() => this.calculateFormStatusSections()));
+        this.inputFieldSubscriptions.push(this.exerciseLanguageComponent?.formValidChanges.subscribe(() => this.calculateFormStatusSections()));
+        this.inputFieldSubscriptions.push(this.exerciseGradingComponent?.formValidChanges.subscribe(() => this.calculateFormStatusSections()));
+        this.inputFieldSubscriptions.push(this.exercisePlagiarismComponent?.formValidChanges.subscribe(() => this.calculateFormStatusSections()));
+    }
+
+    ngOnDestroy() {
+        for (const subscription of this.inputFieldSubscriptions) {
+            subscription?.unsubscribe();
+        }
+    }
+
+    calculateFormStatusSections() {
+        this.formStatusSections = [
+            { title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle', valid: this.exerciseInfoComponent?.formValid ?? false },
+            {
+                title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle',
+                valid: this.exerciseDifficultyComponent?.teamConfigComponent.formValid ?? false,
+            },
+            { title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle', valid: this.exerciseLanguageComponent?.formValid ?? false },
+            { title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle', valid: true, empty: !this.programmingExercise.problemStatement },
+            {
+                title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle',
+                valid: Boolean(this.exerciseGradingComponent?.formValid && (this.isExamMode || this.exercisePlagiarismComponent?.formValid)),
+                empty: this.exerciseGradingComponent?.formEmpty,
+            },
+        ];
     }
 
     private defineSupportedProgrammingLanguages() {
@@ -1050,7 +1098,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
             titleNamePattern: this.titleNamePattern,
             shortNamePattern: this.shortNamePattern,
-            updateRepositoryName: this.updateRepositoryName,
+            updateRepositoryName: this.repositoryNameChanged,
             updateCheckoutDirectory: this.updateCheckoutDirectory,
             refreshAuxiliaryRepositoryChecks: this.refreshAuxiliaryRepositoryChecks,
             exerciseCategories: this.exerciseCategories,
