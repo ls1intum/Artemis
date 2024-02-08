@@ -79,11 +79,13 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
 
     private setCommitDetails() {
         this.commits.forEach((commit) => {
-            if (this.studentParticipation.student?.name! === commit.author) {
+            console.log(this.studentParticipation.student);
+            console.log(this.studentParticipation.team);
+            if (this.studentParticipation.student?.name === commit.author) {
                 commit.user = this.studentParticipation.student!;
             }
             this.studentParticipation.team?.students?.forEach((student) => {
-                if (student.name! === commit.author) {
+                if (student.name === commit.author) {
                     commit.user = student;
                 }
             });

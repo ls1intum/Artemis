@@ -112,11 +112,11 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     }
 
     private findCommitUser() {
-        if (this.studentParticipation.student?.name! === this.currentCommit.author) {
+        if (this.studentParticipation.student?.name === this.currentCommit.author) {
             this.currentCommit.user = this.studentParticipation.student!;
         }
         this.studentParticipation.team?.students?.forEach((student) => {
-            if (student.name! === this.currentCommit.author) {
+            if (student.name === this.currentCommit.author) {
                 this.currentCommit.user = student;
             }
         });
