@@ -12,11 +12,7 @@
         <p>
             <strong>{{ 'artemisApp.repository.commitHistory.commitDetails.author' | artemisTranslate }}</strong
             ><br />
-            @if (currentCommit.user) {
-                {{ currentCommit.user.name }}, <span class="text-primary">{{ currentCommit.user.email }}</span>
-            } @else {
-                {{ currentCommit.author }}
-            }
+            {{ currentCommit.author }}, <span class="text-primary">{{ currentCommit.authorEmail }}</span>
         </p>
         <p>
             <strong>{{ 'artemisApp.repository.commitHistory.commitDetails.date' | artemisTranslate }}</strong

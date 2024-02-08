@@ -34,9 +34,7 @@
                     </td>
                     <td>
                         @if (isRepositoryView) {
-                            @if (commit.user) {
-                                {{ commit.user.name }}, <span class="text-primary">{{ commit.user.email }}</span>
-                            }
+                            {{ commit.author }}, <span class="text-primary">{{ commit.authorEmail }}</span>
                         } @else {
                             {{ commit.author }}
                         }

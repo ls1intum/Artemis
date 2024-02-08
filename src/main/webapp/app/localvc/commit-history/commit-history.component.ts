@@ -73,23 +73,12 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
             }
             // push template commit extra as it has no submission
             this.commits.push(sortedCommits[sortedCommits.length - 1]);
-            this.setCommitDetails();
+            this.setCommitResults();
         });
     }
 
-    private setCommitDetails() {
+    private setCommitResults() {
         this.commits.forEach((commit) => {
-            console.log(this.studentParticipation.student);
-            console.log(this.studentParticipation.team);
-            if (this.studentParticipation.student?.name === commit.author) {
-                commit.user = this.studentParticipation.student!;
-            }
-            this.studentParticipation.team?.students?.forEach((student) => {
-                console.log(commit.author);
-                if (student.name === commit.author) {
-                    commit.user = student;
-                }
-            });
             this.studentParticipation.results?.forEach((result) => {
                 const submission = result.submission as ProgrammingSubmission;
                 if (submission) {

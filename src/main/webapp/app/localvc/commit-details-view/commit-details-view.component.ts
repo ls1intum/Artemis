@@ -111,18 +111,6 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
                 // choose template commit
                 this.previousCommit = this.commits[commits.length - 1];
             }
-            this.findCommitUser();
-        });
-    }
-
-    private findCommitUser() {
-        if (this.studentParticipation.student?.name === this.currentCommit.author) {
-            this.currentCommit.user = this.studentParticipation.student!;
-        }
-        this.studentParticipation.team?.students?.forEach((student) => {
-            if (student.name === this.currentCommit.author) {
-                this.currentCommit.user = student;
-            }
         });
     }
 
