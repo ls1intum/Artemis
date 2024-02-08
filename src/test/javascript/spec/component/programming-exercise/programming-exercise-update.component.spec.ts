@@ -929,40 +929,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         }));
     });
 
-    it('should toggle the wizard mode', fakeAsync(() => {
-        const route = TestBed.inject(ActivatedRoute);
-        route.params = of({ courseId });
-        route.url = of([{ path: 'new' } as UrlSegment]);
-        route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
-
-        const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
-        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
-
-        fixture.detectChanges();
-        tick();
-
-        expect(comp.isShowingWizardMode).toBeFalse();
-        comp.toggleWizardMode();
-        expect(comp.isShowingWizardMode).toBeTrue();
-    }));
-
-    it('should increase the wizard step', fakeAsync(() => {
-        const route = TestBed.inject(ActivatedRoute);
-        route.params = of({ courseId });
-        route.url = of([{ path: 'new' } as UrlSegment]);
-        route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
-
-        const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
-        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
-
-        fixture.detectChanges();
-        tick();
-
-        expect(comp.currentWizardModeStep).toBe(1);
-        comp.nextWizardStep();
-        expect(comp.currentWizardModeStep).toBe(2);
-    }));
-
     it('should return the exercise creation config', fakeAsync(() => {
         const route = TestBed.inject(ActivatedRoute);
         route.params = of({ courseId });

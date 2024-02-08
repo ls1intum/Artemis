@@ -59,15 +59,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     private translationBasePath = 'artemisApp.programmingExercise.';
 
-    toggleMode = () => this.toggleWizardMode();
-    getInvalidReasonsForWizard = () => this.getInvalidReasons(this.currentWizardModeStep);
     programmingLanguageChanged = (language: ProgrammingLanguage) => this.onProgrammingLanguageChange(language);
     withDependenciesChanged = (withDependencies: boolean) => this.onWithDependenciesChanged(withDependencies);
     categoriesChanged = (categories: ExerciseCategory[]) => this.updateCategories(categories);
     projectTypeChanged = (projectType: ProjectType) => this.onProjectTypeChange(projectType);
     staticCodeAnalysisChanged = () => this.onStaticCodeAnalysisChanged();
     repositoryNameChanged = (editedRepository: AuxiliaryRepository) => this.updateRepositoryName(editedRepository);
-    currentWizardModeStep = 1;
 
     auxiliaryRepositoryDuplicateNames: boolean;
     auxiliaryRepositoryDuplicateDirectories: boolean;
@@ -77,7 +74,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     isImportFromFile: boolean;
     isEdit: boolean;
     isExamMode: boolean;
-    isShowingWizardMode = false;
     hasUnsavedChanges = false;
     programmingExercise: ProgrammingExercise;
     backupExercise: ProgrammingExercise;
@@ -177,25 +173,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         private navigationUtilService: ArtemisNavigationUtilService,
         private aeolusService: AeolusService,
     ) {}
-
-    /**
-     * Activate or deactivate the wizard mode for easier exercise creation.
-     * This function is called by pressing "Switch to guided mode" when creating a new exercise
-     */
-    toggleWizardMode() {
-        this.isShowingWizardMode = !this.isShowingWizardMode;
-    }
-
-    /**
-     * Progress to the next step of the wizard mode
-     */
-    nextWizardStep() {
-        this.currentWizardModeStep++;
-
-        if (this.currentWizardModeStep > 5) {
-            this.save();
-        }
-    }
 
     /**
      * Updates the name of the editedAuxiliaryRepository.
@@ -466,12 +443,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 }),
             )
             .subscribe();
-
-        this.activatedRoute.queryParams.subscribe((params) => {
-            if (params.shouldHaveBackButtonToWizard) {
-                this.goBackAfterSaving = true;
-            }
-        });
 
         // If an exercise is created, load our readme template so the problemStatement is not empty
         this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
@@ -839,33 +810,20 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     /**
      * Get a list of all reasons that describe why the current input to update is invalid
-     *
-     * @param forStep Limit the respected invalid reasons to the current wizard mode step. By default, e.g. when not using the wizard, all reasons are respected.
      */
-    getInvalidReasons(forStep = Number.MAX_VALUE): ValidationReason[] {
+    getInvalidReasons(): ValidationReason[] {
         const validationErrorReasons: ValidationReason[] = [];
 
-        if (forStep >= 1) {
-            this.validateExerciseTitle(validationErrorReasons);
-            this.validateExerciseChannelName(validationErrorReasons);
-            this.validateExerciseShortName(validationErrorReasons);
-            this.validateExerciseAuxiliryRepositories(validationErrorReasons);
-        }
-
-        if (forStep >= 3) {
-            this.validateExercisePackageName(validationErrorReasons);
-        }
-
-        if (forStep >= 4) {
-            this.validateExerciseIdeSelection(validationErrorReasons);
-        }
-
-        if (forStep >= 5) {
-            this.validateExercisePoints(validationErrorReasons);
-            this.validateExerciseBonusPoints(validationErrorReasons);
-            this.validateExerciseSCAMaxPenalty(validationErrorReasons);
-            this.validateExerciseSubmissionLimit(validationErrorReasons);
-        }
+        this.validateExerciseTitle(validationErrorReasons);
+        this.validateExerciseChannelName(validationErrorReasons);
+        this.validateExerciseShortName(validationErrorReasons);
+        this.validateExerciseAuxiliryRepositories(validationErrorReasons);
+        this.validateExercisePackageName(validationErrorReasons);
+        this.validateExerciseIdeSelection(validationErrorReasons);
+        this.validateExercisePoints(validationErrorReasons);
+        this.validateExerciseBonusPoints(validationErrorReasons);
+        this.validateExerciseSCAMaxPenalty(validationErrorReasons);
+        this.validateExerciseSubmissionLimit(validationErrorReasons);
 
         return validationErrorReasons;
     }
