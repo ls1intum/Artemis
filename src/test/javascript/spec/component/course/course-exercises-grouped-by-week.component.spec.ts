@@ -8,9 +8,8 @@ import { CourseExercisesGroupedByWeekComponent, WEEK_EXERCISE_GROUP_FORMAT_STRIN
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { ExerciseFilter, ExerciseWithDueDate, SortingAttribute } from 'app/overview/course-exercises/course-exercises.component';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ExerciseFilter, SortingAttribute } from 'app/overview/course-exercises/course-exercises.component';
+import { Exercise } from 'app/entities/exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -27,7 +26,6 @@ const currentExercise_1 = {
 describe('CourseExercisesGroupedByWeekComponent', () => {
     let fixture: ComponentFixture<CourseExercisesGroupedByWeekComponent>;
     let component: CourseExercisesGroupedByWeekComponent;
-    let exerciseService: ExerciseService;
 
     let course: Course;
     let exercise: Exercise;
@@ -42,7 +40,6 @@ describe('CourseExercisesGroupedByWeekComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseExercisesGroupedByWeekComponent);
                 component = fixture.componentInstance;
-                exerciseService = TestBed.inject(ExerciseService);
 
                 course = new Course();
                 course.id = 123;
@@ -68,19 +65,6 @@ describe('CourseExercisesGroupedByWeekComponent', () => {
     });
 
     describe('isVisibleToStudents', () => {
-        it('should be called if nextRelevantExercise is present', () => {
-            const isVisibleToStudentsSpy = jest.spyOn(component, 'isVisibleToStudents');
-            component.activeFilters = new Set<ExerciseFilter>([]);
-            component.nextRelevantExercise = {
-                exercise: currentExercise_1,
-                dueDate: currentExercise_1.dueDate,
-            } as ExerciseWithDueDate;
-
-            fixture.detectChanges();
-
-            expect(isVisibleToStudentsSpy).toHaveBeenCalled();
-        });
-
         it('should return true if filter is not UNRELEASED', () => {
             const exercise = currentExercise_1;
             component.activeFilters = new Set<ExerciseFilter>([]);
@@ -120,39 +104,6 @@ describe('CourseExercisesGroupedByWeekComponent', () => {
 
             expect(isVisibleToStudentsResult).toBeFalse();
         });
-    });
-
-    it('should react to changes', () => {
-        jest.spyOn(exerciseService, 'getNextExerciseForHours').mockReturnValue(exercise);
-        component.ngOnChanges();
-        const expectedExercise = {
-            exercise,
-            dueDate: exercise.dueDate,
-        };
-        expect(component.nextRelevantExercise).toEqual(expectedExercise);
-    });
-
-    it('should set next relevant exercise', () => {
-        const newExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
-        newExercise.releaseDate = dayjs().subtract(3, 'hours');
-        newExercise.dueDate = dayjs().add(3, 'hours');
-        newExercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
-        jest.spyOn(exerciseService, 'getNextExerciseForHours').mockReturnValue(newExercise);
-
-        component.ngOnChanges();
-
-        expect(component.nextRelevantExercise).toEqual({
-            exercise: newExercise,
-            dueDate: newExercise.dueDate,
-        });
-    });
-
-    it('should NOT set next relevant exercise', () => {
-        jest.spyOn(exerciseService, 'getNextExerciseForHours').mockReturnValue(undefined);
-
-        component.ngOnChanges();
-
-        expect(component.nextRelevantExercise).toBeUndefined();
     });
 
     it('should group exercise with individual due date into the week with the individual due date', () => {
