@@ -66,13 +66,17 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
                 this.handleSubmissions();
                 this.retrieveAndHandleCommits();
                 if (this.previousSubmission && this.currentSubmission) {
-                    this.programmingExerciseService.getDiffReportForSubmissions(this.exerciseId, this.previousSubmission.id!, this.currentSubmission.id!).subscribe((report) => {
-                        this.handleNewReport(report!);
-                    });
+                    this.programmingExerciseService
+                        .getGitDiffReportForCommitDetailsViewForSubmissions(this.exerciseId, this.previousSubmission.id!, this.currentSubmission.id!)
+                        .subscribe((report) => {
+                            this.handleNewReport(report!);
+                        });
                 } else if (this.currentSubmission) {
-                    this.programmingExerciseService.getDiffReportForSubmissionWithTemplate(this.exerciseId, this.currentSubmission.id!).subscribe((report) => {
-                        this.handleNewReport(report!);
-                    });
+                    this.programmingExerciseService
+                        .getGitDiffReportForCommitDetailsViewForSubmissionWithTemplate(this.exerciseId, this.currentSubmission.id!)
+                        .subscribe((report) => {
+                            this.handleNewReport(report!);
+                        });
                 }
             });
         });
@@ -93,7 +97,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     }
 
     private retrieveAndHandleCommits() {
-        this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(this.participationId).subscribe((commits) => {
+        this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.participationId).subscribe((commits) => {
             this.commits = commits.sort((a, b) => (dayjs(b.timestamp!).isAfter(dayjs(a.timestamp!)) ? 1 : -1));
             if (this.currentSubmission !== undefined) {
                 this.currentCommit = this.commits.find((commit) => commit.hash === this.currentSubmission.commitHash)!;
