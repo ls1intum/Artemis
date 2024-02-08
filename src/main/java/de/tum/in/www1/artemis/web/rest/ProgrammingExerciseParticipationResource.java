@@ -257,7 +257,7 @@ public class ProgrammingExerciseParticipationResource {
      * @param participationId the id of the participation for which to retrieve the commit history
      * @return A list of commitInfo DTOs with the commits information of the participation
      */
-    @GetMapping("programming-exercise-participations/{participationId}/commits-history")
+    @GetMapping("programming-exercise-participations/{participationId}/commit-history")
     @EnforceAtLeastInstructor
     List<CommitInfoDTO> getCommitHistoryForParticipationRepo(@PathVariable long participationId) {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);

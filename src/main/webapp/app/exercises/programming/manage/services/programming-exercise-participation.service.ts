@@ -113,6 +113,6 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
      * @param participationId of the participation to get the commit infos for
      */
     retrieveCommitHistoryForParticipation(participationId: number): Observable<CommitInfo[]> {
-        return this.http.get<CommitInfo[]>(`${this.resourceUrl}${participationId}/commits-history`);
+        return this.http.get<CommitInfo[]>(`${this.resourceUrl}${participationId}/commit-history`);
     }
 }
