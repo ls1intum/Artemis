@@ -296,7 +296,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
     it('should reload on participation change', () => {
         const loadDiffSpy = jest.spyOn(comp, 'loadGitDiffReport').mockReturnValue(new Promise(() => null));
         jest.spyOn(exerciseService, 'getLatestResult').mockReturnValue({ successful: true });
-        jest.spyOn(exerciseService, 'getLatestTestwiseCoverageReport').mockReturnValue(of({ coveredLineRatio: 0.5 }));
+        jest.spyOn(exerciseService, 'getLatestFullTestwiseCoverageReport').mockReturnValue(of({ coveredLineRatio: 0.5 }));
         comp.programmingExercise = mockProgrammingExercise;
         comp.programmingExercise.testwiseCoverageEnabled = true;
         comp.onParticipationChange();
