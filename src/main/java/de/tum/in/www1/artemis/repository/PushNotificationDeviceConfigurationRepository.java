@@ -28,7 +28,7 @@ public interface PushNotificationDeviceConfigurationRepository extends JpaReposi
      */
     @Query("""
             SELECT p FROM PushNotificationDeviceConfiguration p
-            WHERE p.expirationDate > now()
+            WHERE p.expirationDate > NOW()
                 AND p.owner IN :users
                 AND p.deviceType = :deviceType
             """)
@@ -39,6 +39,9 @@ public interface PushNotificationDeviceConfigurationRepository extends JpaReposi
      */
     @Transactional
     @Modifying
-    @Query("DELETE FROM PushNotificationDeviceConfiguration p WHERE p.expirationDate <= now()")
+    @Query("""
+            DELETE FROM PushNotificationDeviceConfiguration p
+            WHERE p.expirationDate <= NOW()
+            """)
     void deleteExpiredDeviceConfigurations();
 }

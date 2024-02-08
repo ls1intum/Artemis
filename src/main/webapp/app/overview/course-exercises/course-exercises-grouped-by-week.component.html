@@ -1,24 +1,3 @@
-@if (nextRelevantExercise && isVisibleToStudents(nextRelevantExercise.exercise)) {
-    <div class="exercise-row-container mb-3">
-        <h3 class="text-primary">
-            @if (nextRelevantExercise!.dueDate) {
-                <span>
-                    {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeader' | artemisTranslate: { date: nextRelevantExercise.dueDate | artemisDate } }}
-                </span>
-            } @else {
-                {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeaderWithoutDueDate' | artemisTranslate }}
-            }
-        </h3>
-        <jhi-course-exercise-row
-            class="pb-1"
-            id="next-course-exercise-row"
-            [exercise]="nextRelevantExercise!.exercise"
-            [course]="course"
-            [hasGuidedTour]="nextRelevantExercise!.exercise === exerciseForGuidedTour"
-        />
-        <div class="collapsed"></div>
-    </div>
-}
 <div class="guided-tour exercise-row-container">
     @for (weekKey of Object.keys(exerciseGroups); track weekKey) {
         <div class="mb-3">
