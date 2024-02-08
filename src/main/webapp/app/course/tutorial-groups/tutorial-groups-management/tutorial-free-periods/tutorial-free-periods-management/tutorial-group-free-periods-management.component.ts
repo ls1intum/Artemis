@@ -77,12 +77,7 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
     }
 
     public static isFreePeriodWithinDay(tutorialGroupFreePeriod: TutorialGroupFreePeriod) {
-        // debugger;
         return tutorialGroupFreePeriod.start!.day() === tutorialGroupFreePeriod.end!.day() && !TutorialGroupFreePeriodsManagementComponent.isFreeDay(tutorialGroupFreePeriod);
-    }
-
-    public isInThePast(tutorialGroupFreeDay: TutorialGroupFreePeriod): boolean {
-        return tutorialGroupFreeDay.end!.isBefore(this.getCurrentDate());
     }
 
     public getCurrentDate(): dayjs.Dayjs {

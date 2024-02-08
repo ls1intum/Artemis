@@ -4,7 +4,6 @@
             {{ 'artemisApp.generic.timeZone' | artemisTranslate: { timeZone } }}
         </div>
     </div>
-    <!-- Todo: ButtonRadio timeframe selector -->
     <div class="col-12">
         @if (form) {
             <form class="row" [formGroup]="form" (ngSubmit)="submitForm()">

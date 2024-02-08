@@ -1,0 +1,52 @@
+<label class="form-label">{{ lableText | artemisTranslate }}</label>
+<div class="table-responsive">
+    <table class="table table-sm table-hover">
+        <thead>
+            <tr>
+                <th class="col-0">{{ 'global.field.id' | artemisTranslate }}</th>
+                <th class="col-1-2">{{ 'artemisApp.entities.tutorialFreePeriod.startDate' | artemisTranslate }}</th>
+                <th class="col-1-2">{{ 'artemisApp.entities.tutorialFreePeriod.endDate' | artemisTranslate }}</th>
+                <th class="col-3-4">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStartTime' | artemisTranslate }}</th>
+                <th class="col-3-4">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEndTime' | artemisTranslate }}</th>
+                <th class="col-5">{{ 'artemisApp.entities.tutorialFreePeriod.reason' | artemisTranslate }}</th>
+                <th class="col-6"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (freePeriod of tutorialGroupFreePeriods; track freePeriod) {
+                <tr [ngClass]="{ 'opacity-50': isInThePast(freePeriod) }" class="free-period-row">
+                    <td>
+                        {{ freePeriod.id }}
+                    </td>
+                    <td>
+                        {{ freePeriod.start | artemisDate: 'long-date' : false : course.timeZone : true }}
+                    </td>
+                    <td>
+                        {{ freePeriod.end | artemisDate: 'long-date' : false : course.timeZone : true }}
+                    </td>
+                    <td>
+                        {{ freePeriod.start | artemisDate: 'time' : false : course.timeZone : false }}
+                    </td>
+                    <td>
+                        {{ freePeriod.end | artemisDate: 'time' : false : course.timeZone : false }}
+                    </td>
+                    <td>
+                        <span class="d-inline-block text-truncate long-text"> {{ freePeriod.reason }} </span>
+                    </td>
+                    <td>
+                        <div class="extra-buttons">
+                            <jhi-tutorial-group-free-period-row-buttons
+                                [course]="course"
+                                [tutorialGroupConfiguration]="tutorialGroupsConfiguration"
+                                [tutorialFreePeriod]="freePeriod"
+                                (tutorialFreePeriodDeleted)="loadAll()"
+                                (tutorialFreePeriodEdited)="loadAll()"
+                            >
+                            </jhi-tutorial-group-free-period-row-buttons>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

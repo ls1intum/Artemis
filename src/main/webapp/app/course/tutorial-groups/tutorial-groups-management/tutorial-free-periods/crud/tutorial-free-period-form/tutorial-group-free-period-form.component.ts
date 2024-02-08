@@ -13,7 +13,6 @@ export interface TutorialGroupFreePeriodFormData {
     reason?: string;
 }
 
-// ToDo: TimeFrame Enum
 export enum TimeFrame {
     Day,
     Period,
@@ -25,8 +24,6 @@ export enum TimeFrame {
     templateUrl: './tutorial-group-free-period-form.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-
-// ToDo: extend TutorialGroupFreePeriodFormData to support an endDate
 export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     @Input()
     formData: TutorialGroupFreePeriodFormData = {
@@ -186,20 +183,6 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         } else {
             this.setTimeFrame(TimeFrame.Period);
         }
-
-        // if (TutorialGroupFreePeriodsManagementComponent.isFreeDay(tempFreePeriod)) {
-        //     this.setTimeFrame(TimeFrame.Day);
-        //     formData.endDate = undefined;
-        //     formData.startTime = undefined;
-        //     formData.endTime = undefined;
-        // } else if (TutorialGroupFreePeriodsManagementComponent.isFreePeriod(tempFreePeriod)) {
-        //     this.setTimeFrame(TimeFrame.Period);
-        //     formData.startTime = undefined;
-        //     formData.endTime = undefined;
-        // } else if (TutorialGroupFreePeriodsManagementComponent.isFreePeriodWithinDay(tempFreePeriod)) {
-        //     this.setTimeFrame(TimeFrame.PeriodWithinDay);
-        //     formData.endDate = undefined;
-        // }
     }
 
     private createTutorialGroupFreePeriodFromFormData(formData: TutorialGroupFreePeriodFormData): TutorialGroupFreePeriod {

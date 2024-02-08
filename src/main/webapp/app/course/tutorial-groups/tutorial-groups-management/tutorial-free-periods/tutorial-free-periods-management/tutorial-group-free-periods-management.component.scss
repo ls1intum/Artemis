@@ -1,5 +1,5 @@
 .long-text {
-    max-width: 300px;
+    max-width: 100%;
 }
 
 .free-period-row {
@@ -14,18 +14,27 @@
     }
 }
 
+.table {
+    table-layout: fixed;
+}
+
 .table .col-0 {
-    width: 2%;
+    width: 30px;
 }
 
 .table .col-1-2 {
-    width: 15%;
+    width: 180px;
 }
 
 .table .col-3-4 {
-    width: 10%;
+    width: 100px;
 }
 
 .table .col-5 {
-    width: 30%;
+    width: 300px;
+    overflow: auto;
+}
+
+.table .col-6 {
+    width: 200px;
 }
