@@ -208,6 +208,9 @@ class ArchitectureTest extends AbstractArchitectureTest {
         };
     }
 
+    private static final Set<String> SQL_KEYWORDS = Set.of("SELECT", "DISTINCT", "EXISTS", "FROM", "WHERE", "LEFT", "JOIN", "FETCH", "TREAT", "AND", "OR", "AS", "ORDER BY",
+            "GROUP BY", "COUNT", "SUM", "AVG", "FALSE", "TRUE", "NULL", "LIKE");
+
     private ArchCondition<JavaMethod> useUpperCaseSQLStyle() {
         return new ArchCondition<>("@Query content should follow the style guide") {
 
@@ -221,11 +224,13 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 if (!(valueProperty instanceof String query)) {
                     return;
                 }
-                var checkedKeyword = Set.of("SELECT", "DISTINCT", "EXISTS", "FROM", "WHERE", "JOIN", "FETCH", "TREAT", "AND", "ORDER BY", "GROUP BY", "COUNT", "FALSE", "TRUE",
-                        "NULL", "LIKE");
-                for (var keyword : checkedKeyword) {
-                    if (StringUtils.containsIgnoreCase(query, keyword) && !query.contains(keyword)) {
-                        events.add(violated(item, "In the Query of %s the keyword %s should be written in upper case.".formatted(item.getFullName(), keyword)));
+                String[] queryWords = query.split("[\\r\\n ]+");
+
+                for (var word : queryWords) {
+                    if (SQL_KEYWORDS.contains(word.toUpperCase())) {
+                        if (!StringUtils.isAllUpperCase(word)) {
+                            events.add(violated(item, "In the Query of %s the keyword %s should be written in upper case.".formatted(item.getFullName(), word)));
+                        }
                     }
                 }
             }
