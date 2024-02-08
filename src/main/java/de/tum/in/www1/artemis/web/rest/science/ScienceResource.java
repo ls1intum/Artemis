@@ -6,6 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.science.ScienceEventService;
 import de.tum.in.www1.artemis.web.rest.dto.science.ScienceEventDTO;
 
@@ -31,6 +33,7 @@ public class ScienceResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping(value = "science")
+    @FeatureToggle(Feature.Science)
     @EnforceAtLeastStudent
     public ResponseEntity<Void> science(@RequestBody ScienceEventDTO event) {
         log.debug("REST request to log science event of type {}", event);
