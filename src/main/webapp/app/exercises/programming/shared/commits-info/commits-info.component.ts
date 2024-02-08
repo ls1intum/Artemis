@@ -6,7 +6,6 @@ import { createCommitUrl } from 'app/exercises/programming/shared/utils/programm
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { Subscription } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
 import { Router } from '@angular/router';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
 
@@ -26,9 +25,6 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     private commitsInfoSubscription: Subscription;
     private profileInfoSubscription: Subscription;
     localVC = false;
-    courseId: number;
-    exerciseId: number;
-    paramSub: Subscription;
     routerLink: string;
 
     faCircle = faCircle;
@@ -36,41 +32,33 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     constructor(
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private profileService: ProfileService,
-        private route: ActivatedRoute,
         private router: Router,
     ) {}
 
     ngOnInit(): void {
         this.routerLink = this.router.url;
-        this.paramSub = this.route.params.subscribe((params) => {
-            this.courseId = Number(params['courseId']);
-            this.exerciseId = Number(params['exerciseId']);
-        });
         if (!this.commits) {
             if (this.participationId) {
-                this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.participationId).subscribe((commits) => {
+                this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(this.participationId).subscribe((commits) => {
                     this.commits = this.sortCommitsByTimestampDesc(commits);
-                    this.setCommitDetails();
                 });
             }
-        } else {
-            this.setCommitDetails();
         }
         // Get active profiles, to distinguish between Bitbucket and GitLab, and to check if localVC is enabled
         this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.commitHashURLTemplate = profileInfo.commitHashURLTemplate;
             this.localVC = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
+        this.setCommitDetails();
     }
 
     ngOnDestroy(): void {
         this.commitsInfoSubscription?.unsubscribe();
         this.profileInfoSubscription?.unsubscribe();
-        this.paramSub.unsubscribe();
     }
 
     private setCommitDetails() {
-        if (this.commits) {
+        if (this.commits && this.submissions) {
             for (const commit of this.commits) {
                 const submission = this.findSubmissionForCommit(commit, this.submissions);
                 commit.commitUrl = createCommitUrl(this.commitHashURLTemplate, this.exerciseProjectKey, submission?.participation, submission);
