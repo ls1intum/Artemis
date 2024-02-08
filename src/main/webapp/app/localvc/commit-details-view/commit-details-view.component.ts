@@ -5,10 +5,9 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { Subscription } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ActivatedRoute } from '@angular/router';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import dayjs from 'dayjs';
-import { User } from 'app/core/user/user.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 @Component({
     selector: 'jhi-commit-details-view',
@@ -16,7 +15,6 @@ import { User } from 'app/core/user/user.model';
     styleUrl: './commit-details-view.component.scss',
 })
 export class CommitDetailsViewComponent implements OnDestroy, OnInit {
-    exercise: ProgrammingExercise;
     report: ProgrammingExerciseGitDiffReport;
     diffForTemplateAndSolution = false;
     exerciseId: number;
@@ -32,7 +30,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     previousSubmission: ProgrammingSubmission;
     currentCommit: CommitInfo;
     previousCommit: CommitInfo;
-    user: User;
+    studentParticipation: ProgrammingExerciseStudentParticipation;
 
     private templateRepoFilesSubscription: Subscription;
     private solutionRepoFilesSubscription: Subscription;
@@ -40,12 +38,12 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     private participationRepoFilesAtRightCommitSubscription: Subscription;
 
     private paramSub: Subscription;
+    private participationSub: Subscription;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private route: ActivatedRoute,
-        private exerciseService: ExerciseService,
     ) {}
 
     ngOnDestroy(): void {
@@ -55,6 +53,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
         this.participationRepoFilesAtRightCommitSubscription?.unsubscribe();
         this.paramSub?.unsubscribe();
         this.commitsInfoSubscription?.unsubscribe();
+        this.participationSub?.unsubscribe();
     }
 
     ngOnInit(): void {
@@ -62,10 +61,9 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
             this.exerciseId = Number(params['exerciseId']);
             this.participationId = Number(params['participationId']);
             this.commitHash = params['commitHash'];
-            this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((res) => {
-                this.exercise = res.body!;
+            this.participationSub = this.programmingExerciseParticipationService.getStudentParticipationWithAllResults(this.participationId).subscribe((participation) => {
+                this.studentParticipation = participation;
                 this.handleSubmissions();
-                this.user = this.exercise.studentParticipations?.find((participation) => participation.id === this.participationId)?.student!;
                 this.retrieveAndHandleCommits();
                 if (this.previousSubmission && this.currentSubmission) {
                     this.programmingExerciseService.getDiffReportForSubmissions(this.exerciseId, this.previousSubmission.id!, this.currentSubmission.id!).subscribe((report) => {
@@ -80,11 +78,8 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
         });
     }
 
-    handleSubmissions() {
-        const submissions = this.exercise.studentParticipations
-            ?.find((participation) => participation.id === this.participationId)
-            ?.submissions?.map((submission) => submission as ProgrammingSubmission)
-            .sort((a, b) => (dayjs(b.submissionDate!).isAfter(dayjs(a.submissionDate!)) ? -1 : 1));
+    private handleSubmissions() {
+        const submissions = this.studentParticipation.submissions?.sort((a, b) => (dayjs(b.submissionDate!).isAfter(dayjs(a.submissionDate!)) ? -1 : 1)) as ProgrammingSubmission[];
         if (submissions && submissions.length > 0) {
             for (let i = 0; i < submissions.length; i++) {
                 if (submissions[i].commitHash === this.commitHash) {
@@ -97,7 +92,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
         }
     }
 
-    retrieveAndHandleCommits() {
+    private retrieveAndHandleCommits() {
         this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(this.participationId).subscribe((commits) => {
             this.commits = commits.sort((a, b) => (dayjs(b.timestamp!).isAfter(dayjs(a.timestamp!)) ? 1 : -1));
             if (this.currentSubmission !== undefined) {
@@ -112,12 +107,24 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
                 // choose template commit
                 this.previousCommit = this.commits[commits.length - 1];
             }
+            this.findCommitUser();
         });
     }
 
-    handleNewReport(report: ProgrammingExerciseGitDiffReport) {
+    private findCommitUser() {
+        if (this.studentParticipation.student?.name! === this.currentCommit.author) {
+            this.currentCommit.user = this.studentParticipation.student!;
+        }
+        this.studentParticipation.team?.students?.forEach((student) => {
+            if (student.name! === this.currentCommit.author) {
+                this.currentCommit.user = student;
+            }
+        });
+    }
+
+    private handleNewReport(report: ProgrammingExerciseGitDiffReport) {
         this.report = report;
-        this.report.programmingExercise = this.exercise;
+        this.report.programmingExercise = this.studentParticipation.exercise as ProgrammingExercise;
         this.report.leftCommitHash = this.previousCommit.hash;
         this.report.rightCommitHash = this.currentCommit.hash;
         this.report.participationIdForLeftCommit = this.participationId;

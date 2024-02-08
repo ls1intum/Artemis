@@ -2,10 +2,8 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { tap } from 'rxjs/operators';
@@ -26,8 +24,6 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     commitsInfoSubscription: Subscription;
 
     constructor(
-        private exerciseService: ExerciseService,
-        private participationService: ParticipationService,
         private route: ActivatedRoute,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
     ) {}
@@ -44,7 +40,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
         this.commitsInfoSubscription?.unsubscribe();
     }
 
-    loadParticipation() {
+    private loadParticipation() {
         this.programmingExerciseParticipationService
             .getStudentParticipationWithAllResults(this.participationId)
             .pipe(
@@ -53,7 +49,6 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
                     this.studentParticipation.results?.forEach((result) => {
                         result.participation = participation!;
                     });
-                    console.log('participation', participation);
                 }),
             )
             .subscribe({
@@ -63,7 +58,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
             });
     }
 
-    handleCommits() {
+    private handleCommits() {
         this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(this.participationId).subscribe((commits) => {
             this.commits = [];
             const sortedCommits = this.sortCommitsByTimestampDesc(commits);
