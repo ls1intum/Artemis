@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
@@ -69,6 +70,7 @@ public class ProgrammingExerciseGitDiffReportResource {
 
     /**
      * GET exercises/:exerciseId/submissions/:submissionId1/diff-report/:submissionId2 : Get the diff report for two submissions of a programming exercise.
+     * The current user needs to have at least instructor access to the exercise to fetch the diff report for the submissions.
      *
      * @param exerciseId    the id of the exercise the two submissions belong to
      * @param submissionId1 the id of the first (older) submission
@@ -99,6 +101,7 @@ public class ProgrammingExerciseGitDiffReportResource {
     /**
      * GET exercises/:exerciseId/submissions/:submissionId1/diff-report-with-template : Get the diff report for a submission of a programming exercise with the template of the
      * exercise.
+     * The current user needs to have at least instructor access to the exercise to fetch the diff report with the template.
      *
      * @param exerciseId    the id of the exercise the submission and the template belong to
      * @param submissionId1 the id of the submission
@@ -122,7 +125,8 @@ public class ProgrammingExerciseGitDiffReportResource {
     }
 
     /**
-     * GET exercises/:exerciseId/submissions/:submissionId1/diff-report/:submissionId2 : Get the diff report for two submissions of a programming exercise.
+     * GET exercises/:exerciseId/submissions/:submissionId1/diff-report-commit-details/:submissionId2 : Get the diff report for two submissions of a programming exercise.
+     * To fetch the diff report for the commit details view,the current user needs to have access to the participation of the submissions.
      *
      * @param exerciseId    the id of the exercise the two submissions belong to
      * @param submissionId1 the id of the first (older) submission
@@ -132,7 +136,7 @@ public class ProgrammingExerciseGitDiffReportResource {
      * @throws IOException     if errors occur while accessing the file system
      */
     @GetMapping("programming-exercises/{exerciseId}/submissions/{submissionId1}/diff-report-commit-details/{submissionId2}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
     public ResponseEntity<ProgrammingExerciseGitDiffReportDTO> getGitDiffReportForCommitDetailsViewForSubmissions(@PathVariable long exerciseId, @PathVariable long submissionId1,
             @PathVariable long submissionId2) throws GitAPIException, IOException {
         log.debug("REST request to get a ProgrammingExerciseGitDiffReport for the commit details view for submission {} and submission {} of exercise {}", submissionId1,
@@ -152,8 +156,8 @@ public class ProgrammingExerciseGitDiffReportResource {
     }
 
     /**
-     * GET exercises/:exerciseId/submissions/:submissionId1/diff-report-with-template : Get the diff report for a submission of a programming exercise with the template of the
-     * exercise.
+     * GET exercises/:exerciseId/submissions/:submissionId1/diff-report-commit-details-with-template : Get the diff report for a submission of a programming exercise with the
+     * template of the exercise. To fetch the diff report for the commit details view, the current user needs to have access to the participation of the submission.
      *
      * @param exerciseId    the id of the exercise the submission and the template belong to
      * @param submissionId1 the id of the submission
@@ -162,7 +166,7 @@ public class ProgrammingExerciseGitDiffReportResource {
      * @throws IOException     if errors occur while accessing the file system
      */
     @GetMapping("programming-exercises/{exerciseId}/submissions/{submissionId1}/diff-report-commit-details-with-template")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
     public ResponseEntity<ProgrammingExerciseGitDiffReportDTO> getGitDiffReportForCommitDetailsViewForSubmissionWithTemplate(@PathVariable long exerciseId,
             @PathVariable long submissionId1) throws GitAPIException, IOException {
         log.debug("REST request to get a ProgrammingExerciseGitDiffReport for the commit details view for submission {} with the template of exercise {}", submissionId1,
