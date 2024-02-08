@@ -22,10 +22,10 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.iris.session.IrisCompetencyGenerationSessionService;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.competency.CompetencyRelationService;
 import de.tum.in.www1.artemis.service.competency.CompetencyService;
+import de.tum.in.www1.artemis.service.iris.session.IrisCompetencyGenerationSessionService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -62,7 +62,7 @@ public class CompetencyResource {
     private final CompetencyProgressService competencyProgressService;
 
     private final ExerciseService exerciseService;
-  
+
     private final Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService;
 
     private final LectureUnitService lectureUnitService;
@@ -72,7 +72,8 @@ public class CompetencyResource {
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository, CompetencyService competencyService,
             CompetencyProgressRepository competencyProgressRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
-            LectureUnitService lectureUnitService, CompetencyRelationService competencyRelationService, Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService) {
+            LectureUnitService lectureUnitService, CompetencyRelationService competencyRelationService,
+            Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService) {
         this.courseRepository = courseRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -227,19 +228,7 @@ public class CompetencyResource {
         var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
-        var createdCompetencies = new ArrayList<Competency>();
-
-		//TODO: solve this in the competency service.
-        for (var competency : competencies) {
-            var createdCompetency = competencyService.getCompetencyToCreate(competency);
-            createdCompetency.setCourse(course);
-            createdCompetency = competencyRepository.save(createdCompetency);
-            createdCompetencies.add(createdCompetency);
-        }
-
-        if (course.getLearningPathsEnabled()) {
-            learningPathService.linkCompetenciesToLearningPathsOfCourse(createdCompetencies, courseId);
-        }
+        var createdCompetencies = competencyService.createCompetencies(competencies, course);
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(createdCompetencies);
     }
