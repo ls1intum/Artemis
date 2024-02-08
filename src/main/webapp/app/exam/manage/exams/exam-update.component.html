@@ -49,17 +49,13 @@
                 <jhi-exam-mode-picker [exam]="exam" [disableInput]="exam.id !== undefined"></jhi-exam-mode-picker>
             </div>
             <div class="row mb-3">
-                <div class="col-sm-4 form-group">
+                <div class="col-sm-6 form-group">
                     <label class="form-check-label" for="examiner" jhiTranslate="artemisApp.examManagement.examiner">Examiner</label>
                     <input class="form-control" type="text" name="examiner" id="examiner" [(ngModel)]="exam.examiner" />
                 </div>
-                <div class="col-sm-4 form-group">
+                <div class="col-sm-6 form-group">
                     <label class="form-check-label" for="moduleNumber" jhiTranslate="artemisApp.examManagement.moduleNumber">Module number</label>
                     <input class="form-control" type="text" name="moduleNumber" id="moduleNumber" [(ngModel)]="exam.moduleNumber" />
-                </div>
-                <div class="col-sm-4 form-group">
-                    <label class="form-check-label" for="courseName" jhiTranslate="artemisApp.examManagement.courseName">Course name</label>
-                    <input class="form-control" type="text" name="courseName" id="courseName" [(ngModel)]="exam.courseName" />
                 </div>
             </div>
             <hr />
