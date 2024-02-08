@@ -100,11 +100,9 @@ public class ConversationMessagingService extends PostingService {
         newMessage.setDisplayPriority(DisplayPriority.NONE);
 
         var conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(newMessage.getConversation().getId(), author, Optional.empty())
-                .orElse(conversationRepository.findByIdElseThrow(newMessage.getConversation().getId()));
+                .orElse(conversationRepository.findWithParticipantsById(newMessage.getConversation().getId()).orElseThrow());
         log.debug("      createMessage:conversationService.isMemberOrCreateForCourseWideElseThrow DONE");
 
-        // IMPORTANT we don't need it in the conversation any more, so we reduce the amount of data sent to clients
-        conversation.setConversationParticipants(Set.of());
         var course = preCheckUserAndCourseForMessaging(author, courseId);
 
         // extra checks for channels
@@ -128,8 +126,6 @@ public class ConversationMessagingService extends PostingService {
         log.debug("      conversationMessageRepository.save DONE");
         // set the conversation again, because it might have been lost during save
         createdMessage.setConversation(conversation);
-        // reduce the payload of the response / websocket message: this is important to avoid overloading the involved subsystems
-        createdMessage.getConversation().hideDetails();
         log.debug("      conversationMessageRepository.save DONE");
 
         createdMessage.setAuthor(author);

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest.metis;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
+import java.util.Collections;
 import java.util.List;
 
 import javax.validation.Valid;
@@ -78,6 +79,8 @@ public class ConversationMessageResource {
         }
         CreatedConversationMessage createdMessageData = conversationMessagingService.createMessage(courseId, post);
         conversationMessagingService.notifyAboutMessageCreation(createdMessageData);
+        createdMessageData.completeConversation().setConversationParticipants(Collections.emptySet());
+
         log.info("createMessage took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/messages/" + createdMessageData.messageWithHiddenDetails().getId()))
                 .body(createdMessageData.messageWithHiddenDetails());
