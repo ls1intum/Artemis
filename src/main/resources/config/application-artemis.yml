@@ -89,7 +89,7 @@ artemis:
         notification-plugin: "ls1tum/artemis-notification-plugin:1.0.0" # Docker image for the generic notification plugin. This value is set in an CI variable in GitLab CI.
     git:
         name: Artemis
-        email: artemis.in@tum.de
+        email: artemis@xcit.tum.de
     athena:
         url: http://localhost:5000
         secret: abcdef12345

@@ -37,6 +37,8 @@ Some general aspects:
 2. Do not introduce new types/values to the global namespace.
 3. Shared types should be defined in 'types.ts'.
 4. Within a file, type definitions should come first.
+5. Interfaces and types offer almost the same functionality. To ensure consistency, choose ``interface`` over ``type`` whenever possible.
+6. Use strict typing to avoid type errors: Do not use ``any``.
 
 4. ``null`` and ``undefined``
 =============================
