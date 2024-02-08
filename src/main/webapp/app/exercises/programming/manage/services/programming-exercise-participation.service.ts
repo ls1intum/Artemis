@@ -48,6 +48,17 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
         );
     }
 
+    getStudentParticipationWithAllResults(participationId: number): Observable<ProgrammingExerciseStudentParticipation> {
+        return this.http.get<ProgrammingExerciseStudentParticipation>(this.resourceUrl + participationId + '/student-participation-with-all-results-and-feedbacks').pipe(
+            tap((res) => {
+                if (res.exercise) {
+                    this.sendTitlesToEntityTitleService(res);
+                    this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.exercise);
+                }
+            }),
+        );
+    }
+
     checkIfParticipationHasResult(participationId: number): Observable<boolean> {
         return this.http.get<boolean>(this.resourceUrl + participationId + '/has-result');
     }

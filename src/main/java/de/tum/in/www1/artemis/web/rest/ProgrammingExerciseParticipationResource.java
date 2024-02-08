@@ -93,6 +93,24 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
+     * Get the given student participation with all results and feedbacks.
+     *
+     * @param participationId for which to retrieve the student participation with all results and feedbacks.
+     * @return the ResponseEntity with status 200 (OK) and the participation with all results and feedbacks in the body.
+     */
+    @GetMapping("/programming-exercise-participations/{participationId}/student-participation-with-all-results-and-feedbacks")
+    @EnforceAtLeastStudent
+    public ResponseEntity<ProgrammingExerciseStudentParticipation> getParticipationWithAllResultsForStudentParticipation(@PathVariable Long participationId) {
+        ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository
+                .findByIdWithAllResultsAndFeedbacksAndRelatedSubmissions(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+
+        // hide details that should not be shown to the students
+        resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
+        return ResponseEntity.ok(participation);
+    }
+
+    /**
      * Get the latest result for a given programming exercise participation including its result.
      *
      * @param participationId for which to retrieve the programming exercise participation with latest result and feedbacks.

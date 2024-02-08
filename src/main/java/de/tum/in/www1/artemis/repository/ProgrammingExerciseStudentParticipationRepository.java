@@ -48,6 +48,17 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(@Param("participationId") Long participationId,
             @Param("dateTime") ZonedDateTime dateTime);
 
+    @Query("""
+            SELECT DISTINCT p
+            FROM ProgrammingExerciseStudentParticipation p
+                LEFT JOIN FETCH p.results pr
+                LEFT JOIN FETCH pr.feedbacks f
+                LEFT JOIN FETCH f.testCase
+                LEFT JOIN FETCH pr.submission
+            WHERE p.id = :participationId
+             """)
+    Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndFeedbacksAndRelatedSubmissions(@Param("participationId") Long participationId);
+
     @EntityGraph(type = LOAD, attributePaths = { "results", "exercise", "team.students" })
     List<ProgrammingExerciseStudentParticipation> findWithResultsAndExerciseAndTeamStudentsByBuildPlanId(String buildPlanId);
 

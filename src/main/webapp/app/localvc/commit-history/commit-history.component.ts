@@ -54,6 +54,9 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
             this.exercise = exerciseResponse.body!;
             this.handleParticipations();
         });
+        this.programmingExerciseParticipationService.getStudentParticipationWithAllResults(this.participationId).subscribe((participation) => {
+            console.log(participation);
+        });
     }
 
     private handleParticipations() {
