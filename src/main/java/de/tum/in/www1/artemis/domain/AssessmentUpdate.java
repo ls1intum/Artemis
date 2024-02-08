@@ -18,6 +18,8 @@ public class AssessmentUpdate {
      */
     private ComplaintResponse complaintResponse;
 
+    private String assessmentNote;
+
     public List<Feedback> getFeedbacks() {
         return feedbacks;
     }
@@ -37,6 +39,14 @@ public class AssessmentUpdate {
 
     public void setComplaintResponse(ComplaintResponse complaintResponse) {
         this.complaintResponse = complaintResponse;
+    }
+
+    public String getAssessmentNote() {
+        return assessmentNote;
+    }
+
+    public void setAssessmentNote(String assessmentNote) {
+        this.assessmentNote = assessmentNote;
     }
 
     public AssessmentUpdate complaintResponse(ComplaintResponse complaintResponse) {

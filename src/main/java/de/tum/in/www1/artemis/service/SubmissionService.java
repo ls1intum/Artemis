@@ -422,11 +422,13 @@ public class SubmissionService {
      * @param feedbacks  the new feedbacks after the response
      * @return the newly created result
      */
-    public Result createResultAfterComplaintResponse(Submission submission, Result oldResult, List<Feedback> feedbacks) {
+    public Result createResultAfterComplaintResponse(Submission submission, Result oldResult, List<Feedback> feedbacks, String assessmentNoteText) {
         Result newResult = new Result();
         newResult.setParticipation(submission.getParticipation());
         copyFeedbackToResult(newResult, feedbacks);
         newResult = copyResultContentAndAddToSubmission(submission, newResult, oldResult);
+        newResult.setAssessmentNote(oldResult.getAssessmentNote());
+        newResult.getAssessmentNote().setNote(assessmentNoteText);
         return newResult;
     }
 
@@ -447,6 +449,12 @@ public class SubmissionService {
         submission.addResult(savedResult);
         submissionRepository.save(submission);
         return savedResult;
+    }
+
+    private Result updateAssessmentNote(Result newResult, Result oldResult, String assessmentNote) {
+        newResult.setAssessmentNote(oldResult.getAssessmentNote());
+        newResult.getAssessmentNote().setNote(assessmentNote);
+        return resultRepository.save(newResult);
     }
 
     /**

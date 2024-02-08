@@ -690,7 +690,8 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         assertThatExceptionOfType(EntityNotFoundException.class)
                 .isThrownBy(() -> modelingSubmissionRepo.findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(Long.MAX_VALUE));
 
-        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> modelingSubmissionRepo.findByIdWithEagerResultAndFeedbackElseThrow(Long.MAX_VALUE));
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> modelingSubmissionRepo.findByIdWithEagerResultAndFeedbackAndAssessmentNoteElseThrow(Long.MAX_VALUE));
 
         createNineLockedSubmissionsForDifferentExercisesAndUsers(TEST_PREFIX + "tutor1");
         ModelingSubmission newSubmission = ParticipationFactory.generateModelingSubmission(validModel, true);

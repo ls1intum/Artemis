@@ -33,11 +33,12 @@ export class ModelingAssessmentService {
         return this.http.put<Result>(url, feedbacks).pipe(map((res) => this.convertResult(res)));
     }
 
-    updateAssessmentAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number): Observable<EntityResponseType> {
+    updateAssessmentAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number, assessmentNote?: string): Observable<EntityResponseType> {
         const url = `${this.resourceUrl}/modeling-submissions/${submissionId}/assessment-after-complaint`;
         const assessmentUpdate = {
             feedbacks,
             complaintResponse,
+            assessmentNote,
         };
         return this.http.put<Result>(url, assessmentUpdate, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertResultEntityResponseTypeFromServer(res)));
     }
