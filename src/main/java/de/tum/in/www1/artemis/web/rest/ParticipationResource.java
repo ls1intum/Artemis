@@ -653,7 +653,7 @@ public class ParticipationResource {
     @EnforceAtLeastStudent
     public ResponseEntity<StudentParticipation> getParticipationForCurrentUser(@PathVariable Long participationId) {
         log.debug("REST request to get participation : {}", participationId);
-        StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdWithEagerTeamStudentsElseThrow(participationId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionOwner(participation, user);
         return new ResponseEntity<>(participation, HttpStatus.OK);

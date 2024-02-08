@@ -9,6 +9,9 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { BrowserModule } from '@angular/platform-browser';
 import { NgbCollapseMocksModule } from '../../../helpers/mocks/directive/ngbCollapseMocks.module';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ScienceService } from 'app/shared/science/science.service';
+import { ScienceEventType } from 'app/shared/science/science.model';
+import { MockScienceService } from '../../../helpers/mocks/service/mock-science-service';
 
 describe('VideoUnitComponent', () => {
     const exampleName = 'Test';
@@ -17,6 +20,8 @@ describe('VideoUnitComponent', () => {
     let videoUnitComponentFixture: ComponentFixture<VideoUnitComponent>;
     let videoUnitComponent: VideoUnitComponent;
     let videoUnit: VideoUnit;
+    let scienceService: ScienceService;
+    let logEventStub: jest.SpyInstance;
 
     beforeEach(() => {
         videoUnit = new VideoUnit();
@@ -27,14 +32,18 @@ describe('VideoUnitComponent', () => {
         TestBed.configureTestingModule({
             imports: [BrowserModule, NgbCollapseMocksModule, MockDirective(NgbTooltip)],
             declarations: [VideoUnitComponent, SafeResourceUrlPipe, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
-            providers: [{ provide: SafeResourceUrlPipe, useClass: SafeResourceUrlPipe }],
-            schemas: [],
+            providers: [
+                { provide: SafeResourceUrlPipe, useClass: SafeResourceUrlPipe },
+                { provide: ScienceService, useClass: MockScienceService },
+            ],
         })
             .compileComponents()
             .then(() => {
                 videoUnitComponentFixture = TestBed.createComponent(VideoUnitComponent);
                 videoUnitComponent = videoUnitComponentFixture.componentInstance;
                 videoUnitComponent.videoUnit = videoUnit;
+                scienceService = TestBed.inject(ScienceService);
+                logEventStub = jest.spyOn(scienceService, 'logEvent');
             });
     });
 
@@ -96,4 +105,11 @@ describe('VideoUnitComponent', () => {
             videoUnitComponent.handleClick(new Event('click'), false);
         });
     }, 1000);
+
+    it('should log event on open', () => {
+        videoUnitComponent.isCollapsed = true;
+        videoUnitComponentFixture.detectChanges(); // ngInit
+        videoUnitComponent.handleCollapse(new Event('click'));
+        expect(logEventStub).toHaveBeenCalledExactlyOnceWith(ScienceEventType.LECTURE__OPEN_UNIT, videoUnit.id!);
+    });
 });

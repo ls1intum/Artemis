@@ -162,7 +162,7 @@ public class ParticipationTeamWebsocketService {
         // Without this, custom jpa repository methods don't work in websocket channel.
         SecurityUtils.setAuthorizationObject();
 
-        final StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
+        final StudentParticipation participation = studentParticipationRepository.findByIdWithEagerTeamStudentsElseThrow(participationId);
 
         // user must belong to the team who owns the participation in order to update a submission
         if (!participation.isOwnedBy(principal.getName())) {

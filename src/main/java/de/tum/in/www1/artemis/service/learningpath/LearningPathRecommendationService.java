@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 
 /**
  * Service Implementation for the recommendation of competencies and learning objects in learning paths.

@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -9,16 +11,14 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
-import de.tum.in.www1.artemis.repository.CompetencyRepository;
-import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
-import de.tum.in.www1.artemis.repository.LectureUnitRepository;
+import de.tum.in.www1.artemis.repository.*;
 
 @Profile("core")
 @Service
@@ -32,12 +32,15 @@ public class LectureUnitService {
 
     private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, CompetencyRepository competencyRepository,
-            LectureUnitCompletionRepository lectureUnitCompletionRepository) {
+            LectureUnitCompletionRepository lectureUnitCompletionRepository, ExerciseRepository exerciseRepository) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.competencyRepository = competencyRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -101,5 +104,44 @@ public class LectureUnitService {
         lecture.getLectureUnits().clear();
         lecture.getLectureUnits().addAll(lectureUnitsUpdated);
         lectureRepository.save(lecture);
+    }
+
+    /**
+     * Link the competency to a set of lecture units (and exercises if it includes exercise units)
+     *
+     * @param competency           The competency to be linked
+     * @param lectureUnitsToAdd    A set of lecture units to link to the specified competency
+     * @param lectureUnitsToRemove A set of lecture units to unlink from the specified competency
+     */
+    public void linkLectureUnitsToCompetency(Competency competency, Set<LectureUnit> lectureUnitsToAdd, Set<LectureUnit> lectureUnitsToRemove) {
+        final Predicate<LectureUnit> isExerciseUnit = lectureUnit -> lectureUnit instanceof ExerciseUnit;
+
+        // Remove the competency from the old lecture units
+        var lectureUnitsToRemoveFromDb = lectureUnitRepository.findAllByIdWithCompetenciesBidirectional(lectureUnitsToRemove.stream().map(LectureUnit::getId).toList());
+        lectureUnitRepository.saveAll(lectureUnitsToRemoveFromDb.stream().filter(isExerciseUnit.negate()).peek(lectureUnit -> lectureUnit.getCompetencies().remove(competency))
+                .collect(Collectors.toSet()));
+        exerciseRepository.saveAll(lectureUnitsToRemoveFromDb.stream().filter(isExerciseUnit).map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise())
+                .peek(exercise -> exercise.getCompetencies().remove(competency)).collect(Collectors.toSet()));
+
+        // Add the competency to the new lecture units
+        var lectureUnitsFromDb = lectureUnitRepository.findAllByIdWithCompetenciesBidirectional(lectureUnitsToAdd.stream().map(LectureUnit::getId).toList());
+        var lectureUnitsWithoutExercises = lectureUnitsFromDb.stream().filter(isExerciseUnit.negate()).collect(Collectors.toSet());
+        var exercises = lectureUnitsFromDb.stream().filter(isExerciseUnit).map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise()).collect(Collectors.toSet());
+        lectureUnitsWithoutExercises.stream().map(LectureUnit::getCompetencies).forEach(competencies -> competencies.add(competency));
+        exercises.stream().map(Exercise::getCompetencies).forEach(competencies -> competencies.add(competency));
+        lectureUnitRepository.saveAll(lectureUnitsWithoutExercises);
+        exerciseRepository.saveAll(exercises);
+        competency.setLectureUnits(lectureUnitsToAdd);
+    }
+
+    /**
+     * Removes competency from all lecture units.
+     *
+     * @param lectureUnits set of lecture units
+     * @param competency   competency to remove
+     */
+    public void removeCompetency(Set<LectureUnit> lectureUnits, Competency competency) {
+        lectureUnits.forEach(lectureUnit -> lectureUnit.getCompetencies().remove(competency));
+        lectureUnitRepository.saveAll(lectureUnits);
     }
 }

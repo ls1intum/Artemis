@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.competency;
 
 import java.time.Instant;
 import java.util.*;
@@ -21,8 +21,11 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.LearningObjectService;
+import de.tum.in.www1.artemis.service.ParticipantScoreService;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
+import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 
 /**
  * Service for calculating the progress of a student in a competency.
@@ -103,9 +106,8 @@ public class CompetencyProgressService {
     @Async
     public void updateProgressByCompetencyAsync(Competency competency) {
         SecurityUtils.setAuthorizationObject(); // required for async
-        competencyProgressRepository.findAllByCompetencyId(competency.getId()).stream().map(CompetencyProgress::getUser).forEach(user -> {
-            updateCompetencyProgress(competency.getId(), user);
-        });
+        competencyProgressRepository.findAllByCompetencyId(competency.getId()).stream().map(CompetencyProgress::getUser)
+                .forEach(user -> updateCompetencyProgress(competency.getId(), user));
     }
 
     /**
@@ -134,11 +136,7 @@ public class CompetencyProgressService {
                 return;
             }
 
-            users.forEach(user -> {
-                competencies.forEach(competency -> {
-                    updateCompetencyProgress(competency.getId(), user);
-                });
-            });
+            users.forEach(user -> competencies.forEach(competency -> updateCompetencyProgress(competency.getId(), user)));
         }
         catch (Exception e) {
             log.error("Exception while updating progress for competency", e);
@@ -276,5 +274,30 @@ public class CompetencyProgressService {
         final var numberOfLearningObjects = lectureUnits + competency.getExercises().size();
         final var achievableMasteryScore = ((double) lectureUnits) / (3 * numberOfLearningObjects) * 100;
         return achievableMasteryScore >= competency.getMasteryThreshold();
+    }
+
+    /**
+     * Deletes all progress for the given competency.
+     *
+     * @param competencyId The id of the competency for which to delete the progress
+     */
+    public void deleteProgressForCompetency(long competencyId) {
+        competencyProgressRepository.deleteAllByCompetencyId(competencyId);
+    }
+
+    /**
+     * Gets the progress for the whole course.
+     *
+     * @param competency The competency for which to get the progress
+     * @param course     The course for which to get the progress
+     * @return The progress for the course
+     */
+    public CourseCompetencyProgressDTO getCompetencyCourseProgress(@NotNull Competency competency, @NotNull Course course) {
+        var numberOfStudents = competencyProgressRepository.countByCompetency(competency.getId());
+        var numberOfMasteredStudents = competencyProgressRepository.countByCompetencyAndProgressAndConfidenceGreaterThanEqual(competency.getId(), 100.0,
+                (double) competency.getMasteryThreshold());
+        var averageStudentScore = RoundingUtil.roundScoreSpecifiedByCourseSettings(competencyProgressRepository.findAverageConfidenceByCompetencyId(competency.getId()).orElse(0.0),
+                course);
+        return new CourseCompetencyProgressDTO(competency.getId(), numberOfStudents, numberOfMasteredStudents, averageStudentScore);
     }
 }
