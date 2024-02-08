@@ -13,6 +13,13 @@ export interface TutorialGroupFreePeriodFormData {
     reason?: string;
 }
 
+/**
+ * Enum for representing different time frames.
+ * @enum {number}
+ * @property {number} Day - Represents a whole day.
+ * @property {number} Period - Represents a period spanning multiple days.
+ * @property {number} PeriodWithinDay - Represents a period within a single day.
+ */
 export enum TimeFrame {
     Day,
     Period,
@@ -44,32 +51,42 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
 
     form: FormGroup;
 
+    // TimeFrame to store the current time frame of the form.
     protected timeFrame = TimeFrame.Day;
 
+    // Enum Object to be used for Comparing different TimeFrames in the template.
     protected readonly TimeFrame = TimeFrame;
 
-    // Todo: TimeFrame getter/setter. Reset endDate when switching back to single Day
+    /**
+     * Sets the time frame for the form and resets the necessary date controls.
+     * @param {TimeFrame} timeFrame - The time frame to set. This should be one of the values from the TimeFrame enum.
+     */
     setTimeFrame(timeFrame: TimeFrame) {
-        if (timeFrame === TimeFrame.Day) {
-            this.resetDateControl('endDate');
-            this.resetDateControl('endTime');
-            this.resetDateControl('startTime');
-        } else if (timeFrame == TimeFrame.Period) {
-            this.resetDateControl('startTime');
-            this.resetDateControl('endTime');
-        } else if (timeFrame == TimeFrame.PeriodWithinDay) {
-            this.resetDateControl('endDate');
-        }
+        const resetControls = ['endDate', 'endTime', 'startTime'];
+        resetControls.forEach((control) => {
+            if (timeFrame === TimeFrame.Day || (timeFrame === TimeFrame.Period && control !== 'endDate') || (timeFrame === TimeFrame.PeriodWithinDay && control === 'endDate')) {
+                this.resetDateControl(control);
+            }
+        });
         this.timeFrame = timeFrame;
     }
 
+    /**
+     * Resets the specified date-value in the form.
+     * @param {string} controlName - The name of the control to reset.
+     */
     private resetDateControl(controlName: string) {
-        if (this.form.get(controlName)) {
-            this.form.get(controlName)?.reset();
-            this.form.get(controlName)?.markAsUntouched();
+        const control = this.form.get(controlName);
+        if (control) {
+            control.reset();
+            control.markAsUntouched();
         }
     }
 
+    /**
+     * Checks if the start date/time is before the end date/time based on the current time frame.
+     * @returns {boolean} - Returns true if the start time/date is before the end time/date, otherwise returns true.
+     */
     get isStartBeforeEnd() {
         if (this.timeFrame == TimeFrame.PeriodWithinDay && this.endTimeControl && this.startTimeControl) {
             return this.endTimeControl.value > this.startTimeControl.value;
