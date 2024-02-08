@@ -35,12 +35,13 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { User } from 'app/core/user/user.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
+import { UMLDiagramType } from '@ls1intum/apollon';
 import { TextExercise } from 'app/entities/text-exercise.model';
 
 @Component({
@@ -598,6 +599,7 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should perform import of an exam with only selected exercises successfully', () => {
+            fixture.detectChanges();
             const expectedExam = prepareExamForImport(examForImport);
             expectedExam.course = course;
             // Only import one of two exercises
@@ -619,7 +621,7 @@ describe('ExamUpdateComponent', () => {
             expect(importSpy).toHaveBeenCalledOnce();
             expect(importSpy).toHaveBeenCalledWith(1, expectedExam);
             // We expect to have imported only one exercise group and only one of two exercises
-            expect(expectedExam.exerciseGroups?.at(0)).toHaveLength(1);
+            expect(expectedExam.exerciseGroups?.at(0)?.exercises).toHaveLength(1);
             expect(navigateSpy).toHaveBeenCalledOnce();
             expect(navigateSpy).toHaveBeenCalledWith(['course-management', course.id, 'exams', examForImport.id]);
             expect(alertSpy).not.toHaveBeenCalled();

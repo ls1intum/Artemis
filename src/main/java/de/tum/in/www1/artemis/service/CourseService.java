@@ -204,7 +204,8 @@ public class CourseService {
      * @return A wrapper object containing a list of all found courses and the total number of pages
      */
     public SearchResultPageDTO<Course> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
-        final var pageable = PageUtil.createCoursePageRequest(search);
+        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.COURSE);
+
         final var searchTerm = search.getSearchTerm();
         final Page<Course> coursePage;
         if (authCheckService.isAdmin(user)) {
@@ -369,6 +370,18 @@ public class CourseService {
     public Set<Course> findAllEnrollableForUser(User user) {
         return courseRepository.findAllEnrollmentActiveWithOrganizationsAndPrerequisites(ZonedDateTime.now()).stream()
                 .filter(course -> !user.getGroups().contains(course.getStudentGroupName())).collect(Collectors.toSet());
+    }
+
+    /**
+     * Gets a set of all online courses for a specific LTI platform registration, filtered by the instructor user.
+     *
+     * @param registrationId the registration ID of the LTI platform to filter courses.
+     * @param user           the User object representing the instructor whose courses are to be fetched.
+     * @return a set of {@link Course} objects where the user is an instructor, related to the specified LTI platform.
+     */
+    public Set<Course> findAllOnlineCoursesForPlatformForUser(String registrationId, User user) {
+        return courseRepository.findOnlineCoursesWithRegistrationIdEager(registrationId).stream().filter(course -> authCheckService.isInstructorInCourse(course, user))
+                .collect(Collectors.toSet());
     }
 
     /**
