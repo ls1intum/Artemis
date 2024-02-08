@@ -282,4 +282,21 @@ public class ProgrammingExerciseParticipationResource {
         return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content/" + commitId);
     }
 
+    /**
+     * GET /programming-exercise-participations/{participationId}/files-content-commit-details/{commitId} : Get the content of the files of a programming exercise participation.
+     * This method is specifically for the commit details view, where not only Instructors and Admins should have access to the files content as in
+     * redirectGetParticipationRepositoryFiles.
+     *
+     * @param participationId the id of the participation for which to retrieve the files content
+     * @param commitId        the id of the commit for which to retrieve the files content
+     * @return a redirect to the endpoint returning the files with content
+     */
+    @GetMapping("programming-exercise-participations/{participationId}/files-content-commit-details/{commitId}")
+    @EnforceAtLeastStudent
+    public ModelAndView redirectGetParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long participationId, @PathVariable String commitId) {
+        var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content/" + commitId);
+    }
+
 }

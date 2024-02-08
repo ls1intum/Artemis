@@ -85,6 +85,7 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
 
     /**
      * Get the repository files with content for a given participation id at a specific commit hash.
+     * The current user needs to be at least an instructor in the course of the participation.
      * @param participationId of the participation to get the files for
      * @param commitId of the commit to get the files for
      */
@@ -98,6 +99,22 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
         );
     }
 
+    /**
+     * Get the repository files with content for a given participation id at a specific commit hash. This is used for the commit details view.
+     * The current user needs to be at least a teaching assistant in the course of the participation.
+     * If the user is not a teaching assistant, the user needs to be in the team or the owner of the participation.
+     * @param participationId of the participation to get the files for
+     * @param commitId of the commit to get the files for
+     */
+    getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(participationId: number, commitId: string): Observable<Map<string, string> | undefined> {
+        return this.http.get(`${this.resourceUrl}${participationId}/files-content-commit-details/${commitId}`).pipe(
+            map((res: HttpResponse<any>) => {
+                // this mapping is required because otherwise the HttpResponse object would be parsed
+                // to an arbitrary object (and not a map)
+                return res && new Map(Object.entries(res));
+            }),
+        );
+    }
     /**
      * Get the repository files with content for a given participation id at a specific commit hash.
      * The current user needs to be at least a instructor in the course of the participation.
