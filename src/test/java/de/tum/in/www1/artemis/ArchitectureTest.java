@@ -208,8 +208,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
         };
     }
 
-    private static final Set<String> SQL_KEYWORDS = Set.of("SELECT", "DISTINCT", "EXISTS", "FROM", "WHERE", "LEFT", "JOIN", "FETCH", "TREAT", "AND", "OR", "AS", "ORDER BY",
-            "GROUP BY", "COUNT", "SUM", "AVG", "FALSE", "TRUE", "NULL", "LIKE");
+    private static final Set<String> SQL_KEYWORDS = Set.of("SELECT", "DISTINCT", "EXISTS", "FROM", "WHERE", "LEFT", "JOIN", "FETCH", "TREAT", "AND", "OR", "AS", "ORDER BY", "ASC",
+            "DSC", "GROUP BY", "COUNT", "SUM", "AVG", "IS", "NOT", "FALSE", "TRUE", "NULL", "LIKE");
 
     private ArchCondition<JavaMethod> useUpperCaseSQLStyle() {
         return new ArchCondition<>("@Query content should follow the style guide") {
