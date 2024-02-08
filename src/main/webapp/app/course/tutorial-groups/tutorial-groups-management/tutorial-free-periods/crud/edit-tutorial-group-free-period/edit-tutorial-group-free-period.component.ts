@@ -40,41 +40,39 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
         private alertService: AlertService,
     ) {}
 
+    /**
+     * Initializes the component by setting up the form data based on the tutorial group free period, course, and tutorial groups configuration.
+     * If any of these are not provided, it logs an error and returns early.
+     * It determines whether the tutorial group free period is a freePeriod, a freeDay, or a freePeriodWithinDay.
+     * Based on these determinations, it sets up the form data accordingly.
+     */
     initialize() {
-        // debugger;
         if (!this.tutorialGroupFreePeriod || !this.course || !this.tutorialGroupsConfiguration) {
             console.error('Error: Component not fully configured');
-        } else {
-            if (TutorialGroupFreePeriodsManagementComponent.isFreePeriod(this.tutorialGroupFreePeriod)) {
-                this.formData = {
-                    startDate: this.tutorialGroupFreePeriod.start?.tz(this.course.timeZone).toDate(),
-                    endDate: this.tutorialGroupFreePeriod.end?.tz(this.course.timeZone).toDate(),
-                    startTime: undefined,
-                    endTime: undefined,
-                    reason: this.tutorialGroupFreePeriod.reason,
-                };
-            } else if (TutorialGroupFreePeriodsManagementComponent.isFreeDay(this.tutorialGroupFreePeriod)) {
-                this.formData = {
-                    startDate: this.tutorialGroupFreePeriod.start?.tz(this.course.timeZone).toDate(),
-                    endDate: undefined,
-                    startTime: undefined,
-                    endTime: undefined,
-                    reason: this.tutorialGroupFreePeriod.reason,
-                };
-            } else {
-                this.formData = {
-                    startDate: this.tutorialGroupFreePeriod.start?.tz(this.course.timeZone).toDate(),
-                    endDate: undefined,
-                    startTime: this.tutorialGroupFreePeriod.start?.tz(this.course.timeZone).toDate(),
-                    endTime: this.tutorialGroupFreePeriod.end?.tz(this.course.timeZone).toDate(),
-                    reason: this.tutorialGroupFreePeriod.reason,
-                };
-                this.formData.startTime?.setHours(this.tutorialGroupFreePeriod.start?.tz(this.course.timeZone).hour()!);
-                this.formData.endTime?.setHours(this.tutorialGroupFreePeriod.end?.tz(this.course.timeZone).hour()!);
-            }
-
-            this.isInitialized = true;
+            return;
         }
+
+        const isFreePeriod = TutorialGroupFreePeriodsManagementComponent.isFreePeriod(this.tutorialGroupFreePeriod);
+        const isFreePeriodWithinDay = TutorialGroupFreePeriodsManagementComponent.isFreePeriodWithinDay(this.tutorialGroupFreePeriod);
+
+        this.formData = {
+            startDate: this.tutorialGroupFreePeriod.start?.tz(this.course.timeZone).toDate(),
+            endDate: isFreePeriod ? this.tutorialGroupFreePeriod.end?.tz(this.course.timeZone).toDate() : undefined,
+            startTime: isFreePeriodWithinDay ? this.tutorialGroupFreePeriod.start?.tz(this.course.timeZone).toDate() : undefined,
+            endTime: isFreePeriodWithinDay ? this.tutorialGroupFreePeriod.end?.tz(this.course.timeZone).toDate() : undefined,
+            reason: this.tutorialGroupFreePeriod.reason,
+        };
+
+        if (isFreePeriodWithinDay) {
+            if (this.formData.startTime && this.tutorialGroupFreePeriod.start) {
+                this.formData.startTime.setHours(this.tutorialGroupFreePeriod.start.tz(this.course.timeZone).hour());
+            }
+            if (this.formData.endTime && this.tutorialGroupFreePeriod.end) {
+                this.formData.endTime.setHours(this.tutorialGroupFreePeriod.end.tz(this.course.timeZone).hour());
+            }
+        }
+
+        this.isInitialized = true;
     }
 
     updateTutorialGroupFreePeriod(formData: TutorialGroupFreePeriodFormData) {
