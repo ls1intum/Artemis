@@ -45,13 +45,14 @@
                 </div>
 
                 <!-- Date -->
-                <!--Todo: display correct labels for different timeframes-->
                 <div>
-                    @if (timeFrameControl != TimeFrame.Period) {
-                        <label class="form-label" for="startDate">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.label' | artemisTranslate }}</label>
-                    } @else {
-                        <label class="form-label" for="startDate">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStart' | artemisTranslate }}</label>
-                    }
+                    <label class="form-label" for="startDate">
+                        {{
+                            timeFrameControl !== TimeFrame.Period
+                                ? ('artemisApp.forms.tutorialFreePeriodForm.dateInput.label' | artemisTranslate)
+                                : ('artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStart' | artemisTranslate)
+                        }}</label
+                    >
                     <div class="input-group">
                         <input formControlName="startDate" required [owlDateTime]="startDate" class="d-none" />
                         <input
@@ -74,7 +75,7 @@
                         </div>
                     }
                 </div>
-                <!--Todo: EndDate selector and lables. Where is the endDate saved before submitting the form?-->
+
                 @if (timeFrameControl === TimeFrame.Period) {
                     <label class="form-label" for="endDate">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEnd' | artemisTranslate }}</label>
                     <div class="input-group">
