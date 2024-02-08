@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { DebugElement } from '@angular/core';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { ArtemisTestModule } from '../../test.module';
@@ -979,6 +979,39 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         comp.updateCategories(categories);
         expect(comp.exerciseCategories).toBe(categories);
     }));
+
+    it('should validate form sections', () => {
+        comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
+        comp.exerciseInfoComponent = { formValidChanges: new Subject(), formValid: true } as ProgrammingExerciseInformationComponent;
+        comp.exerciseDifficultyComponent = {
+            teamConfigComponent: {
+                formValidChanges: new Subject(),
+                formValid: true,
+            },
+        } as ProgrammingExerciseDifficultyComponent;
+        comp.exerciseLanguageComponent = { formValidChanges: new Subject(), formValid: true } as ProgrammingExerciseLanguageComponent;
+        comp.exerciseGradingComponent = { formValidChanges: new Subject(), formValid: true } as ProgrammingExerciseGradingComponent;
+        comp.exercisePlagiarismComponent = { formValidChanges: new Subject(), formValid: true } as ExerciseUpdatePlagiarismComponent;
+
+        comp.ngAfterViewInit();
+        expect(comp.inputFieldSubscriptions).toHaveLength(5);
+        comp.calculateFormStatusSections();
+
+        for (const section of comp.formStatusSections) {
+            expect(section.valid).toBeTrue();
+        }
+
+        comp.exerciseInfoComponent.formValid = false;
+        comp.exerciseInfoComponent.formValidChanges.next(false);
+
+        expect(comp.formStatusSections[0].valid).toBeFalse();
+
+        comp.ngOnDestroy();
+
+        for (const subscription of comp.inputFieldSubscriptions) {
+            expect(subscription?.closed ?? true).toBeTrue();
+        }
+    });
 
     function verifyImport(importedProgrammingExercise: ProgrammingExercise) {
         expect(comp.programmingExercise.projectKey).toBeUndefined();
