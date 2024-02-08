@@ -83,6 +83,8 @@ public class CompetencyResource {
         this.competencyProgressRepository = competencyProgressRepository;
         this.competencyProgressService = competencyProgressService;
         this.exerciseService = exerciseService;
+        this.lectureUnitService = lectureUnitService;
+        this.competencyRelationService = competencyRelationService;
         this.irisCompetencyGenerationSessionService = irisCompetencyGenerationSessionService;
     }
 
@@ -227,42 +229,6 @@ public class CompetencyResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
         var createdCompetencies = competencyService.createCompetencies(competencies, course);
-
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(createdCompetencies);
-    }
-
-    /**
-     * POST /courses/:courseId/competencies/bulk : creates a number of new competencies
-     *
-     * @param courseId     the id of the course to which the competencies should be added
-     * @param competencies the competencies that should be created
-     * @return the ResponseEntity with status 201 (Created) and body the created competencies
-     * @throws URISyntaxException if the Location URI syntax is incorrect
-     */
-    @PostMapping("/courses/{courseId}/competencies/bulk")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<List<Competency>> createCompetencies(@PathVariable Long courseId, @RequestBody List<Competency> competencies) throws URISyntaxException {
-        log.debug("REST request to create Competencies : {}", competencies);
-        for (Competency competency : competencies) {
-            if (competency.getId() != null || competency.getTitle() == null || competency.getTitle().trim().isEmpty()) {
-                throw new BadRequestException();
-            }
-        }
-        var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-
-        var createdCompetencies = new ArrayList<Competency>();
-
-        for (var competency : competencies) {
-            var createdCompetency = competencyService.getCompetencyToCreate(competency);
-            createdCompetency.setCourse(course);
-            createdCompetency = competencyRepository.save(createdCompetency);
-            createdCompetencies.add(createdCompetency);
-        }
-
-        if (course.getLearningPathsEnabled()) {
-            learningPathService.linkCompetenciesToLearningPathsOfCourse(createdCompetencies, courseId);
-        }
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(createdCompetencies);
     }
