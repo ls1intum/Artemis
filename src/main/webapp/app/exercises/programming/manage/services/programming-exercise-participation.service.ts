@@ -100,9 +100,19 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
 
     /**
      * Get the repository files with content for a given participation id at a specific commit hash.
+     * The current user needs to be at least a instructor in the course of the participation.
      * @param participationId of the participation to get the commit infos for
      */
     retrieveCommitsInfoForParticipation(participationId: number): Observable<CommitInfo[]> {
         return this.http.get<CommitInfo[]>(`${this.resourceUrl}${participationId}/commits-info`);
+    }
+
+    /**
+     * Get the repository files with content for a given participation id at a specific commit hash.
+     * The current user needs to be at least a student in the course of the participation.
+     * @param participationId of the participation to get the commit infos for
+     */
+    retrieveCommitHistoryForParticipation(participationId: number): Observable<CommitInfo[]> {
+        return this.http.get<CommitInfo[]>(`${this.resourceUrl}${participationId}/commits-history`);
     }
 }

@@ -251,6 +251,21 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
+     * GET /programming-exercise-participations/{participationId}/commits-history : Get the commit history of a programming exercise participation.
+     * The difference to getCommitInfosForParticipationRepo is that the authCheckService only checks if the user is a student of the participation instead of an instructor.
+     *
+     * @param participationId the id of the participation for which to retrieve the commit history
+     * @return A list of commitInfo DTOs with the commits information of the participation
+     */
+    @GetMapping("programming-exercise-participations/{participationId}/commits-history")
+    @EnforceAtLeastInstructor
+    List<CommitInfoDTO> getCommitHistoryForParticipationRepo(@PathVariable long participationId) {
+        ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, participation.getProgrammingExercise(), null);
+        return programmingExerciseParticipationService.getCommitInfos(participation);
+    }
+
+    /**
      * GET /programming-exercise-participations/{participationId}/files-content : Get the content of the files of a programming exercise participation.
      *
      * @param participationId the id of the participation for which to retrieve the files content
