@@ -6,6 +6,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyService } from 'app/course/competencies/competency.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { onError } from 'app/shared/util/global.utils';
+import { AlertService } from 'app/core/util/alert.service';
+import { Competency } from 'app/entities/competency.model';
 
 @Component({
     selector: 'jhi-import-competencies',
@@ -16,6 +20,7 @@ export class ImportCompetenciesComponent implements OnInit, ComponentCanDeactiva
     importRelations = true;
     showAdvancedSearch = false;
     courseId: number;
+    competencies: Competency[] = [];
 
     //Icons
     protected readonly faBan = faBan;
@@ -29,6 +34,7 @@ export class ImportCompetenciesComponent implements OnInit, ComponentCanDeactiva
         private router: Router,
         private translateService: TranslateService,
         private competencyService: CompetencyService,
+        private alertService: AlertService,
     ) {}
 
     ngOnInit(): void {
@@ -39,7 +45,15 @@ export class ImportCompetenciesComponent implements OnInit, ComponentCanDeactiva
 
     search(filter: CompetencyFilter) {
         console.log(filter);
-        //TODO: service call to get competencies.
+        this.isLoading = true;
+        this.competencyService.getAllForCourse(this.courseId).subscribe({
+            next: (res) => {
+                this.competencies = res.body ?? [];
+                this.isLoading = false;
+                console.log(this.competencies);
+            },
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
     }
 
     isSubmitPossible() {

@@ -18,7 +18,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { CompetencyImportCourseComponent } from 'app/course/competencies/competency-management/competency-import-course.component';
 import { ImportCompetenciesComponent } from 'app/course/competencies/import-competencies/import-competencies.component';
 import { CompetencySearchComponent } from 'app/course/competencies/import-competencies/competency-search.component';
-import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
+import { CompetencyTableComponent } from 'app/course/competencies/import-competencies/competency-table.component';
 
 @NgModule({
     imports: [
@@ -31,7 +31,6 @@ import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module'
         FormDateTimePickerModule,
         NgbAccordionModule,
         ArtemisMarkdownModule,
-        ArtemisDataTableModule,
     ],
     declarations: [
         CompetencyFormComponent,
@@ -45,6 +44,7 @@ import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module'
         CompetenciesPopoverComponent,
         PrerequisiteImportComponent,
         CompetencyImportCourseComponent,
+        CompetencyTableComponent,
     ],
     exports: [CompetencyCardComponent, CompetenciesPopoverComponent, CompetencyFormComponent, CompetencyRingsComponent],
 })

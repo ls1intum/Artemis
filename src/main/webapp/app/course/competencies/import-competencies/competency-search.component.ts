@@ -31,15 +31,16 @@ export class CompetencySearchComponent {
     protected readonly faChevronDown = faChevronDown;
     protected readonly faChevronUp = faChevronUp;
 
-    //Other constants
+    //Other constants for HTML
     protected readonly ButtonType = ButtonType;
     protected readonly semesters = getSemesters();
 
+    /**
+     * Toggles advanced search (expands component to show more search fields)
+     */
     toggleAdvancedSearch() {
         this.advancedSearchEnabled = !this.advancedSearchEnabled;
     }
-
-    constructor() {}
 
     /**
      * Resets all filters to default values
@@ -47,6 +48,7 @@ export class CompetencySearchComponent {
     reset() {
         this.filter = new CompetencyFilter();
     }
+
     /**
      * Sends an updated filter through the event emitter
      * Triggered every time the user manually presses Enter or the search button
