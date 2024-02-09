@@ -242,7 +242,11 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                 ),
                 empty:
                     !this.isExamMode &&
-                    (!this.modelingExercise.startDate || !this.modelingExercise.dueDate || !this.modelingExercise.assessmentDueDate || !this.modelingExercise.releaseDate),
+                    // if a dayjs object contains an empty date, it is considered "invalid"
+                    (!this.modelingExercise.startDate?.isValid() ||
+                        !this.modelingExercise.dueDate?.isValid() ||
+                        !this.modelingExercise.assessmentDueDate?.isValid() ||
+                        !this.modelingExercise.releaseDate?.isValid()),
             },
         ];
     }
