@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -632,7 +633,7 @@ public class ExerciseService {
      * @param gradingCriteria grading criteria list of exercise
      * @param exercise        exercise to update *
      */
-    public void checkExerciseIfStructuredGradingInstructionFeedbackUsed(List<GradingCriterion> gradingCriteria, Exercise exercise) {
+    public void checkExerciseIfStructuredGradingInstructionFeedbackUsed(Set<GradingCriterion> gradingCriteria, Exercise exercise) {
         List<Feedback> feedback = feedbackRepository.findFeedbackByExerciseGradingCriteria(gradingCriteria);
 
         if (!feedback.isEmpty()) {
@@ -649,7 +650,7 @@ public class ExerciseService {
      * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not *
      */
     public void reEvaluateExercise(Exercise exercise, boolean deleteFeedbackAfterGradingInstructionUpdate) {
-        List<GradingCriterion> gradingCriteria = exercise.getGradingCriteria();
+        Set<GradingCriterion> gradingCriteria = exercise.getGradingCriteria();
         // retrieve the feedback associated with the structured grading instructions
         List<Feedback> feedbackToBeUpdated = feedbackRepository.findFeedbackByExerciseGradingCriteria(gradingCriteria);
 
@@ -714,9 +715,9 @@ public class ExerciseService {
         List<Feedback> feedbackToBeDeleted = new ArrayList<>();
         // check if the user decided to remove the feedback after deleting the associated grading instructions
         if (deleteFeedbackAfterGradingInstructionUpdate) {
-            List<Long> updatedInstructionIds = gradingInstructions.stream().map(GradingInstruction::getId).toList();
+            Set<Long> updatedInstructionIds = gradingInstructions.stream().map(GradingInstruction::getId).collect(Collectors.toCollection(HashSet::new));
             // retrieve the grading instructions from database for backup
-            List<GradingCriterion> backupGradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+            Set<GradingCriterion> backupGradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
             List<Long> backupInstructionIds = backupGradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream())
                     .map(GradingInstruction::getId).toList();
 
@@ -744,5 +745,16 @@ public class ExerciseService {
             return false;
         }
         return score.getAsDouble() >= minScore;
+    }
+
+    /**
+     * Removes competency from all exercises.
+     *
+     * @param exercises  set of exercises
+     * @param competency competency to remove
+     */
+    public void removeCompetency(@NotNull Set<Exercise> exercises, @NotNull Competency competency) {
+        exercises.forEach(exercise -> exercise.getCompetencies().remove(competency));
+        exerciseRepository.saveAll(exercises);
     }
 }

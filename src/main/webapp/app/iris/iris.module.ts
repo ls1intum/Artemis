@@ -24,6 +24,9 @@ import { IrisCodeEditorWebsocketService } from 'app/iris/code-editor-websocket.s
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
 import { IrisEnabledComponent } from 'app/iris/settings/shared/iris-enabled.component';
+import { IrisCompetencyGenerationSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-competency-generation-sub-settings-update/iris-competency-generation-sub-settings-update.component';
+import { IrisLogoButtonComponent } from 'app/iris/iris-logo-button/iris-logo-button.component';
+import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 
 @NgModule({
     declarations: [
@@ -39,12 +42,24 @@ import { IrisEnabledComponent } from 'app/iris/settings/shared/iris-enabled.comp
         IrisLogoComponent,
         IrisChatSubSettingsUpdateComponent,
         IrisHestiaSubSettingsUpdateComponent,
+        IrisCompetencyGenerationSubSettingsUpdateComponent,
         IrisGlobalAutoupdateSettingsUpdateComponent,
         IrisCodeEditorSubSettingsUpdateComponent,
         IrisEnabledComponent,
+        IrisLogoButtonComponent,
     ],
-    imports: [CommonModule, MatDialogModule, FormsModule, FontAwesomeModule, ArtemisSharedModule, ArtemisMarkdownModule, ArtemisSharedComponentModule, RouterModule],
+    imports: [
+        CommonModule,
+        MatDialogModule,
+        FormsModule,
+        FontAwesomeModule,
+        ArtemisSharedModule,
+        ArtemisMarkdownModule,
+        ArtemisSharedComponentModule,
+        RouterModule,
+        FeatureToggleModule,
+    ],
     providers: [IrisCodeEditorWebsocketService, IrisStateStore],
-    exports: [IrisCodeEditorChatbotButtonComponent, IrisTutorChatbotButtonComponent, IrisEnabledComponent],
+    exports: [IrisCodeEditorChatbotButtonComponent, IrisTutorChatbotButtonComponent, IrisEnabledComponent, IrisLogoButtonComponent],
 })
 export class IrisModule {}

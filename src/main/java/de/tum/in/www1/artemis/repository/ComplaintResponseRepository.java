@@ -49,8 +49,9 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
      * @return number of complaints response associated to exercise exerciseId
      */
     @Query("""
-            SELECT COUNT (DISTINCT cr) FROM ComplaintResponse cr
-                WHERE cr.complaint.result.participation.exercise.id = :exerciseId
+            SELECT COUNT (DISTINCT cr)
+            FROM ComplaintResponse cr
+            WHERE cr.complaint.result.participation.exercise.id = :exerciseId
                 AND cr.complaint.complaintType = :complaintType
                 AND cr.submittedTime IS NOT NULL
             """)
@@ -64,17 +65,16 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
      * @return number of complaints associated to exercise exerciseId
      */
     @Query("""
-                SELECT
-                    new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
-                        cr.complaint.result.participation.exercise.id,
-                        count(DISTINCT cr)
-                    )
-                FROM ComplaintResponse cr
-                WHERE cr.complaint.result.participation.exercise.id IN (:exerciseIds)
-                    AND cr.submittedTime IS NOT NULL
-                    AND cr.complaint.complaintType = :complaintType
-                    AND cr.complaint.result.participation.testRun = FALSE
-                GROUP BY cr.complaint.result.participation.exercise.id
+            SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
+                cr.complaint.result.participation.exercise.id,
+                COUNT(DISTINCT cr)
+            )
+            FROM ComplaintResponse cr
+            WHERE cr.complaint.result.participation.exercise.id IN :exerciseIds
+                AND cr.submittedTime IS NOT NULL
+                AND cr.complaint.complaintType = :complaintType
+                AND cr.complaint.result.participation.testRun IS FALSE
+            GROUP BY cr.complaint.result.participation.exercise.id
             """)
     List<ExerciseMapEntry> countComplaintsByExerciseIdsAndComplaintComplaintTypeIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds,
             @Param("complaintType") ComplaintType complaintType);
@@ -87,16 +87,15 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
      * @return number of complaints associated to exercise exerciseId
      */
     @Query("""
-                SELECT
-                    new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
-                        cr.complaint.result.participation.exercise.id,
-                        count(DISTINCT cr)
-                    )
-                FROM ComplaintResponse cr
-                WHERE cr.complaint.result.participation.exercise.id IN (:exerciseIds)
-                    AND cr.submittedTime IS NOT NULL
-                    AND cr.complaint.complaintType = :complaintType
-                GROUP BY cr.complaint.result.participation.exercise.id
+            SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
+                cr.complaint.result.participation.exercise.id,
+                COUNT(DISTINCT cr)
+            )
+            FROM ComplaintResponse cr
+            WHERE cr.complaint.result.participation.exercise.id IN :exerciseIds
+                AND cr.submittedTime IS NOT NULL
+                AND cr.complaint.complaintType = :complaintType
+            GROUP BY cr.complaint.result.participation.exercise.id
             """)
     List<ExerciseMapEntry> countComplaintsByExerciseIdsAndComplaintComplaintType(@Param("exerciseIds") Set<Long> exerciseIds, @Param("complaintType") ComplaintType complaintType);
 

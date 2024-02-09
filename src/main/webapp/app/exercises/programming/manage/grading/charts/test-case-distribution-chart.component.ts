@@ -5,6 +5,7 @@ import { TestCaseStatsMap } from 'app/entities/programming-exercise-test-case-st
 import { TranslateService } from '@ngx-translate/core';
 import { getColor } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.utils';
 import { ProgrammingGradingChartsDirective } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.directive';
+import { getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
@@ -68,7 +69,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
         // max points for the exercise
         const maxPoints = this.exercise.maxPoints!;
         // exercise max score with bonus in percent
-        const maxScoreInPercent = (maxPoints + (this.exercise.bonusPoints || 0)) / maxPoints;
+        const maxScoreInPercent = getTotalMaxPoints(this.exercise) / maxPoints;
 
         // total of achievable points for this exercise
         const totalPoints = maxPoints * (this.totalParticipations || 0);

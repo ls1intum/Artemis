@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.exercise.GradingCriterionUtil;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.UriService;
@@ -242,7 +243,7 @@ public class ParticipationUtilService {
      * @return The created StudentParticipation with eagerly loaded submissions, results and assessors
      */
     public StudentParticipation addTeamParticipationForExercise(Exercise exercise, long teamId) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndTeamId(exercise.getId(), teamId);
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), teamId);
         if (storedParticipation.isEmpty()) {
             Team team = teamRepo.findById(teamId).orElseThrow();
             StudentParticipation participation = new StudentParticipation();
@@ -250,7 +251,7 @@ public class ParticipationUtilService {
             participation.setParticipant(team);
             participation.setExercise(exercise);
             studentParticipationRepo.save(participation);
-            storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndTeamId(exercise.getId(), teamId);
+            storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), teamId);
             assertThat(storedParticipation).isPresent();
         }
         return studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
@@ -806,12 +807,14 @@ public class ParticipationUtilService {
         resultRepo.save(result);
 
         assertThat(exercise.getGradingCriteria()).isNotNull();
-        assertThat(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions()).isNotNull();
+        assertThat(exercise.getGradingCriteria()).allMatch(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions() != null);
 
         // add feedback which is associated with structured grading instructions
+        GradingInstruction anyInstruction = GradingCriterionUtil.findAnyInstructionWhere(exercise.getGradingCriteria(), gradingInstruction -> true).orElseThrow();
         Feedback feedback = new Feedback();
-        feedback.setGradingInstruction(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0));
+        feedback.setGradingInstruction(anyInstruction);
         addFeedbackToResult(feedback, result);
+
         return studentParticipation;
     }
 

@@ -9,6 +9,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../helpers/mocks/service/mock-alert.service';
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
+import { UMLModel } from '@ls1intum/apollon';
 
 const sections = [
     {
@@ -63,20 +64,20 @@ describe('DetailOverviewList', () => {
 
     it('should open git diff modal', () => {
         const modalSpy = jest.spyOn(modalService, 'open');
-        component.showGitDiff(undefined as unknown as ProgrammingExerciseGitDiffReport);
+        component.showGitDiff({} as unknown as ProgrammingExerciseGitDiffReport);
         expect(modalSpy).toHaveBeenCalledOnce();
     });
 
     it('should download apollon Diagram', () => {
         const downloadSpy = jest.spyOn(modelingService, 'convertToPdf').mockReturnValue(of(new HttpResponse({ body: new Blob() })));
-        component.downloadApollonDiagramAsPDf('{}', 'title');
+        component.downloadApollonDiagramAsPDf({} as UMLModel, 'title');
         expect(downloadSpy).toHaveBeenCalledOnce();
     });
 
     it('should error on download apollon Diagram fail', () => {
         jest.spyOn(modelingService, 'convertToPdf').mockReturnValue(throwError(new HttpResponse({ body: new Blob() })));
         const errorSpy = jest.spyOn(alertServide, 'error');
-        component.downloadApollonDiagramAsPDf('{}', 'title');
+        component.downloadApollonDiagramAsPDf({} as UMLModel, 'title');
         expect(errorSpy).toHaveBeenCalledOnce();
     });
 });

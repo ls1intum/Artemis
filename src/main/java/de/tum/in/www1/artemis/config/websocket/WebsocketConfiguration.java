@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.config.websocket;
 
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.getExerciseIdFromNonPersonalExerciseResultDestination;
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.isNonPersonalExerciseResultDestination;
-import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIWebsocketMessagingService.isBuildQueueAdminDestination;
-import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIWebsocketMessagingService.isBuildQueueCourseDestination;
+import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIWebsocketMessagingService.*;
 import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.*;
 
 import java.net.InetSocketAddress;
@@ -286,6 +285,12 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 return authorizationCheckService.isAdmin(user);
             }
 
+            if (isBuildAgentDestination(destination)) {
+                log.debug("Allowing subscription to build agent destination: {}", destination);
+                var user = userRepository.getUserWithAuthorities(principal.getName());
+                return authorizationCheckService.isAdmin(user);
+            }
+
             Optional<Long> courseId = isBuildQueueCourseDestination(destination);
             if (courseId.isPresent()) {
                 Course course = courseRepository.findByIdElseThrow(courseId.get());
@@ -330,7 +335,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     }
 
     private boolean isParticipationOwnedByUser(Principal principal, Long participationId) {
-        StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdWithEagerTeamStudentsElseThrow(participationId);
         return participation.isOwnedBy(principal.getName());
     }
 

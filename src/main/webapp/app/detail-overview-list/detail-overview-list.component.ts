@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { faExclamationTriangle, faEye } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUpRightFromSquare, faExclamationTriangle, faEye } from '@fortawesome/free-solid-svg-icons';
 import { isEmpty } from 'lodash-es';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize } from 'app/shared/components/button.component';
@@ -10,36 +10,30 @@ import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-setting
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
+import { Detail } from 'app/detail-overview-list/detail.model';
+import { UMLModel } from '@ls1intum/apollon';
 
 export interface DetailOverviewSection {
     headline: string;
     details: Detail[];
 }
 
-export interface Detail {
-    type: DetailType;
-    title?: string;
-    titleTranslationProps?: Record<string, string>;
-    titleHelpText?: string;
-    data: any;
-}
-
 export enum DetailType {
-    Link,
-    Text,
-    Date,
-    Boolean,
-    Markdown,
-    GradingCriteria,
-    ModelingEditor,
-    ProgrammingIrisEnabled,
-    ProgrammingRepositoryButtons,
-    ProgrammingAuxiliaryRepositoryButtons,
-    ProgrammingTestStatus,
-    ProgrammingDiffReport,
-    ProgrammingProblemStatement,
-    ProgrammingTimeline,
-    ProgrammingBuildStatistics,
+    Link = 'detail-link',
+    Text = 'detail-text',
+    Date = 'detail-date',
+    Boolean = 'detail-boolean',
+    Markdown = 'detail-markdown',
+    GradingCriteria = 'detail-grading-criteria',
+    ModelingEditor = 'detail-modeling-editor',
+    ProgrammingIrisEnabled = 'detail-iris',
+    ProgrammingRepositoryButtons = 'detail-repository-buttons',
+    ProgrammingAuxiliaryRepositoryButtons = 'detail-auxiliary-repository-buttons',
+    ProgrammingTestStatus = 'detail-test-status',
+    ProgrammingDiffReport = 'detail-diff-report',
+    ProgrammingProblemStatement = 'detail-problem-statement',
+    ProgrammingTimeline = 'detail-timeline',
+    ProgrammingBuildStatistics = 'detail-build-statistics',
 }
 
 @Component({
@@ -66,6 +60,7 @@ export class DetailOverviewListComponent implements OnInit {
     // icons
     faExclamationTriangle = faExclamationTriangle;
     faEye = faEye;
+    faArrowUpRightFromSquare = faArrowUpRightFromSquare;
 
     constructor(
         private modalService: NgbModal,
@@ -85,14 +80,18 @@ export class DetailOverviewListComponent implements OnInit {
         }, {});
     }
 
-    showGitDiff(gitDiff: ProgrammingExerciseGitDiffReport) {
+    showGitDiff(gitDiff?: ProgrammingExerciseGitDiffReport) {
+        if (!gitDiff) {
+            return;
+        }
+
         const modalRef = this.modalService.open(GitDiffReportModalComponent, { size: 'xl' });
         modalRef.componentInstance.report = gitDiff;
     }
 
-    downloadApollonDiagramAsPDf(umlModel: string, title: string) {
+    downloadApollonDiagramAsPDf(umlModel?: UMLModel, title?: string) {
         if (umlModel) {
-            this.modelingExerciseService.convertToPdf(umlModel, `${title}-example-solution`).subscribe({
+            this.modelingExerciseService.convertToPdf(JSON.stringify(umlModel), `${title}-example-solution`).subscribe({
                 error: () => {
                     this.alertService.error('artemisApp.modelingExercise.apollonConversion.error');
                 },
