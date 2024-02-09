@@ -46,6 +46,9 @@ import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { AbstractScienceComponent } from 'app/shared/science/science.component';
+import { ScienceService } from 'app/shared/science/science.service';
+import { ScienceEventType } from 'app/shared/science/science.model';
 
 @Component({
     selector: 'jhi-course-exercise-details',
@@ -53,7 +56,7 @@ import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
     styleUrls: ['../course-overview.scss', './course-exercise-detail.component.scss'],
     providers: [ExerciseCacheService],
 })
-export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
+export class CourseExerciseDetailsComponent extends AbstractScienceComponent implements OnInit, OnDestroy {
     readonly AssessmentType = AssessmentType;
     readonly PlagiarismVerdict = PlagiarismVerdict;
     readonly QuizStatus = QuizStatus;
@@ -139,7 +142,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private exerciseHintService: ExerciseHintService,
         private courseService: CourseManagementService,
         private irisSettingsService: IrisSettingsService,
-    ) {}
+        scienceService: ScienceService,
+    ) {
+        super(scienceService, ScienceEventType.EXERCISE__OPEN);
+    }
 
     ngOnInit() {
         this.route.params.subscribe((params) => {
@@ -157,6 +163,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             if (didExerciseChange || didCourseChange) {
                 this.loadExercise();
             }
+
+            // log event
+            if (this.exerciseId) {
+                this.setResourceId(this.exerciseId);
+            }
+            this.logEvent();
         });
 
         // Checks if the current environment is production
