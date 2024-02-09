@@ -9,40 +9,37 @@
         >
             <fa-icon [icon]="faBook"></fa-icon>
         </li>
-        <li
-            *ngIf="exercise.type !== ExerciseType.PROGRAMMING"
-            [ngClass]="calculateClasses(TRAINED)"
-            (click)="navigate()"
-            [ngbTooltip]="'artemisApp.assessmentDashboard.trainOnExampleSubmissions' | artemisTranslate"
-        >
-            <fa-icon [icon]="faChalkboardTeacher"></fa-icon>
-        </li>
-        <ng-container *ngIf="shouldShowManualAssessments">
-            <li
-                *ngFor="let numberOfAssessedSubmissions of numberOfAssessmentsOfCorrectionRounds; let i = index"
-                class="progress-bar-li stacked-li"
-                [ngClass]="calculateClassProgressBar()"
-            >
-                <div class="stacked-item">
-                    <jhi-progress-bar
-                        [tooltip]="'artemisApp.assessmentDashboard.assessStudentsSubmissions' | artemisTranslate"
-                        [percentage]="percentageInTimeAssessmentProgressOfCorrectionRound[i]"
-                        [numerator]="numberOfAssessedSubmissions.inTime"
-                        [denominator]="numberOfSubmissions?.inTime || 0"
-                    >
-                    </jhi-progress-bar>
-                </div>
-                <div class="stacked-item" *ngIf="numberOfSubmissions && numberOfSubmissions!.late > 0">
-                    <jhi-progress-bar
-                        [tooltip]="'artemisApp.assessmentDashboard.assessStudentsLateSubmissions' | artemisTranslate"
-                        [percentage]="percentageLateAssessmentProgressOfCorrectionRound[i]"
-                        [numerator]="numberOfAssessedSubmissions.late"
-                        [denominator]="numberOfSubmissions?.late || 0"
-                    >
-                    </jhi-progress-bar>
-                </div>
+        @if (exercise.type !== ExerciseType.PROGRAMMING) {
+            <li [ngClass]="calculateClasses(TRAINED)" (click)="navigate()" [ngbTooltip]="'artemisApp.assessmentDashboard.trainOnExampleSubmissions' | artemisTranslate">
+                <fa-icon [icon]="faChalkboardTeacher"></fa-icon>
             </li>
-        </ng-container>
+        }
+        @if (shouldShowManualAssessments) {
+            @for (numberOfAssessedSubmissions of numberOfAssessmentsOfCorrectionRounds; track numberOfAssessedSubmissions; let i = $index) {
+                <li class="progress-bar-li stacked-li" [ngClass]="calculateClassProgressBar()">
+                    <div class="stacked-item">
+                        <jhi-progress-bar
+                            [tooltip]="'artemisApp.assessmentDashboard.assessStudentsSubmissions' | artemisTranslate"
+                            [percentage]="percentageInTimeAssessmentProgressOfCorrectionRound[i]"
+                            [numerator]="numberOfAssessedSubmissions.inTime"
+                            [denominator]="numberOfSubmissions?.inTime || 0"
+                        >
+                        </jhi-progress-bar>
+                    </div>
+                    @if (numberOfSubmissions && numberOfSubmissions!.late > 0) {
+                        <div class="stacked-item">
+                            <jhi-progress-bar
+                                [tooltip]="'artemisApp.assessmentDashboard.assessStudentsLateSubmissions' | artemisTranslate"
+                                [percentage]="percentageLateAssessmentProgressOfCorrectionRound[i]"
+                                [numerator]="numberOfAssessedSubmissions.late"
+                                [denominator]="numberOfSubmissions?.late || 0"
+                            >
+                            </jhi-progress-bar>
+                        </div>
+                    }
+                </li>
+            }
+        }
         <li class="progress-bar-li me-0" [ngClass]="calculateClassProgressBar()">
             <jhi-progress-bar
                 [tooltip]="'artemisApp.assessmentDashboard.evaluateStudentsComplaints' | artemisTranslate"

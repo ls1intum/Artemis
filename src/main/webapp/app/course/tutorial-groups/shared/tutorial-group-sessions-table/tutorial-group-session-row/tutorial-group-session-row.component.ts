@@ -9,6 +9,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { map } from 'rxjs';
 
 @Component({
+    // this is intended and an attribute selector because otherwise the rendered table breaks
     // eslint-disable-next-line @angular-eslint/component-selector
     selector: '[jhi-session-row]',
     templateUrl: './tutorial-group-session-row.component.html',

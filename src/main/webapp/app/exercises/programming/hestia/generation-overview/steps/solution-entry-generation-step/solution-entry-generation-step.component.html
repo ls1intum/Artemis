@@ -1,6 +1,8 @@
-<div *ngIf="isLoading" class="text-center">
-    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-</div>
+@if (isLoading) {
+    <div class="text-center">
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    </div>
+}
 <div class="d-flex justify-content-start button-row">
     <button
         type="button"
@@ -20,16 +22,17 @@
     >
         Generate structural entries
     </button>
-    <button
-        *ngIf="!!exercise?.testwiseCoverageEnabled"
-        type="button"
-        class="btn btn-primary"
-        jhiTranslate="artemisApp.codeHint.management.step3.behavioralEntriesButton.label"
-        [ngbTooltip]="'artemisApp.codeHint.management.step3.behavioralEntriesButton.tooltip' | artemisTranslate"
-        (click)="onGenerateBehavioralSolutionEntries()"
-    >
-        Generate behavioral entries
-    </button>
+    @if (!!exercise?.testwiseCoverageEnabled) {
+        <button
+            type="button"
+            class="btn btn-primary"
+            jhiTranslate="artemisApp.codeHint.management.step3.behavioralEntriesButton.label"
+            [ngbTooltip]="'artemisApp.codeHint.management.step3.behavioralEntriesButton.tooltip' | artemisTranslate"
+            (click)="onGenerateBehavioralSolutionEntries()"
+        >
+            Generate behavioral entries
+        </button>
+    }
     <button
         type="button"
         class="btn btn-danger"
@@ -61,36 +64,40 @@
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let entry of solutionEntries">
-                <td class="text-left">{{ entry?.id }}</td>
-                <td class="text-left">{{ entry?.testCase?.testName }}</td>
-                <td class="text-left">{{ entry?.filePath }}</td>
-                <td class="text-left">
-                    {{
-                        (entry.code?.split('\n')?.length! === 1 ? 'artemisApp.codeHint.lineOfCode' : 'artemisApp.codeHint.linesOfCode')
-                            | artemisTranslate: { lines: entry.code?.split('\n')?.length! }
-                    }}
-                </td>
-                <td class="text-left">{{ 'artemisApp.codeHint.entryAbbreviation.' + entry.testCase?.type?.toString()?.toLocaleLowerCase() | artemisTranslate }}</td>
-                <td class="text-right">
-                    <div class="d-flex justify-content-end button-row">
-                        <button type="button" class="btn btn-primary" jhiTranslate="entity.action.view" (click)="openSolutionEntryModal(entry, false)">View</button>
-                        <button type="button" class="btn btn-warning" jhiTranslate="entity.action.edit" (click)="openSolutionEntryModal(entry, true)">Edit</button>
-                        <button
-                            jhiDeleteButton
-                            [entityTitle]="entry?.id?.toString() ?? ''"
-                            deleteQuestion="artemisApp.codeHint.management.step3.deleteIndividualEntryButton.question"
-                            (delete)="deleteSolutionEntry(entry)"
-                            [dialogError]="dialogError$"
-                        >
-                            <fa-icon [icon]="faTimes"></fa-icon>
-                        </button>
-                    </div>
-                </td>
-            </tr>
+            @for (entry of solutionEntries; track entry) {
+                <tr>
+                    <td class="text-left">{{ entry?.id }}</td>
+                    <td class="text-left">{{ entry?.testCase?.testName }}</td>
+                    <td class="text-left">{{ entry?.filePath }}</td>
+                    <td class="text-left">
+                        {{
+                            (entry.code?.split('\n')?.length! === 1 ? 'artemisApp.codeHint.lineOfCode' : 'artemisApp.codeHint.linesOfCode')
+                                | artemisTranslate: { lines: entry.code?.split('\n')?.length! }
+                        }}
+                    </td>
+                    <td class="text-left">{{ 'artemisApp.codeHint.entryAbbreviation.' + entry.testCase?.type?.toString()?.toLocaleLowerCase() | artemisTranslate }}</td>
+                    <td class="text-right">
+                        <div class="d-flex justify-content-end button-row">
+                            <button type="button" class="btn btn-primary" jhiTranslate="entity.action.view" (click)="openSolutionEntryModal(entry, false)">View</button>
+                            <button type="button" class="btn btn-warning" jhiTranslate="entity.action.edit" (click)="openSolutionEntryModal(entry, true)">Edit</button>
+                            <button
+                                jhiDeleteButton
+                                [entityTitle]="entry?.id?.toString() ?? ''"
+                                deleteQuestion="artemisApp.codeHint.management.step3.deleteIndividualEntryButton.question"
+                                (delete)="deleteSolutionEntry(entry)"
+                                [dialogError]="dialogError$"
+                            >
+                                <fa-icon [icon]="faTimes"></fa-icon>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            }
         </tbody>
     </table>
-    <div *ngIf="!solutionEntries?.length" class="text-center mt-2">
-        <span jhiTranslate="artemisApp.codeHint.management.step3.notGenerated">No Solution Code Snippets have been generated yet.</span>
-    </div>
+    @if (!solutionEntries?.length) {
+        <div class="text-center mt-2">
+            <span jhiTranslate="artemisApp.codeHint.management.step3.notGenerated">No Solution Code Snippets have been generated yet.</span>
+        </div>
+    }
 </div>

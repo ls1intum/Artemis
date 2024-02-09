@@ -23,10 +23,16 @@ class IrisConnectorServiceTest extends AbstractIrisIntegrationTest {
     private IrisConnectorService irisConnectorService;
 
     private static Stream<Arguments> irisExceptions() {
-        return Stream.of(Arguments.of(400, IrisInvalidTemplateException.class), Arguments.of(401, IrisForbiddenException.class), Arguments.of(403, IrisForbiddenException.class),
-                Arguments.of(404, IrisModelNotAvailableException.class), Arguments.of(500, IrisInternalPyrisErrorException.class),
-                // Test default case
-                Arguments.of(418, IrisInternalPyrisErrorException.class));
+        // @formatter:off
+        return Stream.of(
+                Arguments.of(400, IrisInvalidTemplateException.class),
+                Arguments.of(401, IrisForbiddenException.class),
+                Arguments.of(403, IrisForbiddenException.class),
+                Arguments.of(404, IrisModelNotAvailableException.class),
+                Arguments.of(500, IrisInternalPyrisErrorException.class),
+                Arguments.of(418, IrisInternalPyrisErrorException.class) // Test default case
+        );
+        // @formatter:on
     }
 
     @ParameterizedTest
@@ -34,7 +40,7 @@ class IrisConnectorServiceTest extends AbstractIrisIntegrationTest {
     void testException(int httpStatus, Class<?> exceptionClass) throws Exception {
         var template = new IrisTemplate("Dummy");
 
-        irisRequestMockProvider.mockMessageError(httpStatus);
+        irisRequestMockProvider.mockMessageV1Error(httpStatus);
 
         irisConnectorService.sendRequest(template, "TEST_MODEL", Collections.emptyMap()).handle((response, throwable) -> {
             assertThat(throwable.getCause()).isNotNull().isInstanceOf(exceptionClass);
@@ -42,13 +48,25 @@ class IrisConnectorServiceTest extends AbstractIrisIntegrationTest {
         }).get();
     }
 
+    @ParameterizedTest
+    @MethodSource("irisExceptions")
+    void testExceptionV2(int httpStatus, Class<?> exceptionClass) throws Exception {
+        irisRequestMockProvider.mockMessageV2Error(httpStatus);
+
+        irisConnectorService.sendRequestV2("Dummy", "TEST_MODEL", Collections.emptyMap()).handle((response, throwable) -> {
+            assertThat(throwable.getCause()).isNotNull().isInstanceOf(exceptionClass);
+            return null;
+        }).get();
+    }
+
     @Test
-    void testParseException() throws Exception {
+    void testV1ParseException() throws Exception {
         var template = new IrisTemplate("Dummy");
 
-        irisRequestMockProvider.mockCustomJsonResponse("{\"message\": \"invalid\"}");
+        irisRequestMockProvider.mockCustomV1Response("{\"invalid\": \"invalid\"}");
 
         irisConnectorService.sendRequest(template, "TEST_MODEL", Collections.emptyMap()).handle((response, throwable) -> {
+            assertThat(throwable).isNotNull();
             assertThat(throwable.getCause()).isNotNull().isInstanceOf(IrisParseResponseException.class);
             return null;
         }).get();
@@ -64,7 +82,7 @@ class IrisConnectorServiceTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void testOfferedModelsError() throws Exception {
+    void testOfferedModelsError() {
         irisRequestMockProvider.mockModelsError();
 
         assertThatThrownBy(() -> irisConnectorService.getOfferedModels()).isInstanceOf(IrisConnectorException.class);

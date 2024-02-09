@@ -8,6 +8,7 @@ import org.hibernate.Hibernate;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 
@@ -22,12 +23,23 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record FeedbackDTO(Long id, String text, String detailText, boolean hasLongFeedbackText, String reference, Double credits, Boolean positive, FeedbackType type,
-            Visibility visibility) {
+            Visibility visibility, TestCaseDTO testCase) {
 
         public static FeedbackDTO of(Feedback feedback) {
             return new FeedbackDTO(feedback.getId(), feedback.getText(), feedback.getDetailText(), feedback.getHasLongFeedbackText(), feedback.getReference(),
-                    feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility());
+                    feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), TestCaseDTO.of(feedback.getTestCase()));
 
+        }
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record TestCaseDTO(String testName, Long id) {
+
+        public static TestCaseDTO of(ProgrammingExerciseTestCase testCase) {
+            if (testCase == null) {
+                return null;
+            }
+            return new TestCaseDTO(testCase.getTestName(), testCase.getId());
         }
     }
 

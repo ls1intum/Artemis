@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject, Subscription } from 'rxjs';
-import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled, isMessagingOrCommunicationEnabled } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { EventManager } from 'app/core/util/event-manager.service';
@@ -16,20 +16,23 @@ import {
     faFilePdf,
     faFlag,
     faGraduationCap,
+    faList,
     faListAlt,
     faNetworkWired,
     faPersonChalkboard,
+    faPuzzlePiece,
     faRobot,
     faTable,
-    faTimes,
+    faTrash,
     faUserCheck,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
-import { IrisCourseSettingsUpdateComponent } from 'app/iris/settings/iris-course-settings-update/iris-course-settings-update.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
+import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 
 @Component({
     selector: 'jhi-course-management-tab-bar',
@@ -46,12 +49,14 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
     private courseSub?: Subscription;
     private eventSubscriber: Subscription;
 
+    localCIActive: boolean = false;
+
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     // Icons
     faArrowUpRightFromSquare = faArrowUpRightFromSquare;
-    faTimes = faTimes;
+    faTrash = faTrash;
     faEye = faEye;
     faWrench = faWrench;
     faTable = faTable;
@@ -67,11 +72,14 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
     faGraduationCap = faGraduationCap;
     faPersonChalkboard = faPersonChalkboard;
     faRobot = faRobot;
+    faPuzzlePiece = faPuzzlePiece;
+    faList = faList;
 
-    readonly isCommunicationEnabled = isCommunicationEnabled;
-    readonly isMessagingEnabled = isMessagingEnabled;
+    isCommunicationEnabled = false;
+    isMessagingOrCommunicationEnabled = false;
 
     irisEnabled = false;
+    ltiEnabled = false;
 
     constructor(
         private eventManager: EventManager,
@@ -81,6 +89,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
         private router: Router,
         private modalService: NgbModal,
         private profileService: ProfileService,
+        private courseAccessStorageService: CourseAccessStorageService,
     ) {}
 
     /**
@@ -101,8 +110,13 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.irisEnabled = profileInfo.activeProfiles.includes('iris');
+                this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LTI);
+                this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
             }
         });
+
+        // Notify the course access storage service that the course has been accessed
+        this.courseAccessStorageService.onCourseAccessed(courseId);
     }
 
     /**
@@ -111,6 +125,8 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
     private subscribeToCourseUpdates(courseId: number) {
         this.courseSub = this.courseManagementService.find(courseId).subscribe((courseResponse) => {
             this.course = courseResponse.body!;
+            this.isCommunicationEnabled = isCommunicationEnabled(this.course);
+            this.isMessagingOrCommunicationEnabled = isMessagingOrCommunicationEnabled(this.course);
         });
     }
 
@@ -172,13 +188,5 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
     shouldShowControlButtons(): boolean {
         const courseManagementRegex = /course-management\/[0-9]+(\/edit)?$/;
         return courseManagementRegex.test(this.router.url);
-    }
-
-    /**
-     * Shows the iris settings in a modal.
-     */
-    showIrisSettings(): void {
-        const modalRef = this.modalService.open(IrisCourseSettingsUpdateComponent, { size: 'xl' });
-        modalRef.componentInstance.courseId = this.course!.id;
     }
 }

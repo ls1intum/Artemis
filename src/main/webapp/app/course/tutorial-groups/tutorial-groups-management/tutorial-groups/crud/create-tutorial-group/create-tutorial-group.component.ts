@@ -41,7 +41,6 @@ export class CreateTutorialGroupComponent implements OnInit, OnDestroy {
 
     createTutorialGroup(formData: TutorialGroupFormData) {
         const { title, teachingAssistant, additionalInformation, capacity, isOnline, language, campus, schedule } = formData;
-
         this.tutorialGroupToCreate.title = title;
         this.tutorialGroupToCreate.teachingAssistant = teachingAssistant;
         this.tutorialGroupToCreate.additionalInformation = additionalInformation;

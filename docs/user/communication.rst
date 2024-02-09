@@ -78,6 +78,14 @@ located on the right-hand side of the Messages Page when displayed.
 
 |messages|
 
+This video shows how link previews work in Artemis:
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/40580?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
 If the message content contains links, a preview of the link will be shown under the message. This way, users will have a good understanding
 of what that link is about. If they prefer not to have a preview, they can hover over the preview and click the appearing `X` button.
 The preview will be removed.
@@ -201,6 +209,12 @@ editor, see image below. Here, lecture attachment units can be found when users 
 
 Reference Lecture Unit Slides
 """""""""""""""""""""""""""""
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/40579?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
 
 Users can refer to lecture unit slides of the current course, via the dropdown menu ``Lecture``. Here, slides can be found when users
 hover over a specific unit, see image below.

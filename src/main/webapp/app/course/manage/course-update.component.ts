@@ -18,7 +18,7 @@ import { Organization } from 'app/entities/organization.model';
 import { NgbModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
-import { faBan, faExclamationTriangle, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faExclamationTriangle, faQuestionCircle, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/utils/blob-util';
 import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
@@ -61,6 +61,7 @@ export class CourseUpdateComponent implements OnInit {
     faSave = faSave;
     faBan = faBan;
     faTimes = faTimes;
+    faTrash = faTrash;
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
 
@@ -492,11 +493,12 @@ export class CourseUpdateComponent implements OnInit {
         // 2018 is the first year we offer semesters for and go one year into the future
         const years = dayjs().year() - 2018 + 1;
         // Add an empty semester as default value
-        const semesters: string[] = [''];
+        const semesters: string[] = [];
         for (let i = 0; i <= years; i++) {
-            semesters[2 * i + 1] = 'SS' + (18 + i);
-            semesters[2 * i + 2] = 'WS' + (18 + i) + '/' + (19 + i);
+            semesters[2 * i] = 'WS' + (18 + years - i) + '/' + (19 + years - i);
+            semesters[2 * i + 1] = 'SS' + (18 + years - i);
         }
+        semesters.push('');
         return semesters;
     }
 

@@ -38,6 +38,13 @@ public interface LearningPathRepository extends JpaRepository<LearningPath, Long
         return findWithEagerCompetenciesByCourseIdAndUserId(courseId, userId).orElseThrow(() -> new EntityNotFoundException("LearningPath"));
     }
 
+    @EntityGraph(type = LOAD, attributePaths = { "course", "competencies" })
+    Optional<LearningPath> findWithEagerCourseAndCompetenciesById(long learningPathId);
+
+    default LearningPath findWithEagerCourseAndCompetenciesByIdElseThrow(long learningPathId) {
+        return findWithEagerCourseAndCompetenciesById(learningPathId).orElseThrow(() -> new EntityNotFoundException("LearningPath"));
+    }
+
     @Query("""
             SELECT lp
             FROM LearningPath lp
@@ -67,7 +74,7 @@ public interface LearningPathRepository extends JpaRepository<LearningPath, Long
             FROM LearningPath learningPath
                 LEFT JOIN FETCH learningPath.competencies competencies
                 LEFT JOIN competencies.userProgress progress
-                    ON competencies.id = progress.learningGoal.id AND progress.user.id = learningPath.user.id
+                    ON competencies.id = progress.competency.id AND progress.user.id = learningPath.user.id
                 LEFT JOIN FETCH competencies.lectureUnits lectureUnits
                 LEFT JOIN lectureUnits.completedUsers completedUsers
                     ON lectureUnits.id = completedUsers.lectureUnit.id AND completedUsers.user.id = learningPath.user.id

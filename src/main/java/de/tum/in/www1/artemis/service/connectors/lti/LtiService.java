@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
+import de.tum.in.www1.artemis.exception.LtiEmailAlreadyInUseException;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
@@ -46,7 +47,7 @@ public class LtiService {
 
     protected static final List<SimpleGrantedAuthority> SIMPLE_USER_LIST_AUTHORITY = Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()));
 
-    private final Logger log = LoggerFactory.getLogger(LtiService.class);
+    private static final Logger log = LoggerFactory.getLogger(LtiService.class);
 
     private final UserCreationService userCreationService;
 
@@ -100,8 +101,7 @@ public class LtiService {
         // 2. Case: Lookup user with the LTI email address and make sure it's not in use
         final var usernameLookupByEmail = artemisAuthenticationProvider.getUsernameForEmail(email);
         if (usernameLookupByEmail.isPresent()) {
-            throw new InternalAuthenticationServiceException(
-                    "Email address is already in use by Artemis. Please use a different address with your service or contact your instructor to gain direct access.");
+            throw new LtiEmailAlreadyInUseException();
         }
 
         // 3. Case: Create new user if an existing user is not required
@@ -114,7 +114,7 @@ public class LtiService {
     }
 
     @NotNull
-    private Authentication createNewUserFromLaunchRequest(String email, String username, String firstName, String lastName) {
+    protected Authentication createNewUserFromLaunchRequest(String email, String username, String firstName, String lastName) {
         final var user = userRepository.findOneByLogin(username).orElseGet(() -> {
             final User newUser;
             final var groups = new HashSet<String>();
@@ -190,9 +190,7 @@ public class LtiService {
             uriComponentsBuilder.queryParam("initialize", "");
         }
         else {
-            ResponseCookie responseCookie = jwtCookieService.buildLogoutCookie();
-            response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
-
+            prepareLogoutCookie(response);
             uriComponentsBuilder.queryParam("ltiSuccessLoginRequired", user.getLogin());
         }
     }
@@ -205,5 +203,15 @@ public class LtiService {
      */
     public boolean isLtiCreatedUser(User user) {
         return user.getGroups().contains(LTI_GROUP_NAME);
+    }
+
+    /**
+     * Include logout JWT cookie to response.
+     *
+     * @param response the response to add the JWT cookie to
+     */
+    protected void prepareLogoutCookie(HttpServletResponse response) {
+        ResponseCookie responseCookie = jwtCookieService.buildLogoutCookie();
+        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
     }
 }

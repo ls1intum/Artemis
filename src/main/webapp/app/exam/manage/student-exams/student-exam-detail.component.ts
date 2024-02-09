@@ -1,35 +1,26 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { AlertService } from 'app/core/util/alert.service';
-import { round } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
-import { examWorkingTime, getRelativeWorkingTimeExtension } from 'app/exam/participate/exam.utils';
 import { Exercise } from 'app/entities/exercise.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
-
-type WorkingTimeFormValues = {
-    hours: number;
-    minutes: number;
-    seconds: number;
-    percent: number;
-};
+import { combineLatest, takeWhile } from 'rxjs';
 
 @Component({
     selector: 'jhi-student-exam-detail',
     templateUrl: './student-exam-detail.component.html',
     styleUrls: ['./student-exam-detail.component.scss'],
-    providers: [ArtemisDurationFromSecondsPipe],
 })
-export class StudentExamDetailComponent implements OnInit {
+export class StudentExamDetailComponent implements OnInit, OnDestroy {
+    examId: number;
     courseId: number;
     studentExam: StudentExam;
     achievedPointsPerExercise: { [exerciseId: number]: number };
@@ -43,37 +34,22 @@ export class StudentExamDetailComponent implements OnInit {
     bonusTotalPoints = 0;
     isSaving = false;
 
-    examId: number;
-
     gradingScaleExists = false;
     grade?: string;
     gradeAfterBonus?: string;
     isBonus = false;
     passed = false;
 
-    workingTimeFormValues: WorkingTimeFormValues = {
-        hours: 0,
-        minutes: 0,
-        seconds: 0,
-        percent: 0,
-    };
-
-    lastSavedWorkingTime: WorkingTimeFormValues = {
-        hours: 0,
-        minutes: 0,
-        seconds: 0,
-        percent: 0,
-    };
-
-    individualEndDate: dayjs.Dayjs | undefined;
-
     // Icons
     faSave = faSave;
+
+    workingTimeSeconds = 0;
+
+    private componentActive = true;
 
     constructor(
         private route: ActivatedRoute,
         private studentExamService: StudentExamService,
-        private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe,
         private alertService: AlertService,
         private modalService: NgbModal,
     ) {}
@@ -82,31 +58,19 @@ export class StudentExamDetailComponent implements OnInit {
      * Initialize the courseId and studentExam
      */
     ngOnInit(): void {
-        this.isTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
-        this.loadStudentExam();
+        combineLatest([this.route.data, this.route.params, this.route.url])
+            .pipe(takeWhile(() => this.componentActive))
+            .subscribe(([data, params, url]) => {
+                this.examId = params.examId;
+                this.courseId = params.courseId;
+                this.setStudentExamWithGrade(data.studentExam);
+                this.isTestExam = data.studentExam.exam.testExam;
+                this.isTestRun = url[1]?.toString() === 'test-runs';
+            });
     }
 
-    /**
-     * Load the course and the student exam
-     */
-    loadStudentExam() {
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.examId = Number(this.route.snapshot.paramMap.get('examId'));
-        this.route.data.subscribe(({ studentExam }) => this.setStudentExamWithGrade(studentExam));
-        this.isTestExam = this.studentExam.exam!.testExam!;
-    }
-
-    /**
-     * Sets grade related information if a grading scale exists for the exam
-     */
-    setExamGrade(studentExamWithGrade: StudentExamWithGradeDTO) {
-        if (studentExamWithGrade?.studentResult?.overallGrade != undefined) {
-            this.gradingScaleExists = true;
-            this.grade = studentExamWithGrade.studentResult.overallGrade;
-            this.gradeAfterBonus = studentExamWithGrade.studentResult.gradeWithBonus?.finalGrade?.toString();
-            this.passed = !!studentExamWithGrade.studentResult.hasPassed;
-            this.isBonus = studentExamWithGrade.gradeType === GradeType.BONUS;
-        }
+    ngOnDestroy(): void {
+        this.componentActive = false;
     }
 
     /**
@@ -114,8 +78,7 @@ export class StudentExamDetailComponent implements OnInit {
      */
     saveWorkingTime() {
         this.isSavingWorkingTime = true;
-        const seconds = this.getWorkingTimeSeconds(this.workingTimeFormValues);
-        this.studentExamService.updateWorkingTime(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!, seconds).subscribe({
+        this.studentExamService.updateWorkingTime(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!, this.workingTimeSeconds).subscribe({
             next: (res) => {
                 if (res.body) {
                     this.setStudentExam(res.body);
@@ -140,24 +103,35 @@ export class StudentExamDetailComponent implements OnInit {
             throw new Error('studentExamWithGrade.studentExam is undefined');
         }
 
-        this.studentExam = studentExamWithGrade.studentExam;
-        if (this.studentExam.examSessions) {
-            // show the oldest session first (sessions are created sequentially so we can sort after id)
-            this.studentExam.examSessions.sort((s1, s2) => s1.id! - s2.id!);
-        }
-        this.achievedPointsPerExercise = studentExamWithGrade.achievedPointsPerExercise;
+        const studentExam = studentExamWithGrade.studentExam;
 
-        this.initWorkingTimeForm();
+        if (studentExam.examSessions) {
+            // show the oldest session first (sessions are created sequentially so we can sort after id)
+            studentExam.examSessions.sort((s1, s2) => s1.id! - s2.id!);
+        }
+
+        this.setStudentExam(studentExam);
+
+        this.achievedPointsPerExercise = studentExamWithGrade.achievedPointsPerExercise;
 
         this.maxTotalPoints = studentExamWithGrade.maxPoints ?? 0;
         this.achievedTotalPoints = studentExamWithGrade.studentResult.overallPointsAchieved ?? 0;
         this.bonusTotalPoints = studentExamWithGrade.maxBonusPoints ?? 0;
 
-        this.student = studentExamWithGrade.studentExam.user!;
-        this.course = studentExamWithGrade.studentExam.exam!.course!;
-
-        studentExamWithGrade.studentExam.exercises!.forEach((exercise) => this.initExercise(exercise));
         this.setExamGrade(studentExamWithGrade);
+    }
+
+    /**
+     * Sets grade related information if a grading scale exists for the exam
+     */
+    setExamGrade(studentExamWithGrade: StudentExamWithGradeDTO) {
+        if (studentExamWithGrade?.studentResult?.overallGrade != undefined) {
+            this.gradingScaleExists = true;
+            this.grade = studentExamWithGrade.studentResult.overallGrade;
+            this.gradeAfterBonus = studentExamWithGrade.studentResult.gradeWithBonus?.finalGrade?.toString();
+            this.passed = !!studentExamWithGrade.studentResult.hasPassed;
+            this.isBonus = studentExamWithGrade.gradeType === GradeType.BONUS;
+        }
     }
 
     /**
@@ -167,18 +141,18 @@ export class StudentExamDetailComponent implements OnInit {
     private setStudentExam(studentExam: StudentExam) {
         this.studentExam = studentExam;
 
-        this.initWorkingTimeForm();
+        this.student = studentExam.user!;
+        this.course = studentExam.exam!.course!;
 
-        this.student = this.studentExam.user!;
-        this.course = this.studentExam.exam!.course!;
+        this.workingTimeSeconds = studentExam.workingTime ?? 0;
 
-        studentExam.exercises!.forEach((exercise) => this.initExercise(exercise));
+        studentExam.exercises?.forEach((exercise) => this.initExercise(exercise));
     }
 
     /**
      * Gets the correct explanation label for the grade depending on whether it is a bonus or it has bonus.
      */
-    getGradeExplanation() {
+    get gradeExplanation() {
         if (this.isBonus) {
             return 'artemisApp.studentExams.bonus';
         } else if (this.gradeAfterBonus != undefined) {
@@ -202,81 +176,22 @@ export class StudentExamDetailComponent implements OnInit {
     }
 
     /**
-     * Updates the form values based on the working time of the student exam.
-     */
-    private initWorkingTimeForm() {
-        this.setWorkingTimeDuration(this.studentExam.workingTime!);
-        this.updateVariablesDependingOnWorkingTimeForm();
-
-        this.lastSavedWorkingTime = { ...this.workingTimeFormValues };
-    }
-
-    /**
-     * Updates the working time duration values of the form whenever the percent value has been changed by the user.
-     */
-    updateWorkingTimeDuration() {
-        const regularWorkingTime = examWorkingTime(this.studentExam.exam)!;
-        const seconds = round(regularWorkingTime * (1.0 + this.workingTimeFormValues.percent / 100), 0);
-        this.setWorkingTimeDuration(seconds);
-    }
-
-    /**
-     * Updates the hours, minutes, and seconds values of the form.
-     * @param seconds the total number of seconds of working time.
-     */
-    private setWorkingTimeDuration(seconds: number) {
-        const workingTime = this.artemisDurationFromSecondsPipe.secondsToDuration(seconds);
-        this.workingTimeFormValues.hours = workingTime.days * 24 + workingTime.hours;
-        this.workingTimeFormValues.minutes = workingTime.minutes;
-        this.workingTimeFormValues.seconds = workingTime.seconds;
-
-        this.updateIndividualEndDate();
-    }
-
-    updateVariablesDependingOnWorkingTimeForm() {
-        this.updateWorkingTimePercent();
-        this.updateIndividualEndDate();
-    }
-
-    /**
-     * Uses the current durations saved in the form to update the extension percent value.
-     */
-    updateWorkingTimePercent() {
-        this.workingTimeFormValues.percent = getRelativeWorkingTimeExtension(this.studentExam.exam!, this.getWorkingTimeSeconds(this.workingTimeFormValues));
-    }
-
-    updateIndividualEndDate() {
-        this.individualEndDate = dayjs(this.studentExam.exam!.startDate).add(this.getWorkingTimeSeconds(this.workingTimeFormValues), 'seconds');
-    }
-
-    /**
-     * Calculates how many seconds the currently set working time has in total.
-     */
-    private getWorkingTimeSeconds(workingTimeFormValues: WorkingTimeFormValues): number {
-        const duration = {
-            days: 0,
-            hours: workingTimeFormValues.hours,
-            minutes: workingTimeFormValues.minutes,
-            seconds: workingTimeFormValues.seconds,
-        };
-        return this.artemisDurationFromSecondsPipe.durationToSeconds(duration);
-    }
-
-    /**
      * Checks if the user should be able to edit the inputs.
      */
-    isFormDisabled(): boolean {
+    get isWorkingTimeFormDisabled(): boolean {
         return this.isSavingWorkingTime || (this.isTestRun && !!this.studentExam.submitted) || !this.studentExam.exam;
+    }
+
+    get individualEndDate(): dayjs.Dayjs | undefined {
+        return dayjs(this.studentExam.exam!.startDate).add(this.workingTimeSeconds, 'seconds');
     }
 
     /**
      * Checks if the exam is over considering the individual working time of the student and the grace period
      */
-    isExamOver(): boolean {
+    get isExamOver(): boolean {
         if (this.studentExam.exam) {
-            const individualExamEndDate = dayjs(this.studentExam.exam.startDate)
-                .add(this.getWorkingTimeSeconds(this.lastSavedWorkingTime), 'seconds')
-                .add(this.studentExam.exam.gracePeriod!, 'seconds');
+            const individualExamEndDate = dayjs(this.studentExam.exam.startDate).add(this.studentExam.workingTime!, 'seconds').add(this.studentExam.exam.gracePeriod!, 'seconds');
 
             return individualExamEndDate.isBefore(dayjs());
         }

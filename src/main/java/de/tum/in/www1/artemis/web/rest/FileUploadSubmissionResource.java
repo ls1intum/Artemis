@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
@@ -43,7 +41,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
     private static final String ENTITY_NAME = "fileUploadSubmission";
 
-    private final Logger log = LoggerFactory.getLogger(FileUploadSubmissionResource.class);
+    private static final Logger log = LoggerFactory.getLogger(FileUploadSubmissionResource.class);
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -232,7 +230,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         if (!(fileUploadExercise instanceof FileUploadExercise)) {
             throw new BadRequestAlertException("The requested exercise was not found.", "exerciseId", "400");
         }
-        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         fileUploadExercise.setGradingCriteria(gradingCriteria);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 

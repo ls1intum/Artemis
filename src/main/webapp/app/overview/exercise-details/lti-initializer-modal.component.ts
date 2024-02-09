@@ -9,6 +9,7 @@ import { AlertService } from 'app/core/util/alert.service';
 })
 export class LtiInitializerModalComponent {
     password: string;
+    loginName: string;
     passwordResetLocation = ['account', 'reset', 'request'];
 
     readAndUnderstood = false;

@@ -1,6 +1,11 @@
 {
     "artemisApp": {
         "exam": {
+            "detail": {
+                "sections": {
+                    "general": "Informationen"
+                }
+            },
             "examUsers": {
                 "uploadImage": "Bilder hochladen",
                 "uploadImageTooltip": "Hochladen von Bildern für die registrierten Studenten",
@@ -42,6 +47,8 @@
                 "reviewExplanation": "Die Einsicht findet statt bis ",
                 "realExamsHeading": "Klausuren",
                 "testExamsHeading": "Testklausuren",
+                "noExams": "Keine Klausuren vorhanden",
+                "goToExercises": "Gehe zu Aufgaben",
                 "testExam": {
                     "upcoming": "Demnächst stattfindende Testklausur",
                     "imminent": "Die Testklausur beginnt in ",
@@ -65,6 +72,7 @@
                 "backToOverview": "Zurück zur Übersicht",
                 "examResults": "Prüfungsergebnisse",
                 "generalInformation": "Allgemeine Informationen",
+                "youAreViewingAnUnsubmittedExam": "Du betrachtest eine nicht eingereichte Klausur",
                 "exportPDF": "Als PDF exportieren",
                 "noSubmissionFound": "Du hast keine Lösung für diese Aufgabe abgegeben.",
                 "submissionLinkedToCommit": "Die abgegebene Lösung ist mit folgendem Commit verknüpft: ",
@@ -101,8 +109,10 @@
                 "interval": "Intervall (%)",
                 "intervalPoints": "Intervall (Punkte)",
                 "gradeKeyButton": "Notenschlüssel ansehen",
+                "gradeKey": "Notenschlüssel",
                 "gradeKeyButtonBonus": "Bonusregeln ansehen",
-                "bonusGradeKeyButton": "Bonusnotenschlüssel ansehen"
+                "bonusGradeKey": "Bonusnotenschlüssel",
+                "resultTable": "Ergebnistabelle"
             },
             "title": "Klausur",
             "startExam": "Starten",
@@ -171,7 +181,8 @@
                 "button": "Benachrichtigungen",
                 "type": {
                     "examWideAnnouncement": "Klausurweite Ankündigung",
-                    "workingTimeUpdate": "Bearbeitungszeit Aktualisiert"
+                    "workingTimeUpdate": "Bearbeitungszeit Aktualisiert",
+                    "examAttendanceCheck": "Anwesenheitskontrolle"
                 },
                 "from": "von",
                 "acknowledge": "Bestätigen",
@@ -182,6 +193,9 @@
                         "titlePersonal": "Deine persönliche Bearbeitungszeit dieser Klausur wurde geändert.",
                         "old": "Vorherige Bearbeitungszeit",
                         "new": "Neue Bearbeitungszeit"
+                    },
+                    "examAttendanceCheck": {
+                        "description": "Eine Klausur-Aufsicht hat die Anwesenheitskontrolle für dich ausgelöst. Bitte folge den Anweisungen der Aufsicht."
                     }
                 }
             }
@@ -248,7 +262,9 @@
             "totalColumn": "Total",
             "exerciseGroupTitle": "Durchschnittliche Ergebnisse der Aufgabengruppe \"{{ groupTitle }}\" im Vergleich",
             "gradesBeforeBonus": "Noten vor Bonus",
-            "gradesAfterBonus": "Noten nach Bonus"
+            "gradesAfterBonus": "Noten nach Bonus",
+            "noStudentResultAvailable": "Keine Studentenabgabe vorhanden",
+            "noExerciseGroupAvailable": "Keine Aufgabengruppen vorhanden"
         },
         "examParticipation": {
             "timer": "Restzeit: ",
@@ -620,7 +636,7 @@
                     "resolveComplaints": "Beschwerden können im Bewertungs-Dashboard bearbeitet werden.",
                     "testRun": "Probiere verschiedene Kombinationen von Übungsvarianten aus Sicht der Studierenden aus.",
                     "exportResults": "Die Klausurergebnisse können in Form einer .csv Datei exportiert werden.",
-                    "editWorkingTime": "Bis 5 Minuten vor dem Ende der Prüfung können Sie deren Dauer verlängern.",
+                    "editWorkingTime": "Bis zu einer Minute vor dem Ende der Prüfung können Sie deren Dauer verlängern.",
                     "createAnnouncement": "Um wichtige Informationen an alle Studierenden, die gerade an der Klausur arbeiten, zu kommunizieren, kannst du eine Ankündigung machen. Sie wird sofort an alle Studierenden verteilt und angezeigt.",
                     "suspiciousBehavior": "Verdächtiges Verhalten und Plagiatsfälle können in diesem Dashboard eingesehen werden."
                 },

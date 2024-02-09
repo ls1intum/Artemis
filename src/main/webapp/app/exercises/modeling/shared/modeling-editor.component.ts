@@ -129,7 +129,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      */
     private static removeAssessments(umlModel: UMLModel) {
         if (umlModel) {
-            umlModel.assessments = [];
+            umlModel.assessments = {};
         }
     }
 
@@ -216,7 +216,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             }
             // Check if the Inheritance association is correct
             case associationUML.name: {
-                personStudentAssociation = umlModel.relationships.find(
+                personStudentAssociation = Object.values(umlModel.relationships).find(
                     (relationship) =>
                         relationship.source.element === studentClass!.id &&
                         relationship.target.element === personClass!.id &&
@@ -234,7 +234,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      * @param umlModel current model that is assessed
      */
     elementWithClass(name: string, umlModel: UMLModel) {
-        return umlModel.elements.find((element) => element.name.trim() === name && element.type === UMLElementType.Class);
+        return Object.values(umlModel.elements).find((element) => element.name.trim() === name && element.type === UMLElementType.Class);
     }
 
     /**
@@ -243,7 +243,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      * @param umlModel current model that is assessed
      */
     elementWithAttribute(attribute: string, umlModel: UMLModel) {
-        return umlModel.elements.find((element) => element.name.includes(attribute) && element.type === UMLElementType.ClassAttribute);
+        return Object.values(umlModel.elements).find((element) => element.name.includes(attribute) && element.type === UMLElementType.ClassAttribute);
     }
 
     /**
@@ -252,7 +252,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      * @param umlModel current model that is assessed
      */
     elementWithMethod(method: string, umlModel: UMLModel) {
-        return umlModel.elements.find((element) => element.name.includes(method) && element.type === UMLElementType.ClassMethod);
+        return Object.values(umlModel.elements).find((element) => element.name.includes(method) && element.type === UMLElementType.ClassMethod);
     }
 
     /**

@@ -8,7 +8,6 @@ import { LearningPathContainerComponent } from 'app/course/learning-paths/partic
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { RouterModule, Routes } from '@angular/router';
-import { LearningPathGraphSidebarComponent } from 'app/course/learning-paths/participate/learning-path-graph-sidebar.component';
 import { ArtemisLearningPathProgressModule } from 'app/course/learning-paths/progress-modal/learning-path-progress.module';
 import { ArtemisLearningPathGraphModule } from 'app/course/learning-paths/learning-path-graph/learning-path-graph.module';
 
@@ -63,7 +62,7 @@ const routes: Routes = [
         ArtemisLearningPathGraphModule,
         ArtemisLearningPathProgressModule,
     ],
-    declarations: [LearningPathContainerComponent, LearningPathGraphSidebarComponent],
+    declarations: [LearningPathContainerComponent],
     exports: [LearningPathContainerComponent],
 })
 export class ArtemisLearningPathsModule {}

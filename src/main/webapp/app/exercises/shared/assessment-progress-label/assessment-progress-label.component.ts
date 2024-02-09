@@ -4,7 +4,7 @@ import { Result } from 'app/entities/result.model';
 
 @Component({
     selector: 'jhi-assessment-progress-label',
-    templateUrl: './assessment-progress-label.html',
+    templateUrl: './assessment-progress-label.component.html',
 })
 export class AssessmentProgressLabelComponent implements OnChanges {
     @Input()

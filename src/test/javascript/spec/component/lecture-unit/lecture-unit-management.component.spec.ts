@@ -51,6 +51,7 @@ describe('LectureUnitManagementComponent', () => {
     let lectureUnitService: LectureUnitService;
     let findLectureSpy: jest.SpyInstance;
     let findLectureWithDetailsSpy: jest.SpyInstance;
+    let deleteLectureUnitSpy: jest.SpyInstance;
     let updateOrderSpy: jest.SpyInstance;
 
     let attachmentUnit: AttachmentUnit;
@@ -107,6 +108,7 @@ describe('LectureUnitManagementComponent', () => {
 
                 findLectureSpy = jest.spyOn(lectureService, 'find');
                 findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findWithDetails');
+                deleteLectureUnitSpy = jest.spyOn(lectureUnitService, 'delete');
                 updateOrderSpy = jest.spyOn(lectureUnitService, 'updateOrder');
 
                 textUnit = new TextUnit();
@@ -126,6 +128,7 @@ describe('LectureUnitManagementComponent', () => {
                 findLectureSpy.mockReturnValue(returnValue);
                 findLectureWithDetailsSpy.mockReturnValue(returnValue);
                 updateOrderSpy.mockReturnValue(returnValue);
+                deleteLectureUnitSpy.mockReturnValue(of(new HttpResponse({ body: videoUnit, status: 200 })));
 
                 lectureUnitManagementComponentFixture.detectChanges();
             });
@@ -140,14 +143,22 @@ describe('LectureUnitManagementComponent', () => {
         expect(lectureUnitManagementComponent.lectureUnits[1].id).toEqual(originalOrder[0].id);
     });
 
-    it('should navigate to edit attachment unit page', () => {
-        const editButtonClickedSpy = jest.spyOn(lectureUnitManagementComponent, 'editButtonRouterLink');
+    it('should emit edit button event', () => {
+        const editButtonClickedSpy = jest.spyOn(lectureUnitManagementComponent, 'onEditButtonClicked');
+        lectureUnitManagementComponent.emitEditEvents = true;
+        lectureUnitManagementComponentFixture.detectChanges();
         const buttons = lectureUnitManagementComponentFixture.debugElement.queryAll(By.css(`.edit`));
         for (const button of buttons) {
             button.nativeElement.click();
         }
         lectureUnitManagementComponentFixture.detectChanges();
         expect(editButtonClickedSpy).toHaveBeenCalledTimes(buttons.length);
+    });
+
+    it('should show loadData on delete', () => {
+        const loadDataSpy = jest.spyOn(lectureUnitManagementComponent, 'loadData');
+        lectureUnitManagementComponent.deleteLectureUnit(1);
+        expect(loadDataSpy).toHaveBeenCalledOnce();
     });
 
     it('should give the correct delete question translation key', () => {

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import { EMPTY, Subject, from } from 'rxjs';
-import { faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -33,7 +33,7 @@ export class TutorialGroupSessionRowButtonsComponent implements OnDestroy {
 
     faWrench = faWrench;
     faUsers = faUsers;
-    faTimes = faTimes;
+    faTrash = faTrash;
 
     constructor(
         private tutorialGroupSessionService: TutorialGroupSessionService,

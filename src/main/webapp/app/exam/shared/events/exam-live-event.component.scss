@@ -10,6 +10,18 @@
     margin-bottom: 10px;
     box-shadow: rgba(0, 0, 0, 0.35) 0 3px 9px;
 
+    &.examAttendanceCheck {
+        background-color: var(--artemis-alert-info-background);
+        border-color: var(--artemis-alert-info-border);
+
+        .wt-title {
+            font-weight: bold;
+            font-size: 1.3em;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+    }
+
     &.examWideAnnouncement {
         background-color: var(--artemis-alert-info-background);
         border-color: var(--artemis-alert-info-border);

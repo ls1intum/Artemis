@@ -1,36 +1,46 @@
-<div class="d-flex justify-content-between align-items-start channel-item" *ngIf="channel">
-    <div class="ms-2 me-auto">
-        <div class="fw-bold">
-            <span>
-                <jhi-channel-icon [isPublic]="channel.isPublic!" [isArchived]="channel.isArchived!" [isAnnouncementChannel]="channel.isAnnouncementChannel!"></jhi-channel-icon>
-            </span>
-            <span>{{ channel.name }}</span>
+@if (channel) {
+    <div class="d-flex justify-content-between align-items-start channel-item">
+        <div class="ms-2 me-auto">
+            <div class="fw-bold">
+                <span>
+                    <jhi-channel-icon [isPublic]="channel.isPublic!" [isArchived]="channel.isArchived!" [isAnnouncementChannel]="channel.isAnnouncementChannel!"></jhi-channel-icon>
+                </span>
+                <span>{{ channel.name }}</span>
+            </div>
+            @if (channel.isMember) {
+                <span class="badge bg-success rounded-pill">{{ 'artemisApp.dialogs.channelOverview.channelItem.joined:' | artemisTranslate }}</span>
+            }
+            <span> {{ channel.numberOfMembers }} {{ 'artemisApp.dialogs.channelOverview.channelItem.members' | artemisTranslate }}</span>
+            @if (channel.description && channel.description.length > 0) {
+                <div>
+                    <span class="d-inline-block text-truncate long-text fst-italic"> {{ channel.description }}</span>
+                </div>
+            }
+            @if (channel.tutorialGroupId && channel.tutorialGroupTitle) {
+                <div>
+                    <span class="badge bg-info rounded-pill">{{
+                        'artemisApp.entities.tutorialGroup.channelReverse' | artemisTranslate: { title: channel.tutorialGroupTitle }
+                    }}</span>
+                </div>
+            }
         </div>
-        <span *ngIf="channel.isMember" class="badge bg-success rounded-pill">{{ 'artemisApp.dialogs.channelOverview.channelItem.joined:' | artemisTranslate }}</span>
-        <span> {{ channel.numberOfMembers }} {{ 'artemisApp.dialogs.channelOverview.channelItem.members' | artemisTranslate }}</span>
-        <div *ngIf="channel.description && channel.description.length > 0">
-            <span class="d-inline-block text-truncate long-text fst-italic"> {{ channel.description }}</span>
-        </div>
-        <div *ngIf="channel.tutorialGroupId && channel.tutorialGroupTitle">
-            <span class="badge bg-info rounded-pill">{{ 'artemisApp.entities.tutorialGroup.channelReverse' | artemisTranslate: { title: channel.tutorialGroupTitle } }}</span>
+        <div class="interaction">
+            @if (canJoinChannel(channel)) {
+                <button [id]="'register' + channel.id" type="button" class="btn btn-primary" (click)="emitChannelAction($event, 'register')">
+                    {{ 'artemisApp.dialogs.channelOverview.actions.join' | artemisTranslate }}
+                </button>
+                <!--ToDo:  Introduce method to view public channel even if no participant maybe hacky around with visitor status or something? -->
+            }
+            @if (!!channel.isMember) {
+                <button [id]="'view' + channel.id" type="button" class="btn btn-secondary" (click)="emitChannelAction($event, 'view')">
+                    {{ 'artemisApp.dialogs.channelOverview.actions.view' | artemisTranslate }}
+                </button>
+            }
+            @if (canLeaveConversation(channel)) {
+                <button [id]="'deregister' + channel.id" type="button" class="btn btn-danger" (click)="emitChannelAction($event, 'deregister')">
+                    {{ 'artemisApp.dialogs.channelOverview.actions.leave' | artemisTranslate }}
+                </button>
+            }
         </div>
     </div>
-    <div class="interaction">
-        <ng-container *ngIf="canJoinChannel(channel)">
-            <button [id]="'register' + channel.id" type="button" class="btn btn-primary" (click)="emitChannelAction($event, 'register')">
-                {{ 'artemisApp.dialogs.channelOverview.actions.join' | artemisTranslate }}
-            </button>
-            <!--ToDo:  Introduce method to view public channel even if no participant maybe hacky around with visitor status or something? -->
-        </ng-container>
-        <ng-container *ngIf="!!channel.isMember">
-            <button [id]="'view' + channel.id" type="button" class="btn btn-secondary" (click)="emitChannelAction($event, 'view')">
-                {{ 'artemisApp.dialogs.channelOverview.actions.view' | artemisTranslate }}
-            </button>
-        </ng-container>
-        <ng-container *ngIf="canLeaveConversation(channel)">
-            <button [id]="'deregister' + channel.id" type="button" class="btn btn-danger" (click)="emitChannelAction($event, 'deregister')">
-                {{ 'artemisApp.dialogs.channelOverview.actions.leave' | artemisTranslate }}
-            </button>
-        </ng-container>
-    </div>
-</div>
+}

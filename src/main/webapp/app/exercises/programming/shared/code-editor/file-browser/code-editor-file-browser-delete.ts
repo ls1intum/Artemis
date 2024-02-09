@@ -9,7 +9,7 @@ import { faBan, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 // Modal -> Delete repository file
 @Component({
     selector: 'jhi-code-editor-file-browser-delete',
-    templateUrl: './code-editor-file-browser-delete.html',
+    templateUrl: './code-editor-file-browser-delete.component.html',
     providers: [CodeEditorRepositoryFileService],
 })
 export class CodeEditorFileBrowserDeleteComponent implements OnInit {

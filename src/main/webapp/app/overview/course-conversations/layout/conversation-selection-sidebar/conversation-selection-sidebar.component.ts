@@ -4,7 +4,7 @@ import { faChevronLeft, faChevronRight, faComments, faCompress, faExpand, faFilt
 
 import { EMPTY, Subject, from, map, takeUntil } from 'rxjs';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
-import { Course } from 'app/entities/course.model';
+import { Course, isMessagingEnabled } from 'app/entities/course.model';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
@@ -67,6 +67,8 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     displayedLectureChannels: ChannelDTO[] = [];
     displayedExamChannels: ChannelDTO[] = [];
 
+    isMessagingEnabled = false;
+
     constructor(
         private modalService: NgbModal,
         private cdr: ChangeDetectorRef,
@@ -78,6 +80,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
 
     ngOnInit(): void {
         this.course = this.metisConversationService.course;
+        this.isMessagingEnabled = isMessagingEnabled(this.course);
         this.subscribeToSearch();
         this.subscribeToActiveConversation();
         this.subscribeToConversationsOfUser();

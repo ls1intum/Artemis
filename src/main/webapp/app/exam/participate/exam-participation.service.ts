@@ -102,12 +102,15 @@ export class ExamParticipationService {
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
      * @param userId the id of the student if the current caller is an instructor, the grade info for current user's exam will be retrieved if this argument is empty
+     * @param isTestRun
      */
-    public loadStudentExamGradeInfoForSummary(courseId: number, examId: number, userId?: number): Observable<StudentExamWithGradeDTO> {
+    public loadStudentExamGradeInfoForSummary(courseId: number, examId: number, userId?: number, isTestRun?: boolean): Observable<StudentExamWithGradeDTO> {
         let params = new HttpParams();
         if (userId) {
             params = params.set('userId', userId.toString());
         }
+        params = params.append('isTestRun', !!isTestRun);
+
         const url = this.getResourceURL(courseId, examId) + '/student-exams/grade-summary';
         return this.httpClient.get<StudentExamWithGradeDTO>(url, { params });
     }
@@ -162,7 +165,7 @@ export class ExamParticipationService {
      * Submits {@link StudentExam} - the exam cannot be updated afterwards anymore
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
-     * @param studentExam: the student exam to submit
+     * @param studentExam the student exam to submit
      */
     public submitStudentExam(courseId: number, examId: number, studentExam: StudentExam): Observable<void> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/submit';

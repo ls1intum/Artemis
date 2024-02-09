@@ -19,7 +19,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
-import { faCircleNotch, faEraser, faFilePowerpoint, faTable, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faEraser, faFilePowerpoint, faTable, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStepsDTO } from 'app/entities/grade-step.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
@@ -56,7 +56,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     gradeStepsDTO?: GradeStepsDTO;
     gradeStepsDTOSub: Subscription;
 
-    // Used to show the "Clone Repository URL" button instead of a link to Bitbucket/GitLab when the "localvc" profile is active.
+    // Used to show the "Clone Repository URI" button instead of a link to Bitbucket/GitLab when the "localvc" profile is active.
     localVCEnabled = false;
 
     private dialogErrorSource = new Subject<string>();
@@ -79,6 +79,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     // Icons
     faTable = faTable;
     faTimes = faTimes;
+    faTrash = faTrash;
     faCircleNotch = faCircleNotch;
     faEraser = faEraser;
     faFilePowerpoint = faFilePowerpoint;
@@ -103,7 +104,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
      * Initialize component by calling loadAll and registerChangeInParticipation
      */
     ngOnInit() {
-        this.paramSub = this.route.params.subscribe((params) => this.loadExercise(params['exerciseId']));
+        this.paramSub = this.route.params.subscribe((params) => this.loadExercise(+params['exerciseId']));
         this.registerChangeInParticipations();
         this.isAdmin = this.accountService.isAdmin();
     }
@@ -401,16 +402,16 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     };
 
     /**
-     * Removes the login from the repositoryURL
+     * Removes the login from the repositoryUri
      *
      * @param participation Student participation
-     * @param repoUrl original repository url
+     * @param repoUri original repository uri
      */
-    getRepositoryLink = (participation: StudentParticipation, repoUrl: string) => {
-        if ((participation as ProgrammingExerciseStudentParticipation).repositoryUrl === repoUrl) {
-            return (participation as ProgrammingExerciseStudentParticipation).userIndependentRepositoryUrl;
+    getRepositoryLink = (participation: StudentParticipation, repoUri: string) => {
+        if ((participation as ProgrammingExerciseStudentParticipation).repositoryUri === repoUri) {
+            return (participation as ProgrammingExerciseStudentParticipation).userIndependentRepositoryUri;
         }
-        return repoUrl;
+        return repoUri;
     };
 
     /**

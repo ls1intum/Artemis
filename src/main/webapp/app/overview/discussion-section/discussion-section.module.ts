@@ -5,6 +5,7 @@ import { DiscussionSectionComponent } from 'app/overview/discussion-section/disc
 import { RouterModule, Routes } from '@angular/router';
 import { MetisModule } from 'app/shared/metis/metis.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 
 const routes: Routes = [
     {
@@ -15,7 +16,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-    imports: [RouterModule.forChild(routes), MetisModule, ArtemisSharedModule, ArtemisSidePanelModule, ArtemisSharedComponentModule],
+    imports: [RouterModule.forChild(routes), MetisModule, ArtemisSharedModule, ArtemisSidePanelModule, ArtemisSharedComponentModule, InfiniteScrollModule],
     declarations: [DiscussionSectionComponent],
     exports: [DiscussionSectionComponent],
 })

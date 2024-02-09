@@ -7,6 +7,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 
 describe('UnitCreationCardComponent', () => {
     let unitCreationCardComponentFixture: ComponentFixture<UnitCreationCardComponent>;
@@ -38,5 +39,12 @@ describe('UnitCreationCardComponent', () => {
     it('should initialize', () => {
         unitCreationCardComponentFixture.detectChanges();
         expect(unitCreationCardComponent).not.toBeNull();
+    });
+
+    it('should emit creation card event', () => {
+        const emitSpy = jest.spyOn(unitCreationCardComponent.onUnitCreationCardClicked, 'emit');
+        unitCreationCardComponent.emitEvents = true;
+        unitCreationCardComponent.onButtonClicked(LectureUnitType.ONLINE);
+        expect(emitSpy).toHaveBeenCalledWith(LectureUnitType.ONLINE);
     });
 });

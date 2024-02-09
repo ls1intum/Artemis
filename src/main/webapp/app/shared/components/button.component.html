@@ -6,7 +6,13 @@
     [jhiFeatureToggle]="featureToggle"
     [overwriteDisabled]="disabled || isLoading"
 >
-    <fa-icon class="jhi-btn__loading" *ngIf="isLoading" [icon]="faCircleNotch" [spin]="true" size="sm"></fa-icon>
-    <fa-icon class="jhi-btn__icon" *ngIf="icon && !isLoading" [icon]="icon" size="sm"></fa-icon>
-    <span class="jhi-btn__title" [class.ms-1]="icon || isLoading" *ngIf="title" [jhiTranslate]="title"></span>
+    @if (isLoading) {
+        <fa-icon class="jhi-btn__loading" [icon]="faCircleNotch" [spin]="true" size="sm"></fa-icon>
+    }
+    @if (icon && !isLoading) {
+        <fa-icon class="jhi-btn__icon" [icon]="icon" size="sm"></fa-icon>
+    }
+    @if (title) {
+        <span class="jhi-btn__title" [class.ms-1]="icon || isLoading" [jhiTranslate]="title"></span>
+    }
 </button>

@@ -11,6 +11,8 @@ import {
     computeQuizQuestionInvalidReason,
     isQuizQuestionValid,
 } from 'app/exercises/quiz/shared/quiz-manage-util.service';
+import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
+import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 
 @Directive()
 export abstract class QuizExerciseValidationDirective {
@@ -34,6 +36,11 @@ export abstract class QuizExerciseValidationDirective {
 
     protected invalidFlaggedQuestions: InvalidFlaggedQuestions = {};
     pendingChangesCache: boolean;
+
+    protected constructor(
+        protected dragAndDropQuestionUtil: DragAndDropQuestionUtil,
+        protected shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
+    ) {}
 
     /**
      * 1. Check whether the inputs in the quiz are valid

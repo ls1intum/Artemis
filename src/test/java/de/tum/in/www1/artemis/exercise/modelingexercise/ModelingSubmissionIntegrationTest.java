@@ -5,10 +5,7 @@ import static org.assertj.core.api.Assertions.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -484,6 +481,23 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     void getModelSubmissionWithResult_notInvolved_notAllowed() throws Exception {
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
+        request.get("/api/modeling-submissions/" + submission.getId(), HttpStatus.FORBIDDEN, ModelingSubmission.class);
+    }
+
+    @Test
+    @WithMockUser(value = TEST_PREFIX + "student1", roles = "USER")
+    void getModelSubmissionWithResult_notOwner_beforeDueDate_notAllowed() throws Exception {
+        var submission = ParticipationFactory.generateModelingSubmission(validModel, true);
+        submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student2");
+
+        var plagiarismComparison = new PlagiarismComparison<ModelingSubmissionElement>();
+        var submissionA = new PlagiarismSubmission<ModelingSubmissionElement>();
+        submissionA.setStudentLogin(TEST_PREFIX + "student2");
+        submissionA.setSubmissionId(submission.getId());
+        plagiarismComparison.setSubmissionA(submissionA);
+
+        plagiarismComparisonRepository.save(plagiarismComparison);
+
         request.get("/api/modeling-submissions/" + submission.getId(), HttpStatus.FORBIDDEN, ModelingSubmission.class);
     }
 

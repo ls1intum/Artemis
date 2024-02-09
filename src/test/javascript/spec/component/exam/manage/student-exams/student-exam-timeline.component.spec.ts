@@ -15,7 +15,6 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExamNavigationBarComponent } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.component';
 import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directive/mock-translate-values.directive';
-import { NgxSliderStubComponent } from '../../../../helpers/stubs/ngx-slider-stub.component';
 import { EntityArrayResponseType, SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -31,7 +30,7 @@ import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
 import { QueryList } from '@angular/core';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
-import { ChangeContext } from 'ngx-slider-v2';
+import { ChangeContext, SliderComponent } from 'ngx-slider-v2';
 import { SubmissionVersionService } from 'app/exercises/shared/submission-version/submission-version.service';
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -65,7 +64,6 @@ describe('Student Exam Timeline Component', () => {
             imports: [ArtemisTestModule],
             declarations: [
                 StudentExamTimelineComponent,
-                NgxSliderStubComponent,
                 MockComponent(ProgrammingExerciseExamDiffComponent),
                 MockComponent(ModelingExamSubmissionComponent),
                 MockComponent(TextExamSubmissionComponent),
@@ -74,6 +72,7 @@ describe('Student Exam Timeline Component', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockTranslateValuesDirective,
                 MockComponent(ExamNavigationBarComponent),
+                MockComponent(SliderComponent),
             ],
             providers: [
                 {

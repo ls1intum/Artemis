@@ -108,6 +108,7 @@ describe('ProgrammingFeedbackItemService', () => {
             id: 1,
             type: FeedbackType.AUTOMATIC,
             positive: undefined,
+            testCase: { testName: 'testCaseName' },
         } as Feedback;
 
         const expected = {
@@ -144,6 +145,7 @@ describe('ProgrammingFeedbackItemService', () => {
             text: 'automaticTestCase1',
             positive: undefined,
             credits: 0.3,
+            testCase: { testName: 'testCaseName' },
         };
 
         const expected = {
@@ -162,6 +164,7 @@ describe('ProgrammingFeedbackItemService', () => {
         const feedback = {
             id: 1,
             type: FeedbackType.AUTOMATIC,
+            testCase: { testName: 'testCaseName' },
         };
 
         const expected = {
@@ -175,7 +178,7 @@ describe('ProgrammingFeedbackItemService', () => {
     });
 
     it('should handle not executed tests', () => {
-        const feedbacks: Feedback[] = [{ text: 'test1', type: FeedbackType.AUTOMATIC, credits: 0, detailText: 'Test was not executed.' }];
+        const feedbacks: Feedback[] = [{ testCase: { testName: 'test1' }, type: FeedbackType.AUTOMATIC, credits: 0, detailText: 'Test was not executed.' }];
 
         const items = service.create(feedbacks, false);
         const groups = service.group(items, exercise) as FeedbackGroup[];
@@ -188,7 +191,7 @@ describe('ProgrammingFeedbackItemService', () => {
     });
 
     it('should handle automatic feedback with missing positive attribute', () => {
-        const feedbacks: Feedback[] = [{ text: 'test1', type: FeedbackType.AUTOMATIC, credits: 2 }];
+        const feedbacks: Feedback[] = [{ testCase: { testName: 'test1' }, type: FeedbackType.AUTOMATIC, credits: 2 }];
 
         const items = service.create(feedbacks, false);
         const groups = service.group(items, exercise) as FeedbackGroup[];

@@ -1,39 +1,50 @@
-<div *ngIf="activeConversation && course" class="container-fluid conversation-settings">
-    <div *ngIf="canLeaveConversation || canChangeChannelArchivalState || canDeleteChannel; else noSettings" class="row settings-container">
-        <div class="col-12 settings-section text-center">
-            <button *ngIf="canLeaveConversation" type="button" class="btn btn-danger leave-conversation" (click)="leaveConversation($event)">
-                {{ 'artemisApp.dialogs.conversationSettings.actions.leave' | artemisTranslate }}
-            </button>
-        </div>
-        <ng-container *ngIf="conversationAsChannel as channel">
-            <div class="col-12 settings-section text-center" *ngIf="!channel.isArchived && canChangeChannelArchivalState">
-                <button type="button" class="btn btn-danger archive" (click)="openArchivalModal($event)">
-                    {{ 'artemisApp.dialogs.conversationSettings.actions.archiveChannel' | artemisTranslate }}
-                </button>
+@if (activeConversation && course) {
+    <div class="container-fluid conversation-settings">
+        @if (canLeaveConversation || canChangeChannelArchivalState || canDeleteChannel) {
+            <div class="row settings-container">
+                <div class="col-12 settings-section text-center">
+                    @if (canLeaveConversation) {
+                        <button type="button" class="btn btn-danger leave-conversation" (click)="leaveConversation($event)">
+                            {{ 'artemisApp.dialogs.conversationSettings.actions.leave' | artemisTranslate }}
+                        </button>
+                    }
+                </div>
+                @if (conversationAsChannel; as channel) {
+                    @if (!channel.isArchived && canChangeChannelArchivalState) {
+                        <div class="col-12 settings-section text-center">
+                            <button type="button" class="btn btn-danger archive" (click)="openArchivalModal($event)">
+                                {{ 'artemisApp.dialogs.conversationSettings.actions.archiveChannel' | artemisTranslate }}
+                            </button>
+                        </div>
+                    }
+                    @if (channel.isArchived && canChangeChannelArchivalState) {
+                        <div class="col-12 settings-section text-center">
+                            <button type="button" class="btn btn-danger unarchive" (click)="openUnArchivalModal($event)">
+                                {{ 'artemisApp.dialogs.conversationSettings.actions.unarchiveChannel' | artemisTranslate }}
+                            </button>
+                        </div>
+                    }
+                    @if (canDeleteChannel) {
+                        <div class="col-12 settings-section text-center">
+                            <button
+                                class="btn btn-danger delete"
+                                [id]="'delete-' + channel.id"
+                                jhiDeleteButton
+                                [renderButtonStyle]="false"
+                                [entityTitle]="channel.name || ''"
+                                deleteQuestion="artemisApp.dialogs.deleteChannel.question"
+                                deleteConfirmationText="artemisApp.dialogs.deleteChannel.confirm"
+                                (delete)="deleteChannel()"
+                                [dialogError]="dialogError$"
+                            >
+                                <fa-icon [icon]="faTimes"></fa-icon>
+                            </button>
+                        </div>
+                    }
+                }
             </div>
-            <div class="col-12 settings-section text-center" *ngIf="channel.isArchived && canChangeChannelArchivalState">
-                <button type="button" class="btn btn-danger unarchive" (click)="openUnArchivalModal($event)">
-                    {{ 'artemisApp.dialogs.conversationSettings.actions.unarchiveChannel' | artemisTranslate }}
-                </button>
-            </div>
-            <div class="col-12 settings-section text-center" *ngIf="canDeleteChannel">
-                <button
-                    class="btn btn-danger delete"
-                    [id]="'delete-' + channel.id"
-                    jhiDeleteButton
-                    [renderButtonStyle]="false"
-                    [entityTitle]="channel.name || ''"
-                    deleteQuestion="artemisApp.dialogs.deleteChannel.question"
-                    deleteConfirmationText="artemisApp.dialogs.deleteChannel.confirm"
-                    (delete)="deleteChannel()"
-                    [dialogError]="dialogError$"
-                >
-                    <fa-icon [icon]="faTimes"></fa-icon>
-                </button>
-            </div>
-        </ng-container>
+        } @else {
+            <div class="col-12 settings-section text-center" jhiTranslate="artemisApp.dialogs.conversationSettings.settingsUnavailable">No settings possible</div>
+        }
     </div>
-    <ng-template #noSettings>
-        <div class="col-12 settings-section text-center" jhiTranslate="artemisApp.dialogs.conversationSettings.settingsUnavailable">No settings possible</div>
-    </ng-template>
-</div>
+}

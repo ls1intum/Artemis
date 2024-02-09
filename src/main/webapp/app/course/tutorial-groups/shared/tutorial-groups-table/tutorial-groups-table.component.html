@@ -7,10 +7,12 @@
     <table class="table table-sm table-hover">
         <thead>
             <tr jhiSort [(predicate)]="sortingPredicate" [(ascending)]="ascending" (sortChange)="sortRows()">
-                <th jhiSortBy="id" *ngIf="showIdColumn">
-                    <a class="th-link">{{ 'global.field.id' | artemisTranslate }}</a>
-                    <fa-icon [icon]="faSort"></fa-icon>
-                </th>
+                @if (showIdColumn) {
+                    <th jhiSortBy="id">
+                        <a class="th-link">{{ 'global.field.id' | artemisTranslate }}</a>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                }
                 <th jhiSortBy="title">
                     <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.title' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
@@ -31,45 +33,55 @@
                     <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.locationTime' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
                 </th>
-                <th jhiSortBy="isOnline" *ngIf="mixOfOfflineAndOfflineTutorialGroups" id="online-column">
-                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.isOnline' | artemisTranslate }}</a>
-                    <fa-icon [icon]="faSort"></fa-icon>
-                </th>
-                <th jhiSortBy="language" *ngIf="mifOfDifferentLanguages" id="language-column">
-                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.language' | artemisTranslate }}</a>
-                    <fa-icon [icon]="faSort"></fa-icon>
-                </th>
-                <th jhiSortBy="campus" *ngIf="tutorialGroupsSplitAcrossMultipleCampuses" id="campus-column">
-                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.campus' | artemisTranslate }}</a>
-                    <fa-icon [icon]="faSort"></fa-icon>
-                </th>
+                @if (mixOfOfflineAndOfflineTutorialGroups) {
+                    <th jhiSortBy="isOnline" id="online-column">
+                        <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.isOnline' | artemisTranslate }}</a>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                }
+                @if (mifOfDifferentLanguages) {
+                    <th jhiSortBy="language" id="language-column">
+                        <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.language' | artemisTranslate }}</a>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                }
+                @if (tutorialGroupsSplitAcrossMultipleCampuses) {
+                    <th jhiSortBy="campus" id="campus-column">
+                        <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.campus' | artemisTranslate }}</a>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                }
                 <th jhiSortBy="nextSession">
                     <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.nextSession' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
                 </th>
-                <th *ngIf="showChannelColumn">
-                    <a class="th-link" [routerLink]="['/courses', course.id!, 'messages']">{{ 'artemisApp.entities.tutorialGroup.channel' | artemisTranslate }}</a>
-                </th>
-                <th *ngIf="extraColumn"></th>
+                @if (showChannelColumn) {
+                    <th>
+                        <a class="th-link" [routerLink]="['/courses', course.id!, 'messages']">{{ 'artemisApp.entities.tutorialGroup.channel' | artemisTranslate }}</a>
+                    </th>
+                }
+                @if (extraColumn) {
+                    <th></th>
+                }
             </tr>
         </thead>
         <tbody>
-            <tr
-                jhi-tutorial-group-row
-                *ngFor="let tutorialGroup of tutorialGroups; trackBy: trackId"
-                id="tutorial-group-row-{{ tutorialGroup.id }}"
-                [ngClass]="{ 'table-success': tutorialGroup.isUserRegistered, 'table-info': tutorialGroup.isUserTutor }"
-                [tutorialGroup]="tutorialGroup"
-                [course]="course"
-                [extraColumn]="extraColumn"
-                [showIdColumn]="showIdColumn"
-                [showChannelColumn]="showChannelColumn"
-                [tutorialGroupClickHandler]="tutorialGroupClickHandler"
-                [timeZone]="timeZone"
-                [mifOfDifferentLanguages]="mifOfDifferentLanguages"
-                [mixOfOfflineAndOfflineTutorialGroups]="mixOfOfflineAndOfflineTutorialGroups"
-                [tutorialGroupsSplitAcrossMultipleCampuses]="tutorialGroupsSplitAcrossMultipleCampuses"
-            ></tr>
+            @for (tutorialGroup of tutorialGroups; track trackId($index, tutorialGroup)) {
+                <tr
+                    jhi-tutorial-group-row
+                    id="tutorial-group-row-{{ tutorialGroup.id }}"
+                    [ngClass]="{ 'table-success': tutorialGroup.isUserRegistered, 'table-info': tutorialGroup.isUserTutor }"
+                    [tutorialGroup]="tutorialGroup"
+                    [course]="course"
+                    [extraColumn]="extraColumn"
+                    [showIdColumn]="showIdColumn"
+                    [showChannelColumn]="showChannelColumn"
+                    [timeZone]="timeZone"
+                    [mifOfDifferentLanguages]="mifOfDifferentLanguages"
+                    [mixOfOfflineAndOfflineTutorialGroups]="mixOfOfflineAndOfflineTutorialGroups"
+                    [tutorialGroupsSplitAcrossMultipleCampuses]="tutorialGroupsSplitAcrossMultipleCampuses"
+                ></tr>
+            }
         </tbody>
     </table>
 </div>

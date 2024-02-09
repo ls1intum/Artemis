@@ -22,21 +22,26 @@
             </div>
             <!-- body -->
             <div class="card-body pt-0 scrollbar wrapper-scroll-y">
-                <div class="my-2" *ngIf="post !== undefined">
-                    <jhi-post
-                        [readOnlyMode]="readOnlyMode"
-                        [posting]="post"
-                        [showAnswers]="true"
-                        [isCourseMessagesPage]="true"
-                        [isThreadSidebar]="true"
-                        [lastReadDate]="activeConversation?.lastReadDate"
-                    >
-                    </jhi-post>
-                    <div class="message-input">
-                        <jhi-message-reply-inline-input *ngIf="!readOnlyMode" [posting]="createdAnswerPost" (onCreate)="createdAnswerPost = createEmptyAnswerPost()">
-                        </jhi-message-reply-inline-input>
+                @if (post !== undefined) {
+                    <div class="my-2">
+                        <jhi-post
+                            [readOnlyMode]="readOnlyMode"
+                            [posting]="post"
+                            [showAnswers]="true"
+                            [isCourseMessagesPage]="true"
+                            [isThreadSidebar]="true"
+                            [lastReadDate]="conversation?.lastReadDate"
+                            [hasChannelModerationRights]="hasChannelModerationRights"
+                        >
+                        </jhi-post>
+                        <div class="message-input">
+                            @if (!readOnlyMode) {
+                                <jhi-message-reply-inline-input [posting]="createdAnswerPost" (onCreate)="createdAnswerPost = createEmptyAnswerPost()">
+                                </jhi-message-reply-inline-input>
+                            }
+                        </div>
                     </div>
-                </div>
+                }
             </div>
         </div>
     </div>

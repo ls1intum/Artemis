@@ -5,6 +5,13 @@
                 "title": "Exercises",
                 "createLabel": "Create a new Exercise"
             },
+            "sections": {
+                "general": "General Information",
+                "mode": "Mode",
+                "grading": "Grading",
+                "problem": "Problem Statement",
+                "solution": "Example Solution"
+            },
             "details": "Exercise details",
             "addCriterion": "Add a Grading Criterion",
             "resultsPerPage": "{{number}} results per page",
@@ -57,6 +64,8 @@
             "emptyExampleSolution": "(No example solution)",
             "exampleSolutionPublicationDateError": "For graded exercises, Example Solution Publication Date must be after Release, Start and Due Date if set. Please check your selection again",
             "exampleSolutionPublicationDateWarning": "Example Solution Publication Date is before Due Date!",
+            "feedbackSuggestionsEnabled": "Enable feedback suggestions from Athena",
+            "feedbackSuggestionsEnabledTooltip": "If enabled, Athena will suggest feedback to tutors on some submissions.",
             "assessmentCriterion": "Assessment Criterion",
             "assessmentInstructions": "Assessment Instructions",
             "assessmentInstruction": "Assessment Instruction: ",
@@ -231,6 +240,14 @@
                     "undefined": "There has to be a value for the bonus points set!",
                     "customMin": "The number of bonus points must be at least 0!",
                     "customMax": "The number of bonus points may not exceed 9999!"
+                },
+                "minTeamSize": {
+                    "min": "The minimal team size must not be less than 1 person.",
+                    "max": "The minimal team size must not exceed 99 people."
+                },
+                "maxTeamSize": {
+                    "min": "The maximal team size must not be less than 1 person.",
+                    "max": "The maximal team size must not exceed 99 people."
                 },
                 "maxPenalty": {
                     "pattern": "The maximum penalty must be between 0 and 100 percent!"

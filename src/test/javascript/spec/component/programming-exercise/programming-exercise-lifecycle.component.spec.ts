@@ -152,6 +152,15 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         expect(comp.exercise.assessmentDueDate).toBeUndefined();
     });
 
+    it('should disable feedback suggestions when changing the assessment type to automatic', () => {
+        comp.exercise = exercise;
+        comp.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+        comp.exercise.feedbackSuggestionsEnabled = true;
+        comp.toggleAssessmentType(); // toggle to AUTOMATIC
+
+        expect(comp.exercise.feedbackSuggestionsEnabled).toBeFalse();
+    });
+
     it('should change publication of tests for programming exercise with published solution', () => {
         comp.exercise = { ...exercise, exampleSolutionPublicationDate: dayjs() };
         expect(comp.exercise.releaseTestsWithExampleSolution).toBeFalsy();
@@ -278,6 +287,29 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         exercise.course.complaintsEnabled = true;
         fixture.detectChanges();
         const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowComplaintsForAutomaticAssessment');
+        expectElementToBeDisabled(checkbox);
+    });
+
+    it.each([true, false])('should enable checkbox to include tests in example solution', (examMode: boolean) => {
+        comp.exercise = exercise;
+        comp.isExamMode = examMode;
+        if (!examMode) {
+            exercise.course = new Course();
+            exercise.course.complaintsEnabled = true;
+        } else {
+            comp.exercise.exampleSolutionPublicationDate = undefined;
+            comp.exercise.exerciseGroup = { exam: { exampleSolutionPublicationDate } };
+        }
+        fixture.detectChanges();
+        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#releaseTestsWithExampleSolution');
+        expectElementToBeEnabled(checkbox);
+    });
+
+    it('should disable checkbox to include tests in example solution without example solution publication date', () => {
+        comp.exercise = exercise;
+        comp.exercise.exampleSolutionPublicationDate = undefined;
+        fixture.detectChanges();
+        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#releaseTestsWithExampleSolution');
         expectElementToBeDisabled(checkbox);
     });
 });

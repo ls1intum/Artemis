@@ -1,188 +1,215 @@
 <div class="row justify-content-center">
     <div class="col-12">
-        <div *ngIf="lecture">
-            <div *ngIf="showHeader">
-                <h2><span jhiTranslate="artemisApp.lecture.attachments.title">Lecture</span>: {{ lecture.title }} - {{ lecture.course?.shortName }}</h2>
-                <hr />
-                <div class="row">
-                    <div class="col-6">
-                        <dt><span jhiTranslate="artemisApp.lecture.startDate">Start Date</span></dt>
-                        <dd>
-                            <span>{{ lecture.startDate | artemisDate }}</span>
-                        </dd>
-                    </div>
-                    <div class="col-6">
-                        <dt><span jhiTranslate="artemisApp.lecture.endDate">End Date</span></dt>
-                        <dd>
-                            <span>{{ lecture.endDate | artemisDate }}</span>
-                        </dd>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-12">
-                        <dt><span jhiTranslate="artemisApp.lecture.description">Description</span></dt>
-                        <dd class="markdown-preview editor-outline-background" [innerHTML]="lecture.description | htmlForMarkdown"></dd>
-                    </div>
-                </div>
-                <hr class="mt-2 mb-2" />
-                <div class="row">
-                    <div class="col-12">
-                        <h4 jhiTranslate="artemisApp.lecture.attachments.attachments">Attachments</h4>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-12">
-                    <td class="table-responsive" *ngIf="attachments && attachments.length > 0">
-                        <table class="table table-striped position-relative">
-                            <thead>
-                                <tr>
-                                    <th><span jhiTranslate="global.field.id">ID</span></th>
-                                    <th><span jhiTranslate="artemisApp.lecture.attachments.name">Title</span></th>
-                                    <th><span jhiTranslate="artemisApp.lecture.attachments.type">Type</span></th>
-                                    <th><span jhiTranslate="artemisApp.lecture.attachments.link">Link</span></th>
-                                    <th><span jhiTranslate="artemisApp.lecture.attachments.releaseDate">Release Date</span></th>
-                                    <th><span jhiTranslate="artemisApp.lecture.attachments.uploadDate">Upload Date</span></th>
-                                    <th><span jhiTranslate="artemisApp.lecture.attachments.version">Version</span></th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr *ngFor="let attachment of attachments; trackBy: trackId" [ngClass]="{ 'edit-overlay-container': attachmentToBeCreated?.id === attachment?.id }">
-                                    <td>
-                                        {{ attachment.id }}
-                                    </td>
-                                    <td>{{ attachment.name }}</td>
-                                    <td>{{ attachment.attachmentType }}</td>
-                                    <td>
-                                        <a class="text-primary" (click)="downloadAttachment(attachment.link || '')" *ngIf="!isDownloadingAttachmentLink">
-                                            {{ attachment.name }}
-                                        </a>
-                                        <a class="text-primary" *ngIf="isDownloadingAttachmentLink === attachment.link">
-                                            <fa-icon [icon]="faSpinner" [spin]="true"></fa-icon> {{ 'artemisApp.courseOverview.lectureDetails.isDownloading' | artemisTranslate }}
-                                        </a>
-                                    </td>
-                                    <td>{{ attachment.releaseDate | artemisDate }}</td>
-                                    <td>{{ attachment.uploadDate | artemisDate }}</td>
-                                    <td>
-                                        {{ attachment.version }}
-                                    </td>
-                                    <td class="text-end">
-                                        <div class="flex-btn-group-container">
-                                            <button
-                                                [disabled]="attachmentToBeCreated?.id === attachment?.id"
-                                                type="submit"
-                                                (click)="editAttachment(attachment)"
-                                                class="btn btn-primary btn-sm me-1"
-                                            >
-                                                <fa-icon [icon]="faPencilAlt"></fa-icon>
-                                                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
-                                            </button>
-                                            <button
-                                                *ngIf="lecture.isAtLeastInstructor"
-                                                [disabled]="attachmentToBeCreated?.id === attachment?.id"
-                                                jhiDeleteButton
-                                                [entityTitle]="attachment?.name || ''"
-                                                deleteQuestion="artemisApp.attachment.deleteQuestion"
-                                                (delete)="deleteAttachment(attachment)"
-                                                [dialogError]="dialogError$"
-                                            ></button>
-                                        </div>
-                                    </td>
-                                    <div *ngIf="attachmentToBeCreated?.id === attachment?.id" class="edit-overlay">
-                                        {{ 'artemisApp.lecture.attachments.isBeingEdited' | artemisTranslate }}
-                                    </div>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </td>
-                </div>
-            </div>
-
-            <div *ngIf="attachmentToBeCreated">
-                <div class="row">
-                    <div class="col-12">
-                        <h4 jhiTranslate="artemisApp.lecture.attachments.newAttachment" *ngIf="!attachmentToBeCreated.id">New Attachment</h4>
-                        <h4 jhiTranslate="artemisApp.lecture.attachments.editAttachment" *ngIf="attachmentToBeCreated.id">Edit Attachment</h4>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-12 col-md-6">
-                        <div class="form-group">
-                            <label for="attachmentName" jhiTranslate="artemisApp.lecture.attachments.name">Name</label>
-                            <input type="text" class="form-control" id="attachmentName" name="attachmentName" [(ngModel)]="attachmentToBeCreated.name" />
-                        </div>
-                        <div class="form-group">
-                            <label for="lectureAttachmentInput{{ attachmentToBeCreated.name }}" class="form-control-label" jhiTranslate="artemisApp.lecture.attachments.file"
-                                >File</label
-                            >
-                            <small id="fileHelp" class="form-text text-body-secondary">{{ 'artemisApp.lecture.attachments.fileLimitation' | artemisTranslate }} </small>
-                            <fa-icon
-                                [icon]="faQuestionCircle"
-                                [ngbTooltip]="'artemisApp.lecture.attachments.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }"
-                            ></fa-icon>
-                            <div class="input-group background-file">
-                                <div class="custom-file overflow-ellipsis">
-                                    <input
-                                        #fileInput
-                                        id="lectureAttachmentInput{{ attachmentToBeCreated.name }}"
-                                        type="file"
-                                        class="custom-file-input"
-                                        [accept]="acceptedFileExtensionsFileBrowser"
-                                        [placeholder]="'artemisApp.lecture.attachments.chooseFile' | artemisTranslate"
-                                        (change)="setLectureAttachment($event)"
-                                        aria-describedby="fileHelp"
-                                    />
-                                </div>
+        @if (lecture) {
+            <div>
+                @if (showHeader) {
+                    <div>
+                        <h2><span jhiTranslate="artemisApp.lecture.attachments.title">Lecture</span>: {{ lecture.title }} - {{ lecture.course?.shortName }}</h2>
+                        <hr />
+                        <div class="row">
+                            <div class="col-6">
+                                <dt><span jhiTranslate="artemisApp.lecture.startDate">Start Date</span></dt>
+                                <dd>
+                                    <span>{{ lecture.startDate | artemisDate }}</span>
+                                </dd>
                             </div>
-                            <ng-container *ngIf="erroredFile">
-                                <div id="too-large-file-alert" class="alert alert-danger">
-                                    {{ errorMessage }}
-                                </div>
-                            </ng-container>
+                            <div class="col-6">
+                                <dt><span jhiTranslate="artemisApp.lecture.endDate">End Date</span></dt>
+                                <dd>
+                                    <span>{{ lecture.endDate | artemisDate }}</span>
+                                </dd>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <jhi-date-time-picker
-                                labelName="{{ 'artemisApp.lecture.attachments.releaseDate' | artemisTranslate }}"
-                                [(ngModel)]="attachmentToBeCreated.releaseDate"
-                                name="endDate"
-                            ></jhi-date-time-picker>
+                        <div class="row">
+                            <div class="col-12">
+                                <dt><span jhiTranslate="artemisApp.lecture.description">Description</span></dt>
+                                <dd class="markdown-preview editor-outline-background" [innerHTML]="lecture.description | htmlForMarkdown"></dd>
+                            </div>
                         </div>
-                        <div class="form-group" *ngIf="attachmentToBeCreated.id">
-                            <label for="attachmentName" jhiTranslate="artemisApp.lecture.attachments.notificationText">Notification Text</label>
-                            <input
-                                type="text"
-                                class="form-control"
-                                id="notificationText"
-                                name="attachmentName"
-                                [placeholder]="'artemisApp.lecture.attachments.notificationPlaceholder' | artemisTranslate"
-                                [(ngModel)]="notificationText"
-                            />
+                        <hr class="mt-2 mb-2" />
+                        <div class="row">
+                            <div class="col-12">
+                                <h4 jhiTranslate="artemisApp.lecture.attachments.attachments">Attachments</h4>
+                            </div>
                         </div>
                     </div>
-                </div>
-
+                }
                 <div class="row">
                     <div class="col-12">
-                        <button id="upload-attachment" type="submit" [disabled]="!isSubmitPossible" (click)="saveAttachment()" class="btn btn-primary me-2">
-                            <fa-icon [icon]="faPaperclip"></fa-icon>&nbsp;
-                            <span jhiTranslate="entity.action.saveAttachment"></span>
-                        </button>
-                        <button type="submit" (click)="cancel()" class="btn btn-default">
-                            <fa-icon [icon]="faTimes"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
-                        </button>
+                        @if (attachments && attachments.length > 0) {
+                            <td class="table-responsive">
+                                <table class="table table-striped position-relative">
+                                    <thead>
+                                        <tr>
+                                            <th><span jhiTranslate="global.field.id">ID</span></th>
+                                            <th><span jhiTranslate="artemisApp.lecture.attachments.name">Title</span></th>
+                                            <th><span jhiTranslate="artemisApp.lecture.attachments.type">Type</span></th>
+                                            <th><span jhiTranslate="artemisApp.lecture.attachments.link">Link</span></th>
+                                            <th><span jhiTranslate="artemisApp.lecture.attachments.releaseDate">Release Date</span></th>
+                                            <th><span jhiTranslate="artemisApp.lecture.attachments.uploadDate">Upload Date</span></th>
+                                            <th><span jhiTranslate="artemisApp.lecture.attachments.version">Version</span></th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (attachment of attachments; track trackId($index, attachment)) {
+                                            <tr [ngClass]="{ 'edit-overlay-container': attachmentToBeCreated?.id === attachment?.id }">
+                                                <td>
+                                                    {{ attachment.id }}
+                                                </td>
+                                                <td>{{ attachment.name }}</td>
+                                                <td>{{ attachment.attachmentType }}</td>
+                                                <td>
+                                                    @if (!isDownloadingAttachmentLink) {
+                                                        <a class="text-primary" (click)="downloadAttachment(attachment.link || '')">
+                                                            {{ attachment.name }}
+                                                        </a>
+                                                    }
+                                                    @if (isDownloadingAttachmentLink === attachment.link) {
+                                                        <a class="text-primary">
+                                                            <fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>
+                                                            {{ 'artemisApp.courseOverview.lectureDetails.isDownloading' | artemisTranslate }}
+                                                        </a>
+                                                    }
+                                                </td>
+                                                <td>{{ attachment.releaseDate | artemisDate }}</td>
+                                                <td>{{ attachment.uploadDate | artemisDate }}</td>
+                                                <td>
+                                                    {{ attachment.version }}
+                                                </td>
+                                                <td class="text-end">
+                                                    <div class="flex-btn-group-container">
+                                                        <button
+                                                            [disabled]="attachmentToBeCreated?.id === attachment?.id"
+                                                            type="submit"
+                                                            (click)="editAttachment(attachment)"
+                                                            class="btn btn-primary btn-sm me-1"
+                                                        >
+                                                            <fa-icon [icon]="faPencilAlt"></fa-icon>
+                                                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                                                        </button>
+                                                        @if (lecture.isAtLeastInstructor) {
+                                                            <button
+                                                                [disabled]="attachmentToBeCreated?.id === attachment?.id"
+                                                                jhiDeleteButton
+                                                                [entityTitle]="attachment?.name || ''"
+                                                                deleteQuestion="artemisApp.attachment.deleteQuestion"
+                                                                (delete)="deleteAttachment(attachment)"
+                                                                [dialogError]="dialogError$"
+                                                            >
+                                                                <fa-icon [icon]="faTrash"></fa-icon>
+                                                            </button>
+                                                        }
+                                                    </div>
+                                                </td>
+                                                @if (attachmentToBeCreated?.id === attachment?.id) {
+                                                    <div class="edit-overlay">
+                                                        {{ 'artemisApp.lecture.attachments.isBeingEdited' | artemisTranslate }}
+                                                    </div>
+                                                }
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </td>
+                        }
                     </div>
                 </div>
+                @if (attachmentToBeCreated) {
+                    <div>
+                        <div class="row">
+                            <div class="col-12">
+                                @if (!attachmentToBeCreated.id) {
+                                    <h4 jhiTranslate="artemisApp.lecture.attachments.newAttachment">New Attachment</h4>
+                                }
+                                @if (attachmentToBeCreated.id) {
+                                    <h4 jhiTranslate="artemisApp.lecture.attachments.editAttachment">Edit Attachment</h4>
+                                }
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12 col-md-6">
+                                <div class="form-group">
+                                    <label for="attachmentName" jhiTranslate="artemisApp.lecture.attachments.name">Name</label>
+                                    <input type="text" class="form-control" id="attachmentName" name="attachmentName" [(ngModel)]="attachmentToBeCreated.name" />
+                                </div>
+                                <div class="form-group">
+                                    <label
+                                        for="lectureAttachmentInput{{ attachmentToBeCreated.name }}"
+                                        class="form-control-label"
+                                        jhiTranslate="artemisApp.lecture.attachments.file"
+                                        >File</label
+                                    >
+                                    <small id="fileHelp" class="form-text text-body-secondary">{{ 'artemisApp.lecture.attachments.fileLimitation' | artemisTranslate }} </small>
+                                    <fa-icon
+                                        [icon]="faQuestionCircle"
+                                        [ngbTooltip]="'artemisApp.lecture.attachments.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }"
+                                    ></fa-icon>
+                                    <div class="input-group background-file">
+                                        <div class="custom-file overflow-ellipsis">
+                                            <input
+                                                #fileInput
+                                                id="lectureAttachmentInput{{ attachmentToBeCreated.name }}"
+                                                type="file"
+                                                class="custom-file-input"
+                                                [accept]="acceptedFileExtensionsFileBrowser"
+                                                [placeholder]="'artemisApp.lecture.attachments.chooseFile' | artemisTranslate"
+                                                (change)="setLectureAttachment($event)"
+                                                aria-describedby="fileHelp"
+                                            />
+                                        </div>
+                                    </div>
+                                    @if (erroredFile) {
+                                        <div id="too-large-file-alert" class="alert alert-danger">
+                                            {{ errorMessage }}
+                                        </div>
+                                    }
+                                </div>
+                                <div class="form-group">
+                                    <jhi-date-time-picker
+                                        labelName="{{ 'artemisApp.lecture.attachments.releaseDate' | artemisTranslate }}"
+                                        [(ngModel)]="attachmentToBeCreated.releaseDate"
+                                        name="endDate"
+                                    ></jhi-date-time-picker>
+                                </div>
+                                @if (attachmentToBeCreated.id) {
+                                    <div class="form-group">
+                                        <label for="attachmentName" jhiTranslate="artemisApp.lecture.attachments.notificationText">Notification Text</label>
+                                        <input
+                                            type="text"
+                                            class="form-control"
+                                            id="notificationText"
+                                            name="attachmentName"
+                                            [placeholder]="'artemisApp.lecture.attachments.notificationPlaceholder' | artemisTranslate"
+                                            [(ngModel)]="notificationText"
+                                        />
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <button id="upload-attachment" type="submit" [disabled]="!isSubmitPossible" (click)="saveAttachment()" class="btn btn-primary me-2">
+                                    <fa-icon [icon]="faPaperclip"></fa-icon>&nbsp;
+                                    <span jhiTranslate="entity.action.saveAttachment"></span>
+                                </button>
+                                <button type="submit" (click)="cancel()" class="btn btn-default">
+                                    <fa-icon [icon]="faTimes"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+                @if (!attachmentToBeCreated) {
+                    <div class="row">
+                        <div class="col-12">
+                            <button type="submit" (click)="addAttachment()" class="btn btn-primary" id="add-attachment">
+                                <fa-icon [icon]="faPaperclip"></fa-icon>&nbsp;<span jhiTranslate="entity.action.addAttachment"> Add attachment</span>
+                            </button>
+                        </div>
+                    </div>
+                }
             </div>
-
-            <div class="row" *ngIf="!attachmentToBeCreated">
-                <div class="col-12">
-                    <button type="submit" (click)="addAttachment()" class="btn btn-primary" id="add-attachment">
-                        <fa-icon [icon]="faPaperclip"></fa-icon>&nbsp;<span jhiTranslate="entity.action.addAttachment"> Add attachment</span>
-                    </button>
-                </div>
-            </div>
-        </div>
+        }
     </div>
 </div>

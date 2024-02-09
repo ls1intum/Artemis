@@ -7,6 +7,7 @@ import { Subscription } from 'rxjs';
 import { PatternMatch, PostingContentPart, ReferenceType } from '../metis.util';
 import { User } from 'app/core/user/user.model';
 import { Posting } from 'app/entities/metis/posting.model';
+import { isCommunicationEnabled } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-posting-content',
@@ -16,12 +17,12 @@ import { Posting } from 'app/entities/metis/posting.model';
 export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     @Input() content?: string;
     @Input() previewMode?: boolean;
-    @Input() isAnnouncement = false;
     @Input() author?: User;
     @Input() isEdited = false;
     @Input() posting?: Posting;
     @Input() isReply?: boolean;
     @Output() userReferenceClicked = new EventEmitter<string>();
+    @Output() channelReferenceClicked = new EventEmitter<number>();
 
     showContent = false;
     currentlyLoadedPosts: Post[];
@@ -96,8 +97,10 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     // if not, we do not want to fetch the post from the DB and rather always navigate to the course discussion page with the referenceStr as search text
                     const referencedPostInLoadedPosts = this.currentlyLoadedPosts.find((post: Post) => post.id! === +referencedId);
                     referenceStr = this.content.substring(patternMatch.startIndex, patternMatch.endIndex);
-                    linkToReference = this.metisService.getLinkForPost(referencedPostInLoadedPosts);
-                    queryParams = referencedPostInLoadedPosts ? this.metisService.getQueryParamsForPost(referencedPostInLoadedPosts) : ({ searchText: referenceStr } as Params);
+                    if (isCommunicationEnabled(this.metisService.getCourse())) {
+                        linkToReference = this.metisService.getLinkForPost();
+                        queryParams = referencedPostInLoadedPosts ? this.metisService.getQueryParamsForPost(referencedPostInLoadedPosts) : ({ searchText: referenceStr } as Params);
+                    }
                 } else if (
                     ReferenceType.LECTURE === referenceType ||
                     ReferenceType.PROGRAMMING === referenceType ||
@@ -141,6 +144,15 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                     queryParams = {
                         referenceUserLogin: this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex)),
+                    } as Params;
+                } else if (ReferenceType.CHANNEL === referenceType) {
+                    // referenceStr: string to be displayed for the reference
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                    referenceStr = this.content.substring(this.content.indexOf(']', patternMatch.startIndex)! + 1, this.content.indexOf('(', patternMatch.startIndex)!);
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                    const channelId = parseInt(this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex)));
+                    queryParams = {
+                        channelId: isNaN(channelId) ? undefined : channelId,
                     } as Params;
                 }
 
@@ -199,7 +211,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
         // Group 9: reference pattern for Users
         // globally searched for, i.e. no return after first match
         const pattern =
-            /(?<POST>#\d+)|(?<PROGRAMMING>\[programming].*?\[\/programming])|(?<MODELING>\[modeling].*?\[\/modeling])|(?<QUIZ>\[quiz].*?\[\/quiz])|(?<TEXT>\[text].*?\[\/text])|(?<FILE_UPLOAD>\[file-upload].*?\[\/file-upload])|(?<LECTURE>\[lecture].*?\[\/lecture])|(?<ATTACHMENT>\[attachment].*?\[\/attachment])|(?<ATTACHMENT_UNITS>\[lecture-unit].*?\[\/lecture-unit])|(?<SLIDE>\[slide].*?\[\/slide])|(?<USER>\[user].*?\[\/user])/g;
+            /(?<POST>#\d+)|(?<PROGRAMMING>\[programming].*?\[\/programming])|(?<MODELING>\[modeling].*?\[\/modeling])|(?<QUIZ>\[quiz].*?\[\/quiz])|(?<TEXT>\[text].*?\[\/text])|(?<FILE_UPLOAD>\[file-upload].*?\[\/file-upload])|(?<LECTURE>\[lecture].*?\[\/lecture])|(?<ATTACHMENT>\[attachment].*?\[\/attachment])|(?<ATTACHMENT_UNITS>\[lecture-unit].*?\[\/lecture-unit])|(?<SLIDE>\[slide].*?\[\/slide])|(?<USER>\[user].*?\[\/user])|(?<CHANNEL>\[channel].*?\[\/channel])/g;
 
         // array with PatternMatch objects per reference found in the posting content
         const patternMatches: PatternMatch[] = [];

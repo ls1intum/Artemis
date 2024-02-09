@@ -48,14 +48,8 @@ export class PostService extends PostingService<Post> {
         if (postContextFilter.sortingOrder) {
             params = params.set('sortingOrder', postContextFilter.sortingOrder.toString());
         }
-        if (postContextFilter.courseWideContexts?.length) {
-            params = params.set('courseWideContexts', postContextFilter.courseWideContexts.toString());
-        }
-        if (postContextFilter.lectureIds?.length) {
-            params = params.set('lectureIds', postContextFilter.lectureIds.toString());
-        }
-        if (postContextFilter.exerciseIds?.length) {
-            params = params.set('exerciseIds', postContextFilter.exerciseIds.toString());
+        if (postContextFilter.courseWideChannelIds) {
+            params = params.set('courseWideChannelIds', postContextFilter.courseWideChannelIds.toString());
         }
         if (postContextFilter.plagiarismCaseId) {
             params = params.set('plagiarismCaseId', postContextFilter.plagiarismCaseId.toString());
@@ -94,7 +88,7 @@ export class PostService extends PostingService<Post> {
      * @return {Observable<string[]>}
      */
     getAllPostTagsByCourseId(courseId: number): Observable<HttpResponse<string[]>> {
-        return this.http.get<string[]>(`${this.resourceUrl}${courseId}/posts/tags`, { observe: 'response' });
+        return this.http.get<string[]>(`${this.resourceUrl}${courseId}/messages/tags`, { observe: 'response' });
     }
 
     /**
@@ -119,7 +113,7 @@ export class PostService extends PostingService<Post> {
      */
     updatePostDisplayPriority(courseId: number, postId: number, displayPriority: DisplayPriority): Observable<EntityResponseType> {
         return this.http
-            .put(`${this.resourceUrl}${courseId}/posts/${postId}/display-priority`, {}, { params: { displayPriority }, observe: 'response' })
+            .put(`${this.resourceUrl}${courseId}/messages/${postId}/display-priority`, {}, { params: { displayPriority }, observe: 'response' })
             .pipe(map(this.convertPostingResponseDateFromServer));
     }
 
@@ -163,8 +157,17 @@ export class PostService extends PostingService<Post> {
         return res;
     }
 
+    /**
+     * Determines whether to use the /messages or /posts API endpoints based on the presence of certain properties in the postContextFilter or post objects.
+     * If any properties related to conversations are present (conversation, conversationId, or courseWideChannelIds), it returns /messages.
+     * Otherwise, it defaults to /posts.
+     *
+     * @param postContextFilter current post context filter in use
+     * @param post new or updated post
+     * @return '/messages' or '/posts'
+     */
     private static getResourceEndpoint(postContextFilter?: PostContextFilter, post?: Post): string {
-        if (post?.conversation || postContextFilter?.conversationId) {
+        if (post?.conversation || postContextFilter?.conversationId || postContextFilter?.courseWideChannelIds) {
             return '/messages';
         } else {
             return '/posts';

@@ -2,247 +2,264 @@
     <div class="d-flex align-content-center mb-2">
         <h3 class="fw-medium" jhiTranslate="artemisApp.programmingExercise.configureGrading.title">Configure Automated Grading</h3>
     </div>
-    <ng-container *ngIf="!isLoading">
+    @if (!isLoading) {
         <div class="top-bar">
             <div class="d-flex align-items-center">
-                <div class="tab-item test-cases" (click)="selectTab('test-cases')" [ngClass]="activeTab == 'test-cases' ? 'active' : ''">
+                <div class="tab-item test-cases" (click)="selectTab('test-cases')" [ngClass]="activeTab === 'test-cases' ? 'active' : ''">
                     <b>Test Cases</b>
                 </div>
-                <div
-                    class="tab-item code-analysis"
-                    *ngIf="programmingExercise.staticCodeAnalysisEnabled"
-                    (click)="selectTab('code-analysis')"
-                    [ngClass]="activeTab == 'code-analysis' ? 'active' : ''"
-                >
-                    <b>Code Analysis</b>
-                </div>
-                <div class="tab-item submission-policy" (click)="selectTab('submission-policy')" [ngClass]="activeTab == 'submission-policy' ? 'active' : ''">
+                @if (programmingExercise.staticCodeAnalysisEnabled) {
+                    <div class="tab-item code-analysis" (click)="selectTab('code-analysis')" [ngClass]="activeTab === 'code-analysis' ? 'active' : ''">
+                        <b>Code Analysis</b>
+                    </div>
+                }
+                <div class="tab-item submission-policy" (click)="selectTab('submission-policy')" [ngClass]="activeTab === 'submission-policy' ? 'active' : ''">
                     <b>Submission Policy</b>
                 </div>
             </div>
-            <ng-template><div></div></ng-template>
+            <ng-template>
+                <div></div>
+            </ng-template>
             <div class="d-flex align-items-center">
-                <jhi-programming-exercise-configure-grading-status
-                    *ngIf="activeTab != 'submission-policy'"
-                    [exerciseIsReleasedAndHasResults]="isReleasedAndHasResults"
-                    [hasUnsavedTestCaseChanges]="hasUnsavedChanges"
-                    [hasUnsavedCategoryChanges]="!!changedCategoryIds.length"
-                    [hasUpdatedGradingConfig]="hasUpdatedGradingConfig"
-                ></jhi-programming-exercise-configure-grading-status>
-                <jhi-programming-exercise-configure-grading-actions
-                    *ngIf="programmingExercise.isAtLeastInstructor"
-                    [exercise]="programmingExercise"
-                    [hasUpdatedGradingConfig]="hasUpdatedGradingConfig"
-                    [isSaving]="isSaving"
-                ></jhi-programming-exercise-configure-grading-actions>
+                @if (activeTab != 'submission-policy') {
+                    <jhi-programming-exercise-configure-grading-status
+                        [exerciseIsReleasedAndHasResults]="isReleasedAndHasResults"
+                        [hasUnsavedTestCaseChanges]="hasUnsavedChanges"
+                        [hasUnsavedCategoryChanges]="!!changedCategoryIds.length"
+                        [hasUpdatedGradingConfig]="hasUpdatedGradingConfig"
+                    ></jhi-programming-exercise-configure-grading-status>
+                }
+                @if (programmingExercise.isAtLeastInstructor) {
+                    <jhi-programming-exercise-configure-grading-actions
+                        [exercise]="programmingExercise"
+                        [hasUpdatedGradingConfig]="hasUpdatedGradingConfig"
+                        [isSaving]="isSaving"
+                    ></jhi-programming-exercise-configure-grading-actions>
+                }
             </div>
         </div>
-
         <div class="grading-body-container mt-3">
-            <div *ngIf="activeTab == 'submission-policy'">
-                <jhi-programming-exercise-grading-submission-policy-configuration-actions
-                    [exercise]="programmingExercise"
-                    [isSaving]="isSaving"
-                    [hadPolicyBefore]="hadPolicyBefore"
-                    [formInvalid]="policyUpdate.invalid"
-                    (onUpdate)="updateSubmissionPolicy()"
-                    (onToggle)="toggleSubmissionPolicy()"
-                ></jhi-programming-exercise-grading-submission-policy-configuration-actions>
-                <jhi-submission-policy-update
-                    #policyUpdate
-                    [programmingExercise]="programmingExercise"
-                    [editable]="programmingExercise.isAtLeastInstructor!"
-                ></jhi-submission-policy-update>
-                <ng-container *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.submissionPolicy != undefined">
-                    <ngb-alert [dismissible]="false" [type]="'info'">
-                        <span>{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.triggerAllInformation' | artemisTranslate }}</span>
-                    </ngb-alert>
-                </ng-container>
-            </div>
-        </div>
-
-        <div class="grading-body-container mt-3">
-            <div *ngIf="activeTab == 'test-cases'">
-                <div class="grading-table-layout">
-                    <div class="col-7">
-                        <jhi-programming-exercise-grading-tasks-table
-                            [exercise]="programmingExercise"
-                            [course]="course"
-                            [gradingStatisticsObservable]="gradingStatisticsObservable"
-                        ></jhi-programming-exercise-grading-tasks-table>
-                    </div>
-
-                    <div class="col-5">
-                        <h2 class="mb-5 fw-medium">
-                            <span>{{ 'artemisApp.programmingExercise.configureGrading.charts.title' | artemisTranslate }}</span>
-                            <span *ngIf="!!changedTestCaseIds.length" class="badge bg-primary" jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"></span>
-                        </h2>
-
-                        <jhi-test-case-distribution-chart
-                            [testCases]="filteredTestCasesForCharts"
-                            [testCaseStatsMap]="gradingStatistics?.testCaseStatsMap"
-                            [totalParticipations]="gradingStatistics?.numParticipations"
-                            [exercise]="programmingExercise"
-                            (testCaseColorsChange)="testCaseColors = $event"
-                            (testCaseRowFilter)="filterByChart($event, chartFilterType.TEST_CASES)"
-                        ></jhi-test-case-distribution-chart>
-                    </div>
+            @if (activeTab == 'submission-policy') {
+                <div>
+                    <jhi-programming-exercise-grading-submission-policy-configuration-actions
+                        [exercise]="programmingExercise"
+                        [isSaving]="isSaving"
+                        [hadPolicyBefore]="hadPolicyBefore"
+                        [formInvalid]="policyUpdate.invalid"
+                        (onUpdate)="updateSubmissionPolicy()"
+                        (onToggle)="toggleSubmissionPolicy()"
+                    ></jhi-programming-exercise-grading-submission-policy-configuration-actions>
+                    <jhi-submission-policy-update
+                        #policyUpdate
+                        [programmingExercise]="programmingExercise"
+                        [editable]="programmingExercise.isAtLeastInstructor!"
+                    ></jhi-submission-policy-update>
+                    @if (programmingExercise.isAtLeastEditor && programmingExercise.submissionPolicy != undefined) {
+                        <ngb-alert [dismissible]="false" [type]="'info'">
+                            <span>{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.triggerAllInformation' | artemisTranslate }}</span>
+                        </ngb-alert>
+                    }
                 </div>
-            </div>
-            <div *ngIf="activeTab === 'code-analysis' && programmingExercise.staticCodeAnalysisEnabled">
-                <div class="grading-table-layout">
-                    <div class="col-7">
-                        <div class="d-flex align-items-center justify-content-between mb-4">
-                            <h2 class="fw-medium" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.title">Code Analysis Categories</h2>
-                            <jhi-programming-exercise-grading-table-actions
+            }
+        </div>
+        <div class="grading-body-container mt-3">
+            @if (activeTab == 'test-cases') {
+                <div>
+                    <div class="grading-table-layout">
+                        <div class="col-7">
+                            <jhi-programming-exercise-grading-tasks-table
                                 [exercise]="programmingExercise"
-                                [hasUnsavedChanges]="!!changedCategoryIds.length"
-                                [isSaving]="isSaving"
-                                [activeTab]="activeTab"
-                                (onReset)="resetCategories()"
-                                (onSave)="saveCategories()"
-                                (onCategoryImport)="importCategories($event)"
-                            ></jhi-programming-exercise-grading-table-actions>
+                                [course]="course"
+                                [gradingStatisticsObservable]="gradingStatisticsObservable"
+                            ></jhi-programming-exercise-grading-tasks-table>
                         </div>
-
-                        <ngx-datatable
-                            id="codeAnalysisTable"
-                            class="bootstrap"
-                            trackByProp="id"
-                            [headerHeight]="50"
-                            [limit]="20"
-                            [columnMode]="'force'"
-                            [footerHeight]="50"
-                            [rowHeight]="'auto'"
-                            [rows]="staticCodeAnalysisCategoriesForTable"
-                            [sorts]="tableSorts.codeAnalysis"
-                            (sort)="onSort('codeAnalysis', $event)"
-                        >
-                            <ngx-datatable-column name="Category" prop="name">
-                                <ng-template ngx-datatable-header-template let-sortFn="sortFn">
-                                    <span class="datatable-header-cell-wrapper" (click)="sortFn()">
-                                        <span class="datatable-header-cell-label bold sortable">Category</span>
-                                        <fa-icon [icon]="iconForSortPropField('codeAnalysis', 'name')"></fa-icon>
-                                    </span>
-                                </ng-template>
-                                <ng-template ngx-datatable-cell-template let-value="value">
-                                    <fa-icon [icon]="faSquare" [styles]="{ color: categoryColors[value] || 'white' }" class="me-2"></fa-icon>
-                                    {{ value }}
-                                </ng-template>
-                            </ngx-datatable-column>
-                            <ngx-datatable-column name="State" prop="state" [comparator]="compareCategoryState">
-                                <ng-template ngx-datatable-header-template let-sortFn="sortFn">
-                                    <span class="datatable-header-cell-wrapper" (click)="sortFn()">
-                                        <span class="datatable-header-cell-label bold sortable">State</span>
-                                        <fa-icon [icon]="iconForSortPropField('codeAnalysis', 'state')"></fa-icon>
-                                        <fa-icon
-                                            [icon]="faQuestionCircle"
-                                            class="text-secondary ms-2"
-                                            placement="bottom auto"
-                                            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.state' | artemisTranslate"
-                                        ></fa-icon>
-                                    </span>
-                                </ng-template>
-                                <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                                    <select
-                                        [id]="row.id + '-state'"
-                                        [ngModel]="value"
-                                        class="p-1 form-select"
-                                        (change)="updateEditedCategoryField(row, EditableField.STATE)(getEventValue($event))"
-                                    >
-                                        <option *ngFor="let s of categoryStateList" [value]="s.value">{{ s.name }}</option>
-                                    </select>
-                                </ng-template>
-                            </ngx-datatable-column>
-                            <ngx-datatable-column name="Penalty" prop="penalty" [comparator]="comparePenalty">
-                                <ng-template ngx-datatable-header-template let-sortFn="sortFn">
-                                    <span class="datatable-header-cell-wrapper" (click)="sortFn()">
-                                        <span class="datatable-header-cell-label bold sortable">Penalty</span>
-                                        <fa-icon [icon]="iconForSortPropField('codeAnalysis', 'penalty')"></fa-icon>
-                                        <fa-icon
-                                            [icon]="faQuestionCircle"
-                                            class="text-secondary ms-2"
-                                            placement="bottom auto"
-                                            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.penalty' | artemisTranslate"
-                                        ></fa-icon>
-                                    </span>
-                                </ng-template>
-                                <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                                    <jhi-table-editable-field
-                                        *ngIf="row.state === CategoryState.Graded"
-                                        [id]="row.id + '-penalty'"
-                                        [value]="value"
-                                        [onValueUpdate]="updateEditedCategoryField(row, EditableField.PENALTY)"
-                                    ></jhi-table-editable-field>
-                                    <span *ngIf="row.state === CategoryState.Feedback" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
-                                    <span *ngIf="row.state === CategoryState.Inactive" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>
-                                </ng-template>
-                            </ngx-datatable-column>
-                            <ngx-datatable-column name="Max Penalty" prop="maxPenalty" [comparator]="compareMaxPenalty">
-                                <ng-template ngx-datatable-header-template let-sortFn="sortFn">
-                                    <span class="datatable-header-cell-wrapper" (click)="sortFn()">
-                                        <span class="datatable-header-cell-label bold sortable">Max Penalty</span>
-                                        <fa-icon [icon]="iconForSortPropField('codeAnalysis', 'maxPenalty')"></fa-icon>
-                                        <fa-icon
-                                            [icon]="faQuestionCircle"
-                                            class="text-secondary ms-2"
-                                            placement="bottom auto"
-                                            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.maxPenalty' | artemisTranslate"
-                                        ></fa-icon>
-                                    </span>
-                                </ng-template>
-                                <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                                    <jhi-table-editable-field
-                                        *ngIf="row.state === CategoryState.Graded"
-                                        [id]="row.id + '-maxpenalty'"
-                                        [value]="value"
-                                        [onValueUpdate]="updateEditedCategoryField(row, EditableField.MAX_PENALTY)"
-                                    ></jhi-table-editable-field>
-                                    <span *ngIf="row.state === CategoryState.Feedback" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
-                                    <span *ngIf="row.state === CategoryState.Inactive" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>
-                                </ng-template>
-                            </ngx-datatable-column>
-                            <ngx-datatable-column name="Detected Issues" prop="detectedIssues" [comparator]="compareDetectedIssues">
-                                <ng-template ngx-datatable-header-template let-sortFn="sortFn">
-                                    <span class="datatable-header-cell-wrapper" (click)="sortFn()">
-                                        <span class="datatable-header-cell-label bold sortable">Detected Issues</span>
-                                        <fa-icon [icon]="iconForSortPropField('codeAnalysis', 'detectedIssues')"></fa-icon>
-                                        <fa-icon
-                                            [icon]="faQuestionCircle"
-                                            class="text-secondary ms-2"
-                                            placement="bottom auto"
-                                            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.detectedIssues' | artemisTranslate"
-                                        ></fa-icon>
-                                    </span>
-                                </ng-template>
-                                <ng-template ngx-datatable-cell-template let-row="row">
-                                    <jhi-category-issues-chart
-                                        [category]="row"
-                                        [issuesMap]="getIssuesMap(row.name)"
-                                        [totalStudents]="gradingStatistics?.numParticipations || 0"
-                                        [maxNumberOfIssues]="maxIssuesPerCategory"
-                                    >
-                                    </jhi-category-issues-chart>
-                                </ng-template>
-                            </ngx-datatable-column>
-                        </ngx-datatable>
-                    </div>
-                    <div class="col-5">
-                        <h2 class="mb-5 fw-medium">
-                            <span>{{ 'artemisApp.programmingExercise.configureGrading.charts.title' | artemisTranslate }}</span>
-                            <span *ngIf="!!changedCategoryIds.length" class="badge bg-primary" jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"></span>
-                        </h2>
-
-                        <jhi-sca-category-distribution-chart
-                            [categories]="staticCodeAnalysisCategoriesForCharts"
-                            [categoryIssuesMap]="gradingStatistics?.categoryIssuesMap"
-                            [exercise]="programmingExercise"
-                            (categoryColorsChange)="categoryColors = $event"
-                            (scaCategoryFilter)="filterByChart($event, chartFilterType.CATEGORIES)"
-                        ></jhi-sca-category-distribution-chart>
+                        <div class="col-5">
+                            <h2 class="mb-5 fw-medium">
+                                <span>{{ 'artemisApp.programmingExercise.configureGrading.charts.title' | artemisTranslate }}</span>
+                                @if (!!changedTestCaseIds.length) {
+                                    <span class="badge bg-primary" jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"></span>
+                                }
+                            </h2>
+                            <jhi-test-case-distribution-chart
+                                [testCases]="filteredTestCasesForCharts"
+                                [testCaseStatsMap]="gradingStatistics?.testCaseStatsMap"
+                                [totalParticipations]="gradingStatistics?.numParticipations"
+                                [exercise]="programmingExercise"
+                                (testCaseColorsChange)="testCaseColors = $event"
+                                (testCaseRowFilter)="filterByChart($event, chartFilterType.TEST_CASES)"
+                            ></jhi-test-case-distribution-chart>
+                        </div>
                     </div>
                 </div>
-            </div>
+            }
+            @if (activeTab === 'code-analysis' && programmingExercise.staticCodeAnalysisEnabled) {
+                <div>
+                    <div class="grading-table-layout">
+                        <div class="col-7">
+                            <div class="d-flex align-items-center justify-content-between mb-4">
+                                <h2 class="fw-medium" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.title">Code Analysis Categories</h2>
+                                <jhi-programming-exercise-grading-table-actions
+                                    [exercise]="programmingExercise"
+                                    [hasUnsavedChanges]="!!changedCategoryIds.length"
+                                    [isSaving]="isSaving"
+                                    [activeTab]="activeTab"
+                                    (onReset)="resetCategories()"
+                                    (onSave)="saveCategories()"
+                                    (onCategoryImport)="importCategories($event)"
+                                ></jhi-programming-exercise-grading-table-actions>
+                            </div>
+                            <ngx-datatable
+                                id="codeAnalysisTable"
+                                class="bootstrap"
+                                trackByProp="id"
+                                [headerHeight]="50"
+                                [limit]="20"
+                                [columnMode]="'force'"
+                                [footerHeight]="50"
+                                [rowHeight]="'auto'"
+                                [rows]="staticCodeAnalysisCategoriesForTable"
+                                [sorts]="tableSorts.codeAnalysis"
+                                (sort)="onSort('codeAnalysis', $event)"
+                            >
+                                <ngx-datatable-column name="Category" prop="name">
+                                    <ng-template ngx-datatable-header-template let-sortFn="sortFn">
+                                        <span class="datatable-header-cell-wrapper" (click)="sortFn()">
+                                            <span class="datatable-header-cell-label bold sortable">Category</span>
+                                            <fa-icon [icon]="iconForSortPropField('codeAnalysis', 'name')"></fa-icon>
+                                        </span>
+                                    </ng-template>
+                                    <ng-template ngx-datatable-cell-template let-value="value">
+                                        <fa-icon [icon]="faSquare" [styles]="{ color: categoryColors[value] || 'white' }" class="me-2"></fa-icon>
+                                        {{ value }}
+                                    </ng-template>
+                                </ngx-datatable-column>
+                                <ngx-datatable-column name="State" prop="state" [comparator]="compareCategoryState">
+                                    <ng-template ngx-datatable-header-template let-sortFn="sortFn">
+                                        <span class="datatable-header-cell-wrapper" (click)="sortFn()">
+                                            <span class="datatable-header-cell-label bold sortable">State</span>
+                                            <fa-icon [icon]="iconForSortPropField('codeAnalysis', 'state')"></fa-icon>
+                                            <fa-icon
+                                                [icon]="faQuestionCircle"
+                                                class="text-secondary ms-2"
+                                                placement="bottom auto"
+                                                [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.state' | artemisTranslate"
+                                            ></fa-icon>
+                                        </span>
+                                    </ng-template>
+                                    <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                                        <select
+                                            [id]="row.id + '-state'"
+                                            [ngModel]="value"
+                                            class="p-1 form-select"
+                                            (change)="updateEditedCategoryField(row, EditableField.STATE)(getEventValue($event))"
+                                        >
+                                            @for (s of categoryStateList; track s) {
+                                                <option [value]="s.value">{{ s.name }}</option>
+                                            }
+                                        </select>
+                                    </ng-template>
+                                </ngx-datatable-column>
+                                <ngx-datatable-column name="Penalty" prop="penalty" [comparator]="comparePenalty">
+                                    <ng-template ngx-datatable-header-template let-sortFn="sortFn">
+                                        <span class="datatable-header-cell-wrapper" (click)="sortFn()">
+                                            <span class="datatable-header-cell-label bold sortable">Penalty</span>
+                                            <fa-icon [icon]="iconForSortPropField('codeAnalysis', 'penalty')"></fa-icon>
+                                            <fa-icon
+                                                [icon]="faQuestionCircle"
+                                                class="text-secondary ms-2"
+                                                placement="bottom auto"
+                                                [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.penalty' | artemisTranslate"
+                                            ></fa-icon>
+                                        </span>
+                                    </ng-template>
+                                    <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                                        @if (row.state === CategoryState.Graded) {
+                                            <jhi-table-editable-field
+                                                [id]="row.id + '-penalty'"
+                                                [value]="value"
+                                                [onValueUpdate]="updateEditedCategoryField(row, EditableField.PENALTY)"
+                                            ></jhi-table-editable-field>
+                                        }
+                                        @if (row.state === CategoryState.Feedback) {
+                                            <span jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
+                                        }
+                                        @if (row.state === CategoryState.Inactive) {
+                                            <span jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>
+                                        }
+                                    </ng-template>
+                                </ngx-datatable-column>
+                                <ngx-datatable-column name="Max Penalty" prop="maxPenalty" [comparator]="compareMaxPenalty">
+                                    <ng-template ngx-datatable-header-template let-sortFn="sortFn">
+                                        <span class="datatable-header-cell-wrapper" (click)="sortFn()">
+                                            <span class="datatable-header-cell-label bold sortable">Max Penalty</span>
+                                            <fa-icon [icon]="iconForSortPropField('codeAnalysis', 'maxPenalty')"></fa-icon>
+                                            <fa-icon
+                                                [icon]="faQuestionCircle"
+                                                class="text-secondary ms-2"
+                                                placement="bottom auto"
+                                                [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.maxPenalty' | artemisTranslate"
+                                            ></fa-icon>
+                                        </span>
+                                    </ng-template>
+                                    <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                                        @if (row.state === CategoryState.Graded) {
+                                            <jhi-table-editable-field
+                                                [id]="row.id + '-maxpenalty'"
+                                                [value]="value"
+                                                [onValueUpdate]="updateEditedCategoryField(row, EditableField.MAX_PENALTY)"
+                                            ></jhi-table-editable-field>
+                                        }
+                                        @if (row.state === CategoryState.Feedback) {
+                                            <span jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
+                                        }
+                                        @if (row.state === CategoryState.Inactive) {
+                                            <span jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>
+                                        }
+                                    </ng-template>
+                                </ngx-datatable-column>
+                                <ngx-datatable-column name="Detected Issues" prop="detectedIssues" [comparator]="compareDetectedIssues">
+                                    <ng-template ngx-datatable-header-template let-sortFn="sortFn">
+                                        <span class="datatable-header-cell-wrapper" (click)="sortFn()">
+                                            <span class="datatable-header-cell-label bold sortable">Detected Issues</span>
+                                            <fa-icon [icon]="iconForSortPropField('codeAnalysis', 'detectedIssues')"></fa-icon>
+                                            <fa-icon
+                                                [icon]="faQuestionCircle"
+                                                class="text-secondary ms-2"
+                                                placement="bottom auto"
+                                                [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.detectedIssues' | artemisTranslate"
+                                            ></fa-icon>
+                                        </span>
+                                    </ng-template>
+                                    <ng-template ngx-datatable-cell-template let-row="row">
+                                        <jhi-category-issues-chart
+                                            [category]="row"
+                                            [issuesMap]="getIssuesMap(row.name)"
+                                            [totalStudents]="gradingStatistics?.numParticipations || 0"
+                                            [maxNumberOfIssues]="maxIssuesPerCategory"
+                                        >
+                                        </jhi-category-issues-chart>
+                                    </ng-template>
+                                </ngx-datatable-column>
+                            </ngx-datatable>
+                        </div>
+                        <div class="col-5">
+                            <h2 class="mb-5 fw-medium">
+                                <span>{{ 'artemisApp.programmingExercise.configureGrading.charts.title' | artemisTranslate }}</span>
+                                @if (!!changedCategoryIds.length) {
+                                    <span class="badge bg-primary" jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"></span>
+                                }
+                            </h2>
+                            <jhi-sca-category-distribution-chart
+                                [categories]="staticCodeAnalysisCategoriesForCharts"
+                                [categoryIssuesMap]="gradingStatistics?.categoryIssuesMap"
+                                [exercise]="programmingExercise"
+                                (categoryColorsChange)="categoryColors = $event"
+                                (scaCategoryFilter)="filterByChart($event, chartFilterType.CATEGORIES)"
+                            ></jhi-sca-category-distribution-chart>
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
-    </ng-container>
+    }
 </div>

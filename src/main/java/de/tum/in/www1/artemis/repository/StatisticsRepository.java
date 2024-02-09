@@ -81,6 +81,18 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             """)
     List<StatisticsEntry> getActiveUsers(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
+    @Query("""
+            SELECT DISTINCT u.login
+            FROM User u, Submission s, StudentParticipation p
+            WHERE
+                s.participation.id = p.id AND
+                p.student.id = u.id AND
+                s.submissionDate >= :startDate AND
+                s.submissionDate <= :endDate AND
+                u.login NOT LIKE '%test%'
+            """)
+    List<String> getActiveUserNames(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
+
     /**
      * Count users that were active within the given date range.
      * Users are considered as active if they created a submission within the given date range
@@ -374,8 +386,8 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
                 post.creationDate, count(post.id)
                 )
-            from Post post left join post.lecture lectures left join post.exercise exercises
-            where post.creationDate >= :#{#startDate} and post.creationDate <= :#{#endDate} and (lectures.course.id = :#{#courseId} or exercises.course.id = :#{#courseId} or post.course.id = :#{#courseId})
+            from Post post left join Channel channel ON channel.id = post.conversation.id
+            where post.creationDate >= :#{#startDate} and post.creationDate <= :#{#endDate} and channel.course.id = :#{#courseId} and channel.isCourseWide = true
             group by post.creationDate
             order by post.creationDate asc
             """)
@@ -386,8 +398,8 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
                 post.creationDate, count(post.id)
                 )
-            from Post post left join post.exercise exercise
-            where post.creationDate >= :#{#startDate} and post.creationDate <= :#{#endDate} and exercise.id = :#{#exerciseId}
+            from Post post left join Channel channel ON channel.id = post.conversation.id
+            where post.creationDate >= :#{#startDate} and post.creationDate <= :#{#endDate} and channel.exercise.id = :#{#exerciseId}
             group by post.creationDate
             order by post.creationDate asc
             """)
@@ -396,15 +408,15 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
 
     @Query("""
             select count(post)
-            from Post post left join post.exercise exercise
-            where exercise.id = :#{#exerciseId}
+            from Post post left join Channel channel ON channel.id = post.conversation.id
+            where channel.exercise.id = :#{#exerciseId}
             """)
     long getNumberOfExercisePosts(@Param("exerciseId") Long exerciseId);
 
     @Query("""
             select count(distinct post.id)
-            from AnswerPost answer left join answer.post post left join post.exercise exercise
-            where exercise.id = :#{#exerciseId} and answer.resolvesPost = true
+            from AnswerPost answer left join answer.post post left join Channel channel ON channel.id = post.conversation.id
+            where channel.exercise.id = :#{#exerciseId} and answer.resolvesPost = true
             """)
     long getNumberOfResolvedExercisePosts(@Param("exerciseId") Long exerciseId);
 
@@ -413,8 +425,8 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
                 answer.creationDate, count(answer.id)
                 )
-            from AnswerPost answer left join answer.post post left join post.lecture lectures left join post.exercise exercises
-            where answer.creationDate >= :#{#startDate} and answer.creationDate <= :#{#endDate} and answer.resolvesPost = true and (lectures.course.id = :#{#courseId} or exercises.course.id = :#{#courseId} or post.course.id = :#{#courseId})
+            from AnswerPost answer left join answer.post post left join Channel channel ON channel.id = post.conversation.id
+            where answer.creationDate >= :#{#startDate} and answer.creationDate <= :#{#endDate} and answer.resolvesPost = true and channel.course.id = :#{#courseId} and channel.isCourseWide = true
             group by answer.creationDate
             order by answer.creationDate asc
             """)
@@ -425,8 +437,8 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
                 answer.creationDate, count(answer.id)
                 )
-            from AnswerPost answer left join answer.post post left join post.exercise exercise
-            where answer.creationDate >= :#{#startDate} and answer.creationDate <= :#{#endDate} and answer.resolvesPost = true and exercise.course.id = :#{#exerciseId}
+            from AnswerPost answer left join answer.post post left join Channel channel ON channel.id = post.conversation.id
+            where answer.creationDate >= :#{#startDate} and answer.creationDate <= :#{#endDate} and answer.resolvesPost = true and channel.exercise.id = :#{#exerciseId}
             group by answer.creationDate
             order by answer.creationDate asc
             """)
@@ -585,7 +597,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
      * @return A List<StatisticsData> with only distinct users per timeslot
      */
     private List<StatisticsEntry> filterDuplicatedUsers(SpanType span, List<StatisticsEntry> result, ZonedDateTime startDate, GraphType graphType) {
-        Map<Integer, List<String>> users = new HashMap<>();
+        Map<Integer, Set<String>> users = new HashMap<>();
         for (StatisticsEntry listElement : result) {
             ZonedDateTime date;
             if (graphType == GraphType.LOGGED_IN_USERS) {
@@ -607,24 +619,17 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     }
 
     /**
-     * This method is normally invoked in a for each loop and adds a user based on the list element in case it does not yet exist in the users map
+     * This method is normally invoked in a for each loop and adds a user based on the set element in case it does not yet exist in the users map
      *
      * @param users              the map of existing users
      * @param userStatisticEntry the statistic entry which contains a username and a potentially new user
      * @param index              the index of the map which should be considered, can be a date or an integer
      */
-    default void addUserToTimeslot(Map<Integer, List<String>> users, StatisticsEntry userStatisticEntry, Integer index) {
+    default void addUserToTimeslot(Map<Integer, Set<String>> users, StatisticsEntry userStatisticEntry, Integer index) {
         String username = userStatisticEntry.getUsername();
-        List<String> usersInSameSlot = users.get(index);
         // if this index is not yet existing in users
-        if (usersInSameSlot == null) {
-            usersInSameSlot = new ArrayList<>();
-            usersInSameSlot.add(username);
-            users.put(index, usersInSameSlot);
-        }   // if the value of the map for this index does not contain this username
-        else if (!usersInSameSlot.contains(username)) {
-            usersInSameSlot.add(username);
-        }
+        // if the value of the map for this index does not contain this username
+        users.computeIfAbsent(index, k -> new HashSet<>(Collections.singletonList(username))).add(username);
     }
 
     /**
@@ -636,9 +641,9 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
      * @param startDate the startDate which we need for mapping into timeslots
      * @return A List<StatisticsData> with no duplicated user per timeslot
      */
-    private List<StatisticsEntry> mergeUsersPerTimeslotIntoList(Map<Integer, List<String>> users, SpanType span, ZonedDateTime startDate) {
+    private List<StatisticsEntry> mergeUsersPerTimeslotIntoList(Map<Integer, Set<String>> users, SpanType span, ZonedDateTime startDate) {
         List<StatisticsEntry> returnList = new ArrayList<>();
-        users.forEach((timeIndex, userList) -> {
+        users.forEach((timeIndex, userSet) -> {
             ZonedDateTime start = switch (span) {
                 case DAY -> startDate.withHour(timeIndex);
                 case WEEK, MONTH -> startDate.plusDays(timeIndex);
@@ -649,7 +654,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 }
                 case YEAR -> startDate.withMonth(timeIndex);
             };
-            StatisticsEntry listElement = new StatisticsEntry(start, userList.size());
+            StatisticsEntry listElement = new StatisticsEntry(start, userSet.size());
             returnList.add(listElement);
         });
         return returnList;

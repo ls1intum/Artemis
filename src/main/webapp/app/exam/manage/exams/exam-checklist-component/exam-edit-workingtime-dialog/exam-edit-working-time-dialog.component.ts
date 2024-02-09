@@ -22,8 +22,6 @@ export class ExamEditWorkingTimeDialogComponent {
     faSpinner = faSpinner;
     faCheck = faCheck;
 
-    confirmEntityName: string;
-
     workingTimeSeconds = 0;
 
     get oldWorkingTime() {
@@ -44,7 +42,7 @@ export class ExamEditWorkingTimeDialogComponent {
     }
 
     confirmUpdateWorkingTime(): void {
-        if (!this.isWorkingTimeValid()) return;
+        if (!this.isWorkingTimeChangeValid) return;
         this.isLoading = true;
         this.examManagementService.updateWorkingTime(this.exam.course!.id!, this.exam.id!, this.workingTimeSeconds).subscribe({
             next: (res: HttpResponse<Exam>) => {
@@ -59,7 +57,7 @@ export class ExamEditWorkingTimeDialogComponent {
         });
     }
 
-    isWorkingTimeValid(): boolean {
+    get isWorkingTimeChangeValid(): boolean {
         return Math.abs(this.workingTimeSeconds) !== 0;
     }
 }

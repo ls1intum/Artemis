@@ -12,10 +12,16 @@ final class UMLClassDiagrams {
 
     public static final String CLASS_MODEL_2;
 
+    public static final String CLASS_MODEL_1_V3;
+
+    public static final String CLASS_MODEL_2_V3;
+
     static {
         try {
             CLASS_MODEL_1 = IOUtils.toString(UMLClassDiagrams.class.getResource("classModel1.json"), StandardCharsets.UTF_8);
             CLASS_MODEL_2 = IOUtils.toString(UMLClassDiagrams.class.getResource("classModel2.json"), StandardCharsets.UTF_8);
+            CLASS_MODEL_1_V3 = IOUtils.toString(UMLClassDiagrams.class.getResource("classModel1v3.json"), StandardCharsets.UTF_8);
+            CLASS_MODEL_2_V3 = IOUtils.toString(UMLClassDiagrams.class.getResource("classModel2v3.json"), StandardCharsets.UTF_8);
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);

@@ -4,7 +4,9 @@
             {{ (forBonus ? 'artemisApp.gradingSystem.titleBonus' : isExam ? 'artemisApp.gradingSystem.titleExam' : 'artemisApp.gradingSystem.titleCourse') | artemisTranslate }}
             {{ title }}
         </h1>
-        <h6 *ngIf="!isExam">{{ 'artemisApp.gradingSystem.overview.info' | artemisTranslate }}</h6>
+        @if (!isExam) {
+            <h6>{{ 'artemisApp.gradingSystem.overview.info' | artemisTranslate }}</h6>
+        }
         <jhi-grade-key-table />
         <button type="button" class="btn btn-secondary" (click)="previousState()">
             <fa-icon [icon]="faChevronLeft"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>

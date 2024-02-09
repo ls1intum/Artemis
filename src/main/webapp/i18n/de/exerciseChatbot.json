@@ -28,7 +28,6 @@
             "text4_5": "<b>Chatverlauf löschen:</b> Du kannst deinen Chatverlauf löschen, indem du auf den Mülleimer klickst (oben rechts im Widget). Dadurch werden alle vorherigen Nachrichten gelöscht und du kannst einen neuen Chat starten.",
             "supportText": "(Wenn du Probleme mit dem Iris-Widget oder bei der Interaktion mit Iris hast, erstelle bitte einen Issue auf GitHub https://github.com/ls1intum/Artemis)",
             "unreadMessages": "Ungelesene Nachrichten",
-            "buttonTooltip": "Beginne mit Iris zu chatten!",
             "clearSession": {
                 "title": "Chatverlauf löschen",
                 "text": "Bist du sicher, dass du den Chatverlauf löschen möchtest?",
@@ -54,7 +53,8 @@
                 "irisNotAvailable": "Iris antwortet nicht. Bitte versuche es später!",
                 "rateLimitExceeded": "Du hast die maximale Anzahl von Nachrichten, die du in einem {{ hours }}-Stunden-Zeitfenster an Iris senden kannst, erreicht. Bitte versuche es später erneut!"
             },
-            "firstMessage": "Hallo, ich bin Iris! Ich kann dir bei deiner Programmieraufgabe helfen. Du kannst <a href='/about-iris' target='_blank'>hier</a> mehr über mich erfahren.",
+            "tutorFirstMessage": "Hallo, ich bin Iris! Ich kann dir bei deiner Programmieraufgabe helfen. Du kannst <a href='/about-iris' target='_blank'>hier</a> mehr über mich erfahren.",
+            "codeEditorFirstMessage": "Hallo, ich bin Iris! Ich kann dir bei der Bearbeitung von Programmieraufgaben helfen. Ich kann zum Beispiel: <ul><li>eine neue Aufgabe erstellen</li><li><a href='/' target='_blank'>eine Variante von einer bestehenden Aufgabe erstellen</a></li><li>eine bestehende Aufgabe neuen Anforderungen anpassen</li></ul> Du kannst <a href='/about-iris' target='_blank'>hier</a> mehr über mich erfahren.",
             "rateLimitTooltip": "Dies ist die maximale Anzahl von Nachrichten, die du in einem {{ hours }}-Stunden-Zeitfenster an Iris senden kannst."
         }
     }

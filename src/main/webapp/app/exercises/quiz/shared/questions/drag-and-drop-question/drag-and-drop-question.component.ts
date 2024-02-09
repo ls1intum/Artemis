@@ -76,6 +76,8 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     }
     @Input()
     onMappingUpdate: any;
+    @Input()
+    filePreviewPaths: Map<string, string> = new Map<string, string>();
 
     @Output()
     mappingsChange = new EventEmitter<DragAndDropMapping[]>();
@@ -240,11 +242,9 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
      */
     getUnassignedDragItems() {
         return this.question.dragItems?.filter((dragItem) => {
-            return (
-                !this.mappings?.some((mapping) => {
-                    return this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dragItem, dragItem);
-                }, this) ?? true
-            );
+            return !this.mappings?.some((mapping) => {
+                return this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dragItem, dragItem);
+            }, this);
         }, this);
     }
 

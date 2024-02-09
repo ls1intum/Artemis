@@ -90,10 +90,12 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
                 <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="cancel()"></button>
             </div>
             <div class="modal-body">
-                <p *ngIf="dueDatePassed" class="text-danger font-weight-bold" jhiTranslate="artemisApp.programmingExercise.resubmitAllConfirmAfterDueDate">
-                    The due date has passed, some of the student submissions might have received manual results created by teaching assistants. Newly generated automatic results
-                    would replace the manual results as the latest result for the participation.
-                </p>
+                @if (dueDatePassed) {
+                    <p class="text-danger font-weight-bold" jhiTranslate="artemisApp.programmingExercise.resubmitAllConfirmAfterDueDate">
+                        The due date has passed, some of the student submissions might have received manual results created by teaching assistants. Newly generated automatic
+                        results would replace the manual results as the latest result for the participation.
+                    </p>
+                }
                 <p jhiTranslate="artemisApp.programmingExercise.resubmitAllDialog">
                     WARNING: Triggering all participations again is a very expensive operation. This action will start a CI build for every participation in this exercise!
                 </p>

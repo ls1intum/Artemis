@@ -19,18 +19,22 @@
                     <a class="th-link">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.numberOfAcceptedComplaints' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
                 </th>
-                <th *ngIf="!isExamMode" jhiSortBy="numberOfNotAnsweredMoreFeedbackRequests">
-                    <a class="th-link">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.numberOfNotAnsweredMoreFeedbackRequests' | artemisTranslate }}</a>
-                    <fa-icon [icon]="faSort"></fa-icon>
-                </th>
+                @if (!isExamMode) {
+                    <th jhiSortBy="numberOfNotAnsweredMoreFeedbackRequests">
+                        <a class="th-link">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.numberOfNotAnsweredMoreFeedbackRequests' | artemisTranslate }}</a>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                }
                 <th jhiSortBy="numberOfComplaintResponses">
                     <a class="th-link">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.numberOfComplaintResponses' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
                 </th>
-                <th *ngIf="!isExamMode" jhiSortBy="numberOfAnsweredMoreFeedbackRequests">
-                    <a class="th-link">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.numberOfAnsweredMoreFeedbackRequests' | artemisTranslate }}</a>
-                    <fa-icon [icon]="faSort"></fa-icon>
-                </th>
+                @if (!isExamMode) {
+                    <th jhiSortBy="numberOfAnsweredMoreFeedbackRequests">
+                        <a class="th-link">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.numberOfAnsweredMoreFeedbackRequests' | artemisTranslate }}</a>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                }
                 <th jhiSortBy="averageScore">
                     <a class="th-link">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.averageScore' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
@@ -42,71 +46,93 @@
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let tutor of tutorsData; let i = index">
-                <td>{{ i + 1 }}</td>
-                <td>
-                    {{ tutor.name }}
-                    <fa-icon
-                        *ngIf="course?.isAtLeastInstructor && tutor.hasIssuesWithPerformance"
-                        [icon]="faExclamationTriangle"
-                        class="text-warning"
-                        ngbTooltip="{{ 'artemisApp.assessmentDashboard.tutorPerformanceIssues.tutor' | artemisTranslate: { tutorName: tutor.name } }}"
-                    ></fa-icon>
-                </td>
-                <td>{{ tutor.points }}</td>
-                <td>{{ tutor.numberOfAssessments }}</td>
-                <ng-container *ngIf="course && !course.isAtLeastInstructor; else atLeastInstructor">
-                    <td>{{ tutor.numberOfAcceptedComplaints }}</td>
-                    <td *ngIf="!isExamMode">{{ tutor.numberOfNotAnsweredMoreFeedbackRequests }}</td>
-                </ng-container>
-
-                <ng-template #atLeastInstructor>
-                    <ng-container *ngIf="isExerciseDashboard && exercise && exercise.id && course && course.id">
-                        <td>
-                            <a [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'complaints']" [queryParams]="{ tutorId: tutor.userId }">
-                                {{ tutor.numberOfAcceptedComplaints }}
-                            </a>
-                        </td>
-                        <td *ngIf="!isExamMode">
-                            <a
-                                [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'more-feedback-requests']"
-                                [queryParams]="{ tutorId: tutor.userId }"
-                            >
-                                {{ tutor.numberOfNotAnsweredMoreFeedbackRequests }}
-                            </a>
-                        </td>
-                    </ng-container>
-
-                    <ng-container *ngIf="!isExerciseDashboard && course && course.id">
-                        <td *ngIf="isExamMode">
-                            <a [routerLink]="['/course-management', course.id, 'exams', exam!.id, 'complaints']" [queryParams]="{ tutorId: tutor.userId }">
-                                {{ tutor.numberOfAcceptedComplaints }}
-                            </a>
-                        </td>
-                        <td *ngIf="!isExamMode">
-                            <a [routerLink]="['/course-management', course.id, 'complaints']" [queryParams]="{ tutorId: tutor.userId }">
-                                {{ tutor.numberOfAcceptedComplaints }}
-                            </a>
-                        </td>
-                        <td *ngIf="!isExamMode">
-                            <a [routerLink]="['/course-management', course.id, 'more-feedback-requests']" [queryParams]="{ tutorId: tutor.userId }">
-                                {{ tutor.numberOfNotAnsweredMoreFeedbackRequests }}
-                            </a>
-                        </td>
-                    </ng-container>
-                </ng-template>
-
-                <td>{{ tutor.numberOfComplaintResponses }}</td>
-                <td *ngIf="!isExamMode">{{ tutor.numberOfAnsweredMoreFeedbackRequests }}</td>
-                <td>
-                    <span *ngIf="tutor.numberOfAssessments > 0"> {{ tutor.averageScore.toFixed(1) }}% </span>
-                    <span *ngIf="tutor.numberOfAssessments === 0"> n.a. </span>
-                </td>
-                <td>
-                    <span *ngIf="tutor.numberOfTutorRatings > 0"> {{ tutor.averageRating.toFixed(1) }} ⭐ ({{ tutor.numberOfTutorRatings }}) </span>
-                    <span *ngIf="tutor.numberOfTutorRatings === 0"> n.a. </span>
-                </td>
-            </tr>
+            @for (tutor of tutorsData; track tutor; let i = $index) {
+                <tr>
+                    <td>{{ i + 1 }}</td>
+                    <td>
+                        {{ tutor.name }}
+                        @if (course?.isAtLeastInstructor && tutor.hasIssuesWithPerformance) {
+                            <fa-icon
+                                [icon]="faExclamationTriangle"
+                                class="text-warning"
+                                ngbTooltip="{{ 'artemisApp.assessmentDashboard.tutorPerformanceIssues.tutor' | artemisTranslate: { tutorName: tutor.name } }}"
+                            ></fa-icon>
+                        }
+                    </td>
+                    <td>{{ tutor.points }}</td>
+                    <td>{{ tutor.numberOfAssessments }}</td>
+                    @if (course && !course.isAtLeastInstructor) {
+                        <td>{{ tutor.numberOfAcceptedComplaints }}</td>
+                        @if (!isExamMode) {
+                            <td>{{ tutor.numberOfNotAnsweredMoreFeedbackRequests }}</td>
+                        }
+                    } @else {
+                        @if (isExerciseDashboard && exercise && exercise.id && course && course.id) {
+                            <td>
+                                <a
+                                    [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'complaints']"
+                                    [queryParams]="{ tutorId: tutor.userId }"
+                                >
+                                    {{ tutor.numberOfAcceptedComplaints }}
+                                </a>
+                            </td>
+                            @if (!isExamMode) {
+                                <td>
+                                    <a
+                                        [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'more-feedback-requests']"
+                                        [queryParams]="{ tutorId: tutor.userId }"
+                                    >
+                                        {{ tutor.numberOfNotAnsweredMoreFeedbackRequests }}
+                                    </a>
+                                </td>
+                            }
+                        }
+                        @if (!isExerciseDashboard && course && course.id) {
+                            @if (isExamMode) {
+                                <td>
+                                    <a [routerLink]="['/course-management', course.id, 'exams', exam!.id, 'complaints']" [queryParams]="{ tutorId: tutor.userId }">
+                                        {{ tutor.numberOfAcceptedComplaints }}
+                                    </a>
+                                </td>
+                            }
+                            @if (!isExamMode) {
+                                <td>
+                                    <a [routerLink]="['/course-management', course.id, 'complaints']" [queryParams]="{ tutorId: tutor.userId }">
+                                        {{ tutor.numberOfAcceptedComplaints }}
+                                    </a>
+                                </td>
+                            }
+                            @if (!isExamMode) {
+                                <td>
+                                    <a [routerLink]="['/course-management', course.id, 'more-feedback-requests']" [queryParams]="{ tutorId: tutor.userId }">
+                                        {{ tutor.numberOfNotAnsweredMoreFeedbackRequests }}
+                                    </a>
+                                </td>
+                            }
+                        }
+                    }
+                    <td>{{ tutor.numberOfComplaintResponses }}</td>
+                    @if (!isExamMode) {
+                        <td>{{ tutor.numberOfAnsweredMoreFeedbackRequests }}</td>
+                    }
+                    <td>
+                        @if (tutor.numberOfAssessments > 0) {
+                            <span> {{ tutor.averageScore.toFixed(1) }}% </span>
+                        }
+                        @if (tutor.numberOfAssessments === 0) {
+                            <span> n.a. </span>
+                        }
+                    </td>
+                    <td>
+                        @if (tutor.numberOfTutorRatings > 0) {
+                            <span> {{ tutor.averageRating.toFixed(1) }} ⭐ ({{ tutor.numberOfTutorRatings }}) </span>
+                        }
+                        @if (tutor.numberOfTutorRatings === 0) {
+                            <span> n.a. </span>
+                        }
+                    </td>
+                </tr>
+            }
         </tbody>
     </table>
 </div>

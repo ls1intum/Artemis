@@ -1,0 +1,459 @@
+{
+  "version": "3.0.0",
+  "type": "ActivityDiagram",
+  "size": {
+    "width": 780,
+    "height": 520
+  },
+  "interactive": {
+    "elements": {},
+    "relationships": {}
+  },
+  "elements": {
+    "a6facac4-ba6a-41ae-9dc5-98a527f5cd14": {
+      "id": "a6facac4-ba6a-41ae-9dc5-98a527f5cd14",
+      "name": "a",
+      "type": "ActivityActionNode",
+      "owner": null,
+      "bounds": {
+        "x": 180,
+        "y": 0,
+        "width": 160,
+        "height": 80
+      }
+    },
+    "c779c3b9-79b4-4611-bb92-af01fad99eb2": {
+      "id": "c779c3b9-79b4-4611-bb92-af01fad99eb2",
+      "name": "b",
+      "type": "ActivityActionNode",
+      "owner": null,
+      "bounds": {
+        "x": 560,
+        "y": 0,
+        "width": 160,
+        "height": 80
+      }
+    },
+    "b68f1723-ac50-4a2d-83ab-9fc3353a9dcb": {
+      "id": "b68f1723-ac50-4a2d-83ab-9fc3353a9dcb",
+      "name": "c",
+      "type": "ActivityActionNode",
+      "owner": null,
+      "bounds": {
+        "x": 570,
+        "y": 390,
+        "width": 160,
+        "height": 80
+      }
+    },
+    "f55ea711-04da-4e8d-98e0-f69fb8ce53a4": {
+      "id": "f55ea711-04da-4e8d-98e0-f69fb8ce53a4",
+      "name": "",
+      "type": "ActivityInitialNode",
+      "owner": null,
+      "bounds": {
+        "x": 0,
+        "y": 30,
+        "width": 36,
+        "height": 36
+      }
+    },
+    "bc848241-aa47-4adc-a6f4-acbcd0375f37": {
+      "id": "bc848241-aa47-4adc-a6f4-acbcd0375f37",
+      "name": "d",
+      "type": "ActivityActionNode",
+      "owner": null,
+      "bounds": {
+        "x": 150,
+        "y": 380,
+        "width": 160,
+        "height": 80
+      }
+    },
+    "4a59b45e-5b81-47da-a349-ac77b7ed8bf3": {
+      "id": "4a59b45e-5b81-47da-a349-ac77b7ed8bf3",
+      "name": "e",
+      "type": "ActivityMergeNode",
+      "owner": null,
+      "bounds": {
+        "x": 140,
+        "y": 180,
+        "width": 160,
+        "height": 80
+      }
+    },
+    "c66cf2f4-31e5-4491-9219-e47884197410": {
+      "id": "c66cf2f4-31e5-4491-9219-e47884197410",
+      "name": "g",
+      "type": "ActivityActionNode",
+      "owner": null,
+      "bounds": {
+        "x": 380,
+        "y": 310,
+        "width": 160,
+        "height": 80
+      }
+    },
+    "d3a522e3-f0ab-4cca-a952-3eea22569308": {
+      "id": "d3a522e3-f0ab-4cca-a952-3eea22569308",
+      "name": "f",
+      "type": "ActivityActionNode",
+      "owner": null,
+      "bounds": {
+        "x": 380,
+        "y": 80,
+        "width": 160,
+        "height": 80
+      }
+    },
+    "1e870adb-36f2-44e6-9b59-c3c1872a5d77": {
+      "id": "1e870adb-36f2-44e6-9b59-c3c1872a5d77",
+      "name": "",
+      "type": "ActivityFinalNode",
+      "owner": null,
+      "bounds": {
+        "x": 570,
+        "y": 200,
+        "width": 36,
+        "height": 36
+      }
+    }
+  },
+  "relationships": {
+    "a7eacbbd-05cb-4d62-ae14-e5bc591053a2": {
+      "id": "a7eacbbd-05cb-4d62-ae14-e5bc591053a2",
+      "name": "",
+      "type": "ActivityControlFlow",
+      "owner": null,
+      "bounds": {
+        "x": 36,
+        "y": 50,
+        "width": 144,
+        "height": 1
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 144,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Right",
+        "element": "f55ea711-04da-4e8d-98e0-f69fb8ce53a4"
+      },
+      "target": {
+        "direction": "Left",
+        "element": "a6facac4-ba6a-41ae-9dc5-98a527f5cd14"
+      },
+      "isManuallyLayouted": false
+    },
+    "f6718aa0-090c-42d8-9abf-89f27119fd09": {
+      "id": "f6718aa0-090c-42d8-9abf-89f27119fd09",
+      "name": "",
+      "type": "ActivityControlFlow",
+      "owner": null,
+      "bounds": {
+        "x": 340,
+        "y": 40,
+        "width": 220,
+        "height": 1
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 220,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Right",
+        "element": "a6facac4-ba6a-41ae-9dc5-98a527f5cd14"
+      },
+      "target": {
+        "direction": "Left",
+        "element": "c779c3b9-79b4-4611-bb92-af01fad99eb2"
+      },
+      "isManuallyLayouted": false
+    },
+    "036796e8-010e-4b49-ac38-c6d4e5b3261f": {
+      "id": "036796e8-010e-4b49-ac38-c6d4e5b3261f",
+      "name": "",
+      "type": "ActivityControlFlow",
+      "owner": null,
+      "bounds": {
+        "x": 645,
+        "y": 80,
+        "width": 1,
+        "height": 310
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 310
+        }
+      ],
+      "source": {
+        "direction": "Down",
+        "element": "c779c3b9-79b4-4611-bb92-af01fad99eb2"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "b68f1723-ac50-4a2d-83ab-9fc3353a9dcb"
+      },
+      "isManuallyLayouted": false
+    },
+    "f1f56a7f-ee6c-4e31-b0db-cb77d4cb384c": {
+      "id": "f1f56a7f-ee6c-4e31-b0db-cb77d4cb384c",
+      "name": "",
+      "type": "ActivityControlFlow",
+      "owner": null,
+      "bounds": {
+        "x": 310,
+        "y": 425,
+        "width": 260,
+        "height": 1
+      },
+      "path": [
+        {
+          "x": 260,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Left",
+        "element": "b68f1723-ac50-4a2d-83ab-9fc3353a9dcb"
+      },
+      "target": {
+        "direction": "Right",
+        "element": "bc848241-aa47-4adc-a6f4-acbcd0375f37"
+      },
+      "isManuallyLayouted": false
+    },
+    "d789f921-6e4f-49fb-9c21-7cc62de9f7c4": {
+      "id": "d789f921-6e4f-49fb-9c21-7cc62de9f7c4",
+      "name": "",
+      "type": "ActivityControlFlow",
+      "owner": null,
+      "bounds": {
+        "x": 225,
+        "y": 260,
+        "width": 1,
+        "height": 120
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 120
+        },
+        {
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Up",
+        "element": "bc848241-aa47-4adc-a6f4-acbcd0375f37"
+      },
+      "target": {
+        "direction": "Down",
+        "element": "4a59b45e-5b81-47da-a349-ac77b7ed8bf3"
+      },
+      "isManuallyLayouted": false
+    },
+    "0bad0612-55e9-43e7-8518-b523de5aaa6e": {
+      "id": "0bad0612-55e9-43e7-8518-b523de5aaa6e",
+      "name": "[x]",
+      "type": "ActivityControlFlow",
+      "owner": null,
+      "bounds": {
+        "x": 240,
+        "y": 80,
+        "width": 21.899999618530273,
+        "height": 100
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 100
+        },
+        {
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Up",
+        "element": "4a59b45e-5b81-47da-a349-ac77b7ed8bf3"
+      },
+      "target": {
+        "direction": "Down",
+        "element": "a6facac4-ba6a-41ae-9dc5-98a527f5cd14"
+      },
+      "isManuallyLayouted": false
+    },
+    "fbac13c9-769c-4e80-b6d2-87ed0c8a4f05": {
+      "id": "fbac13c9-769c-4e80-b6d2-87ed0c8a4f05",
+      "name": "[y]",
+      "type": "ActivityControlFlow",
+      "owner": null,
+      "bounds": {
+        "x": 300,
+        "y": 120,
+        "width": 80,
+        "height": 100
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 100
+        },
+        {
+          "x": 40,
+          "y": 100
+        },
+        {
+          "x": 40,
+          "y": 0
+        },
+        {
+          "x": 80,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Right",
+        "element": "4a59b45e-5b81-47da-a349-ac77b7ed8bf3"
+      },
+      "target": {
+        "direction": "Left",
+        "element": "d3a522e3-f0ab-4cca-a952-3eea22569308"
+      },
+      "isManuallyLayouted": false
+    },
+    "456956a6-2bec-4969-8578-2cb0d80c0ad9": {
+      "id": "456956a6-2bec-4969-8578-2cb0d80c0ad9",
+      "name": "[z]",
+      "type": "ActivityControlFlow",
+      "owner": null,
+      "bounds": {
+        "x": 300,
+        "y": 220,
+        "width": 80,
+        "height": 130
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 40,
+          "y": 0
+        },
+        {
+          "x": 40,
+          "y": 130
+        },
+        {
+          "x": 80,
+          "y": 130
+        }
+      ],
+      "source": {
+        "direction": "Right",
+        "element": "4a59b45e-5b81-47da-a349-ac77b7ed8bf3"
+      },
+      "target": {
+        "direction": "Left",
+        "element": "c66cf2f4-31e5-4491-9219-e47884197410"
+      },
+      "isManuallyLayouted": false
+    },
+    "3dfdb826-b1c8-49b7-aab7-51fdd09e6edf": {
+      "id": "3dfdb826-b1c8-49b7-aab7-51fdd09e6edf",
+      "name": "",
+      "type": "ActivityControlFlow",
+      "owner": null,
+      "bounds": {
+        "x": 540,
+        "y": 120,
+        "width": 48,
+        "height": 80
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 48,
+          "y": 0
+        },
+        {
+          "x": 48,
+          "y": 80
+        }
+      ],
+      "source": {
+        "direction": "Right",
+        "element": "d3a522e3-f0ab-4cca-a952-3eea22569308"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "1e870adb-36f2-44e6-9b59-c3c1872a5d77"
+      },
+      "isManuallyLayouted": false
+    },
+    "cbffe6b3-4426-4d70-8342-a1cd1a5641b9": {
+      "id": "cbffe6b3-4426-4d70-8342-a1cd1a5641b9",
+      "name": "",
+      "type": "ActivityControlFlow",
+      "owner": null,
+      "bounds": {
+        "x": 540,
+        "y": 236,
+        "width": 48,
+        "height": 114
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 114
+        },
+        {
+          "x": 48,
+          "y": 114
+        },
+        {
+          "x": 48,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Right",
+        "element": "c66cf2f4-31e5-4491-9219-e47884197410"
+      },
+      "target": {
+        "direction": "Down",
+        "element": "1e870adb-36f2-44e6-9b59-c3c1872a5d77"
+      },
+      "isManuallyLayouted": false
+    }
+  },
+  "assessments": {}
+}

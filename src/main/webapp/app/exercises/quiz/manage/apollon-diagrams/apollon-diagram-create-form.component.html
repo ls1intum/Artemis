@@ -4,8 +4,8 @@
     </div>
     <div class="modal-body">
         <div class="form-group-narrow">
-            <label class="form-control-label" jhiTranslate="artemisApp.apollonDiagram.title" for="field_title">Title</label>
-            <input #titleInput type="text" class="form-control" name="title" id="field_title" [(ngModel)]="apollonDiagram.title" />
+            <label class="form-control-label" jhiTranslate="artemisApp.apollonDiagram.title" for="field_diagram_title">Title</label>
+            <input #titleInput type="text" class="form-control" name="title" id="field_diagram_title" [(ngModel)]="apollonDiagram.title" />
         </div>
         <div class="form-group-narrow">
             <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.diagramType" for="field_diagramType">Diagram Type</label>
@@ -20,6 +20,7 @@
                 <option value="PetriNet">{{ 'artemisApp.DiagramType.PetriNet' | artemisTranslate }}</option>
                 <option value="SyntaxTree">{{ 'artemisApp.DiagramType.SyntaxTree' | artemisTranslate }}</option>
                 <option value="Flowchart">{{ 'artemisApp.DiagramType.Flowchart' | artemisTranslate }}</option>
+                <option value="BPMN">{{ 'artemisApp.DiagramType.BPMN' | artemisTranslate }}</option>
             </select>
         </div>
     </div>

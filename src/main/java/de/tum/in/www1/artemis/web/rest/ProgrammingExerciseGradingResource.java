@@ -30,7 +30,7 @@ public class ProgrammingExerciseGradingResource {
 
     public static final String STATISTICS = "/programming-exercises/{exerciseId}/grading/statistics";
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingResource.class);
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
@@ -61,7 +61,7 @@ public class ProgrammingExerciseGradingResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<Integer> reEvaluateGradedResults(@PathVariable Long exerciseId) {
         log.debug("REST request to re-evaluate the graded results of exercise {}", exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         User user = userRepository.getUserWithGroupsAndAuthorities();
 

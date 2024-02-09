@@ -1,12 +1,13 @@
 package de.tum.in.www1.artemis.service.connectors.localci.dto;
 
+import java.io.Serializable;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.TestwiseCoverageReportDTO;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
@@ -17,7 +18,7 @@ import de.tum.in.www1.artemis.service.dto.TestCaseDTOInterface;
  * Represents all the information returned by the local CI system about a build.
  * Note: due to limitations with inheritance, we cannot declare this as a record, but we can use it in a similar way with final fields.
  */
-public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
+public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO implements Serializable {
 
     private final String assignmentRepoBranchName;
 
@@ -31,14 +32,21 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
 
     private final List<LocalCIJobDTO> jobs;
 
+    private List<BuildLogEntry> buildLogEntries = new ArrayList<>();
+
+    private final List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports;
+
+    private boolean hasLogs = false;
+
     public LocalCIBuildResult(String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
-            List<LocalCIJobDTO> jobs) {
+            List<LocalCIJobDTO> jobs, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports) {
         this.assignmentRepoBranchName = assignmentRepoBranchName;
         this.assignmentRepoCommitHash = assignmentRepoCommitHash;
         this.testsRepoCommitHash = testsRepoCommitHash;
         this.isBuildSuccessful = isBuildSuccessful;
         this.buildRunDate = buildRunDate;
         this.jobs = jobs;
+        this.staticCodeAnalysisReports = staticCodeAnalysisReports;
     }
 
     @Override
@@ -48,7 +56,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
 
     @Override
     public Optional<String> getCommitHashFromAssignmentRepo() {
-        if (assignmentRepoCommitHash.length() == 0) {
+        if (assignmentRepoCommitHash.isEmpty()) {
             return Optional.empty();
         }
         return Optional.of(assignmentRepoCommitHash);
@@ -56,7 +64,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
 
     @Override
     public Optional<String> getCommitHashFromTestsRepo() {
-        if (testsRepoCommitHash.length() == 0) {
+        if (testsRepoCommitHash.isEmpty()) {
             return Optional.empty();
         }
         return Optional.of(testsRepoCommitHash);
@@ -91,14 +99,22 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
 
     @Override
     public boolean hasLogs() {
-        // TODO LOCALVC_CI: Implement the retrieval of build logs and return true here if there are any.
-        return false;
+        return hasLogs;
     }
 
     @Override
-    public List<BuildLogEntry> extractBuildLogs(ProgrammingLanguage programmingLanguage) {
-        // TODO LOCALVC_CI: Implement the retrieval of build logs.
-        return Collections.emptyList();
+    public List<BuildLogEntry> extractBuildLogs() {
+        return buildLogEntries;
+    }
+
+    /**
+     * Setter for the buildLogEntries
+     *
+     * @param buildLogEntries the buildLogEntries to be set
+     */
+    public void setBuildLogEntries(List<BuildLogEntry> buildLogEntries) {
+        this.buildLogEntries = buildLogEntries;
+        hasLogs = true;
     }
 
     @Override
@@ -108,8 +124,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
 
     @Override
     public List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports() {
-        // TODO LOCALVC_CI: Implement static code analysis and return the reports here.
-        return Collections.emptyList();
+        return staticCodeAnalysisReports;
     }
 
     @Override
@@ -125,7 +140,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
      * @param failedTests     list of failed tests.
      * @param successfulTests list of successful tests.
      */
-    public record LocalCIJobDTO(List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests) implements BuildJobDTOInterface {
+    public record LocalCIJobDTO(List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests) implements BuildJobDTOInterface, Serializable {
 
         @Override
         public List<? extends TestCaseDTOInterface> getFailedTests() {
@@ -144,7 +159,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
      * @param name   name of the test case.
      * @param errors list of error messages.
      */
-    public record LocalCITestJobDTO(String name, List<String> errors) implements TestCaseDTOInterface {
+    public record LocalCITestJobDTO(String name, List<String> errors) implements TestCaseDTOInterface, Serializable {
 
         @Override
         public String getName() {

@@ -25,7 +25,7 @@ public class AndroidAppSiteAssociationResource {
     @Value("${artemis.androidSha256CertFingerprints: #{null}}")
     private String sha256CertFingerprints;
 
-    private final Logger log = LoggerFactory.getLogger(AndroidAppSiteAssociationResource.class);
+    private static final Logger log = LoggerFactory.getLogger(AndroidAppSiteAssociationResource.class);
 
     /**
      * Provides the assetlinks json content for the Android client deeplink link feature.

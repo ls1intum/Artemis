@@ -13,7 +13,6 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
-import org.json.simple.parser.JSONParser;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +22,8 @@ import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
@@ -227,6 +228,12 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
         programmingExerciseTestService.importFromFile_embeddedFiles_embeddedFilesCopied();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importExerciseFromFile_buildPlanPresent_buildPlanSet() throws Exception {
+        programmingExerciseTestService.importFromFile_buildPlanPresent_buildPlanUsed();
+    }
+
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = ProgrammingLanguage.class, names = { "HASKELL", "PYTHON" }, mode = EnumSource.Mode.INCLUDE)
@@ -278,7 +285,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @EnumSource(ExerciseMode.class)
     @WithMockUser(username = TEST_PREFIX + studentLogin, roles = "USER")
     void resumeProgrammingExerciseByPushingIntoRepo_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
-        Object body = new JSONParser().parse(GITLAB_PUSH_EVENT_REQUEST);
+        Object body = new ObjectMapper().readValue(GITLAB_PUSH_EVENT_REQUEST, Object.class);
         programmingExerciseTestService.resumeProgrammingExerciseByPushingIntoRepo_correctInitializationState(exerciseMode, body);
     }
 
@@ -403,7 +410,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void exportProgrammingExerciseInstructorMaterial() throws Exception {
-        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_shouldReturnFile(true);
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_shouldReturnFileWithBuildplan();
         // we have a working directory and one directory for each repository
         verify(fileService, times(4)).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(5L));
         verify(fileService).schedulePathForDeletion(any(Path.class), eq(5L));
@@ -417,17 +424,23 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void exportProgrammingExerciseInstructorMaterial_problemStatementShouldContainTestNames() throws Exception {
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_problemStatementShouldContainTestNames();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportProgrammingExerciseInstructorMaterial_failToCreateTempDir() throws Exception {
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.createTempDirectory(any(Path.class), any(String.class))).thenThrow(IOException.class);
-            programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial(HttpStatus.INTERNAL_SERVER_ERROR, true, false, false);
+            programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial(HttpStatus.INTERNAL_SERVER_ERROR, true, false, false, false);
         }
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportProgrammingExerciseInstructorMaterial_embeddedFilesDontExist() throws Exception {
-        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_shouldReturnFile(false);
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_shouldReturnFile(false, false);
     }
 
     @Test
@@ -538,5 +551,11 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testBuildLogStatistics() throws Exception {
         programmingExerciseTestService.buildLogStatistics();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateBuildPlanURL() throws Exception {
+        programmingExerciseTestService.updateBuildPlanURL();
     }
 }

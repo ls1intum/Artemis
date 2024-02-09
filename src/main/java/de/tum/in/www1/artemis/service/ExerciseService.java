@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -38,7 +39,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class ExerciseService {
 
-    private final Logger log = LoggerFactory.getLogger(ExerciseService.class);
+    private static final Logger log = LoggerFactory.getLogger(ExerciseService.class);
 
     private final AuthorizationCheckService authCheckService;
 
@@ -265,7 +266,7 @@ public class ExerciseService {
             throw new IllegalArgumentException("All exercises must be from the same course!");
         }
         Course course = courses.stream().findFirst().get();
-        List<StudentParticipation> participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises, false);
+        var participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises, false);
         boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         for (Exercise exercise : exercises) {
             // add participation with submission and result to each exercise
@@ -410,7 +411,7 @@ public class ExerciseService {
      * @param username       used to get quiz submission for the user
      * @param isStudent      defines if the current user is a student
      */
-    public void filterForCourseDashboard(Exercise exercise, List<StudentParticipation> participations, String username, boolean isStudent) {
+    public void filterForCourseDashboard(Exercise exercise, Set<StudentParticipation> participations, String username, boolean isStudent) {
         // remove the unnecessary inner course attribute
         exercise.setCourse(null);
 
@@ -418,11 +419,11 @@ public class ExerciseService {
         exercise.setProblemStatement(null);
 
         if (exercise instanceof ProgrammingExercise programmingExercise) {
-            programmingExercise.setTestRepositoryUrl(null);
+            programmingExercise.setTestRepositoryUri(null);
         }
 
         // get user's participation for the exercise
-        List<StudentParticipation> relevantParticipations = participations != null ? exercise.findRelevantParticipation(participations) : new ArrayList<>();
+        Set<StudentParticipation> relevantParticipations = participations != null ? exercise.findRelevantParticipation(participations) : Set.of();
 
         // for quiz exercises also check SubmissionHashMap for submission by this user (active participation)
         // if participation was not found in database
@@ -431,7 +432,7 @@ public class ExerciseService {
             if (submission.getSubmissionDate() != null) {
                 StudentParticipation quizParticipation = new StudentParticipation().exercise(exercise);
                 quizParticipation.setInitializationState(InitializationState.INITIALIZED);
-                relevantParticipations = List.of(quizParticipation);
+                relevantParticipations = Set.of(quizParticipation);
             }
         }
 
@@ -475,7 +476,7 @@ public class ExerciseService {
             participation.setExercise(null);
         });
 
-        exercise.setStudentParticipations(new HashSet<>(relevantParticipations));
+        exercise.setStudentParticipations(relevantParticipations);
     }
 
     /**
@@ -632,7 +633,7 @@ public class ExerciseService {
      * @param gradingCriteria grading criteria list of exercise
      * @param exercise        exercise to update *
      */
-    public void checkExerciseIfStructuredGradingInstructionFeedbackUsed(List<GradingCriterion> gradingCriteria, Exercise exercise) {
+    public void checkExerciseIfStructuredGradingInstructionFeedbackUsed(Set<GradingCriterion> gradingCriteria, Exercise exercise) {
         List<Feedback> feedback = feedbackRepository.findFeedbackByExerciseGradingCriteria(gradingCriteria);
 
         if (!feedback.isEmpty()) {
@@ -649,7 +650,7 @@ public class ExerciseService {
      * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not *
      */
     public void reEvaluateExercise(Exercise exercise, boolean deleteFeedbackAfterGradingInstructionUpdate) {
-        List<GradingCriterion> gradingCriteria = exercise.getGradingCriteria();
+        Set<GradingCriterion> gradingCriteria = exercise.getGradingCriteria();
         // retrieve the feedback associated with the structured grading instructions
         List<Feedback> feedbackToBeUpdated = feedbackRepository.findFeedbackByExerciseGradingCriteria(gradingCriteria);
 
@@ -692,15 +693,7 @@ public class ExerciseService {
             }
 
             if (!(exercise instanceof ProgrammingExercise programmingExercise)) {
-                final Optional<ZonedDateTime> dueDate;
-                if (result.getParticipation() == null) {
-                    // this is only the case for example submissions, due date does not matter then
-                    dueDate = Optional.empty();
-                }
-                else {
-                    dueDate = ExerciseDateService.getDueDate(result.getParticipation());
-                }
-                resultRepository.submitResult(result, exercise, dueDate);
+                resultRepository.submitResult(result, exercise);
             }
             else {
                 result.calculateScoreForProgrammingExercise(programmingExercise);
@@ -722,9 +715,9 @@ public class ExerciseService {
         List<Feedback> feedbackToBeDeleted = new ArrayList<>();
         // check if the user decided to remove the feedback after deleting the associated grading instructions
         if (deleteFeedbackAfterGradingInstructionUpdate) {
-            List<Long> updatedInstructionIds = gradingInstructions.stream().map(GradingInstruction::getId).toList();
+            Set<Long> updatedInstructionIds = gradingInstructions.stream().map(GradingInstruction::getId).collect(Collectors.toCollection(HashSet::new));
             // retrieve the grading instructions from database for backup
-            List<GradingCriterion> backupGradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+            Set<GradingCriterion> backupGradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
             List<Long> backupInstructionIds = backupGradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream())
                     .map(GradingInstruction::getId).toList();
 
@@ -752,5 +745,16 @@ public class ExerciseService {
             return false;
         }
         return score.getAsDouble() >= minScore;
+    }
+
+    /**
+     * Removes competency from all exercises.
+     *
+     * @param exercises  set of exercises
+     * @param competency competency to remove
+     */
+    public void removeCompetency(@NotNull Set<Exercise> exercises, @NotNull Competency competency) {
+        exercises.forEach(exercise -> exercise.getCompetencies().remove(competency));
+        exerciseRepository.saveAll(exercises);
     }
 }

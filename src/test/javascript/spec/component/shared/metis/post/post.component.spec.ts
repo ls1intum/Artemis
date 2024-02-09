@@ -12,15 +12,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PageType } from 'app/shared/metis/metis.util';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
-import {
-    metisCourse,
-    metisExercise,
-    metisLecture,
-    metisPostExerciseUser1,
-    metisPostLectureUser1,
-    metisPostTechSupport,
-    metisUser1,
-} from '../../../../helpers/sample/metis-sample-data';
+import { metisChannel, metisCourse, metisPostExerciseUser1, metisPostLectureUser1, metisPostTechSupport, metisUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
 import { RouterTestingModule } from '@angular/router/testing';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -31,6 +23,7 @@ import { of } from 'rxjs';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { HttpResponse } from '@angular/common/http';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
+import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -112,8 +105,6 @@ describe('PostComponent', () => {
     });
 
     it('should contain a title with referencable id', () => {
-        metisServiceGetLinkSpy = jest.spyOn(metisService, 'getLinkForPost');
-        metisServiceGetQueryParamsSpy = jest.spyOn(metisService, 'getQueryParamsForPost');
         component.isCommunicationPage = true;
         component.posting = metisPostExerciseUser1;
         component.ngOnInit();
@@ -123,8 +114,19 @@ describe('PostComponent', () => {
         const idHash = getElement(debugElement, '.reference-hash');
         expect(idHash).toBeDefined();
         expect(idHash.innerHTML).toBe(`#${metisPostExerciseUser1.id}`);
-        expect(metisServiceGetLinkSpy).toHaveBeenCalledWith(metisPostExerciseUser1);
+    });
+
+    it('should set router link and query params', () => {
+        metisServiceGetLinkSpy = jest.spyOn(metisService, 'getLinkForPost');
+        metisServiceGetQueryParamsSpy = jest.spyOn(metisService, 'getQueryParamsForPost');
+
+        component.posting = metisPostExerciseUser1;
+        component.ngOnChanges();
+
+        expect(metisServiceGetLinkSpy).toHaveBeenCalled();
         expect(metisServiceGetQueryParamsSpy).toHaveBeenCalledWith(metisPostExerciseUser1);
+        expect(component.routerLink).toEqual(['/courses', metisPostExerciseUser1.conversation?.course?.id, 'discussion']);
+        expect(component.queryParams).toEqual({ searchText: '#' + metisPostExerciseUser1.id });
     });
 
     it('should initialize post without context information when shown in page section', () => {
@@ -146,32 +148,21 @@ describe('PostComponent', () => {
         component.posting = metisPostTechSupport;
         component.ngOnInit();
         fixture.detectChanges();
-        const context = getElement(fixture.debugElement, 'span.context-information');
+        const context = getElement(fixture.debugElement, 'a.linked-context-information');
         expect(context).not.toBeNull();
-        expect(component.contextInformation.routerLinkComponents).toBeUndefined();
+        expect(component.contextInformation.routerLinkComponents).toEqual(expect.arrayContaining(['messages']));
     });
 
-    it('should have a lecture context information shown as title prefix in course discussion overview', () => {
+    it('should have a conversation context information shown as title prefix in course discussion overview', () => {
         metisServiceGetPageTypeStub.mockReturnValue(PageType.OVERVIEW);
         component.posting = metisPostLectureUser1;
         component.ngOnInit();
         fixture.detectChanges();
         const contextLink = getElement(fixture.debugElement, 'a.linked-context-information');
-        expect(component.contextInformation.routerLinkComponents).toEqual(expect.arrayContaining(['lectures']));
-        expect(component.contextInformation.routerLinkComponents).toEqual(expect.arrayContaining([metisLecture.id]));
-        expect(component.contextInformation.displayName).toEqual(metisLecture.title);
-        expect(contextLink).not.toBeNull();
-    });
-
-    it('should have a exercise context information shown as title prefix in course discussion overview', () => {
-        metisServiceGetPageTypeStub.mockReturnValue(PageType.OVERVIEW);
-        component.posting = metisPostExerciseUser1;
-        component.ngOnInit();
-        fixture.detectChanges();
-        const contextLink = getElement(fixture.debugElement, 'a.linked-context-information');
-        expect(component.contextInformation.routerLinkComponents).toEqual(expect.arrayContaining(['exercises']));
-        expect(component.contextInformation.routerLinkComponents).toEqual(expect.arrayContaining([metisExercise.id]));
-        expect(component.contextInformation.displayName).toEqual(metisExercise.title);
+        expect(component.contextInformation.routerLinkComponents).toEqual(expect.arrayContaining(['messages']));
+        expect(component.contextInformation.routerLinkComponents).toEqual(expect.arrayContaining([component.posting?.conversation?.course?.id]));
+        expect(component.contextInformation.displayName).toBeDefined();
+        expect(component.contextInformation.displayName).toEqual(getAsChannelDto(component.posting?.conversation)?.name);
         expect(contextLink).not.toBeNull();
     });
 
@@ -228,5 +219,28 @@ describe('PostComponent', () => {
         component.onUserReferenceClicked(metisUser1.login!);
 
         expect(createOneToOneChatSpy).toHaveBeenCalledWith(metisUser1.login!);
+    });
+
+    it('should navigate to channel when not on messaging page', () => {
+        const navigateSpy = jest.spyOn(router, 'navigate');
+
+        component.onChannelReferenceClicked(metisChannel.id!);
+
+        expect(navigateSpy).toHaveBeenCalledWith(['courses', metisCourse.id, 'messages'], {
+            queryParams: {
+                conversationId: metisChannel.id!,
+            },
+        });
+    });
+
+    it('should navigate to channel when on messaging page', () => {
+        const metisConversationService = TestBed.inject(MetisConversationService);
+        const setActiveConversationSpy = jest.fn();
+        Object.defineProperty(metisConversationService, 'setActiveConversation', { value: setActiveConversationSpy });
+        component.isCourseMessagesPage = true;
+
+        component.onChannelReferenceClicked(metisChannel.id!);
+
+        expect(setActiveConversationSpy).toHaveBeenCalledWith(metisChannel.id!);
     });
 });

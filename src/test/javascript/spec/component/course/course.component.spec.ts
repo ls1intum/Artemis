@@ -6,10 +6,11 @@ import { Location } from '@angular/common';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
+import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { CourseCardComponent } from 'app/overview/course-card.component';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
@@ -32,9 +33,7 @@ import { Component } from '@angular/core';
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam.model';
-import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
-import { InitializationState } from 'app/entities/participation/participation.model';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -62,35 +61,18 @@ const exercise3: Exercise = {
     dueDate: dayjs().add(3, 'hours'),
     secondCorrectionEnabled: true,
 };
-const activeQuiz: QuizExercise = {
-    id: 8,
-    isActiveQuiz: true,
-    quizMode: QuizMode.SYNCHRONIZED,
-    studentParticipations: [{ initializationState: InitializationState.INITIALIZED }],
-    numberOfAssessmentsOfCorrectionRounds: [],
-    secondCorrectionEnabled: false,
-    studentAssignedTeamIdComputed: false,
-};
-const visibleQuiz: QuizExercise = {
-    id: 9,
-    isActiveQuiz: false,
-    visibleToStudents: true,
-    quizMode: QuizMode.SYNCHRONIZED,
-    numberOfAssessmentsOfCorrectionRounds: [],
-    secondCorrectionEnabled: false,
-    studentAssignedTeamIdComputed: false,
-};
-
 const courseEmpty: Course = {};
 
 const exam1: Exam = { id: 3, endDate: endDate1, visibleDate: visibleDate1, course: courseEmpty };
 const exam2: Exam = { id: 4, endDate: endDate2, visibleDate: visibleDate2, course: courseEmpty };
 const exams = [exam1, exam2];
 const course1: Course = { id: 1, exams, exercises: [exercise1, exercise3] };
+const course1Dashboard = { course: course1 } as CourseForDashboardDTO;
 const course2: Course = { id: 2, exercises: [exercise2], testCourse: true };
-const course3: Course = { id: 3 };
-const course4: Course = { id: 4 };
+const course2Dashboard = { course: course2 } as CourseForDashboardDTO;
+const coursesInDashboard: CourseForDashboardDTO[] = [course1Dashboard, course2Dashboard];
 const courses: Course[] = [course1, course2];
+const coursesDashboard = { courses: coursesInDashboard } as CoursesForDashboardDTO;
 
 @Component({
     template: '',
@@ -101,9 +83,8 @@ describe('CoursesComponent', () => {
     let component: CoursesComponent;
     let fixture: ComponentFixture<CoursesComponent>;
     let courseService: CourseManagementService;
-    let courseStorageService: CourseStorageService;
     let serverDateService: ArtemisServerDateService;
-    let exerciseService: ExerciseService;
+    let courseAccessStorageService: CourseAccessStorageService;
     let router: Router;
     let location: Location;
     let httpMock: HttpTestingController;
@@ -132,6 +113,7 @@ describe('CoursesComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: CourseExerciseRowComponent },
                 MockProvider(AlertService),
+                MockProvider(CourseAccessStorageService),
             ],
         })
             .compileComponents()
@@ -139,12 +121,11 @@ describe('CoursesComponent', () => {
                 fixture = TestBed.createComponent(CoursesComponent);
                 component = fixture.componentInstance;
                 courseService = TestBed.inject(CourseManagementService);
+                courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
                 location = TestBed.inject(Location);
                 TestBed.inject(GuidedTourService);
-                courseStorageService = TestBed.inject(CourseStorageService);
                 serverDateService = TestBed.inject(ArtemisServerDateService);
                 TestBed.inject(AlertService);
-                exerciseService = TestBed.inject(ExerciseService);
                 httpMock = TestBed.inject(HttpTestingController);
                 fixture.detectChanges();
             });
@@ -168,23 +149,18 @@ describe('CoursesComponent', () => {
         it('should load courses on init', () => {
             const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
             const serverDateServiceSpy = jest.spyOn(serverDateService, 'now');
-            const findNextRelevantExerciseSpy = jest.spyOn(component, 'findNextRelevantExercise');
-            findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
+            findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: coursesDashboard, headers: new HttpHeaders() })));
             serverDateServiceSpy.mockReturnValue(dayjs());
 
             component.ngOnInit();
 
             expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
-            expect(findNextRelevantExerciseSpy).toHaveBeenCalledOnce();
             expect(component.courses).toEqual(courses);
-            expect(component.exams).toEqual([exam1, exam2]);
-            expect(component.nextRelevantExams).toHaveLength(1);
-            expect(component.nextRelevantExams?.[0]).toEqual(exam1);
+            expect(component.nextRelevantExams).toHaveLength(0);
         });
 
         it('should handle an empty response body correctly when fetching all courses for dashboard', () => {
             const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
-            const courseStorageServiceSpy = jest.spyOn(courseStorageService, 'setCourses');
 
             const req = httpMock.expectOne({ method: 'GET', url: `api/courses/for-dashboard` });
             component.ngOnInit();
@@ -192,72 +168,56 @@ describe('CoursesComponent', () => {
             expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
             req.flush(null);
             expect(component.courses).toBeUndefined();
-            expect(courseStorageServiceSpy).toHaveBeenCalledExactlyOnceWith(undefined);
         });
 
         it('should load exercises on init', () => {
-            const mockFunction = (arg1: Exercise[]) => {
-                switch (arg1[0].id) {
-                    case exercise1.id:
-                        return exercise1;
-                    case exercise2.id:
-                        return exercise2;
-                }
-            };
-
             const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
-            const getNextExerciseForHoursSpy = jest.spyOn(exerciseService, 'getNextExerciseForHours').mockImplementation(mockFunction);
             const serverDateServiceSpy = jest.spyOn(serverDateService, 'now');
 
-            findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
+            findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: coursesDashboard, headers: new HttpHeaders() })));
             serverDateServiceSpy.mockReturnValue(dayjs());
 
             component.ngOnInit();
 
-            expect(getNextExerciseForHoursSpy).toHaveBeenCalledWith(course1.exercises);
-            expect(component.nextRelevantExercise).toEqual(exercise1);
             expect(component.nextRelevantCourse).toEqual(exercise1.course);
         });
-    });
 
-    describe('findNextRelevantExercise', () => {
-        beforeEach(() => {
-            component.courses = [course3, course4];
-        });
+        it('should sort courses into regular and recently accessed after loading', () => {
+            const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
+            const sortCoursesInRecentlyAccessedAndRegularCoursesSpy = jest.spyOn(component, 'sortCoursesInRecentlyAccessedAndRegularCourses');
+            findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: coursesDashboard, headers: new HttpHeaders() })));
 
-        it('should show active quiz', () => {
-            course3.exercises = [exercise1, exercise2];
-            course4.exercises = [activeQuiz, visibleQuiz];
-            activeQuiz.course = course4;
+            component.ngOnInit();
 
-            expect(component.findNextRelevantExercise()).toBe(activeQuiz);
-        });
+            expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
+            expect(sortCoursesInRecentlyAccessedAndRegularCoursesSpy).toHaveBeenCalledOnce();
 
-        it('should show visible quiz if no active quiz is present', () => {
-            course3.exercises = [exercise1, exercise2];
-            course4.exercises = [exercise3, visibleQuiz];
-            visibleQuiz.course = course4;
+            const lastAccessedCourses = [1, 2];
+            const recentCoursesSpy = jest.spyOn(courseAccessStorageService, 'getLastAccessedCourses').mockReturnValue(lastAccessedCourses);
 
-            expect(component.findNextRelevantExercise()).toBe(visibleQuiz);
-        });
+            // Test for less than 5 courses
+            const courses = [];
+            for (let i = 1; i <= 3; i++) {
+                const course = { id: i };
+                courses.push(course);
+            }
 
-        it('should show exercise with next due date if no quiz is present', () => {
-            course3.exercises = [exercise1, exercise2];
-            course4.exercises = [exercise3];
-            exercise1.course = course3;
+            component.courses = courses;
+            component.sortCoursesInRecentlyAccessedAndRegularCourses();
+            expect(component.regularCourses).toEqual(courses);
+            expect(component.recentlyAccessedCourses).toEqual([]);
+            expect(recentCoursesSpy).not.toHaveBeenCalled();
 
-            expect(component.findNextRelevantExercise()).toBe(exercise1);
-        });
-
-        it('should ignore test course', () => {
-            course3.exercises = [exercise1, exercise2];
-            course4.exercises = [activeQuiz, visibleQuiz];
-            course4.testCourse = true;
-            exercise1.course = course3;
-
-            expect(component.findNextRelevantExercise()).toBe(exercise1);
-
-            course4.testCourse = false;
+            // Test for more than 5 courses
+            for (let i = 4; i <= 7; i++) {
+                const course = { id: i };
+                courses.push(course);
+            }
+            component.courses = courses;
+            component.sortCoursesInRecentlyAccessedAndRegularCourses();
+            expect(component.regularCourses).toEqual(courses.slice(2));
+            expect(component.recentlyAccessedCourses).toEqual(courses.slice(0, 2));
+            expect(recentCoursesSpy).toHaveBeenCalledOnce();
         });
     });
 
@@ -283,15 +243,21 @@ describe('CoursesComponent', () => {
             testExam: true,
         };
         const course6 = { id: 3, exams: [testExam1], exercises: [exercise1] };
-        const coursesWithTestExam = [course1, course2, course6];
+        const coursesForDashboard = new CoursesForDashboardDTO();
+        const courseForDashboard1 = new CourseForDashboardDTO();
+        courseForDashboard1.course = course1;
+        const courseForDashboard2 = new CourseForDashboardDTO();
+        courseForDashboard2.course = course2;
+        const courseForDashboard6 = new CourseForDashboardDTO();
+        courseForDashboard6.course = course6;
+        coursesForDashboard.courses = [courseForDashboard1, courseForDashboard2, courseForDashboard6];
 
         const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
         const serverDateServiceSpy = jest.spyOn(serverDateService, 'now');
-        const findNextRelevantExerciseSpy = jest.spyOn(component, 'findNextRelevantExercise');
         findAllForDashboardSpy.mockReturnValue(
             of(
                 new HttpResponse({
-                    body: coursesWithTestExam,
+                    body: coursesForDashboard,
                     headers: new HttpHeaders(),
                 }),
             ),
@@ -302,9 +268,7 @@ describe('CoursesComponent', () => {
         tick(1000);
 
         expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
-        expect(findNextRelevantExerciseSpy).toHaveBeenCalledOnce();
-        expect(component.courses).toEqual(coursesWithTestExam);
-        expect(component.exams).toEqual([exam1, exam2, testExam1]);
-        expect(component.nextRelevantExams).toEqual([exam1]);
+        expect(component.courses).toEqual([course1, course2, course6]);
+        expect(component.nextRelevantExams).toEqual([]);
     }));
 });

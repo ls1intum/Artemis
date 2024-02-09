@@ -6,8 +6,18 @@ import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { QuizPoolMappingQuestionListComponent } from 'app/exercises/quiz/manage/quiz-pool-mapping-question-list.component';
-import * as DragDrop from '@angular/cdk/drag-drop';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
+// Mock before import to prevent errors
+jest.mock('@angular/cdk/drag-drop', () => {
+    const originalModule = jest.requireActual('@angular/cdk/drag-drop');
+    return {
+        ...originalModule,
+        moveItemInArray: jest.fn(),
+        transferArrayItem: jest.fn(),
+    };
+});
+import * as DragDrop from '@angular/cdk/drag-drop';
+import { moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 
 describe('QuizPoolMappingQuestionListComponent', () => {
     let fixture: ComponentFixture<QuizPoolMappingQuestionListComponent>;
@@ -36,7 +46,6 @@ describe('QuizPoolMappingQuestionListComponent', () => {
             previousIndex: 0,
             currentIndex: 1,
         } as DragDrop.CdkDragDrop<QuizQuestion[]>;
-        const moveItemInArray = jest.spyOn(DragDrop, 'moveItemInArray').mockImplementation(() => {});
 
         component.handleOnDropQuestion(event);
 
@@ -56,7 +65,6 @@ describe('QuizPoolMappingQuestionListComponent', () => {
             previousIndex: 0,
             currentIndex: 0,
         } as DragDrop.CdkDragDrop<QuizQuestion[]>;
-        const transferArrayItem = jest.spyOn(DragDrop, 'transferArrayItem').mockImplementation(() => {});
 
         component.handleOnDropQuestion(event);
 

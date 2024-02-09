@@ -12,7 +12,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 @EnableScheduling
 public class TaskSchedulingConfiguration {
 
-    private final Logger log = LoggerFactory.getLogger(TaskSchedulingConfiguration.class);
+    private static final Logger log = LoggerFactory.getLogger(TaskSchedulingConfiguration.class);
 
     @Bean(name = "taskScheduler")
     public TaskScheduler taskScheduler() {

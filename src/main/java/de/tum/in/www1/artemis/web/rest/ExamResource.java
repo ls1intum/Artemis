@@ -6,6 +6,7 @@ import static java.time.ZonedDateTime.now;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -60,7 +61,7 @@ import tech.jhipster.web.util.PaginationUtil;
 @RequestMapping("api/")
 public class ExamResource {
 
-    private final Logger log = LoggerFactory.getLogger(ExamResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ExamResource.class);
 
     private static final String ENTITY_NAME = "exam";
 
@@ -114,12 +115,15 @@ public class ExamResource {
 
     private final ExamLiveEventsService examLiveEventsService;
 
+    private final StudentExamService studentExamService;
+
     public ExamResource(ProfileService profileService, UserRepository userRepository, CourseRepository courseRepository, ExamService examService,
             ExamDeletionService examDeletionService, ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository,
             SubmissionService submissionService, AuthorizationCheckService authCheckService, ExamDateService examDateService,
             TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService,
             StudentExamRepository studentExamRepository, ExamImportService examImportService, CustomAuditEventRepository auditEventRepository, ChannelService channelService,
-            ChannelRepository channelRepository, ExerciseRepository exerciseRepository, ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService) {
+            ChannelRepository channelRepository, ExerciseRepository exerciseRepository, ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService,
+            StudentExamService studentExamService) {
         this.profileService = profileService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
@@ -142,6 +146,7 @@ public class ExamResource {
         this.exerciseRepository = exerciseRepository;
         this.examSessionService = examSessionRepository;
         this.examLiveEventsService = examLiveEventsService;
+        this.studentExamService = studentExamService;
     }
 
     /**
@@ -217,7 +222,7 @@ public class ExamResource {
         Exam savedExam = examRepository.save(updatedExam);
 
         // NOTE: We have to get exercises and groups as we need them for re-scheduling
-        Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId());
+        Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId(), false);
 
         // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
         Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS).toInstant());
@@ -229,7 +234,7 @@ public class ExamResource {
         }
 
         // NOTE: if the end date was changed, we need to update student exams and re-schedule exercises
-        if (!originalExam.getEndDate().equals(savedExam.getEndDate())) {
+        if (comparator.compare(originalExam.getEndDate(), savedExam.getEndDate()) != 0) {
             int workingTimeChange = savedExam.getDuration() - originalExamDuration;
             updateStudentExamsAndRescheduleExercises(examWithExercises, originalExamDuration, workingTimeChange);
         }
@@ -261,7 +266,7 @@ public class ExamResource {
         }
 
         // NOTE: We have to get exercise groups as `scheduleModelingExercises` needs them
-        Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
+        Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
         var originalExamDuration = exam.getDuration();
 
         // 1. Update the end date & working time of the exam
@@ -353,7 +358,7 @@ public class ExamResource {
      */
     @PostMapping("courses/{courseId}/exam-import")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Exam> importExamWithExercises(@PathVariable Long courseId, @RequestBody Exam examToBeImported) throws URISyntaxException {
+    public ResponseEntity<Exam> importExamWithExercises(@PathVariable Long courseId, @RequestBody Exam examToBeImported) throws URISyntaxException, IOException {
         log.debug("REST request to import an exam : {}", examToBeImported);
 
         // Step 1: Check if Exam has an ID
@@ -517,7 +522,7 @@ public class ExamResource {
     public ResponseEntity<Exam> getExamForImportWithExercises(@PathVariable Long examId) {
         log.debug("REST request to get exam : {} for import with exercises", examId);
 
-        Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
+        Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, true);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(exam.getCourse().getId(), examId);
 
         return ResponseEntity.ok(exam);
@@ -551,6 +556,7 @@ public class ExamResource {
             if (channel != null) {
                 exam.setChannelName(channel.getName());
             }
+            examService.setQuizExamProperties(exam);
             return ResponseEntity.ok(exam);
         }
 
@@ -560,15 +566,17 @@ public class ExamResource {
                 exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
             }
             else {
-                exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
+                exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, true);
             }
             examService.setExamProperties(exam);
+            examService.setQuizExamProperties(exam);
             return ResponseEntity.ok(exam);
         }
 
         Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
         exam.getExamUsers().forEach(examUser -> examUser.getUser().setVisibleRegistrationNumber(examUser.getUser().getRegistrationNumber()));
 
+        examService.setQuizExamProperties(exam);
         return ResponseEntity.ok(exam);
     }
 
@@ -638,7 +646,7 @@ public class ExamResource {
     public ResponseEntity<Exam> getExamForAssessmentDashboard(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request /courses/{courseId}/exams/{examId}/exam-for-assessment-dashboard");
 
-        Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
+        Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
         Course course = exam.getCourse();
         checkExamCourseIdElseThrow(courseId, exam);
 
@@ -653,7 +661,7 @@ public class ExamResource {
         Set<Exercise> exercises = new HashSet<>();
         // extract all exercises for all the exam
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            exerciseGroup.setExercises(courseRepository.getInterestingExercisesForAssessmentDashboards(exerciseGroup.getExercises()));
+            exerciseGroup.setExercises(courseRepository.filterInterestingExercisesForAssessmentDashboards(exerciseGroup.getExercises()));
             exercises.addAll(exerciseGroup.getExercises());
         }
         List<TutorParticipation> tutorParticipations = tutorParticipationRepository.findAllByAssessedExercise_ExerciseGroup_Exam_IdAndTutor_Id(examId, user.getId());
@@ -675,14 +683,14 @@ public class ExamResource {
     public ResponseEntity<Exam> getExamForTestRunAssessmentDashboard(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request /courses/{courseId}/exams/{examId}/exam-for-test-run-assessment-dashboard");
 
-        Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
+        Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
         Course course = exam.getCourse();
         checkExamCourseIdElseThrow(courseId, exam);
 
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            exerciseGroup.setExercises(courseRepository.getInterestingExercisesForAssessmentDashboards(exerciseGroup.getExercises()));
+            exerciseGroup.setExercises(courseRepository.filterInterestingExercisesForAssessmentDashboards(exerciseGroup.getExercises()));
         }
 
         return ResponseEntity.ok(exam);
@@ -805,7 +813,7 @@ public class ExamResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
         examDeletionService.reset(exam.getId());
-        Exam returnExam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
+        Exam returnExam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
         examService.setExamProperties(returnExam);
 
         return ResponseEntity.ok(returnExam);
@@ -863,7 +871,7 @@ public class ExamResource {
         // Reset existing student exams & participations in case they already exist
         examDeletionService.deleteStudentExamsAndExistingParticipationsForExam(exam.getId());
 
-        List<StudentExam> studentExams = studentExamRepository.generateStudentExams(exam);
+        List<StudentExam> studentExams = studentExamService.generateStudentExams(exam);
 
         // we need to break a cycle for the serialization
         breakCyclesForSerialization(studentExams);
@@ -907,7 +915,7 @@ public class ExamResource {
         log.info("REST request to generate missing student exams for exam {}", examId);
 
         final var exam = checkAccessForStudentExamGenerationAndLogAuditEvent(courseId, examId, Constants.GENERATE_MISSING_STUDENT_EXAMS);
-        List<StudentExam> studentExams = studentExamRepository.generateMissingStudentExams(exam);
+        List<StudentExam> studentExams = studentExamService.generateMissingStudentExams(exam);
 
         // we need to break a cycle for the serialization
         breakCyclesForSerialization(studentExams);
@@ -1135,6 +1143,7 @@ public class ExamResource {
     public ResponseEntity<StudentExam> getOwnStudentExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get exam {} for conduction", examId);
         StudentExam exam = examAccessService.getExamInCourseElseThrow(courseId, examId);
+        exam.getUser().setVisibleRegistrationNumber();
         return ResponseEntity.ok(exam);
     }
 

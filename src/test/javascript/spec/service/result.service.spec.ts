@@ -1,12 +1,12 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ResultService } from 'app/exercises/shared/result/result.service';
+import { EntityResponseType, ResultService } from 'app/exercises/shared/result/result.service';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
 import { Result } from 'app/entities/result.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -22,6 +22,14 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+// Preliminary mock before import to prevent errors
+jest.mock('@sentry/angular-ivy', () => {
+    const originalModule = jest.requireActual('@sentry/angular-ivy');
+    return {
+        ...originalModule,
+        captureException: jest.fn(),
+    };
+});
 import * as Sentry from '@sentry/angular-ivy';
 
 describe('ResultService', () => {
@@ -48,8 +56,8 @@ describe('ResultService', () => {
     const result2: Result = { id: 2, participation: participation2, completionDate: dayjs().add(2, 'hours'), score: 20 };
     const result3: Result = {
         feedbacks: [
-            { text: 'testBubbleSort', detailText: 'lorem ipsum', positive: false, type: FeedbackType.AUTOMATIC },
-            { text: 'testMergeSort', detailText: 'lorem ipsum', positive: true, type: FeedbackType.AUTOMATIC },
+            { testCase: { testName: 'testBubbleSort' }, detailText: 'lorem ipsum', positive: false, type: FeedbackType.AUTOMATIC },
+            { testCase: { testName: 'testMergeSort' }, detailText: 'lorem ipsum', positive: true, type: FeedbackType.AUTOMATIC },
             { text: SUBMISSION_POLICY_FEEDBACK_IDENTIFIER, detailText: 'should not get counted', positive: true, type: FeedbackType.AUTOMATIC },
         ],
         testCaseCount: 2,
@@ -60,8 +68,8 @@ describe('ResultService', () => {
     };
     const result4: Result = {
         feedbacks: [
-            { text: 'testBubbleSort', detailText: 'lorem ipsum', positive: false, type: FeedbackType.AUTOMATIC },
-            { text: 'testMergeSort', detailText: 'lorem ipsum', positive: true, type: FeedbackType.AUTOMATIC },
+            { testCase: { testName: 'testBubbleSort' }, detailText: 'lorem ipsum', positive: false, type: FeedbackType.AUTOMATIC },
+            { testCase: { testName: 'testMergeSort' }, detailText: 'lorem ipsum', positive: true, type: FeedbackType.AUTOMATIC },
             { text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, detailText: 'should not get counted', positive: false, type: FeedbackType.AUTOMATIC },
         ],
         testCaseCount: 2,
@@ -70,7 +78,12 @@ describe('ResultService', () => {
         completionDate: dayjs().add(4, 'hours'),
         score: 50,
     };
-    const result5: Result = { feedbacks: [{ text: 'Manual feedback', type: FeedbackType.MANUAL }], completionDate: dayjs().subtract(5, 'minutes'), score: 80 };
+    const result5: Result = {
+        feedbacks: [{ text: 'Manual feedback', type: FeedbackType.MANUAL }],
+        participation: { type: ParticipationType.PROGRAMMING },
+        completionDate: dayjs().subtract(5, 'minutes'),
+        score: 80,
+    };
 
     const modelingExercise: ModelingExercise = {
         maxPoints: 50,
@@ -138,6 +151,23 @@ describe('ResultService', () => {
         expect(httpStub).toHaveBeenCalledOnce();
         expect(httpStub).toHaveBeenCalledWith(`api/exercises/${programmingExercise.id}/results-with-points-per-criterion`, expect.anything());
     }));
+
+    it('should convert Result Response from Server', () => {
+        const emptyResponse: EntityResponseType = new HttpResponse<Result>({ body: undefined });
+        const response: EntityResponseType = new HttpResponse<Result>({ body: result1 });
+        const converResultsSpy = jest.spyOn(resultService as any, 'convertResultDatesFromServer');
+        const result = resultService.convertResultResponseDatesFromServer(emptyResponse);
+        expect(result).toBe(emptyResponse);
+        expect(converResultsSpy).toHaveBeenCalledTimes(0);
+        resultService.convertResultResponseDatesFromServer(response);
+        expect(converResultsSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should trigger csv download', () => {
+        const createASpy = jest.spyOn(document, 'createElement');
+        resultService.triggerDownloadCSV(['row1', 'row2'], 'filename');
+        expect(createASpy).toHaveBeenCalledOnce();
+    });
 
     describe('getResultString', () => {
         let translateServiceSpy: jest.SpyInstance;
@@ -241,7 +271,9 @@ describe('ResultService', () => {
         });
 
         it('reports to Sentry if result or exercise is undefined', () => {
+            // Re-mock to get reference because direct import doesn't work here
             const captureExceptionSpy = jest.spyOn(Sentry, 'captureException');
+            captureExceptionSpy.mockClear();
             expect(resultService.getResultString(undefined, undefined)).toBe('');
             expect(captureExceptionSpy).toHaveBeenCalledOnce();
             expect(captureExceptionSpy).toHaveBeenCalledWith('Tried to generate a result string, but either the result or exercise was undefined');

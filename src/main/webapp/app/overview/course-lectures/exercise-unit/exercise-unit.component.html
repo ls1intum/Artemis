@@ -1,8 +1,9 @@
-<jhi-course-exercise-row
-    class="exercise-row"
-    *ngIf="exerciseUnit?.exercise && course"
-    [exercise]="exerciseUnit.exercise!"
-    [course]="course"
-    [hasGuidedTour]="false"
-    [isPresentationMode]="isPresentationMode"
-></jhi-course-exercise-row>
+@if (exerciseUnit?.exercise && course) {
+    <jhi-course-exercise-row
+        class="exercise-row"
+        [exercise]="exerciseUnit.exercise!"
+        [course]="course"
+        [hasGuidedTour]="false"
+        [isPresentationMode]="isPresentationMode"
+    ></jhi-course-exercise-row>
+}

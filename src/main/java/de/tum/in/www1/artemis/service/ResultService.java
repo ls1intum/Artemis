@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -15,10 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
@@ -28,7 +26,7 @@ import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 @Service
 public class ResultService {
 
-    private final Logger log = LoggerFactory.getLogger(ResultService.class);
+    private static final Logger log = LoggerFactory.getLogger(ResultService.class);
 
     private final UserRepository userRepository;
 
@@ -60,10 +58,12 @@ public class ResultService {
 
     private final StudentExamRepository studentExamRepository;
 
+    private final LongFeedbackTextRepository longFeedbackTextRepository;
+
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiNewResultService> ltiNewResultService,
             ResultWebsocketService resultWebsocketService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
-            FeedbackRepository feedbackRepository, ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository,
-            AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService,
+            FeedbackRepository feedbackRepository, LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository,
+            ParticipantScoreRepository participantScoreRepository, AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository) {
@@ -74,6 +74,7 @@ public class ResultService {
         this.complaintResponseRepository = complaintResponseRepository;
         this.ratingRepository = ratingRepository;
         this.feedbackRepository = feedbackRepository;
+        this.longFeedbackTextRepository = longFeedbackTextRepository;
         this.complaintRepository = complaintRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.authCheckService = authCheckService;
@@ -104,9 +105,9 @@ public class ResultService {
         result.getFeedbacks().forEach(feedback -> feedback.setResult(result));
 
         // this call should cascade all feedback relevant changed and save them accordingly
-        var savedResult = resultRepository.save(result);
+        resultRepository.save(result);
         // The websocket client expects the submission and feedbacks, so we retrieve the result again instead of using the save result.
-        savedResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackElseThrow(result.getId());
+        var savedResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackElseThrow(result.getId());
 
         // if it is an example result we do not have any participation (isExampleResult can be also null)
         if (Boolean.FALSE.equals(savedResult.isExampleResult()) || savedResult.isExampleResult() == null) {
@@ -310,7 +311,8 @@ public class ResultService {
         else if (planKey.endsWith("-" + BuildPlanType.SOLUTION.getName())) {
             return solutionProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
         }
-        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository.findByBuildPlanId(planKey);
+        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository
+                .findWithResultsAndExerciseAndTeamStudentsByBuildPlanId(planKey);
         ProgrammingExerciseStudentParticipation participation = null;
         if (!participations.isEmpty()) {
             participation = participations.get(0);
@@ -334,7 +336,7 @@ public class ResultService {
      * @param withSubmissions true, if each result should also contain the submissions.
      * @return a list of results as described above for the given exercise.
      */
-    public List<Result> resultsForExercise(Exercise exercise, List<StudentParticipation> participations, boolean withSubmissions) {
+    public List<Result> resultsForExercise(Exercise exercise, Set<StudentParticipation> participations, boolean withSubmissions) {
         final List<Result> results = new ArrayList<>();
 
         for (StudentParticipation participation : participations) {
@@ -393,13 +395,35 @@ public class ResultService {
     private List<Feedback> saveFeedbackWithHibernateWorkaround(@NotNull Result result, List<Feedback> feedbackList) {
         // Avoid hibernate exception
         List<Feedback> savedFeedbacks = new ArrayList<>();
+        // Collect ids of feedbacks that have long feedback.
+        List<Long> feedbackIdsWithLongFeedback = feedbackList.stream().filter(feedback -> feedback.getId() != null && feedback.getHasLongFeedbackText()).map(Feedback::getId)
+                .toList();
+        // Get long feedback list from the database.
+        List<LongFeedbackText> longFeedbackTextList = longFeedbackTextRepository.findByFeedbackIds(feedbackIdsWithLongFeedback);
+
+        // Convert list to map for accessing later.
+        Map<Long, LongFeedbackText> longLongFeedbackTextMap = longFeedbackTextList.stream()
+                .collect(Collectors.toMap(longFeedbackText -> longFeedbackText.getFeedback().getId(), longFeedbackText -> longFeedbackText));
         feedbackList.forEach(feedback -> {
             // cut association to parent object
             feedback.setResult(null);
+            LongFeedbackText longFeedback = null;
+            // look for long feedback that parent feedback has and cut the association between them.
+            if (feedback.getId() != null && feedback.getHasLongFeedbackText()) {
+                longFeedback = longLongFeedbackTextMap.get(feedback.getId());
+                if (longFeedback != null) {
+                    feedback.clearLongFeedback();
+                }
+            }
             // persist the child object without an association to the parent object.
             feedback = feedbackRepository.saveAndFlush(feedback);
             // restore the association to the parent object
             feedback.setResult(result);
+
+            // restore the association of the long feedback to the parent feedback
+            if (longFeedback != null) {
+                feedback.setDetailText(longFeedback.getText());
+            }
             savedFeedbacks.add(feedback);
         });
         return savedFeedbacks;

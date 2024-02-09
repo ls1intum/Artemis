@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { Result } from 'app/entities/result.model';
 import { isLegacyResult } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 
@@ -15,34 +16,37 @@ export enum TestCaseState {
 export type TaskResult = {
     testCaseState: TestCaseState;
     detailed: {
-        successfulTests: string[];
-        failedTests: string[];
-        notExecutedTests: string[];
+        successfulTests: number[];
+        failedTests: number[];
+        notExecutedTests: number[];
     };
 };
+
+const testIdRegex = /<testid>(\d+)<\/testid>/;
+const testSplitRegex = /,(?![^(]*?\))/;
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseInstructionService {
     /**
      * @function testStatusForTask
-     * @desc Callback function for renderers to set the appropriate test status
-     * @param tests
-     * @param latestResult
+     * @desc Callback function for renderers to set the appropriate test status.
+     * @param testIds all test case ids that are included into the task.
+     * @param latestResult the result to check for if the tests were successful.
      */
-    public testStatusForTask = (tests: string[], latestResult?: Result): TaskResult => {
-        if (latestResult && latestResult.successful && (!latestResult.feedbacks || !latestResult.feedbacks.length) && tests) {
+    public testStatusForTask = (testIds: number[], latestResult?: Result): TaskResult => {
+        if (latestResult?.successful && (!latestResult.feedbacks || !latestResult.feedbacks.length) && testIds) {
             // Case 1: Submission fulfills all test cases and there are no feedbacks (legacy case), no further checking needed.
-            return { testCaseState: TestCaseState.SUCCESS, detailed: { successfulTests: tests, failedTests: [], notExecutedTests: [] } };
+            return { testCaseState: TestCaseState.SUCCESS, detailed: { successfulTests: testIds, failedTests: [], notExecutedTests: [] } };
         }
 
-        if (latestResult && latestResult.feedbacks && latestResult.feedbacks.length) {
+        if (latestResult?.feedbacks?.length) {
             // Case 2: At least one test case is not successful, tests need to checked to find out if they were not fulfilled
-            const { failed, notExecuted, successful } = this.separateTests(tests, latestResult);
+            const { failed, notExecuted, successful } = this.separateTests(testIds, latestResult);
 
             let testCaseState;
             if (failed.length > 0) {
                 testCaseState = TestCaseState.FAIL;
-            } else if (notExecuted.length > 0 || tests.length === 0) {
+            } else if (notExecuted.length > 0 || testIds.length === 0) {
                 testCaseState = TestCaseState.NOT_EXECUTED;
             } else {
                 testCaseState = TestCaseState.SUCCESS;
@@ -50,32 +54,56 @@ export class ProgrammingExerciseInstructionService {
             return { testCaseState, detailed: { successfulTests: successful, failedTests: failed, notExecutedTests: notExecuted } };
         } else {
             // Case 3: There are no results
-            return { testCaseState: TestCaseState.NO_RESULT, detailed: { successfulTests: [], failedTests: [], notExecutedTests: tests } };
+            return { testCaseState: TestCaseState.NO_RESULT, detailed: { successfulTests: [], failedTests: [], notExecutedTests: testIds } };
         }
     };
 
-    private separateTests(tests: string[], latestResult: Result) {
+    private separateTests(tests: number[], latestResult: Result) {
         return tests.reduce(
-            (acc, testName) => {
-                const feedback = latestResult?.feedbacks?.find(({ text }) => text === testName);
+            (acc, testId) => {
+                const feedback = latestResult?.feedbacks?.find((feedback) => feedback.testCase?.id === testId);
                 const resultIsLegacy = isLegacyResult(latestResult!);
 
                 // If there is no feedback item, we assume that the test was successful (legacy check).
                 if (resultIsLegacy) {
                     return {
-                        failed: feedback ? [...acc.failed, testName] : acc.failed,
-                        successful: feedback ? acc.successful : [...acc.successful, testName],
+                        failed: feedback ? [...acc.failed, testId] : acc.failed,
+                        successful: feedback ? acc.successful : [...acc.successful, testId],
                         notExecuted: acc.notExecuted,
                     };
                 }
 
                 return {
-                    failed: feedback?.positive === false ? [...acc.failed, testName] : acc.failed,
-                    successful: feedback?.positive === true ? [...acc.successful, testName] : acc.successful,
-                    notExecuted: feedback?.positive === undefined ? [...acc.notExecuted, testName] : acc.notExecuted,
+                    failed: feedback?.positive === false ? [...acc.failed, testId] : acc.failed,
+                    successful: feedback?.positive === true ? [...acc.successful, testId] : acc.successful,
+                    notExecuted: feedback?.positive === undefined ? [...acc.notExecuted, testId] : acc.notExecuted,
                 };
             },
             { failed: [], successful: [], notExecuted: [] },
         );
+    }
+
+    public convertTestListToIds(testList: string, testCases: ProgrammingExerciseTestCase[] | undefined): number[] {
+        // If there are test names, e.g., during the markdown preview, map the test to its corresponding id using the given testCases array.
+        // Otherwise, use the id directly provided within the <testid> section.
+        // split the tests by "," only when there is not a closing bracket without a previous opening bracket
+        return testList
+            .split(testSplitRegex)
+            .map((text) => text.trim())
+            .map((text) => {
+                // -1 to indicate a not found test
+                return this.convertProblemStatementTextToTestId(text, testCases) ?? -1;
+            });
+    }
+
+    public convertProblemStatementTextToTestId(test: string, testCases?: ProgrammingExerciseTestCase[]): number | undefined {
+        // If the text contains <testid> and </testid>, directly use the number inside
+        const match = testIdRegex.exec(test);
+        if (match) {
+            // If there already is an id, return it directly
+            return parseInt(match[1]);
+        }
+        // otherwise find its corresponding id by the test case name
+        return testCases?.find((testCase) => testCase.testName === test)?.id;
     }
 }

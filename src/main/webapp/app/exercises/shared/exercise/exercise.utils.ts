@@ -124,13 +124,13 @@ export const hasExerciseDueDatePassed = (exercise: Exercise, participation?: Par
  * @param exercise the participation belongs to.
  * @param participation for which the due date should be found.
  */
-export const getExerciseDueDate = (exercise: Exercise, participation?: Participation): dayjs.Dayjs | undefined => {
+export function getExerciseDueDate(exercise: Exercise, participation?: Participation): dayjs.Dayjs | undefined {
     if (exercise.dueDate === undefined) {
         return undefined;
     } else {
         return participation?.individualDueDate ?? exercise.dueDate;
     }
-};
+}
 
 /**
  * Determines if the exercise can be started, this is the case if:
@@ -210,6 +210,10 @@ export const getPositiveAndCappedTotalScore = (totalScore: number, maxPoints: nu
     }
 
     return +totalScore.toFixed(2);
+};
+
+export const getTotalMaxPoints = (exercise?: Exercise): number => {
+    return (exercise?.maxPoints ?? 0) + (exercise?.bonusPoints ?? 0);
 };
 
 const programmingSetupNotFinished = (participation: StudentParticipation): boolean => {

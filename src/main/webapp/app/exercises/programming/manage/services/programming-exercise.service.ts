@@ -24,6 +24,7 @@ import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-lo
 import { SortService } from 'app/shared/service/sort.service';
 import { Result } from 'app/entities/result.model';
 import { Participation } from 'app/entities/participation/participation.model';
+import { PlagiarismResultDTO } from 'app/exercises/shared/plagiarism/types/PlagiarismResultDTO';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -97,15 +98,15 @@ export class ProgrammingExerciseService {
      * @param exerciseId
      * @param options
      */
-    checkPlagiarism(exerciseId: number, options?: PlagiarismOptions): Observable<TextPlagiarismResult> {
+    checkPlagiarism(exerciseId: number, options?: PlagiarismOptions): Observable<PlagiarismResultDTO<TextPlagiarismResult>> {
         return this.http
-            .get<TextPlagiarismResult>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, {
+            .get<PlagiarismResultDTO<TextPlagiarismResult>>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, {
                 observe: 'response',
                 params: {
                     ...options?.toParams(),
                 },
             })
-            .pipe(map((response: HttpResponse<TextPlagiarismResult>) => response.body!));
+            .pipe(map((response: HttpResponse<PlagiarismResultDTO<TextPlagiarismResult>>) => response.body!));
     }
 
     /**
@@ -128,12 +129,12 @@ export class ProgrammingExerciseService {
      *
      * @param exerciseId
      */
-    getLatestPlagiarismResult(exerciseId: number): Observable<TextPlagiarismResult> {
+    getLatestPlagiarismResult(exerciseId: number): Observable<PlagiarismResultDTO<TextPlagiarismResult>> {
         return this.http
-            .get<TextPlagiarismResult>(`${this.resourceUrl}/${exerciseId}/plagiarism-result`, {
+            .get<PlagiarismResultDTO<TextPlagiarismResult>>(`${this.resourceUrl}/${exerciseId}/plagiarism-result`, {
                 observe: 'response',
             })
-            .pipe(map((response: HttpResponse<TextPlagiarismResult>) => response.body!));
+            .pipe(map((response: HttpResponse<PlagiarismResultDTO<TextPlagiarismResult>>) => response.body!));
     }
 
     /**
@@ -214,10 +215,14 @@ export class ProgrammingExerciseService {
     /**
      * Finds the programming exercise for the given exerciseId
      * @param programmingExerciseId of the programming exercise to retrieve
+     * @param withPlagiarismDetectionConfig true if plagiarism detection context should be fetched with the exercise
      */
-    find(programmingExerciseId: number): Observable<EntityResponseType> {
+    find(programmingExerciseId: number, withPlagiarismDetectionConfig: boolean = false): Observable<EntityResponseType> {
         return this.http
-            .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}`, { observe: 'response' })
+            .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}`, {
+                observe: 'response',
+                params: { withPlagiarismDetectionConfig: withPlagiarismDetectionConfig },
+            })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
     }
 
@@ -497,7 +502,7 @@ export class ProgrammingExerciseService {
         ProgrammingExerciseService.convertProgrammingExerciseResponseDatesFromServer(exerciseRes);
         ExerciseService.convertExerciseCategoriesFromServer(exerciseRes);
         this.exerciseService.setAccessRightsExerciseEntityResponseType(exerciseRes);
-        this.exerciseService.sendExerciseTitleToTitleService(exerciseRes?.body);
+        this.exerciseService.sendExerciseTitleToTitleService(exerciseRes?.body ?? undefined);
         return exerciseRes;
     }
 
@@ -551,14 +556,6 @@ export class ProgrammingExerciseService {
      * @param exerciseId The id of a programming exercise
      */
     getLatestFullTestwiseCoverageReport(exerciseId: number): Observable<CoverageReport> {
-        return this.http.get<CoverageReport>(`${this.resourceUrl}/${exerciseId}/full-testwise-coverage-report`);
-    }
-
-    /**
-     * Gets the testwise coverage report of a programming exercise for the latest solution submission without the actual reports
-     * @param exerciseId The id of a programming exercise
-     */
-    getLatestTestwiseCoverageReport(exerciseId: number): Observable<CoverageReport> {
         return this.http.get<CoverageReport>(`${this.resourceUrl}/${exerciseId}/full-testwise-coverage-report`);
     }
 

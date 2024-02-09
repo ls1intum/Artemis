@@ -13,9 +13,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry;
-import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationResultService;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
@@ -31,8 +29,9 @@ public class GitLabCIResultService extends AbstractContinuousIntegrationResultSe
 
     public GitLabCIResultService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
             BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService,
-            ProgrammingExerciseFeedbackCreationService feedbackCreationService) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService, feedbackCreationService);
+            ProgrammingExerciseFeedbackCreationService feedbackCreationService, ProgrammingExerciseTestCaseRepository testCaseRepository) {
+        super(programmingSubmissionRepository, feedbackRepository, testCaseRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService,
+                feedbackCreationService);
     }
 
     @Override

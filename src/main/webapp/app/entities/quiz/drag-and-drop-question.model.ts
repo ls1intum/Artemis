@@ -4,6 +4,7 @@ import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 
 export class DragAndDropQuestion extends QuizQuestion {
+    public importedFiles?: Map<string, Blob>;
     public backgroundFilePath?: string;
     public dropLocations?: DropLocation[];
     public dragItems?: DragItem[];

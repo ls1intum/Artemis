@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.metis;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
@@ -77,9 +79,9 @@ public class AnswerMessageService extends PostingService {
         if (answerMessage.getId() != null) {
             throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idexists");
         }
-        conversationService.isMemberElseThrow(answerMessage.getPost().getConversation().getId(), author.getId());
 
-        Conversation conversation = conversationRepository.findByIdElseThrow(answerMessage.getPost().getConversation().getId());
+        Conversation conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(answerMessage.getPost().getConversation().getId(), author, Optional.empty())
+                .orElse(conversationRepository.findByIdElseThrow(answerMessage.getPost().getConversation().getId()));
 
         Post post = conversationMessageRepository.findMessagePostByIdElseThrow(answerMessage.getPost().getId());
         var course = preCheckUserAndCourseForMessaging(author, courseId);
@@ -98,8 +100,10 @@ public class AnswerMessageService extends PostingService {
         answerMessage.setResolvesPost(false);
         AnswerPost savedAnswerMessage = answerPostRepository.save(answerMessage);
         savedAnswerMessage.getPost().setConversation(conversation);
-        this.preparePostAndBroadcast(savedAnswerMessage, course);
-        this.singleUserNotificationService.notifyInvolvedUsersAboutNewMessageReply(post, mentionedUsers, savedAnswerMessage, author);
+        setAuthorRoleForPosting(savedAnswerMessage, course);
+        SingleUserNotification notification = singleUserNotificationService.createNotificationAboutNewMessageReply(savedAnswerMessage, author, conversation);
+        this.preparePostAndBroadcast(savedAnswerMessage, course, notification);
+        this.singleUserNotificationService.notifyInvolvedUsersAboutNewMessageReply(post, notification, mentionedUsers, savedAnswerMessage, author);
         return savedAnswerMessage;
     }
 
@@ -143,25 +147,28 @@ public class AnswerMessageService extends PostingService {
             // check if requesting user is allowed to update the content, i.e. if user is author of answer message or at least tutor
             mayUpdateOrDeleteAnswerMessageElseThrow(existingAnswerMessage, user);
             existingAnswerMessage.setContent(answerMessage.getContent());
+            existingAnswerMessage.setUpdatedDate(ZonedDateTime.now());
         }
-
-        existingAnswerMessage.setUpdatedDate(ZonedDateTime.now());
 
         updatedAnswerMessage = answerPostRepository.save(existingAnswerMessage);
         updatedAnswerMessage.getPost().setConversation(conversation);
 
-        this.preparePostAndBroadcast(updatedAnswerMessage, course);
+        this.preparePostAndBroadcast(updatedAnswerMessage, course, null);
         return updatedAnswerMessage;
     }
 
     private Conversation mayUpdateOrDeleteAnswerMessageElseThrow(AnswerPost existingAnswerPost, User user) {
-        // only the author of an answerMessage having postMessage with conversation context should edit or delete the entity
-        if (existingAnswerPost.getPost().getConversation() != null && !existingAnswerPost.getAuthor().getId().equals(user.getId())) {
+        boolean userIsAuthor = existingAnswerPost.getAuthor().getId().equals(user.getId());
+        Conversation conversation = existingAnswerPost.getPost().getConversation();
+        boolean isAllowedToEditOrDeleteOtherUsersMessage = conversation instanceof Channel channel
+                && this.channelAuthorizationService.isAllowedToEditOrDeleteMessagesOfOtherUsers(channel, user);
+        boolean isArchivedChannel = conversation instanceof Channel channel && channel.getIsArchived();
+
+        if ((!userIsAuthor && !isAllowedToEditOrDeleteOtherUsersMessage) || isArchivedChannel) {
             throw new AccessForbiddenException("Answer Post", existingAnswerPost.getId());
         }
-        else {
-            return conversationService.getConversationById(existingAnswerPost.getPost().getConversation().getId());
-        }
+
+        return conversationService.getConversationById(existingAnswerPost.getPost().getConversation().getId());
     }
 
     /**
@@ -179,14 +186,18 @@ public class AnswerMessageService extends PostingService {
         Conversation conversation = mayUpdateOrDeleteAnswerMessageElseThrow(answerMessage, user);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
 
-        // delete
-        answerPostRepository.deleteById(answerMessageId);
-
         // we need to explicitly remove the answer post from the answers of the broadcast post to share up-to-date information
         Post updatedMessage = answerMessage.getPost();
         updatedMessage.removeAnswerPost(answerMessage);
+        updatedMessage.setResolved(updatedMessage.getAnswers().stream().anyMatch(AnswerPost::doesResolvePost));
         updatedMessage.setConversation(conversation);
-        broadcastForPost(new PostDTO(updatedMessage, MetisCrudAction.UPDATE), course, null);
+        // update on the message properties
+        conversationMessageRepository.save(updatedMessage);
+
+        // delete
+        answerPostRepository.deleteById(answerMessageId);
+
+        broadcastForPost(new PostDTO(updatedMessage, MetisCrudAction.UPDATE), course.getId(), null, null);
     }
 
     /**

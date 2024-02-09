@@ -162,7 +162,19 @@ class UMLClassDiagramTest extends AbstractUMLDiagramTest {
     }
 
     @Test
+    void similarityClassDiagram_v3_EqualModels() {
+        compareSubmissions(modelingSubmission(UMLClassDiagrams.CLASS_MODEL_1_V3), modelingSubmission(UMLClassDiagrams.CLASS_MODEL_1), 0.8, 100.0);
+        compareSubmissions(modelingSubmission(UMLClassDiagrams.CLASS_MODEL_2_V3), modelingSubmission(UMLClassDiagrams.CLASS_MODEL_2), 0.8, 100.0);
+    }
+
+    @Test
     void similarityClassDiagram_DifferentModels() {
         compareSubmissions(modelingSubmission(UMLClassDiagrams.CLASS_MODEL_1), modelingSubmission(UMLClassDiagrams.CLASS_MODEL_2), 0.0, 30.95);
+    }
+
+    @Test
+    void similarityClassDiagram_v3_DifferentModels() {
+        compareSubmissions(modelingSubmission(UMLClassDiagrams.CLASS_MODEL_1_V3), modelingSubmission(UMLClassDiagrams.CLASS_MODEL_2), 0.0, 30.95);
+        compareSubmissions(modelingSubmission(UMLClassDiagrams.CLASS_MODEL_1), modelingSubmission(UMLClassDiagrams.CLASS_MODEL_2_V3), 0.0, 30.95);
     }
 }

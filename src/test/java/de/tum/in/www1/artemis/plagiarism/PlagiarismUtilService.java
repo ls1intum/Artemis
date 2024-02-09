@@ -51,6 +51,14 @@ public class PlagiarismUtilService {
     @Autowired
     private UserUtilService userUtilService;
 
+    /**
+     * Creates and saves a Course and a TextExercise. It also creates and saves StudentParticipations with similar Submissions.
+     *
+     * @param userPrefix            The prefix for the user logins
+     * @param similarSubmissionText The text that each student submits
+     * @param studentsAmount        The number of students that submitted the text
+     * @return The created Course
+     */
     public Course addCourseWithOneFinishedTextExerciseAndSimilarSubmissions(String userPrefix, String similarSubmissionText, int studentsAmount) {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         userUtilService.addUsers(userPrefix, studentsAmount, 1, 1, 1);
@@ -84,6 +92,15 @@ public class PlagiarismUtilService {
         return course;
     }
 
+    /**
+     * Creates and saves a ModellingExercise. It also creates and saves StudentParticipations with similar Submissions.
+     *
+     * @param userPrefix             The prefix for the user logins
+     * @param similarSubmissionModel The model that each student submits
+     * @param studentsAmount         The number of students that submitted the model
+     * @param course                 The Course to which the ModellingExercise is added
+     * @return The updated Course
+     */
     public Course addOneFinishedModelingExerciseAndSimilarSubmissionsToTheCourse(String userPrefix, String similarSubmissionModel, int studentsAmount, Course course) {
         // Add text exercise to the course
         ModelingExercise exercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, pastTimestamp, futureTimestamp, DiagramType.ClassDiagram, course);
@@ -115,13 +132,28 @@ public class PlagiarismUtilService {
         return course;
     }
 
+    /**
+     * Generates a LinkedMultiValueMap with default parameters for the plagiarism detection. The map is used for REST calls and maps the parameters to the values.
+     * The keys and values are "similarityThreshold" = 50, "minimumScore" = 0 and "minimumSize" = 0.
+     *
+     * @return The generated LinkedMultiValueMap
+     */
     @NotNull
     public LinkedMultiValueMap<String, String> getDefaultPlagiarismOptions() {
-        return getPlagiarismOptions(50D, 0, 0);
+        return getPlagiarismOptions(50, 0, 0);
     }
 
+    /**
+     * Generates a LinkedMultiValueMap with the given parameters for the plagiarism detection. The map is used for REST calls and maps the parameters to the values.
+     * The keys are "similarityThreshold", "minimumScore" and "minimumSize".
+     *
+     * @param similarityThreshold The similarity threshold
+     * @param minimumScore        The minimum score
+     * @param minimumSize         The minimum size
+     * @return The generated LinkedMultiValueMap
+     */
     @NotNull
-    public LinkedMultiValueMap<String, String> getPlagiarismOptions(double similarityThreshold, int minimumScore, int minimumSize) {
+    public LinkedMultiValueMap<String, String> getPlagiarismOptions(int similarityThreshold, int minimumScore, int minimumSize) {
         // Use default options for plagiarism detection
         var params = new LinkedMultiValueMap<String, String>();
         params.add("similarityThreshold", String.valueOf(similarityThreshold));

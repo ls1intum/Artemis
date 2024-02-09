@@ -4,6 +4,7 @@ import { LtiInitializerModalComponent } from 'app/overview/exercise-details/lti-
 import { UserService } from 'app/core/user/user.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-lti-initializer',
@@ -18,6 +19,7 @@ export class LtiInitializerComponent implements OnInit {
         private alertService: AlertService,
         private router: Router,
         private activatedRoute: ActivatedRoute,
+        private accountService: AccountService,
     ) {}
 
     ngOnInit() {
@@ -35,6 +37,7 @@ export class LtiInitializerComponent implements OnInit {
                         return;
                     }
                     this.modalRef = this.modalService.open(LtiInitializerModalComponent, { size: 'lg', backdrop: 'static', keyboard: false });
+                    this.modalRef.componentInstance.loginName = this.accountService.userIdentity?.login;
                     this.modalRef.componentInstance.password = password;
                 });
             }

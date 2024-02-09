@@ -1,5 +1,5 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/entities/feedback.model';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { cloneDeep } from 'lodash-es';
 import { TranslateService } from '@ngx-translate/core';
@@ -81,11 +81,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         this.feedback.type = this.MANUAL;
         this.feedback.reference = `file:${this.selectedFile}_line:${this.codeLine}`;
         if (Feedback.isFeedbackSuggestion(this.feedback)) {
-            // Mark as modified feedback suggestion
-            this.feedback.text = (this.feedback.text ?? FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER).replace(
-                FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
-                FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
-            );
+            Feedback.updateFeedbackTypeOnChange(this.feedback);
         } else {
             this.feedback.text = `File ${this.selectedFile} at line ${this.codeLine + 1}`;
         }

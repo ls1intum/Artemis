@@ -3,12 +3,11 @@ import { Course } from 'app/entities/course.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exam } from 'app/entities/exam.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -24,6 +23,7 @@ import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directiv
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faCheckDouble, faFileUpload, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
+import { UMLDiagramType } from '@ls1intum/apollon';
 
 describe('StudentExamDetailTableRowComponent', () => {
     let studentExamDetailTableRowComponentFixture: ComponentFixture<StudentExamDetailTableRowComponent>;
@@ -45,7 +45,7 @@ describe('StudentExamDetailTableRowComponent', () => {
         exercise.studentParticipations = [studentParticipation];
 
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([]), NgbModule, NgxDatatableModule, FontAwesomeTestingModule, ReactiveFormsModule, TranslateModule.forRoot()],
+            imports: [RouterTestingModule.withRoutes([]), NgbModule, NgxDatatableModule, ReactiveFormsModule, TranslateModule.forRoot()],
             declarations: [StudentExamDetailTableRowComponent, MockComponent(DataTableComponent), MockTranslateValuesDirective, MockPipe(ArtemisTranslatePipe)],
             providers: [MockProvider(AlertService), MockDirective(TranslateDirective)],
         })

@@ -9,6 +9,7 @@ import { ExerciseServicable, ExerciseService } from 'app/exercises/shared/exerci
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 import { TutorEffort } from 'app/entities/tutor-effort.model';
+import { PlagiarismResultDTO } from 'app/exercises/shared/plagiarism/types/PlagiarismResultDTO';
 
 export type EntityResponseType = HttpResponse<TextExercise>;
 export type EntityArrayResponseType = HttpResponse<TextExercise[]>;
@@ -69,10 +70,11 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
     /**
      * Finds the text exercise of the given exerciseId.
      * @param exerciseId of text exercise of type {number}
+     * @param withPlagiarismDetectionConfig true if plagiarism detection context should be fetched with the exercise
      */
-    find(exerciseId: number): Observable<EntityResponseType> {
+    find(exerciseId: number, withPlagiarismDetectionConfig: boolean = false): Observable<EntityResponseType> {
         return this.http
-            .get<TextExercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' })
+            .get<TextExercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response', params: { withPlagiarismDetectionConfig: withPlagiarismDetectionConfig } })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
@@ -101,15 +103,15 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      * @param exerciseId
      * @param options
      */
-    checkPlagiarism(exerciseId: number, options?: PlagiarismOptions): Observable<TextPlagiarismResult> {
+    checkPlagiarism(exerciseId: number, options?: PlagiarismOptions): Observable<PlagiarismResultDTO<TextPlagiarismResult>> {
         return this.http
-            .get<TextPlagiarismResult>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, {
+            .get<PlagiarismResultDTO<TextPlagiarismResult>>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, {
                 observe: 'response',
                 params: {
                     ...options?.toParams(),
                 },
             })
-            .pipe(map((response: HttpResponse<TextPlagiarismResult>) => response.body!));
+            .pipe(map((response: HttpResponse<PlagiarismResultDTO<TextPlagiarismResult>>) => response.body!));
     }
 
     /**
@@ -117,12 +119,12 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      *
      * @param exerciseId
      */
-    getLatestPlagiarismResult(exerciseId: number): Observable<TextPlagiarismResult> {
+    getLatestPlagiarismResult(exerciseId: number): Observable<PlagiarismResultDTO<TextPlagiarismResult>> {
         return this.http
-            .get<TextPlagiarismResult>(`${this.resourceUrl}/${exerciseId}/plagiarism-result`, {
+            .get<PlagiarismResultDTO<TextPlagiarismResult>>(`${this.resourceUrl}/${exerciseId}/plagiarism-result`, {
                 observe: 'response',
             })
-            .pipe(map((response: HttpResponse<TextPlagiarismResult>) => response.body!));
+            .pipe(map((response: HttpResponse<PlagiarismResultDTO<TextPlagiarismResult>>) => response.body!));
     }
 
     /**

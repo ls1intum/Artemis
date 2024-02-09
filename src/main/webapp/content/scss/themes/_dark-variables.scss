@@ -107,6 +107,8 @@ $pre-color: inherit;
 $table-bg-scale: 0;
 $table-border-color: $gray-700;
 $table-striped-bg: rgba($white, 0.02);
+$table-striped-color: $body-color;
+$table-color: $body-color;
 
 // Global colors
 $artemis-dark: #353d47; // (not bootstrap)
@@ -266,6 +268,8 @@ $metis-blue: $link-color;
 $metis-light-blue: #0e252d;
 $metis-green: #33cd32;
 $metis-course-discussion-select-bg: $neutral-dark;
+
+$metis-pinned-post-highlight-color: darken($metis-blue, 42%);
 
 $metis-answer-post-background-color: rgba(255, 255, 255, 0.02);
 

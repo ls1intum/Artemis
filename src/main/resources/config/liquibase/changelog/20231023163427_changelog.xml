@@ -1,0 +1,167 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.18.xsd">
+    <changeSet author="keller" id="20231023163427-1">
+        <comment>Create new channels for existing lecture/exercise and migrate posts of lecture/exercise to respective channel</comment>
+        <comment>Step 1: Create channels for lectures that do not have a channel yet</comment>
+        <sql>
+            INSERT INTO conversation (course_id, lecture_id, name, discriminator, is_public, is_announcement, is_course_wide, creation_date)
+            SELECT l.course_id, l.id, LEFT(TRIM(TRAILING '-' FROM REGEXP_REPLACE(CONCAT('lecture-', LOWER(l.title)), '[^a-z0-9]+', '-')), 30), 'C', true, false, true, NOW()
+            FROM lecture l
+                LEFT JOIN conversation conv ON l.id = conv.lecture_id
+                LEFT JOIN course c on l.course_id = c.id
+            WHERE conv.lecture_id IS NULL
+        </sql>
+        <comment>Step 2: Move lecture posts to lecture channels</comment>
+        <sql>
+            UPDATE post p
+            SET conversation_id = (
+                SELECT DISTINCT c.id as conversation_id
+                FROM conversation c
+                         LEFT JOIN lecture l ON l.id = c.lecture_id
+                WHERE p.lecture_id = l.id
+            )
+            WHERE p.lecture_id IS NOT NULL
+              AND p.conversation_id IS NULL;
+        </sql>
+        <comment>Step 3: Delete lecture_id from posts</comment>
+        <sql>
+            UPDATE post
+            SET lecture_id = NULL
+            WHERE conversation_id IS NOT NULL
+              AND lecture_id IS NOT NULL;
+        </sql>
+        <comment>Step 4: Create channels for exercises that do not have a channel</comment>
+        <sql>
+            INSERT INTO conversation (course_id, exercise_id, name, discriminator, is_public, is_announcement, is_course_wide, creation_date)
+            SELECT e.course_id, e.id, LEFT(TRIM(TRAILING '-' FROM REGEXP_REPLACE(CONCAT('exercise-', LOWER(e.title)), '[^a-z0-9]+', '-')), 30), 'C', true, false, true, NOW()
+            FROM exercise e
+                LEFT JOIN conversation conv ON e.id = conv.exercise_id
+                LEFT JOIN course c on e.course_id = c.id
+            WHERE conv.exercise_id IS NULL
+        </sql>
+        <comment>Step 5: Move exercise posts to exercise channels</comment>
+        <sql>
+            UPDATE post p
+            SET conversation_id = (
+                SELECT DISTINCT c.id as conversation_id
+                FROM conversation c
+                         LEFT JOIN exercise e ON e.id = c.exercise_id
+                WHERE p.exercise_id = e.id
+            )
+            WHERE p.exercise_id IS NOT NULL
+              AND p.conversation_id IS NULL;
+        </sql>
+        <comment>Step 6: Delete exercise_id from posts</comment>
+        <sql>
+            UPDATE post
+            SET exercise_id = NULL
+            WHERE conversation_id IS NOT NULL
+              AND exercise_id IS NOT NULL;
+        </sql>
+        <comment>Step 7: Create general course-wide channels</comment>
+        <sql>
+            INSERT INTO conversation (course_id, name, discriminator, is_public, is_announcement, is_course_wide, creation_date)
+            SELECT c.id, 'announcement', 'C', true, true, true, NOW()
+            FROM course c
+                     LEFT JOIN conversation conv ON c.id = conv.course_id AND conv.name = 'announcement' AND conv.is_course_wide = true
+            WHERE conv.id IS NULL
+
+            UNION ALL
+            SELECT c.id, 'organization', 'C', true, false, true, NOW()
+            FROM course c
+                     LEFT JOIN conversation conv ON c.id = conv.course_id AND conv.name = 'organization' AND conv.is_course_wide = true
+            WHERE conv.id IS NULL
+
+            UNION ALL
+            SELECT c.id, 'tech-support', 'C', true, false, true, NOW()
+            FROM course c
+                     LEFT JOIN conversation conv ON c.id = conv.course_id AND conv.name = 'tech-support' AND conv.is_course_wide = true
+            WHERE conv.id IS NULL
+
+            UNION ALL
+            SELECT c.id, 'random', 'C', true, false, true, NOW()
+            FROM course c
+                     LEFT JOIN conversation conv ON c.id = conv.course_id AND conv.name = 'random' AND conv.is_course_wide = true
+            WHERE conv.id IS NULL
+        </sql>
+        <comment>Step 8: Move course-wide-context posts to general course-wide channels</comment>
+    </changeSet>
+    <changeSet author="keller" id="20231023163427-2">
+        <!-- MySQL -->
+        <preConditions onFail="CONTINUE">
+            <dbms type="mysql"/>
+        </preConditions>
+        <sql>
+            UPDATE post p
+                JOIN conversation c ON p.course_id = c.course_id AND c.name = 'announcement' AND c.is_course_wide = true AND p.course_wide_context = 'ANNOUNCEMENT' AND p.conversation_id IS NULL
+                SET conversation_id = c.id;
+        </sql>
+        <sql>
+            UPDATE post p
+                JOIN conversation c ON p.course_id = c.course_id AND c.name = 'organization' AND c.is_course_wide = true AND p.course_wide_context = 'ORGANIZATION' AND p.conversation_id IS NULL
+                SET conversation_id = c.id;
+        </sql>
+        <sql>
+            UPDATE post p
+                JOIN conversation c ON p.course_id = c.course_id AND c.name = 'tech-support' AND c.is_course_wide = true AND p.course_wide_context = 'TECH_SUPPORT' AND p.conversation_id IS NULL
+                SET conversation_id = c.id;
+        </sql>
+        <sql>
+            UPDATE post p
+                JOIN conversation c ON p.course_id = c.course_id AND c.name = 'random' AND c.is_course_wide = true AND p.course_wide_context = 'RANDOM' AND p.conversation_id IS NULL
+                SET conversation_id = c.id;
+        </sql>
+        <comment>Step 9: Delete course_wide_context and course_id from posts</comment>
+        <sql>
+            UPDATE post
+            SET course_wide_context = NULL, course_id = NULL
+            WHERE course_wide_context IN ('ANNOUNCEMENT', 'ORGANIZATION', 'TECH_SUPPORT', 'RANDOM')
+              AND course_id IS NOT NULL
+              AND conversation_id IS NOT NULL;
+        </sql>
+    </changeSet>
+    <changeSet author="keller" id="20231023163427-3">
+        <!-- Postgres -->
+        <preConditions onFail="CONTINUE">
+            <or>
+                <dbms type="postgres"/>
+                <dbms type="postgresql"/>
+            </or>
+        </preConditions>
+        <sql>
+            UPDATE post p
+            SET conversation_id = c.id
+                FROM conversation c
+            WHERE p.course_id = c.course_id AND c.name = 'announcement' AND c.is_course_wide = true AND p.course_wide_context = 'ANNOUNCEMENT' AND p.conversation_id IS NULL;
+        </sql>
+        <sql>
+
+            UPDATE post p
+            SET conversation_id = c.id
+                FROM conversation c
+            WHERE p.course_id = c.course_id AND c.name = 'organization' AND c.is_course_wide = true AND p.course_wide_context = 'ORGANIZATION' AND p.conversation_id IS NULL;
+        </sql>
+        <sql>
+            UPDATE post p
+            SET conversation_id = c.id
+                FROM conversation c
+            WHERE p.course_id = c.course_id AND c.name = 'tech-support' AND c.is_course_wide = true AND p.course_wide_context = 'TECH_SUPPORT' AND p.conversation_id IS NULL;
+        </sql>
+        <sql>
+            UPDATE post p
+            SET conversation_id = c.id
+                FROM conversation c
+            WHERE p.course_id = c.course_id AND c.name = 'random' AND c.is_course_wide = true AND p.course_wide_context = 'RANDOM' AND p.conversation_id IS NULL;
+        </sql>
+        <comment>Step 9: Delete course_wide_context and course_id from posts</comment>
+        <sql>
+            UPDATE post
+            SET course_wide_context = NULL, course_id = NULL
+            WHERE course_wide_context IN ('ANNOUNCEMENT', 'ORGANIZATION', 'TECH_SUPPORT', 'RANDOM')
+              AND course_id IS NOT NULL
+              AND conversation_id IS NOT NULL;
+        </sql>
+    </changeSet>
+</databaseChangeLog>

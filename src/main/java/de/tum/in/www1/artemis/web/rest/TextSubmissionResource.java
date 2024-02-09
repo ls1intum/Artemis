@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -35,7 +36,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private static final String ENTITY_NAME = "textSubmission";
 
-    private final Logger log = LoggerFactory.getLogger(TextSubmissionResource.class);
+    private static final Logger log = LoggerFactory.getLogger(TextSubmissionResource.class);
 
     private final TextSubmissionRepository textSubmissionRepository;
 
@@ -147,7 +148,8 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(textSubmission.getParticipation().getExercise())) {
             // anonymize and throw exception if not authorized to view submission
-            plagiarismService.checkAccessAndAnonymizeSubmissionForStudent(textSubmission, userRepository.getUser().getLogin());
+            plagiarismService.checkAccessAndAnonymizeSubmissionForStudent(textSubmission, userRepository.getUser().getLogin(),
+                    textSubmission.getParticipation().getExercise().getDueDate());
             return ResponseEntity.ok(textSubmission);
         }
 
@@ -216,7 +218,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
             textAssessmentService.prepareSubmissionForAssessment(textSubmission, textSubmission.getResultForCorrectionRound(correctionRound));
         }
 
-        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         exercise.setGradingCriteria(gradingCriteria);
 
         // Make sure the exercise is connected to the participation in the json response

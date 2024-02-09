@@ -1,5 +1,12 @@
+import {
+    Feedback,
+    FeedbackSuggestionType,
+    FeedbackType,
+    STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
+    SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
+    buildFeedbackTextForReview,
+} from 'app/entities/feedback.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import { Feedback, FeedbackSuggestionType, FeedbackType, buildFeedbackTextForReview } from 'app/entities/feedback.model';
 
 describe('Feedback', () => {
     const createFeedback = (text: string, type: FeedbackType, reference?: string): Feedback => {
@@ -59,16 +66,6 @@ describe('Feedback', () => {
     });
 
     describe('static detection functions', () => {
-        it('should detect TestCase feedback', () => {
-            const feedback1 = createFeedback('Test Case 1 Failed', FeedbackType.AUTOMATIC);
-            const feedback2 = createFeedback('SCAFeedbackIdentifier: Code smells detected', FeedbackType.AUTOMATIC);
-            const feedback3 = createFeedback('Manual feedback', FeedbackType.MANUAL);
-
-            expect(Feedback.isTestCaseFeedback(feedback1)).toBeTrue();
-            expect(Feedback.isTestCaseFeedback(feedback2)).toBeFalse();
-            expect(Feedback.isTestCaseFeedback(feedback3)).toBeFalse();
-        });
-
         it('should detect Static Code Analysis feedback', () => {
             const feedback1 = createFeedback('SCAFeedbackIdentifier: Code smells detected', FeedbackType.AUTOMATIC);
             const feedback2 = createFeedback('Test Case 1 Failed', FeedbackType.AUTOMATIC);
@@ -139,6 +136,28 @@ describe('Feedback', () => {
         it('should extract the line number from the feedback reference for file names with an underscore', () => {
             const feedback = createFeedback('Feedback with reference', FeedbackType.AUTOMATIC, 'file:src/com/example/package/file_with_an_underscore.java_line:13');
             expect(Feedback.getReferenceLine(feedback)).toBe(13);
+        });
+    });
+
+    describe('isTestCaseFeedback', () => {
+        it('should correctly detect manual feedback', () => {
+            const feedback: Feedback = { type: FeedbackType.MANUAL, detailText: 'content' };
+            expect(Feedback.isTestCaseFeedback(feedback)).toBeFalse();
+        });
+
+        it('should correctly detect sca feedback', () => {
+            const feedback: Feedback = { type: FeedbackType.AUTOMATIC, text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER };
+            expect(Feedback.isTestCaseFeedback(feedback)).toBeFalse();
+        });
+
+        it('should correctly detect submission policy feedback', () => {
+            const feedback: Feedback = { type: FeedbackType.AUTOMATIC, text: SUBMISSION_POLICY_FEEDBACK_IDENTIFIER };
+            expect(Feedback.isTestCaseFeedback(feedback)).toBeFalse();
+        });
+
+        it('should correctly detect test case feedback', () => {
+            const feedback: Feedback = { type: FeedbackType.AUTOMATIC, detailText: 'content', testCase: { testName: 'test1' } };
+            expect(Feedback.isTestCaseFeedback(feedback)).toBeTrue();
         });
     });
 });

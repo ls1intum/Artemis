@@ -1,5 +1,4 @@
-import { BASE_API, CourseWideContext, POST, PUT } from '../../constants';
-import { titleCaseWord } from '../../utils';
+import { BASE_API, POST, PUT } from '../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the course communication page.
@@ -7,10 +6,6 @@ import { titleCaseWord } from '../../utils';
 export class CourseCommunicationPage {
     newPost() {
         cy.get('#new-post').click();
-    }
-
-    selectContextInModal(context: CourseWideContext) {
-        cy.get('.modal-content #context').select(titleCaseWord(context));
     }
 
     getContextSelectorInModal() {
@@ -40,7 +35,7 @@ export class CourseCommunicationPage {
         return cy.wait('@createMessage');
     }
 
-    searchForPost(search: string) {
+    searchForMessage(search: string) {
         cy.get('#search').type(search);
         cy.get('#search-submit').click();
     }
@@ -97,20 +92,15 @@ export class CourseCommunicationPage {
         this.getSinglePost(postID).find('.pin').click();
     }
 
-    archivePost(postID: number) {
-        this.getSinglePost(postID).find('.archive').click();
-    }
-
     deletePost(postID: number) {
         this.getSinglePost(postID).find('.deleteIcon').click().click();
     }
 
-    editPost(postID: number, title: string, content: string) {
+    editMessage(postID: number, content: string) {
         const post = this.getSinglePost(postID);
         post.find('.editIcon').click();
-        this.setTitleInModal(title);
-        this.setContentInModal(content);
-        cy.intercept(PUT, BASE_API + 'courses/*/posts/*').as('updatePost');
+        this.setContentInline(content);
+        cy.intercept(PUT, BASE_API + 'courses/*/messages/*').as('updatePost');
         cy.get('#save').click();
         cy.wait('@updatePost');
     }
@@ -123,11 +113,7 @@ export class CourseCommunicationPage {
         this.getSinglePost(answerID).find('.resolve').click();
     }
 
-    checkSinglePost(postID: number, title: string, content: string, context?: CourseWideContext) {
-        if (context) {
-            this.getSinglePost(postID).find('.context-information').contains(titleCaseWord(context));
-        }
-        this.getSinglePost(postID).find('.post-title').contains(title);
+    checkSinglePost(postID: number, content: string) {
         this.getSinglePost(postID).find('.markdown-preview').contains(content);
         this.getSinglePost(postID).find('.reference-hash').contains(`#${postID}`);
     }
@@ -144,10 +130,7 @@ export class CourseCommunicationPage {
         this.getSinglePost(postID).find('fa-icon.resolved').should('exist');
     }
 
-    checkSinglePostByPosition(position: number, title: string | undefined, content: string, context?: CourseWideContext) {
-        if (context) {
-            cy.get('.items-container .item').eq(position).find('.context-information').contains(titleCaseWord(context));
-        }
+    checkSinglePostByPosition(position: number, title: string | undefined, content: string) {
         if (title !== undefined) {
             cy.get('.items-container .item').eq(position).find('.post-title').contains(title);
         }

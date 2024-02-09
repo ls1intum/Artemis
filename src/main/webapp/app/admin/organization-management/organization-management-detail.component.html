@@ -38,17 +38,19 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let course of organization.courses">
-                            <td>
-                                <a [routerLink]="['/course-management/', course.id]">{{ course.id }}</a>
-                            </td>
-                            <td>
-                                <span>{{ course.title }}</span>
-                            </td>
-                            <td>
-                                <span>{{ course.shortName }}</span>
-                            </td>
-                        </tr>
+                        @for (course of organization.courses; track course) {
+                            <tr>
+                                <td>
+                                    <a [routerLink]="['/course-management/', course.id]">{{ course.id }}</a>
+                                </td>
+                                <td>
+                                    <span>{{ course.title }}</span>
+                                </td>
+                                <td>
+                                    <span>{{ course.shortName }}</span>
+                                </td>
+                            </tr>
+                        }
                     </tbody>
                 </table>
             </div>
@@ -101,7 +103,6 @@
                             <a routerLink="/admin/user-management/{{ value?.login }}"> {{ value.id }} </a>
                         </ng-template>
                     </ngx-datatable-column>
-
                     <ngx-datatable-column prop="login" [minWidth]="150" [width]="200" [maxWidth]="200">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('login')">
@@ -113,7 +114,6 @@
                             <span>{{ value }}</span>
                         </ng-template>
                     </ngx-datatable-column>
-
                     <ngx-datatable-column prop="name" [minWidth]="150" [width]="250" [maxWidth]="250">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
@@ -125,7 +125,6 @@
                             <span>{{ value }}</span>
                         </ng-template>
                     </ngx-datatable-column>
-
                     <ngx-datatable-column prop="email" [minWidth]="150" [width]="250">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('email')">
@@ -137,7 +136,6 @@
                             <span>{{ value }}</span>
                         </ng-template>
                     </ngx-datatable-column>
-
                     <ngx-datatable-column prop="" [minWidth]="150" [width]="200">
                         <ng-template ngx-datatable-header-template> </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value">

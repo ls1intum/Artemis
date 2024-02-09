@@ -30,7 +30,7 @@ public class QuizBatchService {
         SECURE_RANDOM.nextBytes(new byte[64]);
     }
 
-    private final Logger log = LoggerFactory.getLogger(QuizBatchService.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizBatchService.class);
 
     private final QuizBatchRepository quizBatchRepository;
 
@@ -92,8 +92,8 @@ public class QuizBatchService {
     public QuizBatch joinBatch(QuizExercise quizExercise, User user, @Nullable String password) throws QuizJoinException {
         QuizBatch quizBatch = switch (quizExercise.getQuizMode()) {
             case SYNCHRONIZED -> throw new QuizJoinException("quizBatchJoinSynchronized", "Cannot join batch in synchronized quiz");
-            case BATCHED -> quizBatchRepository.findByQuizExerciseAndPassword(quizExercise, password)
-                    .orElseThrow(() -> new QuizJoinException("quizBatchNotFound", "Batch does not exist"));
+            case BATCHED ->
+                quizBatchRepository.findByQuizExerciseAndPassword(quizExercise, password).orElseThrow(() -> new QuizJoinException("quizBatchNotFound", "Batch does not exist"));
             case INDIVIDUAL -> createIndividualBatch(quizExercise, user);
         };
 

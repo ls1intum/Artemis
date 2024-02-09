@@ -6,128 +6,169 @@
         <span>{{ questionIndex }})</span> {{ question.title }}
     </h4>
     <p [innerHTML]="renderedQuestion.text"></p>
-    <span style="color: red" *ngIf="question.invalid" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
-    <h6 *ngIf="!isSingleChoice">{{ 'artemisApp.quizQuestion.allOptions' | artemisTranslate }}</h6>
-    <h6 *ngIf="isSingleChoice">{{ 'artemisApp.quizQuestion.singleOption' | artemisTranslate }}</h6>
-    <div class="hint" *ngIf="question.hint || (question.explanation && showResult)">
-        <ng-template #renderedHint>
-            <div [innerHTML]="renderedQuestion.hint"></div>
-        </ng-template>
-        <span class="label label-info" [ngbPopover]="renderedHint" triggers="mouseenter:mouseleave" *ngIf="question.hint">
-            <fa-icon [icon]="faQuestionCircle"></fa-icon>
-            <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
-        </span>
-        <br />
-        <ng-template #renderedExplanation>
-            <div [innerHTML]="renderedQuestion.explanation"></div>
-        </ng-template>
-        <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="right auto" triggers="mouseenter:mouseleave" *ngIf="question.explanation && showResult">
-            <fa-icon [icon]="faExclamationCircle"></fa-icon>
-            <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
-        </span>
-    </div>
-    <div class="question-score" *ngIf="!showResult || forceSampleSolution">
-        <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-        <span>{{ question.points }}</span>
-    </div>
-    <div class="question-score result" *ngIf="showResult && !forceSampleSolution" [ngClass]="{ incorrect: (score || 0) < question.points! }">
-        <span jhiTranslate="artemisApp.quizQuestion.yourScore" class="colon-suffix"></span>
-        <span class="show-explanation">{{ score || 0 }}/{{ question.points }}</span>
-        <span class="show-explanation">
-            <jhi-quiz-scoring-infostudent-modal
-                [score]="score"
-                [question]="question"
-                [multipleChoiceMapping]="selectedAnswerOptions"
-                [questionIndex]="questionIndex"
-                [multipleChoiceSubmittedResult]="submittedResult"
-                [quizQuestions]="quizQuestions"
-            ></jhi-quiz-scoring-infostudent-modal>
-        </span>
-    </div>
-    <div class="answer-options" *ngIf="!showResult">
-        <div
-            *ngFor="let answerOption of question.answerOptions; let i = index"
-            id="answer-option-{{ i }}"
-            class="answer-option"
-            [ngClass]="{ 'click-disabled': clickDisabled, selected: isAnswerOptionSelected(answerOption) }"
-            (click)="toggleSelection(answerOption)"
-        >
-            <div class="content">
-                <div class="text" [innerHTML]="renderedQuestion.renderedSubElements[i]?.text ?? ''"></div>
-                <div class="hint">
-                    <ng-template #renderedAnswerOptionsHint>
-                        <div [innerHTML]="renderedQuestion.renderedSubElements[i]?.hint ?? ''"></div>
-                    </ng-template>
-                    <span class="label label-info" [ngbPopover]="renderedAnswerOptionsHint" triggers="mouseenter:mouseleave" *ngIf="answerOption.hint">
-                        <fa-icon [icon]="faQuestionCircle"></fa-icon>
-                        <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
-                    </span>
-                </div>
-            </div>
-            <div class="selection" id="mc-answer-selection-{{ i }}">
-                <fa-icon [icon]="question.singleChoice ? faDotCircle : faCheckSquare" size="2x" *ngIf="isAnswerOptionSelected(answerOption)"></fa-icon>
-                <fa-icon [icon]="question.singleChoice ? faCircle : faSquare" size="2x" *ngIf="!isAnswerOptionSelected(answerOption)"></fa-icon>
-            </div>
+    @if (question.invalid) {
+        <span style="color: red" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
+    }
+    @if (!isSingleChoice) {
+        <h6>{{ 'artemisApp.quizQuestion.allOptions' | artemisTranslate }}</h6>
+    }
+    @if (isSingleChoice) {
+        <h6>{{ 'artemisApp.quizQuestion.singleOption' | artemisTranslate }}</h6>
+    }
+    @if (question.hint || (question.explanation && showResult)) {
+        <div class="hint">
+            <ng-template #renderedHint>
+                <div [innerHTML]="renderedQuestion.hint"></div>
+            </ng-template>
+            @if (question.hint) {
+                <span class="label label-info" [ngbPopover]="renderedHint" triggers="mouseenter:mouseleave">
+                    <fa-icon [icon]="faQuestionCircle"></fa-icon>
+                    <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
+                </span>
+            }
+            <br />
+            <ng-template #renderedExplanation>
+                <div [innerHTML]="renderedQuestion.explanation"></div>
+            </ng-template>
+            @if (question.explanation && showResult) {
+                <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="right auto" triggers="mouseenter:mouseleave">
+                    <fa-icon [icon]="faExclamationCircle"></fa-icon>
+                    <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
+                </span>
+            }
         </div>
-    </div>
-    <table class="answer-options-result" *ngIf="showResult">
-        <tr>
-            <th class="content">{{ 'artemisApp.multipleChoiceQuestion.answer' | artemisTranslate }}</th>
-            <th class="solution">{{ 'artemisApp.multipleChoiceQuestion.solution' | artemisTranslate }}</th>
-            <th class="result-symbol" *ngIf="!forceSampleSolution"></th>
-            <th class="selection" *ngIf="!forceSampleSolution">{{ 'artemisApp.multipleChoiceQuestion.you' | artemisTranslate }}</th>
-        </tr>
-        <tr class="answer-option" *ngFor="let answerOption of question.answerOptions; let i = index" id="answer-option-{{ i }}">
-            <td class="content">
-                <div class="text" [innerHTML]="renderedQuestion.renderedSubElements![i].text"></div>
-                <div class="hint">
-                    <ng-template #renderedAnswerOptionsHint2>
-                        <div [innerHTML]="renderedQuestion.renderedSubElements![i].hint"></div>
-                    </ng-template>
-                    <span class="label label-info" [ngbPopover]="renderedAnswerOptionsHint2" triggers="mouseenter:mouseleave" *ngIf="answerOption.hint">
-                        <fa-icon [icon]="faQuestionCircle"></fa-icon>
-                        <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
-                    </span>
-                    <ng-template #renderedAnswerOptionsExplanation>
-                        <div [innerHTML]="renderedQuestion.renderedSubElements![i].explanation"></div>
-                    </ng-template>
-                    <span class="label label-primary" [ngbPopover]="renderedAnswerOptionsExplanation" triggers="mouseenter:mouseleave" *ngIf="answerOption.explanation">
-                        <fa-icon [icon]="faExclamationCircle"></fa-icon>
-                        <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
-                    </span>
+    }
+    @if (!showResult || forceSampleSolution) {
+        <div class="question-score">
+            <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
+            <span>{{ question.points }}</span>
+        </div>
+    }
+    @if (showResult && !forceSampleSolution) {
+        <div class="question-score result" [ngClass]="{ incorrect: (score || 0) < question.points! }">
+            <span jhiTranslate="artemisApp.quizQuestion.yourScore" class="colon-suffix"></span>
+            <span class="show-explanation">{{ score || 0 }}/{{ question.points }}</span>
+            <span class="show-explanation">
+                <jhi-quiz-scoring-infostudent-modal
+                    [score]="score"
+                    [question]="question"
+                    [multipleChoiceMapping]="selectedAnswerOptions"
+                    [questionIndex]="questionIndex"
+                    [multipleChoiceSubmittedResult]="submittedResult"
+                    [quizQuestions]="quizQuestions"
+                ></jhi-quiz-scoring-infostudent-modal>
+            </span>
+        </div>
+    }
+    @if (!showResult) {
+        <div class="answer-options">
+            @for (answerOption of question.answerOptions; track answerOption; let i = $index) {
+                <div
+                    id="answer-option-{{ i }}"
+                    class="answer-option"
+                    [ngClass]="{ 'click-disabled': clickDisabled, selected: isAnswerOptionSelected(answerOption) }"
+                    (click)="toggleSelection(answerOption)"
+                >
+                    <div class="content">
+                        <div class="text" [innerHTML]="renderedQuestion.renderedSubElements[i]?.text ?? ''"></div>
+                        <div class="hint">
+                            <ng-template #renderedAnswerOptionsHint>
+                                <div [innerHTML]="renderedQuestion.renderedSubElements[i]?.hint ?? ''"></div>
+                            </ng-template>
+                            @if (answerOption.hint) {
+                                <span class="label label-info" [ngbPopover]="renderedAnswerOptionsHint" triggers="mouseenter:mouseleave">
+                                    <fa-icon [icon]="faQuestionCircle"></fa-icon>
+                                    <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
+                                </span>
+                            }
+                        </div>
+                    </div>
+                    <div class="selection" id="mc-answer-selection-{{ i }}">
+                        @if (isAnswerOptionSelected(answerOption)) {
+                            <fa-icon [icon]="question.singleChoice ? faDotCircle : faCheckSquare" size="2x"></fa-icon>
+                        }
+                        @if (!isAnswerOptionSelected(answerOption)) {
+                            <fa-icon [icon]="question.singleChoice ? faCircle : faSquare" size="2x"></fa-icon>
+                        }
+                    </div>
                 </div>
-            </td>
-            <td class="solution">
-                <span id="answer-option-{{ i }}-correct" *ngIf="!answerOption.invalid && !question.invalid && answerOption.isCorrect" class="correct">{{
-                    'artemisApp.multipleChoiceQuestion.correct' | artemisTranslate
-                }}</span>
-                <span id="answer-option-{{ i }}-wrong" *ngIf="!answerOption.invalid && !question.invalid && !answerOption.isCorrect" class="wrong">{{
-                    'artemisApp.multipleChoiceQuestion.wrong' | artemisTranslate
-                }}</span>
-                <span id="answer-option-{{ i }}-invalid" *ngIf="answerOption.invalid || question.invalid" class="wrong" jhiTranslate="artemisApp.quizQuestion.invalid"></span>
-                <fa-icon
-                    ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.invalid' | artemisTranslate }}"
-                    style="color: black"
-                    [icon]="faQuestionCircle"
-                    *ngIf="answerOption.invalid || question.invalid"
-                ></fa-icon>
-            </td>
-            <td class="result-symbol" *ngIf="!forceSampleSolution">
-                <fa-icon
-                    size="2x"
-                    [icon]="faExclamationTriangle"
-                    class="warning"
-                    *ngIf="
-                        !question.invalid &&
-                        !answerOption.invalid &&
-                        ((isAnswerOptionSelected(answerOption) && !answerOption.isCorrect) || (!isAnswerOptionSelected(answerOption) && answerOption.isCorrect))
-                    "
-                ></fa-icon>
-            </td>
-            <td class="selection" *ngIf="!forceSampleSolution">
-                <fa-icon [icon]="question.singleChoice ? faDotCircle : faCheckSquare" size="2x" *ngIf="isAnswerOptionSelected(answerOption)"></fa-icon>
-                <fa-icon [icon]="question.singleChoice ? faCircle : faSquare" size="2x" *ngIf="!isAnswerOptionSelected(answerOption)"></fa-icon>
-            </td>
-        </tr>
-    </table>
+            }
+        </div>
+    }
+    @if (showResult) {
+        <table class="answer-options-result">
+            <tr>
+                <th class="content">{{ 'artemisApp.multipleChoiceQuestion.answer' | artemisTranslate }}</th>
+                <th class="solution">{{ 'artemisApp.multipleChoiceQuestion.solution' | artemisTranslate }}</th>
+                @if (!forceSampleSolution) {
+                    <th class="result-symbol"></th>
+                }
+                @if (!forceSampleSolution) {
+                    <th class="selection">{{ 'artemisApp.multipleChoiceQuestion.you' | artemisTranslate }}</th>
+                }
+            </tr>
+            @for (answerOption of question.answerOptions; track answerOption; let i = $index) {
+                <tr class="answer-option" id="answer-option-{{ i }}">
+                    <td class="content">
+                        <div class="text" [innerHTML]="renderedQuestion.renderedSubElements![i].text"></div>
+                        <div class="hint">
+                            <ng-template #renderedAnswerOptionsHint2>
+                                <div [innerHTML]="renderedQuestion.renderedSubElements![i].hint"></div>
+                            </ng-template>
+                            @if (answerOption.hint) {
+                                <span class="label label-info" [ngbPopover]="renderedAnswerOptionsHint2" triggers="mouseenter:mouseleave">
+                                    <fa-icon [icon]="faQuestionCircle"></fa-icon>
+                                    <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
+                                </span>
+                            }
+                            <ng-template #renderedAnswerOptionsExplanation>
+                                <div [innerHTML]="renderedQuestion.renderedSubElements![i].explanation"></div>
+                            </ng-template>
+                            @if (answerOption.explanation) {
+                                <span class="label label-primary" [ngbPopover]="renderedAnswerOptionsExplanation" triggers="mouseenter:mouseleave">
+                                    <fa-icon [icon]="faExclamationCircle"></fa-icon>
+                                    <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
+                                </span>
+                            }
+                        </div>
+                    </td>
+                    <td class="solution">
+                        @if (!answerOption.invalid && !question.invalid && answerOption.isCorrect) {
+                            <span id="answer-option-{{ i }}-correct" class="correct">{{ 'artemisApp.multipleChoiceQuestion.correct' | artemisTranslate }}</span>
+                        }
+                        @if (!answerOption.invalid && !question.invalid && !answerOption.isCorrect) {
+                            <span id="answer-option-{{ i }}-wrong" class="wrong">{{ 'artemisApp.multipleChoiceQuestion.wrong' | artemisTranslate }}</span>
+                        }
+                        @if (answerOption.invalid || question.invalid) {
+                            <span id="answer-option-{{ i }}-invalid" class="wrong" jhiTranslate="artemisApp.quizQuestion.invalid"></span>
+                        }
+                        @if (answerOption.invalid || question.invalid) {
+                            <fa-icon ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.invalid' | artemisTranslate }}" style="color: black" [icon]="faQuestionCircle"></fa-icon>
+                        }
+                    </td>
+                    @if (!forceSampleSolution) {
+                        <td class="result-symbol">
+                            @if (
+                                !question.invalid &&
+                                !answerOption.invalid &&
+                                ((isAnswerOptionSelected(answerOption) && !answerOption.isCorrect) || (!isAnswerOptionSelected(answerOption) && answerOption.isCorrect))
+                            ) {
+                                <fa-icon size="2x" [icon]="faExclamationTriangle" class="warning"></fa-icon>
+                            }
+                        </td>
+                    }
+                    @if (!forceSampleSolution) {
+                        <td class="selection">
+                            @if (isAnswerOptionSelected(answerOption)) {
+                                <fa-icon [icon]="question.singleChoice ? faDotCircle : faCheckSquare" size="2x"></fa-icon>
+                            }
+                            @if (!isAnswerOptionSelected(answerOption)) {
+                                <fa-icon [icon]="question.singleChoice ? faCircle : faSquare" size="2x"></fa-icon>
+                            }
+                        </td>
+                    }
+                </tr>
+            }
+        </table>
+    }
 </div>

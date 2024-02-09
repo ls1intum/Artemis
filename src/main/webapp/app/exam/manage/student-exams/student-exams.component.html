@@ -4,100 +4,101 @@
     </h2>
     <hr />
     <div>
-        <ng-container *ngIf="!isTestExam">
-            <button
-                id="generateStudentExamsButton"
-                class="btn btn-primary mt-1"
-                (click)="handleGenerateStudentExams()"
-                *ngIf="course?.isAtLeastInstructor"
-                [disabled]="isLoading || isExamStarted"
-            >
-                <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                <span jhiTranslate="artemisApp.studentExams.generateStudentExams">Generate student exams</span>
+        @if (!isTestExam) {
+            @if (course?.isAtLeastInstructor) {
+                <button id="generateStudentExamsButton" class="btn btn-primary mt-1" (click)="handleGenerateStudentExams()" [disabled]="isLoading || isExamStarted">
+                    @if (isLoading) {
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    }
+                    <span jhiTranslate="artemisApp.studentExams.generateStudentExams">Generate student exams</span>
+                </button>
+            }
+            @if (course?.isAtLeastInstructor) {
+                <button
+                    id="generateMissingStudentExamsButton"
+                    class="btn btn-primary mt-1"
+                    (click)="generateMissingStudentExams()"
+                    [disabled]="isLoading || !hasStudentsWithoutExam || isExamStarted"
+                >
+                    @if (isLoading) {
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    }
+                    <span jhiTranslate="artemisApp.studentExams.generateMissingStudentExams">Generate missing individual exams</span>
+                </button>
+            }
+            @if (course?.isAtLeastInstructor) {
+                <button id="startExercisesButton" class="btn btn-primary mt-1" (click)="startExercises()" [disabled]="isLoading || isExamStarted || exercisePreparationRunning">
+                    @if (isLoading) {
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    }
+                    <span jhiTranslate="artemisApp.studentExams.startExercises">Start Exercises</span>
+                </button>
+            }
+        }
+        @if (!localVCEnabled && course?.isAtLeastInstructor) {
+            <button id="handleUnlockAllRepositoriesButton" class="btn btn-danger mt-1" (click)="handleUnlockAllRepositories()" [disabled]="isLoading">
+                @if (isLoading) {
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                }
+                <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
+                <span jhiTranslate="artemisApp.studentExams.unlockAllRepositories">Unlock all repositories</span>
             </button>
-            <button
-                id="generateMissingStudentExamsButton"
-                class="btn btn-primary mt-1"
-                (click)="generateMissingStudentExams()"
-                *ngIf="course?.isAtLeastInstructor"
-                [disabled]="isLoading || !hasStudentsWithoutExam || isExamStarted"
-            >
-                <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                <span jhiTranslate="artemisApp.studentExams.generateMissingStudentExams">Generate missing individual exams</span>
+        }
+        @if (!localVCEnabled && course?.isAtLeastInstructor) {
+            <button id="lockAllRepositoriesButton" class="btn btn-danger mt-1" (click)="handleLockAllRepositories()" [disabled]="isLoading">
+                @if (isLoading) {
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                }
+                <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
+                <span jhiTranslate="artemisApp.studentExams.lockAllRepositories">Lock all repositories</span>
             </button>
-            <button
-                id="startExercisesButton"
-                class="btn btn-primary mt-1"
-                (click)="startExercises()"
-                *ngIf="course?.isAtLeastInstructor"
-                [disabled]="isLoading || isExamStarted || exercisePreparationRunning"
-            >
-                <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                <span jhiTranslate="artemisApp.studentExams.startExercises">Start Exercises</span>
-            </button>
-        </ng-container>
-        <button
-            id="handleUnlockAllRepositoriesButton"
-            class="btn btn-danger mt-1"
-            (click)="handleUnlockAllRepositories()"
-            *ngIf="!localVCEnabled && course?.isAtLeastInstructor"
-            [disabled]="isLoading"
-        >
-            <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
-            <span jhiTranslate="artemisApp.studentExams.unlockAllRepositories">Unlock all repositories</span>
-        </button>
-        <button
-            id="lockAllRepositoriesButton"
-            class="btn btn-danger mt-1"
-            (click)="handleLockAllRepositories()"
-            *ngIf="!localVCEnabled && course?.isAtLeastInstructor"
-            [disabled]="isLoading"
-        >
-            <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
-            <span jhiTranslate="artemisApp.studentExams.lockAllRepositories">Lock all repositories</span>
-        </button>
+        }
     </div>
     <div class="d-flex align-items-center gap-3 mt-2 mb-3 flex-wrap">
-        <jhi-student-exam-status *ngIf="!isLoading" [isTestExam]="isTestExam" [hasStudentsWithoutExam]="hasStudentsWithoutExam"></jhi-student-exam-status>
-        <div *ngIf="exercisePreparationStatus" class="d-flex flex-wrap flex-grow-1 align-items-center gap-1">
-            <div jhiTranslate="artemisApp.studentExams.exercisePreparationProgress.label">Exercise preparation progress:</div>
-            <div class="flex-grow-1 flex-basis-10 position-relative">
-                <div class="position-absolute w-100 h-100 top-0">
-                    <ngb-progressbar
-                        class=""
-                        [value]="exercisePreparationStatus.finished!"
-                        [max]="exercisePreparationStatus.overall ? exercisePreparationStatus.overall - exercisePreparationStatus.failed! : 0"
-                        [animated]="true"
-                        [height]="'2em'"
-                        type="success"
-                    ></ngb-progressbar>
-                </div>
-                <div class="d-flex justify-content-center gap-1 w-100 z-1 position-relative ms-2 me-2">
-                    <span
-                        >{{ exercisePreparationPercentage }}% {{ exercisePreparationStatus.finished }} / {{ exercisePreparationStatus.overall }}
-                        {{ 'artemisApp.studentExams.exercisePreparationProgress.exams' | artemisTranslate }}</span
-                    >
-                    <span *ngIf="exercisePreparationStatus.failed">
-                        ({{ exercisePreparationStatus.failed }} {{ 'artemisApp.studentExams.exercisePreparationProgress.failed' | artemisTranslate }})
-                    </span>
-                    |
-                    <span *ngIf="exercisePreparationStatus.participationCount">
-                        {{ exercisePreparationStatus.participationCount }} {{ 'artemisApp.studentExams.exercisePreparationProgress.participations' | artemisTranslate }} |
-                    </span>
-                    <span *ngIf="exercisePreparationEta"
-                        >{{ exercisePreparationEta }} {{ 'artemisApp.studentExams.exercisePreparationProgress.remaining' | artemisTranslate }}</span
-                    >
-                    <span *ngIf="!exercisePreparationEta && exercisePreparationPercentage === 100" jhiTranslate="artemisApp.studentExams.exercisePreparationProgress.finished"
-                        >Finished</span
-                    >
-                    <span *ngIf="!exercisePreparationEta && exercisePreparationPercentage < 100" jhiTranslate="artemisApp.studentExams.exercisePreparationProgress.noeta"
-                        >No ETA</span
-                    >
+        @if (!isLoading) {
+            <jhi-student-exam-status [isTestExam]="isTestExam" [hasStudentsWithoutExam]="hasStudentsWithoutExam"></jhi-student-exam-status>
+        }
+        @if (exercisePreparationStatus) {
+            <div class="d-flex flex-wrap flex-grow-1 align-items-center gap-1">
+                <div jhiTranslate="artemisApp.studentExams.exercisePreparationProgress.label">Exercise preparation progress:</div>
+                <div class="flex-grow-1 flex-basis-10 position-relative">
+                    <div class="position-absolute w-100 h-100 top-0">
+                        <ngb-progressbar
+                            class=""
+                            [value]="exercisePreparationStatus.finished!"
+                            [max]="exercisePreparationStatus.overall ? exercisePreparationStatus.overall - exercisePreparationStatus.failed! : 0"
+                            [animated]="true"
+                            [height]="'2em'"
+                            type="success"
+                        ></ngb-progressbar>
+                    </div>
+                    <div class="d-flex justify-content-center gap-1 w-100 z-1 position-relative ms-2 me-2">
+                        <span
+                            >{{ exercisePreparationPercentage }}% {{ exercisePreparationStatus.finished }} / {{ exercisePreparationStatus.overall }}
+                            {{ 'artemisApp.studentExams.exercisePreparationProgress.exams' | artemisTranslate }}</span
+                        >
+                        @if (exercisePreparationStatus.failed) {
+                            <span> ({{ exercisePreparationStatus.failed }} {{ 'artemisApp.studentExams.exercisePreparationProgress.failed' | artemisTranslate }}) </span>
+                        }
+                        |
+                        @if (exercisePreparationStatus.participationCount) {
+                            <span>
+                                {{ exercisePreparationStatus.participationCount }} {{ 'artemisApp.studentExams.exercisePreparationProgress.participations' | artemisTranslate }} |
+                            </span>
+                        }
+                        @if (exercisePreparationEta) {
+                            <span>{{ exercisePreparationEta }} {{ 'artemisApp.studentExams.exercisePreparationProgress.remaining' | artemisTranslate }}</span>
+                        }
+                        @if (!exercisePreparationEta && exercisePreparationPercentage === 100) {
+                            <span jhiTranslate="artemisApp.studentExams.exercisePreparationProgress.finished">Finished</span>
+                        }
+                        @if (!exercisePreparationEta && exercisePreparationPercentage < 100) {
+                            <span jhiTranslate="artemisApp.studentExams.exercisePreparationProgress.noeta">No ETA</span>
+                        }
+                    </div>
                 </div>
             </div>
-        </div>
+        }
     </div>
 </div>
 <jhi-data-table
@@ -139,7 +140,6 @@
                     </div>
                 </ng-template>
             </ngx-datatable-column>
-
             <ngx-datatable-column prop="user" [minWidth]="120" [width]="120">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper username" (click)="controls.onSort('user.name')">
@@ -148,27 +148,34 @@
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">
-                    <a *ngIf="isAdmin; else showName" routerLink="/admin/user-management/{{ value?.login }}">{{ value?.name }}</a>
-                    <ng-template #showName>
+                    @if (isAdmin) {
+                        <a routerLink="/admin/user-management/{{ value?.login }}">{{ value?.name }}</a>
+                    } @else {
                         {{ value?.name }}
-                    </ng-template>
+                    }
                 </ng-template>
             </ngx-datatable-column>
-
             <ngx-datatable-column prop="workingTime" [minWidth]="170" [width]="170">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('workingTime')">
-                        <span *ngIf="!isTestExam" class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.workingTime"> Working time </span>
-                        <span *ngIf="isTestExam" class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.usedWorkingTime"> Used Working time </span>
+                        @if (!isTestExam) {
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.workingTime"> Working time </span>
+                        }
+                        @if (isTestExam) {
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.usedWorkingTime"> Used Working time </span>
+                        }
                         <fa-icon [icon]="controls.iconForSortPropField('workingTime')"></fa-icon>
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                    <jhi-testexam-working-time *ngIf="isTestExam" [studentExam]="row"></jhi-testexam-working-time>
-                    <jhi-student-exam-working-time *ngIf="!isTestExam" [studentExam]="row"></jhi-student-exam-working-time>
+                    @if (isTestExam) {
+                        <jhi-testexam-working-time [studentExam]="row"></jhi-testexam-working-time>
+                    }
+                    @if (!isTestExam) {
+                        <jhi-student-exam-working-time [studentExam]="row"></jhi-student-exam-working-time>
+                    }
                 </ng-template>
             </ngx-datatable-column>
-
             <ngx-datatable-column prop="started" [minWidth]="80" [width]="80">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('started')">
@@ -180,7 +187,6 @@
                     <span>{{ (value ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
                 </ng-template>
             </ngx-datatable-column>
-
             <ngx-datatable-column prop="submitted" [minWidth]="80" [width]="80">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submitted')">
@@ -192,7 +198,6 @@
                     <span class="submitted">{{ (value ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
                 </ng-template>
             </ngx-datatable-column>
-
             <ngx-datatable-column prop="submissionDate" [minWidth]="130" [width]="130">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submissionDate')">
@@ -204,7 +209,6 @@
                     <span>{{ value | artemisDate }}</span>
                 </ng-template>
             </ngx-datatable-column>
-
             <ngx-datatable-column prop="numberOfExamSessions" [minWidth]="100" [width]="100">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('numberOfExamSessions')">
@@ -216,18 +220,19 @@
                     <span> {{ value }} </span>
                 </ng-template>
             </ngx-datatable-column>
-
             <ngx-datatable-column prop="" [minWidth]="100" [width]="100">
                 <ng-template ngx-datatable-cell-template let-value="value">
                     <div class="w-100 text-end">
-                        <div class="btn-group" *ngIf="course?.isAtLeastTutor">
-                            <a
-                                class="btn btn-primary btn-sm me-1 mb-1 view-submission"
-                                [routerLink]="['/course-management', courseId, 'exams', examId, 'student-exams', value?.id]"
-                            >
-                                <span jhiTranslate="artemisApp.studentExams.view">View</span>
-                            </a>
-                        </div>
+                        @if (course?.isAtLeastTutor) {
+                            <div class="btn-group">
+                                <a
+                                    class="btn btn-primary btn-sm me-1 mb-1 view-submission"
+                                    [routerLink]="['/course-management', courseId, 'exams', examId, 'student-exams', value?.id]"
+                                >
+                                    <span jhiTranslate="artemisApp.studentExams.view">View</span>
+                                </a>
+                            </div>
+                        }
                     </div>
                 </ng-template>
             </ngx-datatable-column>

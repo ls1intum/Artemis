@@ -117,6 +117,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     loadingExam: boolean;
     isAtLeastTutor?: boolean;
+    isAtLeastInstructor?: boolean;
 
     generateParticipationStatus: BehaviorSubject<GenerateParticipationStatus> = new BehaviorSubject('success');
 
@@ -539,9 +540,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (!course) {
             this.courseService.find(this.courseId).subscribe((courseResponse) => {
                 this.isAtLeastTutor = courseResponse.body?.isAtLeastTutor;
+                this.isAtLeastInstructor = courseResponse.body?.isAtLeastInstructor;
             });
         } else {
             this.isAtLeastTutor = course.isAtLeastTutor;
+            this.isAtLeastInstructor = course.isAtLeastInstructor;
         }
         this.loadingExam = false;
     }
@@ -801,19 +804,21 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 filter((submissionStateObj) => submissionStateObj != undefined),
                 distinctUntilChanged(),
                 tap((submissionStateObj) => {
-                    const exerciseForSubmission = this.studentExam.exercises?.find(
-                        (programmingExercise) =>
-                            programmingExercise.studentParticipations?.some((exerciseParticipation) => exerciseParticipation.id === submissionStateObj.participationId),
+                    const exerciseForSubmission = this.studentExam.exercises?.find((programmingExercise) =>
+                        programmingExercise.studentParticipations?.some((exerciseParticipation) => exerciseParticipation.id === submissionStateObj.participationId),
                     );
                     if (exerciseForSubmission?.studentParticipations && submissionStateObj.submission?.participation) {
-                        exerciseForSubmission.studentParticipations[0] = submissionStateObj.submission.participation;
+                        // Update the original object as the server only sends a DTO over the websocket
+                        // TODO: This is a dark hack to just make it work; the client assumes that ProgrammingSubmissionStateObj contains a submission
+                        // TODO: but this is not always the case (only on the initial REST fetch call). WS submission updates are stripped down DTOs only.
+                        const base = exerciseForSubmission.studentParticipations?.[0] || {};
+                        exerciseForSubmission.studentParticipations[0] = { ...base, ...submissionStateObj.submission.participation };
                     }
                 }),
             )
             .subscribe((programmingSubmissionObj) => {
-                const exerciseForSubmission = this.studentExam.exercises?.find(
-                    (programmingExercise) =>
-                        programmingExercise.studentParticipations?.some((exerciseParticipation) => exerciseParticipation.id === programmingSubmissionObj.participationId),
+                const exerciseForSubmission = this.studentExam.exercises?.find((programmingExercise) =>
+                    programmingExercise.studentParticipations?.some((exerciseParticipation) => exerciseParticipation.id === programmingSubmissionObj.participationId),
                 );
                 if (
                     exerciseForSubmission?.studentParticipations &&

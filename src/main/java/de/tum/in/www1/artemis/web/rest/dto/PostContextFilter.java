@@ -5,7 +5,6 @@ import javax.validation.constraints.NotBlank;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
-import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -14,11 +13,7 @@ public class PostContextFilter {
     @NotBlank
     private Long courseId;
 
-    private CourseWideContext[] courseWideContexts;
-
-    private Long[] exerciseIds;
-
-    private Long[] lectureIds;
+    private long[] courseWideChannelIds;
 
     private Long plagiarismCaseId;
 
@@ -53,28 +48,12 @@ public class PostContextFilter {
         this.courseId = courseId;
     }
 
-    public CourseWideContext[] getCourseWideContexts() {
-        return courseWideContexts;
+    public long[] getCourseWideChannelIds() {
+        return courseWideChannelIds;
     }
 
-    public void setCourseWideContexts(CourseWideContext[] courseWideContexts) {
-        this.courseWideContexts = courseWideContexts;
-    }
-
-    public Long[] getExerciseIds() {
-        return exerciseIds;
-    }
-
-    public void setExerciseIds(Long[] exerciseIds) {
-        this.exerciseIds = exerciseIds;
-    }
-
-    public Long[] getLectureIds() {
-        return lectureIds;
-    }
-
-    public void setLectureIds(Long[] lectureIds) {
-        this.lectureIds = lectureIds;
+    public void setCourseWideChannelIds(long[] courseWideChannelIds) {
+        this.courseWideChannelIds = courseWideChannelIds;
     }
 
     public Long getPlagiarismCaseId() {

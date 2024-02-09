@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, HostListener, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
@@ -145,6 +145,22 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             });
     }
 
+    @HostListener('document:keydown.control.s', ['$event'])
+    saveOnControlAndS(event: KeyboardEvent) {
+        if (!navigator.userAgent.includes('Mac')) {
+            event.preventDefault();
+            this.saveInstructions(event);
+        }
+    }
+
+    @HostListener('document:keydown.meta.s', ['$event'])
+    saveOnCommandAndS(event: KeyboardEvent) {
+        if (navigator.userAgent.includes('Mac')) {
+            event.preventDefault();
+            this.saveInstructions(event);
+        }
+    }
+
     updateProblemStatement(problemStatement: string) {
         if (this.exercise.problemStatement !== problemStatement) {
             this.exercise = { ...this.exercise, problemStatement };
@@ -174,7 +190,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                         if (testCases) {
                             const sortedTestCaseNames = testCases
                                 .filter((testCase) => testCase.active)
-                                .map((testCase) => testCase.testName)
+                                .map((testCase) => testCase.testName!)
                                 .sort();
                             return of(sortedTestCaseNames);
                         } else if (this.exercise.templateParticipation) {
@@ -201,8 +217,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     loadTestCasesFromTemplateParticipationResult = (templateParticipationId: number): Observable<Array<string | undefined>> => {
         // Fallback for exercises that don't have test cases yet.
         return this.programmingExerciseParticipationService.getLatestResultWithFeedback(templateParticipationId).pipe(
-            rxMap((result) => (!result || !result.feedbacks ? throwError(() => new Error('no result available')) : result)),
-            rxMap(({ feedbacks }: Result) => feedbacks!.map((feedback) => feedback.text).sort()),
+            rxMap((result) => (!result?.feedbacks ? throwError(() => new Error('no result available')) : result)),
+            // use the text (legacy case) or the name of the provided test case attribute
+            rxMap(({ feedbacks }: Result) => feedbacks!.map((feedback) => feedback.text ?? feedback.testCase?.testName).sort()),
             catchError(() => of([])),
         );
     };
@@ -225,15 +242,21 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     };
 
     private mapAnalysisToWarnings = (analysis: ProblemStatementAnalysis) => {
-        return Array.from(analysis.values()).flatMap(({ lineNumber, invalidTestCases }) => this.mapIssuesToAnnotations(lineNumber, invalidTestCases));
+        return Array.from(analysis.values()).flatMap(({ lineNumber, invalidTestCases, repeatedTestCases }) =>
+            this.mapIssuesToAnnotations(lineNumber, invalidTestCases, repeatedTestCases),
+        );
     };
 
-    private mapIssuesToAnnotations = (lineNumber: number, invalidTestCases?: string[]) => {
+    private mapIssuesToAnnotations = (lineNumber: number, invalidTestCases?: string[], repeatedTestCases?: string[]) => {
         const mapIssues = (issues: string[]) => ({ row: lineNumber, column: 0, text: ' - ' + issues.join('\n - '), type: 'warning' });
 
         const annotations = [];
         if (invalidTestCases) {
             annotations.push(mapIssues(invalidTestCases));
+        }
+
+        if (repeatedTestCases) {
+            annotations.push(mapIssues(repeatedTestCases));
         }
 
         return annotations;

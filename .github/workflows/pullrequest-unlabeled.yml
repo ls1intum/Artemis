@@ -14,7 +14,7 @@ jobs:
     steps:
       - name: Get badge id
         id: env
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             const labelName = context.payload.label.name;

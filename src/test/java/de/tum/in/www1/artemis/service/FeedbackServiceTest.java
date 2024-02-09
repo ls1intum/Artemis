@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -10,6 +12,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.LongFeedbackText;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.LongFeedbackTextRepository;
 
 class FeedbackServiceTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -18,6 +21,9 @@ class FeedbackServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private FeedbackRepository feedbackRepository;
+
+    @Autowired
+    private LongFeedbackTextRepository longFeedbackTextRepository;
 
     @Test
     void copyWithLongFeedback() {
@@ -50,6 +56,7 @@ class FeedbackServiceTest extends AbstractSpringIntegrationIndependentTest {
         final long feedbackId = feedbackRepository.save(feedback).getId();
         // load from database again to check that it works even with lazy loading
         final Feedback freshlyLoadedFeedback = feedbackRepository.findById(feedbackId).orElseThrow();
+        assertThat(freshlyLoadedFeedback.getHasLongFeedbackText()).isTrue();
 
         final Feedback copiedFeedback = feedbackService.copyFeedback(freshlyLoadedFeedback);
         assertThat(copiedFeedback.getLongFeedback()).isNotEmpty();
@@ -58,5 +65,8 @@ class FeedbackServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         final Feedback newSavedFeedback = feedbackRepository.save(copiedFeedback);
         assertThat(newSavedFeedback.getId()).isNotEqualTo(feedbackId);
+
+        final Optional<LongFeedbackText> savedNewLongFeedback = longFeedbackTextRepository.findByFeedbackId(newSavedFeedback.getId());
+        assertThat(savedNewLongFeedback).isPresent();
     }
 }

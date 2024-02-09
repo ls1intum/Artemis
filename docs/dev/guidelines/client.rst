@@ -9,9 +9,16 @@ The Artemis client is an Angular project. Keep https://angular.io/guide/stylegui
 
 Some general aspects:
 
-* Never invoke methods from the html template. The automatic change tracking in Angular will kill the application performance
 * The Artemis client uses lazy loading to keep the initial bundle size below 2 MB.
 * Code quality and test coverage are important. Try to reuse code and avoid code duplication. Write meaningful tests!
+
+
+.. WARNING::
+    **Never invoke methods from the html template. The automatic change tracking in Angular will kill the application performance!**
+
+    This also includes getter functions. The only exception is the use of `signals <https://angular.io/guide/signals>`_.
+
+    If you need more information/examples or methods to avoid function calls, have a look at this `article <https://dev.to/sandrocagara/angular-avoid-function-calls-in-templates-1mfa>`_.
 
 1. Names
 ========
@@ -35,8 +42,45 @@ Some general aspects:
 
 1. Do not export types/functions unless you need to share it across multiple components.
 2. Do not introduce new types/values to the global namespace.
-3. Shared types should be defined in 'types.ts'.
+3. Shared types/interfaces should be defined in 'types.ts'.
 4. Within a file, type definitions should come first.
+5. Interfaces and types offer almost the same functionality. To ensure consistency, choose ``interface`` over ``type`` whenever possible.
+
+    .. code-block:: ts
+
+        // Dont do
+        type AngularLink = {
+            text: string;
+            routerLink: (string | number) [];
+        }
+
+        // Do
+        interface AngularLink {
+            text: string;
+            routerLink: (string | number) [];
+        }
+
+        // And this is also allowed (because interface is not possible here)
+        type RouterLinkPart = string | number;
+
+
+
+6. Use strict typing to avoid type errors: Do not use ``any``.
+
+7. Do not use anonymous data structures.
+
+    .. code-block:: ts
+
+        interface AngularLink {
+            text: string;
+            routerLink: (string | number) [];
+        }
+
+        // Do not do this because the type error will not be recognized during compile time.
+        const link = { text: 'I am a Link', routerLink: 4 } as AngularLink;
+
+        // Instead do this (it will throw a type error during compilation because '4' is not an array of strings)
+        const link: AngularLink = { text: 'I am a Link', routerLink: '4' };
 
 4. ``null`` and ``undefined``
 =============================

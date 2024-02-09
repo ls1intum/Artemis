@@ -1,4 +1,11 @@
-import { average, round, roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings, stringifyIgnoringFields } from 'app/shared/util/utils';
+import {
+    average,
+    getAsMutableObject,
+    round,
+    roundScorePercentSpecifiedByCourseSettings,
+    roundValueSpecifiedByCourseSettings,
+    stringifyIgnoringFields,
+} from 'app/shared/util/utils';
 
 describe('Round', () => {
     it('Decimal length', () => {
@@ -76,5 +83,20 @@ describe('average', () => {
         expect(average([10])).toBe(10);
         expect(average([1, 3])).toBe(2);
         expect(average([1, 5, 4, 8])).toBe(4.5);
+    });
+});
+
+describe('getAsMutableObject', () => {
+    it('should return immutable object as mutable object', () => {
+        const immutableObject = Object.freeze({
+            name: 'Jane',
+            familyName: 'Doe',
+            age: 26,
+        });
+
+        const mutableObject = getAsMutableObject(immutableObject);
+        mutableObject.name = 'Kelly';
+        mutableObject.familyName = 'Wilkins';
+        mutableObject.age = 42;
     });
 });

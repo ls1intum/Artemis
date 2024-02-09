@@ -16,6 +16,7 @@ export class ConfirmAutofocusButtonComponent {
     @Input() isLoading = false;
 
     @Input() confirmationTitle: string;
+    @Input() confirmationTitleTranslationParams?: Record<string, string>;
     @Input() confirmationText: string;
     @Input() translateText?: boolean;
     @Input() textIsMarkdown?: boolean;
@@ -42,6 +43,7 @@ export class ConfirmAutofocusButtonComponent {
             modalRef.componentInstance.textIsMarkdown = false;
         }
         modalRef.componentInstance.title = this.confirmationTitle;
+        modalRef.componentInstance.titleTranslationParams = this.confirmationTitleTranslationParams;
         if (this.translateText !== undefined) {
             modalRef.componentInstance.translateText = this.translateText;
         } else {

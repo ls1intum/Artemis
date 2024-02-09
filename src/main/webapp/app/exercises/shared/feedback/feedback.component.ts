@@ -25,7 +25,7 @@ import dayjs from 'dayjs/esm';
 import { FeedbackItemService, FeedbackItemServiceImpl } from 'app/exercises/shared/feedback/item/feedback-item-service';
 import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/item/programming-feedback-item.service';
 import { FeedbackService } from 'app/exercises/shared/feedback/feedback.service';
-import { evaluateTemplateStatus, isOnlyCompilationTested, resultIsPreliminary } from '../result/result.utils';
+import { evaluateTemplateStatus, isOnlyCompilationTested, isStudentParticipation, resultIsPreliminary } from '../result/result.utils';
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 import { ChartData } from 'app/exercises/shared/feedback/chart/feedback-chart-data';
 import { FeedbackChartService } from 'app/exercises/shared/feedback/chart/feedback-chart.service';
@@ -48,8 +48,12 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
     @Input() exercise?: Exercise;
     @Input() result: Result;
-    // Specify the feedback.text values that should be shown, all other values will not be visible.
-    @Input() feedbackFilter: string[];
+
+    /**
+     * Specify the feedback.testCase.id values that should be shown, all other values will not be visible.
+     * Used to show only feedback related to a specific task.
+     */
+    @Input() feedbackFilter: number[];
     @Input() showScoreChart = false;
     @Input() exerciseType: ExerciseType;
     /**
@@ -230,7 +234,9 @@ export class FeedbackComponent implements OnInit, OnChanges {
                         this.updateChart(this.feedbackItemNodes);
                     }
 
-                    this.badge = ResultService.evaluateBadge(this.result.participation!, this.result);
+                    if (isStudentParticipation(this.result)) {
+                        this.badge = ResultService.evaluateBadge(this.result.participation!, this.result);
+                    }
 
                     return of(null);
                 }),

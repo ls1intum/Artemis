@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 @Service
 public class ExerciseDeletionService {
 
-    private final Logger log = LoggerFactory.getLogger(ExerciseDeletionService.class);
+    private static final Logger log = LoggerFactory.getLogger(ExerciseDeletionService.class);
 
     private final ParticipationService participationService;
 
@@ -129,8 +129,8 @@ public class ExerciseDeletionService {
         log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
 
         long start = System.nanoTime();
-        Channel exreciseChannel = channelRepository.findChannelByExerciseId(exerciseId);
-        channelService.deleteChannel(exreciseChannel);
+        Channel exerciseChannel = channelRepository.findChannelByExerciseId(exerciseId);
+        channelService.deleteChannel(exerciseChannel);
         log.info("Deleting the channel took {}", TimeLogUtil.formatDurationFrom(start));
 
         if (exercise instanceof ModelingExercise modelingExercise) {

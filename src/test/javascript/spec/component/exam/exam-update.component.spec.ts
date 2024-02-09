@@ -16,7 +16,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam.model';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
@@ -36,12 +35,14 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { User } from 'app/core/user/user.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
+import { UMLDiagramType } from '@ls1intum/apollon';
+import { TextExercise } from 'app/entities/text-exercise.model';
 
 @Component({
     template: '',
@@ -72,15 +73,7 @@ describe('ExamUpdateComponent', () => {
     describe('create and edit exams', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [
-                    RouterTestingModule.withRoutes(routes),
-                    MockModule(NgbModule),
-                    TranslateModule.forRoot(),
-                    FontAwesomeTestingModule,
-                    FormsModule,
-                    HttpClientModule,
-                    ArtemisExamModePickerModule,
-                ],
+                imports: [RouterTestingModule.withRoutes(routes), MockModule(NgbModule), TranslateModule.forRoot(), FormsModule, HttpClientModule, ArtemisExamModePickerModule],
                 declarations: [
                     ExamUpdateComponent,
                     MockComponent(FormDateTimePickerComponent),
@@ -449,7 +442,10 @@ describe('ExamUpdateComponent', () => {
         const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup1);
         modelingExercise.id = 1;
         modelingExercise.title = 'ModelingExercise';
-        exerciseGroup1.exercises = [modelingExercise];
+        const textExercise = new TextExercise(undefined, exerciseGroup1);
+        textExercise.id = 2;
+        textExercise.title = 'TextExercise';
+        exerciseGroup1.exercises = [modelingExercise, textExercise];
 
         const timeNow = dayjs();
 
@@ -492,15 +488,7 @@ describe('ExamUpdateComponent', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [
-                    RouterTestingModule.withRoutes(routes),
-                    MockModule(NgbModule),
-                    TranslateModule.forRoot(),
-                    FontAwesomeTestingModule,
-                    FormsModule,
-                    HttpClientModule,
-                    ArtemisExamModePickerModule,
-                ],
+                imports: [RouterTestingModule.withRoutes(routes), MockModule(NgbModule), TranslateModule.forRoot(), FormsModule, HttpClientModule, ArtemisExamModePickerModule],
                 declarations: [
                     ExamUpdateComponent,
                     ExamExerciseImportComponent,
@@ -605,6 +593,35 @@ describe('ExamUpdateComponent', () => {
 
             expect(importSpy).toHaveBeenCalledOnce();
             expect(importSpy).toHaveBeenCalledWith(1, expectedExam);
+            expect(navigateSpy).toHaveBeenCalledOnce();
+            expect(navigateSpy).toHaveBeenCalledWith(['course-management', course.id, 'exams', examForImport.id]);
+            expect(alertSpy).not.toHaveBeenCalled();
+        });
+
+        it('should perform import of an exam with only selected exercises successfully', () => {
+            fixture.detectChanges();
+            const expectedExam = prepareExamForImport(examForImport);
+            expectedExam.course = course;
+            // Only import one of two exercises
+            component.examExerciseImportComponent.selectedExercises = new Map([[exerciseGroup1, new Set([textExercise])]]);
+            const alertSpy = jest.spyOn(alertService, 'error');
+            const navigateSpy = jest.spyOn(router, 'navigate');
+            const importSpy = jest.spyOn(examManagementService, 'import').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        status: 200,
+                        body: examForImport,
+                    }),
+                ),
+            );
+
+            fixture.detectChanges();
+            component.save();
+
+            expect(importSpy).toHaveBeenCalledOnce();
+            expect(importSpy).toHaveBeenCalledWith(1, expectedExam);
+            // We expect to have imported only one exercise group and only one of two exercises
+            expect(expectedExam.exerciseGroups?.at(0)?.exercises).toHaveLength(1);
             expect(navigateSpy).toHaveBeenCalledOnce();
             expect(navigateSpy).toHaveBeenCalledWith(['course-management', course.id, 'exams', examForImport.id]);
             expect(alertSpy).not.toHaveBeenCalled();

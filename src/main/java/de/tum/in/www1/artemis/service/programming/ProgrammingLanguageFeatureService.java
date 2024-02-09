@@ -4,16 +4,18 @@ import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.actuate.info.Info;
+import org.springframework.boot.actuate.info.InfoContributor;
 
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 
 /**
  * This service provides information about features the different ProgrammingLanguages support.
- * The configuration is also available in the client as the {@link ProgrammingLanguageFeatureContributor} exposes them.
+ * The configuration is also available in the client as this class exposes them.
  */
-public abstract class ProgrammingLanguageFeatureService {
+public abstract class ProgrammingLanguageFeatureService implements InfoContributor {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingLanguageFeatureService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingLanguageFeatureService.class);
 
     protected final Map<ProgrammingLanguage, ProgrammingLanguageFeature> programmingLanguageFeatures = new HashMap<>();
 
@@ -34,11 +36,12 @@ public abstract class ProgrammingLanguageFeatureService {
         return programmingLanguageFeature;
     }
 
-    public Set<ProgrammingLanguage> getSupportedLanguages() {
-        return programmingLanguageFeatures.keySet();
-    }
-
     public Map<ProgrammingLanguage, ProgrammingLanguageFeature> getProgrammingLanguageFeatures() {
         return programmingLanguageFeatures;
+    }
+
+    @Override
+    public void contribute(Info.Builder builder) {
+        builder.withDetail("programmingLanguageFeatures", getProgrammingLanguageFeatures().values());
     }
 }

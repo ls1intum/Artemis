@@ -20,10 +20,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import de.tum.in.www1.artemis.domain.ConversationWebSocketRecipientSummary;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Organization;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -77,6 +74,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByLogin(String login);
 
+    @EntityGraph(type = LOAD, attributePaths = { "authorities" })
+    Optional<User> findOneWithAuthoritiesByLogin(String login);
+
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByEmail(String email);
 
@@ -122,9 +122,13 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     Set<User> findAllInGroup(@Param("groupName") String groupName);
 
     @Query("""
-            SELECT NEW de.tum.in.www1.artemis.domain.ConversationWebSocketRecipientSummary (
+            SELECT NEW de.tum.in.www1.artemis.domain.ConversationNotificationRecipientSummary (
                 user.id,
                 user.login,
+                user.firstName,
+                user.lastName,
+                user.langKey,
+                user.email,
                 CASE WHEN cp.isHidden = true THEN true ELSE false END,
                 CASE WHEN ug.group = :teachingAssistantGroupName OR ug.group = :editorGroupName OR ug.group = :instructorGroupName THEN true ELSE false END
             )
@@ -133,7 +137,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             LEFT JOIN ConversationParticipant cp ON cp.user.id = user.id AND cp.conversation.id = :conversationId
             WHERE user.isDeleted = false AND (ug.group = :studentGroupName OR ug.group = :teachingAssistantGroupName OR ug.group = :editorGroupName OR ug.group = :instructorGroupName)
             """)
-    Set<ConversationWebSocketRecipientSummary> findAllWebSocketRecipientsInCourseForConversation(@Param("conversationId") Long conversationId,
+    Set<ConversationNotificationRecipientSummary> findAllWebSocketRecipientsInCourseForConversation(@Param("conversationId") Long conversationId,
             @Param("studentGroupName") String studentGroupName, @Param("teachingAssistantGroupName") String teachingAssistantGroupName,
             @Param("editorGroupName") String editorGroupName, @Param("instructorGroupName") String instructorGroupName);
 
@@ -499,6 +503,17 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     }
 
     /**
+     * Get user with authorities of currently logged-in user
+     *
+     * @return currently logged-in user
+     */
+    default User getUserWithAuthorities() {
+        String currentUserLogin = getCurrentUserLogin();
+        Optional<User> user = findOneWithAuthoritiesByLogin(currentUserLogin);
+        return unwrapOptionalUser(user, currentUserLogin);
+    }
+
+    /**
      * Get user with user groups, authorities and organizations of currently logged-in user
      *
      * @return currently logged-in user
@@ -545,6 +560,17 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @NotNull
     default User getUserWithGroupsAndAuthorities(@NotNull String username) {
         Optional<User> user = findOneWithGroupsAndAuthoritiesByLogin(username);
+        return unwrapOptionalUser(user, username);
+    }
+
+    /**
+     * Get user with authorities with the username (i.e. user.getLogin() or principal.getName())
+     *
+     * @param username the username of the user who should be retrieved from the database
+     * @return the user that belongs to the given principal with eagerly loaded authorities
+     */
+    default User getUserWithAuthorities(@NotNull String username) {
+        Optional<User> user = findOneWithAuthoritiesByLogin(username);
         return unwrapOptionalUser(user, username);
     }
 

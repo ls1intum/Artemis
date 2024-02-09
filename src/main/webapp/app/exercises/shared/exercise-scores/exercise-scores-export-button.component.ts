@@ -1,5 +1,5 @@
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings, scrollToTopOfPage } from 'app/shared/util/utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
@@ -10,7 +10,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
-import { ExportToCsv } from 'export-to-csv';
+import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { TestCaseResult } from 'app/entities/test-case-result.model';
 
 @Component({
@@ -59,7 +59,7 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
             const results: ResultWithPointsPerGradingCriterion[] = data.body || [];
             if (results.length === 0) {
                 this.alertService.warning(`artemisApp.exercise.export.results.emptyError`, { exercise: exercise.title });
-                window.scroll(0, 0);
+                scrollToTopOfPage();
                 return;
             }
             const isTeamExercise = !!(results[0].result.participation! as StudentParticipation).team;
@@ -102,18 +102,20 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
     private static exportAsCsv(filename: string, keys: string[], rows: ExerciseScoresRow[], fieldSeparator = ';') {
         const options = {
             fieldSeparator,
-            quoteStrings: '"',
+            quoteStrings: true,
+            quoteCharacter: '"',
             decimalSeparator: 'locale',
             showLabels: true,
             showTitle: false,
             filename,
             useTextFile: false,
             useBom: true,
-            headers: keys,
+            columnHeaders: keys,
         };
 
-        const csvExporter = new ExportToCsv(options);
-        csvExporter.generateCsv(rows); // includes download
+        const csvExportConfig = mkConfig(options);
+        const csvData = generateCsv(csvExportConfig)(rows);
+        download(csvExportConfig)(csvData);
     }
 
     /**
@@ -229,7 +231,7 @@ class ExerciseScoresRowBuilder {
      */
     private setProgrammingExerciseInformation() {
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            const repoLink = (this.participation as ProgrammingExerciseStudentParticipation).repositoryUrl;
+            const repoLink = (this.participation as ProgrammingExerciseStudentParticipation).repositoryUri;
             this.set('Repo Link', repoLink);
         }
     }

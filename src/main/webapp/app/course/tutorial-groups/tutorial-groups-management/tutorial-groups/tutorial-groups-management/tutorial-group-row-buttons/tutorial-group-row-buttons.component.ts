@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { faCalendarAlt, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarAlt, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { EMPTY, Subject, from } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
@@ -31,7 +31,7 @@ export class TutorialGroupRowButtonsComponent implements OnDestroy {
 
     faWrench = faWrench;
     faUsers = faUsers;
-    faTimes = faTimes;
+    faTrash = faTrash;
     faCalendar = faCalendarAlt;
 
     public constructor(

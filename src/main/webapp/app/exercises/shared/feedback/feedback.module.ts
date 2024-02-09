@@ -9,10 +9,19 @@ import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.compon
 import { FeedbackTextComponent } from 'app/exercises/shared/feedback/text/feedback-text.component';
 import { StandaloneFeedbackComponent } from './standalone-feedback/standalone-feedback.component';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercises/shared/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
+import { FeedbackSuggestionsPendingConfirmationDialogComponent } from 'app/exercises/shared/feedback/feedback-suggestions-pending-confirmation-dialog/feedback-suggestions-pending-confirmation-dialog.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisProgrammingExerciseActionsModule, ArtemisSharedComponentModule, BarChartModule],
-    declarations: [FeedbackCollapseComponent, FeedbackNodeComponent, FeedbackComponent, FeedbackTextComponent, StandaloneFeedbackComponent, FeedbackSuggestionBadgeComponent],
-    exports: [FeedbackComponent, FeedbackSuggestionBadgeComponent],
+    declarations: [
+        FeedbackCollapseComponent,
+        FeedbackNodeComponent,
+        FeedbackComponent,
+        FeedbackTextComponent,
+        StandaloneFeedbackComponent,
+        FeedbackSuggestionBadgeComponent,
+        FeedbackSuggestionsPendingConfirmationDialogComponent,
+    ],
+    exports: [FeedbackComponent, FeedbackSuggestionBadgeComponent, FeedbackSuggestionsPendingConfirmationDialogComponent],
 })
 export class ArtemisFeedbackModule {}

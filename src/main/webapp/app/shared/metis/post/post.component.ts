@@ -3,14 +3,15 @@ import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ContextInformation, CourseWideContext, PageType } from '../metis.util';
+import { ContextInformation, PageType, RouteComponents } from '../metis.util';
 import { faBullhorn, faCheckSquare } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
-import { isMessagingEnabled } from 'app/entities/course.model';
+import { isMessagingEnabled, isMessagingOrCommunicationEnabled } from 'app/entities/course.model';
 import { Router } from '@angular/router';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 
 @Component({
     selector: 'jhi-post',
@@ -29,10 +30,12 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     @ViewChild('postFooter') postFooterComponent: PostFooterComponent;
 
     displayInlineInput = false;
+    routerLink: RouteComponents;
+    queryParams = {};
+    showAnnouncementIcon = false;
 
     pageType: PageType;
     contextInformation: ContextInformation;
-    readonly CourseWideContext = CourseWideContext;
     readonly PageType = PageType;
 
     // Icons
@@ -40,7 +43,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     faCheckSquare = faCheckSquare;
 
     constructor(
-        public metisService: MetisService,
+        private metisService: MetisService,
         protected changeDetector: ChangeDetectorRef,
         private oneToOneChatService: OneToOneChatService,
         private metisConversationService: MetisConversationService,
@@ -63,6 +66,9 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
      */
     ngOnChanges() {
         this.contextInformation = this.metisService.getContextInformation(this.posting);
+        this.routerLink = this.metisService.getLinkForPost();
+        this.queryParams = this.metisService.getQueryParamsForPost(this.posting);
+        this.showAnnouncementIcon = (getAsChannelDto(this.posting.conversation)?.isAnnouncementChannel && !this.isCourseMessagesPage) ?? false;
     }
 
     /**
@@ -117,6 +123,26 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
                             conversationId: res.body!.id,
                         },
                     });
+                });
+            }
+        }
+    }
+
+    /**
+     * Navigate to the referenced channel
+     *
+     * @param channelId id of the referenced channel
+     */
+    onChannelReferenceClicked(channelId: number) {
+        const course = this.metisService.getCourse();
+        if (isMessagingOrCommunicationEnabled(course)) {
+            if (this.isCourseMessagesPage) {
+                this.metisConversationService.setActiveConversation(channelId);
+            } else {
+                this.router.navigate(['courses', course.id, 'messages'], {
+                    queryParams: {
+                        conversationId: channelId,
+                    },
                 });
             }
         }

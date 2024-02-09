@@ -2,8 +2,7 @@ import { CourseConversationsComponent } from 'app/overview/course-conversations/
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from './helpers/conversationExampleModels';
-import { AlertService } from 'app/core/util/alert.service';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { LoadingIndicatorContainerStubComponent } from '../../../helpers/stubs/loading-indicator-container-stub.component';
 import { ConversationSelectionSidebarComponent } from 'app/overview/course-conversations/layout/conversation-selection-sidebar/conversation-selection-sidebar.component';
@@ -11,9 +10,7 @@ import { ConversationHeaderComponent } from 'app/overview/course-conversations/l
 import { ConversationMessagesComponent } from 'app/overview/course-conversations/layout/conversation-messages/conversation-messages.component';
 import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { Course } from 'app/entities/course.model';
-import { EMPTY } from 'rxjs';
 import { BehaviorSubject } from 'rxjs';
-import { GroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -21,6 +18,8 @@ import { Post } from 'app/entities/metis/post.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { CourseConversationsCodeOfConductComponent } from 'app/overview/course-conversations/code-of-conduct/course-conversations-code-of-conduct.component';
+import { MockMetisConversationService } from '../../../helpers/mocks/service/mock-metis-conversation.service';
+import { MockMetisService } from '../../../helpers/mocks/service/mock-metis-service.service';
 
 const examples: (ConversationDto | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -28,17 +27,15 @@ examples.forEach((activeConversation) => {
     describe('CourseConversationComponent with ' + (activeConversation?.type || 'no active conversation'), () => {
         let component: CourseConversationsComponent;
         let fixture: ComponentFixture<CourseConversationsComponent>;
-        let metisConversationService: MetisConversationService;
-        let metisService: MetisService;
         const course = { id: 1 } as Course;
         let queryParamsSubject: BehaviorSubject<Params>;
         const router = new MockRouter();
-        let postsSubject = new BehaviorSubject<Post[]>([]);
+        let postsSubject: BehaviorSubject<Post[]>;
+        let acceptCodeOfConductSpy: jest.SpyInstance;
+        let setActiveConversationSpy: jest.SpyInstance;
 
         beforeEach(waitForAsync(() => {
             queryParamsSubject = new BehaviorSubject(convertToParamMap({}));
-            metisConversationService = {} as MetisConversationService;
-            metisService = {} as MetisService;
             TestBed.configureTestingModule({
                 declarations: [
                     CourseConversationsComponent,
@@ -52,9 +49,6 @@ examples.forEach((activeConversation) => {
                     MockPipe(HtmlForMarkdownPipe),
                 ],
                 providers: [
-                    MockProvider(AlertService),
-                    MockProvider(MetisConversationService),
-                    MockProvider(MetisService),
                     { provide: Router, useValue: router },
                     {
                         provide: ActivatedRoute,
@@ -72,63 +66,34 @@ examples.forEach((activeConversation) => {
                         },
                     },
                 ],
-            });
+            }).compileComponents();
 
-            fixture = TestBed.overrideComponent(CourseConversationsComponent, {
+            const metisConversationService = new MockMetisConversationService();
+            const metisService = new MockMetisService();
+
+            TestBed.overrideComponent(CourseConversationsComponent, {
                 set: {
                     providers: [
-                        {
-                            provide: MetisConversationService,
-                            useValue: metisConversationService,
-                        },
-                        {
-                            provide: MetisService,
-                            useValue: metisService,
-                        },
+                        { provide: MetisConversationService, useValue: metisConversationService },
+                        { provide: MetisService, useValue: metisService },
                     ],
                 },
-            }).createComponent(CourseConversationsComponent);
-            postsSubject = new BehaviorSubject([]);
-            Object.defineProperty(metisConversationService, 'setActiveConversation', { value: jest.fn(), configurable: true, writable: true });
-            Object.defineProperty(metisConversationService, 'course', { get: () => course });
-            Object.defineProperty(metisConversationService, 'activeConversation$', { get: () => new BehaviorSubject(activeConversation).asObservable() });
-            Object.defineProperty(metisConversationService, 'forceRefresh', { value: () => EMPTY });
-            Object.defineProperty(metisConversationService, 'setUpConversationService', { value: () => EMPTY });
-            Object.defineProperty(metisConversationService, 'isServiceSetup$', {
-                get: () => new BehaviorSubject(true).asObservable(),
             });
-            Object.defineProperty(metisConversationService, 'conversationsOfUser$', {
-                get: () => new BehaviorSubject([new GroupChatDto()]).asObservable(),
-            });
-            Object.defineProperty(metisConversationService, 'isLoading$', {
-                get: () => new BehaviorSubject(false).asObservable(),
-            });
-            Object.defineProperty(metisConversationService, 'isCodeOfConductAccepted$', {
-                get: () => new BehaviorSubject(true).asObservable(),
-            });
-            Object.defineProperty(metisConversationService, 'isCodeOfConductPresented$', {
-                get: () => new BehaviorSubject(false).asObservable(),
-            });
-            Object.defineProperty(metisConversationService, 'checkIsCodeOfConductAccepted', {
-                get: () => {
-                    return () => {};
-                },
-            });
-            Object.defineProperty(metisConversationService, 'acceptCodeOfConduct', {
-                get: () => {
-                    return () => {};
-                },
-            });
-            Object.defineProperty(metisService, 'posts', {
-                get: () => postsSubject.asObservable(),
-            });
-            Object.defineProperty(metisService, 'setPageType', { value: jest.fn() });
-            Object.defineProperty(metisService, 'setCourse', { value: jest.fn() });
+
+            fixture = TestBed.createComponent(CourseConversationsComponent);
             component = fixture.componentInstance;
+
+            postsSubject = new BehaviorSubject([]);
+            jest.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
+            jest.spyOn(metisConversationService, 'activeConversation$', 'get').mockReturnValue(new BehaviorSubject(activeConversation).asObservable());
+            setActiveConversationSpy = jest.spyOn(metisConversationService, 'setActiveConversation');
+            acceptCodeOfConductSpy = jest.spyOn(metisConversationService, 'acceptCodeOfConduct');
+
+            jest.spyOn(metisService, 'posts', 'get').mockReturnValue(postsSubject.asObservable());
         }));
 
-        it('should create', () => {
-            expect(component).toBeTruthy();
+        afterEach(() => {
+            jest.resetAllMocks();
         });
 
         it('should have service set up', () => {
@@ -141,8 +106,7 @@ examples.forEach((activeConversation) => {
 
         it('should update thread in post', fakeAsync(() => {
             fixture.detectChanges();
-            const originalPost = { id: 1, content: 'loremIpsum' } as Post;
-            component.postInThread = originalPost;
+            component.postInThread = { id: 1, content: 'loremIpsum' } as Post;
             fixture.detectChanges();
             const updatedPost = { id: 1, content: 'updatedContent' } as Post;
             postsSubject.next([updatedPost]);
@@ -151,12 +115,11 @@ examples.forEach((activeConversation) => {
         }));
 
         it('should set active conversation depending on the query param', fakeAsync(() => {
-            const setActiveConversationByIdSpy = jest.spyOn(metisConversationService, 'setActiveConversation');
             queryParamsSubject.next({ conversationId: '12' });
             // mock setActiveConversationById method
             fixture.detectChanges();
             tick();
-            expect(setActiveConversationByIdSpy).toHaveBeenCalledWith(12);
+            expect(setActiveConversationSpy).toHaveBeenCalledWith(12);
         }));
 
         it('should set the query params when an active conversation is selected', () => {
@@ -166,16 +129,14 @@ examples.forEach((activeConversation) => {
             expect(navigateSpy).toHaveBeenCalledWith([], {
                 relativeTo: activatedRoute,
                 queryParams: { conversationId: activeConversation?.id },
-                queryParamsHandling: 'merge',
                 replaceUrl: true,
             });
         });
 
         it('should accept code of conduct', () => {
-            const metisSpy = jest.spyOn(metisConversationService, 'acceptCodeOfConduct');
             fixture.detectChanges();
             component.acceptCodeOfConduct();
-            expect(metisSpy).toHaveBeenCalledOnce();
+            expect(acceptCodeOfConductSpy).toHaveBeenCalledOnce();
         });
     });
 });

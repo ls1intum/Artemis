@@ -2,6 +2,8 @@
     "artemisApp": {
         "studentDashboard": {
             "title": "Deine aktuellen Kurse",
+            "recentlyAccessed": "Zuletzt besuchte Kurse",
+            "otherCourses": "Andere Kurse",
             "exerciseTitle": "Aktuelle aktive Übung von \"{{ course }}\"",
             "exerciseTitleWithoutDueDate": "Aktuelle Übung von \"{{ course }}\":",
             "examTitle": "Aktuelle Prüfung von \"{{ course }}\":",
@@ -19,7 +21,7 @@
                 "noCourse": "Keine Kurse zur Einschreibung verfügbar",
                 "courseLoading": "Kurs wird geladen...",
                 "coursesLoading": "Kurse werden geladen...",
-                "courseSignupConfirmationTitle": "Bestätigung der Kurseinschreibung"
+                "courseEnrollmentConfirmationTitle": "Bestätigung der Einschreibung für Kurs \"{{ courseName }}\""
             },
             "course": "Kurs"
         },
@@ -28,6 +30,7 @@
             "showMore": "Mehr anzeigen",
             "showLess": "Weniger anzeigen",
             "manage": "Verwalten",
+            "studentView": "Studentenansicht",
             "menu": {
                 "exercises": "Aufgaben",
                 "statistics": "Statistiken",

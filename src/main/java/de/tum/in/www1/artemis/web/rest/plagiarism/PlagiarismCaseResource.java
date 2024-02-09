@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest.plagiarism;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismDetectionConfig;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -20,8 +22,8 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService;
-import de.tum.in.www1.artemis.web.rest.dto.PlagiarismCaseInfoDTO;
-import de.tum.in.www1.artemis.web.rest.dto.PlagiarismVerdictDTO;
+import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismCaseInfoDTO;
+import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismVerdictDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
@@ -44,7 +46,7 @@ public class PlagiarismCaseResource {
 
     private final PlagiarismCaseRepository plagiarismCaseRepository;
 
-    private final Logger log = LoggerFactory.getLogger(PlagiarismCaseResource.class);
+    private static final Logger log = LoggerFactory.getLogger(PlagiarismCaseResource.class);
 
     public PlagiarismCaseResource(CourseRepository courseRepository, AuthorizationCheckService authenticationCheckService, UserRepository userRepository,
             PlagiarismCaseService plagiarismCaseService, PlagiarismCaseRepository plagiarismCaseRepository) {
@@ -189,7 +191,7 @@ public class PlagiarismCaseResource {
                 // Note: we only return the ID and verdict to tell the client there is a confirmed plagiarism case with student notification (post) and to support navigating to the
                 // detail page
                 // all other information might be irrelevant or sensitive and could lead to longer loading times
-                var plagiarismCaseInfoDTO = new PlagiarismCaseInfoDTO(plagiarismCase.getId(), plagiarismCase.getVerdict());
+                var plagiarismCaseInfoDTO = new PlagiarismCaseInfoDTO(plagiarismCase.getId(), plagiarismCase.getVerdict(), plagiarismCase.isCreatedByContinuousPlagiarismControl());
                 return ResponseEntity.ok(plagiarismCaseInfoDTO);
             }
         }
@@ -223,8 +225,10 @@ public class PlagiarismCaseResource {
         }
         Map<Long, PlagiarismCaseInfoDTO> plagiarismCaseInfoDTOs = plagiarismCasePerExerciseList.stream()
                 // the following line is already checked in the SQL statement, but we want to ensure it 100%
-                .filter(plagiarismCase -> plagiarismCase.getPost() != null).collect(Collectors.toMap(plagiarismCase -> plagiarismCase.getExercise().getId(),
-                        plagiarismCase -> new PlagiarismCaseInfoDTO(plagiarismCase.getId(), plagiarismCase.getVerdict()), (case1, case2) -> case1));
+                .filter(plagiarismCase -> plagiarismCase.getPost() != null)
+                .collect(Collectors.toMap(plagiarismCase -> plagiarismCase.getExercise().getId(),
+                        plagiarismCase -> new PlagiarismCaseInfoDTO(plagiarismCase.getId(), plagiarismCase.getVerdict(), plagiarismCase.isCreatedByContinuousPlagiarismControl()),
+                        (case1, case2) -> case1));
 
         return ResponseEntity.ok(plagiarismCaseInfoDTOs);
     }
@@ -258,13 +262,14 @@ public class PlagiarismCaseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
-        var plagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(plagiarismCaseId);
+        var plagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsAndPlagiarismDetectionConfigElseThrow(plagiarismCaseId);
         if (!plagiarismCase.getStudent().getLogin().equals(user.getLogin())) {
             throw new AccessForbiddenException("Students only have access to plagiarism cases by which they are affected");
         }
 
         // hide potentially sensitive data
         plagiarismCase.getExercise().filterSensitiveInformation();
+        Optional.ofNullable(plagiarismCase.getExercise().getPlagiarismDetectionConfig()).ifPresent(PlagiarismDetectionConfig::filterSensitiveInformation);
 
         return getPlagiarismCaseResponseEntity(plagiarismCase);
     }

@@ -1,5 +1,7 @@
-<h5>{{ 'artemisApp.examManagement.suspiciousBehavior.title' | artemisTranslate }}</h5>
-
+<h5>
+    {{ 'artemisApp.examManagement.suspiciousBehavior.title' | artemisTranslate }}
+    <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+</h5>
 <p>
     {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionDescription' | artemisTranslate }}
 </p>
@@ -7,7 +9,6 @@
     <input class="form-check-input" type="checkbox" id="different-student-exams-same-ip" [(ngModel)]="checkboxCriterionDifferentStudentExamsSameIPAddressChecked" />
     <label for="different-student-exams-same-ip">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionIpAddress' | artemisTranslate }}</label>
 </div>
-
 <div>
     <input
         class="form-check-input"
@@ -19,12 +20,10 @@
         'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionBrowserFingerprint' | artemisTranslate
     }}</label>
 </div>
-
 <div>
     <input class="form-check-input" type="checkbox" id="same-student-exam-different-ips" [(ngModel)]="checkboxCriterionSameStudentExamDifferentIPAddressesChecked" />
     <label for="same-student-exam-different-ips">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionDifferentIpAddress' | artemisTranslate }}</label>
 </div>
-
 <div>
     <input
         class="form-check-input"
@@ -36,33 +35,32 @@
         'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionDifferentBrowserFingerprint' | artemisTranslate
     }}</label>
 </div>
-
 <div>
     <input class="form-check-input" type="checkbox" id="ip-outside-of-range" [(ngModel)]="checkboxCriterionIPOutsideOfASpecificRangeChecked" />
     <label for="ip-outside-of-range">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionIpOutsideOfRange' | artemisTranslate }}</label>
 </div>
-<div *ngIf="checkboxCriterionIPOutsideOfASpecificRangeChecked" class="form-group col-6">
-    <div class="d-flex">
-        <label for="ip-subnet" class="me-2">{{ 'artemisApp.examManagement.suspiciousBehavior.subnet' | artemisTranslate }}</label>
-        <jhi-help-icon text="artemisApp.examManagement.suspiciousBehavior.subnetHelp"></jhi-help-icon>
+@if (checkboxCriterionIPOutsideOfASpecificRangeChecked) {
+    <div class="form-group col-6">
+        <div class="d-flex">
+            <label for="ip-subnet" class="me-2">{{ 'artemisApp.examManagement.suspiciousBehavior.subnet' | artemisTranslate }}</label>
+            <jhi-help-icon text="artemisApp.examManagement.suspiciousBehavior.subnetHelp"></jhi-help-icon>
+        </div>
+        <input type="text" class="form-control" id="ip-subnet" [(ngModel)]="ipSubnet" [pattern]="ipSubnetRegexPattern" required />
     </div>
-    <input type="text" class="form-control" id="ip-subnet" [(ngModel)]="ipSubnet" [pattern]="ipSubnetRegexPattern" required />
-</div>
-
+}
 <div class="mt-3 mb-3">
     <jhi-button [title]="'artemisApp.examManagement.suspiciousBehavior.analyzeSessions'" [disabled]="!analyzeButtonEnabled" [isLoading]="analyzing" (onClick)="analyzeSessions()">
     </jhi-button>
 </div>
-
 <div class="column">
-    <p
-        *ngIf="analyzed"
-        jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.number"
-        [translateValues]="{ numberOfSuspiciousSessions: suspiciousSessions?.length }"
-    ></p>
-    <button *ngIf="suspiciousSessions.length !== 0" type="submit" (click)="goToSuspiciousSessions()" class="btn btn-primary mb-5">
-        <span class="d-none d-md-inline" id="view-sessions-btn" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.view">View</span>
-    </button>
+    @if (analyzed) {
+        <p jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.number" [translateValues]="{ numberOfSuspiciousSessions: suspiciousSessions?.length }"></p>
+    }
+    @if (suspiciousSessions.length !== 0) {
+        <button type="submit" (click)="goToSuspiciousSessions()" class="btn btn-primary mb-5">
+            <span class="d-none d-md-inline" id="view-sessions-btn" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.view">View</span>
+        </button>
+    }
 </div>
 <jhi-plagiarism-cases-overview
     [exercises]="exercises"

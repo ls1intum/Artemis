@@ -1,10 +1,8 @@
 <div>
     <h2>
         <span id="health-page-heading" jhiTranslate="health.title">Health Checks</span>
-
         <button class="btn btn-primary float-end" (click)="refresh()"><fa-icon [icon]="faSync"></fa-icon> <span jhiTranslate="health.refresh.button">Refresh</span></button>
     </h2>
-
     <div class="table-responsive">
         <table id="healthCheck" class="table table-striped" aria-describedby="health-page-heading">
             <thead>
@@ -14,33 +12,41 @@
                     <th scope="col" class="text-center" jhiTranslate="health.details.details">Details</th>
                 </tr>
             </thead>
-            <tbody *ngIf="health">
-                <tr *ngFor="let componentHealth of health.components | keyvalue" [id]="componentHealth.key">
-                    <td>
-                        {{ 'health.indicator.' + componentHealth.key | artemisTranslate }}
-                        <a *ngIf="componentHealth.value?.details?.url" class="badge bg-info" [href]="componentHealth.value!.details!.url">
-                            {{ componentHealth.value!.details!.url }}
-                        </a>
-                    </td>
-                    <td class="status text-center">
-                        <span class="badge" [ngClass]="getBadgeClass(componentHealth.value!.status)" jhiTranslate="{{ 'health.status.' + componentHealth.value!.status }}">
-                            {{ componentHealth.value!.status }}
-                        </span>
-                    </td>
-                    <td class="text-center">
-                        <a class="hand" (click)="showHealth({ key: componentHealth.key, value: componentHealth.value! })" *ngIf="componentHealth.value!.details">
-                            <fa-icon [icon]="faEye"></fa-icon>
-                        </a>
-                    </td>
-                </tr>
-                <tr id="websocketConnection">
-                    <td>Websocket Connection (Client -> Server)</td>
-                    <td class="status text-center">
-                        <jhi-connection-status></jhi-connection-status>
-                    </td>
-                    <td class="text-center">-</td>
-                </tr>
-            </tbody>
+            @if (health) {
+                <tbody>
+                    @for (componentHealth of health.components | keyvalue; track componentHealth) {
+                        <tr [id]="componentHealth.key">
+                            <td>
+                                {{ 'health.indicator.' + componentHealth.key | artemisTranslate }}
+                                @if (componentHealth.value?.details?.url) {
+                                    <a class="badge bg-info" [href]="componentHealth.value!.details!.url">
+                                        {{ componentHealth.value!.details!.url }}
+                                    </a>
+                                }
+                            </td>
+                            <td class="status text-center">
+                                <span class="badge" [ngClass]="getBadgeClass(componentHealth.value!.status)" jhiTranslate="{{ 'health.status.' + componentHealth.value!.status }}">
+                                    {{ componentHealth.value!.status }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                @if (componentHealth.value!.details) {
+                                    <a class="hand" (click)="showHealth({ key: componentHealth.key, value: componentHealth.value! })">
+                                        <fa-icon [icon]="faEye"></fa-icon>
+                                    </a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    <tr id="websocketConnection">
+                        <td>Websocket Connection (Client -> Server)</td>
+                        <td class="status text-center">
+                            <jhi-connection-status></jhi-connection-status>
+                        </td>
+                        <td class="text-center">-</td>
+                    </tr>
+                </tbody>
+            }
         </table>
     </div>
 </div>

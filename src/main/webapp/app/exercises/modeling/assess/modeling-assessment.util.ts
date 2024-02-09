@@ -1,18 +1,18 @@
 import { Result } from 'app/entities/result.model';
-import { UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
+import { UMLElementType, UMLModelCompat, UMLRelationshipType, findElement, findRelationship } from '@ls1intum/apollon';
 import { Feedback } from 'app/entities/feedback.model';
 
 /**
  * Creates the labels for the assessment elements for displaying them in the modeling and assessment editor.
  */
 // TODO: define a mapping or simplify this complex monster in a another way so that we can support other diagram types as well
-export function getNamesForAssessments(result: Result, model: UMLModel): Map<string, Map<string, string>> {
+export function getNamesForAssessments(result: Result, model: UMLModelCompat): Map<string, Map<string, string>> {
     const assessmentsNames = new Map<string, Map<string, string>>();
     for (const feedback of result.feedbacks!) {
         const referencedModelType = feedback.referenceType! as UMLElementType;
         const referencedModelId = feedback.referenceId!;
         if (referencedModelType in UMLElementType) {
-            const element = model.elements.find((elem) => elem.id === referencedModelId);
+            const element = findElement(model, referencedModelId);
             if (!element) {
                 // prevent errors when element could not be found, should never happen
                 assessmentsNames[referencedModelId] = { name: '', type: '' };
@@ -67,9 +67,14 @@ export function getNamesForAssessments(result: Result, model: UMLModel): Map<str
             }
             assessmentsNames[referencedModelId] = { type, name };
         } else if (referencedModelType in UMLRelationshipType) {
-            const relationship = model.relationships.find((rel) => rel.id === referencedModelId)!;
-            const source = model.elements.find((element) => element.id === relationship.source.element)!.name;
-            const target = model.elements.find((element) => element.id === relationship.target.element)!.name;
+            const relationship = findRelationship(model, referencedModelId);
+            if (!relationship) {
+                // prevent errors when relationship could not be found, should never happen
+                assessmentsNames[referencedModelId] = { name: '', type: '' };
+                continue;
+            }
+            const source = findElement(model, relationship.source.element)?.name ?? '?';
+            const target = findElement(model, relationship.target.element)?.name ?? '?';
             const relationshipType = relationship.type;
             let type = 'association';
             let relation: string;
@@ -112,7 +117,7 @@ export function getNamesForAssessments(result: Result, model: UMLModel): Map<str
  * @param feedbacks the list of feedback to filter
  * @param umlModel the UML model containing the references
  */
-export function filterInvalidFeedback(feedbacks: Feedback[], umlModel: UMLModel): Feedback[] {
+export function filterInvalidFeedback(feedbacks: Feedback[], umlModel: UMLModelCompat): Feedback[] {
     if (!feedbacks) {
         return feedbacks;
     }
@@ -120,9 +125,9 @@ export function filterInvalidFeedback(feedbacks: Feedback[], umlModel: UMLModel)
         return [];
     }
 
-    let availableIds: string[] = umlModel.elements.map((element) => element.id);
+    let availableIds: string[] = Object.values(umlModel.elements).map((el) => el.id);
     if (umlModel.relationships) {
-        availableIds = availableIds.concat(umlModel.relationships.map((relationship) => relationship.id));
+        availableIds = availableIds.concat(Object.values(umlModel.relationships).map((rel) => rel.id));
     }
     return feedbacks.filter((feedback) => availableIds.includes(feedback.referenceId!));
 }

@@ -2,54 +2,74 @@
     <div class="row justify-content-between">
         <div class="col-md-8">
             <h2>
-                <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.complaint.listOfComplaints.title' | artemisTranslate }}</span>
-                <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.moreFeedback.list.title' | artemisTranslate }}</span>
+                @if (complaintType === ComplaintType.COMPLAINT) {
+                    <span>{{ 'artemisApp.complaint.listOfComplaints.title' | artemisTranslate }}</span>
+                }
+                @if (complaintType === ComplaintType.MORE_FEEDBACK) {
+                    <span>{{ 'artemisApp.moreFeedback.list.title' | artemisTranslate }}</span>
+                }
             </h2>
         </div>
     </div>
 </div>
 <div class="col-12 mt-4">
     <div class="alert alert-info" [hidden]="!course || course.isAtLeastInstructor">
-        <span *ngIf="!allComplaintsForTutorLoaded && complaintType === ComplaintType.COMPLAINT">{{
-            'artemisApp.complaint.listOfComplaints.loadAllComplaintsExplanation' | artemisTranslate
-        }}</span>
-        <span *ngIf="!allComplaintsForTutorLoaded && complaintType === ComplaintType.MORE_FEEDBACK">{{
-            'artemisApp.moreFeedback.list.loadAllRequestsExplanation' | artemisTranslate
-        }}</span>
-        <span *ngIf="allComplaintsForTutorLoaded && complaintType === ComplaintType.COMPLAINT">
-            {{ 'artemisApp.complaint.listOfComplaints.allComplaintsLoaded' | artemisTranslate }}</span
-        >
-        <span *ngIf="allComplaintsForTutorLoaded && complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.moreFeedback.list.allRequestsLoaded' | artemisTranslate }}</span>
-        <button
-            *ngIf="!allComplaintsForTutorLoaded"
-            class="btn btn-outline-info m-1"
-            (click)="triggerShowAllComplaints()"
-            [disabled]="allComplaintsForTutorLoaded"
-            name="loadAllComplaintsForTutor"
-            id="button_loadAllComplaintsForTutor"
-        >
-            <span *ngIf="isLoadingAllComplaints" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.complaint.listOfComplaints.loadAllComplaints' | artemisTranslate }}</span>
-            <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.moreFeedback.list.loadAllRequests' | artemisTranslate }}</span>
-        </button>
+        @if (!allComplaintsForTutorLoaded && complaintType === ComplaintType.COMPLAINT) {
+            <span>{{ 'artemisApp.complaint.listOfComplaints.loadAllComplaintsExplanation' | artemisTranslate }}</span>
+        }
+        @if (!allComplaintsForTutorLoaded && complaintType === ComplaintType.MORE_FEEDBACK) {
+            <span>{{ 'artemisApp.moreFeedback.list.loadAllRequestsExplanation' | artemisTranslate }}</span>
+        }
+        @if (allComplaintsForTutorLoaded && complaintType === ComplaintType.COMPLAINT) {
+            <span> {{ 'artemisApp.complaint.listOfComplaints.allComplaintsLoaded' | artemisTranslate }}</span>
+        }
+        @if (allComplaintsForTutorLoaded && complaintType === ComplaintType.MORE_FEEDBACK) {
+            <span>{{ 'artemisApp.moreFeedback.list.allRequestsLoaded' | artemisTranslate }}</span>
+        }
+        @if (!allComplaintsForTutorLoaded) {
+            <button
+                class="btn btn-outline-info m-1"
+                (click)="triggerShowAllComplaints()"
+                [disabled]="allComplaintsForTutorLoaded"
+                name="loadAllComplaintsForTutor"
+                id="button_loadAllComplaintsForTutor"
+            >
+                @if (isLoadingAllComplaints) {
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                }
+                @if (complaintType === ComplaintType.COMPLAINT) {
+                    <span>{{ 'artemisApp.complaint.listOfComplaints.loadAllComplaints' | artemisTranslate }}</span>
+                }
+                @if (complaintType === ComplaintType.MORE_FEEDBACK) {
+                    <span>{{ 'artemisApp.moreFeedback.list.loadAllRequests' | artemisTranslate }}</span>
+                }
+            </button>
+        }
     </div>
     <div class="row table-responsive">
-        <div class="form-check col-6 align-baseline" *ngIf="!loading">
-            <input
-                type="checkbox"
-                class="form-check-input"
-                name="showAddressedComplaint"
-                id="field_showAddressedComplaint"
-                [ngModel]="showAddressedComplaints"
-                (ngModelChange)="triggerAddressedComplaints()"
-            />
-            <label class="form-check-label" for="field_showAddressedComplaint">
-                <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{
-                    'artemisApp.complaint.listOfComplaints.show' + (filterOption === FilterOptionAddressedComplaints ? 'Only' : '') + 'AddressedComplaints' | artemisTranslate
-                }}</span>
-                <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.moreFeedback.list.showAnsweredRequests' | artemisTranslate }}</span>
-            </label>
-        </div>
+        @if (!loading) {
+            <div class="form-check col-6 align-baseline">
+                <input
+                    type="checkbox"
+                    class="form-check-input"
+                    name="showAddressedComplaint"
+                    id="field_showAddressedComplaint"
+                    [ngModel]="showAddressedComplaints"
+                    (ngModelChange)="triggerAddressedComplaints()"
+                />
+                <label class="form-check-label" for="field_showAddressedComplaint">
+                    @if (complaintType === ComplaintType.COMPLAINT) {
+                        <span>{{
+                            'artemisApp.complaint.listOfComplaints.show' + (filterOption === FilterOptionAddressedComplaints ? 'Only' : '') + 'AddressedComplaints'
+                                | artemisTranslate
+                        }}</span>
+                    }
+                    @if (complaintType === ComplaintType.MORE_FEEDBACK) {
+                        <span>{{ 'artemisApp.moreFeedback.list.showAnsweredRequests' | artemisTranslate }}</span>
+                    }
+                </label>
+            </div>
+        }
     </div>
     <div class="row table-responsive pt-3">
         <table class="table" [hidden]="complaintsToShow.length === 0">
@@ -71,18 +91,24 @@
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.assessorName' | artemisTranslate }}</a>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th jhiSortBy="student.login" *ngIf="course?.isAtLeastInstructor">
-                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentLogin' | artemisTranslate }}</a>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="student.name" *ngIf="course?.isAtLeastInstructor">
-                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentName' | artemisTranslate }}</a>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="complaintResponse.reviewer.name" *ngIf="course?.isAtLeastInstructor">
-                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerName' | artemisTranslate }}</a>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
+                    @if (course?.isAtLeastInstructor) {
+                        <th jhiSortBy="student.login">
+                            <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentLogin' | artemisTranslate }}</a>
+                            <fa-icon [icon]="faSort"></fa-icon>
+                        </th>
+                    }
+                    @if (course?.isAtLeastInstructor) {
+                        <th jhiSortBy="student.name">
+                            <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentName' | artemisTranslate }}</a>
+                            <fa-icon [icon]="faSort"></fa-icon>
+                        </th>
+                    }
+                    @if (course?.isAtLeastInstructor) {
+                        <th jhiSortBy="complaintResponse.reviewer.name">
+                            <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerName' | artemisTranslate }}</a>
+                            <fa-icon [icon]="faSort"></fa-icon>
+                        </th>
+                    }
                     <th jhiSortBy="submittedTime">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.dateAndTime' | artemisTranslate }}</a>
                         <fa-icon [icon]="faSort"></fa-icon>
@@ -102,82 +128,93 @@
                     <th>{{ 'artemisApp.complaint.listOfComplaints.actions' | artemisTranslate }}</th>
                 </tr>
             </thead>
-
             <tbody>
-                <tr *ngFor="let complaint of complaintsToShow">
-                    <td>
-                        {{ complaint.id }}
-                    </td>
-
-                    <td>
-                        <span>{{ complaint.result?.participation?.exercise?.title }}</span>
-                    </td>
-
-                    <td>
-                        <span>{{ complaint.result?.submission?.id }}</span>
-                    </td>
-
-                    <td>
-                        <span>{{ complaint.result?.assessor?.name }}</span>
-                    </td>
-
-                    <td *ngIf="course?.isAtLeastInstructor">
-                        <span>{{ complaint.student?.login }}</span>
-                    </td>
-
-                    <td *ngIf="course?.isAtLeastInstructor">
-                        <span>{{ complaint.student?.name }}</span>
-                    </td>
-
-                    <td *ngIf="course?.isAtLeastInstructor">
-                        <span>{{ complaint.complaintResponse?.reviewer?.name }}</span>
-                    </td>
-
-                    <td>
-                        <span>{{ complaint.submittedTime | artemisDate }}</span>
-                    </td>
-
-                    <td>
-                        <span>
-                            <ng-container *ngIf="complaint.accepted === undefined"> &gt;= </ng-container>
-                            {{ complaintService.getResponseTimeInSeconds(complaint) | artemisDurationFromSeconds: true }}
-                            <fa-icon
-                                *ngIf="complaintService.shouldHighlightComplaint(complaint)"
-                                [icon]="faExclamationTriangle"
-                                class="text-warning"
-                                ngbTooltip="{{ 'artemisApp.complaint.oneWeekUnanswered' | artemisTranslate }}"
-                            ></fa-icon>
-                        </span>
-                    </td>
-                    <td>
-                        <span class="text-warning" *ngIf="complaint.accepted == undefined">{{ 'artemisApp.complaint.listOfComplaints.noReply' | artemisTranslate }}</span>
-                        <span class="text-success" *ngIf="complaint.accepted == true && complaintType === ComplaintType.COMPLAINT">{{
-                            'artemisApp.complaint.listOfComplaints.accepted' | artemisTranslate
-                        }}</span>
-                        <span class="text-success" *ngIf="complaint.accepted == true && complaintType === ComplaintType.MORE_FEEDBACK">{{
-                            'artemisApp.moreFeedback.accepted' | artemisTranslate
-                        }}</span>
-                        <span class="text-danger" *ngIf="complaint.accepted == false">{{ 'artemisApp.complaint.listOfComplaints.rejected' | artemisTranslate }}</span>
-                    </td>
-                    <td>
-                        {{ calculateComplaintLockStatus(complaint) }}
-                    </td>
-
-                    <td class="text-center">
-                        <button class="btn btn-primary btn-sm" (click)="openAssessmentEditor(complaint)" id="show-complaint">
-                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
-                            <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}</span>
-                            <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{
-                                'artemisApp.exerciseAssessmentDashboard.showMoreFeedbackRequests' | artemisTranslate
-                            }}</span>
-                        </button>
-                    </td>
-                </tr>
+                @for (complaint of complaintsToShow; track complaint) {
+                    <tr>
+                        <td>
+                            {{ complaint.id }}
+                        </td>
+                        <td>
+                            <span>{{ complaint.result?.participation?.exercise?.title }}</span>
+                        </td>
+                        <td>
+                            <span>{{ complaint.result?.submission?.id }}</span>
+                        </td>
+                        <td>
+                            <span>{{ complaint.result?.assessor?.name }}</span>
+                        </td>
+                        @if (course?.isAtLeastInstructor) {
+                            <td>
+                                <span>{{ complaint.student?.login }}</span>
+                            </td>
+                        }
+                        @if (course?.isAtLeastInstructor) {
+                            <td>
+                                <span>{{ complaint.student?.name }}</span>
+                            </td>
+                        }
+                        @if (course?.isAtLeastInstructor) {
+                            <td>
+                                <span>{{ complaint.complaintResponse?.reviewer?.name }}</span>
+                            </td>
+                        }
+                        <td>
+                            <span>{{ complaint.submittedTime | artemisDate }}</span>
+                        </td>
+                        <td>
+                            <span>
+                                @if (complaint.accepted === undefined) {
+                                    &gt;=
+                                }
+                                {{ complaintService.getResponseTimeInSeconds(complaint) | artemisDurationFromSeconds: true }}
+                                @if (complaintService.shouldHighlightComplaint(complaint)) {
+                                    <fa-icon
+                                        [icon]="faExclamationTriangle"
+                                        class="text-warning"
+                                        ngbTooltip="{{ 'artemisApp.complaint.oneWeekUnanswered' | artemisTranslate }}"
+                                    ></fa-icon>
+                                }
+                            </span>
+                        </td>
+                        <td>
+                            @if (complaint.accepted == undefined) {
+                                <span class="text-warning">{{ 'artemisApp.complaint.listOfComplaints.noReply' | artemisTranslate }}</span>
+                            }
+                            @if (complaint.accepted == true && complaintType === ComplaintType.COMPLAINT) {
+                                <span class="text-success">{{ 'artemisApp.complaint.listOfComplaints.accepted' | artemisTranslate }}</span>
+                            }
+                            @if (complaint.accepted == true && complaintType === ComplaintType.MORE_FEEDBACK) {
+                                <span class="text-success">{{ 'artemisApp.moreFeedback.accepted' | artemisTranslate }}</span>
+                            }
+                            @if (complaint.accepted == false) {
+                                <span class="text-danger">{{ 'artemisApp.complaint.listOfComplaints.rejected' | artemisTranslate }}</span>
+                            }
+                        </td>
+                        <td>
+                            {{ calculateComplaintLockStatus(complaint) }}
+                        </td>
+                        <td class="text-center">
+                            <button class="btn btn-primary btn-sm" (click)="openAssessmentEditor(complaint)" id="show-complaint">
+                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
+                                @if (complaintType === ComplaintType.COMPLAINT) {
+                                    <span>{{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}</span>
+                                }
+                                @if (complaintType === ComplaintType.MORE_FEEDBACK) {
+                                    <span>{{ 'artemisApp.exerciseAssessmentDashboard.showMoreFeedbackRequests' | artemisTranslate }}</span>
+                                }
+                            </button>
+                        </td>
+                    </tr>
+                }
             </tbody>
         </table>
     </div>
     <div class="alert alert-info" [hidden]="complaints.length !== 0">
-        <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.exerciseAssessmentDashboard.noComplaints' | artemisTranslate }}</span>
-        <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequests' | artemisTranslate }}</span>
+        @if (complaintType === ComplaintType.COMPLAINT) {
+            <span>{{ 'artemisApp.exerciseAssessmentDashboard.noComplaints' | artemisTranslate }}</span>
+        }
+        @if (complaintType === ComplaintType.MORE_FEEDBACK) {
+            <span>{{ 'artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequests' | artemisTranslate }}</span>
+        }
     </div>
 </div>

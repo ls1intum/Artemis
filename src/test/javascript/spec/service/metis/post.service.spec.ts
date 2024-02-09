@@ -3,19 +3,8 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { take } from 'rxjs/operators';
 import { Post } from 'app/entities/metis/post.model';
 import { PostService } from 'app/shared/metis/post.service';
-import { CourseWideContext, DisplayPriority, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
-import {
-    metisCourse,
-    metisCoursePosts,
-    metisCoursePostsWithCourseWideContext,
-    metisExercise,
-    metisExercisePosts,
-    metisLecture,
-    metisLecturePosts,
-    metisPostExerciseUser1,
-    metisPostToCreateUser1,
-    metisTags,
-} from '../../helpers/sample/metis-sample-data';
+import { DisplayPriority } from 'app/shared/metis/metis.util';
+import { metisCourse, metisCoursePosts, metisPostExerciseUser1, metisPostToCreateUser1, metisTags } from '../../helpers/sample/metis-sample-data';
 
 describe('Post Service', () => {
     let service: PostService;
@@ -111,53 +100,6 @@ describe('Post Service', () => {
             tick();
         }));
 
-        it('should return all student posts for a course-wide context', fakeAsync(() => {
-            const returnedFromService = [metisCoursePostsWithCourseWideContext.filter((post) => post.courseWideContext === CourseWideContext.RANDOM)];
-            const expected = returnedFromService;
-            service
-                .getPosts(metisCourse.id!, {
-                    courseWideContexts: [CourseWideContext.RANDOM],
-                    searchText: 'Text to search for',
-                    filterToOwn: true,
-                    filterToAnsweredOrReacted: true,
-                    filterToUnresolved: true,
-                    pagingEnabled: true,
-                    page: 0,
-                    pageSize: 50,
-                    postSortCriterion: PostSortCriterion.CREATION_DATE,
-                    sortingOrder: SortDirection.ASCENDING,
-                })
-                .pipe(take(2))
-                .subscribe((resp) => expect(resp.body).toEqual(expected));
-            const req = httpMock.expectOne({ method: 'GET' });
-            req.flush(returnedFromService);
-            tick();
-        }));
-
-        it('should return all student posts for a lecture', fakeAsync(() => {
-            const returnedFromService = metisLecturePosts;
-            const expected = returnedFromService;
-            service
-                .getPosts(metisCourse.id!, { lectureIds: [metisLecture.id!] })
-                .pipe(take(2))
-                .subscribe((resp) => expect(resp.body).toEqual(expected));
-            const req = httpMock.expectOne({ method: 'GET' });
-            req.flush(returnedFromService);
-            tick();
-        }));
-
-        it('should return all student posts for an exercise', fakeAsync(() => {
-            const returnedFromService = metisExercisePosts;
-            const expected = returnedFromService;
-            service
-                .getPosts(metisCourse.id!, { exerciseIds: [metisExercise.id!] })
-                .pipe(take(2))
-                .subscribe((resp) => expect(resp.body).toEqual(expected));
-            const req = httpMock.expectOne({ method: 'GET' });
-            req.flush(returnedFromService);
-            tick();
-        }));
-
         it('should return all post tags for a course', fakeAsync(() => {
             const returnedFromService = metisTags;
             const expected = returnedFromService;
@@ -167,6 +109,36 @@ describe('Post Service', () => {
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(returnedFromService);
+            tick();
+        }));
+
+        it('should use /posts endpoints if plagiarismCaseId is provided in the postContextFilter', fakeAsync(() => {
+            const plagiarismCaseId = 123;
+            const expectedUrl = `${service.resourceUrl}${metisCourse.id}/posts?plagiarismCaseId=${plagiarismCaseId}`;
+            const mockResponse: Post[] = [];
+
+            service
+                .getPosts(metisCourse.id!, { plagiarismCaseId })
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp.body).toEqual(mockResponse));
+            const req = httpMock.expectOne({ method: 'GET', url: expectedUrl });
+
+            req.flush(mockResponse);
+            tick();
+        }));
+
+        it('should use /messages endpoints if course-wide channel ids are provided', fakeAsync(() => {
+            const courseWideChannelIds = [123];
+            const expectedUrl = `${service.resourceUrl}${metisCourse.id}/messages?courseWideChannelIds=${courseWideChannelIds}`;
+            const mockResponse: Post[] = [];
+
+            service
+                .getPosts(metisCourse.id!, { courseWideChannelIds })
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp.body).toEqual(mockResponse));
+            const req = httpMock.expectOne({ method: 'GET', url: expectedUrl });
+
+            req.flush(mockResponse);
             tick();
         }));
     });

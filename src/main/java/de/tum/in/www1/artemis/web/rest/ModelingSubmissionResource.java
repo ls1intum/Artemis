@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -41,7 +39,7 @@ import io.swagger.annotations.ApiResponses;
 @RequestMapping("/api")
 public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
-    private final Logger log = LoggerFactory.getLogger(ModelingSubmissionResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ModelingSubmissionResource.class);
 
     private static final String ENTITY_NAME = "modelingSubmission";
 
@@ -187,7 +185,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         if (!authCheckService.isAllowedToAssessExercise(modelingExercise, user, resultId)) {
             // anonymize and throw exception if not authorized to view submission
-            plagiarismService.checkAccessAndAnonymizeSubmissionForStudent(modelingSubmission, userRepository.getUser().getLogin());
+            plagiarismService.checkAccessAndAnonymizeSubmissionForStudent(modelingSubmission, userRepository.getUser().getLogin(), modelingExercise.getDueDate());
             return ResponseEntity.ok(modelingSubmission);
         }
 
@@ -235,7 +233,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      */
     @GetMapping(value = "/exercises/{exerciseId}/modeling-submission-without-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId, @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+    public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
 
         log.debug("REST request to get a modeling submission without assessment");
         final var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -254,12 +253,11 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         // Check if the limit of simultaneously locked submissions has been reached
         modelingSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
-        var submission = modelingSubmissionService.findRandomSubmissionWithoutExistingAssessment(lockSubmission, correctionRound, modelingExercise, isExamMode)
-            .orElse(null);
+        var submission = modelingSubmissionService.findRandomSubmissionWithoutExistingAssessment(lockSubmission, correctionRound, modelingExercise, isExamMode).orElse(null);
 
         if (submission != null) {
             // needed to show the grading criteria in the assessment view
-            List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+            Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
             modelingExercise.setGradingCriteria(gradingCriteria);
             // Make sure the exercise is connected to the participation in the json response
             submission.getParticipation().setExercise(modelingExercise);

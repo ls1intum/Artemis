@@ -7,6 +7,11 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { faSmile } from '@fortawesome/free-regular-svg-icons';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import dayjs from 'dayjs/esm';
+import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 
 @Component({
     selector: 'jhi-post-reactions-bar',
@@ -15,8 +20,8 @@ import dayjs from 'dayjs/esm';
 })
 export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Post> implements OnInit, OnChanges {
     pinTooltip: string;
-    archiveTooltip: string;
     displayPriority: DisplayPriority;
+    canPin = false;
     readonly DisplayPriority = DisplayPriority;
 
     // Icons
@@ -33,7 +38,10 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
     @Output() openThread = new EventEmitter<void>();
 
-    constructor(metisService: MetisService) {
+    constructor(
+        metisService: MetisService,
+        private accountService: AccountService,
+    ) {
         super(metisService);
     }
 
@@ -42,7 +50,30 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
      */
     ngOnInit() {
         super.ngOnInit();
+
+        const currentConversation = this.metisService.getCurrentConversation();
+        this.setCanPin(currentConversation);
         this.resetTooltipsAndPriority();
+    }
+
+    /**
+     * Checks whether the user can pin the message in the conversation
+     *
+     * @param currentConversation the conversation the post belongs to
+     */
+    private setCanPin(currentConversation: ConversationDto | undefined) {
+        if (!currentConversation) {
+            this.canPin = this.metisService.metisUserIsAtLeastInstructorInCourse();
+            return;
+        }
+
+        if (isChannelDto(currentConversation)) {
+            this.canPin = currentConversation.hasChannelModerationRights ?? false;
+        } else if (isGroupChatDto(currentConversation)) {
+            this.canPin = currentConversation.creator?.id === this.accountService.userIdentity?.id;
+        } else if (isOneToOneChatDto(currentConversation)) {
+            this.canPin = true;
+        }
     }
 
     /**
@@ -79,29 +110,15 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     }
 
     /**
-     * changes the state of the displayPriority property on a post to ARCHIVED by invoking the metis service,
-     * in case the displayPriority is already set to ARCHIVED, it will be changed to NONE
-     */
-    toggleArchive() {
-        if (this.displayPriority === DisplayPriority.ARCHIVED) {
-            this.displayPriority = DisplayPriority.NONE;
-        } else {
-            this.displayPriority = DisplayPriority.ARCHIVED;
-        }
-        this.posting.displayPriority = this.displayPriority;
-        this.metisService.updatePostDisplayPriority(this.posting.id!, this.displayPriority).subscribe();
-    }
-
-    /**
      * provides the tooltip for the pin icon dependent on the user authority and the pin state of a posting
      *
      */
     getPinTooltip(): string {
-        if (this.currentUserIsAtLeastTutor && this.displayPriority === DisplayPriority.PINNED) {
-            return 'artemisApp.metis.removePinPostTutorTooltip';
+        if (this.canPin && this.displayPriority === DisplayPriority.PINNED) {
+            return 'artemisApp.metis.removePinPostTooltip';
         }
-        if (this.currentUserIsAtLeastTutor && this.displayPriority !== DisplayPriority.PINNED) {
-            return 'artemisApp.metis.pinPostTutorTooltip';
+        if (this.canPin && this.displayPriority !== DisplayPriority.PINNED) {
+            return 'artemisApp.metis.pinPostTooltip';
         }
         return 'artemisApp.metis.pinnedPostTooltip';
     }
@@ -119,22 +136,8 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
         return showIcon;
     }
 
-    /**
-     * provides the tooltip for the archive icon dependent on the user authority and the archive state of a posting
-     */
-    getArchiveTooltip(): string {
-        if (this.currentUserIsAtLeastTutor && this.displayPriority === DisplayPriority.ARCHIVED) {
-            return 'artemisApp.metis.removeArchivePostTutorTooltip';
-        }
-        if (this.currentUserIsAtLeastTutor && this.displayPriority !== DisplayPriority.ARCHIVED) {
-            return 'artemisApp.metis.archivePostTutorTooltip';
-        }
-        return 'artemisApp.metis.archivedPostTooltip';
-    }
-
     private resetTooltipsAndPriority() {
         this.displayPriority = this.posting.displayPriority!;
         this.pinTooltip = this.getPinTooltip();
-        this.archiveTooltip = this.getArchiveTooltip();
     }
 }

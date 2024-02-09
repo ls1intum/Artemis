@@ -13,7 +13,7 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundScorePercentSpecifiedByCourseSettings, scrollToTopOfPage } from 'app/shared/util/utils';
 import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
 import { evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
 import { Submission } from 'app/entities/submission.model';
@@ -22,6 +22,9 @@ import { faArrowUp, faEye, faEyeSlash, faFolderOpen, faInfoCircle, faPrint } fro
 import { cloneDeep } from 'lodash-es';
 import { captureException } from '@sentry/angular-ivy';
 import { AlertService } from 'app/core/util/alert.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { isExamResultPublished } from 'app/exam/participate/exam.utils';
+import { Course } from 'app/entities/course.model';
 
 export type ResultSummaryExerciseInfo = {
     icon: IconProp;
@@ -34,6 +37,7 @@ export type ResultSummaryExerciseInfo = {
     submission?: Submission;
     participation?: Participation;
     displayExampleSolution: boolean;
+    releaseTestsWithExampleSolution: boolean;
 };
 
 type StateBeforeResetting = {
@@ -154,9 +158,9 @@ export class ExamResultSummaryComponent implements OnInit {
             throw new Error('studentExam.user.id should be present to fetch grade info');
         }
 
-        if (this.isExamResultPublished()) {
+        if (isExamResultPublished(this.isTestRun, this.studentExam.exam, this.serverDateService)) {
             this.examParticipationService
-                .loadStudentExamGradeInfoForSummary(this.courseId, this.studentExam.exam.id, this.studentExam.user.id)
+                .loadStudentExamGradeInfoForSummary(this.courseId, this.studentExam.exam.id, this.studentExam.user.id, this.isTestRun)
                 .subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
                     studentExamWithGrade.studentExam = this.studentExam;
                     this.studentExamGradeInfoDTO = studentExamWithGrade;
@@ -208,11 +212,6 @@ export class ExamResultSummaryComponent implements OnInit {
         }
     }
 
-    private isExamResultPublished() {
-        const exam = this.studentExam.exam;
-        return exam?.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(this.serverDateService.now());
-    }
-
     /**
      * called for exportPDF Button
      */
@@ -230,10 +229,6 @@ export class ExamResultSummaryComponent implements OnInit {
         this.resetExpandingExercisesAndGradingKeys(stateBeforeResetting);
     }
 
-    private scrollToTop() {
-        window.scrollTo(0, 0);
-    }
-
     scrollToOverviewOrTop() {
         const searchedId = 'exam-summary-result-overview';
         const targetElement = document.getElementById(searchedId);
@@ -245,7 +240,7 @@ export class ExamResultSummaryComponent implements OnInit {
                 inline: 'nearest',
             });
         } else {
-            this.scrollToTop();
+            scrollToTopOfPage();
         }
     }
 
@@ -351,13 +346,14 @@ export class ExamResultSummaryComponent implements OnInit {
                 icon: getIcon(exercise.type),
                 isCollapsed: false,
                 achievedPoints: this.getPointsByExerciseIdFromExam(exercise.id, studentExamWithGrade),
-                achievedPercentage: this.getAchievedPercentageByExerciseId(exercise.id),
+                achievedPercentage: this.getAchievedPercentageByExerciseId(exercise.id, studentExamWithGrade),
                 colorClass: textColorClass,
                 resultIconClass: resultIconClass,
 
                 submission: this.getSubmissionForExercise(exercise),
                 participation: this.getParticipationForExercise(exercise),
                 displayExampleSolution: false,
+                releaseTestsWithExampleSolution: exercise.type === ExerciseType.PROGRAMMING && !!(exercise as ProgrammingExercise).releaseTestsWithExampleSolution,
             };
         }
         return exerciseInfos;
@@ -411,23 +407,46 @@ export class ExamResultSummaryComponent implements OnInit {
         this.exerciseInfos[exerciseId].displayExampleSolution = !this.exerciseInfos[exerciseId].displayExampleSolution;
     }
 
-    getAchievedPercentageByExerciseId(exerciseId?: number): number | undefined {
-        const result = this.getExerciseResultByExerciseId(exerciseId);
-        if (result === undefined) {
-            return undefined;
+    private calculateAchievedPercentageFromScoreAndMaxPoints(achievedPoints?: number, maxScore?: number, course?: Course) {
+        const canCalculatePercentage = maxScore !== undefined && achievedPoints !== undefined;
+        if (canCalculatePercentage) {
+            return roundScorePercentSpecifiedByCourseSettings(achievedPoints! / maxScore, course);
         }
 
-        const course = this.studentExamGradeInfoDTO.studentExam?.exam?.course;
+        return undefined;
+    }
+
+    private getAchievedPercentageFromResult(result: ExerciseResult, course?: Course) {
         if (result.achievedScore !== undefined) {
             return roundScorePercentSpecifiedByCourseSettings(result.achievedScore / 100, course);
         }
 
-        const canCalculatePercentage = result.maxScore && result.achievedPoints !== undefined;
-        if (canCalculatePercentage) {
-            return roundScorePercentSpecifiedByCourseSettings(result.achievedPoints! / result.maxScore, course);
+        return this.calculateAchievedPercentageFromScoreAndMaxPoints(result.achievedPoints, result.maxScore, course);
+    }
+
+    /**
+     * This should only be needed when unsubmitted exercises are viewed, otherwise the results should be set
+     */
+    private getAchievedPercentageFromExamResults(exerciseId?: number, studentExamWithGrade?: StudentExamWithGradeDTO | undefined, course?: Course) {
+        if (exerciseId === undefined) {
+            return undefined;
         }
 
-        return undefined;
+        const maxPoints = studentExamWithGrade?.studentExam?.exercises?.find((exercise) => exercise.id === exerciseId)?.maxPoints;
+        const achievedPoints = this.getPointsByExerciseIdFromExam(exerciseId, studentExamWithGrade);
+
+        return this.calculateAchievedPercentageFromScoreAndMaxPoints(achievedPoints, maxPoints, course);
+    }
+
+    getAchievedPercentageByExerciseId(exerciseId?: number, studentExamWithGrade?: StudentExamWithGradeDTO | undefined): number | undefined {
+        const result = this.getExerciseResultByExerciseId(exerciseId);
+        const course = this.studentExamGradeInfoDTO?.studentExam?.exam?.course;
+
+        if (result === undefined) {
+            return this.getAchievedPercentageFromExamResults(exerciseId, studentExamWithGrade, course);
+        }
+
+        return this.getAchievedPercentageFromResult(result, course);
     }
 
     getTextColorAndIconClassByExercise(exercise: Exercise) {
@@ -442,6 +461,10 @@ export class ExamResultSummaryComponent implements OnInit {
             textColorClass: getTextColorClass(result, templateStatus),
             resultIconClass: getResultIconClass(result, templateStatus),
         };
+    }
+
+    toggleCollapseExercise(exerciseInfo: ResultSummaryExerciseInfo) {
+        return () => (exerciseInfo!.isCollapsed = !exerciseInfo!.isCollapsed);
     }
 
     protected readonly getIcon = getIcon;

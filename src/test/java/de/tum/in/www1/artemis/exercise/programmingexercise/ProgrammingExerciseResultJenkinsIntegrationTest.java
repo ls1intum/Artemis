@@ -162,7 +162,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldRemoveTestCaseNamesFromWebsocketNotification() throws Exception {
+    void shouldCorrectlyNotifyStudentsAboutNewResults() throws Exception {
         var exercise = programmingExerciseResultTestService.getProgrammingExercise();
         var commit = new CommitDTO("abc123", "slug", DEFAULT_BRANCH);
         String repoName = getRepoName(exercise, TEST_PREFIX + "student1");
@@ -170,5 +170,31 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
         var notification = ProgrammingExerciseFactory.generateTestResultDTO(folderName, repoName, null, ProgrammingLanguage.JAVA, false, List.of("test1", "test2"),
                 List.of("test3"), List.of(), List.of(commit), null);
         programmingExerciseResultTestService.shouldCorrectlyNotifyStudentsAboutNewResults(notification, websocketMessagingService);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRemoveTestCaseNamesFromWebsocketNotification() throws Exception {
+        var exercise = programmingExerciseResultTestService.getProgrammingExercise();
+        var commit = new CommitDTO("abc123", "slug", DEFAULT_BRANCH);
+        String repoName = getRepoName(exercise, TEST_PREFIX + "student1");
+        String folderName = getFolderName(exercise, repoName);
+        var notification = ProgrammingExerciseFactory.generateTestResultDTO(folderName, repoName, null, ProgrammingLanguage.JAVA, false, List.of("test1", "test2"),
+                List.of("test3", "test4"), List.of(), List.of(commit), null);
+        programmingExerciseResultTestService.shouldRemoveTestCaseNamesFromWebsocketNotification(notification, websocketMessagingService);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldUpdateParticipantScoresOnlyOnce() throws Exception {
+        var exercise = programmingExerciseResultTestService.getProgrammingExercise();
+        var commit = new CommitDTO(TestConstants.COMMIT_HASH_STRING, "slug", DEFAULT_BRANCH);
+        String repoName = getRepoName(exercise, TEST_PREFIX + "student1");
+        String folderName = getFolderName(exercise, repoName);
+        var notification = ProgrammingExerciseFactory.generateTestResultDTO(folderName, repoName, null, ProgrammingLanguage.JAVA, false, List.of("test1", "test2"),
+                List.of("test3", "test4"), List.of(), List.of(commit), null);
+        gitlabRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getProgrammingExerciseStudentParticipation(),
+                Map.of(TestConstants.COMMIT_HASH_STRING, ZonedDateTime.now()));
+        programmingExerciseResultTestService.shouldUpdateParticipantScoresOnlyOnce(notification, instanceMessageSendService);
     }
 }

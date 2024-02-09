@@ -8,14 +8,15 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 @Component({
     selector: 'jhi-external-submission',
     template: `
-        <jhi-button
-            *ngIf="!exercise.teamMode"
-            [btnType]="ButtonType.WARNING"
-            [btnSize]="ButtonSize.SMALL"
-            [icon]="faPlus"
-            [title]="'entity.action.addExternalSubmission'"
-            (onClick)="openExternalSubmissionDialog($event)"
-        ></jhi-button>
+        @if (!exercise.teamMode) {
+            <jhi-button
+                [btnType]="ButtonType.WARNING"
+                [btnSize]="ButtonSize.SMALL"
+                [icon]="faPlus"
+                [title]="'entity.action.addExternalSubmission'"
+                (onClick)="openExternalSubmissionDialog($event)"
+            ></jhi-button>
+        }
     `,
 })
 export class ExternalSubmissionButtonComponent {

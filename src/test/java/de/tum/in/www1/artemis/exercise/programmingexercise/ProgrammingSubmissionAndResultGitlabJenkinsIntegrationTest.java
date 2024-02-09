@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,6 +25,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.google.gson.JsonParser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.*;
@@ -287,9 +286,9 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     void shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived() throws Exception {
         testService.setUp_shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived(TEST_PREFIX);
         String userLogin = TEST_PREFIX + "student1";
-        var pushJSON = (JSONObject) new JSONParser().parse(GITLAB_PUSH_EVENT_REQUEST);
-        var firstCommitHash = (String) pushJSON.get("before");
-        var secondCommitHash = (String) pushJSON.get("after");
+        var pushJSON = new JsonParser().parse(GITLAB_PUSH_EVENT_REQUEST).getAsJsonObject();
+        var firstCommitHash = pushJSON.get("before").getAsString();
+        var secondCommitHash = pushJSON.get("after").getAsString();
         var firstCommitDate = ZonedDateTime.now().minusSeconds(60);
         var secondCommitDate = ZonedDateTime.now().minusSeconds(30);
 
@@ -303,7 +302,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
         // Build result for first commit is received
         var firstBuildCompleteDate = ZonedDateTime.now();
-        var firstVcsDTO = new CommitDTO(firstCommitHash, urlService.getRepositorySlugFromRepositoryUrl(testService.participation.getVcsRepositoryUrl()), defaultBranch);
+        var firstVcsDTO = new CommitDTO(firstCommitHash, uriService.getRepositorySlugFromRepositoryUri(testService.participation.getVcsRepositoryUri()), defaultBranch);
         var notificationDTOFirstCommit = createJenkinsNewResultNotification(testService.programmingExercise.getProjectKey(), userLogin, JAVA, List.of(), new ArrayList<>(),
                 firstBuildCompleteDate, List.of(firstVcsDTO));
 
@@ -311,7 +310,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
         // Build result for second commit is received
         var secondBuildCompleteDate = ZonedDateTime.now();
-        var secondVcsDTO = new CommitDTO(secondCommitHash, urlService.getRepositorySlugFromRepositoryUrl(testService.participation.getVcsRepositoryUrl()), defaultBranch);
+        var secondVcsDTO = new CommitDTO(secondCommitHash, uriService.getRepositorySlugFromRepositoryUri(testService.participation.getVcsRepositoryUri()), defaultBranch);
         var notificationDTOSecondCommit = createJenkinsNewResultNotification(testService.programmingExercise.getProjectKey(), userLogin, JAVA, List.of(), new ArrayList<>(),
                 secondBuildCompleteDate, List.of(secondVcsDTO));
 

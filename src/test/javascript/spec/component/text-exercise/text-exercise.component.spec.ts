@@ -110,4 +110,13 @@ describe('TextExercise Management Component', () => {
             expect(comp.filteredTextExercises).toHaveLength(0);
         });
     });
+
+    it('should have working selection', () => {
+        // WHEN
+        comp.toggleExercise(textExercise);
+
+        // THEN
+        expect(comp.selectedExercises[0]).toContainEntry(['id', textExercise.id]);
+        expect(comp.allChecked).toEqual(comp.selectedExercises.length === comp.textExercises.length);
+    });
 });

@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faChevronUp, faEye } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -14,7 +14,9 @@ import { LearningPathLectureUnitViewComponent } from 'app/course/learning-paths/
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseEntry, LearningPathStorageService, LectureUnitEntry, StorageEntry } from 'app/course/learning-paths/participate/learning-path-storage.service';
-import { LearningPathGraphSidebarComponent } from 'app/course/learning-paths/participate/learning-path-graph-sidebar.component';
+import { LearningPathComponent } from 'app/course/learning-paths/learning-path-graph/learning-path.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { LearningPathProgressModalComponent } from 'app/course/learning-paths/progress-modal/learning-path-progress-modal.component';
 
 @Component({
     selector: 'jhi-learning-path-container',
@@ -22,7 +24,7 @@ import { LearningPathGraphSidebarComponent } from 'app/course/learning-paths/par
     templateUrl: './learning-path-container.component.html',
 })
 export class LearningPathContainerComponent implements OnInit {
-    @ViewChild('graphSidebar') graphSidebar: LearningPathGraphSidebarComponent;
+    @ViewChild('learningPathComponent') learningPathComponent: LearningPathComponent;
 
     @Input() courseId: number;
     learningPathId: number;
@@ -34,8 +36,9 @@ export class LearningPathContainerComponent implements OnInit {
     exercise?: Exercise;
 
     // icons
-    faChevronLeft = faChevronLeft;
-    faChevronRight = faChevronRight;
+    faChevronUp = faChevronUp;
+    faChevronDown = faChevronDown;
+    faEye = faEye;
 
     constructor(
         private router: Router,
@@ -44,6 +47,7 @@ export class LearningPathContainerComponent implements OnInit {
         private learningPathService: LearningPathService,
         private lectureService: LectureService,
         private exerciseService: ExerciseService,
+        private modalService: NgbModal,
         public learningPathStorageService: LearningPathStorageService,
     ) {}
 
@@ -62,8 +66,9 @@ export class LearningPathContainerComponent implements OnInit {
         const entry = this.currentStateToEntry();
         // reset state to avoid invalid states
         this.undefineAll();
-        const recommendation = this.learningPathStorageService.getNextRecommendation(this.learningPathId, entry);
-        this.loadEntry(recommendation);
+        if (this.learningPathStorageService.hasNextRecommendation(this.learningPathId, entry)) {
+            this.loadEntry(this.learningPathStorageService.getNextRecommendation(this.learningPathId, entry));
+        }
     }
 
     onPrevTask() {
@@ -102,10 +107,13 @@ export class LearningPathContainerComponent implements OnInit {
             this.learningObjectId = entry.exerciseId;
             this.loadExercise();
         } else {
-            this.graphSidebar.learningPathGraphComponent.clearHighlighting();
+            this.learningPathComponent.clearHighlighting();
             return;
         }
-        this.graphSidebar.learningPathGraphComponent.highlightNode(entry);
+        this.learningPathComponent.highlightNode(entry);
+        if (this.learningPathComponent.highlightedNode) {
+            this.scrollTo(this.learningPathComponent.highlightedNode);
+        }
     }
 
     loadLectureUnit() {
@@ -169,10 +177,31 @@ export class LearningPathContainerComponent implements OnInit {
         this.lectureId = node.linkedResourceParent;
         if (node.type === NodeType.LECTURE_UNIT) {
             this.loadLectureUnit();
-            this.graphSidebar.learningPathGraphComponent.highlightNode(new LectureUnitEntry(this.lectureId!, this.learningObjectId));
+            this.learningPathComponent.highlightNode(new LectureUnitEntry(this.lectureId!, this.learningObjectId));
         } else if (node.type === NodeType.EXERCISE) {
             this.loadExercise();
-            this.graphSidebar.learningPathGraphComponent.highlightNode(new ExerciseEntry(this.learningObjectId));
+            this.learningPathComponent.highlightNode(new ExerciseEntry(this.learningObjectId));
         }
+        if (this.learningPathComponent.highlightedNode) {
+            this.scrollTo(this.learningPathComponent.highlightedNode);
+        }
+    }
+
+    scrollTo(node: NgxLearningPathNode) {
+        document.getElementById(node.id)?.scrollIntoView({
+            behavior: 'smooth',
+        });
+    }
+
+    viewProgress() {
+        this.learningPathService.getLearningPath(this.learningPathId).subscribe((learningPathResponse) => {
+            const modalRef = this.modalService.open(LearningPathProgressModalComponent, {
+                size: 'xl',
+                backdrop: 'static',
+                windowClass: 'learning-path-modal',
+            });
+            modalRef.componentInstance.courseId = this.courseId;
+            modalRef.componentInstance.learningPath = learningPathResponse.body!;
+        });
     }
 }

@@ -1,10 +1,11 @@
-import { Component, EventEmitter, Input, OnInit, Output, forwardRef } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { Competency, getIcon } from 'app/entities/competency.model';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { ActivatedRoute } from '@angular/router';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { finalize } from 'rxjs';
 
 @Component({
     selector: 'jhi-competency-selection',
@@ -39,6 +40,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         private route: ActivatedRoute,
         private courseStorageService: CourseStorageService,
         private competencyService: CompetencyService,
+        private changeDetector: ChangeDetectorRef,
     ) {}
 
     ngOnInit(): void {
@@ -49,17 +51,26 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
                 this.setCompetencies(course.competencies!);
             } else {
                 this.isLoading = true;
-                this.competencyService.getAllForCourse(courseId).subscribe({
-                    next: (response) => {
-                        this.setCompetencies(response.body!);
-                        this.writeValue(this.value);
-                        this.isLoading = false;
-                    },
-                    error: () => {
-                        this.disabled = true;
-                        this.isLoading = false;
-                    },
-                });
+                this.competencyService
+                    .getAllForCourse(courseId)
+                    .pipe(
+                        finalize(() => {
+                            this.isLoading = false;
+
+                            // trigger change detection manually
+                            // necessary because quiz exercises use ChangeDetectionStrategy.OnPush
+                            this.changeDetector.detectChanges();
+                        }),
+                    )
+                    .subscribe({
+                        next: (response) => {
+                            this.setCompetencies(response.body!);
+                            this.writeValue(this.value);
+                        },
+                        error: () => {
+                            this.disabled = true;
+                        },
+                    });
             }
         }
     }

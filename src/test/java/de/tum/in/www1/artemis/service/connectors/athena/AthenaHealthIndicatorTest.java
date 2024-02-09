@@ -26,6 +26,7 @@ class AthenaHealthIndicatorTest extends AbstractAthenaTest {
         final Health health = athenaHealthIndicator.health();
         assertThat(health.getStatus()).isEqualTo(Status.UP);
         assertThat(health.getDetails().get(MODULE_EXAMPLE).toString()).contains(GREEN_CIRCLE);
+        athenaRequestMockProvider.verify();
     }
 
     @Test
@@ -34,6 +35,7 @@ class AthenaHealthIndicatorTest extends AbstractAthenaTest {
         final Health health = athenaHealthIndicator.health();
         assertThat(health.getStatus()).isEqualTo(Status.UP);
         assertThat(health.getDetails().get(MODULE_EXAMPLE).toString()).contains(RED_CIRCLE);
+        athenaRequestMockProvider.verify();
     }
 
     @Test
@@ -41,5 +43,6 @@ class AthenaHealthIndicatorTest extends AbstractAthenaTest {
         athenaRequestMockProvider.mockHealthStatusFailure();
         final Health health = athenaHealthIndicator.health();
         assertThat(health.getStatus()).isEqualTo(Status.DOWN);
+        athenaRequestMockProvider.verify();
     }
 }

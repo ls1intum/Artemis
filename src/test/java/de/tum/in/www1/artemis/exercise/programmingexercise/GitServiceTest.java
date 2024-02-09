@@ -78,10 +78,10 @@ class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testCheckoutRepositoryNotOnServer() throws GitAPIException, IOException {
-        var repoUrl = gitUtilService.getRepoUrlByType(GitUtilService.REPOS.REMOTE);
+        var repoUri = gitUtilService.getRepoUriByType(GitUtilService.REPOS.REMOTE);
         gitUtilService.deleteRepo(GitUtilService.REPOS.LOCAL);
         gitUtilService.reinitializeLocalRepository();
-        try (var repo = gitService.getOrCheckoutRepository(repoUrl, true)) {
+        try (var repo = gitService.getOrCheckoutRepository(repoUri, true)) {
             assertThat(gitUtilService.isLocalEqualToRemote()).isTrue();
         }
     }
@@ -114,13 +114,12 @@ class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @Disabled
     void testCheckoutRepositoryAtCommit(boolean withUrl) throws GitAPIException {
         // first commit
         prepareRepositoryContent();
         String commitHash = getCommitHash("my first commit");
         if (withUrl) {
-            gitService.checkoutRepositoryAtCommit(gitUtilService.getRepoUrlByType(GitUtilService.REPOS.LOCAL), commitHash, true);
+            gitService.checkoutRepositoryAtCommit(gitUtilService.getRepoUriByType(GitUtilService.REPOS.LOCAL), commitHash, true);
         }
         else {
             try (var repo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL)) {
@@ -188,12 +187,12 @@ class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
         gitUtilService.initRepo(defaultBranch);
 
         Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.REMOTE);
-        var repoUrl = gitUtilService.getRepoUrlByType(GitUtilService.REPOS.REMOTE);
+        var repoUri = gitUtilService.getRepoUriByType(GitUtilService.REPOS.REMOTE);
 
         Git git = new Git(localRepo);
         assertThat(git.getRepository().getBranch()).isEqualTo(defaultBranch);
 
-        gitService.pushSourceToTargetRepo(localRepo, repoUrl, defaultBranch);
+        gitService.pushSourceToTargetRepo(localRepo, repoUri, defaultBranch);
 
         assertThat(git.getRepository().getBranch()).isEqualTo(this.defaultBranch);
 
@@ -210,17 +209,17 @@ class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         doReturn(localRepo.getLocalPath()).when(gitService).getLocalPathOfRepo(any(), any());
 
-        assertThat(gitService.isRepositoryCached(localRepo.getRemoteRepositoryUrl())).isFalse();
+        assertThat(gitService.isRepositoryCached(localRepo.getRemoteRepositoryUri())).isFalse();
 
-        gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.getLocalPath(), localRepo.getRemoteRepositoryUrl());
+        gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.getLocalPath(), localRepo.getRemoteRepositoryUri());
 
-        assertThat(gitService.isRepositoryCached(localRepo.getRemoteRepositoryUrl())).isTrue();
+        assertThat(gitService.isRepositoryCached(localRepo.getRemoteRepositoryUri())).isTrue();
 
         FileUtils.deleteDirectory(localRepo.getLocalPath().toFile());
 
-        Repository repo = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.getLocalPath(), localRepo.getRemoteRepositoryUrl());
+        Repository repo = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.getLocalPath(), localRepo.getRemoteRepositoryUri());
 
-        assertThat(gitService.isRepositoryCached(localRepo.getRemoteRepositoryUrl())).isFalse();
+        assertThat(gitService.isRepositoryCached(localRepo.getRemoteRepositoryUri())).isFalse();
         assertThat(repo).isNull();
     }
 
@@ -231,7 +230,7 @@ class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
 
-        Repository repo = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.getLocalPath(), localRepo.getRemoteRepositoryUrl(), defaultBranchArtemis);
+        Repository repo = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.getLocalPath(), localRepo.getRemoteRepositoryUri(), defaultBranchArtemis);
 
         assertThat(repo.getConfig().getString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranchArtemis, ConfigConstants.CONFIG_REMOTE_SECTION)).isEqualTo("origin");
         assertThat(repo.getConfig().getString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranchArtemis, ConfigConstants.CONFIG_MERGE_SECTION))
@@ -340,7 +339,7 @@ class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     void testGetCommitsInfo() throws GitAPIException {
         prepareRepositoryContent();
-        var commitsInfos = gitService.getCommitInfos(gitUtilService.getRepoUrlByType(GitUtilService.REPOS.LOCAL));
+        var commitsInfos = gitService.getCommitInfos(gitUtilService.getRepoUriByType(GitUtilService.REPOS.LOCAL));
         assertThat(commitsInfos).hasSize(3);
         assertThat(commitsInfos.get(0).hash()).isEqualTo(getCommitHash("my second commit"));
         assertThat(commitsInfos.get(0).message()).isEqualTo("my second commit");

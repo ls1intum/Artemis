@@ -1,59 +1,75 @@
-<div class="course-info-bar course-info-bar--participation" *ngIf="exercise" id="participation-header">
-    <div class="row">
-        <div class="col-12 col-sm-12 col-lg-5 d-flex flex-column justify-content-center">
-            <h4 class="fw-medium"><ng-content select="[pagetitle]"></ng-content></h4>
-            <div class="d-flex align-items-center">
-                <h6 class="me-2 mb-0 fw-medium">{{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | artemisTranslate }}</h6>
-                <span>{{ (dueDate | artemisDate) || 'N/A' }}</span>
-                <span *ngIf="dueDate" [ngClass]="exerciseStatusBadge" class="badge ms-2">{{ dueDate | artemisTimeAgo }}</span>
+@if (exercise) {
+    <div class="course-info-bar course-info-bar--participation" id="participation-header">
+        <div class="row">
+            <div class="col-12 col-sm-12 col-lg-5 d-flex flex-column justify-content-center">
+                <h4 class="fw-medium"><ng-content select="[pagetitle]"></ng-content></h4>
+                <div class="d-flex align-items-center">
+                    <h6 class="me-2 mb-0 fw-medium">{{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | artemisTranslate }}</h6>
+                    <span>{{ (dueDate | artemisDate) || 'N/A' }}</span>
+                    @if (dueDate) {
+                        <span [ngClass]="exerciseStatusBadge" class="badge ms-2">{{ dueDate | artemisTimeAgo }}</span>
+                    }
+                </div>
+                @if (exercise.categories) {
+                    <div class="d-sm-flex">
+                        <h6 class="me-1 fw-medium">{{ 'artemisApp.courseOverview.exerciseDetails.categories' | artemisTranslate }}</h6>
+                        @for (category of exerciseCategories; track category) {
+                            <h6 class="fw-medium">
+                                <span class="badge text-white me-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
+                            </h6>
+                        }
+                    </div>
+                }
             </div>
-            <div *ngIf="exercise.categories" class="d-sm-flex">
-                <h6 class="me-1 fw-medium">{{ 'artemisApp.courseOverview.exerciseDetails.categories' | artemisTranslate }}</h6>
-                <h6 class="fw-medium" *ngFor="let category of exerciseCategories">
-                    <span class="badge text-white me-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
-                </h6>
+            <div class="col-12 col-sm-auto flex-sm-shrink-0 col-lg-4 mt-4 mt-lg-0 d-flex flex-column justify-content-center align-items-start">
+                <table class="exercise-details-table">
+                    @if (exercise.maxPoints) {
+                        <tr>
+                            <td>
+                                <h6 class="fw-medium">{{ 'artemisApp.courseOverview.exerciseDetails.points' | artemisTranslate }}</h6>
+                            </td>
+                            <td>
+                                <span>
+                                    @if (achievedPoints !== undefined) {
+                                        {{ achievedPoints + ('artemisApp.courseOverview.exerciseDetails.of' | artemisTranslate) }}
+                                    }
+                                    {{ exercise.maxPoints }}
+                                    @if (exercise.bonusPoints) {
+                                        <span>({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | artemisTranslate }} {{ exercise.bonusPoints }})</span>
+                                    }
+                                </span>
+                                @if (exercise.difficulty) {
+                                    <jhi-difficulty-badge class="ms-1" [exercise]="exercise"></jhi-difficulty-badge>
+                                }
+                                @if (exercise.includedInOverallScore && exercise.includedInOverallScore != IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                                    <jhi-included-in-score-badge class="ms-1" [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    @if (exercise.assessmentDueDate) {
+                        <tr>
+                            <td>
+                                <h6 class="fw-medium">{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}:</h6>
+                            </td>
+                            <td>
+                                <span>{{ (exercise.assessmentDueDate | artemisDate) || 'N/A' }}</span>
+                                <span [ngClass]="exerciseStatusBadge" class="badge ms-1">{{ exercise.assessmentDueDate | artemisTimeAgo }}</span>
+                            </td>
+                        </tr>
+                    }
+                </table>
             </div>
-        </div>
-        <div class="col-12 col-sm-auto flex-sm-shrink-0 col-lg-4 mt-4 mt-lg-0 d-flex flex-column justify-content-center align-items-start">
-            <table class="exercise-details-table">
-                <tr *ngIf="exercise.maxPoints">
-                    <td>
-                        <h6 class="fw-medium">{{ 'artemisApp.courseOverview.exerciseDetails.points' | artemisTranslate }}</h6>
-                    </td>
-                    <td>
-                        <span>
-                            <ng-container *ngIf="achievedPoints !== undefined">
-                                {{ achievedPoints + ('artemisApp.courseOverview.exerciseDetails.of' | artemisTranslate) }}
-                            </ng-container>
-                            {{ exercise.maxPoints }}
-                            <span *ngIf="exercise.bonusPoints">({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | artemisTranslate }} {{ exercise.bonusPoints }})</span>
-                        </span>
-                        <jhi-difficulty-badge *ngIf="exercise.difficulty" class="ms-1" [exercise]="exercise"></jhi-difficulty-badge>
-                        <jhi-included-in-score-badge
-                            *ngIf="exercise.includedInOverallScore && exercise.includedInOverallScore != IncludedInOverallScore.INCLUDED_COMPLETELY"
-                            class="ms-1"
-                            [includedInOverallScore]="exercise.includedInOverallScore"
-                        ></jhi-included-in-score-badge>
-                    </td>
-                </tr>
-                <tr *ngIf="exercise.assessmentDueDate">
-                    <td>
-                        <h6 class="fw-medium">{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}:</h6>
-                    </td>
-                    <td>
-                        <span>{{ (exercise.assessmentDueDate | artemisDate) || 'N/A' }}</span>
-                        <span [ngClass]="exerciseStatusBadge" class="badge ms-1">{{ exercise.assessmentDueDate | artemisTimeAgo }}</span>
-                    </td>
-                </tr>
-            </table>
-        </div>
-        <div class="col-12 col-sm-auto flex-sm-grow-1 col-lg-3 mt-4 mt-md-0 d-flex flex-column justify-content-center align-items-end">
-            <div *ngIf="participation && resultsPublished" class="row">
-                <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="participation"></jhi-submission-result-status>
-            </div>
-            <div class="mt-2">
-                <ng-content select="[submitbutton]"></ng-content>
+            <div class="col-12 col-sm-auto flex-sm-grow-1 col-lg-3 mt-4 mt-md-0 d-flex flex-column justify-content-center align-items-end">
+                @if (participation && resultsPublished) {
+                    <div class="row">
+                        <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="participation"></jhi-submission-result-status>
+                    </div>
+                }
+                <div class="mt-2">
+                    <ng-content select="[submitbutton]"></ng-content>
+                </div>
             </div>
         </div>
     </div>
-</div>
+}

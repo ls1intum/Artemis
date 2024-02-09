@@ -256,7 +256,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
             teachingAssistant: [undefined, [Validators.required]],
             capacity: [undefined, [Validators.min(1)]],
             isOnline: [false, [Validators.required]],
-            language: ['German', [Validators.required, Validators.maxLength(255)]],
+            language: [undefined, [Validators.required, Validators.maxLength(255)]],
             campus: [undefined, Validators.maxLength(255)],
         });
 
@@ -367,6 +367,13 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
             ),
         ).subscribe((languages: string[]) => {
             this.languages = languages;
+            // default values for English & German
+            if (!languages.includes('English')) {
+                this.languages.push('English');
+            }
+            if (!languages.includes('German')) {
+                this.languages.push('German');
+            }
         });
     }
 }

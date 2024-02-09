@@ -39,7 +39,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @RequestMapping("/api")
 public class ProgrammingSubmissionResource {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionResource.class);
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
@@ -346,7 +346,7 @@ public class ProgrammingSubmissionResource {
 
         final ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
-        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         programmingExercise.setGradingCriteria(gradingCriteria);
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -363,7 +363,8 @@ public class ProgrammingSubmissionResource {
             submission = programmingSubmissionService.getNextAssessableSubmission(programmingExercise, programmingExercise.isExamExercise(), correctionRound).orElse(null);
         }
         else {
-            submission = programmingSubmissionService.getRandomAssessableSubmission(programmingExercise, programmingExercise.isExamExercise(), correctionRound).orElse(null);
+            submission = programmingSubmissionService.getRandomAssessableSubmission(programmingExercise, !lockSubmission, programmingExercise.isExamExercise(), correctionRound)
+                    .orElse(null);
 
             // Check if tutors can start assessing the students submission
             programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);

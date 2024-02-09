@@ -96,7 +96,7 @@ describe('FeedbackComponent', () => {
     const generateTestCaseFeedbackPair = (showDetails: boolean, name: string, message: string | undefined, credits: number) => {
         return {
             fb: makeFeedback({
-                text: name,
+                testCase: { testName: name },
                 detailText: message,
                 credits,
                 positive: credits > 0,
@@ -208,7 +208,7 @@ describe('FeedbackComponent', () => {
                         id: 55,
                         type: ParticipationType.PROGRAMMING,
                         participantIdentifier: 'student42',
-                        repositoryUrl: 'https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42',
+                        repositoryUri: 'https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42',
                     },
                 } as Result;
 

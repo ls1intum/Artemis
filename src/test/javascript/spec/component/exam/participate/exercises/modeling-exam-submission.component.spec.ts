@@ -1,9 +1,9 @@
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By, SafeHtml } from '@angular/platform-browser';
-import { ApollonEditor, UMLModel } from '@ls1intum/apollon';
+import { ApollonEditor, UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { Course } from 'app/entities/course.model';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExamSubmissionComponent } from 'app/exam/participate/exercises/modeling/modeling-exam-submission.component';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
@@ -236,16 +236,16 @@ describe('ModelingExamSubmissionComponent', () => {
         jest.replaceProperty(comp, 'modelingEditor', { apollonEditor: { nextRender: () => {} } as unknown as ApollonEditor } as unknown as ModelingEditorComponent);
         const submissionVersion = {
             content:
-                'Model: {"version":"2.0.0","type":"ClassDiagram","size":{"width":220,"height":420},"interactive":{"elements":[],"relationships":[]},"elements":[],"relationships":[],"assessments":[]}; Explanation: explanation',
+                'Model: {"version":"3.0.0","type":"ClassDiagram","size":{"width":220,"height":420},"interactive":{"elements":{},"relationships":{}},"elements":{},"relationships":{},"assessments":{}}; Explanation: explanation',
         } as unknown as SubmissionVersion;
         const parsedModel = {
-            version: '2.0.0',
+            version: '3.0.0',
             type: 'ClassDiagram',
             size: { width: 220, height: 420 },
-            interactive: { elements: [], relationships: [] },
-            elements: [],
-            relationships: [],
-            assessments: [],
+            interactive: { elements: {}, relationships: {} },
+            elements: {},
+            relationships: {},
+            assessments: {},
         } as UMLModel;
         await comp.setSubmissionVersion(submissionVersion);
         await fixture.whenStable();

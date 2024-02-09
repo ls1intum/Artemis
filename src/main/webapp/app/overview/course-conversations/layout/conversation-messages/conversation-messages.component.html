@@ -1,85 +1,109 @@
-<div class="row p-3 justify-content-center conversation-messages" *ngIf="course">
-    <div class="justify-content-center">
-        <div class="row justify-content-center p-0">
-            <!-- search bar -->
-            <div class="input-group ps-0" [class.search-active]="!!searchText">
-                <span class="input-group-text">
-                    <fa-icon [icon]="faSearch" size="sm"></fa-icon>
-                    <span [hidden]="true" id="inputLabel">{{ 'artemisApp.conversationsLayout.conversationMessages.searchLabel' | artemisTranslate }}</span>
-                </span>
-                <input
-                    id="searchInput"
-                    aria-labelledby="inputLabel"
-                    aria-describedby="searchResult"
-                    #searchInput
-                    (input)="onSearchQueryInput($event)"
-                    class="form-control"
-                    type="text"
-                    placeholder="{{ 'artemisApp.conversationsLayout.conversationMessages.searchBarPlaceholder' | artemisTranslate }}"
-                />
-                <button
-                    class="btn btn-outline-secondary border-end-0 border-start-0"
-                    type="button"
-                    *ngIf="!!searchText"
-                    (click)="clearSearchInput()"
-                    aria-labelledby="clearSearchLabel"
-                    id="clearSearchButton"
-                >
-                    <span id="clearSearchLabel" [hidden]="true">{{ 'artemisApp.conversationsLayout.conversationMessages.clearSearch' | artemisTranslate }}</span>
-                    <fa-icon [icon]="faTimes" size="xs"></fa-icon>
-                </button>
-                <span class="input-group-text" [hidden]="!searchText" id="searchResult">
-                    <ng-container [ngSwitch]="totalNumberOfPosts">
-                        <span *ngSwitchCase="0">{{ 'artemisApp.conversationsLayout.conversationMessages.searchResultsNone' | artemisTranslate }}</span>
-                        <span *ngSwitchCase="1">{{ 'artemisApp.conversationsLayout.conversationMessages.searchResultsSingle' | artemisTranslate }}</span>
-                        <span *ngSwitchDefault>
-                            {{ 'artemisApp.conversationsLayout.conversationMessages.searchResultsMultiple' | artemisTranslate: { count: totalNumberOfPosts } }}</span
+@if (course) {
+    <div class="row p-3 justify-content-center conversation-messages">
+        <div class="justify-content-center">
+            <div class="row justify-content-center p-0">
+                <!-- search bar -->
+                <div class="input-group ps-0" [class.search-active]="!!searchText">
+                    <span class="input-group-text">
+                        <fa-icon [icon]="faSearch" size="sm"></fa-icon>
+                        <span [hidden]="true" id="inputLabel">{{ 'artemisApp.conversationsLayout.conversationMessages.searchLabel' | artemisTranslate }}</span>
+                    </span>
+                    <input
+                        id="searchInput"
+                        aria-labelledby="inputLabel"
+                        aria-describedby="searchResult"
+                        #searchInput
+                        (input)="onSearchQueryInput($event)"
+                        class="form-control"
+                        type="text"
+                        placeholder="{{ 'artemisApp.conversationsLayout.conversationMessages.searchBarPlaceholder' | artemisTranslate }}"
+                    />
+                    @if (!!searchText) {
+                        <button
+                            class="btn btn-outline-secondary border-end-0 border-start-0"
+                            type="button"
+                            (click)="clearSearchInput()"
+                            aria-labelledby="clearSearchLabel"
+                            id="clearSearchButton"
                         >
-                    </ng-container>
-                </span>
+                            <span id="clearSearchLabel" [hidden]="true">{{ 'artemisApp.conversationsLayout.conversationMessages.clearSearch' | artemisTranslate }}</span>
+                            <fa-icon [icon]="faTimes" size="xs"></fa-icon>
+                        </button>
+                    }
+                    <span class="input-group-text" [hidden]="!searchText" id="searchResult">
+                        @switch (totalNumberOfPosts) {
+                            @case (0) {
+                                <span>{{ 'artemisApp.conversationsLayout.conversationMessages.searchResultsNone' | artemisTranslate }}</span>
+                            }
+                            @case (1) {
+                                <span>{{ 'artemisApp.conversationsLayout.conversationMessages.searchResultsSingle' | artemisTranslate }}</span>
+                            }
+                            @default {
+                                <span> {{ 'artemisApp.conversationsLayout.conversationMessages.searchResultsMultiple' | artemisTranslate: { count: totalNumberOfPosts } }}</span>
+                            }
+                        }
+                    </span>
+                </div>
             </div>
-        </div>
-        <div class="row mt-3">
-            <!-- loading messages -->
-            <div *ngIf="isFetchingPosts" class="envelope">
-                <fa-icon size="3x" [icon]="faCircleNotch" [spin]="true"></fa-icon>
-            </div>
-            <!-- no message exist -->
-            <div *ngIf="!isFetchingPosts && (totalNumberOfPosts === 0 || !_activeConversation)" class="envelope">
-                <fa-icon size="5x" [icon]="faEnvelope"></fa-icon>
-            </div>
-            <!-- list of messages -->
-            <div
-                id="scrollableDiv"
-                #container
-                class="{{ totalNumberOfPosts !== 0 ? 'posting-infinite-scroll-container' : '' }}"
-                infinite-scroll
-                [scrollWindow]="false"
-                (scrolledUp)="fetchNextPage()"
-            >
-                <!-- list of all top level posts -->
-                <!-- answers are opened in the thread sidebar -->
-                <jhi-posting-thread
-                    #postingThread
-                    *ngFor="let post of posts; trackBy: postsTrackByFn"
-                    [lastReadDate]="_activeConversation?.lastReadDate"
-                    [hasChannelModerationRights]="!!getAsChannel(_activeConversation)?.hasChannelModerationRights"
-                    [id]="'item-' + post.id"
-                    [post]="post"
-                    [showAnswers]="false"
-                    [readOnlyMode]="!!getAsChannel(_activeConversation)?.isArchived"
-                    [isCourseMessagesPage]="true"
-                    (openThread)="setPostForThread($event)"
+            <div class="row mt-3">
+                <!-- loading messages -->
+                @if (isFetchingPosts) {
+                    <div class="envelope">
+                        <fa-icon size="3x" [icon]="faCircleNotch" [spin]="true"></fa-icon>
+                    </div>
+                }
+                <!-- no message exist -->
+                @if (!isFetchingPosts && (totalNumberOfPosts === 0 || !_activeConversation)) {
+                    <div class="envelope">
+                        <fa-icon size="5x" [icon]="faEnvelope"></fa-icon>
+                    </div>
+                }
+                <!-- list of messages -->
+                <div
+                    id="scrollableDiv"
+                    #container
+                    class="{{ totalNumberOfPosts !== 0 ? 'posting-infinite-scroll-container' : '' }}"
+                    infinite-scroll
+                    [scrollWindow]="false"
+                    (scrolledUp)="fetchNextPage()"
                 >
-                </jhi-posting-thread>
+                    <!-- list of all top level posts -->
+                    <!-- answers are opened in the thread sidebar -->
+                    @for (post of posts; track postsTrackByFn($index, post)) {
+                        <jhi-posting-thread
+                            #postingThread
+                            [lastReadDate]="_activeConversation?.lastReadDate"
+                            [hasChannelModerationRights]="!!getAsChannel(_activeConversation)?.hasChannelModerationRights"
+                            [id]="'item-' + post.id"
+                            [post]="post"
+                            [showAnswers]="false"
+                            [readOnlyMode]="!!getAsChannel(_activeConversation)?.isArchived"
+                            [isCourseMessagesPage]="true"
+                            (openThread)="setPostForThread($event)"
+                        >
+                        </jhi-posting-thread>
+                    }
+                </div>
+                @if (_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation)) {
+                    <div>
+                        @if (getAsChannel(_activeConversation)?.isAnnouncementChannel) {
+                            <div class="pt-2">
+                                <button class="btn btn-md btn-primary" (click)="createEditModal.open()">
+                                    {{ 'artemisApp.metis.newAnnouncement' | artemisTranslate }}
+                                </button>
+                                <jhi-post-create-edit-modal
+                                    #createEditModal
+                                    [posting]="newPost!"
+                                    [isCourseMessagesPage]="true"
+                                    (onCreate)="createEmptyPost(); scrollToBottomOfMessages()"
+                                ></jhi-post-create-edit-modal>
+                            </div>
+                        } @else {
+                            <jhi-message-inline-input class="message-input" [posting]="newPost!" (onCreate)="createEmptyPost(); scrollToBottomOfMessages()" />
+                        }
+                    </div>
+                }
             </div>
-            <jhi-message-inline-input
-                class="message-input"
-                *ngIf="_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation)"
-                [posting]="newPost"
-                (onCreate)="createEmptyPost(); scrollToBottomOfMessages()"
-            >
-            </jhi-message-inline-input>
         </div>
     </div>
-</div>
+}

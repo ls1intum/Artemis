@@ -150,6 +150,9 @@ public class Exam extends DomainObject {
     @Transient
     private String channelNameTransient;
 
+    @Transient
+    private Integer quizExamMaxPoints;
+
     public String getTitle() {
         return title;
     }
@@ -483,28 +486,19 @@ public class Exam extends DomainObject {
         this.channelNameTransient = channelNameTransient;
     }
 
+    @JsonProperty(value = "quizExamMaxPoints", access = JsonProperty.Access.READ_ONLY)
+    public Integer getQuizExamMaxPoints() {
+        return quizExamMaxPoints;
+    }
+
+    @JsonProperty(value = "quizExamMaxPoints", access = JsonProperty.Access.WRITE_ONLY)
+    public void setQuizExamMaxPoints(Integer quizExamMaxPoints) {
+        this.quizExamMaxPoints = quizExamMaxPoints;
+    }
+
     @JsonIgnore
     public String getSanitizedExamTitle() {
         // exam titles are non-nullable
         return StringUtil.sanitizeStringForFileName(this.title);
-    }
-
-    /**
-     * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.TextExerciseService#getAllOnPageWithSize(PageableSearchDTO, User)}}
-     * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
-     */
-    public enum ExamSearchColumn {
-
-        ID("id"), TITLE("title"), COURSE_TITLE("course.title"), EXAM_MODE("exam.testExam");
-
-        private final String mappedColumnName;
-
-        ExamSearchColumn(String mappedColumnName) {
-            this.mappedColumnName = mappedColumnName;
-        }
-
-        public String getMappedColumnName() {
-            return mappedColumnName;
-        }
     }
 }

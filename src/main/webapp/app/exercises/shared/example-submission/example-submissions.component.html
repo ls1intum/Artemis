@@ -1,95 +1,113 @@
 <div>
-    <div class="row" *ngIf="exercise && exercise.id && exercise.course && exercise.course.id">
-        <div class="col-12 col-sm">
-            <h4>
-                <span>{{ 'artemisApp.exampleSubmission.exampleSubmissions' | artemisTranslate }}</span>
-            </h4>
+    @if (exercise && exercise.id && exercise.course && exercise.course.id) {
+        <div class="row">
+            <div class="col-12 col-sm">
+                <h4>
+                    <span>{{ 'artemisApp.exampleSubmission.exampleSubmissions' | artemisTranslate }}</span>
+                </h4>
+            </div>
+            <div class="col-12 col-sm-auto d-flex flex-btn-group-container me-1 mb-1">
+                @if (exercise.course.isAtLeastEditor) {
+                    <a class="btn btn-primary me-1 mb-1" [routerLink]="getLinkToExampleSubmission('new')">
+                        <fa-icon [icon]="faPlus"></fa-icon>
+                        <fa-icon class="d-xl-none" [icon]="faFont"></fa-icon>
+                        <span class="d-none d-xl-inline" jhiTranslate="artemisApp.modelingExercise.createExampleSubmission" id="create-example-submission"></span>
+                    </a>
+                }
+                @if (exercise.course.isAtLeastEditor) {
+                    <a class="btn btn-primary me-1 mb-1" (click)="openImportModal()">
+                        <fa-icon [icon]="faPlus"></fa-icon>
+                        <fa-icon class="d-xl-none" [icon]="faFont"></fa-icon>
+                        <span class="d-none d-xl-inline" jhiTranslate="artemisApp.exampleSubmission.useAsExampleSubmission"></span>
+                    </a>
+                }
+            </div>
         </div>
-        <div class="col-12 col-sm-auto d-flex flex-btn-group-container me-1 mb-1">
-            <a *ngIf="exercise.course.isAtLeastEditor" class="btn btn-primary me-1 mb-1" [routerLink]="getLinkToExampleSubmission('new')">
-                <fa-icon [icon]="faPlus"></fa-icon>
-                <fa-icon class="d-xl-none" [icon]="faFont"></fa-icon>
-                <span class="d-none d-xl-inline" jhiTranslate="artemisApp.modelingExercise.createExampleSubmission" id="create-example-submission"></span>
-            </a>
-            <a *ngIf="exercise.course.isAtLeastEditor" class="btn btn-primary me-1 mb-1" (click)="openImportModal()">
-                <fa-icon [icon]="faPlus"></fa-icon>
-                <fa-icon class="d-xl-none" [icon]="faFont"></fa-icon>
-                <span class="d-none d-xl-inline" jhiTranslate="artemisApp.exampleSubmission.useAsExampleSubmission"></span>
-            </a>
-        </div>
-    </div>
+    }
     <br />
     <div class="table-responsive">
-        <table class="table table-striped" *ngIf="exercise && exercise.id && exercise.course && exercise.course.id">
-            <thead>
-                <tr>
-                    <th><span jhiTranslate="global.field.id"></span></th>
-                    <th><span jhiTranslate="artemisApp.exercise.title"></span></th>
-                    <th><span jhiTranslate="artemisApp.assessment.dashboard.columns.result"></span></th>
-                    <th>
-                        <span jhiTranslate="artemisApp.exampleSubmission.submissionSize"></span>
-                        <fa-icon
-                            *ngIf="exercise.type === exerciseType.TEXT"
-                            [icon]="faQuestionCircle"
-                            class="text-secondary ps-1"
-                            [ngbTooltip]="'artemisApp.exampleSubmission.textSubmissionSizeHint' | artemisTranslate"
-                        ></fa-icon>
-                        <fa-icon
-                            *ngIf="exercise.type === exerciseType.MODELING"
-                            [icon]="faQuestionCircle"
-                            class="text-secondary ps-1"
-                            [ngbTooltip]="'artemisApp.exampleSubmission.modelingSubmissionSizeHint' | artemisTranslate"
-                        ></fa-icon>
-                    </th>
-                    <th><span jhiTranslate="artemisApp.exampleSubmission.assessmentTraining"></span></th>
-                    <th><span jhiTranslate="artemisApp.exampleSubmission.exampleAssessmentCreated"></span></th>
-                    <th *ngIf="exercise.course.isAtLeastEditor"></th>
-                </tr>
-            </thead>
-            <tbody class="markdown-preview">
-                <tr *ngFor="let exampleSubmission of exercise.exampleSubmissions; let i = index">
-                    <td>
-                        <a [routerLink]="getLinkToExampleSubmission(exampleSubmission.id!)" class="btn-link">
-                            {{ exampleSubmission.id }}
-                        </a>
-                    </td>
-                    <td>
-                        <a [routerLink]="getLinkToExampleSubmission(exampleSubmission.id!)" class="btn-link">
-                            {{ 'artemisApp.exampleSubmission.exampleSubmission' | artemisTranslate }} {{ i + 1 }}
-                        </a>
-                    </td>
-                    <td>
-                        <jhi-result
-                            *ngIf="exampleSubmission.submission && exampleSubmission.submission!.results && exampleSubmission.submission!.results!.length > 0; else showEmptyResult"
-                            [result]="exampleSubmission.submission!.results![0]"
-                            [exercise]="exercise"
-                        ></jhi-result>
-                        <ng-template #showEmptyResult>
-                            <jhi-result></jhi-result>
-                        </ng-template>
-                    </td>
-                    <td>
-                        {{ exampleSubmission.submission!.submissionSize }}
-                    </td>
-                    <td>{{ 'artemisApp.exampleSubmission.' + (exampleSubmission.usedForTutorial ? 'assessCorrectly' : 'readAndConfirm') | artemisTranslate }}</td>
-                    <td>
-                        <span *ngIf="createdExampleAssessment[i]" jhiTranslate="global.generic.yes"></span>
-                        <span *ngIf="!createdExampleAssessment[i]" class="text-danger" jhiTranslate="global.generic.no"></span>
-                        <fa-icon
-                            *ngIf="!createdExampleAssessment[i]"
-                            [icon]="faExclamationTriangle"
-                            class="text-warning"
-                            [ngbTooltip]="'artemisApp.exampleSubmission.exampleAssessmentWarning' | artemisTranslate"
-                        ></fa-icon>
-                    </td>
-                    <td *ngIf="exercise.course.isAtLeastEditor">
-                        <button (click)="deleteExampleSubmission(i)" class="btn btn-danger col-auto">
-                            <fa-icon [icon]="faTimes"></fa-icon>
-                            {{ 'entity.action.delete' | artemisTranslate }}
-                        </button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        @if (exercise && exercise.id && exercise.course && exercise.course.id) {
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th><span jhiTranslate="global.field.id"></span></th>
+                        <th><span jhiTranslate="artemisApp.exercise.title"></span></th>
+                        <th><span jhiTranslate="artemisApp.assessment.dashboard.columns.result"></span></th>
+                        <th>
+                            <span jhiTranslate="artemisApp.exampleSubmission.submissionSize"></span>
+                            @if (exercise.type === exerciseType.TEXT) {
+                                <fa-icon
+                                    [icon]="faQuestionCircle"
+                                    class="text-secondary ps-1"
+                                    [ngbTooltip]="'artemisApp.exampleSubmission.textSubmissionSizeHint' | artemisTranslate"
+                                ></fa-icon>
+                            }
+                            @if (exercise.type === exerciseType.MODELING) {
+                                <fa-icon
+                                    [icon]="faQuestionCircle"
+                                    class="text-secondary ps-1"
+                                    [ngbTooltip]="'artemisApp.exampleSubmission.modelingSubmissionSizeHint' | artemisTranslate"
+                                ></fa-icon>
+                            }
+                        </th>
+                        <th><span jhiTranslate="artemisApp.exampleSubmission.assessmentTraining"></span></th>
+                        <th><span jhiTranslate="artemisApp.exampleSubmission.exampleAssessmentCreated"></span></th>
+                        @if (exercise.course.isAtLeastEditor) {
+                            <th></th>
+                        }
+                    </tr>
+                </thead>
+                <tbody class="markdown-preview">
+                    @for (exampleSubmission of exercise.exampleSubmissions; track exampleSubmission; let i = $index) {
+                        <tr>
+                            <td>
+                                <a [routerLink]="getLinkToExampleSubmission(exampleSubmission.id!)" class="btn-link">
+                                    {{ exampleSubmission.id }}
+                                </a>
+                            </td>
+                            <td>
+                                <a [routerLink]="getLinkToExampleSubmission(exampleSubmission.id!)" class="btn-link">
+                                    {{ 'artemisApp.exampleSubmission.exampleSubmission' | artemisTranslate }} {{ i + 1 }}
+                                </a>
+                            </td>
+                            <td>
+                                @if (exampleSubmission.submission && exampleSubmission.submission!.results && exampleSubmission.submission!.results!.length > 0) {
+                                    <jhi-result [result]="exampleSubmission.submission!.results![0]" [exercise]="exercise"></jhi-result>
+                                } @else {
+                                    <jhi-result></jhi-result>
+                                }
+                            </td>
+                            <td>
+                                {{ exampleSubmission.submission!.submissionSize }}
+                            </td>
+                            <td>{{ 'artemisApp.exampleSubmission.' + (exampleSubmission.usedForTutorial ? 'assessCorrectly' : 'readAndConfirm') | artemisTranslate }}</td>
+                            <td>
+                                @if (createdExampleAssessment[i]) {
+                                    <span jhiTranslate="global.generic.yes"></span>
+                                }
+                                @if (!createdExampleAssessment[i]) {
+                                    <span class="text-danger" jhiTranslate="global.generic.no"></span>
+                                }
+                                @if (!createdExampleAssessment[i]) {
+                                    <fa-icon
+                                        [icon]="faExclamationTriangle"
+                                        class="text-warning"
+                                        [ngbTooltip]="'artemisApp.exampleSubmission.exampleAssessmentWarning' | artemisTranslate"
+                                    ></fa-icon>
+                                }
+                            </td>
+                            @if (exercise.course.isAtLeastEditor) {
+                                <td>
+                                    <button (click)="deleteExampleSubmission(i)" class="btn btn-danger col-auto">
+                                        <fa-icon [icon]="faTimes"></fa-icon>
+                                        {{ 'entity.action.delete' | artemisTranslate }}
+                                    </button>
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
     </div>
 </div>

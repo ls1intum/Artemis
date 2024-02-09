@@ -22,7 +22,16 @@ import { Subscription } from 'rxjs';
 export class ConfirmEntityNameComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
     @Input() warningTextColor: string;
     @Input() confirmationText: string;
-    @Input() entityName: string;
+
+    @Input()
+    set entityName(entityName: string) {
+        this.currentEntityName = entityName;
+        this.onValidatorChange?.();
+    }
+
+    get entityName(): string {
+        return this.currentEntityName;
+    }
 
     control: FormControl<string>;
 
@@ -30,12 +39,14 @@ export class ConfirmEntityNameComponent implements OnInit, OnDestroy, ControlVal
 
     onTouched = () => {};
 
+    private currentEntityName: string;
     private onChangeSubs: Subscription[] = [];
+    private onValidatorChange?: () => void;
 
     ngOnInit() {
         this.control = this.fb.control('', {
             nonNullable: true,
-            validators: [Validators.required, Validators.pattern(this.entityName)],
+            validators: [Validators.required, (control: FormControl) => Validators.pattern(this.entityName)(control)],
         });
     }
 
@@ -45,8 +56,8 @@ export class ConfirmEntityNameComponent implements OnInit, OnDestroy, ControlVal
         }
     }
 
-    writeValue(entityName: string) {
-        if (entityName) {
+    writeValue(entityName: string | undefined | null) {
+        if (typeof entityName === 'string') {
             this.control.setValue(entityName, { emitEvent: false });
         }
     }
@@ -73,5 +84,9 @@ export class ConfirmEntityNameComponent implements OnInit, OnDestroy, ControlVal
         }
 
         return this.control.errors;
+    }
+
+    registerOnValidatorChange(fn: () => void) {
+        this.onValidatorChange = fn;
     }
 }

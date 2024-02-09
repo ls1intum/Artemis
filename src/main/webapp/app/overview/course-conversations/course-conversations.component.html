@@ -1,31 +1,40 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
-    <div *ngIf="course && !isCodeOfConductAccepted">
-        <jhi-course-conversations-code-of-conduct [course]="course!"></jhi-course-conversations-code-of-conduct>
-        <button id="acceptCodeOfConductButton" class="btn btn-primary" type="button" (click)="acceptCodeOfConduct()">
-            {{ 'artemisApp.codeOfConduct.accept' | artemisTranslate }}
-        </button>
-    </div>
-    <div class="row mt-2" *ngIf="isCodeOfConductAccepted && isServiceSetUp && course">
-        <div class="col d-flex flex-grow-1 justify-end px-0 me-1" style="max-width: min-content">
-            <jhi-conversation-selection-sidebar></jhi-conversation-selection-sidebar>
-        </div>
-        <div class="col pe-0 flex-grow-1" *ngIf="course && !activeConversation && isCodeOfConductPresented">
+    @if (course && !isCodeOfConductAccepted) {
+        <div>
             <jhi-course-conversations-code-of-conduct [course]="course!"></jhi-course-conversations-code-of-conduct>
+            <button id="acceptCodeOfConductButton" class="btn btn-primary" type="button" (click)="acceptCodeOfConduct()">
+                {{ 'artemisApp.codeOfConduct.accept' | artemisTranslate }}
+            </button>
         </div>
-        <div class="col pe-0 flex-grow-1" [ngClass]="{ 'card-border': activeConversation }" style="min-width: 200px">
-            <ng-container *ngIf="activeConversation">
-                <jhi-conversation-header></jhi-conversation-header>
-                <jhi-conversation-messages (openThread)="postInThread = $event" [course]="course"></jhi-conversation-messages>
-            </ng-container>
+    }
+    @if (isCodeOfConductAccepted && isServiceSetUp && course) {
+        <div class="row mt-2">
+            <div class="col d-flex flex-grow-1 justify-end px-0 me-1" style="max-width: min-content">
+                <jhi-conversation-selection-sidebar></jhi-conversation-selection-sidebar>
+            </div>
+            @if (course && !activeConversation && isCodeOfConductPresented) {
+                <div class="col pe-0 flex-grow-1">
+                    <jhi-course-conversations-code-of-conduct [course]="course!"></jhi-course-conversations-code-of-conduct>
+                </div>
+            }
+            <div class="col pe-0 flex-grow-1" [ngClass]="{ 'card-border': activeConversation }" style="min-width: 200px">
+                @if (activeConversation) {
+                    <jhi-conversation-header></jhi-conversation-header>
+                    <jhi-conversation-messages (openThread)="postInThread = $event" [course]="course"></jhi-conversation-messages>
+                }
+            </div>
+            @if (activeConversation) {
+                <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
+                    @if (!!postInThread) {
+                        <jhi-conversation-thread-sidebar
+                            [activeConversation]="activeConversation"
+                            [readOnlyMode]="!!getAsChannel(activeConversation)?.isArchived"
+                            [activePost]="postInThread"
+                            (closePostThread)="postInThread = undefined"
+                        ></jhi-conversation-thread-sidebar>
+                    }
+                </div>
+            }
         </div>
-        <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content" *ngIf="activeConversation">
-            <jhi-conversation-thread-sidebar
-                *ngIf="!!postInThread"
-                [activeConversation]="activeConversation"
-                [readOnlyMode]="!!getAsChannel(activeConversation)?.isArchived"
-                [activePost]="postInThread"
-                (closePostThread)="postInThread = undefined"
-            ></jhi-conversation-thread-sidebar>
-        </div>
-    </div>
+    }
 </jhi-loading-indicator-container>

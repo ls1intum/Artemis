@@ -24,11 +24,19 @@ import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/ma
 import { TranslateService } from '@ngx-translate/core';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Title } from '@angular/platform-browser';
-import * as Sentry from '@sentry/angular-ivy';
 import { LANGUAGES } from 'app/core/language/language.constants';
 import { AdminUserService } from 'app/core/user/admin-user.service';
+// Preliminary mock before import to prevent errors
+jest.mock('@sentry/angular-ivy', () => {
+    const originalModule = jest.requireActual('@sentry/angular-ivy');
+    return {
+        ...originalModule,
+        captureException: jest.fn(),
+    };
+});
+import * as Sentry from '@sentry/angular-ivy';
 
-describe('User Management Update Component', () => {
+describe('UserManagementUpdateComponent', () => {
     let comp: UserManagementUpdateComponent;
     let fixture: ComponentFixture<UserManagementUpdateComponent>;
     let service: AdminUserService;
@@ -192,6 +200,7 @@ describe('User Management Update Component', () => {
                 const updateTitleSpy = jest.spyOn(languageHelper, 'updateTitle');
                 const getTranslationSpy = jest.spyOn(translateService, 'get').mockReturnValue(of(undefined));
                 const setTitleOnTitleServiceSpy = jest.spyOn(titleService, 'setTitle');
+                // Re-mock to get reference because direct import doesn't work here
                 const captureExceptionSpy = jest.spyOn(Sentry, 'captureException');
 
                 // WHEN

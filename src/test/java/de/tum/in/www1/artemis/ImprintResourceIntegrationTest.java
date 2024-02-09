@@ -17,9 +17,10 @@ import org.mockito.MockedStatic;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.google.gson.JsonObject;
+
 import de.tum.in.www1.artemis.domain.Imprint;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
-import net.minidev.json.JSONObject;
 
 class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -212,10 +213,10 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testUpdateImprint_unsupportedLanguageBadRequest() throws Exception {
-        JSONObject body = new JSONObject();
-        body.put("text", "test");
-        body.put("language", "FRENCH");
-        request.put("/api/admin/imprint", body, HttpStatus.BAD_REQUEST);
+        JsonObject body = new JsonObject();
+        body.addProperty("text", "test");
+        body.addProperty("language", "FRENCH");
+        request.put("/api/admin/imprint", body.toString(), HttpStatus.BAD_REQUEST);
     }
 
     @Test

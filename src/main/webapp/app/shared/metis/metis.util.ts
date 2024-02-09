@@ -6,13 +6,6 @@ export enum PostingEditType {
     UPDATE,
 }
 
-export enum CourseWideContext {
-    TECH_SUPPORT = 'TECH_SUPPORT',
-    ORGANIZATION = 'ORGANIZATION',
-    RANDOM = 'RANDOM',
-    ANNOUNCEMENT = 'ANNOUNCEMENT',
-}
-
 export enum DisplayPriority {
     PINNED = 'PINNED',
     ARCHIVED = 'ARCHIVED',
@@ -36,7 +29,6 @@ export enum SortDirection {
 export enum PostSortCriterion {
     CREATION_DATE = 'CREATION_DATE',
     VOTES = 'VOTES',
-    ANSWER_COUNT = 'ANSWER_COUNT',
 }
 
 export enum MetisPostAction {
@@ -49,9 +41,7 @@ export enum MetisPostAction {
 
 export interface PostContextFilter {
     courseId?: number;
-    courseWideContexts?: CourseWideContext[];
-    exerciseIds?: number[];
-    lectureIds?: number[];
+    courseWideChannelIds?: number[];
     plagiarismCaseId?: number;
     searchText?: string;
     conversationId?: number;
@@ -114,6 +104,7 @@ export enum ReferenceType {
     TEXT = 'text',
     FILE_UPLOAD = 'file-upload',
     USER = 'USER',
+    CHANNEL = 'CHANNEL',
 }
 
 export enum UserRole {
@@ -128,6 +119,7 @@ export enum UserRole {
  */
 export interface ContextInformation {
     routerLinkComponents?: RouteComponents;
+    queryParams?: Params;
     displayName: string;
 }
 

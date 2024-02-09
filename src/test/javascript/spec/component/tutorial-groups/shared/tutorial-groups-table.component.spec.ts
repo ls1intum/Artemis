@@ -12,7 +12,6 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { Component, Input, QueryList, SimpleChange, ViewChild, ViewChildren } from '@angular/core';
 import { TutorialGroupRowStubComponent } from '../stubs/tutorial-groups-table-stub.component';
 import { Course, Language } from 'app/entities/course.model';
-import { By } from '@angular/platform-browser';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
 import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
@@ -241,18 +240,5 @@ describe('TutorialGroupsTableComponent', () => {
         component.sortRows();
         expect(sortServiceSpy).toHaveBeenCalledWith([tutorialGroupOne, tutorialGroupTwo], ['capacity', 'numberOfRegisteredUsers'], false);
         expect(sortServiceSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should call tutorialGroupClickHandler', () => {
-        const tutorialGroupClickHandler = jest.fn();
-        component.tutorialGroupClickHandler = tutorialGroupClickHandler;
-        runOnPushChangeDetection(fixture);
-        // get first instance of tutorialGroupRowStubComponent
-        const tutorialGroupRowStubComponents = fixture.debugElement.queryAll(By.directive(TutorialGroupRowStubComponent));
-        expect(tutorialGroupRowStubComponents).toHaveLength(2);
-        tutorialGroupRowStubComponents[0].componentInstance.tutorialGroupClickHandler(tutorialGroupOne);
-
-        expect(tutorialGroupClickHandler).toHaveBeenCalledOnce();
-        expect(tutorialGroupClickHandler).toHaveBeenCalledWith(tutorialGroupOne);
     });
 });

@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureServ
 
 class PlagiarismDetectionServiceTest {
 
-    private final PlagiarismDetectionConfig config = new PlagiarismDetectionConfig(0.5f, 1, 2);
+    private final PlagiarismDetectionConfig config = PlagiarismDetectionConfig.createDefault();
 
     private final TextPlagiarismDetectionService textPlagiarismDetectionService = mock();
 
@@ -46,13 +46,14 @@ class PlagiarismDetectionServiceTest {
     void shouldExecuteChecksForTextExercise() throws ExitException {
         // given
         var textExercise = new TextExercise();
+        textExercise.setPlagiarismDetectionConfig(config);
         var textPlagiarismResult = new TextPlagiarismResult();
         textPlagiarismResult.setComparisons(emptySet());
-        when(textPlagiarismDetectionService.checkPlagiarism(textExercise, config.similarityThreshold(), config.minimumScore(), config.minimumSize()))
+        when(textPlagiarismDetectionService.checkPlagiarism(textExercise, config.getSimilarityThreshold(), config.getMinimumScore(), config.getMinimumSize()))
                 .thenReturn(textPlagiarismResult);
 
         // when
-        var result = service.checkTextExercise(textExercise, config);
+        var result = service.checkTextExercise(textExercise);
 
         // then
         assertThat(result).isEqualTo(textPlagiarismResult);
@@ -62,13 +63,14 @@ class PlagiarismDetectionServiceTest {
     void shouldExecuteChecksForModelingExercise() {
         // given
         var modelingExercise = new ModelingExercise();
+        modelingExercise.setPlagiarismDetectionConfig(config);
         var modelingPlagiarismResult = new ModelingPlagiarismResult();
         modelingPlagiarismResult.setComparisons(emptySet());
-        when(modelingPlagiarismDetectionService.checkPlagiarism(modelingExercise, config.similarityThreshold(), config.minimumSize(), config.minimumScore()))
+        when(modelingPlagiarismDetectionService.checkPlagiarism(modelingExercise, config.getSimilarityThreshold(), config.getMinimumSize(), config.getMinimumScore()))
                 .thenReturn(modelingPlagiarismResult);
 
         // when
-        var result = service.checkModelingExercise(modelingExercise, config);
+        var result = service.checkModelingExercise(modelingExercise);
 
         // then
         assertThat(result).isEqualTo(modelingPlagiarismResult);
@@ -79,9 +81,10 @@ class PlagiarismDetectionServiceTest {
         // given
         var programmingExercise = new ProgrammingExercise();
         programmingExercise.setId(1L);
+        programmingExercise.setPlagiarismDetectionConfig(config);
         var programmingPlagiarismResult = new TextPlagiarismResult();
         programmingPlagiarismResult.setComparisons(emptySet());
-        when(programmingPlagiarismDetectionService.checkPlagiarism(1L, config.similarityThreshold(), config.minimumScore(), config.minimumSize()))
+        when(programmingPlagiarismDetectionService.checkPlagiarism(1L, config.getSimilarityThreshold(), config.getMinimumScore(), config.getMinimumSize()))
                 .thenReturn(programmingPlagiarismResult);
 
         // and
@@ -89,7 +92,7 @@ class PlagiarismDetectionServiceTest {
         when(programmingLanguageFeatureService.getProgrammingLanguageFeatures(any())).thenReturn(programmingLanguageFeature);
 
         // when
-        var result = service.checkProgrammingExercise(programmingExercise, config);
+        var result = service.checkProgrammingExercise(programmingExercise);
 
         // then
         assertThat(result).isEqualTo(programmingPlagiarismResult);
@@ -103,7 +106,7 @@ class PlagiarismDetectionServiceTest {
         when(programmingLanguageFeatureService.getProgrammingLanguageFeatures(any())).thenReturn(programmingLanguageFeature);
 
         // expect
-        assertThatThrownBy(() -> service.checkProgrammingExercise(programmingExercise, config)).isInstanceOf(ProgrammingLanguageNotSupportedForPlagiarismDetectionException.class);
+        assertThatThrownBy(() -> service.checkProgrammingExercise(programmingExercise)).isInstanceOf(ProgrammingLanguageNotSupportedForPlagiarismDetectionException.class);
     }
 
     @Test
@@ -111,8 +114,9 @@ class PlagiarismDetectionServiceTest {
         // given
         var programmingExercise = new ProgrammingExercise();
         programmingExercise.setId(1L);
+        programmingExercise.setPlagiarismDetectionConfig(config);
         var zipFile = new File("");
-        when(programmingPlagiarismDetectionService.checkPlagiarismWithJPlagReport(1L, config.similarityThreshold(), config.minimumScore(), config.minimumSize()))
+        when(programmingPlagiarismDetectionService.checkPlagiarismWithJPlagReport(1L, config.getSimilarityThreshold(), config.getMinimumScore(), config.getMinimumSize()))
                 .thenReturn(zipFile);
 
         // and
@@ -120,7 +124,7 @@ class PlagiarismDetectionServiceTest {
         when(programmingLanguageFeatureService.getProgrammingLanguageFeatures(any())).thenReturn(programmingLanguageFeature);
 
         // when
-        var result = service.checkProgrammingExerciseWithJplagReport(programmingExercise, config);
+        var result = service.checkProgrammingExerciseWithJplagReport(programmingExercise);
 
         // then
         assertThat(result).isEqualTo(zipFile);
@@ -134,7 +138,7 @@ class PlagiarismDetectionServiceTest {
         when(programmingLanguageFeatureService.getProgrammingLanguageFeatures(any())).thenReturn(programmingLanguageFeature);
 
         // expect
-        assertThatThrownBy(() -> service.checkProgrammingExerciseWithJplagReport(programmingExercise, config))
+        assertThatThrownBy(() -> service.checkProgrammingExerciseWithJplagReport(programmingExercise))
                 .isInstanceOf(ProgrammingLanguageNotSupportedForPlagiarismDetectionException.class);
     }
 }

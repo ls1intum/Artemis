@@ -486,7 +486,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationIndependentTe
         for (ProgrammingExerciseTestCase testCase : exercise.getTestCases()) {
             var feedback = new Feedback();
             feedback.setPositive(successfulTestCases.contains(testCase));
-            feedback.setText(testCase.getTestName());
+            feedback.setTestCase(testCase);
             feedback.setVisibility(Visibility.ALWAYS);
             feedback.setType(FeedbackType.AUTOMATIC);
             participationUtilService.addFeedbackToResult(feedback, result);

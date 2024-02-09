@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismDetectionConfig;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
@@ -20,6 +21,7 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepositor
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.hestia.ExerciseHintService;
+import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
 @Service
@@ -49,6 +51,8 @@ public class ProgrammingExerciseImportBasicService {
 
     private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
 
+    private final ProgrammingExerciseTaskService programmingExerciseTaskService;
+
     private final ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
 
     private final ChannelService channelService;
@@ -58,8 +62,8 @@ public class ProgrammingExerciseImportBasicService {
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseService programmingExerciseService, StaticCodeAnalysisService staticCodeAnalysisService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyRepository submissionPolicyRepository,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseSolutionEntryRepository solutionEntryRepository,
-            ChannelService channelService) {
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
+            ProgrammingExerciseSolutionEntryRepository solutionEntryRepository, ChannelService channelService) {
         this.exerciseHintService = exerciseHintService;
         this.exerciseHintRepository = exerciseHintRepository;
         this.versionControlService = versionControlService;
@@ -72,6 +76,7 @@ public class ProgrammingExerciseImportBasicService {
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
+        this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.solutionEntryRepository = solutionEntryRepository;
         this.channelService = channelService;
     }
@@ -97,9 +102,7 @@ public class ProgrammingExerciseImportBasicService {
     @Transactional // TODO: apply the transaction on a smaller scope
     // IMPORTANT: the transactional context only works if you invoke this method from another class
     public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
-        // Set values we don't want to copy to null
-        setupExerciseForImport(newExercise);
-        newExercise.setBranch(versionControlService.orElseThrow().getDefaultBranchOfArtemis());
+        prepareBasicExerciseInformation(templateExercise, newExercise);
 
         // Note: same order as when creating an exercise
         programmingExerciseParticipationService.setupInitialTemplateParticipation(newExercise);
@@ -120,6 +123,11 @@ public class ProgrammingExerciseImportBasicService {
         importSubmissionPolicy(importedExercise);
         // Having the submission policy in place prevents errors
         importSolutionEntries(templateExercise, importedExercise, newTestCaseIdByOldId, newHintIdByOldId);
+
+        // Use the template problem statement (with ids) as a new basis (You cannot edit the problem statement while importing)
+        // Then replace the old test ids by the newly created ones.
+        importedExercise.setProblemStatement(templateExercise.getProblemStatement());
+        programmingExerciseTaskService.updateTestIds(importedExercise, newTestCaseIdByOldId);
 
         // Copy or create SCA categories
         if (Boolean.TRUE.equals(importedExercise.isStaticCodeAnalysisEnabled() && Boolean.TRUE.equals(templateExercise.isStaticCodeAnalysisEnabled()))) {
@@ -152,14 +160,33 @@ public class ProgrammingExerciseImportBasicService {
     }
 
     /**
-     * Sets up the test repository for a new exercise by setting the repository URL. This does not create the actual
+     * Prepares information directly stored in the exercise for the copy process.
+     * <p>
+     * Replaces attributes in the new exercise that should not be copied from the previous one.
+     *
+     * @param templateExercise Some exercise the information is copied from.
+     * @param newExercise      The exercise that is prepared.
+     */
+    private void prepareBasicExerciseInformation(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
+        // Set values we don't want to copy to null
+        setupExerciseForImport(newExercise);
+
+        if (templateExercise.hasBuildPlanAccessSecretSet()) {
+            newExercise.generateAndSetBuildPlanAccessSecret();
+        }
+
+        newExercise.setBranch(versionControlService.orElseThrow().getDefaultBranchOfArtemis());
+    }
+
+    /**
+     * Sets up the test repository for a new exercise by setting the repository URI. This does not create the actual
      * repository on the version control server!
      *
      * @param newExercise the new exercises that should be created during import
      */
     private void setupTestRepository(ProgrammingExercise newExercise) {
         final var testRepoName = newExercise.generateRepositoryName(RepositoryType.TESTS);
-        newExercise.setTestRepositoryUrl(versionControlService.orElseThrow().getCloneRepositoryUrl(newExercise.getProjectKey(), testRepoName).toString());
+        newExercise.setTestRepositoryUri(versionControlService.orElseThrow().getCloneRepositoryUri(newExercise.getProjectKey(), testRepoName).toString());
     }
 
     /**
@@ -292,6 +319,16 @@ public class ProgrammingExerciseImportBasicService {
 
         if (newExercise.isTeamMode()) {
             newExercise.getTeamAssignmentConfig().setId(null);
+        }
+
+        if (newExercise.isCourseExercise() && newExercise.getPlagiarismDetectionConfig() != null) {
+            newExercise.getPlagiarismDetectionConfig().setId(null);
+        }
+        else if (newExercise.isCourseExercise() && newExercise.getPlagiarismDetectionConfig() == null) {
+            newExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+        }
+        else {
+            newExercise.setPlagiarismDetectionConfig(null);
         }
     }
 

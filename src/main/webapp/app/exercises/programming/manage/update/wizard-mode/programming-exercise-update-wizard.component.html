@@ -1,40 +1,40 @@
 <form name="editForm" role="form" novalidate>
-    <jhi-programming-exercise-info
-        class="form-step"
-        *ngIf="currentStep >= 1"
-        [programmingExercise]="programmingExercise"
-        [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
-        [isExamMode]="isExamMode"
-    ></jhi-programming-exercise-info>
-
-    <jhi-programming-exercise-difficulty
-        class="form-step"
-        *ngIf="currentStep >= 2"
-        [programmingExercise]="programmingExercise"
-        [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
-    ></jhi-programming-exercise-difficulty>
-
-    <jhi-programming-exercise-language
-        class="form-step"
-        *ngIf="currentStep >= 3"
-        [programmingExercise]="programmingExercise"
-        [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
-    ></jhi-programming-exercise-language>
-
-    <jhi-programming-exercise-problem
-        class="form-step"
-        *ngIf="currentStep >= 4"
-        [(exercise)]="exercise"
-        [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
-    ></jhi-programming-exercise-problem>
-
-    <jhi-programming-exercise-grading
-        class="form-step"
-        *ngIf="currentStep >= 5"
-        [programmingExercise]="programmingExercise"
-        [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
-    ></jhi-programming-exercise-grading>
-
+    @if (currentStep >= 1) {
+        <jhi-programming-exercise-info
+            class="form-step"
+            [programmingExercise]="programmingExercise"
+            [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
+            [isExamMode]="isExamMode"
+        />
+    }
+    @if (currentStep >= 2) {
+        <jhi-programming-exercise-difficulty
+            class="form-step"
+            [programmingExercise]="programmingExercise"
+            [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
+        ></jhi-programming-exercise-difficulty>
+    }
+    @if (currentStep >= 3) {
+        <jhi-programming-exercise-language
+            class="form-step"
+            [programmingExercise]="programmingExercise"
+            [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
+        ></jhi-programming-exercise-language>
+    }
+    @if (currentStep >= 4) {
+        <jhi-programming-exercise-problem
+            class="form-step"
+            [(exercise)]="exercise"
+            [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
+        ></jhi-programming-exercise-problem>
+    }
+    @if (currentStep >= 5) {
+        <jhi-programming-exercise-grading
+            class="form-step"
+            [programmingExercise]="programmingExercise"
+            [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
+        ></jhi-programming-exercise-grading>
+    }
     <!-- Bottom Navigation Bar -->
     <jhi-programming-exercise-update-wizard-bottom-bar
         (onNextStep)="nextStep()"

@@ -33,6 +33,8 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     protected dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
+    protected abstract get exercises(): Exercise[];
+
     protected constructor(
         private courseService: CourseManagementService,
         protected translateService: TranslateService,
@@ -84,18 +86,6 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
         });
     }
 
-    /**
-     * Returns the number of exercises given as a string
-     * @param exercises Exercises which to count
-     */
-    public getAmountOfExercisesString<T>(exercises: Array<T>): string {
-        if (exercises.length === 0) {
-            return this.translateService.instant('artemisApp.createExercise.noExercises');
-        } else {
-            return exercises.length.toString();
-        }
-    }
-
     protected abstract loadExercises(): void;
 
     protected abstract applyFilter(): void;
@@ -118,7 +108,6 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
      * Deletes all the given exercises (does not work for programming exercises)
      * @param exercisesToDelete the exercise objects which are to be deleted
      * @param exerciseService service that is used to delete the exercise
-     * @param event contains additional checks which are performed for all these exercises
      */
     deleteMultipleExercises(exercisesToDelete: Exercise[], exerciseService: DeletionServiceInterface) {
         const deletionObservables = exercisesToDelete.map((exercise) => exerciseService.delete(exercise.id!));
@@ -141,6 +130,7 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
         } else {
             this.selectedExercises.push(exercise);
         }
+        this.allChecked = this.selectedExercises.length === this.exercises.length;
     }
 
     toggleMultipleExercises(exercises: Exercise[]) {
@@ -148,7 +138,7 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
         if (!this.allChecked) {
             this.selectedExercises = this.selectedExercises.concat(exercises);
         }
-        this.allChecked = !this.allChecked;
+        this.allChecked = this.selectedExercises.length === this.exercises.length;
     }
 
     isExerciseSelected(exercise: Exercise) {

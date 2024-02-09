@@ -41,13 +41,13 @@ jhi-learning-path-graph-node:hover {
     fa-icon {
         width: 100%;
         display: flex;
-
-        svg {
-            margin: 10%;
-            width: 80%;
-            height: 80%;
-        }
     }
+}
+
+:host::ng-deep .graph-container .node-icon-container fa-icon svg {
+    margin: 10%;
+    width: 80%;
+    height: 80%;
 }
 
 .node-xs {
@@ -71,4 +71,17 @@ jhi-learning-path-graph-node:hover {
 .node-details {
     display: block;
     max-width: 40vw;
+}
+
+.legend {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    margin-right: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+.legend-wrapper {
+    background: var(--bs-body-bg);
+    border-radius: 5px;
 }

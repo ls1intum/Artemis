@@ -1,5 +1,7 @@
 <div [hidden]="buttonLoading">
-    <fa-icon #icon *ngIf="buttonIcon" [icon]="buttonIcon"></fa-icon>
+    @if (buttonIcon) {
+        <fa-icon #icon [icon]="buttonIcon"></fa-icon>
+    }
     <span>{{ buttonLabel }}</span>
 </div>
 <fa-icon #loadingIcon [hidden]="!buttonLoading" [spin]="true" [icon]="faCircleNotch" class="posting-btn-loading-icon"></fa-icon>

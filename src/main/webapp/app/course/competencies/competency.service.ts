@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Competency, CompetencyProgress, CompetencyRelation, CourseCompetencyProgress } from 'app/entities/competency.model';
+import { Competency, CompetencyProgress, CompetencyRelation, CompetencyWithTailRelationDTO, CourseCompetencyProgress } from 'app/entities/competency.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { map, tap } from 'rxjs/operators';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { AccountService } from 'app/core/auth/account.service';
 
 type EntityResponseType = HttpResponse<Competency>;
 type EntityArrayResponseType = HttpResponse<Competency[]>;
@@ -21,6 +22,7 @@ export class CompetencyService {
         private httpClient: HttpClient,
         private entityTitleService: EntityTitleService,
         private lectureUnitService: LectureUnitService,
+        private accountService: AccountService,
     ) {}
 
     getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
@@ -66,9 +68,26 @@ export class CompetencyService {
         return this.httpClient.post<Competency>(`${this.resourceURL}/courses/${courseId}/competencies`, copy, { observe: 'response' });
     }
 
+    createBulk(competencies: Competency[], courseId: number) {
+        const copy = competencies.map((competency) => this.convertCompetencyFromClient(competency));
+        return this.httpClient.post<Competency[]>(`${this.resourceURL}/courses/${courseId}/competencies/bulk`, copy, { observe: 'response' });
+    }
+
     import(competency: Competency, courseId: number): Observable<EntityResponseType> {
         const competencyCopy = this.convertCompetencyFromClient(competency);
         return this.httpClient.post<Competency>(`${this.resourceURL}/courses/${courseId}/competencies/import`, competencyCopy, { observe: 'response' });
+    }
+
+    generateCompetenciesFromCourseDescription(courseDescription: string, courseId: number): Observable<EntityArrayResponseType> {
+        return this.httpClient.post<Competency[]>(`${this.resourceURL}/courses/${courseId}/competencies/generate-from-description`, courseDescription, { observe: 'response' });
+    }
+
+    importAll(courseId: number, sourceCourseId: number, importRelations: boolean) {
+        const params = new HttpParams().set('importRelations', importRelations);
+        return this.httpClient.post<Array<CompetencyWithTailRelationDTO>>(`${this.resourceURL}/courses/${courseId}/competencies/import-all/${sourceCourseId}`, null, {
+            params: params,
+            observe: 'response',
+        });
     }
 
     addPrerequisite(competencyId: number, courseId: number): Observable<EntityResponseType> {
@@ -116,10 +135,17 @@ export class CompetencyService {
         if (res.body?.lectureUnits) {
             res.body.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromServer(res.body.lectureUnits);
         }
+        if (res.body?.course) {
+            this.accountService.setAccessRightsForCourse(res.body.course);
+        }
         if (res.body?.exercises) {
             res.body.exercises = ExerciseService.convertExercisesDateFromServer(res.body.exercises);
-            res.body.exercises.forEach((exercise) => ExerciseService.parseExerciseCategories(exercise));
+            res.body.exercises.forEach((exercise) => {
+                ExerciseService.parseExerciseCategories(exercise);
+                this.accountService.setAccessRightsForExercise(exercise);
+            });
         }
+
         return res;
     }
 

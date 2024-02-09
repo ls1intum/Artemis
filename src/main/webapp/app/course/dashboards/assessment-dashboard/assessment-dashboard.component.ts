@@ -31,7 +31,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 })
 export class AssessmentDashboardComponent implements OnInit {
     readonly TeamFilterProp = TeamFilterProp;
-    documentationType = DocumentationType.Assessment;
+    readonly documentationType: DocumentationType = 'Assessment';
 
     course: Course;
     exam: Exam;

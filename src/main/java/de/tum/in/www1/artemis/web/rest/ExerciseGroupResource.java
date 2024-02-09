@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -35,7 +36,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("/api")
 public class ExerciseGroupResource {
 
-    private final Logger log = LoggerFactory.getLogger(ExerciseGroupResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ExerciseGroupResource.class);
 
     private static final String ENTITY_NAME = "exerciseGroup";
 
@@ -143,7 +144,8 @@ public class ExerciseGroupResource {
      */
     @PostMapping("/courses/{courseId}/exams/{examId}/import-exercise-group")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<ExerciseGroup>> importExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<ExerciseGroup> updatedExerciseGroup) {
+    public ResponseEntity<List<ExerciseGroup>> importExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<ExerciseGroup> updatedExerciseGroup)
+            throws IOException {
         log.debug("REST request to import {} exercise group(s) to exam {}", updatedExerciseGroup.size(), examId);
 
         examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);

@@ -1,20 +1,35 @@
-<ng-container *ngIf="plagiarismCase" class="my-1">
-    <div *ngIf="!plagiarismCase.verdict; else verdict" class="badge bg-secondary py-2">
-        <h6 class="mb-0">
-            {{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdict' | artemisTranslate }}: {{ 'artemisApp.plagiarism.plagiarismCases.verdict.none' | artemisTranslate }}
-        </h6>
-    </div>
-
-    <ng-template #verdict>
-        <div
-            class="badge py-2"
-            [class]="plagiarismCase.verdict == plagiarismVerdict.NO_PLAGIARISM ? 'bg-success' : 'bg-danger'"
-            ngbTooltip="{{
-                'artemisApp.plagiarism.plagiarismCases.verdict.description'
-                    | artemisTranslate: { date: plagiarismCase.verdictDate | artemisDate, user: plagiarismCase.verdictBy?.name }
-            }}"
-        >
-            <h6 class="mb-0">{{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdict' | artemisTranslate }}: {{ verdictTranslationString | artemisTranslate }}</h6>
-        </div>
-    </ng-template>
-</ng-container>
+@if (plagiarismCase) {
+    <ng-container class="my-1">
+        @if (!plagiarismCase.verdict) {
+            <div class="badge bg-secondary py-2">
+                <h6 class="mb-0">
+                    {{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdict' | artemisTranslate }}
+                    : {{ 'artemisApp.plagiarism.plagiarismCases.verdict.none' | artemisTranslate }}
+                </h6>
+            </div>
+        } @else {
+            <div
+                class="badge py-2"
+                [class]="plagiarismCase.verdict === plagiarismVerdict.NO_PLAGIARISM ? 'bg-success' : 'bg-danger'"
+                ngbTooltip="{{
+                    'artemisApp.plagiarism.plagiarismCases.verdict.description'
+                        | artemisTranslate: { date: plagiarismCase.verdictDate | artemisDate, user: plagiarismCase.verdictBy?.name }
+                }}"
+            >
+                <h6 class="mb-0">{{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdict' | artemisTranslate }} : {{ verdictTranslationString | artemisTranslate }}</h6>
+            </div>
+        }
+        <ng-template #verdict>
+            <div
+                class="badge py-2"
+                [class]="plagiarismCase.verdict === plagiarismVerdict.NO_PLAGIARISM ? 'bg-success' : 'bg-danger'"
+                ngbTooltip="{{
+                    'artemisApp.plagiarism.plagiarismCases.verdict.description'
+                        | artemisTranslate: { date: plagiarismCase.verdictDate | artemisDate, user: plagiarismCase.verdictBy?.name }
+                }}"
+            >
+                <h6 class="mb-0">{{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdict' | artemisTranslate }} : {{ verdictTranslationString | artemisTranslate }}</h6>
+            </div>
+        </ng-template>
+    </ng-container>
+}

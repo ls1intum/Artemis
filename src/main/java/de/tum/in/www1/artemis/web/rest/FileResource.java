@@ -1,19 +1,15 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.io.IOException;
-import java.net.FileNameMap;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLConnection;
+import java.net.*;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.activation.MimetypesFileTypeMap;
+import javax.annotation.Nullable;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -37,13 +33,9 @@ import de.tum.in.www1.artemis.domain.quiz.DragItem;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.*;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.FilePathService;
-import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.ResourceLoaderService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.in.www1.artemis.web.rest.lecture.AttachmentUnitResource;
 
 /**
  * REST controller for managing Files.
@@ -52,13 +44,11 @@ import de.tum.in.www1.artemis.web.rest.lecture.AttachmentUnitResource;
 @RequestMapping("/api")
 public class FileResource {
 
-    private final Logger log = LoggerFactory.getLogger(FileResource.class);
+    private static final Logger log = LoggerFactory.getLogger(FileResource.class);
 
     private static final int DAYS_TO_CACHE = 1;
 
     private final FileService fileService;
-
-    private final FilePathService filePathService;
 
     private final ResourceLoaderService resourceLoaderService;
 
@@ -88,12 +78,13 @@ public class FileResource {
 
     private final CourseRepository courseRepository;
 
-    public FileResource(FilePathService filePathService, SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService,
-            ResourceLoaderService resourceLoaderService, LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository,
-            FileUploadExerciseRepository fileUploadExerciseRepository, AttachmentRepository attachmentRepository, AttachmentUnitRepository attachmentUnitRepository,
-            AuthorizationCheckService authCheckService, UserRepository userRepository, ExamUserRepository examUserRepository, QuizQuestionRepository quizQuestionRepository,
-            DragItemRepository dragItemRepository, CourseRepository courseRepository) {
-        this.filePathService = filePathService;
+    private final LectureUnitService lectureUnitService;
+
+    public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
+            LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
+            AttachmentRepository attachmentRepository, AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
+            ExamUserRepository examUserRepository, QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository,
+            LectureUnitService lectureUnitService) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -109,44 +100,7 @@ public class FileResource {
         this.quizQuestionRepository = quizQuestionRepository;
         this.dragItemRepository = dragItemRepository;
         this.courseRepository = courseRepository;
-    }
-
-    /**
-     * POST /fileUpload : Upload a new file.
-     *
-     * @param file         The file to save
-     * @param keepFileName specifies if original file name should be kept
-     * @return The path of the file
-     * @throws URISyntaxException if response path can't be converted into URI
-     * @deprecated Implement your own usage of {@link FileService#handleSaveFile(MultipartFile, boolean, boolean)} with a mixed multipart request instead. An example for this is
-     *             {@link AttachmentUnitResource#updateAttachmentUnit(Long, Long, AttachmentUnit, Attachment, MultipartFile, boolean, String)}
-     */
-    @Deprecated
-    @PostMapping("fileUpload")
-    @EnforceAtLeastTutor
-    public ResponseEntity<String> saveFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName) throws URISyntaxException {
-        log.debug("REST request to upload file : {}", file.getOriginalFilename());
-        String responsePath = fileService.handleSaveFile(file, keepFileName, false).toString();
-
-        // return path for getting the file
-        String responseBody = "{\"path\":\"" + responsePath + "\"}";
-
-        return ResponseEntity.created(new URI(responsePath)).body(responseBody);
-
-    }
-
-    /**
-     * GET /files/temp/:filename : Get the temporary file with the given filename
-     *
-     * @param filename The filename of the file to get
-     * @return The requested file, or 404 if the file doesn't exist
-     */
-    @GetMapping("files/temp/{filename:.+}")
-    @EnforceAtLeastTutor
-    public ResponseEntity<byte[]> getTempFile(@PathVariable String filename) {
-        log.debug("REST request to get file : {}", filename);
-        sanitizeFilenameElseThrow(filename);
-        return responseEntityForFilePath(FilePathService.getTempFilePath().resolve(filename));
+        this.lectureUnitService = lectureUnitService;
     }
 
     /**
@@ -237,7 +191,7 @@ public class FileResource {
         DragAndDropQuestion question = quizQuestionRepository.findDnDQuestionByIdOrElseThrow(questionId);
         Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        return responseEntityForFilePath(filePathService.actualPathForPublicPath(URI.create(question.getBackgroundFilePath())));
+        return responseEntityForFilePath(getActualPathFromPublicPathString(question.getBackgroundFilePath()));
     }
 
     /**
@@ -256,7 +210,7 @@ public class FileResource {
         if (dragItem.getPictureFilePath() == null) {
             throw new EntityNotFoundException("Drag item " + dragItemId + " has no picture file");
         }
-        return responseEntityForFilePath(filePathService.actualPathForPublicPath(URI.create(dragItem.getPictureFilePath())));
+        return responseEntityForFilePath(getActualPathFromPublicPathString(dragItem.getPictureFilePath()));
     }
 
     /**
@@ -290,7 +244,7 @@ public class FileResource {
             throw new AccessForbiddenException();
         }
 
-        return buildFileResponse(filePathService.actualPathForPublicPath(URI.create(submission.getFilePath())), false);
+        return buildFileResponse(getActualPathFromPublicPathString(submission.getFilePath()), false);
     }
 
     /**
@@ -304,8 +258,8 @@ public class FileResource {
     public ResponseEntity<byte[]> getCourseIcon(@PathVariable Long courseId) {
         log.debug("REST request to get icon for course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        return responseEntityForFilePath(filePathService.actualPathForPublicPath(URI.create(course.getCourseIcon())));
+        // NOTE: we do not enforce a check if the user is a student in the course here, because the course icon is not criticial and we do not want to waste resources
+        return responseEntityForFilePath(getActualPathFromPublicPathString(course.getCourseIcon()));
     }
 
     /**
@@ -335,7 +289,7 @@ public class FileResource {
         ExamUser examUser = examUserRepository.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
 
-        return buildFileResponse(filePathService.actualPathForPublicPath(URI.create(examUser.getSigningImagePath())), false);
+        return buildFileResponse(getActualPathFromPublicPathString(examUser.getSigningImagePath()), false);
     }
 
     /**
@@ -351,7 +305,7 @@ public class FileResource {
         ExamUser examUser = examUserRepository.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
 
-        return buildFileResponse(filePathService.actualPathForPublicPath(URI.create(examUser.getStudentImagePath())), true);
+        return buildFileResponse(getActualPathFromPublicPathString(examUser.getStudentImagePath()), true);
     }
 
     /**
@@ -378,7 +332,7 @@ public class FileResource {
         // check if the user is authorized to access the requested attachment unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        return buildFileResponse(filePathService.actualPathForPublicPath(URI.create(attachment.getLink())), false);
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
     }
 
     /**
@@ -399,13 +353,12 @@ public class FileResource {
 
         authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
 
-        List<AttachmentUnit> lectureAttachments = attachmentUnitRepository.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE);
-
-        List<String> attachmentLinks = lectureAttachments.stream()
+        List<AttachmentUnit> lectureAttachments = attachmentUnitRepository.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE).stream()
                 .filter(unit -> authCheckService.isAllowedToSeeLectureUnit(unit, user) && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
-                .map(unit -> FilePathService.getAttachmentUnitFilePath()
-                        .resolve(Path.of(String.valueOf(unit.getId()), StringUtils.substringAfterLast(unit.getAttachment().getLink(), "/"))).toString())
                 .toList();
+
+        lectureUnitService.setCompletedForAllLectureUnits(lectureAttachments, user, true);
+        List<Path> attachmentLinks = lectureAttachments.stream().map(unit -> FilePathService.actualPathForPublicPathOrThrow(URI.create(unit.getAttachment().getLink()))).toList();
 
         Optional<byte[]> file = fileService.mergePdfFiles(attachmentLinks, lectureRepository.getLectureTitle(lectureId));
         if (file.isEmpty()) {
@@ -435,7 +388,7 @@ public class FileResource {
         // check if the user is authorized to access the requested attachment unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        return buildFileResponse(filePathService.actualPathForPublicPath(URI.create(attachment.getLink())), false);
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
     }
 
     /**
@@ -521,16 +474,7 @@ public class FileResource {
                     : "inline";
             headers.setContentDisposition(ContentDisposition.builder(contentType).filename(filename).build());
 
-            FileNameMap fileNameMap = URLConnection.getFileNameMap();
-            String mimeType = fileNameMap.getContentTypeFor(filename);
-
-            // If we were unable to find mimeType with previous method, try another one, which returns application/octet-stream mime type,
-            // if it also can't determine mime type
-            if (mimeType == null) {
-                MimetypesFileTypeMap fileTypeMap = new MimetypesFileTypeMap();
-                mimeType = fileTypeMap.getContentType(filename);
-            }
-            var response = ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType(mimeType)).header("filename", filename);
+            var response = ResponseEntity.ok().headers(headers).contentType(getMediaTypeFromFilename(filename)).header("filename", filename);
             if (cache) {
                 var cacheControl = CacheControl.maxAge(Duration.ofDays(DAYS_TO_CACHE)).cachePublic();
                 response = response.cacheControl(cacheControl);
@@ -541,6 +485,24 @@ public class FileResource {
             log.error("Failed to download file: {} on path: {}", filename, path, ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    private Path getActualPathFromPublicPathString(@Nullable String publicPath) {
+        if (publicPath == null) {
+            throw new EntityNotFoundException("No file linked");
+        }
+        return FilePathService.actualPathForPublicPathOrThrow(URI.create(publicPath));
+    }
+
+    private MediaType getMediaTypeFromFilename(String filename) {
+        FileNameMap fileNameMap = URLConnection.getFileNameMap();
+        String mimeType = fileNameMap.getContentTypeFor(filename);
+        if (mimeType != null) {
+            return MediaType.parseMediaType(mimeType);
+        }
+        MimetypesFileTypeMap fileTypeMap = new MimetypesFileTypeMap();
+
+        return MediaType.parseMediaType(fileTypeMap.getContentType(filename));
     }
 
     /**
@@ -590,5 +552,4 @@ public class FileResource {
             throw new EntityNotFoundException("The filename contains invalid characters. Only characters a-z, A-Z, 0-9, '_', '.' and '-' are allowed!");
         }
     }
-
 }

@@ -51,7 +51,7 @@ public class DataExportExerciseCreationService {
 
     private final Path repoClonePath;
 
-    private final Logger log = LoggerFactory.getLogger(DataExportExerciseCreationService.class);
+    private static final Logger log = LoggerFactory.getLogger(DataExportExerciseCreationService.class);
 
     private final FileService fileService;
 
@@ -98,7 +98,7 @@ public class DataExportExerciseCreationService {
     public void createExercisesExport(Path workingDirectory, User user) throws IOException {
         // retrieve all exercises as we cannot retrieve the exercises by course because a user might have participated in a course they are no longer a member of (they have
         // unenrolled)
-        var allExerciseParticipations = exerciseRepository.getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByUserId(user.getId());
+        var allExerciseParticipations = exerciseRepository.getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksTestCasesByUserId(user.getId());
         var exerciseParticipationsPerCourse = allExerciseParticipations.stream().collect(Collectors.groupingBy(Exercise::getCourseViaExerciseGroupOrCourseMember));
         for (var entry : exerciseParticipationsPerCourse.entrySet()) {
             var course = entry.getKey();
@@ -316,11 +316,16 @@ public class DataExportExerciseCreationService {
                     if (feedback != null) {
                         resultScoreAndFeedbacks.append("- Feedback: ");
 
-                        // null if it's manual feedback
+                        // getTestCase() is null if it's manual feedback or if the test name was filtered out above
+                        if (feedback.getTestCase() != null && feedback.getTestCase().getTestName() != null) {
+                            resultScoreAndFeedbacks.append(feedback.getTestCase().getTestName()).append("\t");
+                        }
+                        // getText() contains, e.g., the file and line number for programming exercises
                         if (feedback.getText() != null) {
                             resultScoreAndFeedbacks.append(feedback.getText()).append("\t");
                         }
-                        // null if the test case passes
+                        // getDetailText() contains the text message produced by the test case or written by the assessor.
+                        // Usually null if the test case passes
                         if (feedback.getDetailText() != null) {
                             resultScoreAndFeedbacks.append(feedback.getDetailText()).append("\t");
                         }
@@ -370,7 +375,7 @@ public class DataExportExerciseCreationService {
             headers.add("accepted");
             dataStreamBuilder.add(complaint.isAccepted());
         }
-        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(new String[0])).build();
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(String[]::new)).build();
         var prefix = complaint.getComplaintType() == ComplaintType.COMPLAINT ? "complaint_" : "more_feedback_";
 
         try (final var printer = new CSVPrinter(Files.newBufferedWriter(outputDir.resolve(prefix + complaint.getId() + CSV_FILE_EXTENSION)), csvFormat)) {
@@ -415,7 +420,7 @@ public class DataExportExerciseCreationService {
         else if (plagiarismCase.getVerdict() == PlagiarismVerdict.WARNING) {
             dataStreamBuilder.add(plagiarismCase.getVerdictMessage());
         }
-        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(new String[0])).build();
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(String[]::new)).build();
 
         try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(exercisePath.resolve("plagiarism_case_" + plagiarismCase.getId() + CSV_FILE_EXTENSION)),
                 csvFormat)) {

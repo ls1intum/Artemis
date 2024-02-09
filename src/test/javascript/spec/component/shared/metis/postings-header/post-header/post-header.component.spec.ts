@@ -13,7 +13,7 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
 import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
-import { metisAnnouncement, metisPostLectureUser1 } from '../../../../../helpers/sample/metis-sample-data';
+import { metisAnnouncement, metisPostInChannel, metisPostLectureUser1 } from '../../../../../helpers/sample/metis-sample-data';
 import { UserRole } from 'app/shared/metis/metis.util';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
@@ -24,6 +24,7 @@ describe('PostHeaderComponent', () => {
     let metisService: MetisService;
     let metisServiceUserIsAtLeastTutorStub: jest.SpyInstance;
     let metisServiceUserIsAtLeastInstructorStub: jest.SpyInstance;
+    let metisServiceUserIsAuthorOfPostingStub: jest.SpyInstance;
     let metisServiceDeletePostMock: jest.SpyInstance;
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -47,6 +48,7 @@ describe('PostHeaderComponent', () => {
                 metisService = TestBed.inject(MetisService);
                 metisServiceUserIsAtLeastTutorStub = jest.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse');
                 metisServiceUserIsAtLeastInstructorStub = jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse');
+                metisServiceUserIsAuthorOfPostingStub = jest.spyOn(metisService, 'metisUserIsAuthorOfPosting');
                 metisServiceDeletePostMock = jest.spyOn(metisService, 'deletePost');
                 debugElement = fixture.debugElement;
                 component.posting = metisPostLectureUser1;
@@ -69,6 +71,29 @@ describe('PostHeaderComponent', () => {
         fixture.detectChanges();
         expect(getElement(debugElement, '.editIcon')).not.toBeNull();
         expect(getElement(debugElement, '.deleteIcon')).not.toBeNull();
+    });
+
+    it('should display edit and delete options to instructor if posting is in course-wide channel from a student', () => {
+        metisServiceUserIsAtLeastInstructorStub.mockReturnValue(true);
+        metisServiceUserIsAuthorOfPostingStub.mockReturnValue(false);
+        component.posting = { ...metisPostInChannel };
+        component.posting.authorRole = UserRole.USER;
+        component.ngOnInit();
+        fixture.detectChanges();
+        expect(getElement(debugElement, '.editIcon')).not.toBeNull();
+        expect(getElement(debugElement, '.deleteIcon')).not.toBeNull();
+    });
+
+    it('should not display edit and delete options to tutor if posting is in course-wide channel', () => {
+        metisServiceUserIsAtLeastInstructorStub.mockReturnValue(false);
+        metisServiceUserIsAtLeastTutorStub.mockReturnValue(true);
+        metisServiceUserIsAuthorOfPostingStub.mockReturnValue(false);
+        component.posting = { ...metisPostInChannel };
+        component.posting.authorRole = UserRole.USER;
+        component.ngOnInit();
+        fixture.detectChanges();
+        expect(getElement(debugElement, '.editIcon')).toBeNull();
+        expect(getElement(debugElement, '.deleteIcon')).toBeNull();
     });
 
     it('should invoke metis service when delete icon is clicked', () => {

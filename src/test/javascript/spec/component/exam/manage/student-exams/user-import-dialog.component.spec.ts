@@ -21,7 +21,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { ExamUserDTO } from 'app/entities/exam-user-dto.model';
 
-describe('UsersImportButtonComponent', () => {
+describe('UsersImportDialogComponent', () => {
     let fixture: ComponentFixture<UsersImportDialogComponent>;
     let component: UsersImportDialogComponent;
     let examManagementService: ExamManagementService;

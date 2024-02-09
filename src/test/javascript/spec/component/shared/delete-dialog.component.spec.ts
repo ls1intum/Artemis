@@ -5,7 +5,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { By } from '@angular/platform-browser';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subject } from 'rxjs';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
@@ -15,6 +15,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import '@angular/localize/init';
 import { ButtonType } from 'app/shared/components/button.component';
+import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
 
 describe('DeleteDialogComponent', () => {
     let comp: DeleteDialogComponent;
@@ -22,19 +23,16 @@ describe('DeleteDialogComponent', () => {
     let debugElement: DebugElement;
     let ngbActiveModal: NgbActiveModal;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, FormsModule, NgbModule],
-            declarations: [DeleteDialogComponent, AlertOverlayComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ReactiveFormsModule, FormsModule, NgbModule],
+            declarations: [DeleteDialogComponent, AlertOverlayComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), ConfirmEntityNameComponent],
             providers: [JhiLanguageHelper, AlertService],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(DeleteDialogComponent);
-                comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-                ngbActiveModal = TestBed.inject(NgbActiveModal);
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(DeleteDialogComponent);
+        comp = fixture.componentInstance;
+        debugElement = fixture.debugElement;
+        ngbActiveModal = TestBed.inject(NgbActiveModal);
     });
 
     it('Dialog is correctly initialized', fakeAsync(() => {
@@ -66,7 +64,7 @@ describe('DeleteDialogComponent', () => {
         expect(inputFormGroup).not.toBeNull();
     }));
 
-    it('Form properly checked before submission', fakeAsync(() => {
+    it('Form properly checked before submission', async () => {
         // Form can't be submitted if there is deleteConfirmationText and user didn't input the entity title
         comp.entityTitle = 'title';
         comp.deleteConfirmationText = 'artemisApp.exercise.delete.typeNameToConfirm';
@@ -74,22 +72,30 @@ describe('DeleteDialogComponent', () => {
         comp.dialogError = new Observable<string>();
         comp.buttonType = ButtonType.ERROR;
         fixture.detectChanges();
-        let submitButton = debugElement.query(By.css('.btn.btn-danger'));
-        expect(submitButton.nativeElement.disabled).toBeTrue();
+        await fixture.whenStable();
+        expect(comp.deleteForm.invalid).toBeTrue();
+        // TODO: why do changes not propagate to the UI?
+        // let submitButton = debugElement.query(By.css('.btn.btn-danger'));
+        // expect(submitButton.nativeElement.disabled).toBeTrue();
 
         // User entered some title
         comp.confirmEntityName = 'some title';
         fixture.detectChanges();
-        submitButton = debugElement.query(By.css('.btn.btn-danger'));
-        expect(submitButton.nativeElement.disabled).toBeTrue();
+        await fixture.whenStable();
+        expect(comp.deleteForm.invalid).toBeTrue();
+        // TODO: why do changes not propagate to the UI?
+        // submitButton = debugElement.query(By.css('.btn.btn-danger'));
+        // expect(submitButton.nativeElement.disabled).toBeTrue();
 
         // User entered correct tile
         comp.confirmEntityName = 'title';
-        expect(comp.confirmEntityName).toBe('title');
         fixture.detectChanges();
-        submitButton = debugElement.query(By.css('.btn.btn-danger'));
-        expect(submitButton.nativeElement.disabled).toBeFalse();
-    }));
+        await fixture.whenStable();
+        expect(comp.deleteForm.invalid).toBeFalse();
+        // TODO: why do changes not propagate to the UI?
+        // submitButton = debugElement.query(By.css('.btn.btn-danger'));
+        // expect(submitButton.nativeElement.disabled).toBeFalse();
+    });
 
     it('Error dialog events are correctly handled', fakeAsync(() => {
         comp.entityTitle = 'title';

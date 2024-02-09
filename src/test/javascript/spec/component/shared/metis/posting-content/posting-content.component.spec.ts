@@ -10,15 +10,7 @@ import { Observable, of } from 'rxjs';
 import { Post } from 'app/entities/metis/post.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import {
-    metisCourse,
-    metisCoursePosts,
-    metisCoursePostsWithCourseWideContext,
-    metisExercise,
-    metisExercisePosts,
-    metisLecture,
-    metisLecturePosts,
-} from '../../../../helpers/sample/metis-sample-data';
+import { metisCourse, metisCoursePosts, metisExercisePosts, metisGeneralCourseWidePosts, metisLecturePosts } from '../../../../helpers/sample/metis-sample-data';
 import { Params } from '@angular/router';
 
 describe('PostingContentComponent', () => {
@@ -118,6 +110,12 @@ describe('PostingContentComponent', () => {
         expect(component.getPatternMatches()).toEqual([firstMatch]);
     });
 
+    it('should calculate correct pattern matches for content with one channel reference', () => {
+        component.content = 'I do want to reference [channel]test(1)[/channel]!';
+        const firstMatch = { startIndex: 23, endIndex: 49, referenceType: ReferenceType.CHANNEL } as PatternMatch;
+        expect(component.getPatternMatches()).toEqual([firstMatch]);
+    });
+
     it('should calculate correct pattern matches for content with post, multiple exercise, lecture and attachment references', () => {
         component.content =
             'I do want to reference #4, #10, ' +
@@ -128,7 +126,8 @@ describe('PostingContentComponent', () => {
             '[text](courses/1/exercises/1)Text Exercise[/text], ' +
             '[lecture](courses/1/lectures/1)Lecture[/lecture], and ' +
             '[attachment](attachmentPath/attachment.pdf)PDF File[/attachment] in my posting content' +
-            '[user]name(login)[/user]!';
+            '[user]name(login)[/user]! ' +
+            'Check [channel]test(1)[/channel], as well!';
 
         const firstMatch = { startIndex: 23, endIndex: 25, referenceType: ReferenceType.POST } as PatternMatch;
         const secondMatch = { startIndex: 27, endIndex: 30, referenceType: ReferenceType.POST } as PatternMatch;
@@ -140,8 +139,21 @@ describe('PostingContentComponent', () => {
         const eightMatch = { startIndex: 341, endIndex: 389, referenceType: ReferenceType.LECTURE } as PatternMatch;
         const ninthMatch = { startIndex: 395, endIndex: 459, referenceType: ReferenceType.ATTACHMENT } as PatternMatch;
         const tenthMatch = { startIndex: 481, endIndex: 505, referenceType: ReferenceType.USER } as PatternMatch;
+        const eleventhMath = { startIndex: 513, endIndex: 539, referenceType: ReferenceType.CHANNEL } as PatternMatch;
 
-        expect(component.getPatternMatches()).toEqual([firstMatch, secondMatch, thirdMatch, fourthMatch, fifthMatch, sixthMatch, seventhMatch, eightMatch, ninthMatch, tenthMatch]);
+        expect(component.getPatternMatches()).toEqual([
+            firstMatch,
+            secondMatch,
+            thirdMatch,
+            fourthMatch,
+            fifthMatch,
+            sixthMatch,
+            seventhMatch,
+            eightMatch,
+            ninthMatch,
+            tenthMatch,
+            eleventhMath,
+        ]);
     });
 
     describe('Computing posting content parts', () => {
@@ -174,8 +186,8 @@ describe('PostingContentComponent', () => {
             expect(component.postingContentParts).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
-                    linkToReference: ['/courses', metisCourse.id, 'exercises', metisExercise.id],
-                    queryParams: { postId: idOfExercisePostToReference },
+                    linkToReference: ['/courses', metisCourse.id, 'discussion'],
+                    queryParams: { searchText: `#${idOfExercisePostToReference}` },
                     referenceStr: `#${idOfExercisePostToReference}`,
                     referenceType: ReferenceType.POST,
                     contentAfterReference: ' in the same exercise context.',
@@ -198,8 +210,8 @@ describe('PostingContentComponent', () => {
             expect(component.postingContentParts).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
-                    linkToReference: ['/courses', metisCourse.id, 'lectures', metisLecture.id],
-                    queryParams: { postId: idOfLecturePostToReference },
+                    linkToReference: ['/courses', metisCourse.id, 'discussion'],
+                    queryParams: { searchText: `#${idOfLecturePostToReference}` },
                     referenceStr: `#${idOfLecturePostToReference}`,
                     referenceType: ReferenceType.POST,
                     contentAfterReference: ' in the same lecture context.',
@@ -209,22 +221,22 @@ describe('PostingContentComponent', () => {
 
         it('should include content before and reference as well as a linked reference within the course discussion overview', fakeAsync(() => {
             // currently loaded posts will be set to a list of posts having a course-wide context  -> simulating being at course discussion overview
-            jest.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisCoursePostsWithCourseWideContext) as Observable<Post[]>);
+            jest.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisGeneralCourseWidePosts) as Observable<Post[]>);
             component.ngOnInit();
             tick();
-            expect(component.currentlyLoadedPosts).toEqual(metisCoursePostsWithCourseWideContext);
+            expect(component.currentlyLoadedPosts).toEqual(metisGeneralCourseWidePosts);
             // in the posting content, use the reference to an id that is included in the lists of currently loaded posts and can therefore be referenced directly,
             // i.e. being shown in the detail view of the course overview
-            const idOfPostWithCourseWideContextToReference = component.currentlyLoadedPosts[0].id!;
-            component.content = `I want to reference #${idOfPostWithCourseWideContextToReference} with course-wide context while currently being at course discussion overview.`;
+            const idOfGeneralCourseWidePost = component.currentlyLoadedPosts[0].id!;
+            component.content = `I want to reference #${idOfGeneralCourseWidePost} with course-wide context while currently being at course discussion overview.`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
             expect(component.postingContentParts).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
                     linkToReference: ['/courses', metisCourse.id, 'discussion'],
-                    queryParams: { searchText: `#${idOfPostWithCourseWideContextToReference}` },
-                    referenceStr: `#${idOfPostWithCourseWideContextToReference}`,
+                    queryParams: { searchText: `#${idOfGeneralCourseWidePost}` },
+                    referenceStr: `#${idOfGeneralCourseWidePost}`,
                     referenceType: ReferenceType.POST,
                     contentAfterReference: ' with course-wide context while currently being at course discussion overview.',
                 } as PostingContentPart,
@@ -233,7 +245,7 @@ describe('PostingContentComponent', () => {
 
         it('should compute parts when referencing a post from a lecture context while being at the course discussion overview.', fakeAsync(() => {
             // currently loaded posts will be set to a list of posts having a course-wide context -> simulating being at course discussion overview
-            jest.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisCoursePostsWithCourseWideContext) as Observable<Post[]>);
+            jest.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisGeneralCourseWidePosts) as Observable<Post[]>);
             component.ngOnInit();
             tick();
             // in the posting content, use the reference to an id that is _not_ included in the lists of currently loaded posts and can therefore _not_ be referenced directly,
@@ -256,7 +268,7 @@ describe('PostingContentComponent', () => {
 
         it('should compute parts when referencing a post from an exercise context while being at the course discussion overview', fakeAsync(() => {
             // currently loaded posts will be set to a list of posts having a course-wide context -> simulating being at course discussion overview
-            jest.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisCoursePostsWithCourseWideContext) as Observable<Post[]>);
+            jest.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisGeneralCourseWidePosts) as Observable<Post[]>);
             component.ngOnInit();
             tick();
             // in the posting content, use the reference to an id that is _not_ included in the lists of currently loaded posts and can therefore _not_ be referenced directly,
@@ -284,16 +296,16 @@ describe('PostingContentComponent', () => {
             tick();
             // in the posting content, use the reference to an id that is _not_ included in the lists of currently loaded posts and can therefore _not_ be referenced directly,
             // and rather being queried for in the course overview
-            const idOfPostWithCourseWideContextToReference = metisCoursePostsWithCourseWideContext[0].id!;
-            component.content = `I want to reference #${idOfPostWithCourseWideContextToReference} with course-wide context while currently being at a lecture page.`;
+            const idOfCourseWidePostToReference = metisGeneralCourseWidePosts[0].id!;
+            component.content = `I want to reference #${idOfCourseWidePostToReference} with course-wide context while currently being at a lecture page.`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
             expect(component.postingContentParts).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
                     linkToReference: ['/courses', metisCourse.id, 'discussion'],
-                    queryParams: { searchText: `#${idOfPostWithCourseWideContextToReference}` },
-                    referenceStr: `#${idOfPostWithCourseWideContextToReference}`,
+                    queryParams: { searchText: `#${idOfCourseWidePostToReference}` },
+                    referenceStr: `#${idOfCourseWidePostToReference}`,
                     referenceType: ReferenceType.POST,
                     contentAfterReference: ' with course-wide context while currently being at a lecture page.',
                 } as PostingContentPart,
@@ -474,6 +486,36 @@ describe('PostingContentComponent', () => {
                     referenceStr: `Test`,
                     referenceType: ReferenceType.USER,
                     queryParams: { referenceUserLogin: 'test_login' } as Params,
+                    contentAfterReference: '.',
+                } as PostingContentPart,
+            ]);
+        }));
+
+        it('should compute parts when referencing a channel', fakeAsync(() => {
+            component.content = `This topic belongs to [channel]test(1)[/channel].`;
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            expect(component.postingContentParts).toEqual([
+                {
+                    contentBeforeReference: 'This topic belongs to ',
+                    referenceStr: 'test',
+                    referenceType: ReferenceType.CHANNEL,
+                    queryParams: { channelId: 1 } as Params,
+                    contentAfterReference: '.',
+                } as PostingContentPart,
+            ]);
+        }));
+
+        it('should set channelID undefined if referenced a channel id is not a number', fakeAsync(() => {
+            component.content = `This topic belongs to [channel]test(abc)[/channel].`;
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            expect(component.postingContentParts).toEqual([
+                {
+                    contentBeforeReference: 'This topic belongs to ',
+                    referenceStr: 'test',
+                    referenceType: ReferenceType.CHANNEL,
+                    queryParams: { channelId: undefined } as Params,
                     contentAfterReference: '.',
                 } as PostingContentPart,
             ]);

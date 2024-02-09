@@ -27,9 +27,6 @@ export class TutorialGroupsTableComponent implements OnChanges {
     course: Course;
 
     @Input()
-    tutorialGroupClickHandler: (tutorialGroup: TutorialGroup) => void;
-
-    @Input()
     timeZone?: string = undefined;
 
     timeZoneUsedForDisplay = dayjs.tz.guess();

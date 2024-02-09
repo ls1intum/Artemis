@@ -5,17 +5,19 @@ configurations {
 }
 
 dependencies {
-    liquibase "org.liquibase.ext:liquibase-hibernate5:4.22.0"
+    liquibase "org.liquibase.ext:liquibase-hibernate5:4.24.0"
 }
 
-if (OperatingSystem.current().isWindows()) {
-    task pathingLiquibaseJar(type: Jar) {
+def isWindows = OperatingSystem.current().isWindows()
+
+if (isWindows) {
+    tasks.register('pathingLiquibaseJar', Jar) {
         dependsOn configurations.liquibase
         archiveAppendix = 'pathingLiquibase'
 
         doFirst {
             manifest {
-                attributes 'Class-Path': sourceSets.main.runtimeClasspath.plus(configurations.liquibase).collect {
+                attributes 'Class-Path': (sourceSets.main.runtimeClasspath + configurations.liquibase).collect {
                     it.toURI().toURL().toString().replaceFirst(/file:\/+/, '/')
                 }.join(' ')
             }
@@ -23,52 +25,58 @@ if (OperatingSystem.current().isWindows()) {
     }
 }
 
-task initPaths(dependsOn: compileJava) {
+tasks.register('initPaths', {
     group = "liquibase"
-    if (OperatingSystem.current().isWindows()) {
-        dependsOn pathingLiquibaseJar
+    dependsOn tasks.named('compileJava')
+    if (isWindows) {
+        dependsOn tasks.named('pathingLiquibaseJar')
     }
-}
+})
 
 def liquibaseCommand(command) {
     javaexec {
-        if (OperatingSystem.current().isWindows()) {
-            classpath files(pathingLiquibaseJar.archivePath)
+        if (isWindows) {
+            classpath tasks.named('pathingLiquibaseJar').get().outputs.files
         } else {
             classpath sourceSets.main.runtimeClasspath
             classpath configurations.liquibase
         }
         main = "liquibase.integration.commandline.Main"
 
-        args "--changeLogFile=src/main/resources/config/liquibase/changelog/" + buildTimestamp() +"_changelog.xml"
-        args "--referenceUrl=hibernate:spring:de.tum.in.www1.artemis.domain?dialect=org.hibernate.dialect.MySQL8Dialect&hibernate.physical_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy&hibernate.implicit_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy"
-        args "--username=root"
-        args "--password="
-        args "--url=jdbc:mysql://localhost:3306/ArTEMiS?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC"
-        args "--driver=com.mysql.cj.jdbc.Driver"
-        args command
+        args = [
+             "--changeLogFile=src/main/resources/config/liquibase/changelog/" + buildTimestamp() +"_changelog.xml",
+             "--referenceUrl=hibernate:spring:de.tum.in.www1.artemis.domain?dialect=org.hibernate.dialect.MySQL8Dialect&hibernate.physical_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy&hibernate.implicit_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy",
+             "--username=root",
+             "--password=",
+             "--url=jdbc:mysql://localhost:3306/ArTEMiS?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC",
+             "--driver=com.mysql.cj.jdbc.Driver",
+             command
+        ]
     }
 }
 
-task liquibaseDiffChangeLog(dependsOn: initPaths) {
+tasks.register('liquibaseDiffChangeLog', {
+    dependsOn tasks.named('initPaths')
     doLast {
         liquibaseCommand("diffChangeLog")
     }
-}
+})
 
-task liquibaseClearChecksums(dependsOn: initPaths) {
+tasks.register('liquibaseClearChecksums', {
+    dependsOn tasks.named('initPaths')
     doLast {
         liquibaseCommand("clearChecksums")
     }
-}
+})
 
-task liquibaseGenerateChangelog(dependsOn: initPaths) {
+tasks.register('liquibaseGenerateChangelog', {
+    dependsOn tasks.named('initPaths')
     doLast {
         liquibaseCommand("generateChangelog")
     }
-}
+})
 
-def buildTimestamp() {
+static def buildTimestamp() {
     def date = new Date()
     def formattedDate = date.format('yyyyMMddHHmmss')
     return formattedDate

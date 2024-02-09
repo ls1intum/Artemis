@@ -27,7 +27,7 @@ import {
     faKeyboard,
     faPlus,
     faProjectDiagram,
-    faTimes,
+    faTrash,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
@@ -53,7 +53,7 @@ export class ExerciseGroupsComponent implements OnInit {
 
     // Icons
     faPlus = faPlus;
-    faTimes = faTimes;
+    faTrash = faTrash;
     faFont = faFont;
     faWrench = faWrench;
     faCheckDouble = faCheckDouble;

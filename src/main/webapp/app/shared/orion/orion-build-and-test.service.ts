@@ -75,8 +75,8 @@ export class OrionBuildAndTestService {
                         this.forwardBuildLogs(participationId, exercise.programmingLanguage, exercise.projectType);
                     } else {
                         // TODO: Deal with static code analysis feedback in Orion
-                        const testCaseFeedback = result.feedbacks!.filter((feedback) => !Feedback.isStaticCodeAnalysisFeedback(feedback));
-                        testCaseFeedback.forEach((feedback) => this.orionConnectorService.onTestResult(!!feedback.positive, feedback.text!, feedback.detailText!));
+                        const testCaseFeedback = result.feedbacks!.filter((feedback) => Feedback.isTestCaseFeedback(feedback));
+                        testCaseFeedback.forEach((feedback) => this.orionConnectorService.onTestResult(!!feedback.positive, feedback.testCase!.testName!, feedback.detailText!));
                         this.orionConnectorService.onBuildFinished();
                         this.buildFinished.next();
                     }

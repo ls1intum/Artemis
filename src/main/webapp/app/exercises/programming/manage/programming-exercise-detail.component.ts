@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject } from 'rxjs';
+import { SafeHtml } from '@angular/platform-browser';
+import { Subject, firstValueFrom } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -11,7 +12,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -39,12 +40,12 @@ import {
     faPencilAlt,
     faRobot,
     faTable,
-    faTimes,
+    faTrash,
+    faUndo,
     faUserCheck,
     faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
 import { TestwiseCoverageReportModalComponent } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-report-modal.component';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
@@ -54,7 +55,11 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
 import { hasEditableBuildPlan } from 'app/shared/layouts/profiles/profile-info.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
-import { IrisProgrammingExerciseSettingsUpdateComponent } from 'app/iris/settings/iris-programming-exercise-settings-update/iris-programming-exercise-settings-update.component';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { Detail } from 'app/detail-overview-list/detail.model';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -71,8 +76,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly ButtonSize = ButtonSize;
     readonly AssessmentType = AssessmentType;
-
-    documentationType = DocumentationType.Programming;
+    readonly documentationType: DocumentationType = 'Programming';
 
     programmingExercise: ProgrammingExercise;
     isExamExercise: boolean;
@@ -85,10 +89,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     lockingOrUnlockingRepositories = false;
     courseId: number;
     doughnutStats: ExerciseManagementStatisticsDto;
+    formattedGradingInstructions: SafeHtml;
     // Used to hide links to repositories and build plans when the "localvc" profile is active.
     // Also used to hide the buttons to lock and unlock all repositories as that does not do anything in the local VCS.
     localVCEnabled = false;
     irisEnabled = false;
+    irisChatEnabled = false;
 
     isAdmin = false;
     addedLineCount: number;
@@ -101,8 +107,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
+    exerciseDetailSections: DetailOverviewSection[];
+
     // Icons
-    faTimes = faTimes;
+    faUndo = faUndo;
+    faTrash = faTrash;
     faBook = faBook;
     faWrench = faWrench;
     faCheckDouble = faCheckDouble;
@@ -123,13 +132,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private activatedRoute: ActivatedRoute,
         private accountService: AccountService,
         private programmingExerciseService: ProgrammingExerciseService,
-        private exerciseService: ExerciseService,
+        public exerciseService: ExerciseService,
+        private artemisMarkdown: ArtemisMarkdownService,
         private alertService: AlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private programmingExerciseSubmissionPolicyService: SubmissionPolicyService,
         private repositoryFileService: CodeEditorRepositoryFileService,
         private eventManager: EventManager,
-        private modalService: NgbModal,
+        public modalService: NgbModal,
         private translateService: TranslateService,
         private profileService: ProfileService,
         private statisticsService: StatisticsService,
@@ -139,6 +149,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private router: Router,
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
         private consistencyCheckService: ConsistencyCheckService,
+        private irisSettingsService: IrisSettingsService,
     ) {}
 
     ngOnInit() {
@@ -150,6 +161,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.isExamExercise = !!this.programmingExercise.exerciseGroup;
             this.courseId = this.isExamExercise ? this.programmingExercise.exerciseGroup!.exam!.course!.id! : this.programmingExercise.course!.id!;
             this.isAdmin = this.accountService.isAdmin();
+            this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.programmingExercise.gradingInstructions);
 
             if (!this.isExamExercise) {
                 this.baseResource = `/course-management/${this.courseId}/programming-exercises/${exerciseId}/`;
@@ -165,14 +177,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/exercises/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
             }
 
-            this.programmingExerciseService.findWithTemplateAndSolutionParticipationAndLatestResults(programmingExercise.id!).subscribe((updatedProgrammingExercise) => {
+            this.programmingExerciseService.findWithTemplateAndSolutionParticipationAndLatestResults(programmingExercise.id!).subscribe(async (updatedProgrammingExercise) => {
                 this.programmingExercise = updatedProgrammingExercise.body!;
 
                 this.setLatestCoveredLineRatio();
                 this.loadingTemplateParticipationResults = false;
                 this.loadingSolutionParticipationResults = false;
-
-                this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
                     if (profileInfo) {
                         if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation && this.programmingExercise.templateParticipation.buildPlanId) {
                             this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
@@ -191,21 +202,27 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         this.supportsAuxiliaryRepositories =
                             this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ?? false;
                         this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-                        this.irisEnabled = profileInfo.activeProfiles.includes('iris') && !this.programmingExercise.exerciseGroup;
+                        this.irisEnabled = profileInfo.activeProfiles.includes('iris');
+                        if (this.irisEnabled) {
+                            this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
+                                this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
+                                this.exerciseDetailSections = this.getExerciseDetails();
+                            });
+                        }
                     }
+                    this.exerciseDetailSections = this.getExerciseDetails();
                 });
 
                 this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId!).subscribe((submissionPolicy) => {
                     this.programmingExercise.submissionPolicy = submissionPolicy;
+                    this.exerciseDetailSections = this.getExerciseDetails();
                 });
 
-                this.loadGitDiffReport();
+                await this.loadGitDiffReport();
 
                 // the build logs endpoint requires at least editor privileges
                 if (this.programmingExercise.isAtLeastEditor) {
-                    this.programmingExerciseService.getBuildLogStatistics(exerciseId!).subscribe((buildLogStatisticsDto) => {
-                        this.programmingExercise.buildLogStatistics = buildLogStatisticsDto;
-                    });
+                    this.programmingExercise.buildLogStatistics = await firstValueFrom(this.programmingExerciseService.getBuildLogStatistics(exerciseId!));
                 }
 
                 this.setLatestCoveredLineRatio();
@@ -215,6 +232,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.plagiarismCheckSupported = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(
                     programmingExercise.programmingLanguage,
                 ).plagiarismCheckSupported;
+                this.exerciseDetailSections = this.getExerciseDetails();
             });
 
             this.statisticsService.getExerciseStatistics(exerciseId!).subscribe((statistics: ExerciseManagementStatisticsDto) => {
@@ -225,6 +243,303 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
+    }
+
+    getExerciseDetails(): DetailOverviewSection[] {
+        const exercise = this.programmingExercise;
+        return [
+            this.getExerciseDetailsGeneralSection(exercise),
+            this.getExerciseDetailsModeSection(exercise),
+            this.getExerciseDetailsLanguageSection(exercise),
+            this.getExerciseDetailsProblemSection(exercise),
+            this.getExerciseDetailsGradingSection(exercise),
+        ] as DetailOverviewSection[];
+    }
+
+    getExerciseDetailsGeneralSection(exercise: ProgrammingExercise): DetailOverviewSection {
+        return {
+            headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle',
+            details: [
+                exercise.course && {
+                    type: DetailType.Link,
+                    title: 'artemisApp.exercise.course',
+                    data: { text: exercise.course?.title, routerLink: ['/course-management', exercise.course?.id] },
+                },
+                exercise.exerciseGroup && {
+                    type: DetailType.Link,
+                    title: 'artemisApp.exercise.course',
+                    data: { text: exercise.exerciseGroup?.exam?.course?.id, routerLink: ['/course-management', exercise.exerciseGroup?.exam?.course?.id] },
+                },
+                exercise.exerciseGroup && {
+                    type: DetailType.Link,
+                    title: 'artemisApp.exercise.exam',
+                    data: {
+                        text: exercise.exerciseGroup?.exam?.title,
+                        routerLink: ['/course-management', exercise.exerciseGroup?.exam?.course?.id, 'exams', exercise.exerciseGroup?.exam?.id],
+                    },
+                },
+                { type: DetailType.Text, title: 'artemisApp.exercise.title', data: { text: exercise.title } },
+                { type: DetailType.Text, title: 'artemisApp.exercise.shortName', data: { text: exercise.shortName } },
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.exercise.categories',
+                    data: { text: exercise.categories?.map((category) => category.category?.toUpperCase()).join(', ') },
+                },
+            ],
+        };
+    }
+
+    getExerciseDetailsModeSection(exercise: ProgrammingExercise): DetailOverviewSection {
+        return {
+            headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle',
+            details: [
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.exercise.difficulty',
+                    data: { text: exercise.difficulty },
+                },
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.exercise.mode',
+                    data: { text: exercise.mode },
+                },
+                exercise.teamAssignmentConfig && {
+                    type: DetailType.Text,
+                    title: 'artemisApp.exercise.teamAssignmentConfig.teamSize',
+                    data: { text: `Min. ${exercise.teamAssignmentConfig.minTeamSize}, Max. ${exercise.teamAssignmentConfig.maxTeamSize}` },
+                },
+                {
+                    type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.allowOfflineIde.title',
+                    data: { boolean: exercise.allowOfflineIde },
+                },
+                {
+                    type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.allowOnlineEditor.title',
+                    data: { boolean: exercise.allowOnlineEditor },
+                },
+                {
+                    type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.publishBuildPlanUrl',
+                    data: { boolean: exercise.publishBuildPlanUrl },
+                },
+            ],
+        };
+    }
+
+    getExerciseDetailsLanguageSection(exercise: ProgrammingExercise): DetailOverviewSection {
+        return {
+            headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
+            details: [
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.programmingExercise.programmingLanguage',
+                    data: { text: exercise.programmingLanguage?.toUpperCase() },
+                },
+                {
+                    type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.sequentialTestRuns.title',
+                    data: { boolean: exercise.sequentialTestRuns },
+                },
+                {
+                    type: DetailType.ProgrammingRepositoryButtons,
+                    title: 'artemisApp.programmingExercise.templateRepositoryUri',
+                    data: {
+                        participation: exercise.templateParticipation,
+                        exerciseId: exercise.id,
+                        type: 'TEMPLATE',
+                        showOpenLink: !this.localVCEnabled,
+                    },
+                },
+                {
+                    type: DetailType.ProgrammingRepositoryButtons,
+                    title: 'artemisApp.programmingExercise.solutionRepositoryUri',
+                    data: {
+                        participation: exercise.solutionParticipation,
+                        exerciseId: exercise.id,
+                        type: 'SOLUTION',
+                        showOpenLink: !this.localVCEnabled,
+                    },
+                },
+                {
+                    type: DetailType.ProgrammingRepositoryButtons,
+                    title: 'artemisApp.programmingExercise.testRepositoryUri',
+                    data: {
+                        participation: { repositoryUri: exercise.testRepositoryUri },
+                        exerciseId: exercise.id,
+                        type: 'TESTS',
+                        showOpenLink: !this.localVCEnabled,
+                    },
+                },
+                this.supportsAuxiliaryRepositories &&
+                    !!exercise.auxiliaryRepositories?.length && {
+                        type: DetailType.ProgrammingAuxiliaryRepositoryButtons,
+                        title: 'artemisApp.programmingExercise.auxiliaryRepositories',
+                        data: {
+                            auxiliaryRepositories: exercise.auxiliaryRepositories,
+                            exerciseId: exercise.id,
+                            showOpenLink: !this.localVCEnabled,
+                        },
+                    },
+                {
+                    type: DetailType.Link,
+                    title: 'artemisApp.programmingExercise.templateBuildPlanId',
+                    data: { href: !this.localVCEnabled && exercise.templateParticipation?.buildPlanUrl, text: exercise.templateParticipation?.buildPlanId },
+                },
+                {
+                    type: DetailType.Link,
+                    title: 'artemisApp.programmingExercise.solutionBuildPlanId',
+                    data: { href: !this.localVCEnabled && exercise.solutionParticipation?.buildPlanUrl, text: exercise.solutionParticipation?.buildPlanId },
+                },
+                {
+                    type: DetailType.ProgrammingTestStatus,
+                    title: 'artemisApp.programmingExercise.templateResult',
+                    data: {
+                        exercise,
+                        participation: exercise.templateParticipation,
+                        loading: this.loadingTemplateParticipationResults,
+                        submissionRouterLink: exercise.templateParticipation && this.getParticipationSubmissionLink(exercise.templateParticipation.id!),
+                        onParticipationChange: this.onParticipationChange,
+                        type: ProgrammingExerciseParticipationType.TEMPLATE,
+                    },
+                },
+                {
+                    type: DetailType.ProgrammingTestStatus,
+                    title: 'artemisApp.programmingExercise.solutionResult',
+                    data: {
+                        exercise,
+                        participation: exercise.solutionParticipation,
+                        loading: this.loadingSolutionParticipationResults,
+                        submissionRouterLink: exercise.solutionParticipation && this.getParticipationSubmissionLink(exercise.solutionParticipation.id!),
+                        onParticipationChange: this.onParticipationChange,
+                        type: ProgrammingExerciseParticipationType.SOLUTION,
+                    },
+                },
+                {
+                    type: DetailType.ProgrammingDiffReport,
+                    title: 'artemisApp.programmingExercise.diffReport.lineStatLabel',
+                    data: {
+                        addedLineCount: this.addedLineCount,
+                        removedLineCount: this.removedLineCount,
+                        isLoadingDiffReport: this.isLoadingDiffReport,
+                        gitDiffReport: exercise.gitDiffReport,
+                    },
+                },
+                {
+                    type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.recordTestwiseCoverage',
+                    data: { boolean: exercise.testwiseCoverageEnabled },
+                },
+                exercise.isAtLeastTutor &&
+                    exercise?.testwiseCoverageEnabled && {
+                        type: DetailType.Text,
+                        title: 'artemisApp.programmingExercise.coveredLineRatio',
+                        data: { text: exercise?.coveredLinesRatio ? (exercise.coveredLinesRatio * 100).toFixed(1) + ' %' : undefined },
+                    },
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.programmingExercise.packageName',
+                    data: { text: exercise.packageName },
+                },
+            ],
+        };
+    }
+
+    getExerciseDetailsProblemSection(exercise: ProgrammingExercise): DetailOverviewSection {
+        return {
+            headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle',
+            details: [
+                {
+                    type: DetailType.ProgrammingProblemStatement,
+                    data: { exercise: exercise },
+                },
+            ],
+        };
+    }
+
+    getExerciseDetailsGradingSection(exercise: ProgrammingExercise): DetailOverviewSection {
+        const includedInScoreIsBoolean = exercise.includedInOverallScore != IncludedInOverallScore.INCLUDED_AS_BONUS;
+        const includedInScore: Detail = includedInScoreIsBoolean
+            ? {
+                  type: DetailType.Boolean,
+                  title: 'artemisApp.exercise.includedInOverallScore',
+                  data: { boolean: exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY },
+              }
+            : {
+                  type: DetailType.Text,
+                  title: 'artemisApp.exercise.includedInOverallScore',
+                  data: { text: 'BONUS' },
+              };
+        return {
+            headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle',
+            details: [
+                { type: DetailType.Text, title: 'artemisApp.exercise.points', data: { text: exercise.maxPoints } },
+                !!exercise.bonusPoints && { type: DetailType.Text, title: 'artemisApp.exercise.bonusPoints', data: { text: exercise.bonusPoints } },
+                includedInScore,
+                { type: DetailType.Boolean, title: 'artemisApp.exercise.presentationScoreEnabled.title', data: { boolean: exercise.presentationScoreEnabled } },
+                { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.enableStaticCodeAnalysis.title', data: { boolean: exercise.staticCodeAnalysisEnabled } },
+                exercise.staticCodeAnalysisEnabled && {
+                    type: DetailType.Text,
+                    title: 'artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.title',
+                    data: { text: exercise.maxStaticCodeAnalysisPenalty },
+                },
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.title',
+                    data: {
+                        text: this.translateService.instant(
+                            'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' +
+                                (!exercise.submissionPolicy ? 'none' : exercise.submissionPolicy.type!) +
+                                '.title',
+                        ),
+                    },
+                },
+                exercise.submissionPolicy && {
+                    type: DetailType.Text,
+                    title: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle',
+                    data: { text: exercise.submissionPolicy.submissionLimit },
+                },
+                exercise.submissionPolicy &&
+                    !!exercise.submissionPolicy.exceedingPenalty && {
+                        type: DetailType.Text,
+                        title: 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.detailLabel',
+                        data: { text: exercise.submissionPolicy.exceedingPenalty },
+                    },
+                { type: DetailType.ProgrammingTimeline, title: 'artemisApp.programmingExercise.timeline.timelineLabel', data: { exercise, isExamMode: this.isExamExercise } },
+                {
+                    type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment',
+                    data: { boolean: exercise.allowComplaintsForAutomaticAssessments },
+                },
+                { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.timeline.manualFeedbackRequests', data: { boolean: exercise.allowManualFeedbackRequests } },
+                { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.showTestNamesToStudents', data: { boolean: exercise.showTestNamesToStudents } },
+                {
+                    type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolution',
+                    data: { boolean: exercise.releaseTestsWithExampleSolution },
+                },
+                { type: DetailType.Markdown, title: 'artemisApp.exercise.assessmentInstructions', data: { innerHtml: this.formattedGradingInstructions } },
+                exercise.gradingCriteria && {
+                    type: DetailType.GradingCriteria,
+                    title: 'artemisApp.exercise.structuredAssessmentInstructions',
+                    data: { gradingCriteria: exercise.gradingCriteria },
+                },
+                this.irisEnabled &&
+                    this.irisChatEnabled &&
+                    exercise.course &&
+                    !this.isExamExercise && {
+                        type: DetailType.ProgrammingIrisEnabled,
+                        title: 'artemisApp.iris.settings.subSettings.enabled.chat',
+                        data: { exercise, disabled: !exercise.isAtLeastInstructor, subSettingsType: IrisSubSettingsType.CHAT },
+                    },
+                exercise.buildLogStatistics && {
+                    type: DetailType.ProgrammingBuildStatistics,
+                    title: 'artemisApp.programmingExercise.buildLogStatistics.title',
+                    titleHelpText: 'artemisApp.programmingExercise.buildLogStatistics.tooltip',
+                    data: { buildLogStatistics: exercise.buildLogStatistics },
+                },
+            ],
+        };
     }
 
     private checkBuildPlanEditable() {
@@ -392,39 +707,24 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         return link;
     }
 
-    loadGitDiffReport(): void {
-        this.programmingExerciseService.getDiffReport(this.programmingExercise.id!).subscribe((gitDiffReport) => {
-            if (gitDiffReport) {
-                this.programmingExercise.gitDiffReport = gitDiffReport;
-                gitDiffReport.programmingExercise = this.programmingExercise;
-                this.addedLineCount = gitDiffReport.entries
-                    .map((entry) => entry.lineCount)
+    async loadGitDiffReport(): Promise<void> {
+        const gitDiffReport = await firstValueFrom(this.programmingExerciseService.getDiffReport(this.programmingExercise.id!));
+        if (gitDiffReport) {
+            this.programmingExercise.gitDiffReport = gitDiffReport;
+            gitDiffReport.programmingExercise = this.programmingExercise;
+            this.addedLineCount =
+                gitDiffReport.entries
+                    ?.map((entry) => entry.lineCount)
                     .filter((lineCount) => lineCount)
                     .map((lineCount) => lineCount!)
-                    .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
-                this.removedLineCount = gitDiffReport.entries
-                    .map((entry) => entry.previousLineCount)
+                    .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
+            this.removedLineCount =
+                gitDiffReport.entries
+                    ?.map((entry) => entry.previousLineCount)
                     .filter((lineCount) => lineCount)
                     .map((lineCount) => lineCount!)
-                    .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
-            }
-        });
-    }
-
-    /**
-     * Shows the git-diff in a modal.
-     */
-    showGitDiff(): void {
-        const modalRef = this.modalService.open(GitDiffReportModalComponent, { size: 'xl' });
-        modalRef.componentInstance.report = this.programmingExercise.gitDiffReport;
-    }
-
-    /**
-     * Shows the iris settings in a modal.
-     */
-    showIrisSettings(): void {
-        const modalRef = this.modalService.open(IrisProgrammingExerciseSettingsUpdateComponent, { size: 'xl' });
-        modalRef.componentInstance.programmingExerciseId = this.programmingExercise.id;
+                    .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
+        }
     }
 
     createStructuralSolutionEntries() {
@@ -465,7 +765,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
         const latestSolutionSubmissionSuccessful = this.programmingExerciseService.getLatestResult(this.programmingExercise.solutionParticipation)?.successful;
         if (this.programmingExercise.testwiseCoverageEnabled && !!latestSolutionSubmissionSuccessful) {
-            this.programmingExerciseService.getLatestTestwiseCoverageReport(this.programmingExercise.id!).subscribe((coverageReport) => {
+            this.programmingExerciseService.getLatestFullTestwiseCoverageReport(this.programmingExercise.id!).subscribe((coverageReport) => {
                 this.programmingExercise.coveredLinesRatio = coverageReport.coveredLineRatio;
             });
         }

@@ -12,25 +12,23 @@
                 durationLabelText="artemisApp.examManagement.editWorkingTime.label"
                 [(ngModel)]="workingTimeSeconds"
                 [allowNegative]="true"
-                [showRelative]="false"
                 [disabled]="isLoading"
             />
         </div>
-
         <div class="bg-light rounded-2 p-3 mt-3">
-            <jhi-working-time-change *ngIf="newWorkingTime && oldWorkingTime" [newWorkingTime]="newWorkingTime" [oldWorkingTime]="oldWorkingTime" />
+            @if (newWorkingTime && oldWorkingTime) {
+                <jhi-working-time-change [newWorkingTime]="newWorkingTime" [oldWorkingTime]="oldWorkingTime" />
+            }
         </div>
-
         <hr />
-
         <div>
             <p jhiTranslate="artemisApp.examManagement.editWorkingTime.question" [translateValues]="{ title: exam.title }">Do you really want to edit the duration of the exam?</p>
             <jhi-confirm-entity-name
                 confirmationText="artemisApp.examManagement.editWorkingTime.typeNameToConfirm"
                 [entityName]="exam.title!"
                 [disabled]="isLoading"
-                [(ngModel)]="confirmEntityName"
                 name="confirmEntityName"
+                ngModel
             />
         </div>
     </div>
@@ -42,11 +40,16 @@
             id="confirm"
             type="submit"
             class="btn btn-warning"
-            [style.cursor]="editForm.invalid || isLoading || !isWorkingTimeValid() ? 'not-allowed' : 'pointer'"
-            [disabled]="editForm.invalid || isLoading || !isWorkingTimeValid()"
+            [style.cursor]="editForm.invalid || isLoading || !isWorkingTimeChangeValid ? 'not-allowed' : 'pointer'"
+            [disabled]="editForm.invalid || isLoading || !isWorkingTimeChangeValid"
         >
-            <span *ngIf="isLoading"><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span>
-            <fa-icon *ngIf="!isLoading" [icon]="faCheck"></fa-icon>&nbsp;
+            @if (isLoading) {
+                <span><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span>
+            }
+            @if (!isLoading) {
+                <fa-icon [icon]="faCheck"></fa-icon>
+            }
+            &nbsp;
             <span jhiTranslate="entity.action.confirm">Confirm</span>
         </button>
     </div>

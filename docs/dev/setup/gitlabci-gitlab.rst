@@ -123,7 +123,7 @@ Artemis
                 artemis-authentication-token-value: notification-plugin-token # change this value
             git:
                 name: Artemis
-                email: artemis.in@tum.de
+                email: artemis@xcit.tum.de
         server:
             url: http://host.docker.internal:8080
 

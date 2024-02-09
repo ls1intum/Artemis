@@ -1,4 +1,4 @@
-<ng-container *ngIf="plagiarismCase">
+@if (plagiarismCase) {
     <div class="plagiarism-case">
         <div class="case-header">
             <div class="row">
@@ -13,16 +13,19 @@
                         <fa-icon [icon]="faUser"></fa-icon>
                         {{ plagiarismCase.student!.name }} ({{ plagiarismCase.student!.login }})
                     </p>
-                    <p class="mb-0 text-truncate" *ngIf="plagiarismCase?.exercise">
-                        <fa-icon *ngIf="plagiarismCase.exercise!.type!" [icon]="getIcon(plagiarismCase.exercise!.type!)"></fa-icon>
-                        {{ plagiarismCase.exercise!.title! }}
-                    </p>
+                    @if (plagiarismCase?.exercise) {
+                        <p class="mb-0 text-truncate">
+                            @if (plagiarismCase.exercise!.type!) {
+                                <fa-icon [icon]="getIcon(plagiarismCase.exercise!.type!)"></fa-icon>
+                            }
+                            {{ plagiarismCase.exercise!.title! }}
+                        </p>
+                    }
                 </div>
                 <div class="col-12 col-lg-6 col-xl-3 d-flex align-items-center justify-content-xl-end">
                     <button class="btn btn-secondary my-1" (click)="printPlagiarismCase()">
                         <fa-icon [icon]="faPrint"></fa-icon>
                     </button>
-
                     <div class="btn-group m-1">
                         <a
                             class="btn btn-primary d-print-none"
@@ -30,7 +33,6 @@
                         >
                             <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.exercise">Affected exercise</span>
                         </a>
-
                         <div class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
                             <button type="button" class="btn btn-primary d-print-none dropdown-toggle-split" ngbDropdownToggle></button>
                             <div class="dropdown-menu" ngbDropdownMenu>
@@ -49,20 +51,21 @@
         <div class="case-body">
             <section>
                 <h3>{{ 'artemisApp.plagiarism.plagiarismCases.conversation' | artemisTranslate }}</h3>
-
-                <jhi-posting-thread *ngIf="posts && posts.length > 0" [post]="posts[0]" [showAnswers]="true"></jhi-posting-thread>
-
-                <div *ngIf="(!posts || posts.length === 0) && createdPost">
-                    <button class="btn btn-md btn-primary" (click)="createEditModal.open()">
-                        {{ 'artemisApp.plagiarism.plagiarismCases.notifyStudent' | artemisTranslate }}
-                    </button>
-                    <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="onStudentNotified($event)"></jhi-post-create-edit-modal>
-                </div>
+                @if (posts && posts.length > 0) {
+                    <jhi-posting-thread [post]="posts[0]" [showAnswers]="true"></jhi-posting-thread>
+                }
+                @if ((!posts || posts.length === 0) && createdPost) {
+                    <div>
+                        <button class="btn btn-md btn-primary" (click)="createEditModal.open()">
+                            {{ 'artemisApp.plagiarism.plagiarismCases.notifyStudent' | artemisTranslate }}
+                        </button>
+                        <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="onStudentNotified($event)"></jhi-post-create-edit-modal>
+                    </div>
+                }
             </section>
             <section class="d-print-none">
                 <h2 class="mt-5">{{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdict' | artemisTranslate }}</h2>
                 <p>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.text' | artemisTranslate }}</p>
-
                 <div class="verdict-container">
                     <ul ngbNav #nav="ngbNav" [(activeId)]="activeTab" [destroyOnHide]="false" class="nav-tabs">
                         <li [ngbNavItem]="1">
@@ -78,7 +81,6 @@
                                         [disabled]="!!plagiarismCase.verdict || !isStudentNotified()"
                                         (onConfirm)="saveVerdict()"
                                     ></jhi-confirm-button>
-
                                     <jhi-confirm-button
                                         title="artemisApp.plagiarism.plagiarismCases.verdict.noPlagiarism"
                                         confirmationText="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"
@@ -152,18 +154,22 @@
                         </li>
                     </ul>
                     <div class="mt-4" [ngbNavOutlet]="nav"></div>
-
-                    <div *ngIf="!isStudentNotified()" class="disabled-overlay">
-                        <fa-icon [icon]="faInfo" [fixedWidth]="true"></fa-icon>
-                        <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.studentNotNotified"> You must notify the student before determining the verdict. </span>
-                    </div>
-
-                    <div *ngIf="isStudentNotified() && plagiarismCase.verdict" class="disabled-overlay">
-                        <fa-icon [icon]="faCheck" [fixedWidth]="true"></fa-icon>
-                        <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.alreadyDecided">
-                            An instructor already determined a verdict for this plagiarism case.
-                        </span>
-                    </div>
+                    @if (!isStudentNotified()) {
+                        <div class="disabled-overlay">
+                            <fa-icon [icon]="faInfo" [fixedWidth]="true"></fa-icon>
+                            <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.studentNotNotified">
+                                You must notify the student before determining the verdict.
+                            </span>
+                        </div>
+                    }
+                    @if (isStudentNotified() && plagiarismCase.verdict) {
+                        <div class="disabled-overlay">
+                            <fa-icon [icon]="faCheck" [fixedWidth]="true"></fa-icon>
+                            <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.alreadyDecided">
+                                An instructor already determined a verdict for this plagiarism case.
+                            </span>
+                        </div>
+                    }
                 </div>
             </section>
             <section>
@@ -174,4 +180,4 @@
             </section>
         </div>
     </div>
-</ng-container>
+}

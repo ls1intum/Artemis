@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.exercise;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
@@ -16,6 +14,16 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
  */
 public class ExerciseFactory {
 
+    /**
+     * Populates an exercise with passed dates and sets its course. Other attributes are initialized with default values.
+     *
+     * @param exercise          The exercise to be populated.
+     * @param releaseDate       The release date of the exercise.
+     * @param dueDate           The due date of the exercise.
+     * @param assessmentDueDate The assessment due date of the exercise.
+     * @param course            The course to which the exercise should be added.
+     * @return The populated course exercise.
+     */
     public static Exercise populateExercise(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
         exercise.setTitle(UUID.randomUUID().toString());
         exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
@@ -34,6 +42,13 @@ public class ExerciseFactory {
         return exercise;
     }
 
+    /**
+     * Populates an exam exercise with default values and adds it to the exercise group.
+     *
+     * @param exercise      The exercise to be populated.
+     * @param exerciseGroup The exam exercise group to which the exercise should be added.
+     * @return The populated exam exercise.
+     */
     public static Exercise populateExerciseForExam(Exercise exercise, ExerciseGroup exerciseGroup) {
         exercise.setTitle(UUID.randomUUID().toString());
         exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
@@ -51,25 +66,47 @@ public class ExerciseFactory {
         exercise.setCourse(null);
         if (!(exercise instanceof QuizExercise)) {
             exercise.setGradingInstructions("Grading instructions");
-            exercise.setGradingCriteria(List.of(new GradingCriterion()));
+            exercise.setGradingCriteria(Set.of(new GradingCriterion()));
         }
         return exercise;
     }
 
+    /**
+     * Populates an exam exercise with default values, the passed title, and adds it to the exercise group.
+     *
+     * @param exercise      The exercise to be populated.
+     * @param exerciseGroup The exam exercise group to which the exercise should be added.
+     * @param title         The title used for the exercise.
+     * @return The populated exam exercise.
+     */
     public static Exercise populateExerciseForExam(Exercise exercise, ExerciseGroup exerciseGroup, String title) {
         var populatedExercise = populateExerciseForExam(exercise, exerciseGroup);
         populatedExercise.setTitle(title + UUID.randomUUID().toString().substring(0, 3));
         return populatedExercise;
     }
 
+    /**
+     * Generates a grading criterion with the passed title.
+     *
+     * @param title The title that should be set.
+     * @return The newly created grading criterion.
+     */
     public static GradingCriterion generateGradingCriterion(String title) {
         var criterion = new GradingCriterion();
         criterion.setTitle(title);
         return criterion;
     }
 
-    public static List<GradingInstruction> generateGradingInstructions(GradingCriterion criterion, int numberOfTestInstructions, int usageCount) {
-        var instructions = new ArrayList<GradingInstruction>();
+    /**
+     * Generates grading instructions using a grading criterion.
+     *
+     * @param criterion                The grading criterion of the instructions.
+     * @param numberOfTestInstructions The number of instructions that should be created.
+     * @param usageCount               The usage count of each instruction.
+     * @return Set of generated grading instructions.
+     */
+    public static Set<GradingInstruction> generateGradingInstructions(GradingCriterion criterion, int numberOfTestInstructions, int usageCount) {
+        var instructions = new HashSet<GradingInstruction>();
         while (numberOfTestInstructions > 0) {
             var exampleInstruction1 = new GradingInstruction();
             exampleInstruction1.setGradingCriterion(criterion);

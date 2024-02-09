@@ -27,7 +27,7 @@ export class MockExamParticipationService {
         return examParticipationSubjectMock;
     }
 
-    loadStudentExamGradeInfoForSummary(courseId: number, examId: number, userId?: number): Observable<StudentExamWithGradeDTO> {
+    loadStudentExamGradeInfoForSummary(courseId: number, examId: number, userId?: number, isTestRun?: boolean): Observable<StudentExamWithGradeDTO> {
         return of({} as StudentExamWithGradeDTO);
     }
 

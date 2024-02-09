@@ -1,9 +1,11 @@
 <jhi-split-pane-header studentLogin="{{ plagiarismSubmission?.studentLogin }}"></jhi-split-pane-header>
-
-<jhi-modeling-editor *ngIf="!loading" [umlModel]="submissionModel" [diagramType]="exercise.diagramType" [readOnly]="true"></jhi-modeling-editor>
-
-<div class="plagiarism-submission-loader" *ngIf="loading">
-    <div class="spinner-border text-primary" role="status">
-        <span class="sr-only">Loading...</span>
+@if (!loading) {
+    <jhi-modeling-editor [umlModel]="submissionModel" [diagramType]="exercise.diagramType" [readOnly]="true"></jhi-modeling-editor>
+}
+@if (loading) {
+    <div class="plagiarism-submission-loader">
+        <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
     </div>
-</div>
+}

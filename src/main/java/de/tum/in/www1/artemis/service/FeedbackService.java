@@ -26,17 +26,19 @@ public class FeedbackService {
      * @return A copy of the feedback with an empty ID.
      */
     public Feedback copyFeedback(final Feedback originalFeedback) {
-        if (!originalFeedback.getHasLongFeedbackText()) {
-            return copyFeedback(originalFeedback, Optional.empty());
+        Optional<LongFeedbackText> longFeedbackText = Optional.empty();
+
+        if (originalFeedback.getHasLongFeedbackText()) {
+            if (Hibernate.isInitialized(originalFeedback.getLongFeedbackText())) {
+                longFeedbackText = originalFeedback.getLongFeedback();
+            }
+            // still empty: the feedback was not fetched from the DB, load it explicitly now
+            if (longFeedbackText.isEmpty()) {
+                longFeedbackText = longFeedbackTextRepository.findByFeedbackId(originalFeedback.getId());
+            }
         }
-        else if (Hibernate.isInitialized(originalFeedback.getLongFeedbackText())) {
-            final Optional<LongFeedbackText> longFeedbackText = originalFeedback.getLongFeedbackText().stream().findAny();
-            return copyFeedback(originalFeedback, longFeedbackText);
-        }
-        else {
-            final Optional<LongFeedbackText> longFeedbackText = longFeedbackTextRepository.findByFeedbackId(originalFeedback.getId());
-            return copyFeedback(originalFeedback, longFeedbackText);
-        }
+
+        return copyFeedback(originalFeedback, longFeedbackText);
     }
 
     private Feedback copyFeedback(final Feedback originalFeedback, final Optional<LongFeedbackText> longFeedbackText) {
@@ -58,6 +60,7 @@ public class FeedbackService {
         feedback.setReference(originalFeedback.getReference());
         feedback.setVisibility(originalFeedback.getVisibility());
         feedback.setGradingInstruction(originalFeedback.getGradingInstruction());
+        feedback.setTestCase(originalFeedback.getTestCase());
 
         feedback.setHasLongFeedbackText(originalFeedback.getHasLongFeedbackText());
         longFeedbackText.ifPresent(longFeedback -> feedback.setDetailText(longFeedback.getText()));

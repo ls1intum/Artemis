@@ -147,13 +147,32 @@ class UMLActivityDiagramTest extends AbstractUMLDiagramTest {
     }
 
     @Test
+    void similarityActivityDiagram_v3_EqualModels() {
+        compareSubmissions(modelingSubmission(UMLActivityDiagrams.ACTIVITY_MODEL_1_V3), modelingSubmission(UMLActivityDiagrams.ACTIVITY_MODEL_1_V3), 0.8, 100.0);
+        compareSubmissions(modelingSubmission(UMLActivityDiagrams.ACTIVITY_MODEL_2_V3), modelingSubmission(UMLActivityDiagrams.ACTIVITY_MODEL_2_V3), 0.8, 100.0);
+    }
+
+    @Test
     void similarityActivityDiagram_DifferentModels() {
         compareSubmissions(modelingSubmission(UMLActivityDiagrams.ACTIVITY_MODEL_1), modelingSubmission(UMLActivityDiagrams.ACTIVITY_MODEL_2), 0.0, 57.08);
     }
 
     @Test
+    void similarityActivityDiagram_v3_DifferentModels() {
+        compareSubmissions(modelingSubmission(UMLActivityDiagrams.ACTIVITY_MODEL_1_V3), modelingSubmission(UMLActivityDiagrams.ACTIVITY_MODEL_2_V3), 0.0, 57.08);
+    }
+
+    @Test
     void loadActivityDiagramExample() throws IOException {
         var submission = modelingSubmission(UMLActivityDiagrams.ACTIVITY_MODEL_3);
+        submission.setId(1L);
+        UMLDiagram model = UMLModelParser.buildModelFromJSON(parseString(submission.getModel()).getAsJsonObject(), submission.getId());
+        assertThat(model).isNotNull();
+    }
+
+    @Test
+    void loadActivityDiagramExample_v3() throws IOException {
+        var submission = modelingSubmission(UMLActivityDiagrams.ACTIVITY_MODEL_3_V3);
         submission.setId(1L);
         UMLDiagram model = UMLModelParser.buildModelFromJSON(parseString(submission.getModel()).getAsJsonObject(), submission.getId());
         assertThat(model).isNotNull();

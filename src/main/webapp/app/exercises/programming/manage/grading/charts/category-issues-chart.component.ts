@@ -14,15 +14,11 @@ export class IssueColumn {
     template: `
         <div style="max-width: 120px; margin: auto;">
             <div style="height: 30px;" class="d-flex justify-content-between">
-                <div
-                    *ngFor="let column of columns"
-                    class="d-flex align-items-end"
-                    [style]="{ width: column.w, height: '30px' }"
-                    [ngbTooltip]="column.tooltip"
-                    placement="bottom auto"
-                >
-                    <div [style]="{ width: '100%', height: column.h, background: column.color }"></div>
-                </div>
+                @for (column of columns; track column) {
+                    <div class="d-flex align-items-end" [style]="{ width: column.w, height: '30px' }" [ngbTooltip]="column.tooltip" placement="bottom auto">
+                        <div [style]="{ width: '100%', height: column.h, background: column.color }"></div>
+                    </div>
+                }
             </div>
         </div>
     `,
@@ -56,10 +52,10 @@ export class CategoryIssuesChartComponent implements OnChanges {
                     this.category.state === StaticCodeAnalysisCategoryState.Inactive
                         ? '#ddd'
                         : numStudents === 0 || this.category.state !== StaticCodeAnalysisCategoryState.Graded
-                        ? '#28a745'
-                        : numIssues > maxGradedIssues
-                        ? '#dc3545'
-                        : '#ffc107',
+                          ? '#28a745'
+                          : numIssues > maxGradedIssues
+                            ? '#dc3545'
+                            : '#ffc107',
                 tooltip: `${numStudents} student${numStudents !== 1 ? 's' : ''} ${numStudents !== 1 ? 'have' : 'has'} ${numIssues} issue${numIssues !== 1 ? 's' : ''}.`,
             };
         });

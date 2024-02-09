@@ -25,6 +25,11 @@ export enum CompetencyRelationError {
     NONE = 'NONE',
 }
 
+export enum CompetencyValidators {
+    TITLE_MAX = 255,
+    DESCRIPTION_MAX = 10000,
+}
+
 export class Competency implements BaseEntity {
     public id?: number;
     public title?: string;
@@ -67,6 +72,35 @@ export class CompetencyRelation implements BaseEntity {
     constructor() {}
 }
 
+export class CompetencyRelationDTO implements BaseEntity {
+    id?: number;
+    tailCompetencyId?: number;
+    headCompetencyId?: number;
+    relationType?: string;
+
+    constructor() {}
+}
+
+/**
+ * Converts a CompetencyRelationDTO to a CompetencyRelation
+ * @param competencyRelationDTO
+ */
+export function dtoToCompetencyRelation(competencyRelationDTO: CompetencyRelationDTO): CompetencyRelation {
+    return {
+        id: competencyRelationDTO.id,
+        tailCompetency: { id: competencyRelationDTO.tailCompetencyId },
+        headCompetency: { id: competencyRelationDTO.headCompetencyId },
+        type: competencyRelationDTO.relationType,
+    };
+}
+
+export class CompetencyWithTailRelationDTO {
+    competency?: Competency;
+    tailRelations?: CompetencyRelationDTO[];
+
+    constructor() {}
+}
+
 export function getIcon(competencyTaxonomy?: CompetencyTaxonomy): IconProp {
     if (!competencyTaxonomy) {
         return faQuestion as IconProp;
@@ -99,4 +133,17 @@ export function getIconTooltip(competencyTaxonomy?: CompetencyTaxonomy): string 
     };
 
     return tooltips[competencyTaxonomy];
+}
+
+export function getProgress(competencyProgress: CompetencyProgress) {
+    return Math.round(competencyProgress?.progress ?? 0);
+}
+
+export function getConfidence(competencyProgress: CompetencyProgress, masteryThreshold: number): number {
+    return Math.min(Math.round(((competencyProgress?.confidence ?? 0) / (masteryThreshold ?? 100)) * 100), 100);
+}
+
+export function getMastery(competencyProgress: CompetencyProgress, masteryThreshold: number): number {
+    const weight = 2 / 3;
+    return Math.round((1 - weight) * getProgress(competencyProgress) + weight * getConfidence(competencyProgress, masteryThreshold));
 }

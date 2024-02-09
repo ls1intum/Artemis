@@ -30,8 +30,8 @@ public interface TemplateProgrammingExerciseParticipationRepository extends JpaR
         return findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).orElseThrow(() -> new EntityNotFoundException("ProgrammingExerciseParticipation", exerciseId));
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "submissions" })
-    Optional<TemplateProgrammingExerciseParticipation> findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(Long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.feedbacks.testCase", "submissions" })
+    Optional<TemplateProgrammingExerciseParticipation> findWithEagerResultsAndFeedbacksAndTestCasesAndSubmissionsByProgrammingExerciseId(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     Optional<TemplateProgrammingExerciseParticipation> findWithEagerSubmissionsByProgrammingExerciseId(Long exerciseId);

@@ -6,6 +6,8 @@ import javax.validation.constraints.Size;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import de.tum.in.www1.artemis.config.Constants;
 
 @Entity
@@ -19,6 +21,7 @@ public class LongFeedbackText extends DomainObject {
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "feedback_id", nullable = false)
+    @JsonIgnore
     private Feedback feedback;
 
     public String getText() {
