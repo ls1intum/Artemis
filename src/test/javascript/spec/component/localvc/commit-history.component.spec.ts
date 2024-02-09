@@ -31,7 +31,9 @@ describe('CommitHistoryComponent', () => {
             { id: 3, commitHash: 'commit3' },
         ] as ProgrammingSubmission[],
     };
+    // template commit
     const commit1: CommitInfo = { hash: 'commit1', author: 'author1', message: 'message1', timestamp: dayjs('2021-01-01') };
+
     const commit2: CommitInfo = { hash: 'commit2', author: 'author2', message: 'message2', timestamp: dayjs('2021-01-02') };
     const commit3: CommitInfo = { hash: 'commit3', author: 'author3', message: 'message3', timestamp: dayjs('2021-01-03') };
     const mockCommits: CommitInfo[] = [commit2, commit3, commit1];
@@ -61,11 +63,18 @@ describe('CommitHistoryComponent', () => {
 
     it('should create', () => {
         setupComponent();
+
+        // Trigger ngOnInit
+        component.ngOnInit();
+
         expect(component).toBeTruthy();
     });
 
     it('should load student participation', () => {
         setupComponent();
+
+        // Trigger ngOnInit
+        component.ngOnInit();
 
         // Expectations
         expect(component.studentParticipation).toEqual(mockParticipation);
@@ -83,6 +92,9 @@ describe('CommitHistoryComponent', () => {
     it('should load commits', () => {
         setupComponent();
 
+        // Trigger ngOnInit
+        component.ngOnInit();
+
         // Expectations
         expect(component.studentParticipation).toEqual(mockParticipation);
         expect(component.commits).toEqual([commit3, commit2, commit1]); // Updated to reflect the correct order
@@ -97,6 +109,9 @@ describe('CommitHistoryComponent', () => {
 
     it('should set commit results', () => {
         setupComponent();
+
+        // Trigger ngOnInit
+        component.ngOnInit();
 
         // Expectations
         expect(component.studentParticipation).toEqual(mockParticipation);

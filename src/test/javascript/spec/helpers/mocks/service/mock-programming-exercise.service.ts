@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
 import { ProgrammingExerciseInstructorRepositoryType } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { Participation } from 'app/entities/participation/participation.model';
-import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 
 export class MockProgrammingExerciseService {
     updateProblemStatement = (exerciseId: number, problemStatement: string) => of();
@@ -25,4 +25,6 @@ export class MockProgrammingExerciseService {
     delete = (programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean) => of({});
     generateStructureOracle = (exerciseId: number) => of({});
     unlockAllRepositories = (exerciseId: number) => of({});
+    getGitDiffReportForCommitDetailsViewForSubmissions = (exerciseId: number, participationId: number, commitHash: string) => of({} as ProgrammingExerciseGitDiffReport);
+    getGitDiffReportForCommitDetailsViewForSubmissionWithTemplate = (exerciseId: number, participationId: number, commitHash: string) => of({} as ProgrammingExerciseGitDiffReport);
 }

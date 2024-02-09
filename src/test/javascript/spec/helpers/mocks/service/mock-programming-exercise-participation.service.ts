@@ -9,5 +9,6 @@ export class MockProgrammingExerciseParticipationService implements IProgramming
     getStudentParticipationWithLatestResult = (participationId: number) => of({} as ProgrammingExerciseStudentParticipation);
     getStudentParticipationWithAllResults = (participationId: number) => of({} as ProgrammingExerciseStudentParticipation);
     retrieveCommitHistoryForParticipation = (participationId: number) => of([] as CommitInfo[]);
+    getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView = (participationId: number, commitHash: string) => of(new Map<string, string>());
     checkIfParticipationHasResult = (participationId: number) => of(true);
 }

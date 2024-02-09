@@ -32,8 +32,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     previousCommit: CommitInfo;
     studentParticipation: ProgrammingExerciseStudentParticipation;
 
-    private templateRepoFilesSubscription: Subscription;
-    private solutionRepoFilesSubscription: Subscription;
+    private repoFilesSubscription: Subscription;
     private participationRepoFilesAtLeftCommitSubscription: Subscription;
     private participationRepoFilesAtRightCommitSubscription: Subscription;
 
@@ -47,8 +46,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     ) {}
 
     ngOnDestroy(): void {
-        this.templateRepoFilesSubscription?.unsubscribe();
-        this.solutionRepoFilesSubscription?.unsubscribe();
+        this.repoFilesSubscription?.unsubscribe();
         this.participationRepoFilesAtLeftCommitSubscription?.unsubscribe();
         this.participationRepoFilesAtRightCommitSubscription?.unsubscribe();
         this.paramSub?.unsubscribe();
@@ -66,13 +64,13 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
                 this.handleSubmissions();
                 this.retrieveAndHandleCommits();
                 if (this.previousSubmission && this.currentSubmission) {
-                    this.programmingExerciseService
+                    this.repoFilesSubscription = this.programmingExerciseService
                         .getGitDiffReportForCommitDetailsViewForSubmissions(this.exerciseId, this.previousSubmission.id!, this.currentSubmission.id!)
                         .subscribe((report) => {
                             this.handleNewReport(report!);
                         });
                 } else if (this.currentSubmission) {
-                    this.programmingExerciseService
+                    this.repoFilesSubscription = this.programmingExerciseService
                         .getGitDiffReportForCommitDetailsViewForSubmissionWithTemplate(this.exerciseId, this.currentSubmission.id!)
                         .subscribe((report) => {
                             this.handleNewReport(report!);
