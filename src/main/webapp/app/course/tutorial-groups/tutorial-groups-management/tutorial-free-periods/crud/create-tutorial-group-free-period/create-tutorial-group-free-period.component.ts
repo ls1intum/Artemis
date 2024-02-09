@@ -86,7 +86,7 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
             resDate.setHours(time ? time.getHours() : 23, time ? time.getMinutes() : 59);
             return resDate;
         }
-        date.setHours(time ? time.getHours() : alternativeDate ? 23 : 0, time ? time.getMinutes() : 0);
+        date.setHours(time ? time.getHours() : alternativeDate ? 23 : 0, time ? time.getMinutes() : alternativeDate ? 59 : 0);
         return date;
     }
 

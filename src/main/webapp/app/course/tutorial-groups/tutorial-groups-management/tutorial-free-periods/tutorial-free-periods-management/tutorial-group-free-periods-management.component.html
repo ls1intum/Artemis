@@ -25,7 +25,7 @@
                     [tutorialGroupsConfiguration]="tutorialGroupsConfiguration"
                     [tutorialGroupFreePeriods]="freePeriods"
                     [lableText]="'artemisApp.forms.tutorialFreePeriodForm.timeFrame.period'"
-                    [tutorialGroupFreePeriodManagement]="this"
+                    [loadAll]="loadAll.bind(this)"
                 ></jhi-tutorial-group-free-periods-table>
             }
 
@@ -36,7 +36,7 @@
                     [tutorialGroupsConfiguration]="tutorialGroupsConfiguration"
                     [tutorialGroupFreePeriods]="freeDays"
                     [lableText]="'artemisApp.forms.tutorialFreePeriodForm.timeFrame.day'"
-                    [tutorialGroupFreePeriodManagement]="this"
+                    [loadAll]="loadAll.bind(this)"
                 ></jhi-tutorial-group-free-periods-table>
             }
 
@@ -47,7 +47,7 @@
                     [tutorialGroupsConfiguration]="tutorialGroupsConfiguration"
                     [tutorialGroupFreePeriods]="freePeriodsWithinDay"
                     [lableText]="'artemisApp.forms.tutorialFreePeriodForm.timeFrame.periodWithinDay'"
-                    [tutorialGroupFreePeriodManagement]="this"
+                    [loadAll]="loadAll.bind(this)"
                 ></jhi-tutorial-group-free-periods-table>
             }
         </div>
