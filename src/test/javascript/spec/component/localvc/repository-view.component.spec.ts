@@ -173,6 +173,10 @@ describe('RepositoryViewComponent', () => {
             id: 2,
             repositoryUri: 'student-repo-uri',
             exercise: { id: 1, numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()], studentAssignedTeamIdComputed: true, secondCorrectionEnabled: true },
+            results: [
+                { id: 3, successful: true, score: 100, rated: true, hasComplaint: false, exampleResult: false, testCaseCount: 10, passedTestCaseCount: 10, codeIssueCount: 0 },
+                { id: 4, successful: true, score: 100, rated: true, hasComplaint: false, exampleResult: false, testCaseCount: 10, passedTestCaseCount: 10, codeIssueCount: 0 },
+            ],
         };
         const participationId = 2;
 

@@ -95,6 +95,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     }
 
     private retrieveAndHandleCommits() {
+        console.log(this.currentSubmission);
         this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.participationId).subscribe((commits) => {
             this.commits = commits.sort((a, b) => (dayjs(b.timestamp!).isAfter(dayjs(a.timestamp!)) ? 1 : -1));
             if (this.currentSubmission !== undefined) {

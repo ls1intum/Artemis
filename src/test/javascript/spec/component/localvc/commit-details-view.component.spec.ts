@@ -6,7 +6,7 @@ import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { CommitDetailsViewComponent } from 'app/localvc/commit-details-view/commit-details-view.component';
@@ -104,13 +104,11 @@ describe('CommitDetailsViewComponent', () => {
         programmingExerciseParticipationService = fixture.debugElement.injector.get(ProgrammingExerciseParticipationService);
         programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
 
-        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
         mockRepositoryFiles.set('file1', 'content1');
         mockRepositoryFiles.set('file2', 'content2');
 
         jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(mockParticipation));
         jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation').mockReturnValue(of(mockCommits));
-        jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView').mockReturnValue(of(mockRepositoryFiles));
         jest.spyOn(programmingExerciseService, 'getGitDiffReportForCommitDetailsViewForSubmissions').mockReturnValue(of(mockDiffReportForSubmissions));
         jest.spyOn(programmingExerciseService, 'getGitDiffReportForCommitDetailsViewForSubmissionWithTemplate').mockReturnValue(of(mockDiffReportWithTemplate));
 
@@ -124,6 +122,7 @@ describe('CommitDetailsViewComponent', () => {
 
     it('should load student participation', () => {
         setupComponent();
+        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -140,6 +139,7 @@ describe('CommitDetailsViewComponent', () => {
 
     it('should handle submissions', () => {
         setupComponent();
+        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -156,6 +156,7 @@ describe('CommitDetailsViewComponent', () => {
 
     it('should retrieve and handle commits', () => {
         setupComponent();
+        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -172,6 +173,7 @@ describe('CommitDetailsViewComponent', () => {
 
     it('should handle new report for submission with template', () => {
         setupComponent();
+        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -189,7 +191,7 @@ describe('CommitDetailsViewComponent', () => {
 
     it('should handle new report for submissions', () => {
         setupComponent();
-
+        //different commit hash than usual
         activatedRoute.setParameters({ participationId: 2, commitHash: 'commit3', exerciseId: 1 });
 
         // Trigger ngOnInit
@@ -208,6 +210,8 @@ describe('CommitDetailsViewComponent', () => {
 
     it('should fetch repository files', () => {
         setupComponent();
+        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
+        jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView').mockReturnValue(of(mockRepositoryFiles));
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -224,5 +228,53 @@ describe('CommitDetailsViewComponent', () => {
         expect(component.repoFilesSubscription?.closed).toBeTrue();
         expect(component.participationRepoFilesAtLeftCommitSubscription?.closed).toBeTrue();
         expect(component.participationRepoFilesAtRightCommitSubscription?.closed).toBeTrue();
+    });
+
+    it('should handle error when fetching repository files', () => {
+        setupComponent();
+        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit2', exerciseId: 1 });
+        jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView').mockReturnValue(
+            new Observable((subscriber) => {
+                subscriber.error('Error');
+            }),
+        );
+
+        fixture.detectChanges();
+
+        // Trigger ngOnInit
+        component.ngOnInit();
+
+        expect(component.leftCommitFileContentByPath).toEqual(new Map<string, string>());
+        expect(component.rightCommitFileContentByPath).toEqual(new Map<string, string>());
+        expect(component.errorWhileFetchingRepos).toBeTrue();
+
+        // Trigger ngOnDestroy
+        component.ngOnDestroy();
+
+        // Expect subscription to be unsubscribed
+        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.commitsInfoSubscription?.closed).toBeTrue();
+        expect(component.repoFilesSubscription?.closed).toBeTrue();
+        expect(component.participationRepoFilesAtLeftCommitSubscription?.closed).toBeTrue();
+        expect(component.participationRepoFilesAtRightCommitSubscription?.closed).toBeTrue();
+    });
+
+    it('should handle if current submission is not available', () => {
+        setupComponent();
+        activatedRoute.setParameters({ participationId: 2, commitHash: 'commit1', exerciseId: 1 });
+
+        // Trigger ngOnInit
+        component.ngOnInit();
+
+        expect(component.currentSubmission).toBeUndefined();
+        expect(component.previousSubmission).toBeUndefined();
+        expect(component.currentCommit).toEqual(commit1);
+        expect(component.report).toBeUndefined();
+
+        // Trigger ngOnDestroy
+        component.ngOnDestroy();
+
+        // Expect subscription to be unsubscribed
+        expect(component.paramSub?.closed).toBeTrue();
     });
 });
