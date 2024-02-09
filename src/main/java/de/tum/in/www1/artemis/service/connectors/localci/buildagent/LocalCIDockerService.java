@@ -57,6 +57,9 @@ public class LocalCIDockerService {
         this.hazelcastInstance = hazelcastInstance;
     }
 
+    /**
+     * Removes all stranded build containers after the application has started
+     */
     @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {
         // NOTE: we delay this after startup, because this can take several seconds and can block the startup of the build agent otherwise
