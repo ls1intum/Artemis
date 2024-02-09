@@ -21,26 +21,6 @@
         </div>
     </div>
 }
-@if (nextRelevantExercise && nextRelevantCourse) {
-    <div class="row mb-1">
-        <div class="col">
-            <h3 class="fw-medium">
-                @if (nextRelevantExercise.dueDate) {
-                    <span>
-                        {{ 'artemisApp.studentDashboard.exerciseTitle' | artemisTranslate: { course: nextRelevantCourse.title } }}
-                    </span>
-                } @else {
-                    {{ 'artemisApp.studentDashboard.exerciseTitleWithoutDueDate' | artemisTranslate: { course: nextRelevantCourse.title } }}
-                }
-            </h3>
-        </div>
-    </div>
-}
-@if (nextRelevantExercise && nextRelevantCourse) {
-    <div class="row mb-3">
-        <jhi-course-exercise-row class="pb-1" [exercise]="nextRelevantExercise" [course]="nextRelevantCourse"></jhi-course-exercise-row>
-    </div>
-}
 <div class="row mb-3 justify-content-between">
     <div class="col-sm-8">
         <h3 class="fw-medium" jhiTranslate="artemisApp.studentDashboard.title">Your current courses</h3>
