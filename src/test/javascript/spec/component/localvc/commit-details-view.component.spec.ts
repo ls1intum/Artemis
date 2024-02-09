@@ -26,16 +26,12 @@ describe('CommitDetailsViewComponent', () => {
     // Define mock data for participation and commits
     const submission2: ProgrammingSubmission = { id: 2, commitHash: 'commit2' } as ProgrammingSubmission;
     const submission3: ProgrammingSubmission = { id: 3, commitHash: 'commit3' } as ProgrammingSubmission;
+    const exercise = { id: 1, numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()], studentAssignedTeamIdComputed: true, secondCorrectionEnabled: true };
 
     const mockParticipation: ProgrammingExerciseStudentParticipation = {
         id: 2,
         repositoryUri: 'student-repo-uri',
-        exercise: {
-            id: 1,
-            numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()],
-            studentAssignedTeamIdComputed: true,
-            secondCorrectionEnabled: true,
-        },
+        exercise: exercise,
         results: [
             {
                 id: 1,
@@ -76,9 +72,11 @@ describe('CommitDetailsViewComponent', () => {
     const mockCommits: CommitInfo[] = [commit2, commit3, commit1];
     const mockDiffReportWithTemplate: ProgrammingExerciseGitDiffReport = {
         id: 1,
+        programmingExercise: exercise,
     };
     const mockDiffReportForSubmissions: ProgrammingExerciseGitDiffReport = {
         id: 2,
+        programmingExercise: exercise,
     };
     const mockRepositoryFiles: Map<string, string> = new Map<string, string>();
 

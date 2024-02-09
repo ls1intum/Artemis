@@ -32,12 +32,12 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     previousCommit: CommitInfo;
     studentParticipation: ProgrammingExerciseStudentParticipation;
 
-    private repoFilesSubscription: Subscription;
-    private participationRepoFilesAtLeftCommitSubscription: Subscription;
-    private participationRepoFilesAtRightCommitSubscription: Subscription;
+    repoFilesSubscription: Subscription;
+    participationRepoFilesAtLeftCommitSubscription: Subscription;
+    participationRepoFilesAtRightCommitSubscription: Subscription;
 
-    private paramSub: Subscription;
-    private participationSub: Subscription;
+    paramSub: Subscription;
+    participationSub: Subscription;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
