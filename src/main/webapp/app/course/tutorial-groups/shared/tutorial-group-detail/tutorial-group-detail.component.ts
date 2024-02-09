@@ -6,8 +6,9 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { getDayTranslationKey } from '../weekdays';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { Detail, DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { TranslateService } from '@ngx-translate/core';
+import { Detail } from 'app/detail-overview-list/detail.model';
 
 @Component({
     selector: 'jhi-tutorial-group-detail',
@@ -123,7 +124,7 @@ export class TutorialGroupDetailComponent implements OnChanges {
                 title: 'artemisApp.entities.tutorialGroup.channel',
                 data: {
                     text: tutorialGroup.channel.name,
-                    routerLink: tutorialGroup.channel.isMember && ['/courses', this.course.id!, 'messages'],
+                    routerLink: tutorialGroup.channel.isMember ? ['/courses', this.course.id!, 'messages'] : undefined,
                     queryParams: { conversationId: tutorialGroup.channel.id },
                 },
             });
