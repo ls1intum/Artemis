@@ -26,10 +26,10 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
 
-    @ViewChild(SubmissionPolicyUpdateComponent) submissionPolicyUpdateComponent: SubmissionPolicyUpdateComponent;
-    @ViewChild(ProgrammingExerciseLifecycleComponent) lifecycleComponent: ProgrammingExerciseLifecycleComponent;
-    @ViewChild('maxScore') maxScoreField: NgModel;
-    @ViewChild('bonusPoints') bonusPointsField: NgModel;
+    @ViewChild(SubmissionPolicyUpdateComponent) submissionPolicyUpdateComponent?: SubmissionPolicyUpdateComponent;
+    @ViewChild(ProgrammingExerciseLifecycleComponent) lifecycleComponent?: ProgrammingExerciseLifecycleComponent;
+    @ViewChild('maxScore') maxScoreField?: NgModel;
+    @ViewChild('bonusPoints') bonusPointsField?: NgModel;
     @ViewChild('maxPenalty') maxPenaltyField?: NgModel;
 
     formValid: boolean;
@@ -43,11 +43,11 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
     constructor(private translateService: TranslateService) {}
 
     ngAfterViewInit(): void {
-        this.inputFieldSubscriptions.push(this.maxScoreField.valueChanges?.subscribe(() => this.calculateFormStatus()));
-        this.inputFieldSubscriptions.push(this.bonusPointsField.valueChanges?.subscribe(() => this.calculateFormStatus()));
+        this.inputFieldSubscriptions.push(this.maxScoreField?.valueChanges?.subscribe(() => this.calculateFormStatus()));
+        this.inputFieldSubscriptions.push(this.bonusPointsField?.valueChanges?.subscribe(() => this.calculateFormStatus()));
         this.inputFieldSubscriptions.push(this.maxPenaltyField?.valueChanges?.subscribe(() => this.calculateFormStatus()));
-        this.inputFieldSubscriptions.push(this.submissionPolicyUpdateComponent.form?.valueChanges?.subscribe(() => this.calculateFormStatus()));
-        this.inputFieldSubscriptions.push(this.lifecycleComponent.formValidChanges?.subscribe(() => this.calculateFormStatus()));
+        this.inputFieldSubscriptions.push(this.submissionPolicyUpdateComponent?.form?.valueChanges?.subscribe(() => this.calculateFormStatus()));
+        this.inputFieldSubscriptions.push(this.lifecycleComponent?.formValidChanges?.subscribe(() => this.calculateFormStatus()));
         this.setEditPolicyPageLink();
     }
 
@@ -59,13 +59,13 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
 
     calculateFormStatus() {
         this.formValid = Boolean(
-            this.maxScoreField.valid &&
-                this.bonusPointsField.valid &&
+            this.maxScoreField?.valid &&
+                this.bonusPointsField?.valid &&
                 (this.maxPenaltyField?.valid || !this.programmingExercise.staticCodeAnalysisEnabled) &&
-                (this.submissionPolicyUpdateComponent.form?.disabled || this.submissionPolicyUpdateComponent.form?.valid) &&
-                this.lifecycleComponent.formValid,
+                !this.submissionPolicyUpdateComponent?.invalid &&
+                this.lifecycleComponent?.formValid,
         );
-        this.formEmpty = this.lifecycleComponent.formEmpty;
+        this.formEmpty = this.lifecycleComponent?.formEmpty ?? false;
         this.formValidChanges.next(this.formValid);
     }
 
