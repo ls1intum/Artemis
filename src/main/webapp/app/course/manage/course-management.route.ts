@@ -9,6 +9,7 @@ import { RatingListComponent } from 'app/exercises/shared/rating/rating-list/rat
 import { CompetencyManagementComponent } from 'app/course/competencies/competency-management/competency-management.component';
 import { CreateCompetencyComponent } from 'app/course/competencies/create-competency/create-competency.component';
 import { EditCompetencyComponent } from 'app/course/competencies/edit-competency/edit-competency.component';
+import { GenerateCompetenciesComponent } from 'app/course/competencies/generate-competencies/generate-competencies.component';
 import { CourseManagementStatisticsComponent } from './course-management-statistics.component';
 import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
 import { isOrion } from 'app/shared/orion/orion';
@@ -22,6 +23,7 @@ import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-co
 import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
 import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
 import { LearningPathManagementComponent } from 'app/course/learning-paths/learning-path-management/learning-path-management.component';
+import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
 import { LocalCIGuard } from 'app/localci/build-queue/localci-guard.service';
 
@@ -223,6 +225,16 @@ export const courseManagementState: Routes = [
                                     pageTitle: 'artemisApp.competency.editCompetency.title',
                                 },
                                 canActivate: [UserRouteAccessService],
+                            },
+                            {
+                                path: 'generate',
+                                component: GenerateCompetenciesComponent,
+                                data: {
+                                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                                    pageTitle: 'artemisApp.competency.generate.title',
+                                },
+                                canActivate: [UserRouteAccessService],
+                                canDeactivate: [PendingChangesGuard],
                             },
                         ],
                     },

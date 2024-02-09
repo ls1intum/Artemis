@@ -7,8 +7,8 @@ public interface IrisButtonBasedFeatureInterface<S extends IrisSession, O> exten
     /**
      * Sends a request to Iris to get an answer for the given session.
      *
-     * @param input The input to send to Iris
+     * @param session The iris session used
      * @return The response created with Iris
      */
-    O executeRequest(S input);
+    O executeRequest(S session);
 }

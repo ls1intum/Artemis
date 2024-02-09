@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -745,5 +746,16 @@ public class ExerciseService {
             return false;
         }
         return score.getAsDouble() >= minScore;
+    }
+
+    /**
+     * Removes competency from all exercises.
+     *
+     * @param exercises  set of exercises
+     * @param competency competency to remove
+     */
+    public void removeCompetency(@NotNull Set<Exercise> exercises, @NotNull Competency competency) {
+        exercises.forEach(exercise -> exercise.getCompetencies().remove(competency));
+        exerciseRepository.saveAll(exercises);
     }
 }
