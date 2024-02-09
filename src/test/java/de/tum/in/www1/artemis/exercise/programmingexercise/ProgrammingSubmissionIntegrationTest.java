@@ -61,7 +61,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    private ProgrammingSubmissionRepository submissionRepository;
+    private ProgrammingSubmissionTestRepository submissionRepository;
 
     @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;

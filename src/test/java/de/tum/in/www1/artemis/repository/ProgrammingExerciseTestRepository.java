@@ -47,7 +47,11 @@ public interface ProgrammingExerciseTestRepository extends JpaRepository<Program
      * @param dateTime ZonedDatetime object.
      * @return List<ProgrammingExercise> (can be empty)
      */
-    @Query("SELECT pe FROM ProgrammingExercise pe WHERE pe.buildAndTestStudentSubmissionsAfterDueDate > :#{#dateTime}")
+    @Query("""
+                SELECT pe
+                FROM ProgrammingExercise pe
+                WHERE pe.buildAndTestStudentSubmissionsAfterDueDate > :dateTime
+            """)
     List<ProgrammingExercise> findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 
     /**
