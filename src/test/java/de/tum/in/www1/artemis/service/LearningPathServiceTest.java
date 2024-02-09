@@ -264,8 +264,8 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         void testSingleMatches() {
             competencyUtilService.addRelation(competency1, RelationType.MATCHES, competency2);
-            expectedNodes.add(new NgxLearningPathDTO.Node(LearningPathNgxService.getMatchingClusterStartNodeId(0), NgxLearningPathDTO.NodeType.MATCH_START, null, ""));
-            expectedNodes.add(new NgxLearningPathDTO.Node(LearningPathNgxService.getMatchingClusterEndNodeId(0), NgxLearningPathDTO.NodeType.MATCH_END, null, ""));
+            expectedNodes.add(NgxLearningPathDTO.Node.of(LearningPathNgxService.getMatchingClusterStartNodeId(0), NgxLearningPathDTO.NodeType.MATCH_START, null, ""));
+            expectedNodes.add(NgxLearningPathDTO.Node.of(LearningPathNgxService.getMatchingClusterEndNodeId(0), NgxLearningPathDTO.NodeType.MATCH_END, null, ""));
             expectedEdges.add(new NgxLearningPathDTO.Edge(LearningPathNgxService.getInEdgeId(competency1.getId()), LearningPathNgxService.getMatchingClusterStartNodeId(0),
                     LearningPathNgxService.getCompetencyStartNodeId(competency1.getId())));
             expectedEdges.add(new NgxLearningPathDTO.Edge(LearningPathNgxService.getOutEdgeId(competency1.getId()),
@@ -285,8 +285,8 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
 
             competencyUtilService.addRelation(competency1, RelationType.MATCHES, competency2);
             competencyUtilService.addRelation(competency2, RelationType.MATCHES, competency3);
-            expectedNodes.add(new NgxLearningPathDTO.Node(LearningPathNgxService.getMatchingClusterStartNodeId(0), NgxLearningPathDTO.NodeType.MATCH_START, null, ""));
-            expectedNodes.add(new NgxLearningPathDTO.Node(LearningPathNgxService.getMatchingClusterEndNodeId(0), NgxLearningPathDTO.NodeType.MATCH_END, null, ""));
+            expectedNodes.add(NgxLearningPathDTO.Node.of(LearningPathNgxService.getMatchingClusterStartNodeId(0), NgxLearningPathDTO.NodeType.MATCH_START, null, ""));
+            expectedNodes.add(NgxLearningPathDTO.Node.of(LearningPathNgxService.getMatchingClusterEndNodeId(0), NgxLearningPathDTO.NodeType.MATCH_END, null, ""));
             expectedEdges.add(new NgxLearningPathDTO.Edge(LearningPathNgxService.getInEdgeId(competency1.getId()), LearningPathNgxService.getMatchingClusterStartNodeId(0),
                     LearningPathNgxService.getCompetencyStartNodeId(competency1.getId())));
             expectedEdges.add(new NgxLearningPathDTO.Edge(LearningPathNgxService.getOutEdgeId(competency1.getId()),
@@ -407,7 +407,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
             competencyRepository.save(competency2);
             Competency[] priors1 = competencyUtilService.createCompetencies(course, future(110), future(112), future(114));
             Competency[] priors2 = competencyUtilService.createCompetencies(course, future(111), future(113), future(115));
-            ;
+
             for (var competency : priors1) {
                 competencyUtilService.addRelation(competency1, RelationType.RELATES, competency);
             }
@@ -436,7 +436,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
             competencyRepository.save(competency2);
             Competency[] priors1 = competencyUtilService.createCompetencies(course, future(110), future(112), future(114));
             Competency[] priors2 = competencyUtilService.createCompetencies(course, future(111), future(113), future(115));
-            ;
+
             competencyUtilService.addRelation(competency1, RelationType.EXTENDS, priors1[0]);
             competencyUtilService.addRelation(competency1, RelationType.EXTENDS, priors1[1]);
             competencyUtilService.addRelation(competency1, RelationType.ASSUMES, priors1[2]);
@@ -662,19 +662,18 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static Set<NgxLearningPathDTO.Node> getExpectedNodesOfEmptyCompetency(Competency competency) {
         return new HashSet<>(Set.of(
-                new NgxLearningPathDTO.Node(LearningPathNgxService.getCompetencyStartNodeId(competency.getId()), NgxLearningPathDTO.NodeType.COMPETENCY_START, competency.getId(),
+                NgxLearningPathDTO.Node.of(LearningPathNgxService.getCompetencyStartNodeId(competency.getId()), NgxLearningPathDTO.NodeType.COMPETENCY_START, competency.getId(),
                         ""),
-                new NgxLearningPathDTO.Node(LearningPathNgxService.getCompetencyEndNodeId(competency.getId()), NgxLearningPathDTO.NodeType.COMPETENCY_END, competency.getId(),
-                        "")));
+                NgxLearningPathDTO.Node.of(LearningPathNgxService.getCompetencyEndNodeId(competency.getId()), NgxLearningPathDTO.NodeType.COMPETENCY_END, competency.getId(), "")));
     }
 
     private static NgxLearningPathDTO.Node getNodeForLectureUnit(Competency competency, LectureUnit lectureUnit) {
-        return new NgxLearningPathDTO.Node(LearningPathNgxService.getLectureUnitNodeId(competency.getId(), lectureUnit.getId()), NgxLearningPathDTO.NodeType.LECTURE_UNIT,
+        return NgxLearningPathDTO.Node.of(LearningPathNgxService.getLectureUnitNodeId(competency.getId(), lectureUnit.getId()), NgxLearningPathDTO.NodeType.LECTURE_UNIT,
                 lectureUnit.getId(), lectureUnit.getLecture().getId(), false, lectureUnit.getName());
     }
 
     private static NgxLearningPathDTO.Node getNodeForExercise(Competency competency, Exercise exercise) {
-        return new NgxLearningPathDTO.Node(LearningPathNgxService.getExerciseNodeId(competency.getId(), exercise.getId()), NgxLearningPathDTO.NodeType.EXERCISE, exercise.getId(),
+        return NgxLearningPathDTO.Node.of(LearningPathNgxService.getExerciseNodeId(competency.getId(), exercise.getId()), NgxLearningPathDTO.NodeType.EXERCISE, exercise.getId(),
                 exercise.getTitle());
     }
 
