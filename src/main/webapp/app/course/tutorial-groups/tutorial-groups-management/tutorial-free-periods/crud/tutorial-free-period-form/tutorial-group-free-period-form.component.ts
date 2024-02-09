@@ -143,7 +143,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         } else if (this.timeFrame == TimeFrame.Period) {
             return !!this.endDateControl?.valid && this.isStartBeforeEnd;
         } else if (this.timeFrame == TimeFrame.PeriodWithinDay) {
-            return !!this.startTimeControl?.valid && !!this.endTimeControl?.valid && this.isStartBeforeEnd && this.isStartTimeInvalid && this.isEndTimeInvalid;
+            return !!this.startTimeControl?.valid && !!this.endTimeControl?.valid && this.isStartBeforeEnd && !this.isStartTimeInvalid && !this.isEndTimeInvalid;
         }
         return false;
     }
