@@ -503,7 +503,7 @@ export class ProgrammingExerciseService {
         ProgrammingExerciseService.convertProgrammingExerciseResponseDatesFromServer(exerciseRes);
         ExerciseService.convertExerciseCategoriesFromServer(exerciseRes);
         this.exerciseService.setAccessRightsExerciseEntityResponseType(exerciseRes);
-        this.exerciseService.sendExerciseTitleToTitleService(exerciseRes?.body);
+        this.exerciseService.sendExerciseTitleToTitleService(exerciseRes?.body ?? undefined);
         return exerciseRes;
     }
 
@@ -557,14 +557,6 @@ export class ProgrammingExerciseService {
      * @param exerciseId The id of a programming exercise
      */
     getLatestFullTestwiseCoverageReport(exerciseId: number): Observable<CoverageReport> {
-        return this.http.get<CoverageReport>(`${this.resourceUrl}/${exerciseId}/full-testwise-coverage-report`);
-    }
-
-    /**
-     * Gets the testwise coverage report of a programming exercise for the latest solution submission without the actual reports
-     * @param exerciseId The id of a programming exercise
-     */
-    getLatestTestwiseCoverageReport(exerciseId: number): Observable<CoverageReport> {
         return this.http.get<CoverageReport>(`${this.resourceUrl}/${exerciseId}/full-testwise-coverage-report`);
     }
 

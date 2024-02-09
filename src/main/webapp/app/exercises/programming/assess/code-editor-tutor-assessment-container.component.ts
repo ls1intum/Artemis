@@ -584,6 +584,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.alertService.closeAll();
         this.alertService.success(translationKey);
         this.saveBusy = this.submitBusy = false;
+        this.checkPermissions();
     }
 
     /**
