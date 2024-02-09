@@ -340,7 +340,7 @@ public class ExamImportService {
         newExercise.setExampleSolutionPublicationDate(null);
 
         // Fetch grading criterion into exercise. For course exercises, this is performed before sending the exercise to the client.
-        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(newExercise.getId());
+        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(newExercise.getId());
         newExercise.setGradingCriteria(gradingCriteria);
 
         newExercise.forceNewProjectKey();

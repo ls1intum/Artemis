@@ -83,15 +83,15 @@ public class QuizExerciseImportService extends ExerciseImportService {
     }
 
     /**
-     * This helper method copies all questions of the {@code importedExercise} into a new exercise.
+     * This helper method copies all questions of the {@code sourceExercise} into a new exercise.
      *
-     * @param importedExercise The exercise from which to copy the questions
-     * @param newExercise      The exercise to which the questions are copied
+     * @param sourceExercise The exercise from which to copy the questions
+     * @param newExercise    The exercise to which the questions are copied
      */
-    private void copyQuizQuestions(QuizExercise importedExercise, QuizExercise newExercise) {
+    private void copyQuizQuestions(QuizExercise sourceExercise, QuizExercise newExercise) {
         log.debug("Copying the QuizQuestions to new QuizExercise: {}", newExercise);
 
-        for (QuizQuestion quizQuestion : importedExercise.getQuizQuestions()) {
+        for (QuizQuestion quizQuestion : sourceExercise.getQuizQuestions()) {
             quizQuestion.setId(null);
             quizQuestion.setQuizQuestionStatistic(null);
             if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
@@ -105,7 +105,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
             }
             quizQuestion.setExercise(newExercise);
         }
-        newExercise.setQuizQuestions(importedExercise.getQuizQuestions());
+        newExercise.setQuizQuestions(sourceExercise.getQuizQuestions());
     }
 
     private void setUpMultipleChoiceQuestionForImport(MultipleChoiceQuestion mcQuestion) {
@@ -195,16 +195,16 @@ public class QuizExerciseImportService extends ExerciseImportService {
     }
 
     /**
-     * This helper method copies all batches of the {@code importedExercise} into a new exercise.
+     * This helper method copies all batches of the {@code sourceExercise} into a new exercise.
      *
-     * @param importedExercise The exercise from which to copy the batches
-     * @param newExercise      The exercise to which the batches are copied
+     * @param sourceExercise The exercise from which to copy the batches
+     * @param newExercise    The exercise to which the batches are copied
      */
-    private void copyQuizBatches(QuizExercise importedExercise, QuizExercise newExercise) {
+    private void copyQuizBatches(QuizExercise sourceExercise, QuizExercise newExercise) {
         log.debug("Copying the QuizBatches to new QuizExercise: {}", newExercise);
 
         Set<QuizBatch> quizBatchList = new HashSet<>();
-        for (QuizBatch batch : importedExercise.getQuizBatches()) {
+        for (QuizBatch batch : sourceExercise.getQuizBatches()) {
             batch.setId(null);
             batch.setQuizExercise(newExercise);
             quizBatchList.add(batch);

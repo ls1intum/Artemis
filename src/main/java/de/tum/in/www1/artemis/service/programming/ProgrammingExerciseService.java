@@ -26,7 +26,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
@@ -213,57 +212,79 @@ public class ProgrammingExerciseService {
      * @throws GitAPIException If something during the communication with the remote Git repository went wrong
      * @throws IOException     If the template files couldn't be read
      */
-    @Transactional // TODO: apply the transaction on a smaller scope
-    // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, boolean isImportedFromFile) throws GitAPIException, IOException {
-        programmingExercise.generateAndSetProjectKey();
         final User exerciseCreator = userRepository.getUser();
-
         VersionControlService versionControl = versionControlService.orElseThrow();
-        programmingExercise.setBranch(versionControl.getDefaultBranchOfArtemis());
-        programmingExerciseRepositoryService.createRepositoriesForNewExercise(programmingExercise);
-        initParticipations(programmingExercise);
-        setURLsAndBuildPlanIDsForNewExercise(programmingExercise);
 
-        // Save participations to get the ids required for the webhooks
-        connectBaseParticipationsToExerciseAndSave(programmingExercise);
+        // The client sends a solution and template participation object (filled with null values) when creating a programming exercise.
+        // When saving the object leads to an exception at runtime.
+        // As the participations objects are just dummy values representing the data structure in the client, we set this to null.
+        // See https://github.com/ls1intum/Artemis/pull/7451/files#r1459228917
+        programmingExercise.setSolutionParticipation(null);
+        programmingExercise.setTemplateParticipation(null);
 
-        connectAuxiliaryRepositoriesToExercise(programmingExercise);
+        // We save once in order to generate an id for the programming exercise
+        var savedProgrammingExercise = programmingExerciseRepository.saveForCreation(programmingExercise);
 
-        programmingExerciseRepositoryService.setupExerciseTemplate(programmingExercise, exerciseCreator);
-        programmingSubmissionService.createInitialSubmissions(programmingExercise);
+        // Step 1: Setting constant facts for a programming exercise
+        savedProgrammingExercise.generateAndSetProjectKey();
+        savedProgrammingExercise.setBranch(versionControl.getDefaultBranchOfArtemis());
 
-        // make sure that plagiarism detection config does not use existing id
-        Optional.ofNullable(programmingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
+        // Step 2: Creating repositories for new exercise
+        programmingExerciseRepositoryService.createRepositoriesForNewExercise(savedProgrammingExercise);
+        // Step 3: Initializing solution and template participation
+        initParticipations(savedProgrammingExercise);
 
-        // for LocalCI and Aeolus, we store the build plan definition in the database as a windfile
+        // Step 4a: Setting build plan IDs and URLs for template and solution participation
+        setURLsAndBuildPlanIDsForNewExercise(savedProgrammingExercise);
+
+        // Step 4b: Connecting base participations with the exercise
+        connectBaseParticipationsToExerciseAndSave(savedProgrammingExercise);
+
+        savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+
+        // Step 4c: Connect auxiliary repositories
+        connectAuxiliaryRepositoriesToExercise(savedProgrammingExercise);
+
+        // Step 5: Setup exercise template
+        programmingExerciseRepositoryService.setupExerciseTemplate(savedProgrammingExercise, exerciseCreator);
+
+        // Step 6: Create initial submission
+        programmingSubmissionService.createInitialSubmissions(savedProgrammingExercise);
+
+        // Step 7: Make sure that plagiarism detection config does not use existing id
+        Optional.ofNullable(savedProgrammingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
+
+        // Step 8: For LocalCI and Aeolus, we store the build plan definition in the database as a windfile
         if (aeolusTemplateService.isPresent() && programmingExercise.getBuildPlanConfiguration() == null) {
             Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(programmingExercise);
             if (windfile != null) {
-                programmingExercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
+                savedProgrammingExercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
             }
             else {
-                log.warn("No windfile for the settings of exercise {}", programmingExercise.getId());
+                log.warn("No windfile for the settings of exercise {}", savedProgrammingExercise.getId());
             }
         }
 
-        // Save programming exercise to prevent transient exception
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
-
+        // Step 9: Create exercise channel
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
+        // Step 10: Setup build plans for template and solution participation
         setupBuildPlansForNewExercise(savedProgrammingExercise, isImportedFromFile);
-        // save to get the id required for the webhook
-        savedProgrammingExercise = programmingExerciseRepository.saveAndFlush(savedProgrammingExercise);
+        savedProgrammingExercise = programmingExerciseRepository.findForCreationByIdElseThrow(savedProgrammingExercise.getId());
 
+        // Step 11: Update task from problem statement
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
-        // The creation of the webhooks must occur after the initial push, because the participation is
-        // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.processNewProgrammingSubmission)
+        // Step 12: Webhooks and scheduling
+        // Step 12a: Create web hooks for version control
         versionControl.addWebHooksForExercise(savedProgrammingExercise);
+        // Step 12b: Schedule operations
         scheduleOperations(savedProgrammingExercise.getId());
+        // Step 12c: Check notifications for new exercise
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(savedProgrammingExercise);
-        return savedProgrammingExercise;
+
+        return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
     }
 
     public void scheduleOperations(Long programmingExerciseId) {
@@ -402,7 +423,7 @@ public class ProgrammingExerciseService {
             String script = buildScriptGenerationService.get().getScript(programmingExercise);
             programmingExercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
             programmingExercise.setBuildScript(script);
-            programmingExercise = programmingExerciseRepository.save(programmingExercise);
+            programmingExercise = programmingExerciseRepository.saveForCreation(programmingExercise);
         }
 
         // if the exercise is imported from a file, the changes fixing the project name will trigger a first build anyway, so
