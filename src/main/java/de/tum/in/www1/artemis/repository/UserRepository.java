@@ -363,7 +363,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     List<User> findAllWithGroupsByIsDeletedIsFalseAndGroupsContainsAndLoginIn(String groupName, Set<String> logins);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Set<User> findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndLoginIn(@Param("logins") Set<String> logins);
+    Set<User> findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndLoginIn(Set<String> logins);
 
     /**
      * Searches for users by their login or full name.
