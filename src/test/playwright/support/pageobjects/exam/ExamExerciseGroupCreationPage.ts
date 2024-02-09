@@ -3,10 +3,11 @@ import { Exam } from 'app/entities/exam.model';
 import { ExamAPIRequests } from '../../requests/ExamAPIRequests';
 import { ExerciseAPIRequests } from '../../requests/ExerciseAPIRequests';
 import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
-import { AdditionalData, BASE_API, Exercise, ExerciseType } from '../../constants';
+import { AdditionalData, BASE_API, ExerciseType, Exercise as PlaywrightExercise } from '../../constants';
 import { generateUUID } from '../../utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Exercise } from 'app/entities/exercise.model';
 
 export class ExamExerciseGroupCreationPage {
     private readonly page: Page;
@@ -42,9 +43,9 @@ export class ExamExerciseGroupCreationPage {
         await responsePromise;
     }
 
-    async addGroupWithExercise(exam: Exam, exerciseType: ExerciseType, additionalData: AdditionalData = {}): Promise<Exercise> {
+    async addGroupWithExercise(exam: Exam, exerciseType: ExerciseType, additionalData: AdditionalData = {}): Promise<PlaywrightExercise> {
         const response = await this.handleAddGroupWithExercise(exam, 'Exercise ' + generateUUID(), exerciseType, additionalData);
-        let exercise = { ...response! };
+        let exercise = { ...response!, additionalData };
         if (exerciseType == ExerciseType.QUIZ) {
             const quiz = response as QuizExercise;
             additionalData!.quizExerciseID = quiz.quizQuestions![0].id;
@@ -53,7 +54,7 @@ export class ExamExerciseGroupCreationPage {
         return exercise;
     }
 
-    async handleAddGroupWithExercise(exam: Exam, title: string, exerciseType: ExerciseType, additionalData: AdditionalData): Promise<any> {
+    async handleAddGroupWithExercise(exam: Exam, title: string, exerciseType: ExerciseType, additionalData: AdditionalData): Promise<Exercise | undefined> {
         const exerciseGroup = await this.examAPIRequests.addExerciseGroupForExam(exam);
         switch (exerciseType) {
             case ExerciseType.TEXT:

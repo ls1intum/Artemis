@@ -31,10 +31,10 @@ test.describe('Test exam test run', () => {
         };
         exam = await examAPIRequests.createExam(examConfig);
         Promise.all([
-            examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }),
-            examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, { submission: javaBuildErrorSubmission, practiceMode: true }),
-            examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 }),
-            examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING),
+            await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }),
+            await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, { submission: javaBuildErrorSubmission, practiceMode: true }),
+            await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 }),
+            await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING),
         ]).then((responses) => {
             exerciseArray = responses;
         });

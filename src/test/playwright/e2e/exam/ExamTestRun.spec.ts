@@ -34,18 +34,23 @@ test.describe('Exam test run', () => {
             numberOfExercisesInExam: 4,
         };
         exam = await examAPIRequests.createExam(examConfig);
+        Promise.all([
+            await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }),
+            await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
+                submission: javaBuildErrorSubmission,
+                practiceMode: true,
+            }),
+            await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 }),
+            await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING),
+        ]).then((responses) => {
+            exerciseArray = responses;
+        });
         const textExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
-        textExercise.additionalData = { textFixture };
         const programmingExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
             submission: javaBuildErrorSubmission,
             practiceMode: true,
         });
-        programmingExercise.additionalData = {
-            submission: javaBuildErrorSubmission,
-            practiceMode: true,
-        };
         const quizExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 });
-        quizExercise.additionalData = { quizExerciseID: 0 };
         const modelingExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING);
         exerciseArray = [textExercise, programmingExercise, quizExercise, modelingExercise];
     });
@@ -112,19 +117,19 @@ test.describe('Exam test run', () => {
     });
 
     test('Conducts a test run', async ({ examTestRun, examParticipation, examNavigation }) => {
+        test.slow();
         await examTestRun.startParticipation(instructor, course, exam, testRun.id!);
         await expect(examTestRun.getTestRunRibbon().getByText('Test Run')).toBeVisible();
 
         for (let j = 0; j < exerciseArray.length; j++) {
             const exercise = exerciseArray[j];
             await examNavigation.openExerciseAtIndex(j);
-            console.log('Exercise data: ', exercise);
-            await examParticipation.makeSubmission(exercise.id, exercise.type, exercise.additionalData);
+            await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
         }
         await examParticipation.handInEarly();
         for (let j = 0; j < exerciseArray.length; j++) {
             const exercise = exerciseArray[j];
-            await examParticipation.verifyExerciseTitleOnFinalPage(exercise.id, exercise.exerciseGroup!.title!);
+            await examParticipation.verifyExerciseTitleOnFinalPage(exercise.id!, exercise.exerciseGroup!.title!);
             if (exercise.type === ExerciseType.TEXT) {
                 await examParticipation.verifyTextExerciseOnFinalPage(exercise.additionalData!.textFixture!);
             }
@@ -133,6 +138,7 @@ test.describe('Exam test run', () => {
         await examTestRun.openTestRunPage(course, exam);
         await expect(examTestRun.getStarted(testRun.id!).getByText('Yes')).toBeVisible();
         await expect(examTestRun.getSubmitted(testRun.id!).getByText('Yes')).toBeVisible();
+        console.log('---Test finished---');
     });
 
     test('Deletes a test run', async ({ login, examTestRun }) => {
@@ -145,5 +151,6 @@ test.describe('Exam test run', () => {
 
     test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
         await courseManagementAPIRequests.deleteCourse(course, admin);
+        console.log('---Delete course finished---');
     });
 });

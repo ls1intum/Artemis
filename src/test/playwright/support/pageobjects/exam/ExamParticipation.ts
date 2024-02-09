@@ -178,6 +178,6 @@ export class ExamParticipation {
     // TODO: Test fixture correctness.
     async verifyTextExerciseOnFinalPage(textFixture: string): Promise<void> {
         const submissionText = await Fixtures.get(textFixture);
-        await expect(this.page.locator('textarea')).toHaveValue(submissionText!);
+        await expect(this.page.locator('#text-editor')).toHaveValue(submissionText!);
     }
 }

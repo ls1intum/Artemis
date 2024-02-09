@@ -81,9 +81,9 @@ export class AdditionalData {
 
 // Exercise
 export type Exercise = {
-    title: string;
-    type: ExerciseType;
-    id: number;
+    title?: string;
+    type?: ExerciseType;
+    id?: number;
     additionalData?: AdditionalData;
     exerciseGroup?: ExerciseGroup;
 };

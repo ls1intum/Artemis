@@ -18,8 +18,8 @@ export class OnlineEditorPage {
         this.courseOverview = courseOverview;
     }
 
-    findFileBrowser(exerciseID: number, containingText?: string) {
-        return getExercise(this.page, exerciseID).locator('#cardFiles', { hasText: containingText });
+    findFileBrowser(exerciseID: number) {
+        return getExercise(this.page, exerciseID).locator('#cardFiles');
     }
 
     // TODO: Not complete, needs correct conversion
@@ -31,15 +31,9 @@ export class OnlineEditorPage {
                 await this.createFileInRootPackage(exerciseID, newFile.name, submission.packageName!);
             }
             console.log('File path to use for fixture: ', newFile.path);
-            const fileContent = Fixtures.get(newFile.path);
+            const fileContent = await Fixtures.get(newFile.path);
             const editorElement = getExercise(this.page, exerciseID).locator('#ace-code-editor');
-            await this.page.evaluate(
-                ({ fileContent }) => {
-                    const editor = (window as any).ace.edit(editorElement);
-                    editor.setValue(fileContent, 1);
-                },
-                { editorSelector: '#ace-code-editor', fileContent },
-            );
+            await editorElement.pressSequentially(fileContent!);
         }
         await this.page.waitForTimeout(500);
     }
@@ -50,11 +44,11 @@ export class OnlineEditorPage {
         await this.page.locator('#delete-file').click();
         const response = await responsePromise;
         expect(response.status()).toBe(200);
-        await expect(this.findFileBrowser(exerciseID, name)).not.toBeVisible();
+        await expect(this.findFile(exerciseID, name)).not.toBeVisible();
     }
 
     private findFile(exerciseID: number, name: string) {
-        return this.findFileBrowser(exerciseID, name).locator('#file-browser-file').first();
+        return this.findFileBrowser(exerciseID).locator('#file-browser-file', { hasText: name });
     }
 
     async openFileWithName(exerciseID: number, name: string) {
@@ -91,7 +85,7 @@ export class OnlineEditorPage {
         await getExercise(this.page, exerciseID).locator('#file-browser-folder-create-file').nth(2).click();
         await this.page.waitForTimeout(500);
         const responsePromise = this.page.waitForResponse(`${BASE_API}repository/*/file?file=${filePath}`);
-        await getExercise(this.page, exerciseID).locator('#file-browser-create-node').fill(fileName);
+        await getExercise(this.page, exerciseID).locator('#file-browser-create-node').pressSequentially(fileName);
         await this.page.waitForTimeout(500);
         await getExercise(this.page, exerciseID).locator('#file-browser-create-node').press('Enter');
         const response = await responsePromise;
