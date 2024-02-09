@@ -71,6 +71,6 @@ describe('AssessmentInstructionsComponent', () => {
         comp.exerciseInput = programmingExercise;
         expect(comp.sampleSolutionExplanation).toBeUndefined();
 
-        expect(markdownSpy).toHaveBeenCalledTimes(11);
+        expect(markdownSpy).toHaveBeenCalledTimes(7);
     });
 });
