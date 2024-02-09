@@ -1,25 +1,17 @@
 <div>
-    <div class="mb-5">
-        <div class="d-flex align-items-center">
-            <div>
-                @if (!isImportFromExistingExercise && !isImportFromFile && !programmingExercise.id) {
-                    <h2 id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.createLabel">Create Programming Exercise</h2>
-                } @else if (!isImportFromExistingExercise && programmingExercise.id) {
-                    <h2 id="jhi-programming-exercise-heading-edit" jhiTranslate="artemisApp.programmingExercise.home.editLabel">Edit Programming Exercise</h2>
-                } @else if (isImportFromExistingExercise || isImportFromFile) {
-                    <h2 id="jhi-programming-exercise-heading-import" jhiTranslate="artemisApp.programmingExercise.home.importLabel">Import Programming Exercise</h2>
-                }
-                <jhi-documentation-button [type]="documentationType" />
-            </div>
-        </div>
+    <div class="d-flex align-items-center gap-2">
+        @if (!isImportFromExistingExercise && !isImportFromFile && !programmingExercise.id) {
+            <h2 id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.createLabel">Create Programming Exercise</h2>
+        } @else if (!isImportFromExistingExercise && programmingExercise.id) {
+            <h2 id="jhi-programming-exercise-heading-edit" jhiTranslate="artemisApp.programmingExercise.home.editLabel">Edit Programming Exercise</h2>
+        } @else if (isImportFromExistingExercise || isImportFromFile) {
+            <h2 id="jhi-programming-exercise-heading-import" jhiTranslate="artemisApp.programmingExercise.home.importLabel">Import Programming Exercise</h2>
+        }
+        <jhi-documentation-button [type]="documentationType" />
     </div>
     <jhi-form-status-bar [formStatusSections]="formStatusSections" />
     <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)">
         <div class="update-programming-exercise">
-            <div class="form-group" [hidden]="isImportFromExistingExercise || !programmingExercise.id">
-                <label for="id" jhiTranslate="global.field.id">ID</label>
-                <input type="text" class="form-control" id="id" name="id" [(ngModel)]="programmingExercise.id" readonly />
-            </div>
             <jhi-programming-exercise-info
                 [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"

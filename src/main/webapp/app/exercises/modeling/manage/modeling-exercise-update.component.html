@@ -1,16 +1,12 @@
 <form name="editForm markdown-preview" role="form" novalidate #editForm="ngForm">
-    <div class="d-flex align-items-center">
-        <div>
-            @if (!modelingExercise.id) {
-                <h2 id="jhi-modeling-exercise-heading-create" jhiTranslate="artemisApp.modelingExercise.home.createLabel">Create a new Modeling Exercise</h2>
-            }
-            @if (!isImport && modelingExercise.id) {
-                <h2 id="jhi-modeling-exercise-heading-edit" jhiTranslate="artemisApp.modelingExercise.home.editLabel">Edit a Modeling Exercise</h2>
-            }
-            @if (isImport) {
-                <h2 id="jhi-modeling-exercise-heading-import" jhiTranslate="artemisApp.modelingExercise.home.importLabel">Import Modeling Exercise</h2>
-            }
-        </div>
+    <div class="d-flex align-items-center gap-2">
+        @if (!modelingExercise.id) {
+            <h2 id="jhi-modeling-exercise-heading-create" jhiTranslate="artemisApp.modelingExercise.home.createLabel">Create a new Modeling Exercise</h2>
+        } @else if (!isImport && modelingExercise.id) {
+            <h2 id="jhi-modeling-exercise-heading-edit" jhiTranslate="artemisApp.modelingExercise.home.editLabel">Edit a Modeling Exercise</h2>
+        } @else if (isImport) {
+            <h2 id="jhi-modeling-exercise-heading-import" jhiTranslate="artemisApp.modelingExercise.home.importLabel">Import Modeling Exercise</h2>
+        }
         <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
     </div>
     <jhi-form-status-bar [formStatusSections]="formSectionStatus" />
