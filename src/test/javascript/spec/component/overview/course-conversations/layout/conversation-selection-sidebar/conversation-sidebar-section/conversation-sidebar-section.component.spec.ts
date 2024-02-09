@@ -47,9 +47,9 @@ examples.forEach((activeConversation) => {
         let fixture: ComponentFixture<ConversationSidebarSectionComponent>;
         const course = { id: 1 } as Course;
 
-        const visibleConversation = generateExampleChannelDTO({ isHidden: false });
-        const mutedConversation = generateExampleChannelDTO({ isMuted: true });
-        const hiddenConversation = generateExampleChannelDTO({ isHidden: true });
+        const visibleConversation = generateExampleChannelDTO({ id: 2, isHidden: false });
+        const mutedConversation = generateExampleChannelDTO({ id: 3, unreadMessagesCount: 1, isMuted: true });
+        const hiddenConversation = generateExampleChannelDTO({ id: 4, unreadMessagesCount: 1, isHidden: true });
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
@@ -86,6 +86,14 @@ examples.forEach((activeConversation) => {
             expect(component.localStorageService.retrieve(component.storageKey)).toBeFalse();
             component.toggleCollapsed();
             expect(component.localStorageService.retrieve(component.storageKey)).toBeTrue();
+            component.toggleCollapsed();
+        });
+
+        it('should display a conversation is unread', () => {
+            component.toggleCollapsed();
+            expect(component.anyConversationUnread).toBeTrue();
+            expect(component.anyHiddenConversationUnread).toBeTrue();
+            component.toggleCollapsed();
         });
 
         it('should hide if empty only if hideIfEmpty is set', () => {
