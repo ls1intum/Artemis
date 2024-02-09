@@ -53,12 +53,6 @@ describe('RepositoryViewComponent', () => {
             });
     });
 
-    beforeEach(() => {
-        fixture = TestBed.createComponent(RepositoryViewComponent);
-        component = fixture.componentInstance;
-        fixture.detectChanges();
-    });
-
     it('should create', () => {
         expect(component).toBeTruthy();
     });
