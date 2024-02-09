@@ -48,7 +48,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
 
     constructor(
         private accountService: AccountService,
-        private domainService: DomainService,
+        public domainService: DomainService,
         private route: ActivatedRoute,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private programmingExerciseService: ProgrammingExerciseService,
@@ -69,7 +69,6 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
             this.participationCouldNotBeFetched = false;
             const exerciseId = Number(params['exerciseId']);
             const participationId = Number(params['participationId']);
-
             if (participationId) {
                 this.loadStudentParticipation(participationId);
             } else {
