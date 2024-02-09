@@ -68,9 +68,18 @@ export class CompetencyService {
         return this.httpClient.post<Competency>(`${this.resourceURL}/courses/${courseId}/competencies`, copy, { observe: 'response' });
     }
 
+    createBulk(competencies: Competency[], courseId: number) {
+        const copy = competencies.map((competency) => this.convertCompetencyFromClient(competency));
+        return this.httpClient.post<Competency[]>(`${this.resourceURL}/courses/${courseId}/competencies/bulk`, copy, { observe: 'response' });
+    }
+
     import(competency: Competency, courseId: number): Observable<EntityResponseType> {
         const competencyCopy = this.convertCompetencyFromClient(competency);
         return this.httpClient.post<Competency>(`${this.resourceURL}/courses/${courseId}/competencies/import`, competencyCopy, { observe: 'response' });
+    }
+
+    generateCompetenciesFromCourseDescription(courseDescription: string, courseId: number): Observable<EntityArrayResponseType> {
+        return this.httpClient.post<Competency[]>(`${this.resourceURL}/courses/${courseId}/competencies/generate-from-description`, courseDescription, { observe: 'response' });
     }
 
     importAll(courseId: number, sourceCourseId: number, importRelations: boolean) {

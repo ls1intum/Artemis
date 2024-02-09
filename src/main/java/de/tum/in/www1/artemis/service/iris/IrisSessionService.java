@@ -26,12 +26,15 @@ public class IrisSessionService {
 
     private final IrisCodeEditorSessionService irisCodeEditorSessionService;
 
+    private final IrisCompetencyGenerationSessionService irisCompetencyGenerationSessionService;
+
     public IrisSessionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisHestiaSessionService irisHestiaSessionService,
-            IrisCodeEditorSessionService irisCodeEditorSessionService) {
+            IrisCodeEditorSessionService irisCodeEditorSessionService, IrisCompetencyGenerationSessionService irisCompetencyGenerationSessionService) {
         this.userRepository = userRepository;
         this.irisChatSessionService = irisChatSessionService;
         this.irisHestiaSessionService = irisHestiaSessionService;
         this.irisCodeEditorSessionService = irisCodeEditorSessionService;
+        this.irisCompetencyGenerationSessionService = irisCompetencyGenerationSessionService;
     }
 
     /**
@@ -129,6 +132,9 @@ public class IrisSessionService {
         }
         if (session instanceof IrisCodeEditorSession codeEditorSession) {
             return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisCodeEditorSessionService, codeEditorSession);
+        }
+        if (session instanceof IrisCompetencyGenerationSession irisCompetencyGenerationSession) {
+            return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisCompetencyGenerationSessionService, irisCompetencyGenerationSession);
         }
         throw new BadRequestException("Unknown Iris session type " + session.getClass().getSimpleName());
     }

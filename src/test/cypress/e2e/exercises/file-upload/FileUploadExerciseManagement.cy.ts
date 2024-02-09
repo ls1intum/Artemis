@@ -18,7 +18,7 @@ describe('File upload exercise management', () => {
         });
     });
 
-    it('Creates a file upload exercise in the UI', () => {
+    it('Creates a file upload exercise in the UI', { scrollBehavior: 'center' }, () => {
         cy.visit('/');
         navigationBar.openCourseManagement();
         courseManagement.openExercisesOfCourse(course.id!);
