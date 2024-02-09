@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -77,16 +76,6 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
 
     @EntityGraph(type = LOAD, attributePaths = "results")
     Optional<ProgrammingSubmission> findFirstByTypeNotAndTypeNotNullAndParticipationIdAndResultsNotNullOrderBySubmissionDateDesc(SubmissionType type, Long participationId);
-
-    /**
-     * Get the latest submission for a participation with specific types.
-     *
-     * @param participationId the id of the participation
-     * @param type            the type of the submission
-     * @return the latest submission for the participation with one of the given types
-     */
-    @EntityGraph(type = LOAD, attributePaths = "results")
-    Optional<ProgrammingSubmission> findFirstByParticipationIdAndTypeInOrderBySubmissionDateDesc(Long participationId, Collection<SubmissionType> type);
 
     @EntityGraph(type = LOAD, attributePaths = "results")
     Optional<ProgrammingSubmission> findFirstByParticipationIdOrderBySubmissionDateDesc(Long participationId);
