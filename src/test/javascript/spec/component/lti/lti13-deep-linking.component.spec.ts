@@ -107,7 +107,7 @@ describe('Lti13DeepLinkingComponent', () => {
     }));
 
     it('should not send deep link request when exercise is not selected', () => {
-        component.selectedExercise = undefined;
+        component.selectedExercises = undefined;
 
         component.sendDeepLinkRequest();
 
@@ -120,7 +120,8 @@ describe('Lti13DeepLinkingComponent', () => {
             value: { replace: replaceMock },
             writable: true,
         });
-        component.selectedExercise = exercise1;
+        component.selectExercise(exercise1.id);
+        component.selectExercise(exercise2.id);
         component.courseId = 123;
         const nonSuccessResponse = new HttpResponse({
             status: 400,
@@ -134,13 +135,13 @@ describe('Lti13DeepLinkingComponent', () => {
         expect(component.isLinking).toBeFalse();
         expect(httpMock.post).toHaveBeenCalledWith(`api/lti13/deep-linking/${component.courseId}`, null, {
             observe: 'response',
-            params: new HttpParams().set('exerciseId', exercise1.id!).set('ltiIdToken', '').set('clientRegistrationId', ''),
+            params: new HttpParams().set('exerciseIds', Array.from(component.selectedExercises!).join(',')).set('ltiIdToken', '').set('clientRegistrationId', ''),
         });
         expect(replaceMock).not.toHaveBeenCalled(); // Verify that we did not navigate
     }));
 
     it('should set isLinking to false if there is an error during the HTTP request', fakeAsync(() => {
-        component.selectedExercise = exercise1;
+        component.selectExercise(exercise1.id);
         component.courseId = 123;
         const mockError = new Error('Network error');
         httpMock.post.mockReturnValue(throwError(() => mockError));
@@ -151,7 +152,7 @@ describe('Lti13DeepLinkingComponent', () => {
         expect(component.isLinking).toBeFalse();
         expect(httpMock.post).toHaveBeenCalledWith(`api/lti13/deep-linking/${component.courseId}`, null, {
             observe: 'response',
-            params: new HttpParams().set('exerciseId', exercise1.id!).set('ltiIdToken', '').set('clientRegistrationId', ''),
+            params: new HttpParams().set('exerciseIds', Array.from(component.selectedExercises!).join(',')).set('ltiIdToken', '').set('clientRegistrationId', ''),
         });
     }));
 
@@ -161,7 +162,7 @@ describe('Lti13DeepLinkingComponent', () => {
             value: { replace: replaceMock },
             writable: true,
         });
-        component.selectedExercise = exercise1;
+        component.selectExercise(exercise1.id);
         component.courseId = 123;
 
         const mockResponse = new HttpResponse({
@@ -174,7 +175,7 @@ describe('Lti13DeepLinkingComponent', () => {
 
         expect(httpMock.post).toHaveBeenCalledWith(`api/lti13/deep-linking/${component.courseId}`, null, {
             observe: 'response',
-            params: new HttpParams().set('exerciseId', exercise1.id!).set('ltiIdToken', '').set('clientRegistrationId', ''),
+            params: new HttpParams().set('exerciseIds', Array.from(component.selectedExercises!).join(',')).set('ltiIdToken', '').set('clientRegistrationId', ''),
         });
     });
 });

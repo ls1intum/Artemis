@@ -74,7 +74,7 @@ public interface DataExportRepository extends JpaRepository<DataExport, Long> {
             WHERE dataExport.user.id = :userId
             ORDER BY dataExport.createdDate DESC
             """)
-    List<DataExport> findAllDataExportsByUserIdOrderByRequestDateDesc(long userId);
+    List<DataExport> findAllDataExportsByUserIdOrderByRequestDateDesc(@Param("userId") long userId);
 
     @Query("""
             SELECT dataExport

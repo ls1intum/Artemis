@@ -68,6 +68,9 @@ import { ProblemStatementComponent } from 'app/overview/exercise-details/problem
 import { ExerciseInfoComponent } from 'app/exercises/shared/exercise-info/exercise-info.component';
 import { IrisSettingsService } from '../../../../../../main/webapp/app/iris/settings/shared/iris-settings.service';
 import { IrisSettings } from '../../../../../../main/webapp/app/entities/iris/settings/iris-settings.model';
+import { ScienceService } from 'app/shared/science/science.service';
+import { MockScienceService } from '../../../helpers/mocks/service/mock-science-service';
+import { ScienceEventType } from 'app/shared/science/science.model';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -85,6 +88,8 @@ describe('CourseExerciseDetailsComponent', () => {
     let mergeStudentParticipationMock: jest.SpyInstance;
     let subscribeForParticipationChangesMock: jest.SpyInstance;
     let plagiarismCaseServiceMock: jest.SpyInstance;
+    let scienceService: ScienceService;
+    let logEventStub: jest.SpyInstance;
 
     const exercise = { id: 42, type: ExerciseType.TEXT, studentParticipations: [], course: {} } as unknown as Exercise;
 
@@ -137,6 +142,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
+                { provide: ScienceService, useClass: MockScienceService },
                 MockProvider(ExerciseService),
                 MockProvider(ParticipationService),
                 MockProvider(GuidedTourService),
@@ -186,6 +192,9 @@ describe('CourseExerciseDetailsComponent', () => {
                 plagiarismCaseServiceMock = jest
                     .spyOn(plagiarismCaseService, 'getPlagiarismCaseInfoForStudent')
                     .mockReturnValue(of({ body: plagiarismCaseInfo } as HttpResponse<PlagiarismCaseInfo>));
+
+                scienceService = TestBed.inject(ScienceService);
+                logEventStub = jest.spyOn(scienceService, 'logEvent');
             });
     });
 
@@ -397,4 +406,9 @@ describe('CourseExerciseDetailsComponent', () => {
             }
         }),
     );
+
+    it('should log event on init', () => {
+        fixture.detectChanges();
+        expect(logEventStub).toHaveBeenCalledExactlyOnceWith(ScienceEventType.EXERCISE__OPEN, exercise.id);
+    });
 });
