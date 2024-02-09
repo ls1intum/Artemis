@@ -3,6 +3,9 @@ package de.tum.in.www1.artemis.service.feature;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.PostConstruct;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
@@ -13,6 +16,9 @@ import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 public class FeatureToggleService {
 
     private static final String TOPIC_FEATURE_TOGGLES = "/topic/management/feature-toggles";
+
+    @Value("${artemis.science.event-logging.enable:false}")
+    private boolean scienceEnabledOnStart;
 
     private final WebsocketMessagingService websocketMessagingService;
 
@@ -25,11 +31,18 @@ public class FeatureToggleService {
         features = hazelcastInstance.getMap("features");
 
         // Features that are neither enabled nor disabled should be enabled by default
-        // This ensures that all features are enabled once the system starts up
+        // This ensures that all features (except the Science API) are enabled once the system starts up
         for (Feature feature : Feature.values()) {
-            if (!features.containsKey(feature)) {
+            if (!features.containsKey(feature) && feature != Feature.Science) {
                 features.put(feature, true);
             }
+        }
+    }
+
+    @PostConstruct
+    public void initScienceFeatureFromConfig() {
+        if (!features.containsKey(Feature.Science)) {
+            features.put(Feature.Science, scienceEnabledOnStart);
         }
     }
 

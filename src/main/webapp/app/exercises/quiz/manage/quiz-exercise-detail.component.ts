@@ -98,8 +98,8 @@ export class QuizExerciseDetailComponent implements OnInit {
             },
             {
                 headline: 'artemisApp.exercise.sections.grading',
-                details: [...defaultGradingDetails].filter(Boolean),
+                details: defaultGradingDetails,
             },
-        ] as DetailOverviewSection[];
+        ];
     }
 }

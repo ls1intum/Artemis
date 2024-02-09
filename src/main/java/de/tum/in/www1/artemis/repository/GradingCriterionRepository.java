@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
-import java.util.List;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.GradingCriterion;
 @Repository
 public interface GradingCriterionRepository extends JpaRepository<GradingCriterion, Long> {
 
-    List<GradingCriterion> findByExerciseId(long exerciseId);
+    Set<GradingCriterion> findByExerciseId(long exerciseId);
 
     @Query("""
             SELECT DISTINCT criterion
@@ -23,5 +23,5 @@ public interface GradingCriterionRepository extends JpaRepository<GradingCriteri
                 LEFT JOIN FETCH criterion.structuredGradingInstructions
             WHERE criterion.exercise.id = :exerciseId
             """)
-    List<GradingCriterion> findByExerciseIdWithEagerGradingCriteria(@Param("exerciseId") long exerciseId);
+    Set<GradingCriterion> findByExerciseIdWithEagerGradingCriteria(@Param("exerciseId") long exerciseId);
 }

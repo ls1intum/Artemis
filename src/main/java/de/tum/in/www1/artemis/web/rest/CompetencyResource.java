@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.competency.CompetencyRelationService;
 import de.tum.in.www1.artemis.service.competency.CompetencyService;
+import de.tum.in.www1.artemis.service.iris.session.IrisCompetencyGenerationSessionService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -62,6 +63,8 @@ public class CompetencyResource {
 
     private final ExerciseService exerciseService;
 
+    private final Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService;
+
     private final LectureUnitService lectureUnitService;
 
     private final CompetencyRelationService competencyRelationService;
@@ -69,7 +72,8 @@ public class CompetencyResource {
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository, CompetencyService competencyService,
             CompetencyProgressRepository competencyProgressRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
-            LectureUnitService lectureUnitService, CompetencyRelationService competencyRelationService) {
+            LectureUnitService lectureUnitService, CompetencyRelationService competencyRelationService,
+            Optional<IrisCompetencyGenerationSessionService> irisCompetencyGenerationSessionService) {
         this.courseRepository = courseRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -81,6 +85,7 @@ public class CompetencyResource {
         this.exerciseService = exerciseService;
         this.lectureUnitService = lectureUnitService;
         this.competencyRelationService = competencyRelationService;
+        this.irisCompetencyGenerationSessionService = irisCompetencyGenerationSessionService;
     }
 
     /**
@@ -201,6 +206,31 @@ public class CompetencyResource {
         final var persistedCompetency = competencyService.createCompetency(competency, course);
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/" + persistedCompetency.getId())).body(persistedCompetency);
+    }
+
+    /**
+     * POST /courses/:courseId/competencies/bulk : creates a number of new competencies
+     *
+     * @param courseId     the id of the course to which the competencies should be added
+     * @param competencies the competencies that should be created
+     * @return the ResponseEntity with status 201 (Created) and body the created competencies
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("/courses/{courseId}/competencies/bulk")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<List<Competency>> createCompetencies(@PathVariable Long courseId, @RequestBody List<Competency> competencies) throws URISyntaxException {
+        log.debug("REST request to create Competencies : {}", competencies);
+        for (Competency competency : competencies) {
+            if (competency.getId() != null || competency.getTitle() == null || competency.getTitle().trim().isEmpty()) {
+                throw new BadRequestException();
+            }
+        }
+        var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+
+        var createdCompetencies = competencyService.createCompetencies(competencies, course);
+
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(createdCompetencies);
     }
 
     /**
@@ -469,6 +499,28 @@ public class CompetencyResource {
         courseRepository.save(course);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, competency.getTitle())).build();
+    }
+
+    /**
+     * Generates a list of competencies from a given course description by using IRIS.
+     *
+     * @param courseId          the id of the current course
+     * @param courseDescription the text description of the course
+     * @return the ResponseEntity with status 200 (OK) and body the genrated competencies
+     */
+    @PostMapping("/courses/{courseId}/competencies/generate-from-description")
+    @EnforceAtLeastEditor
+    public ResponseEntity<List<Competency>> generateCompetenciesFromCourseDescription(@PathVariable Long courseId, @RequestBody String courseDescription) {
+        var irisService = irisCompetencyGenerationSessionService.orElseThrow();
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+
+        var session = irisService.getOrCreateSession(course, user);
+        irisService.addUserTextMessageToSession(session, courseDescription);
+        var competencies = irisService.executeRequest(session);
+
+        return ResponseEntity.ok().body(competencies);
     }
 
     /**
