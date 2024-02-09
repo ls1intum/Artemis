@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.config.Constants;
 import tech.jhipster.config.JHipsterConstants;
 
-@Profile("core || buildagent")
+@Profile({ "core", "buildagent" })
 @Service
 public class ProfileService {
 

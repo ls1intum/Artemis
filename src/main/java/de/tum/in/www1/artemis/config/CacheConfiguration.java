@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
 
 import java.nio.file.Path;
@@ -40,7 +41,7 @@ import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import tech.jhipster.config.JHipsterProperties;
 import tech.jhipster.config.cache.PrefixedKeyGenerator;
 
-@Profile("core || buildagent")
+@Profile({ "core", "buildagent" })
 @Configuration
 @EnableCaching
 public class CacheConfiguration {
@@ -183,7 +184,7 @@ public class CacheConfiguration {
 
         // only add the queue config if the profile "localci" is active
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-        if (activeProfiles.contains(PROFILE_LOCALCI)) {
+        if (activeProfiles.contains(PROFILE_LOCALCI) || activeProfiles.contains(PROFILE_BUILDAGENT)) {
             // add queue config for local ci shared queue
             configureQueueCluster(config, jHipsterProperties);
         }

@@ -59,7 +59,7 @@ import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.web.rest.dto.CommitInfoDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-@Profile("core || buildagent")
+@Profile({ "core", "buildagent" })
 @Service
 public class GitService {
 

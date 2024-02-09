@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 import com.hazelcast.core.HazelcastInstance;
 
-@Profile("core || buildagent")
+@Profile({ "core", "buildagent" })
 @Component
 public class HazelcastHealthIndicator implements HealthIndicator {
 
