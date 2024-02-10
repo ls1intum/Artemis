@@ -94,7 +94,8 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     }
 
     void testJustForInstructorEndpoints() throws Exception {
-        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, firstAugustMondayMorning.toLocalDate(), firstSeptemberMonday.toLocalDate());
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY_00_00.toLocalDate(),
+                FIRST_SEPTEMBER_MONDAY_00_00.toLocalDate());
         request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId) + configuration.getId(), configuration, TutorialGroupsConfiguration.class, HttpStatus.FORBIDDEN);
         this.deleteExampleConfiguration();
         request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId), buildExampleConfiguration(courseId), TutorialGroupsConfiguration.class, HttpStatus.FORBIDDEN);
@@ -104,7 +105,8 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getOneOfCourse_asStudent_shouldReturnTutorialGroupsConfiguration() throws Exception {
         // given
-        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, firstAugustMondayMorning.toLocalDate(), firstSeptemberMonday.toLocalDate());
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY_00_00.toLocalDate(),
+                FIRST_SEPTEMBER_MONDAY_00_00.toLocalDate());
         // when
         var configurationFromRequest = request.get(this.getTutorialGroupsConfigurationPath(courseId), HttpStatus.OK, TutorialGroupsConfiguration.class);
         // then
@@ -122,7 +124,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
                 TutorialGroupsConfiguration.class, HttpStatus.CREATED);
         // then
         assertThat(configurationFromRequest).isNotNull();
-        this.assertConfigurationStructure(configurationFromRequest, firstAugustMondayMorning.toLocalDate(), firstSeptemberMonday.toLocalDate(), courseId, true, true);
+        this.assertConfigurationStructure(configurationFromRequest, FIRST_AUGUST_MONDAY_00_00.toLocalDate(), FIRST_SEPTEMBER_MONDAY_00_00.toLocalDate(), courseId, true, true);
     }
 
     @Test
@@ -142,7 +144,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void create_configurationAlreadyExists_shouldReturnBadRequest() throws Exception {
         // given
-        tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, firstAugustMondayMorning.toLocalDate(), firstSeptemberMonday.toLocalDate());
+        tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY_00_00.toLocalDate(), FIRST_SEPTEMBER_MONDAY_00_00.toLocalDate());
         // when
         request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId), buildExampleConfiguration(courseId), TutorialGroupsConfiguration.class, HttpStatus.BAD_REQUEST);
         // then
@@ -153,14 +155,15 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void update_periodChange_deleteTutorialGroupFreePeriodsAndIndividualSessionsAndRecreateScheduledSessions() throws Exception {
         // given
-        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, firstAugustMondayMorning.toLocalDate(), firstSeptemberMonday.toLocalDate());
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY_00_00.toLocalDate(),
+                FIRST_SEPTEMBER_MONDAY_00_00.toLocalDate());
 
         // when
-        configuration.setTutorialPeriodEndInclusive(firstSeptemberMonday.toLocalDate().toString());
+        configuration.setTutorialPeriodEndInclusive(FIRST_SEPTEMBER_MONDAY_00_00.toLocalDate().toString());
         request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId) + configuration.getId(), configuration, TutorialGroupsConfiguration.class, HttpStatus.OK);
         // then
         configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(configuration.getId());
-        this.assertConfigurationStructure(configuration, firstAugustMondayMorning.toLocalDate(), firstSeptemberMonday.toLocalDate(), courseId, true, true);
+        this.assertConfigurationStructure(configuration, FIRST_AUGUST_MONDAY_00_00.toLocalDate(), FIRST_SEPTEMBER_MONDAY_00_00.toLocalDate(), courseId, true, true);
     }
 
     /**
@@ -175,7 +178,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void persistEntityWithIndirectConnectionToConfiguration_dateAsFullIsoString_shouldNotThrowDeserializationException() throws Exception {
         // given
-        tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, firstAugustMondayMorning.toLocalDate(), firstSeptemberMonday.toLocalDate());
+        tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY_00_00.toLocalDate(), FIRST_SEPTEMBER_MONDAY_00_00.toLocalDate());
         var course = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(courseId);
         var configuration = course.getTutorialGroupsConfiguration();
         // this date format should not throw an error here, even though it is not the uuuu-MM-dd format we use in the database as it neither updates nor creates the configuration
@@ -193,16 +196,17 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateCourse_switchUseTutorialGroupSetting_shouldCreateAndThenDeleteTutorialGroupChannels() throws Exception {
         // given
-        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, firstAugustMondayMorning.toLocalDate(), firstSeptemberMonday.toLocalDate());
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY_00_00.toLocalDate(),
+                FIRST_SEPTEMBER_MONDAY_00_00.toLocalDate());
         var tutorialGroupWithSchedule = setUpTutorialGroupWithSchedule(courseId, "tutor1");
-        this.assertConfigurationStructure(configuration, firstAugustMondayMorning.toLocalDate(), firstSeptemberMonday.toLocalDate(), courseId, true, true);
+        this.assertConfigurationStructure(configuration, FIRST_AUGUST_MONDAY_00_00.toLocalDate(), FIRST_SEPTEMBER_MONDAY_00_00.toLocalDate(), courseId, true, true);
         asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroupWithSchedule);
         // when
         configuration.setUseTutorialGroupChannels(false);
         request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId) + configuration.getId(), configuration, TutorialGroupsConfiguration.class, HttpStatus.OK);
         // then
         configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(configuration.getId());
-        this.assertConfigurationStructure(configuration, firstAugustMondayMorning.toLocalDate(), firstSeptemberMonday.toLocalDate(), courseId, false, true);
+        this.assertConfigurationStructure(configuration, FIRST_AUGUST_MONDAY_00_00.toLocalDate(), FIRST_SEPTEMBER_MONDAY_00_00.toLocalDate(), courseId, false, true);
         assertTutorialGroupChannelDoesNotExist(tutorialGroupWithSchedule);
     }
 
@@ -210,16 +214,17 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateCourse_switchUsePublicChannelsSetting_shouldSwitchChannelModeOfTutorialGroupChannels() throws Exception {
         // given
-        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, firstAugustMondayMorning.toLocalDate(), firstSeptemberMonday.toLocalDate());
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY_00_00.toLocalDate(),
+                FIRST_SEPTEMBER_MONDAY_00_00.toLocalDate());
         var tutorialGroupWithSchedule = setUpTutorialGroupWithSchedule(courseId, "tutor1");
-        this.assertConfigurationStructure(configuration, firstAugustMondayMorning.toLocalDate(), firstSeptemberMonday.toLocalDate(), courseId, true, true);
+        this.assertConfigurationStructure(configuration, FIRST_AUGUST_MONDAY_00_00.toLocalDate(), FIRST_SEPTEMBER_MONDAY_00_00.toLocalDate(), courseId, true, true);
         asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroupWithSchedule);
         // when
         configuration.setUsePublicTutorialGroupChannels(false);
         request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId) + configuration.getId(), configuration, TutorialGroupsConfiguration.class, HttpStatus.OK);
         // then
         configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(configuration.getId());
-        this.assertConfigurationStructure(configuration, firstAugustMondayMorning.toLocalDate(), firstSeptemberMonday.toLocalDate(), courseId, true, false);
+        this.assertConfigurationStructure(configuration, FIRST_AUGUST_MONDAY_00_00.toLocalDate(), FIRST_SEPTEMBER_MONDAY_00_00.toLocalDate(), courseId, true, false);
         asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroupWithSchedule);
     }
 
@@ -227,20 +232,21 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateCourse_timeZoneChange_deleteTutorialGroupFreePeriodsAndIndividualSessionsAndRecreateScheduledSessions() throws Exception {
         // given
-        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, firstAugustMondayMorning.toLocalDate(), firstSeptemberMonday.toLocalDate());
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY_00_00.toLocalDate(),
+                FIRST_SEPTEMBER_MONDAY_00_00.toLocalDate());
         var tutorialGroupWithSchedule = setUpTutorialGroupWithSchedule(courseId, "tutor1");
         var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroupWithSchedule.getId()).orElseThrow();
-        this.buildAndSaveExampleIndividualTutorialGroupSession(tutorialGroupWithSchedule.getId(), firstSeptemberMonday);
-        tutorialGroupUtilService.addTutorialGroupFreePeriod(configuration.getId(), fourthAugustMonday, fourthAugustMonday, "Holiday");
+        this.buildAndSaveExampleIndividualTutorialGroupSession(tutorialGroupWithSchedule.getId(), FIRST_SEPTEMBER_MONDAY_00_00);
+        tutorialGroupUtilService.addTutorialGroupFreePeriod(configuration.getId(), FOURTH_AUGUST_MONDAY_00_00, FOURTH_AUGUST_MONDAY_00_00, "Holiday");
 
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroupWithSchedule.getId());
         assertThat(sessions).hasSize(3);
         var firstAugustMondaySession = sessions.get(0);
         var secondAugustMondaySession = sessions.get(1);
         var firstSeptemberMondaySession = sessions.get(2);
-        this.assertScheduledSessionIsActiveOnDate(firstAugustMondaySession, firstAugustMondayMorning.toLocalDate(), tutorialGroupWithSchedule.getId(), persistedSchedule);
-        this.assertScheduledSessionIsActiveOnDate(secondAugustMondaySession, secondAugustMonday.toLocalDate(), tutorialGroupWithSchedule.getId(), persistedSchedule);
-        this.assertIndividualSessionIsActiveOnDate(firstSeptemberMondaySession, firstSeptemberMonday, tutorialGroupWithSchedule.getId());
+        this.assertScheduledSessionIsActiveOnDate(firstAugustMondaySession, FIRST_AUGUST_MONDAY_00_00.toLocalDate(), tutorialGroupWithSchedule.getId(), persistedSchedule);
+        this.assertScheduledSessionIsActiveOnDate(secondAugustMondaySession, SECOND_AUGUST_MONDAY_00_00.toLocalDate(), tutorialGroupWithSchedule.getId(), persistedSchedule);
+        this.assertIndividualSessionIsActiveOnDate(firstSeptemberMondaySession, FIRST_SEPTEMBER_MONDAY_00_00, tutorialGroupWithSchedule.getId());
         assertThat(tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(courseId)).hasSize(1);
 
         // when
@@ -261,13 +267,14 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         secondAugustMondaySession = sessions.get(1);
 
         this.assertTutorialGroupSessionProperties(firstAugustMondaySession, Optional.of(persistedSchedule.getId()), tutorialGroupWithSchedule.getId(),
-                getDateTimeInBerlinTimeZone(firstAugustMondayMorning.toLocalDate(), defaultSessionStartHour),
-                getDateTimeInBerlinTimeZone(firstAugustMondayMorning.toLocalDate(), defaultSessionEndHour), persistedSchedule.getLocation(), TutorialGroupSessionStatus.ACTIVE,
+                getDateTimeInBerlinTimeZone(FIRST_AUGUST_MONDAY_00_00.toLocalDate(), defaultSessionStartHour),
+                getDateTimeInBerlinTimeZone(FIRST_AUGUST_MONDAY_00_00.toLocalDate(), defaultSessionEndHour), persistedSchedule.getLocation(), TutorialGroupSessionStatus.ACTIVE,
                 null);
 
         this.assertTutorialGroupSessionProperties(secondAugustMondaySession, Optional.of(persistedSchedule.getId()), tutorialGroupWithSchedule.getId(),
-                getDateTimeInBerlinTimeZone(secondAugustMonday.toLocalDate(), defaultSessionStartHour),
-                getDateTimeInBerlinTimeZone(secondAugustMonday.toLocalDate(), defaultSessionEndHour), persistedSchedule.getLocation(), TutorialGroupSessionStatus.ACTIVE, null);
+                getDateTimeInBerlinTimeZone(SECOND_AUGUST_MONDAY_00_00.toLocalDate(), defaultSessionStartHour),
+                getDateTimeInBerlinTimeZone(SECOND_AUGUST_MONDAY_00_00.toLocalDate(), defaultSessionEndHour), persistedSchedule.getLocation(), TutorialGroupSessionStatus.ACTIVE,
+                null);
         assertThat(tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(courseId)).hasSize(0);
 
     }

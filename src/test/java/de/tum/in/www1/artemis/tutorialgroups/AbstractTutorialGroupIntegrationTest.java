@@ -3,8 +3,17 @@ package de.tum.in.www1.artemis.tutorialgroups;
 import static de.tum.in.www1.artemis.tutorialgroups.AbstractTutorialGroupIntegrationTest.RandomTutorialGroupGenerator.generateRandomTitle;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.*;
-import java.util.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -98,27 +107,27 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
 
     Integer defaultSessionEndHour = 12;
 
-    LocalDateTime firstAugustMondayMorning = LocalDateTime.of(2022, 8, 1, 0, 0, 0);
+    final LocalDateTime FIRST_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 1, 0, 0, 0);
 
-    LocalDateTime firstAugustMondayMorningPeriod = LocalDateTime.of(2022, 8, 1, 10, 0, 0);
+    final LocalDateTime FIRST_AUGUST_MONDAY_10_00 = LocalDateTime.of(2022, 8, 1, 10, 0, 0);
 
-    LocalDateTime firstAugustMondayEvening = LocalDateTime.of(2022, 8, 1, 23, 59);
+    final LocalDateTime FIRST_AUGUST_MONDAY_23_59 = LocalDateTime.of(2022, 8, 1, 23, 59);
 
-    LocalDateTime firstAugustMondayMidday = LocalDateTime.of(2022, 8, 1, 13, 00);
+    final LocalDateTime FIRST_AUGUST_MONDAY_13_00 = LocalDateTime.of(2022, 8, 1, 13, 00);
 
-    LocalDateTime firstAugustMondayAfternoon = LocalDateTime.of(2022, 8, 1, 18, 00);
+    final LocalDateTime FIRST_AUGUST_MONDAY_18_00 = LocalDateTime.of(2022, 8, 1, 18, 00);
 
-    LocalDateTime secondAugustMonday = LocalDateTime.of(2022, 8, 8, 0, 0, 0);
+    final LocalDateTime SECOND_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 8, 0, 0, 0);
 
-    LocalDateTime secondAugustMondayEvening = LocalDateTime.of(2022, 8, 8, 23, 59);
+    final LocalDateTime SECOND_AUGUST_MONDAY_23_59 = LocalDateTime.of(2022, 8, 8, 23, 59);
 
-    LocalDateTime thirdAugustMonday = LocalDateTime.of(2022, 8, 15, 0, 0, 0);
+    final LocalDateTime THIRD_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 15, 0, 0, 0);
 
-    LocalDateTime thirdAugustMondayEvening = LocalDateTime.of(2022, 8, 15, 23, 59);
+    final LocalDateTime THIRD_AUGUST_MONDAY_23_59 = LocalDateTime.of(2022, 8, 15, 23, 59);
 
-    LocalDateTime fourthAugustMonday = LocalDateTime.of(2022, 8, 22, 0, 0, 0);
+    final LocalDateTime FOURTH_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 22, 0, 0, 0);
 
-    LocalDateTime firstSeptemberMonday = LocalDateTime.of(2022, 9, 5, 0, 0, 0);
+    final LocalDateTime FIRST_SEPTEMBER_MONDAY_00_00 = LocalDateTime.of(2022, 9, 5, 0, 0, 0);
 
     @BeforeEach
     void setupTestScenario() {
@@ -168,8 +177,8 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
     TutorialGroupsConfiguration buildExampleConfiguration(Long courseId) {
         TutorialGroupsConfiguration tutorialGroupsConfiguration = new TutorialGroupsConfiguration();
         tutorialGroupsConfiguration.setCourse(courseRepository.findById(courseId).orElseThrow());
-        tutorialGroupsConfiguration.setTutorialPeriodStartInclusive(firstAugustMondayMorning.toLocalDate().toString());
-        tutorialGroupsConfiguration.setTutorialPeriodEndInclusive(firstSeptemberMonday.toLocalDate().toString());
+        tutorialGroupsConfiguration.setTutorialPeriodStartInclusive(FIRST_AUGUST_MONDAY_00_00.toLocalDate().toString());
+        tutorialGroupsConfiguration.setTutorialPeriodEndInclusive(FIRST_SEPTEMBER_MONDAY_00_00.toLocalDate().toString());
         tutorialGroupsConfiguration.setUseTutorialGroupChannels(true);
         tutorialGroupsConfiguration.setUsePublicTutorialGroupChannels(true);
         return tutorialGroupsConfiguration;
@@ -218,7 +227,7 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
     }
 
     TutorialGroup setUpTutorialGroupWithSchedule(Long courseId, String tutorLogin) throws Exception {
-        var newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(firstAugustMondayMorning.toLocalDate(), secondAugustMonday.toLocalDate(), tutorLogin);
+        var newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(FIRST_AUGUST_MONDAY_00_00.toLocalDate(), SECOND_AUGUST_MONDAY_00_00.toLocalDate(), tutorLogin);
         var scheduleToCreate = newTutorialGroup.getTutorialGroupSchedule();
         var persistedTutorialGroupId = request.postWithResponseBody(getTutorialGroupsPath(courseId), newTutorialGroup, TutorialGroup.class, HttpStatus.CREATED).getId();
 
