@@ -40,7 +40,9 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
         if (!this.commits) {
             if (this.participationId) {
                 this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(this.participationId).subscribe((commits) => {
-                    this.commits = this.sortCommitsByTimestampDesc(commits);
+                    if (commits) {
+                        this.commits = this.sortCommitsByTimestampDesc(commits);
+                    }
                 });
             }
         }
