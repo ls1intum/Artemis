@@ -35,7 +35,7 @@ import tech.jhipster.web.util.HeaderUtil;
  */
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 public class ExerciseHintResource {
 
     private static final String EXERCISE_HINT_ENTITY_NAME = "exerciseHint";

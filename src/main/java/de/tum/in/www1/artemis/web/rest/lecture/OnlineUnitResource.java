@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 public class OnlineUnitResource {
 
     private static final Logger log = LoggerFactory.getLogger(OnlineUnitResource.class);

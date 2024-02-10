@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
  */
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 public class CodeHintResource {
 
     private static final Logger log = LoggerFactory.getLogger(CodeHintResource.class);

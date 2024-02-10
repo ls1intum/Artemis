@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.web.rest.errors.*;
 
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 public class AttachmentUnitResource {
 
     private static final Logger log = LoggerFactory.getLogger(AttachmentUnitResource.class);

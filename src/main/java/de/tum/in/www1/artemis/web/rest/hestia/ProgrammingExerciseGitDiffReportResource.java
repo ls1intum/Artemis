@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGitDiffReportDTO;
  */
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 public class ProgrammingExerciseGitDiffReportResource {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGitDiffReportResource.class);

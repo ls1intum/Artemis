@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 public class AnswerMessageResource {
 
     private static final Logger log = LoggerFactory.getLogger(AnswerMessageResource.class);
