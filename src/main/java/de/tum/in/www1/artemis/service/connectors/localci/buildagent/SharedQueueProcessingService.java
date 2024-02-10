@@ -248,8 +248,7 @@ public class SharedQueueProcessingService {
             else {
                 log.error("Error while processing build job: {}", buildJob, ex);
                 job = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(), buildJob.participationId(), buildJob.courseId(),
-                        buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildJobResult.CANCELLED, buildJob.repositoryInfo(), jobTimingInfo,
-                        buildJob.buildConfig());
+                        buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildJobResult.FAILED, buildJob.repositoryInfo(), jobTimingInfo, buildJob.buildConfig());
             }
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(null, job, ex);

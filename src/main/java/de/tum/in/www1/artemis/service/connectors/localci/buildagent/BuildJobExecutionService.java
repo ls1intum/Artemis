@@ -141,7 +141,7 @@ public class BuildJobExecutionService {
                 assignmentCommitHash = gitService.getLastCommitHash(assignmentRepoUri).getName();
             }
             catch (EntityNotFoundException e) {
-                throw new LocalCIException("Could not find last commit hash for assignment repository");
+                throw new LocalCIException("Could not find last commit hash for assignment repository with absolute path " + assignmentRepositoryPath, e);
             }
         }
         String testCommitHash;
