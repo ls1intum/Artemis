@@ -65,13 +65,13 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
                 this.retrieveAndHandleCommits();
                 if (this.previousSubmission && this.currentSubmission) {
                     this.repoFilesSubscription = this.programmingExerciseService
-                        .getGitDiffReportForCommitDetailsViewForSubmissions(this.exerciseId, this.previousSubmission.id!, this.currentSubmission.id!)
+                        .getDiffReportForCommitDetailsViewForSubmissions(this.exerciseId, this.previousSubmission.id!, this.currentSubmission.id!)
                         .subscribe((report) => {
                             this.handleNewReport(report!);
                         });
                 } else if (this.currentSubmission) {
                     this.repoFilesSubscription = this.programmingExerciseService
-                        .getGitDiffReportForCommitDetailsViewForSubmissionWithTemplate(this.exerciseId, this.currentSubmission.id!)
+                        .getDiffReportForCommitDetailsViewForSubmissionWithTemplate(this.exerciseId, this.currentSubmission.id!)
                         .subscribe((report) => {
                             this.handleNewReport(report!);
                         });

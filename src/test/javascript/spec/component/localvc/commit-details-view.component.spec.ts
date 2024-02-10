@@ -109,8 +109,8 @@ describe('CommitDetailsViewComponent', () => {
 
         jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(mockParticipation));
         jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation').mockReturnValue(of(mockCommits));
-        jest.spyOn(programmingExerciseService, 'getGitDiffReportForCommitDetailsViewForSubmissions').mockReturnValue(of(mockDiffReportForSubmissions));
-        jest.spyOn(programmingExerciseService, 'getGitDiffReportForCommitDetailsViewForSubmissionWithTemplate').mockReturnValue(of(mockDiffReportWithTemplate));
+        jest.spyOn(programmingExerciseService, 'getDiffReportForCommitDetailsViewForSubmissions').mockReturnValue(of(mockDiffReportForSubmissions));
+        jest.spyOn(programmingExerciseService, 'getDiffReportForCommitDetailsViewForSubmissionWithTemplate').mockReturnValue(of(mockDiffReportWithTemplate));
 
         fixture.detectChanges();
     }

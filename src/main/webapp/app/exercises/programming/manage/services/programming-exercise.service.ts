@@ -560,7 +560,7 @@ export class ProgrammingExerciseService {
      * @param olderSubmissionId The id of the older submission
      * @param newerSubmissionId The id of the newer submission
      */
-    getGitDiffReportForCommitDetailsViewForSubmissions(
+    getDiffReportForCommitDetailsViewForSubmissions(
         exerciseId: number,
         olderSubmissionId: number,
         newerSubmissionId: number,
@@ -578,7 +578,7 @@ export class ProgrammingExerciseService {
      * @param exerciseId The id of a programming exercise
      * @param submissionId The id of a submission
      */
-    getGitDiffReportForCommitDetailsViewForSubmissionWithTemplate(exerciseId: number, submissionId: number): Observable<ProgrammingExerciseGitDiffReport | undefined> {
+    getDiffReportForCommitDetailsViewForSubmissionWithTemplate(exerciseId: number, submissionId: number): Observable<ProgrammingExerciseGitDiffReport | undefined> {
         return this.http
             .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/submissions/${submissionId}/diff-report-commit-details-with-template`, {
                 observe: 'response',
