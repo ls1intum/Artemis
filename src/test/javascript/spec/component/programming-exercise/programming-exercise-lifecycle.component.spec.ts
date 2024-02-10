@@ -9,10 +9,11 @@ import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercise
 import { NgModel } from '@angular/forms';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { SimpleChange } from '@angular/core';
+import { QueryList, SimpleChange } from '@angular/core';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { expectElementToBeDisabled, expectElementToBeEnabled } from '../../helpers/utils/general.utils';
 import { Course } from 'app/entities/course.model';
+import { Subject } from 'rxjs';
 
 describe('ProgrammingExerciseLifecycleComponent', () => {
     let comp: ProgrammingExerciseLifecycleComponent;
@@ -154,6 +155,11 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
     it('should disable feedback suggestions when changing the assessment type to automatic', () => {
         comp.exercise = exercise;
+        comp.exercise.id = undefined;
+        comp.ngOnInit();
+
+        expect(comp.exercise.assessmentType).toBe(AssessmentType.AUTOMATIC);
+
         comp.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
         comp.exercise.feedbackSuggestionsEnabled = true;
         comp.toggleAssessmentType(); // toggle to AUTOMATIC
@@ -311,5 +317,15 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         fixture.detectChanges();
         const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#releaseTestsWithExampleSolution');
         expectElementToBeDisabled(checkbox);
+    });
+
+    it('should calculate form validation status', () => {
+        const datePicker = { dateInput: { valueChanges: new Subject(), valid: true } } as any as ProgrammingExerciseTestScheduleDatePickerComponent;
+        comp.datePickerComponents = { changes: new Subject(), toArray: () => [datePicker] } as any as QueryList<ProgrammingExerciseTestScheduleDatePickerComponent>;
+        comp.ngAfterViewInit();
+        (comp.datePickerComponents.changes as Subject<any>).next({ toArray: () => [datePicker] });
+        (datePicker.dateInput.valueChanges as Subject<boolean>).next(true);
+        expect(comp.formValid).toBeTrue();
+        expect(comp.formEmpty).toBeTrue();
     });
 });

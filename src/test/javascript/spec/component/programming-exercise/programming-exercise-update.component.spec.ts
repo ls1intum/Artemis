@@ -981,6 +981,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     }));
 
     it('should validate form sections', () => {
+        const calculateFormValidSectionsSpy = jest.spyOn(comp, 'calculateFormStatusSections');
         comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
         comp.exerciseInfoComponent = { formValidChanges: new Subject(), formValid: true } as ProgrammingExerciseInformationComponent;
         comp.exerciseDifficultyComponent = {
@@ -1005,6 +1006,13 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         comp.exerciseInfoComponent.formValidChanges.next(false);
 
         expect(comp.formStatusSections[0].valid).toBeFalse();
+
+        comp.exerciseLanguageComponent.formValidChanges.next(false);
+        comp.exerciseGradingComponent.formValidChanges.next(false);
+        comp.exerciseDifficultyComponent.teamConfigComponent.formValidChanges.next(false);
+        comp.exercisePlagiarismComponent.formValidChanges.next(false);
+
+        expect(calculateFormValidSectionsSpy).toHaveBeenCalledTimes(6);
 
         comp.ngOnDestroy();
 
