@@ -11,7 +11,6 @@ import { tap } from 'rxjs/operators';
 @Component({
     selector: 'jhi-commit-history',
     templateUrl: './commit-history.component.html',
-    styleUrl: './commit-history.component.scss',
 })
 export class CommitHistoryComponent implements OnInit, OnDestroy {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;

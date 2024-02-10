@@ -12,7 +12,6 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 @Component({
     selector: 'jhi-commit-details-view',
     templateUrl: './commit-details-view.component.html',
-    styleUrl: './commit-details-view.component.scss',
 })
 export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     report: ProgrammingExerciseGitDiffReport;

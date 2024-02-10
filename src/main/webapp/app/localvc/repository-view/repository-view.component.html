@@ -7,18 +7,10 @@
                     <jhi-result [result]="result" [showUngradedResults]="true" [showBadge]="true" [exercise]="exercise" style="padding-right: 20px"> </jhi-result>
                 }
                 @if (routeCommitHistory) {
-                    <button
-                        jhi-exercise-action-button
-                        [id]="'commit-history' + participation.id!"
-                        [buttonIcon]="faClockRotateLeft"
-                        class="commit-history"
-                        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                        [buttonLabel]="'artemisApp.repository.commitHistory.openCommitHistory' | artemisTranslate"
-                        [buttonLoading]="!!exercise.loading"
-                        [smallButton]="false"
-                        [hideLabelMobile]="false"
-                        [routerLink]="routeCommitHistory"
-                    ></button>
+                    <a [routerLink]="routeCommitHistory" class="btn btn-primary">
+                        <fa-icon [icon]="faClockRotateLeft"></fa-icon>
+                        <span jhiTranslate="artemisApp.repository.commitHistory.openCommitHistory">Open Commit History</span>
+                    </a>
                 }
                 @if (exercise?.allowOfflineIde) {
                     <jhi-clone-repo-button [loading]="!!exercise.loading" [smallButtons]="false" [repositoryUri]="repositoryUri" [exercise]="exercise" style="padding-left: 15px">

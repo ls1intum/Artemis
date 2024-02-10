@@ -19,7 +19,6 @@ import { Router } from '@angular/router';
 @Component({
     selector: 'jhi-repository-view',
     templateUrl: './repository-view.component.html',
-    styleUrl: './repository-view.component.scss',
 })
 export class RepositoryViewComponent implements OnInit, OnDestroy {
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
