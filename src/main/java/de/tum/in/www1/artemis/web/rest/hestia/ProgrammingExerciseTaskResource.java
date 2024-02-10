@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
  */
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 public class ProgrammingExerciseTaskResource {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTaskResource.class);
