@@ -133,7 +133,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void create_startDateIsBeforeEndDate_shouldNotCreateSession() throws Exception {
+    void create_startDateIsAfterEndDate_shouldNotCreateFreePeriod() throws Exception {
         // given
         TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule(this.exampleCourseId, "tutor1");
         var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
@@ -149,6 +149,46 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
         // cleanup
         tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void create_freePeriodEndTimeMatchesSessionStartTime_shouldNotCancelSession() throws Exception {
+        // given
+        TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule(this.exampleCourseId, "tutor1");
+        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
+
+        var dto = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_08_00, FIRST_AUGUST_MONDAY_10_00, "Holiday");
+        // when
+        var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
+        // then
+        var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
+        var firstMondayOfAugustSession = sessions.get(0);
+        assertScheduledSessionIsActiveOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY_00_00.toLocalDate(), tutorialGroup.getId(), persistedSchedule);
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());
+        tutorialGroupFreePeriodRepository.deleteById(createdPeriod.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void create_freePeriodStartTimeMatchesSessionEndTime_shouldNotCancelSession() throws Exception {
+        // given
+        TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule(this.exampleCourseId, "tutor1");
+        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
+
+        var dto = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_12_00, FIRST_AUGUST_MONDAY_13_00, "Holiday");
+        // when
+        var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
+        // then
+        var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
+        var firstMondayOfAugustSession = sessions.get(0);
+        assertScheduledSessionIsActiveOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY_00_00.toLocalDate(), tutorialGroup.getId(), persistedSchedule);
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());
+        tutorialGroupFreePeriodRepository.deleteById(createdPeriod.getId());
     }
 
     @Test
