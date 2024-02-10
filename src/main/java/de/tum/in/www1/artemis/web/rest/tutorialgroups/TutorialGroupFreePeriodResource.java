@@ -222,9 +222,10 @@ public class TutorialGroupFreePeriodResource {
     private void checkForOverlapWithPeriod(TutorialGroupFreePeriod tutorialGroupFreePeriod) {
         var overlappingPeriod = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(tutorialGroupFreePeriod.getTutorialGroupsConfiguration().getCourse(),
                 tutorialGroupFreePeriod.getStart(), tutorialGroupFreePeriod.getEnd());
-        if (overlappingPeriod.isPresent() && !overlappingPeriod.get().getId().equals(tutorialGroupFreePeriod.getId())) {
-            throw new BadRequestAlertException("The given tutorial group free period overlaps with another tutorial group free period in the same course", ENTITY_NAME,
-                    "overlapping");
+        var overlappingPeriodOptional = overlappingPeriod.stream().filter(period -> !period.getId().equals(tutorialGroupFreePeriod.getId())).findFirst();
+        if (!overlappingPeriodOptional.isEmpty()) {
+            throw new BadRequestAlertException("The given tutorial group free period overlaps with another tutorial group free period with ID "
+                    + overlappingPeriodOptional.get().getId() + " in the same course.", ENTITY_NAME, "overlapping");
         }
     }
 
