@@ -817,7 +817,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.validateExerciseTitle(validationErrorReasons);
         this.validateExerciseChannelName(validationErrorReasons);
         this.validateExerciseShortName(validationErrorReasons);
-        this.validateExerciseAuxiliryRepositories(validationErrorReasons);
+        this.validateExerciseAuxiliaryRepositories(validationErrorReasons);
         this.validateExercisePackageName(validationErrorReasons);
         this.validateExerciseIdeSelection(validationErrorReasons);
         this.validateExercisePoints(validationErrorReasons);
@@ -1007,7 +1007,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
     }
 
-    private validateExerciseAuxiliryRepositories(validationErrorReasons: ValidationReason[]): void {
+    private validateExerciseAuxiliaryRepositories(validationErrorReasons: ValidationReason[]): void {
         if (!this.auxiliaryRepositoriesValid) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.programmingExercise.auxiliaryRepository.error',
