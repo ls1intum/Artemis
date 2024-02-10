@@ -59,6 +59,15 @@ public class TutorialGroupFreePeriodService {
         findAndUpdateSessionsToReactivate(course, tutorialGroupFreePeriod, overlappingSessions);
     }
 
+    /**
+     * Find and update tutorial group sessions that are still cancelled due to overlapping with another free period.
+     * If the Period that provided the reason initially is still present, the reason remains the same.
+     * If it is not, it finds the first overlapping free period and updates the session status, status explanation, and the tutorial group free period.
+     *
+     * @param course                  The course in which the free period is defined.
+     * @param tutorialGroupFreePeriod The free period.
+     * @param overlappingSessions     The set of sessions that overlap with the given free period.
+     */
     private void findAndUpdateStillCanceledSessions(Course course, TutorialGroupFreePeriod tutorialGroupFreePeriod, Set<TutorialGroupSession> overlappingSessions) {
         // Find those sessions that are still overlapping with another free period
         List<TutorialGroupSession> sessionsStillOverlappingWithFreePeriods = overlappingSessions.stream().filter(session -> {
@@ -86,6 +95,13 @@ public class TutorialGroupFreePeriodService {
         tutorialGroupSessionRepository.saveAll(sessionsStillOverlappingWithFreePeriods);
     }
 
+    /**
+     * Find and reactivate tutorial group sessions that were cancelled due to overlapping with a free period that is mow removed.
+     *
+     * @param course                  The course in which the free period is defined.
+     * @param tutorialGroupFreePeriod The free period.
+     * @param overlappingSessions     The set of sessions that overlap with the given free period.
+     */
     private void findAndUpdateSessionsToReactivate(Course course, TutorialGroupFreePeriod tutorialGroupFreePeriod, Set<TutorialGroupSession> overlappingSessions) {
         // Filter out those sessions that are still overlapping with another free period
         List<TutorialGroupSession> sessionsToReactivate = overlappingSessions.stream().filter(session -> {
