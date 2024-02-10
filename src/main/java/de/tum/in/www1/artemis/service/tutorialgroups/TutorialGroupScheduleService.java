@@ -10,7 +10,6 @@ import javax.validation.constraints.NotNull;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSchedule;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
@@ -18,6 +17,7 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupScheduleRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil;
+import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupSessionResource;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.errors.ScheduleOverlapsWithSessionException;
 
 @Service
@@ -126,16 +126,7 @@ public class TutorialGroupScheduleService {
         session.setTutorialGroup(tutorialGroupSchedule.getTutorialGroup());
 
         var overlappingPeriod = tutorialGroupFreePeriodService.findOverlappingPeriods(course, session).stream().findFirst();
-        if (overlappingPeriod.isPresent()) {
-            session.setStatus(TutorialGroupSessionStatus.CANCELLED);
-            session.setStatusExplanation(null);
-            session.setTutorialGroupFreePeriod(overlappingPeriod.get());
-        }
-        else {
-            session.setStatus(TutorialGroupSessionStatus.ACTIVE);
-            session.setStatusExplanation(null);
-            session.setTutorialGroupFreePeriod(null);
-        }
+        TutorialGroupSessionResource.updateTutorialGroupSession(session, overlappingPeriod);
         session.setLocation(tutorialGroupSchedule.getLocation());
         return session;
     }
