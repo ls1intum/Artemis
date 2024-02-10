@@ -25,6 +25,6 @@ export class MockProgrammingExerciseService {
     delete = (programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean) => of({});
     generateStructureOracle = (exerciseId: number) => of({});
     unlockAllRepositories = (exerciseId: number) => of({});
-    getGitDiffReportForCommitDetailsViewForSubmissions = (exerciseId: number, participationId: number, commitHash: string) => of({} as ProgrammingExerciseGitDiffReport);
-    getGitDiffReportForCommitDetailsViewForSubmissionWithTemplate = (exerciseId: number, participationId: number, commitHash: string) => of({} as ProgrammingExerciseGitDiffReport);
+    getDiffReportForCommitDetailsViewForSubmissions = (exerciseId: number, participationId: number, commitHash: string) => of({} as ProgrammingExerciseGitDiffReport);
+    getDiffReportForCommitDetailsViewForSubmissionWithTemplate = (exerciseId: number, participationId: number, commitHash: string) => of({} as ProgrammingExerciseGitDiffReport);
 }
