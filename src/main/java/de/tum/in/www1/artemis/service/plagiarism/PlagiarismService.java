@@ -7,11 +7,15 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
+
+import javax.validation.constraints.NotNull;
 
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
@@ -19,6 +23,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 @Service
@@ -28,14 +33,17 @@ public class PlagiarismService {
 
     private final PlagiarismCaseService plagiarismCaseService;
 
+    private final AuthorizationCheckService authCheckService;
+
     private final SubmissionRepository submissionRepository;
 
     private final UserRepository userRepository;
 
-    public PlagiarismService(PlagiarismComparisonRepository plagiarismComparisonRepository, PlagiarismCaseService plagiarismCaseService, SubmissionRepository submissionRepository,
-            UserRepository userRepository) {
+    public PlagiarismService(PlagiarismComparisonRepository plagiarismComparisonRepository, PlagiarismCaseService plagiarismCaseService, AuthorizationCheckService authCheckService,
+            SubmissionRepository submissionRepository, UserRepository userRepository) {
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
         this.plagiarismCaseService = plagiarismCaseService;
+        this.authCheckService = authCheckService;
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
     }
@@ -162,5 +170,53 @@ public class PlagiarismService {
             }
         }
         return true; // if the user is not found, we assume that the user has been deleted
+    }
+
+    /**
+     * filter a participation based on the last submission and make sure the last result - if available - has a minimum score - in case this is larger than 0
+     *
+     * @param minimumScore the minimum score
+     * @return a predicate that can be used in streams for filtering
+     */
+    @NotNull
+    public static Predicate<ProgrammingExerciseParticipation> filterParticipationMinimumScore(int minimumScore) {
+        return participation -> {
+            Submission submission = participation.findLatestSubmission().orElse(null);
+            // filter empty submissions
+            if (submission == null) {
+                return false;
+            }
+            return hasMinimumScore(submission, minimumScore);
+        };
+    }
+
+    /**
+     * filter a submission so that the last result - if available - has a minimum score - in case this is larger than 0
+     *
+     * @param minimumScore the minimum score
+     * @return a predicate that can be used in streams for filtering
+     */
+    public static boolean hasMinimumScore(Submission submission, int minimumScore) {
+        return minimumScore == 0
+                || submission.getLatestResult() != null && submission.getLatestResult().getScore() != null && submission.getLatestResult().getScore() >= minimumScore;
+    }
+
+    /**
+     * filter a student participation so that it includes a student that is not at least a tutor, in case of team participations no filter is applied
+     *
+     * @return a predicate that can be used in streams for filtering
+     */
+    @NotNull
+    public Predicate<StudentParticipation> filterForStudents() {
+        return participation -> {
+            // this filter excludes individual participations that are not from students
+            if (participation.getStudent().isPresent()) {
+                return !authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), participation.getStudent().get());
+            }
+            // however, we make sure that team participations are included (in the unlikely case, neither student and team is defined, we filter)
+            else {
+                return participation.getTeam().isPresent();
+            }
+        };
     }
 }
