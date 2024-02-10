@@ -55,8 +55,18 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     ) {}
 
     /**
-     * On init set up the route param subscription.
-     * Will load the participation according to participation id with the latest result and result details.
+     * Unsubscribe from all subscriptions when the component is destroyed
+     */
+    ngOnDestroy() {
+        this.paramSub?.unsubscribe();
+        this.participationWithLatestResultSub?.unsubscribe();
+        this.differentParticipationSub?.unsubscribe();
+    }
+
+    /**
+     * On init, subscribe to the route params to get the participation and exercise id
+     * If the participation id is present, load the participation with the latest result
+     * If the participation id is not present, load the template, solution or test participation
      */
     ngOnInit(): void {
         // Used to check if the assessor is the current user
@@ -77,7 +87,14 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
         });
     }
 
-    loadDifferentParticipation(repositoryType: string, exerciseId: number) {
+    /**
+     * Load the template, solution or test participation. Set the domain and repositoryUri accordingly.
+     * If the participation can't be fetched, set the error state. The test repository does not have a participation.
+     * Only the domain is set.
+     * @param repositoryType
+     * @param exerciseId
+     */
+    private loadDifferentParticipation(repositoryType: string, exerciseId: number) {
         this.differentParticipationSub = this.programmingExerciseService
             .findWithTemplateAndSolutionParticipationAndLatestResults(exerciseId)
             .pipe(
@@ -108,9 +125,13 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
             });
     }
 
-    loadStudentParticipation(participationId: number) {
+    /**
+     * Load the participation with the latest result. Set the domain and repositoryUri accordingly.
+     * @param participationId the id of the participation to load
+     */
+    private loadStudentParticipation(participationId: number) {
         this.routeCommitHistory = this.router.url + '/commit-history';
-        this.participationWithLatestResultSub = this.loadParticipationWithLatestResult(participationId)
+        this.participationWithLatestResultSub = this.getParticipationWithLatestResult(participationId)
             .pipe(
                 tap((participationWithResults) => {
                     this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
@@ -131,10 +152,10 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Load the participation from server with the latest result.
-     * @param participationId
+     * Load the participation from server with the latest result. Set the result and participation accordingly.
+     * @param participationId the id of the participation to load
      */
-    loadParticipationWithLatestResult(participationId: number): Observable<ProgrammingExerciseStudentParticipation> {
+    private getParticipationWithLatestResult(participationId: number): Observable<ProgrammingExerciseStudentParticipation> {
         return this.programmingExerciseParticipationService.getStudentParticipationWithLatestResult(participationId).pipe(
             map((participation: ProgrammingExerciseStudentParticipation) => {
                 if (participation.results?.length) {
@@ -145,14 +166,5 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
                 return participation;
             }),
         );
-    }
-
-    /**
-     * If a subscription exists for paramSub, unsubscribe
-     */
-    ngOnDestroy() {
-        this.paramSub?.unsubscribe();
-        this.participationWithLatestResultSub?.unsubscribe();
-        this.differentParticipationSub?.unsubscribe();
     }
 }

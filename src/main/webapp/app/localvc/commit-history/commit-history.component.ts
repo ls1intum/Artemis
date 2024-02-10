@@ -27,6 +27,14 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
     ) {}
 
+    ngOnDestroy() {
+        this.paramSub?.unsubscribe();
+        this.commitsInfoSubscription?.unsubscribe();
+    }
+
+    /**
+     * On init, subscribe to the route params to get the participation id and load the participation.
+     */
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => {
             this.participationId = Number(params['participationId']);
@@ -34,11 +42,10 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
         });
     }
 
-    ngOnDestroy() {
-        this.paramSub?.unsubscribe();
-        this.commitsInfoSubscription?.unsubscribe();
-    }
-
+    /**
+     * Load the participation with all results. Calls the handleCommits method after the participation is loaded.
+     * @private
+     */
     private loadParticipation() {
         this.programmingExerciseParticipationService
             .getStudentParticipationWithAllResults(this.participationId)
@@ -57,6 +64,11 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
             });
     }
 
+    /**
+     * Retrieves the commit history for the participation and filters out the commits that have no submission.
+     * The last commit is always the template commit and is added to the list of commits.
+     * @private
+     */
     private handleCommits() {
         this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.participationId).subscribe((commits) => {
             this.commits = [];
@@ -76,6 +88,10 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Sets the result of the commit if it exists.
+     * @private
+     */
     private setCommitResults() {
         this.commits.forEach((commit) => {
             this.studentParticipation.results?.forEach((result) => {
@@ -89,6 +105,11 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Sorts the commits by timestamp in descending order.
+     * @param commitInfos the commits to sort
+     * @private
+     */
     private sortCommitsByTimestampDesc(commitInfos: CommitInfo[]) {
         return commitInfos.sort((a, b) => (dayjs(b.timestamp!).isAfter(dayjs(a.timestamp!)) ? 1 : -1));
     }

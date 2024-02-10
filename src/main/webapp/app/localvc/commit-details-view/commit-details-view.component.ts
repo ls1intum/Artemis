@@ -53,6 +53,13 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
         this.participationSub?.unsubscribe();
     }
 
+    /**
+     * On init, subscribe to the route params to get the exercise id, participation id and commit hash.
+     * Then, retrieve the student participation with all results and handle the submissions.
+     * After that, retrieve and handle the commits.
+     * If there is a previous submission and a current submission, subscribe to the diff report for the commit details view for the submissions.
+     * If there is only a current submission, subscribe to the diff report for the commit details view for the submission with template.
+     */
     ngOnInit(): void {
         this.paramSub = this.route.params.subscribe((params) => {
             this.exerciseId = Number(params['exerciseId']);
@@ -79,6 +86,13 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
         });
     }
 
+    /**
+     * Handles the submissions and sets the current and previous submission.
+     * If there are no submissions, the current and previous submission are undefined.
+     * If there is only one submission, the current submission is set and the previous submission is undefined.
+     * This is the case for the template commit as there is no submission for the template.
+     * @private
+     */
     private handleSubmissions() {
         const submissions = this.studentParticipation.submissions?.sort((a, b) => (dayjs(b.submissionDate!).isAfter(dayjs(a.submissionDate!)) ? -1 : 1)) as ProgrammingSubmission[];
         if (submissions && submissions.length > 0) {
@@ -93,6 +107,12 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
         }
     }
 
+    /**
+     * Retrieves the commits for the participation and sets the current and previous commit.
+     * If there is no submission, the current and previous commit are set to the last commit in the list of commits
+     * which is the template commit.
+     * @private
+     */
     private retrieveAndHandleCommits() {
         this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.participationId).subscribe((commits) => {
             this.commits = commits.sort((a, b) => (dayjs(b.timestamp!).isAfter(dayjs(a.timestamp!)) ? 1 : -1));
@@ -111,6 +131,11 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
         });
     }
 
+    /**
+     * Handles the new report and sets the report, the left and right commit hash and the participation ids for the left and right commit.
+     * @param report the new report
+     * @private
+     */
     private handleNewReport(report: ProgrammingExerciseGitDiffReport) {
         this.report = report;
         this.report.programmingExercise = this.studentParticipation.exercise as ProgrammingExercise;
@@ -121,6 +146,10 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
         this.fetchParticipationRepoFiles();
     }
 
+    /**
+     * Fetches the participation repository files for the left and right commit.
+     * @private
+     */
     private fetchParticipationRepoFiles() {
         this.participationRepoFilesAtLeftCommitSubscription = this.programmingExerciseParticipationService
             .getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(this.report.participationIdForLeftCommit!, this.report.leftCommitHash!)
@@ -135,6 +164,10 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
             });
     }
 
+    /**
+     * Fetches the participation repository files for the right commit.
+     * @private
+     */
     private fetchParticipationRepoFilesAtRightCommit() {
         this.participationRepoFilesAtRightCommitSubscription = this.programmingExerciseParticipationService
             .getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(this.report.participationIdForRightCommit!, this.report.rightCommitHash!)
