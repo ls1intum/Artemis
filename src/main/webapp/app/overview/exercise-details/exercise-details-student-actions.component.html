@@ -128,18 +128,16 @@
                             >
                             </jhi-clone-repo-button>
                         }
-                        <button
-                            jhi-exercise-action-button
-                            [id]="'open-repository-' + exercise.id!"
-                            [buttonIcon]="faCodeBranch"
-                            class="open-repository"
-                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                            [buttonLabel]="'artemisApp.exerciseActions.openRepository' | artemisTranslate"
-                            [buttonLoading]="!!exercise.loading"
-                            [smallButton]="smallButtons"
-                            [hideLabelMobile]="false"
-                            [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'repository', exercise.studentParticipations![0].id]"
-                        ></button>
+                        @if (localVCEnabled) {
+                            <a
+                                class="btn btn-primary"
+                                [class.btn-sm]="smallButtons"
+                                [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'repository', exercise.studentParticipations![0].id]"
+                            >
+                                <fa-icon [icon]="faCodeBranch" [fixedWidth]="true"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.openRepository">Open Repository</span>
+                            </a>
+                        }
                         @if (exercise.allowManualFeedbackRequests) {
                             <span tabindex="0" [ngbTooltip]="'artemisApp.exerciseActions.requestFeedbackTooltip' | artemisTranslate">
                                 <button

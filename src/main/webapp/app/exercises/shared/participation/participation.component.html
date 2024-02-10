@@ -132,8 +132,8 @@
                         </ng-template>
                     </ngx-datatable-column>
                 }
-                @if (exercise?.type === ExerciseType.PROGRAMMING) {
-                    <ngx-datatable-column [minWidth]="120" [width]="120">
+                @if (exercise?.type === ExerciseType.PROGRAMMING && localVCEnabled) {
+                    <ngx-datatable-column [minWidth]="120" [width]="150">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper">
                                 <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.repository.title">Repository</span>

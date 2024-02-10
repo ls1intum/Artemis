@@ -1,10 +1,10 @@
 import { RouterModule, Routes } from '@angular/router';
-import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { RepositoryViewComponent } from 'app/localvc/repository-view/repository-view.component';
 import { CommitHistoryComponent } from 'app/localvc/commit-history/commit-history.component';
 import { CommitDetailsViewComponent } from 'app/localvc/commit-details-view/commit-details-view.component';
+import { LocalVCGuard } from 'app/localvc/localvc-guard.service';
 const routes: Routes = [
     {
         path: ':participationId',
@@ -16,7 +16,7 @@ const routes: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [LocalVCGuard],
     },
     {
         path: ':participationId/commit-history',
@@ -28,7 +28,7 @@ const routes: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [LocalVCGuard],
     },
     {
         path: ':participationId/commit-history/:commitHash',
@@ -40,7 +40,7 @@ const routes: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [LocalVCGuard],
     },
     {
         path: ':repositoryType',
@@ -52,7 +52,7 @@ const routes: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [LocalVCGuard],
     },
 ];
 

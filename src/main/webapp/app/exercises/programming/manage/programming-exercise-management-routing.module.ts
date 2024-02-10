@@ -17,6 +17,7 @@ import { BuildPlanEditorComponent } from 'app/exercises/programming/manage/build
 import { RepositoryViewComponent } from 'app/localvc/repository-view/repository-view.component';
 import { CommitHistoryComponent } from 'app/localvc/commit-history/commit-history.component';
 import { CommitDetailsViewComponent } from 'app/localvc/commit-details-view/commit-details-view.component';
+import { LocalVCGuard } from 'app/localvc/localvc-guard.service';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
@@ -168,7 +169,7 @@ export const routes: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [LocalVCGuard],
     },
     {
         path: ':courseId/programming-exercises/:exerciseId/participations/:participationId/repository',
@@ -180,7 +181,7 @@ export const routes: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [LocalVCGuard],
     },
     {
         path: ':courseId/programming-exercises/:exerciseId/participations/:participationId/repository/commit-history',
@@ -192,7 +193,7 @@ export const routes: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [LocalVCGuard],
     },
     {
         path: ':courseId/programming-exercises/:exerciseId/participations/:participationId/repository/commit-history/:commitHash',
@@ -204,7 +205,7 @@ export const routes: Routes = [
             participationCache: {},
             repositoryCache: {},
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [LocalVCGuard],
     },
 ];
 

@@ -25,7 +25,7 @@ import { CourseManagementTabBarComponent } from 'app/course/manage/course-manage
 import { LearningPathManagementComponent } from 'app/course/learning-paths/learning-path-management/learning-path-management.component';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
-import { LocalCIGuard } from 'app/localci/build-queue/localci-guard.service';
+import { LocalCIGuard } from 'app/localci/localci-guard.service';
 
 export const courseManagementState: Routes = [
     {
