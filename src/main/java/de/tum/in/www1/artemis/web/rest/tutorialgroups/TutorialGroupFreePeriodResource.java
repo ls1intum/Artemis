@@ -119,7 +119,7 @@ public class TutorialGroupFreePeriodResource {
         isValidTutorialGroupPeriod(updatedFreePeriod);
 
         // activate previously cancelled sessions
-        tutorialGroupFreePeriodService.activateOverlappingSessions(existingFreePeriod);
+        tutorialGroupFreePeriodService.activateOverlappingSessions(configuration.getCourse(), existingFreePeriod);
         // update free period
         updatedFreePeriod = tutorialGroupFreePeriodRepository.save(updatedFreePeriod);
         // cancel now overlapping sessions
@@ -190,7 +190,9 @@ public class TutorialGroupFreePeriodResource {
         TutorialGroupFreePeriod tutorialGroupFreePeriod = tutorialGroupFreePeriodRepository.findByIdElseThrow(tutorialGroupFreePeriodId);
         checkEntityIdMatchesPathIds(tutorialGroupFreePeriod, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFreePeriod.getTutorialGroupsConfiguration().getCourse(), null);
-        tutorialGroupFreePeriodService.activateOverlappingSessions(tutorialGroupFreePeriod);
+        Optional<TutorialGroupsConfiguration> configurationOptional = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriods(courseId);
+        TutorialGroupsConfiguration configuration = configurationOptional.get();
+        tutorialGroupFreePeriodService.activateOverlappingSessions(configuration.getCourse(), tutorialGroupFreePeriod);
         tutorialGroupFreePeriodRepository.delete(tutorialGroupFreePeriod);
         return ResponseEntity.noContent().build();
     }
@@ -219,6 +221,13 @@ public class TutorialGroupFreePeriodResource {
         this.checkForOverlapWithPeriod(tutorialGroupFreePeriod);
     }
 
+    /**
+     * This method checks if the given tutorial group free period overlaps with any other tutorial group free period in the same course.
+     * If there is an overlap, it throws a BadRequestAlertException.
+     *
+     * @param tutorialGroupFreePeriod The tutorial group free period to check for overlaps. It should have a valid start and end date, and belong to a course.
+     * @throws BadRequestAlertException If the given tutorial group free period overlaps with another tutorial group free period in the same course.
+     */
     private void checkForOverlapWithPeriod(TutorialGroupFreePeriod tutorialGroupFreePeriod) {
         var overlappingPeriod = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(tutorialGroupFreePeriod.getTutorialGroupsConfiguration().getCourse(),
                 tutorialGroupFreePeriod.getStart(), tutorialGroupFreePeriod.getEnd());

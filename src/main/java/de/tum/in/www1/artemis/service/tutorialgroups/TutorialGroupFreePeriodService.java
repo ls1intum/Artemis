@@ -53,15 +53,20 @@ public class TutorialGroupFreePeriodService {
      *
      * @param tutorialGroupFreePeriod the free period
      */
-    public void activateOverlappingSessions(TutorialGroupFreePeriod tutorialGroupFreePeriod) {
-        var overlappingSessions = tutorialGroupSessionRepository.findAllByTutorialGroupFreePeriodId(tutorialGroupFreePeriod.getId());
+    public void activateOverlappingSessions(Course course, TutorialGroupFreePeriod tutorialGroupFreePeriod) {
+        Set<TutorialGroupSession> overlappingSessions = tutorialGroupSessionRepository.findAllBetween(course, tutorialGroupFreePeriod.getStart(), tutorialGroupFreePeriod.getEnd());
+        System.out.println("activateOverlappingSessions: overlappingSessions.size() = " + overlappingSessions.size());
+
+        overlappingSessions.forEach(session -> {
+            System.out.println("Session: ID = " + session.getId() + "; Session = " + session);
+        });
 
         // Filter out those sessions that are still overlapping with another free period
         List<TutorialGroupSession> sessionsToReactivate = overlappingSessions.stream().filter(session -> {
             Set<TutorialGroupFreePeriod> overlappingPeriods = tutorialGroupFreePeriodRepository
                     .findOverlappingInSameCourse(tutorialGroupFreePeriod.getTutorialGroupsConfiguration().getCourse(), session.getStart(), session.getEnd());
-            System.out.println("Overlapping periods: " + overlappingPeriods.size());
-            return overlappingPeriods.size() < 1;
+            System.out.println("ActivateOverlappingSessions: Overlapping periods: " + overlappingPeriods.size());
+            return overlappingPeriods.size() <= 1;
         }).toList();
 
         sessionsToReactivate.forEach(session -> {

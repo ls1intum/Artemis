@@ -13,9 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
-import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
-import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSchedule;
-import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
+import de.tum.in.www1.artemis.domain.tutorialgroups.*;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Repository
