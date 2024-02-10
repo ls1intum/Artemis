@@ -1,7 +1,7 @@
 import { Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { faChalkboardTeacher, faEllipsis, faUser, faUserCheck, faUserGear } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { EMPTY, Observable, Subject, from, takeUntil } from 'rxjs';
@@ -10,14 +10,14 @@ import { canGrantChannelModeratorRole, canRemoveUsersFromConversation, canRevoke
 import { defaultSecondLayerDialogOptions, getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { TranslateService } from '@ngx-translate/core';
 import { GenericConfirmationDialogComponent } from 'app/overview/course-conversations/dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { onError } from 'app/shared/util/global.utils';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { getAsGroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { getAsGroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { catchError } from 'rxjs/operators';
 
@@ -31,7 +31,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
 
     @Input()
-    activeConversation: ConversationDto;
+    activeConversation: ConversationDTO;
 
     @Input()
     course: Course;
@@ -63,7 +63,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     faEllipsis = faEllipsis;
     faUserGear = faUserGear;
 
-    isChannel = isChannelDto;
+    isChannel = isChannelDTO;
 
     canGrantChannelModeratorRole = canGrantChannelModeratorRole;
     canRevokeChannelModeratorRole = canRevokeChannelModeratorRole;
@@ -92,7 +92,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
                 this.setUserAuthorityIconAndTooltip();
                 // the creator of a channel can not be removed from the channel
                 this.canBeRemovedFromConversation = !this.isCurrentUser && this.canRemoveUsersFromConversation(this.activeConversation);
-                if (isChannelDto(this.activeConversation)) {
+                if (isChannelDTO(this.activeConversation)) {
                     // the creator of a channel can not be removed from the channel
                     this.canBeRemovedFromConversation = this.canBeRemovedFromConversation && !this.isCreator && !this.activeConversation.isCourseWide;
                     this.canBeGrantedChannelModeratorRole = this.canGrantChannelModeratorRole(this.activeConversation) && !this.conversationMember.isChannelModerator;
@@ -111,7 +111,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
 
     openGrantChannelModeratorRoleDialog(event: MouseEvent) {
         event.stopPropagation();
-        const channel = getAsChannelDto(this.activeConversation);
+        const channel = getAsChannelDTO(this.activeConversation);
         if (!channel) {
             return;
         }
@@ -131,7 +131,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
 
     openRevokeChannelModeratorRoleDialog(event: MouseEvent) {
         event.stopPropagation();
-        const channel = getAsChannelDto(this.activeConversation);
+        const channel = getAsChannelDTO(this.activeConversation);
         if (!channel) {
             return;
         }
@@ -151,7 +151,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
 
     openRemoveFromChannelDialog(event: MouseEvent) {
         event.stopPropagation();
-        const channel = getAsChannelDto(this.activeConversation);
+        const channel = getAsChannelDTO(this.activeConversation);
         if (!channel) {
             return;
         }
@@ -182,7 +182,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
 
     openRemoveFromGroupChatDialog(event: MouseEvent) {
         event.stopPropagation();
-        const groupChat = getAsGroupChatDto(this.activeConversation);
+        const groupChat = getAsGroupChatDTO(this.activeConversation);
         if (!groupChat) {
             return;
         }
@@ -229,9 +229,9 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     }
 
     openRemoveFromConversationDialog(event: MouseEvent) {
-        if (isChannelDto(this.activeConversation)) {
+        if (isChannelDTO(this.activeConversation)) {
             this.openRemoveFromChannelDialog(event);
-        } else if (isGroupChatDto(this.activeConversation)) {
+        } else if (isGroupChatDTO(this.activeConversation)) {
             this.openRemoveFromGroupChatDialog(event);
         } else {
             throw new Error('Unsupported conversation type');
