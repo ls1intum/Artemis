@@ -21,6 +21,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     paramSub: Subscription;
     commits: CommitInfo[];
     commitsInfoSubscription: Subscription;
+    participationSub: Subscription;
 
     constructor(
         private route: ActivatedRoute,
@@ -30,6 +31,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.paramSub?.unsubscribe();
         this.commitsInfoSubscription?.unsubscribe();
+        this.participationSub?.unsubscribe();
     }
 
     /**
@@ -47,7 +49,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
      * @private
      */
     private loadParticipation() {
-        this.programmingExerciseParticipationService
+        this.participationSub = this.programmingExerciseParticipationService
             .getStudentParticipationWithAllResults(this.participationId)
             .pipe(
                 tap((participation) => {

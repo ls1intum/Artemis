@@ -87,6 +87,7 @@ describe('CommitHistoryComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
+        expect(component.participationSub?.closed).toBeTrue();
     });
 
     it('should load commits', () => {
@@ -104,6 +105,7 @@ describe('CommitHistoryComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
+        expect(component.participationSub?.closed).toBeTrue();
         expect(component.commitsInfoSubscription?.closed).toBeTrue();
     });
 
@@ -126,6 +128,7 @@ describe('CommitHistoryComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
+        expect(component.participationSub?.closed).toBeTrue();
         expect(component.commitsInfoSubscription?.closed).toBeTrue();
     });
 });
