@@ -193,6 +193,7 @@ public class PlagiarismService {
     /**
      * filter a submission so that the last result - if available - has a minimum score - in case this is larger than 0
      *
+     * @param submission   the submission which latest result should be tested for filtering
      * @param minimumScore the minimum score
      * @return a predicate that can be used in streams for filtering
      */
