@@ -20,8 +20,7 @@ public abstract class CacheHandler<K, C extends Cache> {
     protected final IMap<K, C> cache;
 
     protected CacheHandler(HazelcastInstance hazelcastInstance, String name) {
-        // NOTE: it's ok to directly access hazelcastInstance in the constructor, because this is no Bean/Service and will be created after the services are initialized in
-        // with an @PostConstruct annotation
+        // NOTE: CacheHandler is not a Spring bean and is manually created after all services are initialized, ensuring safe access to hazelcastInstance in the constructor.
         this.hazelcastInstance = hazelcastInstance;
         this.cache = hazelcastInstance.getMap(name);
     }
