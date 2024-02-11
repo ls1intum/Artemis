@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { ConversationMemberSearchFilter, ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { catchError, debounceTime, distinctUntilChanged, switchMap, takeUntil, tap } from 'rxjs/operators';
@@ -10,7 +10,7 @@ import { EMPTY, Subject, from, map } from 'rxjs';
 import { faMagnifyingGlass, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
-import { getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { canAddUsersToConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
@@ -30,12 +30,12 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
     @Input()
     course: Course;
     @Input()
-    public activeConversation: ConversationDto;
+    public activeConversation: ConversationDTO;
     @Output()
     changesPerformed = new EventEmitter<void>();
     canAddUsersToConversation = canAddUsersToConversation;
-    getAsChannel = getAsChannelDto;
-    isChannel = isChannelDto;
+    getAsChannel = getAsChannelDTO;
+    isChannel = isChannelDTO;
 
     members: ConversationUserDTO[] = [];
     // page information

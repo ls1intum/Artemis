@@ -15,10 +15,11 @@ import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/f
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { Detail, DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { Detail } from 'app/detail-overview-list/detail.model';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -123,7 +124,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
                 title: 'artemisApp.course.studentGroupName',
                 data: {
                     text: `${this.course.studentGroupName} (${this.course.numberOfStudents ?? 0})`,
-                    routerLink: this.course.isAtLeastInstructor && ['/course-management', this.course.id, 'groups', 'students'],
+                    routerLink: this.course.isAtLeastInstructor ? ['/course-management', this.course.id, 'groups', 'students'] : undefined,
                 },
             },
             {
@@ -131,7 +132,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
                 title: 'artemisApp.course.teachingAssistantGroupName',
                 data: {
                     text: `${this.course.teachingAssistantGroupName} (${this.course.numberOfTeachingAssistants ?? 0})`,
-                    routerLink: this.course.isAtLeastInstructor && ['/course-management', this.course.id, 'groups', 'tutors'],
+                    routerLink: this.course.isAtLeastInstructor ? ['/course-management', this.course.id, 'groups', 'tutors'] : undefined,
                 },
             },
             {
@@ -139,7 +140,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
                 title: 'artemisApp.course.editorGroupName',
                 data: {
                     text: `${this.course.editorGroupName} (${this.course.numberOfEditors ?? 0})`,
-                    routerLink: this.course.isAtLeastInstructor && ['/course-management', this.course.id, 'groups', 'editors'],
+                    routerLink: this.course.isAtLeastInstructor ? ['/course-management', this.course.id, 'groups', 'editors'] : undefined,
                 },
             },
             {
@@ -147,7 +148,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
                 title: 'artemisApp.course.instructorGroupName',
                 data: {
                     text: `${this.course.instructorGroupName} (${this.course.numberOfInstructors ?? 0})`,
-                    routerLink: this.course.isAtLeastInstructor && ['/course-management', this.course.id, 'groups', 'instructors'],
+                    routerLink: this.course.isAtLeastInstructor ? ['/course-management', this.course.id, 'groups', 'instructors'] : undefined,
                 },
             },
             { type: DetailType.Date, title: 'artemisApp.course.startDate', data: { date: this.course.startDate } },
@@ -203,7 +204,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     }
 
     getIrisDetails(): Detail[] {
-        const irisDetails = [];
+        const irisDetails: Detail[] = [];
         if (this.irisEnabled && this.irisChatEnabled) {
             irisDetails.push({
                 type: DetailType.ProgrammingIrisEnabled,
