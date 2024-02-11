@@ -62,7 +62,7 @@ public class TextPlagiarismDetectionService {
      * @return List containing the latest text submission for every participation
      */
     public List<TextSubmission> textSubmissionsForComparison(TextExercise exerciseWithParticipationsAndSubmissions, int minimumScore, int minimumSize) {
-        var textSubmissions = exerciseWithParticipationsAndSubmissions.getStudentParticipations().parallelStream().filter(participation -> participation.getStudent().isPresent())
+        var textSubmissions = exerciseWithParticipationsAndSubmissions.getStudentParticipations().parallelStream()
                 .filter(plagiarismService.filterForStudents()).map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
                 .filter(submission -> submission instanceof TextSubmission).map(submission -> (TextSubmission) submission)
                 .filter(submission -> minimumSize == 0 || submission.getText() != null && submission.countWords() >= minimumSize)
