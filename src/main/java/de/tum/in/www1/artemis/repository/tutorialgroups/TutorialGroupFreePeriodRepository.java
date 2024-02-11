@@ -25,6 +25,16 @@ public interface TutorialGroupFreePeriodRepository extends JpaRepository<Tutoria
     Set<TutorialGroupFreePeriod> findOverlappingInSameCourse(@Param("course") Course course, @Param("fromInclusive") ZonedDateTime fromInclusive,
             @Param("toInclusive") ZonedDateTime toInclusive);
 
+    @Query("""
+            SELECT period
+            FROM TutorialGroupFreePeriod period
+            WHERE period.start < :toExclusive
+                AND period.end > :fromExclusive
+                AND period.tutorialGroupsConfiguration.course = :course
+            """)
+    Set<TutorialGroupFreePeriod> findOverlappingInSameCourseExclusive(@Param("course") Course course, @Param("fromExclusive") ZonedDateTime fromExclusive,
+            @Param("toExclusive") ZonedDateTime toExclusive);
+
     default TutorialGroupFreePeriod findByIdElseThrow(Long tutorialGroupFreePeriodId) {
         return findById(tutorialGroupFreePeriodId).orElseThrow(() -> new EntityNotFoundException("TutorialGroupFreePeriod", tutorialGroupFreePeriodId));
     }

@@ -101,7 +101,7 @@ public class TutorialGroupFreePeriodService {
             // If the session was cancelled because of the free period, we update the status and the explanation
             if (session.getTutorialGroupFreePeriod().equals(tutorialGroupFreePeriod) && !onDeletion && freePeriod.isPresent()) {
                 session.setStatus(TutorialGroupSessionStatus.CANCELLED);
-                session.setStatusExplanation(freePeriod.get().getReason());
+                session.setStatusExplanation(null);
                 session.setTutorialGroupFreePeriod(freePeriod.get());
             }
         });

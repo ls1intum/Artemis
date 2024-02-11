@@ -229,7 +229,7 @@ public class TutorialGroupFreePeriodResource {
      * @throws BadRequestAlertException If the given tutorial group free period overlaps with another tutorial group free period in the same course.
      */
     private void checkForOverlapWithPeriod(TutorialGroupFreePeriod tutorialGroupFreePeriod) {
-        var overlappingPeriod = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(tutorialGroupFreePeriod.getTutorialGroupsConfiguration().getCourse(),
+        var overlappingPeriod = tutorialGroupFreePeriodRepository.findOverlappingInSameCourseExclusive(tutorialGroupFreePeriod.getTutorialGroupsConfiguration().getCourse(),
                 tutorialGroupFreePeriod.getStart(), tutorialGroupFreePeriod.getEnd());
         var overlappingPeriodOptional = overlappingPeriod.stream().filter(period -> !period.getId().equals(tutorialGroupFreePeriod.getId())).findFirst();
         if (!overlappingPeriodOptional.isEmpty()) {

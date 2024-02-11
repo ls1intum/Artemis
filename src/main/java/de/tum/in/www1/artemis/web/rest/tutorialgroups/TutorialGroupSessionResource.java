@@ -218,7 +218,7 @@ public class TutorialGroupSessionResource {
     public static void updateTutorialGroupSession(TutorialGroupSession newSession, Optional<TutorialGroupFreePeriod> overlappingPeriod) {
         if (overlappingPeriod.isPresent()) {
             newSession.setStatus(TutorialGroupSessionStatus.CANCELLED);
-            newSession.setStatusExplanation(overlappingPeriod.get().getReason().trim());
+            newSession.setStatusExplanation(null);
             newSession.setTutorialGroupFreePeriod(overlappingPeriod.get());
         }
         else {
