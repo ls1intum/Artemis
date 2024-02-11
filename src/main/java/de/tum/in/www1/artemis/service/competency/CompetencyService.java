@@ -175,6 +175,32 @@ public class CompetencyService {
     }
 
     /**
+     * Creates a list of new competencies and links them to a course and lecture units.
+     *
+     * @param competencies the competencies to create
+     * @param course       the course to link the competencies to
+     * @return the persisted competencies
+     */
+    public List<Competency> createCompetencies(List<Competency> competencies, Course course) {
+        var createdCompetencies = new ArrayList<Competency>();
+
+        for (var competency : competencies) {
+            var createdCompetency = getCompetencyToCreate(competency);
+            createdCompetency.setCourse(course);
+            createdCompetency = competencyRepository.save(createdCompetency);
+
+            lectureUnitService.linkLectureUnitsToCompetency(createdCompetency, competency.getLectureUnits(), Set.of());
+            createdCompetencies.add(createdCompetency);
+        }
+
+        if (course.getLearningPathsEnabled()) {
+            learningPathService.linkCompetenciesToLearningPathsOfCourse(createdCompetencies, course.getId());
+        }
+
+        return createdCompetencies;
+    }
+
+    /**
      * Updates a competency with the values of another one. Updates progress if necessary.
      *
      * @param competencyToUpdate the competency to update
