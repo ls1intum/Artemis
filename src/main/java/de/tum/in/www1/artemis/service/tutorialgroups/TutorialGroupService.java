@@ -103,7 +103,7 @@ public class TutorialGroupService {
         }
 
         if (tutorialGroup.getTutorialGroupChannel() != null) {
-            tutorialGroup.setChannel(conversationDTOService.convertChannelToDto(user, tutorialGroup.getTutorialGroupChannel()));
+            tutorialGroup.setChannel(conversationDTOService.convertChannelToDTO(user, tutorialGroup.getTutorialGroupChannel()));
         }
 
         this.setNextSession(tutorialGroup);

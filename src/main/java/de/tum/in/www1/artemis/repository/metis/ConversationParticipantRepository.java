@@ -37,7 +37,7 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
             FROM ConversationParticipant conversationParticipant
             WHERE conversationParticipant.conversation.id = :conversationId
             """)
-    Set<ConversationParticipant> findConversationParticipantByConversationId(@Param("conversationId") Long conversationId);
+    Set<ConversationParticipant> findConversationParticipantsByConversationId(@Param("conversationId") Long conversationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "user.groups", "user.authorities" })
     @Query("""
@@ -45,7 +45,7 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
             FROM ConversationParticipant conversationParticipant
             WHERE conversationParticipant.conversation.id = :conversationId
             """)
-    Set<ConversationParticipant> findConversationParticipantWithUserGroupsByConversationId(@Param("conversationId") Long conversationId);
+    Set<ConversationParticipant> findConversationParticipantsWithUserGroupsByConversationId(@Param("conversationId") Long conversationId);
 
     @Async
     @Transactional // ok because of modifying query
