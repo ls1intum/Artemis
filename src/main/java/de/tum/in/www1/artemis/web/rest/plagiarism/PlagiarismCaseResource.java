@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
  */
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("ap")
 public class PlagiarismCaseResource {
 
     private static final String ENTITY_NAME = "plagiarismCase";

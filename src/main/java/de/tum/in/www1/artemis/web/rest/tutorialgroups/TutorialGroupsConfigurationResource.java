@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Profile("core")
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/")
 public class TutorialGroupsConfigurationResource {
 
     private static final String ENTITY_NAME = "tutorialGroupsConfiguration";
