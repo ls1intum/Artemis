@@ -125,7 +125,7 @@ public class TutorialGroupScheduleService {
         session.setTutorialGroupSchedule(tutorialGroupSchedule);
         session.setTutorialGroup(tutorialGroupSchedule.getTutorialGroup());
 
-        var overlappingPeriod = tutorialGroupFreePeriodService.findOverlappingPeriods(course, session).stream().findFirst();
+        var overlappingPeriod = tutorialGroupFreePeriodService.findOverlappingPeriod(course, session).stream().findFirst();
         TutorialGroupSessionResource.updateTutorialGroupSession(session, overlappingPeriod);
         session.setLocation(tutorialGroupSchedule.getLocation());
         return session;

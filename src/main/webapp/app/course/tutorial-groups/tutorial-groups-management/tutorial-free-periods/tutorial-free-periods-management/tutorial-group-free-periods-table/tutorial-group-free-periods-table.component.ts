@@ -7,14 +7,14 @@ import dayjs from 'dayjs/esm';
 @Component({
     selector: 'jhi-tutorial-group-free-periods-table',
     templateUrl: './tutorial-group-free-periods-table.component.html',
-    styleUrl: '../tutorial-group-free-periods-management.component.scss',
+    styleUrls: ['../tutorial-group-free-periods-management.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupFreePeriodsTableComponent {
     @Input() course: Course;
     @Input() tutorialGroupsConfiguration: TutorialGroupsConfiguration;
     @Input() tutorialGroupFreePeriods: TutorialGroupFreePeriod[];
-    @Input() lableText: string;
+    @Input() labelText: string;
     @Input() loadAll: () => void;
 
     public isInThePast(tutorialGroupFreeDay: TutorialGroupFreePeriod): boolean {

@@ -25,7 +25,7 @@ public class TutorialGroupFreePeriodService {
         this.tutorialGroupFreePeriodRepository = tutorialGroupFreePeriodRepository;
     }
 
-    public Optional<TutorialGroupFreePeriod> findOverlappingPeriods(Course course, TutorialGroupSession tutorialGroupSession) {
+    public Optional<TutorialGroupFreePeriod> findOverlappingPeriod(Course course, TutorialGroupSession tutorialGroupSession) {
         return tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(course, tutorialGroupSession.getStart(), tutorialGroupSession.getEnd()).stream().findFirst();
     }
 
