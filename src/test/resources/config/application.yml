@@ -175,7 +175,7 @@ zonky:
                         enabled: true
                 server:
                     properties:
-                        max_connections: 100
+                        max_connections: 1024
                         shared_buffers: 2GB
                         effective_cache_size: 4GB
                         maintenance_work_mem: 256MB
@@ -183,13 +183,13 @@ zonky:
                         wal_buffers: 16MB
                         default_statistics_target: 100
                         random_page_cost: 1.1
-                        effective_io_concurrency: 200
-                        work_mem: 16MB
+                        effective_io_concurrency: 512
+                        work_mem: 64MB
                         min_wal_size: 1GB
                         max_wal_size: 4GB
-                        max_worker_processes: 8
+                        max_worker_processes: 16
                         max_parallel_workers_per_gather: 4
-                        max_parallel_workers: 8
+                        max_parallel_workers: 16
                         max_parallel_maintenance_workers: 4
             mysql:
                 docker:
