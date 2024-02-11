@@ -108,9 +108,9 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
             solutionSection,
             {
                 headline: 'artemisApp.exercise.sections.grading',
-                details: [...defaultGradingDetails, ...gradingInstructionsCriteriaDetails].filter(Boolean),
+                details: [...defaultGradingDetails, ...gradingInstructionsCriteriaDetails],
             },
-        ] as DetailOverviewSection[];
+        ];
     }
 
     /**
