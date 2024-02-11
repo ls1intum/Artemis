@@ -37,9 +37,9 @@ import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWe
 @Service
 public class LocalCIResultProcessingService {
 
-    private final HazelcastInstance hazelcastInstance;
+    private static final Logger log = LoggerFactory.getLogger(LocalCIResultProcessingService.class);
 
-    private final IQueue<ResultQueueItem> resultQueue;
+    private final HazelcastInstance hazelcastInstance;
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
@@ -49,13 +49,13 @@ public class LocalCIResultProcessingService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final FencedLock lock;
-
     private final ParticipationRepository participationRepository;
 
-    private UUID listenerId;
+    private IQueue<ResultQueueItem> resultQueue;
 
-    private static final Logger log = LoggerFactory.getLogger(LocalCIResultProcessingService.class);
+    private FencedLock lock;
+
+    private UUID listenerId;
 
     public LocalCIResultProcessingService(HazelcastInstance hazelcastInstance, ProgrammingExerciseGradingService programmingExerciseGradingService,
             ProgrammingMessagingService programmingMessagingService, BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository,
@@ -63,15 +63,15 @@ public class LocalCIResultProcessingService {
         this.hazelcastInstance = hazelcastInstance;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
-        this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.programmingMessagingService = programmingMessagingService;
         this.buildJobRepository = buildJobRepository;
-        this.lock = this.hazelcastInstance.getCPSubsystem().getLock("resultQueueLock");
     }
 
     @PostConstruct
-    public void addListener() {
+    public void init() {
+        this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
+        this.lock = this.hazelcastInstance.getCPSubsystem().getLock("resultQueueLock");
         this.listenerId = resultQueue.addItemListener(new ResultQueueListener(), true);
     }
 
