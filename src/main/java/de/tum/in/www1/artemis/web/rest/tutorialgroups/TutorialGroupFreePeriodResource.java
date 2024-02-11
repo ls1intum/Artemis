@@ -119,7 +119,7 @@ public class TutorialGroupFreePeriodResource {
         isValidTutorialGroupPeriod(updatedFreePeriod);
 
         // activate previously cancelled sessions
-        tutorialGroupFreePeriodService.updateOverlappingSessions(configuration.getCourse(), existingFreePeriod);
+        tutorialGroupFreePeriodService.updateOverlappingSessions(configuration.getCourse(), existingFreePeriod, false);
         // update free period
         updatedFreePeriod = tutorialGroupFreePeriodRepository.save(updatedFreePeriod);
         // cancel now overlapping sessions
@@ -192,8 +192,8 @@ public class TutorialGroupFreePeriodResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFreePeriod.getTutorialGroupsConfiguration().getCourse(), null);
         Optional<TutorialGroupsConfiguration> configurationOptional = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriods(courseId);
         TutorialGroupsConfiguration configuration = configurationOptional.get();
-        tutorialGroupFreePeriodService.updateOverlappingSessions(configuration.getCourse(), tutorialGroupFreePeriod);
-        tutorialGroupFreePeriodRepository.delete(tutorialGroupFreePeriod);
+        tutorialGroupFreePeriodService.updateOverlappingSessions(configuration.getCourse(), tutorialGroupFreePeriod, true);
+        tutorialGroupFreePeriodRepository.delete(tutorialGroupFreePeriod); // TODO: Whenever a Session overlaps with 2 free Periods
         return ResponseEntity.noContent().build();
     }
 

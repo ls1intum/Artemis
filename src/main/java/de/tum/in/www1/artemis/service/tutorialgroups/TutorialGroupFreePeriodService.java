@@ -37,6 +37,8 @@ public class TutorialGroupFreePeriodService {
      */
     public void cancelOverlappingSessions(Course course, TutorialGroupFreePeriod tutorialGroupFreePeriod) {
         var overlappingSessions = tutorialGroupSessionRepository.findAllBetween(course, tutorialGroupFreePeriod.getStart(), tutorialGroupFreePeriod.getEnd());
+
+        // Only cancel active sessions
         List<TutorialGroupSession> sessionsToCancel = getActiveSessionsFromSet(overlappingSessions);
 
         sessionsToCancel.forEach(session -> {
@@ -53,9 +55,9 @@ public class TutorialGroupFreePeriodService {
      *
      * @param tutorialGroupFreePeriod the free period
      */
-    public void updateOverlappingSessions(Course course, TutorialGroupFreePeriod tutorialGroupFreePeriod) {
+    public void updateOverlappingSessions(Course course, TutorialGroupFreePeriod tutorialGroupFreePeriod, boolean onDeletion) {
         Set<TutorialGroupSession> overlappingSessions = tutorialGroupSessionRepository.findAllBetween(course, tutorialGroupFreePeriod.getStart(), tutorialGroupFreePeriod.getEnd());
-        findAndUpdateStillCanceledSessions(course, tutorialGroupFreePeriod, overlappingSessions);
+        findAndUpdateStillCanceledSessions(course, tutorialGroupFreePeriod, overlappingSessions, onDeletion);
         findAndUpdateSessionsToReactivate(course, tutorialGroupFreePeriod, overlappingSessions);
     }
 
@@ -68,7 +70,8 @@ public class TutorialGroupFreePeriodService {
      * @param tutorialGroupFreePeriod The free period.
      * @param overlappingSessions     The set of sessions that overlap with the given free period.
      */
-    private void findAndUpdateStillCanceledSessions(Course course, TutorialGroupFreePeriod tutorialGroupFreePeriod, Set<TutorialGroupSession> overlappingSessions) {
+    private void findAndUpdateStillCanceledSessions(Course course, TutorialGroupFreePeriod tutorialGroupFreePeriod, Set<TutorialGroupSession> overlappingSessions,
+            boolean onDeletion) {
         // Find those sessions that are still overlapping with another free period
         List<TutorialGroupSession> sessionsStillOverlappingWithFreePeriods = overlappingSessions.stream().filter(session -> {
             Set<TutorialGroupFreePeriod> overlappingPeriods = tutorialGroupFreePeriodRepository
@@ -77,6 +80,16 @@ public class TutorialGroupFreePeriodService {
         }).toList();
 
         sessionsStillOverlappingWithFreePeriods.forEach(session -> {
+            // if the FreePeriod should get deleted and the session was cancelled because of the free period, we update the status and the explanation to another free period
+            if (onDeletion && session.getTutorialGroupFreePeriod().equals(tutorialGroupFreePeriod)) {
+                TutorialGroupFreePeriod replacementFreePeriod = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(course, session.getStart(), session.getEnd()).stream()
+                        .filter(period -> !period.equals(tutorialGroupFreePeriod)).findFirst().get();
+                session.setStatus(TutorialGroupSessionStatus.CANCELLED);
+                session.setStatusExplanation(replacementFreePeriod.getReason());
+                session.setTutorialGroupFreePeriod(replacementFreePeriod);
+                return;
+            }
+
             // if one of the still overlapping FreePeriods is the same as the one that caused the session to be cancelled in the first place, we don't update the status and the
             // explanation
             if (tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(course, session.getStart(), session.getEnd()).contains(tutorialGroupFreePeriod)) {
@@ -86,7 +99,7 @@ public class TutorialGroupFreePeriodService {
             Optional<TutorialGroupFreePeriod> freePeriod = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(course, session.getStart(), session.getEnd()).stream()
                     .findFirst();
             // If the session was cancelled because of the free period, we update the status and the explanation
-            if (session.getTutorialGroupFreePeriod().equals(tutorialGroupFreePeriod) && freePeriod.isPresent()) {
+            if (session.getTutorialGroupFreePeriod().equals(tutorialGroupFreePeriod) && !onDeletion && freePeriod.isPresent()) {
                 session.setStatus(TutorialGroupSessionStatus.CANCELLED);
                 session.setStatusExplanation(freePeriod.get().getReason());
                 session.setTutorialGroupFreePeriod(freePeriod.get());
@@ -107,7 +120,6 @@ public class TutorialGroupFreePeriodService {
         List<TutorialGroupSession> sessionsToReactivate = overlappingSessions.stream().filter(session -> {
             Set<TutorialGroupFreePeriod> overlappingPeriods = tutorialGroupFreePeriodRepository
                     .findOverlappingInSameCourse(tutorialGroupFreePeriod.getTutorialGroupsConfiguration().getCourse(), session.getStart(), session.getEnd());
-            System.out.println("ActivateOverlappingSessions: Overlapping periods: " + overlappingPeriods.size());
             return overlappingPeriods.size() <= 1;
         }).toList();
 
