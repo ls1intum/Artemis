@@ -175,27 +175,35 @@ zonky:
                         enabled: true
                 server:
                     properties:
-                        max_connections: 1024
+                        max_connections: 200
                         shared_buffers: 2GB
                         effective_cache_size: 4GB
-                        maintenance_work_mem: 256MB
+                        maintenance_work_mem: 512MB
                         checkpoint_completion_target: 0.9
                         wal_buffers: 16MB
                         default_statistics_target: 100
                         random_page_cost: 1.1
-                        effective_io_concurrency: 512
-                        work_mem: 64MB
+                        effective_io_concurrency: 200
+                        work_mem: 128MB
                         min_wal_size: 1GB
                         max_wal_size: 4GB
                         max_worker_processes: 16
                         max_parallel_workers_per_gather: 4
                         max_parallel_workers: 16
                         max_parallel_maintenance_workers: 4
+                        checkpoint_timeout: 86400 # we don't need checkpoints for tests
+                        fsync: off # we don't need to sync to the disk for tests
             mysql:
                 docker:
                     image: "mysql:8.2.0"
                     tmpfs:
                         enabled: true
+                server:
+                    properties:
+                        max_connections: 200
+                        innodb_buffer_pool_size: 2G
+                        innodb_flush_log_at_trx_commit: 2
+                        innodb_log_file_size: 512M
 
 server:
     port: 8080
