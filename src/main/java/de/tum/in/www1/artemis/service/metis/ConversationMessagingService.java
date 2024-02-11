@@ -52,7 +52,7 @@ public class ConversationMessagingService extends PostingService {
 
     private static final int TOP_K_SIMILARITY_RESULTS = 5;
 
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private static final Logger log = LoggerFactory.getLogger(ConversationMessagingService.class);
 
     private final ConversationService conversationService;
 
@@ -236,24 +236,24 @@ public class ConversationMessagingService extends PostingService {
      * Filters the given list of recipients for users that should receive a notification about a new message.
      * <p>
      * In all cases, the author will be filtered out.
-     * If the conversation is not an announcement channel, the method filters out participants, that have hidden the conversation.
+     * If the conversation is not an announcement channel, the method filters out participants, that have muted or hidden the conversation.
      * If the conversation is not visible to students, the method also filters out students from the provided list of recipients.
      *
-     * @param author              the author of the message
-     * @param conversation        the conversation the new message has been written in
-     * @param webSocketRecipients the list of users that should be filtered
-     * @param mentionedUsers      users mentioned within the message
+     * @param author                 the author of the message
+     * @param conversation           the conversation the new message has been written in
+     * @param notificationRecipients the list of users that should be filtered
+     * @param mentionedUsers         users mentioned within the message
      * @return filtered list of users that are supposed to receive a notification
      */
-    private Set<User> filterNotificationRecipients(User author, Conversation conversation, Set<ConversationNotificationRecipientSummary> webSocketRecipients,
+    private Set<User> filterNotificationRecipients(User author, Conversation conversation, Set<ConversationNotificationRecipientSummary> notificationRecipients,
             Set<User> mentionedUsers) {
         // Initialize filter with check for author
         Predicate<ConversationNotificationRecipientSummary> filter = recipientSummary -> !Objects.equals(recipientSummary.userId(), author.getId());
 
         if (conversation instanceof Channel channel) {
-            // If a channel is not an announcement channel, filter out users, that hid the conversation
+            // If a channel is not an announcement channel, filter out users, that muted or hid the conversation
             if (!channel.getIsAnnouncementChannel()) {
-                filter = filter.and(summary -> !summary.isConversationHidden() || mentionedUsers
+                filter = filter.and(summary -> summary.shouldNotifyRecipient() || mentionedUsers
                         .contains(new User(summary.userId(), summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail())));
             }
 
@@ -263,10 +263,10 @@ public class ConversationMessagingService extends PostingService {
             }
         }
         else {
-            filter = filter.and(recipientSummary -> !recipientSummary.isConversationHidden());
+            filter = filter.and(ConversationNotificationRecipientSummary::shouldNotifyRecipient);
         }
 
-        return webSocketRecipients.stream().filter(filter)
+        return notificationRecipients.stream().filter(filter)
                 .map(summary -> new User(summary.userId(), summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail()))
                 .collect(Collectors.toSet());
     }

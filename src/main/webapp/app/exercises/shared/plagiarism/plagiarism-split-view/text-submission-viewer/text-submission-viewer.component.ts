@@ -10,6 +10,7 @@ import { DomainChange, DomainType, FileType } from 'app/exercises/programming/sh
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { FileWithHasMatch } from 'app/exercises/shared/plagiarism/plagiarism-split-view/split-pane-header/split-pane-header.component';
 import { escape } from 'lodash-es';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 type FilesWithType = { [p: string]: FileType };
 
@@ -66,6 +67,13 @@ export class TextSubmissionViewerComponent implements OnChanges {
      */
     binaryFile?: boolean;
 
+    /**
+     * True if fetching submission files resulted in an error.
+     */
+    cannotLoadFiles: boolean = false;
+
+    faExclamationTriangle = faExclamationTriangle;
+
     constructor(
         private repositoryService: CodeEditorRepositoryFileService,
         private textSubmissionService: TextSubmissionService,
@@ -92,15 +100,16 @@ export class TextSubmissionViewerComponent implements OnChanges {
      * @param currentPlagiarismSubmission The submission to load the plagiarism information for.
      */
     private loadProgrammingExercise(currentPlagiarismSubmission: PlagiarismSubmission<TextSubmissionElement>) {
-        this.isProgrammingExercise = true;
-
         const domain: DomainChange = [DomainType.PARTICIPATION, { id: currentPlagiarismSubmission.submissionId }];
         this.repositoryService.getRepositoryContent(domain).subscribe({
             next: (files) => {
+                this.cannotLoadFiles = false;
+                this.isProgrammingExercise = true;
                 this.loading = false;
                 this.files = this.programmingExerciseFilesWithMatches(files);
             },
             error: () => {
+                this.cannotLoadFiles = true;
                 this.loading = false;
             },
         });
@@ -217,7 +226,44 @@ export class TextSubmissionViewerComponent implements OnChanges {
             return escape(fileContent);
         }
 
+        if (this.exercise?.type === ExerciseType.PROGRAMMING) {
+            return this.buildFileContentWithHighlightedMatchesAsWholeLines(fileContent, matches);
+        }
         return this.buildFileContentWithHighlightedMatches(fileContent, matches);
+    }
+
+    /**
+     * Builds the required HTML to highlight the lines with matches in the file content.
+     * Use with programming exercises to improve user experience,
+     * as matches provided by JPlag for them may not be precise for code submissions.
+     *
+     * @param fileContent The text inside a file.
+     * @param matches The found matching plagiarism fragments.
+     * @return The file content as HTML with highlighted lines with plagiarism matches.
+     */
+    private buildFileContentWithHighlightedMatchesAsWholeLines(fileContent: string, matches: FromToElement[]): string {
+        const fileLines = fileContent.split('\n');
+        let result = '';
+
+        const linesWithMatches = new Set<number>();
+        for (const match of matches) {
+            for (let i = match.from.line - 1; i < match.to.line; i++) {
+                linesWithMatches.add(i);
+            }
+        }
+
+        for (let i = 0; i < fileLines.length; i++) {
+            if (linesWithMatches.has(i)) {
+                result += this.tokenStart + escape(fileLines[i]) + this.tokenEnd;
+            } else {
+                result += escape(fileLines[i]);
+            }
+            if (i != fileLines.length - 1) {
+                result += '\n';
+            }
+        }
+
+        return result;
     }
 
     /**
@@ -231,10 +277,13 @@ export class TextSubmissionViewerComponent implements OnChanges {
         const fileLines = fileContent.split('\n');
         let result = '';
 
-        for (let i = 0; i < matches[0].from.line - 1; i++) {
-            result += escape(fileLines[i]) + '\n';
+        // if the first match does not start at the beginning of the content append not affected symbols to the result
+        if (!(matches[0].from.line == 1 && matches[0].from.column == 0)) {
+            for (let i = 0; i < matches[0].from.line - 1; i++) {
+                result += escape(fileLines[i]) + '\n';
+            }
+            result += escape(fileLines[matches[0].from.line - 1].slice(0, matches[0].from.column - 1));
         }
-        result += escape(fileLines[matches[0].from.line - 1].slice(0, matches[0].from.column - 1));
 
         for (let i = 0; i < matches.length; i++) {
             result += this.buildFileContentPartForMatch(matches, i, fileLines);
@@ -257,17 +306,27 @@ export class TextSubmissionViewerComponent implements OnChanges {
         const idxLineFrom = match.from.line - 1;
         const idxLineTo = match.to.line - 1;
 
-        const idxColumnFrom = match.from.column - 1;
-        const idxColumnTo = match.to.column + match.to.length - 1;
+        const idxColumnFrom = match.from.column > 0 ? match.from.column - 1 : 0;
+        const idxColumnTo = match.to.column + match.to.length;
 
         let result = this.tokenStart;
 
         if (idxLineFrom === idxLineTo) {
             result += escape(fileLines[idxLineFrom].slice(idxColumnFrom, idxColumnTo)) + this.tokenEnd;
         } else {
-            result += escape(fileLines[idxLineFrom].slice(idxColumnFrom));
-            for (let j = idxLineFrom + 1; j < idxLineTo; j++) {
-                result += '\n' + escape(fileLines[j]);
+            let j = idxLineFrom;
+            // if match does not start at the first character add only contents after the match start
+            // and move the iterator to the next line
+            if (idxColumnFrom > 0) {
+                result += escape(fileLines[idxLineFrom].slice(idxColumnFrom));
+                j += 1;
+            }
+            for (; j < idxLineTo; j++) {
+                // if not at the beginning of the match add the new line character
+                if (result.trim() != this.tokenStart) {
+                    result += '\n';
+                }
+                result += escape(fileLines[j]);
             }
             result += '\n' + escape(fileLines[idxLineTo].slice(0, idxColumnTo)) + this.tokenEnd;
         }

@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 @Service
 public class PlagiarismWebsocketService {
 
-    private final Logger log = LoggerFactory.getLogger(PlagiarismWebsocketService.class);
+    private static final Logger log = LoggerFactory.getLogger(PlagiarismWebsocketService.class);
 
     private final WebsocketMessagingService websocketMessagingService;
 

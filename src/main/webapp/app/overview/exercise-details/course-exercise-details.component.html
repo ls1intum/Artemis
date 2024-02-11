@@ -42,12 +42,10 @@
                         }}</span>
                         <div class="gap-1">
                             <!-- Actions for Tutors, Editors and Instructors -->
-                            @if (exercise.type !== QUIZ) {
-                                <a [routerLink]="baseResource" class="btn btn-info btn-sm">
-                                    <fa-icon [icon]="faEye"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
-                                </a>
-                            }
+                            <a [routerLink]="baseResource" class="btn btn-info btn-sm">
+                                <fa-icon [icon]="faEye"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                            </a>
                             <a [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm">
                                 <fa-icon [icon]="faTable"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>

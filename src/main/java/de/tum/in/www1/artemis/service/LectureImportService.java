@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 @Service
 public class LectureImportService {
 
-    private final Logger log = LoggerFactory.getLogger(LectureImportService.class);
+    private static final Logger log = LoggerFactory.getLogger(LectureImportService.class);
 
     private final LectureRepository lectureRepository;
 
@@ -32,14 +32,10 @@ public class LectureImportService {
 
     private final AttachmentRepository attachmentRepository;
 
-    private final FilePathService filePathService;
-
-    public LectureImportService(LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository, AttachmentRepository attachmentRepository,
-            FilePathService filePathService) {
+    public LectureImportService(LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository, AttachmentRepository attachmentRepository) {
         this.lectureRepository = lectureRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.attachmentRepository = attachmentRepository;
-        this.filePathService = filePathService;
     }
 
     /**
@@ -162,7 +158,7 @@ public class LectureImportService {
         attachment.setVersion(importedAttachment.getVersion());
         attachment.setAttachmentType(importedAttachment.getAttachmentType());
 
-        Path oldPath = filePathService.actualPathForPublicPathOrThrow(URI.create(importedAttachment.getLink()));
+        Path oldPath = FilePathService.actualPathForPublicPathOrThrow(URI.create(importedAttachment.getLink()));
         Path tempPath = FilePathService.getTempFilePath().resolve(oldPath.getFileName());
 
         try {
@@ -170,7 +166,7 @@ public class LectureImportService {
             FileUtils.copyFile(oldPath.toFile(), tempPath.toFile(), REPLACE_EXISTING);
 
             // File was copied to a temp directory and will be moved once we persist the attachment
-            attachment.setLink(filePathService.publicPathForActualPathOrThrow(tempPath, null).toString());
+            attachment.setLink(FilePathService.publicPathForActualPathOrThrow(tempPath, null).toString());
         }
         catch (IOException e) {
             log.error("Error while copying file", e);

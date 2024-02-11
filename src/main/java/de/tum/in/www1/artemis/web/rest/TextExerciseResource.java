@@ -58,7 +58,7 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 @RequestMapping("api/")
 public class TextExerciseResource {
 
-    private final Logger log = LoggerFactory.getLogger(TextExerciseResource.class);
+    private static final Logger log = LoggerFactory.getLogger(TextExerciseResource.class);
 
     private static final String ENTITY_NAME = "textExercise";
 
@@ -248,7 +248,7 @@ public class TextExerciseResource {
             // not required in the returned json body
             exercise.setStudentParticipations(null);
             exercise.setCourse(null);
-            List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+            Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
             exercise.setGradingCriteria(gradingCriteria);
         }
         return ResponseEntity.ok().body(exercises);
@@ -293,7 +293,7 @@ public class TextExerciseResource {
         }
 
         Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithResultByExerciseId(exerciseId);
-        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         textExercise.setGradingCriteria(gradingCriteria);
         textExercise.setExampleSubmissions(exampleSubmissions);
 

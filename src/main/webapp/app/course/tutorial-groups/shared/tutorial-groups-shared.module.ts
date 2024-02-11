@@ -12,9 +12,10 @@ import { VerticalProgressBarModule } from 'app/shared/vertical-progress-bar/vert
 import { TutorialGroupUtilizationIndicatorComponent } from './tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
 import { RemoveSecondsPipe } from 'app/course/tutorial-groups/shared/remove-seconds.pipe';
 import { MeetingPatternPipe } from 'app/course/tutorial-groups/shared/meeting-pattern.pipe';
+import { DetailModule } from 'app/detail-overview-list/detail.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule, ArtemisSidePanelModule, VerticalProgressBarModule],
+    imports: [ArtemisSharedModule, RouterModule, ArtemisSidePanelModule, VerticalProgressBarModule, DetailModule],
     declarations: [
         TutorialGroupsTableComponent,
         TutorialGroupDetailComponent,

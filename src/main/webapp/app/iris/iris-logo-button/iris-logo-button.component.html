@@ -1,0 +1,17 @@
+<button
+    [ngClass]="['jhi-btn', 'btn', btnType, btnSize]"
+    [type]="shouldSubmit ? 'submit' : 'button'"
+    ngbTooltip="{{ tooltip | artemisTranslate }}"
+    (click)="onClick.emit($event)"
+    [jhiFeatureToggle]="featureToggle"
+    [overwriteDisabled]="disabled || isLoading"
+>
+    @if (isLoading) {
+        <fa-icon class="jhi-btn__loading" [icon]="faCircleNotch" [spin]="true" size="sm"></fa-icon>
+    } @else {
+        <jhi-iris-logo [size]="SMALL"></jhi-iris-logo>
+    }
+    @if (title) {
+        <span class="jhi-btn__title" [class.ms-1]="true || isLoading" [jhiTranslate]="title"></span>
+    }
+</button>

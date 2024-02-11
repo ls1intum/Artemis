@@ -8,13 +8,17 @@
             "buildJob": {
                 "name": "Name",
                 "participationId": "Teilnahme ID",
+                "repositoryName": "Repository Name",
                 "repositoryType": "Repository Typ",
                 "commitHash": "Commit Hash",
                 "submissionDate": "Abgabe Datum",
                 "buildStartDate": "Build Start Datum",
                 "courseId": "Kurs ID",
-                "priority": "Priorität"
-            }
+                "priority": "Priorität",
+                "buildCompletionDate": "Build Fertigstellungsdatum",
+                "status": "Status"
+            },
+            "cancelAll": "Alle abbrechen"
         }
     }
 }

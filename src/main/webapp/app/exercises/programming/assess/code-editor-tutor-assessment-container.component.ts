@@ -28,7 +28,7 @@ import { CodeEditorRepositoryFileService } from 'app/exercises/programming/share
 import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise.utils';
+import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { SubmissionType, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
@@ -127,7 +127,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         private programmingSubmissionService: ProgrammingSubmissionService,
         private domainService: DomainService,
         private complaintService: ComplaintService,
-        translateService: TranslateService,
         private route: ActivatedRoute,
         private alertService: AlertService,
         private structuredGradingCriterionService: StructuredGradingCriterionService,
@@ -136,6 +135,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         private profileService: ProfileService,
         private modalService: NgbModal,
         private athenaService: AthenaService,
+        translateService: TranslateService,
     ) {
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
         translateService.get('artemisApp.assessment.messages.acceptComplaintWithoutMoreScore').subscribe((text) => (this.acceptComplaintWithoutMoreScoreText = text));
@@ -580,6 +580,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.alertService.closeAll();
         this.alertService.success(translationKey);
         this.saveBusy = this.submitBusy = false;
+        this.checkPermissions();
     }
 
     /**
@@ -666,7 +667,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private calculateTotalScoreOfFeedbacks(feedbacks: Feedback[]): number {
-        const maxPoints = this.exercise.maxPoints! + (this.exercise.bonusPoints ?? 0.0);
+        const maxPoints = getTotalMaxPoints(this.exercise);
         let totalScore = 0.0;
         let scoreAutomaticTests = 0.0;
         const gradingInstructions = {}; // { instructionId: noOfEncounters }

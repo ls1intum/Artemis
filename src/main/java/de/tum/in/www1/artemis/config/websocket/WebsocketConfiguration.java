@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.config.websocket;
 
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.getExerciseIdFromNonPersonalExerciseResultDestination;
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.isNonPersonalExerciseResultDestination;
-import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIBuildQueueWebsocketService.isBuildQueueAdminDestination;
-import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIBuildQueueWebsocketService.isBuildQueueCourseDestination;
+import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIWebsocketMessagingService.*;
 import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.*;
 
 import java.net.InetSocketAddress;
@@ -64,7 +63,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 // See https://stackoverflow.com/a/34337731/3802758
 public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConfiguration {
 
-    private final Logger log = LoggerFactory.getLogger(WebsocketConfiguration.class);
+    private static final Logger log = LoggerFactory.getLogger(WebsocketConfiguration.class);
 
     private static final Pattern EXAM_TOPIC_PATTERN = Pattern.compile("^/topic/exams/(\\d+)/.+$");
 
@@ -286,6 +285,12 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 return authorizationCheckService.isAdmin(user);
             }
 
+            if (isBuildAgentDestination(destination)) {
+                log.debug("Allowing subscription to build agent destination: {}", destination);
+                var user = userRepository.getUserWithAuthorities(principal.getName());
+                return authorizationCheckService.isAdmin(user);
+            }
+
             Optional<Long> courseId = isBuildQueueCourseDestination(destination);
             if (courseId.isPresent()) {
                 Course course = courseRepository.findByIdElseThrow(courseId.get());
@@ -330,7 +335,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     }
 
     private boolean isParticipationOwnedByUser(Principal principal, Long participationId) {
-        StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdWithEagerTeamStudentsElseThrow(participationId);
         return participation.isOwnedBy(principal.getName());
     }
 

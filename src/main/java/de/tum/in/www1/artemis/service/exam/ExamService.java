@@ -123,7 +123,7 @@ public class ExamService {
     @Value("${artemis.course-archives-path}")
     private Path examArchivesDirPath;
 
-    private final Logger log = LoggerFactory.getLogger(ExamService.class);
+    private static final Logger log = LoggerFactory.getLogger(ExamService.class);
 
     private final UserRepository userRepository;
 
@@ -1356,7 +1356,7 @@ public class ExamService {
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
     public SearchResultPageDTO<Exam> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user, final boolean withExercises) {
-        final var pageable = PageUtil.createExamPageRequest(search);
+        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.EXAM);
         final var searchTerm = search.getSearchTerm();
         final Page<Exam> examPage;
         if (authorizationCheckService.isAdmin(user)) {

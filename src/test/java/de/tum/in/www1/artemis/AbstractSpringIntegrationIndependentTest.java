@@ -39,7 +39,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @TestPropertySource(properties = { "artemis.user-management.use-external=false" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest {
 
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private static final Logger log = LoggerFactory.getLogger(AbstractSpringIntegrationIndependentTest.class);
 
     @AfterEach
     protected void resetSpyBeans() {

@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "course": {
+            "searchForCourse": "Suchen Sie nach einem Kurs",
             "home": {
                 "title": "Kurse",
                 "createLabel": "Kurs erstellen",
@@ -65,6 +66,7 @@
             "startDate": "Start",
             "endDate": "Ende",
             "semester": "Semester",
+            "ltiConfiguration": "LTI Konfiguration",
             "recentlyAccessed": "Zuletzt verwendet",
             "maxPoints": {
                 "title": "Maximale Punktzahl",
@@ -207,6 +209,12 @@
             },
             "detail": {
                 "title": "Kurs Details:",
+                "sections": {
+                    "general": "Informationen",
+                    "mode": "Modus",
+                    "enrollment": "Einschreibung",
+                    "messaging": "Nachrichten & Kommunikation"
+                },
                 "assessmentsTitle": "Insgesamte Bewertungen",
                 "complaintsTitle": "Insgesamte Beschwerden",
                 "moreFeedbackTitle": "Insgesamte Feedbackanfragen",
@@ -226,7 +234,6 @@
             "activeStudents": "Aktive Studierende",
             "activeStudentsExplanation": "Aktive Studierende sind Studierende, die in der entsprechenden Woche mindestens eine Lösung eingereicht haben.",
             "average": "Durchschnitt: ",
-            "meanReferenceLineCheckboxLabel": "Zeige den Durchschnitt als Referenz-Linie",
             "exerciseType": "Aufgabentyp",
             "programming": "Programmierung",
             "quiz": "Quiz",
@@ -240,10 +247,10 @@
             },
             "calendarWeek": "Kalenderwoche",
             "scopeButton": {
-                "recentWeekButton": "Jüngste Aktivität",
-                "recentWeekTooltip": "Zeigt die Aktivität der letzten 17 Wochen. Begann der Kurs vor weniger als 17 Wochen, beginnt die Anzeige zum Startdatum.",
-                "lifetimeOverviewButtonLabel": "Kursdauerüberblick",
-                "lifetimeOverviewTooltip": "Zeigt die Periode von Kurstart bis jetzt. Ist der Kurs bereits beendet, endet die Anzeige zum Enddatum des Kurses."
+                "period": "{{ amount }}W",
+                "periodTooltip": "Zeigt die Aktivität der letzten {{ amount }} Wochen.",
+                "overview": "Max",
+                "overviewTooltip": "Zeigt die Aktivität ab dem Kurstart bis jetzt."
             }
         }
     }
