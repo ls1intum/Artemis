@@ -43,7 +43,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
 
     private final AntPathRequestMatcher requestMatcher;
 
-    private final Logger log = LoggerFactory.getLogger(Lti13LaunchFilter.class);
+    private static final Logger log = LoggerFactory.getLogger(Lti13LaunchFilter.class);
 
     public Lti13LaunchFilter(OAuth2LoginAuthenticationFilter defaultFilter, String filterProcessingUrl, Lti13Service lti13Service) {
         this.defaultFilter = defaultFilter;
@@ -66,7 +66,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             try {
                 // here we need to check if this is a deep-linking request or a launch request
                 if ("LtiDeepLinkingRequest".equals(ltiIdToken.getClaim(Claims.MESSAGE_TYPE))) {
-                    lti13Service.startDeepLinking(ltiIdToken);
+                    lti13Service.startDeepLinking(ltiIdToken, authToken.getAuthorizedClientRegistrationId());
                 }
                 else {
                     lti13Service.performLaunch(ltiIdToken, authToken.getAuthorizedClientRegistrationId());

@@ -61,7 +61,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class GitService {
 
-    private final Logger log = LoggerFactory.getLogger(GitService.class);
+    private static final Logger log = LoggerFactory.getLogger(GitService.class);
 
     private final Environment environment;
 

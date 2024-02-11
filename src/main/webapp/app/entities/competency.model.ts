@@ -25,6 +25,11 @@ export enum CompetencyRelationError {
     NONE = 'NONE',
 }
 
+export enum CompetencyValidators {
+    TITLE_MAX = 255,
+    DESCRIPTION_MAX = 10000,
+}
+
 export class Competency implements BaseEntity {
     public id?: number;
     public title?: string;
@@ -63,6 +68,35 @@ export class CompetencyRelation implements BaseEntity {
     public tailCompetency?: Competency;
     public headCompetency?: Competency;
     public type?: string;
+
+    constructor() {}
+}
+
+export class CompetencyRelationDTO implements BaseEntity {
+    id?: number;
+    tailCompetencyId?: number;
+    headCompetencyId?: number;
+    relationType?: string;
+
+    constructor() {}
+}
+
+/**
+ * Converts a CompetencyRelationDTO to a CompetencyRelation
+ * @param competencyRelationDTO
+ */
+export function dtoToCompetencyRelation(competencyRelationDTO: CompetencyRelationDTO): CompetencyRelation {
+    return {
+        id: competencyRelationDTO.id,
+        tailCompetency: { id: competencyRelationDTO.tailCompetencyId },
+        headCompetency: { id: competencyRelationDTO.headCompetencyId },
+        type: competencyRelationDTO.relationType,
+    };
+}
+
+export class CompetencyWithTailRelationDTO {
+    competency?: Competency;
+    tailRelations?: CompetencyRelationDTO[];
 
     constructor() {}
 }

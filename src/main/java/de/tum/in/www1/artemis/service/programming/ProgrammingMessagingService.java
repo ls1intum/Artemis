@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
@@ -20,7 +21,7 @@ import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWe
 @Service
 public class ProgrammingMessagingService {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingMessagingService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingMessagingService.class);
 
     private final GroupNotificationService groupNotificationService;
 
@@ -30,12 +31,15 @@ public class ProgrammingMessagingService {
 
     private final Optional<LtiNewResultService> ltiNewResultService;
 
+    private final TeamRepository teamRepository;
+
     public ProgrammingMessagingService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
-            ResultWebsocketService resultWebsocketService, Optional<LtiNewResultService> ltiNewResultService) {
+            ResultWebsocketService resultWebsocketService, Optional<LtiNewResultService> ltiNewResultService, TeamRepository teamRepository) {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
         this.resultWebsocketService = resultWebsocketService;
         this.ltiNewResultService = ltiNewResultService;
+        this.teamRepository = teamRepository;
     }
 
     public void notifyInstructorAboutStartedExerciseBuildRun(ProgrammingExercise programmingExercise) {
@@ -81,6 +85,10 @@ public class ProgrammingMessagingService {
      */
     public void notifyUserAboutSubmissionError(Participation participation, BuildTriggerWebsocketError error) {
         if (participation instanceof StudentParticipation studentParticipation) {
+            if (studentParticipation.getParticipant() instanceof Team team) {
+                // eager load the team with students so their information can be used for the messages below
+                studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
+            }
             studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, error));
         }
 

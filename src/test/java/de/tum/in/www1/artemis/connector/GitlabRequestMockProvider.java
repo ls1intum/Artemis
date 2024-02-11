@@ -49,7 +49,7 @@ import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccess
 @Profile("gitlab")
 public class GitlabRequestMockProvider {
 
-    private final Logger log = LoggerFactory.getLogger(getClass());
+    private static final Logger log = LoggerFactory.getLogger(GitlabRequestMockProvider.class);
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;

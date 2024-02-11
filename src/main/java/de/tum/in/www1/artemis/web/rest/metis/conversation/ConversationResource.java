@@ -40,7 +40,7 @@ import tech.jhipster.web.util.PaginationUtil;
 @RequestMapping("/api/courses")
 public class ConversationResource extends ConversationManagementResource {
 
-    private final Logger log = LoggerFactory.getLogger(ConversationResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ConversationResource.class);
 
     private final ConversationService conversationService;
 
@@ -91,11 +91,11 @@ public class ConversationResource extends ConversationManagementResource {
      */
     @PostMapping("/{courseId}/conversations/{conversationId}/favorite")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> changeFavoriteStatus(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isFavorite) {
+    public ResponseEntity<Void> updateIsFavorite(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam boolean isFavorite) {
         checkMessagingOrCommunicationEnabledElseThrow(courseId);
         var requestingUser = this.userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
-        conversationService.switchFavoriteStatus(conversationId, requestingUser, isFavorite);
+        conversationService.setIsFavorite(conversationId, requestingUser, isFavorite);
         return ResponseEntity.ok().build();
     }
 
@@ -109,11 +109,29 @@ public class ConversationResource extends ConversationManagementResource {
      */
     @PostMapping("/{courseId}/conversations/{conversationId}/hidden")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> switchHiddenStatus(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isHidden) {
+    public ResponseEntity<Void> updateIsHidden(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam boolean isHidden) {
         checkMessagingOrCommunicationEnabledElseThrow(courseId);
         var requestingUser = this.userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
-        conversationService.switchHiddenStatus(conversationId, requestingUser, isHidden);
+        conversationService.setIsHidden(conversationId, requestingUser, isHidden);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * POST /api/courses/:courseId/conversations/:conversationId/muted : Updates a conversation's muted status for the requesting user
+     *
+     * @param courseId       the id of the course
+     * @param conversationId the id of the conversation
+     * @param isMuted        the new muted status
+     * @return ResponseEntity with status 200 (Ok)
+     */
+    @PostMapping("/{courseId}/conversations/{conversationId}/muted")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> updateIsMuted(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam boolean isMuted) {
+        checkMessagingOrCommunicationEnabledElseThrow(courseId);
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
+        conversationService.setIsMuted(conversationId, requestingUser, isMuted);
         return ResponseEntity.ok().build();
     }
 

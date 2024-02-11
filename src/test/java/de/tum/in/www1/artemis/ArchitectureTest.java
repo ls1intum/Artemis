@@ -5,6 +5,7 @@ import static com.tngtech.archunit.core.domain.JavaCall.Predicates.target;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.*;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
+import static com.tngtech.archunit.core.domain.properties.HasType.Predicates.rawType;
 import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.*;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
@@ -16,6 +17,10 @@ import java.util.stream.Collectors;
 import org.eclipse.jgit.api.Git;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.slf4j.Logger;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 import com.tngtech.archunit.base.DescribedPredicate;
@@ -25,6 +30,7 @@ import com.tngtech.archunit.library.GeneralCodingRules;
 
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.web.rest.repository.RepositoryResource;
 
 class ArchitectureTest extends AbstractArchitectureTest {
 
@@ -110,6 +116,19 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testCorrectLoggerFields() {
+        var naming = fields().that().haveRawType(Logger.class).should().haveName("log");
+        var modifiers = fields().that().haveRawType(Logger.class).should().bePrivate().andShould().beFinal().andShould().beStatic();
+
+        // Interfaces can only contain public attributes
+        // The RepositoryResource inherits its logger
+        var modifierExclusions = allClasses.that(are(not(INTERFACES)).and(not(type(RepositoryResource.class))));
+
+        naming.check(allClasses);
+        modifiers.check(modifierExclusions);
+    }
+
+    @Test
     void testJSONImplementations() {
         ArchRule jsonObject = noClasses().should().dependOnClassesThat(have(simpleName("JsonObject").or(simpleName("JSONObject"))).and(not(resideInAPackage("com.google.gson"))));
 
@@ -120,6 +139,25 @@ class ArchitectureTest extends AbstractArchitectureTest {
         jsonObject.check(allClasses);
         jsonArray.check(allClasses);
         jsonParser.check(allClasses);
+    }
+
+    @Test
+    void testRepositoryParamAnnotation() {
+        var useParamInQueries = methods().that().areAnnotatedWith(Query.class).should(haveAllParametersAnnotatedWithUnless(rawType(Param.class), type(Pageable.class)));
+        var notUseParamOutsideQueries = methods().that().areNotAnnotatedWith(Query.class).should(notHaveAnyParameterAnnotatedWith(rawType(Param.class)));
+        useParamInQueries.check(productionClasses);
+        notUseParamOutsideQueries.check(productionClasses);
+    }
+
+    /**
+     * Checks that no class directly calls Git.commit(), but instead uses GitService.commit()
+     * This is necessary to ensure that committing is identical for all setups, with and without commit signing
+     */
+    @Test
+    void testNoDirectGitCommitCalls() {
+        ArchRule usage = noClasses().should().callMethod(Git.class, "commit").because("You should use GitService.commit() instead");
+        var classesWithoutGitService = allClasses.that(not(assignableTo(GitService.class)));
+        usage.check(classesWithoutGitService);
     }
 
     // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes
@@ -133,7 +171,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     private ArchCondition<JavaMethod> notHaveAnyParameterAnnotatedWith(DescribedPredicate<? super JavaAnnotation<?>> annotationPredicate) {
-        return new ArchCondition<>("have parameters annotated with ") {
+        return new ArchCondition<>("not have parameters annotated with " + annotationPredicate.getDescription()) {
 
             @Override
             public void check(JavaMethod item, ConditionEvents events) {
@@ -145,14 +183,22 @@ class ArchitectureTest extends AbstractArchitectureTest {
         };
     }
 
-    /**
-     * Checks that no class directly calls Git.commit(), but instead uses GitService.commit()
-     * This is necessary to ensure that committing is identical for all setups, with and without commit signing
-     */
-    @Test
-    void testNoDirectGitCommitCalls() {
-        ArchRule usage = noClasses().should().callMethod(Git.class, "commit").because("You should use GitService.commit() instead");
-        var classesWithoutGitService = allClasses.that(not(assignableTo(GitService.class)));
-        usage.check(classesWithoutGitService);
+    private ArchCondition<JavaMethod> haveAllParametersAnnotatedWithUnless(DescribedPredicate<? super JavaAnnotation<?>> annotationPredicate,
+            DescribedPredicate<JavaClass> exception) {
+        return new ArchCondition<>("have all parameters annotated with " + annotationPredicate.getDescription()) {
+
+            @Override
+            public void check(JavaMethod item, ConditionEvents events) {
+                boolean satisfied = item.getParameters().stream()
+                        // Ignore annotations of the Pageable parameter
+                        .filter(javaParameter -> !exception.test(javaParameter.getRawType())).map(JavaParameter::getAnnotations)
+                        // Else, one of the annotations should match the given predicate
+                        // This allows parameters with multiple annotations (e.g. @NonNull @Param)
+                        .allMatch(annotations -> annotations.stream().anyMatch(annotationPredicate));
+                if (!satisfied) {
+                    events.add(violated(item, String.format("Method %s has parameter violating %s", item.getFullName(), annotationPredicate.getDescription())));
+                }
+            }
+        };
     }
 }

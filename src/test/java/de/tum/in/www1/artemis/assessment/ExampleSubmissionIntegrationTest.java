@@ -36,7 +36,7 @@ import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 
 class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
-    private final Logger log = LoggerFactory.getLogger(ExampleSubmissionIntegrationTest.class);
+    private static final Logger log = LoggerFactory.getLogger(ExampleSubmissionIntegrationTest.class);
 
     private static final String TEST_PREFIX = "examplesubmissionintegration";
 
@@ -386,7 +386,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     private void testGradingCriteriaAreImported(Exercise exercise) throws Exception {
-        List<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(exercise);
+        Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(exercise);
         gradingCriterionRepo.saveAll(gradingCriteria);
         var studentParticipation = participationUtilService.addAssessmentWithFeedbackWithGradingInstructionsForExercise(exercise, TEST_PREFIX + "instructor1");
         Submission originalSubmission = studentParticipation.findLatestSubmission().orElseThrow();

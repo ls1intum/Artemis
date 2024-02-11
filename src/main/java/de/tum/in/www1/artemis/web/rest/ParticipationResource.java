@@ -59,7 +59,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("api/")
 public class ParticipationResource {
 
-    private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
 
     private static final String ENTITY_NAME = "participation";
 
@@ -271,12 +271,7 @@ public class ParticipationResource {
     public ResponseEntity<ProgrammingExerciseStudentParticipation> resumeParticipation(@PathVariable Long exerciseId, @PathVariable Long participationId, Principal principal) {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-        var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
-
-        if (!participation.isOwnedBy(principal.getName())) {
-            throw new AccessForbiddenException("You are not the user of this participation");
-        }
-
+        var participation = programmingExerciseStudentParticipationRepository.findWithTeamStudentsByIdElseThrow(participationId);
         // explicitly set the exercise here to make sure that the templateParticipation and solutionParticipation are initialized in case they should be used again
         participation.setProgrammingExercise(programmingExercise);
 
@@ -286,7 +281,7 @@ public class ParticipationResource {
             throw new AccessForbiddenException("You are not allowed to resume that participation.");
         }
 
-        // There is a second participation of that student in the exericse that is inactive/finished now
+        // There is a second participation of that student in the exercise that is inactive/finished now
         Optional<StudentParticipation> optionalOtherStudentParticipation = participationService.findOneByExerciseAndParticipantAnyStateAndTestRun(programmingExercise, user,
                 !participation.isPracticeMode());
         if (optionalOtherStudentParticipation.isPresent()) {
@@ -656,7 +651,7 @@ public class ParticipationResource {
     @EnforceAtLeastStudent
     public ResponseEntity<StudentParticipation> getParticipationForCurrentUser(@PathVariable Long participationId) {
         log.debug("REST request to get participation : {}", participationId);
-        StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdWithEagerTeamStudentsElseThrow(participationId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionOwner(participation, user);
         return new ResponseEntity<>(participation, HttpStatus.OK);

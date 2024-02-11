@@ -58,7 +58,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping(ROOT)
 public class ProgrammingExerciseExportImportResource {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseExportImportResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseExportImportResource.class);
 
     private static final String ENTITY_NAME = "programmingExercise";
 
@@ -377,10 +377,10 @@ public class ProgrammingExerciseExportImportResource {
             repositoryExportOptions.setFilterLateSubmissionsDate(programmingExercise.getDueDate());
         }
 
-        List<String> participantIdentifierList = new ArrayList<>();
+        Set<String> participantIdentifierList = new HashSet<>();
         if (!repositoryExportOptions.isExportAllParticipants()) {
             participantIdentifiers = participantIdentifiers.replaceAll("\\s+", "");
-            participantIdentifierList = Arrays.asList(participantIdentifiers.split(","));
+            participantIdentifierList.addAll(List.of(participantIdentifiers.split(",")));
         }
 
         // Select the participations that should be exported

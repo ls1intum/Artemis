@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.GradingCriterionUtil;
 import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseFactory;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
@@ -115,10 +116,9 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private List<Feedback> createFeedback(Exercise exercise) {
-
-        var gradingInstructionNoLimit = exercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0);
-        var gradingInstructionLimited = exercise.getGradingCriteria().get(1).getStructuredGradingInstructions().get(0);
-        var gradingInstructionBigLimit = exercise.getGradingCriteria().get(2).getStructuredGradingInstructions().get(0);
+        var gradingInstructionNoLimit = GradingCriterionUtil.findInstructionByMaxUsageCount(exercise.getGradingCriteria(), 0);
+        var gradingInstructionLimited = GradingCriterionUtil.findInstructionByMaxUsageCount(exercise.getGradingCriteria(), 1);
+        var gradingInstructionBigLimit = GradingCriterionUtil.findInstructionByMaxUsageCount(exercise.getGradingCriteria(), 4);
 
         var feedbacks = new ArrayList<Feedback>();
         var feedbackAppliedSGINoLimit = new Feedback();
@@ -176,7 +176,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
-        resultRepository.submitResult(result, exercise, ExerciseDateService.getDueDate(result.getParticipation()));
+        resultRepository.submitResult(result, exercise);
         resultRepository.save(result);
 
         assertThat(result.getScore()).isEqualTo(85.7); // 85.7 = 6/7 * 100
@@ -198,7 +198,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
-        resultRepository.submitResult(result, exercise, ExerciseDateService.getDueDate(result.getParticipation()));
+        resultRepository.submitResult(result, exercise);
         resultRepository.save(result);
 
         assertThat(result.getScore()).isEqualTo(85.7); // 85.7 = 6/7 * 100
@@ -220,7 +220,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
-        resultRepository.submitResult(result, exercise, ExerciseDateService.getDueDate(result.getParticipation()));
+        resultRepository.submitResult(result, exercise);
         resultRepository.save(result);
 
         assertThat(result.getScore()).isEqualTo(85.7); // 85.7 = 6/7 * 100
@@ -259,7 +259,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         }
         exercise = exerciseRepository.save(exercise);
 
-        resultRepository.submitResult(result, exercise, ExerciseDateService.getDueDate(result.getParticipation()));
+        resultRepository.submitResult(result, exercise);
         resultRepository.save(result);
 
         assertThat(result.isRated()).isTrue();
@@ -281,7 +281,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
-        resultRepository.submitResult(result, exercise, ExerciseDateService.getDueDate(result.getParticipation()));
+        resultRepository.submitResult(result, exercise);
         resultRepository.save(result);
 
         assertThat(result.isRated()).isFalse();
@@ -303,7 +303,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
-        resultRepository.submitResult(result, exercise, ExerciseDateService.getDueDate(result.getParticipation()));
+        resultRepository.submitResult(result, exercise);
         resultRepository.save(result);
 
         assertThat(result.isRated()).isTrue();

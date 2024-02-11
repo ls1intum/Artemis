@@ -26,6 +26,7 @@ import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dt
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ExerciseType, ScoresPerExerciseType } from 'app/entities/exercise.model';
+import { OnlineCourseDtoModel } from 'app/lti/online-course-dto.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -79,6 +80,11 @@ export class CourseManagementService {
         return this.http.put<OnlineCourseConfiguration>(`${this.resourceUrl}/${courseId}/onlineCourseConfiguration`, onlineCourseConfiguration, { observe: 'response' });
     }
 
+    findAllOnlineCoursesWithRegistrationId(clientId: string): Observable<OnlineCourseDtoModel[]> {
+        const params = new HttpParams().set('clientId', '' + clientId);
+        return this.http.get<OnlineCourseDtoModel[]>(`${this.resourceUrl}/for-lti-dashboard`, { params });
+    }
+
     /**
      * finds the course with the provided unique identifier
      * @param courseId - the id of the course to be found
@@ -101,9 +107,13 @@ export class CourseManagementService {
      * gets the active users for the line chart in the detail view
      * @param courseId the id of the course of which the statistics should be fetched
      * @param periodIndex the period of the statistics we want to have
+     * @param periodSize the size of the statistics-period to be fetched
      */
-    getStatisticsData(courseId: number, periodIndex: number): Observable<number[]> {
-        const params = new HttpParams().set('periodIndex', '' + periodIndex);
+    getStatisticsData(courseId: number, periodIndex: number, periodSize?: number): Observable<number[]> {
+        const params: Record<string, number> = { periodIndex };
+        if (periodSize) {
+            params.periodSize = periodSize;
+        }
         return this.http.get<number[]>(`${this.resourceUrl}/${courseId}/statistics`, { params });
     }
 

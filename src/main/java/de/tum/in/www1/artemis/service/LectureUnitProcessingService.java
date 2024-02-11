@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 @Service
 public class LectureUnitProcessingService {
 
-    private final Logger log = LoggerFactory.getLogger(LectureUnitProcessingService.class);
+    private static final Logger log = LoggerFactory.getLogger(LectureUnitProcessingService.class);
 
     private final FileService fileService;
 
@@ -211,7 +211,7 @@ public class LectureUnitProcessingService {
      */
     public String saveTempFileForProcessing(long lectureId, MultipartFile file, int minutesUntilDeletion) throws IOException {
         String prefix = "Temp_" + lectureId + "_";
-        Path filePath = fileService.generateFilePath(prefix, FilenameUtils.getExtension(file.getOriginalFilename()), FilePathService.getTempFilePath());
+        Path filePath = FilePathService.getTempFilePath().resolve(fileService.generateFilename(prefix, FilenameUtils.getExtension(file.getOriginalFilename())));
         FileUtils.copyInputStreamToFile(file.getInputStream(), filePath.toFile());
         fileService.schedulePathForDeletion(filePath, minutesUntilDeletion);
         return filePath.getFileName().toString().substring(prefix.length());

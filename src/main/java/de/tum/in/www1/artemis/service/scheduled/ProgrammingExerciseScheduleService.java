@@ -45,7 +45,7 @@ import tech.jhipster.config.JHipsterConstants;
 @Profile("scheduling")
 public class ProgrammingExerciseScheduleService implements IExerciseScheduleService<ProgrammingExercise> {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseScheduleService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseScheduleService.class);
 
     private final ScheduleService scheduleService;
 
@@ -394,7 +394,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         // DURING EXAM
         else if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
             // This is only a backup (e.g. a crash of this node and restart during the exam)
-            // TODO: Christian Femers: this can lead to a weired edge case after the normal exam end date and before the last individual exam end date (in case of working time
+            // TODO: Christian Femers: this can lead to a weird edge case after the normal exam end date and before the last individual exam end date (in case of working time
             // extensions)
             var scheduledRunnable = Set.of(
                     new Tuple<>(now.plusSeconds(Constants.SECONDS_AFTER_RELEASE_DATE_FOR_UNLOCKING_STUDENT_EXAM_REPOS), unlockAllStudentRepositoriesAndParticipations(exercise)));
@@ -959,6 +959,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         }
 
         return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).thenApply(ignore -> {
+            threadPool.shutdown();
             log.info("Finished executing (scheduled) task '{}' for programming exercise with id {}.", operationName, programmingExercise.getId());
             if (!failedOperations.isEmpty()) {
                 var failedIds = failedOperations.stream().map(participation -> participation.getId().toString()).collect(Collectors.joining(","));

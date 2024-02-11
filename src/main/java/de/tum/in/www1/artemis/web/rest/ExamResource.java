@@ -61,7 +61,7 @@ import tech.jhipster.web.util.PaginationUtil;
 @RequestMapping("api/")
 public class ExamResource {
 
-    private final Logger log = LoggerFactory.getLogger(ExamResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ExamResource.class);
 
     private static final String ENTITY_NAME = "exam";
 
@@ -522,7 +522,7 @@ public class ExamResource {
     public ResponseEntity<Exam> getExamForImportWithExercises(@PathVariable Long examId) {
         log.debug("REST request to get exam : {} for import with exercises", examId);
 
-        Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
+        Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, true);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(exam.getCourse().getId(), examId);
 
         return ResponseEntity.ok(exam);
