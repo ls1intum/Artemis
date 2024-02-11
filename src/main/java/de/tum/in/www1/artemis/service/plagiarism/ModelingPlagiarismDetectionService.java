@@ -198,9 +198,8 @@ public class ModelingPlagiarismDetectionService {
     public List<ModelingSubmission> modelingSubmissionsForComparison(ModelingExercise exerciseWithParticipationsAndSubmissions, int minimumScore) {
 
         // Note: minimum size is checked at a different place in this service
-        return exerciseWithParticipationsAndSubmissions.getStudentParticipations().parallelStream()
-                .filter(plagiarismService.filterForStudents()).map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
-                .filter(submission -> submission instanceof ModelingSubmission).map(submission -> (ModelingSubmission) submission)
-                .filter(submission -> hasMinimumScore(submission, minimumScore)).toList();
+        return exerciseWithParticipationsAndSubmissions.getStudentParticipations().parallelStream().filter(plagiarismService.filterForStudents())
+                .map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).filter(submission -> submission instanceof ModelingSubmission)
+                .map(submission -> (ModelingSubmission) submission).filter(submission -> hasMinimumScore(submission, minimumScore)).toList();
     }
 }
