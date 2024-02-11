@@ -8,6 +8,8 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -48,12 +50,6 @@ public class ParticipationTeamWebsocketService {
 
     private final SimpUserRegistry simpUserRegistry;
 
-    private final Map<String, String> destinationTracker;
-
-    private final Map<String, Instant> lastTypingTracker;
-
-    private final Map<String, Instant> lastActionTracker;
-
     private final UserRepository userRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -63,6 +59,14 @@ public class ParticipationTeamWebsocketService {
     private final TextSubmissionService textSubmissionService;
 
     private final ModelingSubmissionService modelingSubmissionService;
+
+    private final HazelcastInstance hazelcastInstance;
+
+    private Map<String, String> destinationTracker;
+
+    private Map<String, Instant> lastTypingTracker;
+
+    private Map<String, Instant> lastActionTracker;
 
     public ParticipationTeamWebsocketService(WebsocketMessagingService websocketMessagingService, SimpUserRegistry simpUserRegistry, UserRepository userRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, TextSubmissionService textSubmissionService,
@@ -74,7 +78,14 @@ public class ParticipationTeamWebsocketService {
         this.exerciseRepository = exerciseRepository;
         this.textSubmissionService = textSubmissionService;
         this.modelingSubmissionService = modelingSubmissionService;
+        this.hazelcastInstance = hazelcastInstance;
+    }
 
+    /**
+     * Initialize relevant data from hazelcast
+     */
+    @PostConstruct
+    public void init() {
         // participationId-username -> timestamp
         this.lastTypingTracker = hazelcastInstance.getMap("lastTypingTracker");
         // participationId-username -> timestamp

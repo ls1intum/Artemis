@@ -39,6 +39,8 @@ public class BuildJobManagementService {
 
     private final LocalCIDockerService localCIDockerService;
 
+    private final HazelcastInstance hazelcastInstance;
+
     @Value("${artemis.continuous-integration.timeout-seconds:120}")
     private int timeoutSeconds;
 
@@ -61,15 +63,13 @@ public class BuildJobManagementService {
      */
     private final Set<String> cancelledBuildJobs = new ConcurrentSkipListSet<>();
 
-    private final ITopic<String> canceledBuildJobsTopic;
-
     public BuildJobManagementService(HazelcastInstance hazelcastInstance, BuildJobExecutionService buildJobExecutionService, ExecutorService localCIBuildExecutorService,
             BuildJobContainerService buildJobContainerService, LocalCIDockerService localCIDockerService) {
         this.buildJobExecutionService = buildJobExecutionService;
         this.localCIBuildExecutorService = localCIBuildExecutorService;
         this.buildJobContainerService = buildJobContainerService;
         this.localCIDockerService = localCIDockerService;
-        this.canceledBuildJobsTopic = hazelcastInstance.getTopic("canceledBuildJobsTopic");
+        this.hazelcastInstance = hazelcastInstance;
     }
 
     /**
@@ -77,7 +77,8 @@ public class BuildJobManagementService {
      * It gets broadcast to all nodes in the cluster. Only the node that is running the build job will cancel it.
      */
     @PostConstruct
-    public void addListener() {
+    public void init() {
+        ITopic<String> canceledBuildJobsTopic = hazelcastInstance.getTopic("canceledBuildJobsTopic");
         canceledBuildJobsTopic.addMessageListener(message -> {
             String buildJobId = message.getMessageObject();
             if (runningFutures.containsKey(buildJobId)) {
@@ -126,8 +127,7 @@ public class BuildJobManagementService {
                     throw new CompletionException("Build job with id " + buildJobItem.id() + " was cancelled.", e);
                 }
                 else {
-                    finishBuildJobExceptionally(buildJobItem.id(), buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.buildConfig().commitHash(), containerName,
-                            e);
+                    finishBuildJobExceptionally(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.buildConfig().commitHash(), containerName, e);
                     throw new CompletionException(e);
                 }
             }
@@ -170,7 +170,7 @@ public class BuildJobManagementService {
      * @param containerName The name of the Docker container that was used to execute the build job.
      * @param exception     The exception that occurred while building and testing the repository.
      */
-    private void finishBuildJobExceptionally(String buildJobId, String repositoryUri, String commitHash, String containerName, Exception exception) {
+    private void finishBuildJobExceptionally(String repositoryUri, String commitHash, String containerName, Exception exception) {
         log.error("Error while building and testing commit {} in repository {}", commitHash, repositoryUri, exception);
 
         buildJobContainerService.stopContainer(containerName);
