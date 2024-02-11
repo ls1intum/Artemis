@@ -66,12 +66,12 @@ public class SharedQueueManagementService {
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
         this.canceledBuildJobsTopic = hazelcastInstance.getTopic("canceledBuildJobsTopic");
         this.dockerImageCleanupInfo = this.hazelcastInstance.getMap("dockerImageCleanupInfo");
+        pushDockerImageCleanupInfo();
     }
 
     /**
      * Pushes the last build dates for all docker images to the hazelcast map dockerImageCleanupInfo.
      */
-    @PostConstruct
     public void pushDockerImageCleanupInfo() {
         Set<DockerImageBuild> lastBuildDatesForDockerImages = buildJobRepository.findAllLastBuildDatesForDockerImages();
 
