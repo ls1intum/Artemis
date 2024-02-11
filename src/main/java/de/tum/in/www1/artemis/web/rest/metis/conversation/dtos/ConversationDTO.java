@@ -46,6 +46,9 @@ public class ConversationDTO {
     private Boolean isHidden;
 
     // property not taken from entity
+    private Boolean isMuted;
+
+    // property not taken from entity
     private Boolean isCreator;
 
     // property not taken from entity
@@ -153,6 +156,14 @@ public class ConversationDTO {
 
     public void setIsHidden(Boolean hidden) {
         isHidden = hidden;
+    }
+
+    public Boolean getIsMuted() {
+        return isMuted;
+    }
+
+    public void setIsMuted(Boolean isMuted) {
+        this.isMuted = isMuted;
     }
 
     public ZonedDateTime getLastReadDate() {
