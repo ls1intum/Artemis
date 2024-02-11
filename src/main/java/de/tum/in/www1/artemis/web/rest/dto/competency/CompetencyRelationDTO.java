@@ -15,7 +15,8 @@ import de.tum.in.www1.artemis.domain.competency.RelationType;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CompetencyRelationDTO(long id, long tailCompetencyId, long headCompetencyId, RelationType relationType) {
 
-    public CompetencyRelationDTO(CompetencyRelation competencyRelation) {
-        this(competencyRelation.getId(), competencyRelation.getTailCompetency().getId(), competencyRelation.getHeadCompetency().getId(), competencyRelation.getType());
+    public static CompetencyRelationDTO of(CompetencyRelation competencyRelation) {
+        return new CompetencyRelationDTO(competencyRelation.getId(), competencyRelation.getTailCompetency().getId(), competencyRelation.getHeadCompetency().getId(),
+                competencyRelation.getType());
     }
 }

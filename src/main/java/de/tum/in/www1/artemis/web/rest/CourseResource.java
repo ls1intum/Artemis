@@ -1048,7 +1048,7 @@ public class CourseResource {
 
         var searchTerm = loginOrName != null ? loginOrName.toLowerCase().trim() : "";
         List<UserNameAndLoginDTO> searchResults = userRepository.searchAllByLoginOrNameInCourse(Pageable.ofSize(10), searchTerm, course.getId()).stream()
-                .map(user -> new UserNameAndLoginDTO(user.getName(), user.getLogin())).toList();
+                .map(UserNameAndLoginDTO::of).toList();
 
         return ResponseEntity.ok().body(searchResults);
     }
