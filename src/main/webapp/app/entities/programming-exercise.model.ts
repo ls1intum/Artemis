@@ -89,6 +89,7 @@ export class ProgrammingExercise extends Exercise {
     public publishBuildPlanUrl?: boolean;
     public customizeBuildPlanWithAeolus?: boolean;
     public allowOnlineEditor?: boolean;
+    public allowOnlineEditorReadOnlyMode?: boolean;
     public staticCodeAnalysisEnabled?: boolean;
     /**
      * Max penalty from SCA in percentage
@@ -136,6 +137,7 @@ export class ProgrammingExercise extends Exercise {
         this.solutionParticipation = new SolutionProgrammingExerciseParticipation();
         this.publishBuildPlanUrl = false; // default value
         this.allowOnlineEditor = false; // default value
+        this.allowOnlineEditorReadOnlyMode = false;
         this.staticCodeAnalysisEnabled = false; // default value
         this.allowOfflineIde = true; // default value
         this.programmingLanguage = ProgrammingLanguage.JAVA; // default value

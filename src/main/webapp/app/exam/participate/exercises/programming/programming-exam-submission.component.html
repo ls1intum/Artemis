@@ -10,8 +10,15 @@
                 <jhi-exercise-details-student-actions [examMode]="true" [exercise]="exercise" [courseId]="courseId"></jhi-exercise-details-student-actions>
             }
         </div>
+        @if (exercise.allowOnlineEditorReadOnlyMode) {
+            <div class="row-container">
+                <span class="badge bg-danger" jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor.readOnlyMode.info">
+                    For this exercise the online code editor is only enabled in the read-only mode
+                </span>
+            </div>
+        }
         <jhi-code-editor-container
-            [editable]="!repositoryIsLocked"
+            [editable]="!repositoryIsLocked && !exercise.allowOnlineEditorReadOnlyMode"
             [participation]="studentParticipation"
             [showEditorInstructions]="showEditorInstructions"
             [course]="getCourseFromExercise(exercise)"

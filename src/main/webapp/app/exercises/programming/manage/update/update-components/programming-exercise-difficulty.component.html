@@ -17,7 +17,15 @@
     <div class="form-group">
         <div class="form-check">
             <label [class]="!programmingExerciseCreationConfig.validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOfflineIde">
-                <input class="form-check-input" type="checkbox" name="allowOfflineIde" id="field_allowOfflineIde" [(ngModel)]="programmingExercise.allowOfflineIde" checked />
+                <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="allowOfflineIde"
+                    id="field_allowOfflineIde"
+                    [(ngModel)]="programmingExercise.allowOfflineIde"
+                    (change)="updateReadOnly()"
+                    checked
+                />
                 <span jhiTranslate="artemisApp.programmingExercise.allowOfflineIde.title">Allow Offline IDE</span>
                 @if (!programmingExerciseCreationConfig.validIdeSelection()) {
                     <fa-icon
@@ -38,6 +46,7 @@
                         name="allowOnlineEditor"
                         id="field_allowOnlineEditor"
                         [(ngModel)]="programmingExercise.allowOnlineEditor"
+                        (change)="updateReadOnly()"
                         checked
                     />
                     <span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor.title">Allow Online Editor</span>
@@ -49,6 +58,21 @@
                             ngbTooltip="{{ 'artemisApp.programmingExercise.allowOnlineEditor.alert' | artemisTranslate }}"
                         ></fa-icon>
                     }
+                </label>
+            </div>
+            <div class="form-check" style="margin-left: 20px">
+                <label [class]="'form-check-label'" [ngStyle]="isReadOnlyDisabled() ? { color: 'grey' } : {}" for="field_allowOnlineEditorReadOnlyMode">
+                    <input
+                        class="form-check-input"
+                        type="checkbox"
+                        name="allowOnlineEditorReadOnlyMode"
+                        id="field_allowOnlineEditorReadOnlyMode"
+                        [(ngModel)]="programmingExercise.allowOnlineEditorReadOnlyMode"
+                        [disabled]="isReadOnlyDisabled()"
+                        checked
+                    />
+                    <span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor.readOnlyMode.title">read-only mode</span>
+                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.allowOnlineEditor.readOnlyMode.alert"></jhi-help-icon>
                 </label>
             </div>
         }

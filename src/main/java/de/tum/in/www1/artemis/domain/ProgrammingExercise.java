@@ -63,6 +63,9 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "allow_online_editor", table = "programming_exercise_details")
     private Boolean allowOnlineEditor;
 
+    @Column(name = "allow_online_editor_read_only_mode", table = "programming_exercise_details")
+    private Boolean allowOnlineEditorReadOnlyMode;
+
     @Column(name = "allow_offline_ide", table = "programming_exercise_details")
     private Boolean allowOfflineIde;
 
@@ -269,6 +272,14 @@ public class ProgrammingExercise extends Exercise {
         this.allowOnlineEditor = allowOnlineEditor;
     }
 
+    public Boolean isAllowOnlineEditorReadOnlyMode() {
+        return allowOnlineEditorReadOnlyMode;
+    }
+
+    public void setAllowOnlineEditorReadOnlyMode(Boolean allowOnlineEditorReadOnlyMode) {
+        this.allowOnlineEditorReadOnlyMode = allowOnlineEditorReadOnlyMode;
+    }
+
     public Boolean isAllowOfflineIde() {
         return allowOfflineIde;
     }
@@ -355,7 +366,7 @@ public class ProgrammingExercise extends Exercise {
     /**
      * Generates a unique project key based on the course short name and the exercise short name. This should only be used
      * for instantiating a new exercise
-     *
+     * <p>
      * The key concatenates the course short name and the exercise short name (in upper case letters), e.g.: <br>
      * Course: <code>crs</code> <br>
      * Exercise: <code>exc</code> <br>
@@ -737,8 +748,9 @@ public class ProgrammingExercise extends Exercise {
     public String toString() {
         return "ProgrammingExercise{" + "id=" + getId() + ", templateRepositoryUri='" + getTemplateRepositoryUri() + "'" + ", solutionRepositoryUri='" + getSolutionRepositoryUri()
                 + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", publishBuildPlanUrl='"
-                + isPublishBuildPlanUrl() + "'" + ", allowOnlineEditor='" + isAllowOnlineEditor() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'"
-                + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
+                + isPublishBuildPlanUrl() + "'" + ", allowOnlineEditor='" + isAllowOnlineEditor() + "'" + "'" + ", allowOnlineEditorReadOnlyMode='"
+                + isAllowOnlineEditorReadOnlyMode() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'" + ", packageName='" + getPackageName() + "'"
+                + ", testCasesChanged='" + testCasesChanged + "'" + "}";
     }
 
     public boolean getCheckoutSolutionRepository() {
@@ -758,6 +770,12 @@ public class ProgrammingExercise extends Exercise {
         // Check if a participation mode was selected
         if (!Boolean.TRUE.equals(isAllowOnlineEditor()) && !Boolean.TRUE.equals(isAllowOfflineIde())) {
             throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor or the offline IDE", "Exercise", "noParticipationModeAllowed");
+        }
+
+        // Check if read-only mode is enabled correctly
+        if (isAllowOnlineEditorReadOnlyMode() && (!isAllowOnlineEditor() || !isAllowOfflineIde())) {
+            throw new BadRequestAlertException("You need to allow both the online editor and the offline IDE to enable the read-only mode", "Exercise",
+                    "noParticipationModeAllowed");
         }
 
         // Check if Xcode has no online code editor enabled

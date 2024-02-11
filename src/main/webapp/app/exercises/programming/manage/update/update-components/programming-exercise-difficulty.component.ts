@@ -15,4 +15,14 @@ export class ProgrammingExerciseDifficultyComponent {
     protected readonly ProjectType = ProjectType;
 
     faQuestionCircle = faQuestionCircle;
+
+    updateReadOnly() {
+        if (this.isReadOnlyDisabled()) {
+            this.programmingExercise.allowOnlineEditorReadOnlyMode = false;
+        }
+    }
+
+    isReadOnlyDisabled(): boolean {
+        return !this.programmingExercise.allowOfflineIde || !this.programmingExercise.allowOnlineEditor;
+    }
 }

@@ -264,6 +264,11 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
                     "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null);
         }
+        if (Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineEditorReadOnlyMode())
+                && (Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOnlineEditor()) || Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde()))) {
+            throw new BadRequestAlertException("You need to allow both the online editor and the offline IDE to enable the read-only mode", "Exercise",
+                    "noParticipationModeAllowed");
+        }
         // Forbid changing the course the exercise belongs to.
         if (!Objects.equals(programmingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId(),
                 updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {

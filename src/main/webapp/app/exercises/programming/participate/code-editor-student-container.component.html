@@ -22,9 +22,16 @@
             <span class="badge bg-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"> Warning: You are viewing an illegal submission. </span>
         </div>
     }
+    @if (exercise.allowOnlineEditorReadOnlyMode) {
+        <div class="row-container">
+            <span class="badge bg-danger" jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor.readOnlyMode.info">
+                For this exercise the online code editor is only enabled in the read-only mode
+            </span>
+        </div>
+    }
     @if (!loadingParticipation && !participationCouldNotBeFetched) {
         <jhi-code-editor-container
-            [editable]="!repositoryIsLocked"
+            [editable]="!repositoryIsLocked && !exercise.allowOnlineEditorReadOnlyMode"
             [participation]="participation"
             [showEditorInstructions]="showEditorInstructions"
             [isTutorAssessment]="hasTutorAssessment"
@@ -50,7 +57,11 @@
                     <span>
                         {{
                             'artemisApp.programmingExercise.submissionPolicy.submissionsAllowed'
-                                | artemisTranslate: { submissionCount: numberOfSubmissionsForSubmissionPolicy, totalSubmissions: exercise.submissionPolicy.submissionLimit }
+                                | artemisTranslate
+                                    : {
+                                          submissionCount: numberOfSubmissionsForSubmissionPolicy,
+                                          totalSubmissions: exercise.submissionPolicy.submissionLimit
+                                      }
                         }}
                     </span>
                     @if (exercise.submissionPolicy.type === SubmissionPolicyType.SUBMISSION_PENALTY) {
@@ -65,32 +76,32 @@
             </div>
             <!-- prettier-ignore -->
             <div editorToolbar class="d-inline-flex align-items-center">
-              @if (repositoryIsLocked) {
-                <jhi-code-editor-repository-is-locked class="me-3">
-                </jhi-code-editor-repository-is-locked>
-              }
-              <jhi-exercise-hint-button-overlay
-                [availableExerciseHints]="availableExerciseHints"
-                [activatedExerciseHints]="activatedExerciseHints"
-                (onHintActivated)="onHintActivated($event)"
-              ></jhi-exercise-hint-button-overlay>
-              @if (participation) {
-                <jhi-updating-result
-                  [exercise]="exercise"
-                  [showUngradedResults]="true"
-                  [showBadge]="true"
-                  [participation]="participation"
-                  [personalParticipation]="true"
-                  (onParticipationChange)="receivedNewResult()"
-                  class="me-2"
-                ></jhi-updating-result>
-              }
-              <jhi-programming-exercise-student-trigger-build-button
-                class="me-2"
-                [exercise]="exercise"
-                [participation]="participation"
-                [btnSize]="ButtonSize.MEDIUM"
-              ></jhi-programming-exercise-student-trigger-build-button>
+                @if (repositoryIsLocked) {
+                    <jhi-code-editor-repository-is-locked class="me-3">
+                    </jhi-code-editor-repository-is-locked>
+                }
+                <jhi-exercise-hint-button-overlay
+                    [availableExerciseHints]="availableExerciseHints"
+                    [activatedExerciseHints]="activatedExerciseHints"
+                    (onHintActivated)="onHintActivated($event)"
+                ></jhi-exercise-hint-button-overlay>
+                @if (participation) {
+                    <jhi-updating-result
+                        [exercise]="exercise"
+                        [showUngradedResults]="true"
+                        [showBadge]="true"
+                        [participation]="participation"
+                        [personalParticipation]="true"
+                        (onParticipationChange)="receivedNewResult()"
+                        class="me-2"
+                    ></jhi-updating-result>
+                }
+                <jhi-programming-exercise-student-trigger-build-button
+                    class="me-2"
+                    [exercise]="exercise"
+                    [participation]="participation"
+                    [btnSize]="ButtonSize.MEDIUM"
+                ></jhi-programming-exercise-student-trigger-build-button>
             </div>
             <jhi-programming-exercise-instructions
                 editorSidebar

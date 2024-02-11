@@ -124,7 +124,12 @@
             "script": "Script",
             "allowOnlineEditor": {
                 "title": "Allow Online Editor",
-                "alert": "At least one option (Offline IDE or Online Editor) must be selected"
+                "alert": "At least one option (Offline IDE or Online Editor) must be selected",
+                "readOnlyMode": {
+                    "title": "read-only mode",
+                    "alert": "Read-only mode can only be enabled if the Offline IDE is enabled",
+                    "info": "For this exercise the online code editor is only enabled in the read-only mode"
+                }
             },
             "onlineEditor": "Online Editor",
             "allowOfflineIde": {

@@ -112,7 +112,12 @@
             "workdir": "Verzeichnis",
             "allowOnlineEditor": {
                 "title": "Online-Editor erlauben",
-                "alert": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
+                "alert": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein",
+                "readOnlyMode": {
+                    "title": "schreibgeschützter Modus",
+                    "alert": "Der schreibgeschützter Modus kann nur aktiviert werden, wenn die Offline-IDE aktiviert ist.",
+                    "info": "Für diese Aufgabe ist der Online-Editor nur im schreibgeschützten Modus aktiviert"
+                }
             },
             "onlineEditor": "Online-Editor",
             "allowOfflineIde": {
