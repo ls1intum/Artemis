@@ -366,7 +366,7 @@ public class ProgrammingExercise extends Exercise {
     /**
      * Generates a unique project key based on the course short name and the exercise short name. This should only be used
      * for instantiating a new exercise
-     * <p>
+     *
      * The key concatenates the course short name and the exercise short name (in upper case letters), e.g.: <br>
      * Course: <code>crs</code> <br>
      * Exercise: <code>exc</code> <br>
