@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config.migration.entries;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
@@ -27,7 +29,7 @@ import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UriService;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Component
 public class MigrationEntry20230920_181600 extends MigrationEntry {
 

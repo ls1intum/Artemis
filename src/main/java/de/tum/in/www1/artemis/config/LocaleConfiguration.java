@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -10,7 +12,7 @@ import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 
 import tech.jhipster.config.locale.AngularCookieLocaleResolver;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Configuration
 public class LocaleConfiguration implements WebMvcConfigurer {
 

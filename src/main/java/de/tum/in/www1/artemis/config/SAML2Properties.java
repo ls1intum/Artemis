@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -14,7 +16,7 @@ import org.springframework.stereotype.Component;
 /**
  * This class describes SAML2 properties.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Component
 @ConfigurationProperties("saml2")
 public class SAML2Properties {

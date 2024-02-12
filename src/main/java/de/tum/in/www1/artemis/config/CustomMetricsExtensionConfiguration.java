@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import org.springframework.boot.actuate.autoconfigure.endpoint.condition.ConditionalOnAvailableEndpoint;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -18,7 +20,7 @@ import tech.jhipster.config.metric.JHipsterMetricsEndpoint;
  * CustomMetricsExtensionConfiguration.
  * Configuration for custom Artemis metrics.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 public class CustomMetricsExtensionConfiguration {
 
     @Configuration

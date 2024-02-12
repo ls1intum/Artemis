@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.config;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -41,7 +40,7 @@ import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import tech.jhipster.config.JHipsterProperties;
 import tech.jhipster.config.cache.PrefixedKeyGenerator;
 
-@Profile({ "core", "buildagent" })
+@Profile({ PROFILE_CORE, "buildagent" })
 @Configuration
 @EnableCaching
 public class CacheConfiguration {

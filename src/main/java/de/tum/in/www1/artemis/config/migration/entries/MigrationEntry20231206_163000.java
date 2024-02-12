@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config.migration.entries;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -22,7 +24,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
  * This migration entry migrates all Haskell and OCaml exercises that need to check out the solution repository
  * in a student build plan. This is necessary because earlier versions of Artemis did not store this information.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Component
 public class MigrationEntry20231206_163000 extends MigrationEntry {
 

@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.config;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.context.annotation.Profile;
-
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisDefaultCategory;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -13,7 +11,6 @@ import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 /**
  * Provides hard-coded programming language specific static code analysis default categories as an unmodifiable Map
  */
-@Profile("core")
 public class StaticCodeAnalysisConfigurer {
 
     private static final Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> languageToDefaultCategories = Map.of(ProgrammingLanguage.JAVA,

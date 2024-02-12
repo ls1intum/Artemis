@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config.websocket;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,8 +16,8 @@ import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 
+@Profile(PROFILE_CORE)
 @Component
-@Profile("core")
 public class WebsocketBrokerHealthIndicator implements HealthIndicator, ApplicationListener<BrokerAvailabilityEvent> {
 
     private boolean isBrokerAvailable = false; // Will be updated to true by event listener once connection is established

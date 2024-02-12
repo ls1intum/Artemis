@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.sql.SQLException;
@@ -30,7 +31,7 @@ import liquibase.integration.spring.SpringLiquibase;
 import tech.jhipster.config.JHipsterConstants;
 import tech.jhipster.config.liquibase.SpringLiquibaseUtil;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Configuration
 public class LiquibaseConfiguration {
 

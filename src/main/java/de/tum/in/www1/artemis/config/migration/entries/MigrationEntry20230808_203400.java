@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Component
 public class MigrationEntry20230808_203400 extends MigrationEntry {
 

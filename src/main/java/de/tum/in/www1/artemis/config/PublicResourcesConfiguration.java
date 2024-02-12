@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
@@ -21,7 +23,7 @@ import tech.jhipster.config.JHipsterProperties;
 /**
  * Configures serving of static resources from /public from both the resources folder and the host file system.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Configuration
 public class PublicResourcesConfiguration implements WebMvcConfigurer {
 

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -15,7 +17,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
  * This configuration file provides functions to get the configured Docker Images for {@link ProgrammingLanguage ProgrammingLanguages}.
  */
 @ConfigurationProperties(prefix = "artemis.continuous-integration.build")
-@Profile("core")
+@Profile(PROFILE_CORE)
 public class ProgrammingLanguageConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingLanguageConfiguration.class);

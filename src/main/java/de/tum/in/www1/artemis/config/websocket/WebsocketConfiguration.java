@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.config.websocket;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.getExerciseIdFromNonPersonalExerciseResultDestination;
 import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.isNonPersonalExerciseResultDestination;
 import static de.tum.in.www1.artemis.web.websocket.localci.LocalCIWebsocketMessagingService.*;
@@ -60,7 +61,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.validation.InetSocketAddressValidator;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Configuration
 // See https://stackoverflow.com/a/34337731/3802758
 public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConfiguration {

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config.websocket;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.SimpMessageType;
@@ -8,7 +10,7 @@ import org.springframework.security.config.annotation.web.socket.AbstractSecurit
 
 import de.tum.in.www1.artemis.security.Role;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Configuration
 public class WebsocketSecurityConfiguration extends AbstractSecurityWebSocketMessageBrokerConfigurer {
 
