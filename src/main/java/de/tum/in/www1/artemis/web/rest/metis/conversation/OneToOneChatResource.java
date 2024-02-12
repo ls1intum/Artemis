@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.metis.conversation;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -24,7 +26,7 @@ import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationServic
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/courses")
 public class OneToOneChatResource extends ConversationManagementResource {

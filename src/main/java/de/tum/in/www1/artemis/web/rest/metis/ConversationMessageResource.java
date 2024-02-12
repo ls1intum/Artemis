@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.metis;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
@@ -36,7 +38,7 @@ import tech.jhipster.web.util.PaginationUtil;
 /**
  * REST controller for managing Message Posts.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class ConversationMessageResource {

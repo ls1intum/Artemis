@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.lecture;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -32,7 +34,7 @@ import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.errors.*;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class AttachmentUnitResource {

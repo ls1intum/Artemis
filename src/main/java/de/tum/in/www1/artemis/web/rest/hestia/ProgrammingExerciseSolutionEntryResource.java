@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.hestia;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -36,7 +38,7 @@ import tech.jhipster.web.util.HeaderUtil;
 /**
  * REST controller for managing {@link de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry}.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class ProgrammingExerciseSolutionEntryResource {

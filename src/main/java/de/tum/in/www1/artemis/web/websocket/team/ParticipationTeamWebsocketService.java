@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.websocket.team;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.security.Principal;
 import java.time.Instant;
 import java.util.List;
@@ -41,7 +43,7 @@ import de.tum.in.www1.artemis.web.websocket.dto.OnlineTeamStudentDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.SubmissionSyncPayload;
 
 @Controller
-@Profile("core")
+@Profile(PROFILE_CORE)
 public class ParticipationTeamWebsocketService {
 
     private static final Logger log = LoggerFactory.getLogger(ParticipationTeamWebsocketService.class);

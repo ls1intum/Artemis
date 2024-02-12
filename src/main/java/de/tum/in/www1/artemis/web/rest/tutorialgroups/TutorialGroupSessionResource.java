@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.interpretInTimeZone;
 
 import java.net.URI;
@@ -37,7 +38,7 @@ import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.errors.SessionOverlapsWithSessionException;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class TutorialGroupSessionResource {

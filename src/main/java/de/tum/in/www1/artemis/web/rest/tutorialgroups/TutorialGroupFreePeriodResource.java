@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.*;
 
 import java.net.URI;
@@ -29,7 +30,7 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupFreePeriodService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class TutorialGroupFreePeriodResource {

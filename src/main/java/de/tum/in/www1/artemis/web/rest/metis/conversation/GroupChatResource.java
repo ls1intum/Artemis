@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.metis.conversation;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.metis.conversation.ConversationSettings.MAX_GROUP_CHAT_PARTICIPANTS;
 import static de.tum.in.www1.artemis.service.metis.conversation.GroupChatService.GROUP_CHAT_ENTITY_NAME;
 
@@ -30,7 +31,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.GroupChatDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/courses")
 public class GroupChatResource extends ConversationManagementResource {

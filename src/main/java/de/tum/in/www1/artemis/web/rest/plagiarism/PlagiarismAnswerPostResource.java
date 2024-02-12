@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.plagiarism;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -18,7 +20,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 /**
  * REST controller for managing AnswerPost.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/core/")
 public class PlagiarismAnswerPostResource {

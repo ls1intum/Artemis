@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.admin;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -21,7 +23,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 /**
  * REST controller for administrating system notifications.
  */
-@Profile("admin")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/admin/")
 public class AdminSystemNotificationResource {

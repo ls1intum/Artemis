@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.hestia;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -22,7 +24,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGitDiffReportDTO;
 /**
  * REST controller for managing ProgrammingExerciseGitDiffReports and its entries.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class ProgrammingExerciseGitDiffReportResource {

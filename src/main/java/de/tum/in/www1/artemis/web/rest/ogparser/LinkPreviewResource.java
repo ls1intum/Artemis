@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.ogparser;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
@@ -13,7 +15,7 @@ import de.tum.in.www1.artemis.web.rest.dto.LinkPreviewDTO;
 /**
  * REST controller for Link Preview.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class LinkPreviewResource {

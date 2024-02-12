@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.security.Principal;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +39,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 /**
  * Executes requested actions on the test repository of a programming exercise. Only available to TAs, Instructors and Admins.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class TestRepositoryResource extends RepositoryResource {

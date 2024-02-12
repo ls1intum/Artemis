@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
  */
 @Profile("iris")
 @RestController
-@RequestMapping("api/iris/")
+@RequestMapping("api/")
 public class IrisModelsResource {
 
     private final IrisConnectorService irisConnectorService;

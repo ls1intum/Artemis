@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.websocket.team;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.*;
 
 import javax.annotation.Nullable;
@@ -14,7 +16,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.web.websocket.dto.TeamAssignmentPayload;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Controller
 public class TeamWebsocketService {
 

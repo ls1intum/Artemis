@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,7 +44,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Executes repository actions on repositories related to the participation id transmitted. Available to the owner of the participation, TAs/Instructors of the exercise and Admins.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class RepositoryProgrammingExerciseParticipationResource extends RepositoryResource {

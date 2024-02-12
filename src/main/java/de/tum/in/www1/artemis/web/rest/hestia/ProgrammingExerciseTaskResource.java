@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.hestia;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -22,7 +24,7 @@ import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 /**
  * REST controller for managing {@link de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask}.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class ProgrammingExerciseTaskResource {

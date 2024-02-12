@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.lecture;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -31,7 +33,7 @@ import de.tum.in.www1.artemis.web.rest.dto.OnlineResourceDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class OnlineUnitResource {

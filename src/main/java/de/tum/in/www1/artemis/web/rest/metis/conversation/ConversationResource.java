@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.metis.conversation;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -37,7 +39,7 @@ import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationUserDTO;
 import tech.jhipster.web.util.PaginationUtil;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/courses")
 public class ConversationResource extends ConversationManagementResource {

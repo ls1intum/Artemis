@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.push_notification;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
@@ -30,7 +32,7 @@ import io.jsonwebtoken.*;
 /**
  * Rest Controller for managing push notification device tokens for native clients.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/push_notification")
 public class PushNotificationResource {

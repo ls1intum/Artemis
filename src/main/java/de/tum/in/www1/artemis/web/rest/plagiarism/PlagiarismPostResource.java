@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.plagiarism;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -31,7 +33,7 @@ import tech.jhipster.web.util.PaginationUtil;
 /**
  * REST controller for managing Post.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/core/")
 public class PlagiarismPostResource {

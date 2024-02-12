@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.hestia;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -19,7 +21,7 @@ import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 /**
  * REST controller for managing ProgrammingExerciseTestwiseCoverageReports and its entries.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class CoverageReportResource {

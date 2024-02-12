@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.open;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -14,7 +16,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.service.SystemNotificationService;
 
 /** REST controller for public system notifications. */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/public/")
 public class PublicSystemNotificationResource {

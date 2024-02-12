@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 /**
  * REST controller for managing {@link IrisSettings}.
  */
-@Profile("admin & iris")
+@Profile("iris")
 @RestController
 @RequestMapping("api/admin/")
 public class AdminIrisSettingsResource {

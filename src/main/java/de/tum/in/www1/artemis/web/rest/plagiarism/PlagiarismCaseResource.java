@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.plagiarism;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -31,9 +33,9 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 /**
  * REST controller for managing Plagiarism Cases.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("ap")
+@RequestMapping("api/")
 public class PlagiarismCaseResource {
 
     private static final String ENTITY_NAME = "plagiarismCase";

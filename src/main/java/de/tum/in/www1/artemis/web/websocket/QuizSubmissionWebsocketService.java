@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.websocket;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.security.Principal;
 
 import javax.validation.Valid;
@@ -17,7 +19,7 @@ import de.tum.in.www1.artemis.service.QuizSubmissionService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
 @Controller
-@Profile("core")
+@Profile(PROFILE_CORE)
 public class QuizSubmissionWebsocketService {
 
     private final QuizSubmissionService quizSubmissionService;

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.open;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Optional;
 
 import javax.servlet.ServletException;
@@ -34,7 +36,7 @@ import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 /**
  * REST controller to authenticate users.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/public/")
 public class PublicUserJwtResource {

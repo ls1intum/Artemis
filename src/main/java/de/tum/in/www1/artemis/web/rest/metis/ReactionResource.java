@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.metis;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -19,7 +21,7 @@ import de.tum.in.www1.artemis.service.metis.ReactionService;
 /**
  * REST controller for Reaction on Postings.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class ReactionResource {

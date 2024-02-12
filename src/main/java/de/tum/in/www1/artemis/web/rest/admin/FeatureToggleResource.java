@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.admin;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 import java.util.Map;
 
@@ -15,7 +17,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 
-@Profile("admin")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/admin/")
 public class FeatureToggleResource {

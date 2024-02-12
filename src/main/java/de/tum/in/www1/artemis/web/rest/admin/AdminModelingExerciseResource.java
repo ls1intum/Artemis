@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.admin;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,7 +19,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 /**
  * REST controller for administrating ModelingExercise.
  */
-@Profile("admin")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/admin/")
 public class AdminModelingExerciseResource {
