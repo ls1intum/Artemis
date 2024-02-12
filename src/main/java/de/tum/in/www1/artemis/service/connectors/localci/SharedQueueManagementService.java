@@ -56,7 +56,7 @@ public class SharedQueueManagementService {
     }
 
     /**
-     * Initialize all hazelcast data structures used by the shared queue management service.
+     * Initialize relevant data from hazelcast
      */
     @PostConstruct
     public void init() {
