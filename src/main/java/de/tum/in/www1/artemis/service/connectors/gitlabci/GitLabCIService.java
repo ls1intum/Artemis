@@ -202,7 +202,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
         // When sending the build results back, the build plan key is used to identify the participation.
         // Therefore, we return the key here even though GitLab CI does not need it.
-        return generateBuildPlanId(targetProjectKey, targetPlanName);
+        return generateBuildPlanId(targetExercise.getProjectKey(), targetPlanName);
     }
 
     private String generateBuildPlanId(String projectKey, String planKey) {
