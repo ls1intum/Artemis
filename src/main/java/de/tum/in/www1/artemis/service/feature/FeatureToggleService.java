@@ -46,10 +46,7 @@ public class FeatureToggleService {
                 features.put(feature, true);
             }
         }
-    }
-
-    @PostConstruct
-    public void initScienceFeatureFromConfig() {
+        // init science feature from config
         if (!features.containsKey(Feature.Science)) {
             features.put(Feature.Science, scienceEnabledOnStart);
         }
