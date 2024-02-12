@@ -19,7 +19,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import tech.jhipster.async.ExceptionHandlingAsyncTaskExecutor;
 
-@Profile(PROFILE_CORE)
+@Profile({ PROFILE_CORE, "buildagent" })
 @Configuration
 @EnableAsync(proxyTargetClass = true)
 @EnableScheduling

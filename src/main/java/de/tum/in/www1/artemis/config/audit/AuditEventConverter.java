@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.domain.PersistentAuditEvent;
 
-@Profile(PROFILE_CORE)
+@Profile({ PROFILE_CORE, "buildagent" })
 @Component
 public class AuditEventConverter {
 
