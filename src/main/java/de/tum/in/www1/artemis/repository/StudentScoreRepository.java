@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.List;
@@ -20,7 +21,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Repository
 public interface StudentScoreRepository extends JpaRepository<StudentScore, Long> {
 

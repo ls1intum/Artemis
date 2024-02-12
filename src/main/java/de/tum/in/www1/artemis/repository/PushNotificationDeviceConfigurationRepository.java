@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 import java.util.Set;
 
@@ -19,7 +21,7 @@ import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceTyp
 /**
  * The Repository used for PushNotificationDeviceConfiguration
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Repository
 public interface PushNotificationDeviceConfigurationRepository extends JpaRepository<PushNotificationDeviceConfiguration, PushNotificationDeviceConfigurationId> {
 

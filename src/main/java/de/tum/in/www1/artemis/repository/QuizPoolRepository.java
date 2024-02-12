@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
@@ -13,7 +15,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 /**
  * Spring Data JPA repository for the QuizPool entity.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @SuppressWarnings("unused")
 @Repository
 public interface QuizPoolRepository extends JpaRepository<QuizPool, Long> {

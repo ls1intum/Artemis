@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -26,7 +28,7 @@ import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 /**
  * Spring Data repository for the StaticCodeAnalysisCategory entity.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Repository
 public interface StaticCodeAnalysisCategoryRepository extends JpaRepository<StaticCodeAnalysisCategory, Long> {
 

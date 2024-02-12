@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.security;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Locale;
 
 import org.slf4j.Logger;
@@ -16,7 +18,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 /**
  * Authenticate a user from the database.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Component("userDetailsService")
 public class DomainUserDetailsService implements UserDetailsService {
 

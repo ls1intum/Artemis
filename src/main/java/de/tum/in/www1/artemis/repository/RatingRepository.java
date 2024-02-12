@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -17,7 +19,7 @@ import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseRatingCount;
 /**
  * Spring Data JPA repository for the Rating entity.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Repository
 public interface RatingRepository extends JpaRepository<Rating, Long> {
 

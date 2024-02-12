@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.IsoFields;
@@ -26,7 +28,7 @@ import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 /**
  * Spring Data JPA repository for the statistics pages
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Repository
 public interface StatisticsRepository extends JpaRepository<User, Long> {
 

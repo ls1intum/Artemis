@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Collection;
 import java.util.Set;
 
@@ -14,7 +16,7 @@ import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 /**
  * Spring Data repository for the SubmissionPolicy entity.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Repository
 public interface SubmissionPolicyRepository extends JpaRepository<SubmissionPolicy, Long> {
 

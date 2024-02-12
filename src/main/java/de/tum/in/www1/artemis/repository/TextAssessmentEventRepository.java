@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.util.stream.Collectors.toMap;
 
 import java.util.List;
@@ -16,7 +17,7 @@ import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 /**
  * Spring Data repository for the TextAssessmentEvent entity.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Repository
 public interface TextAssessmentEventRepository extends JpaRepository<TextAssessmentEvent, Long> {
 

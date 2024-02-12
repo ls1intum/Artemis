@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Collection;
 import java.util.Set;
 
@@ -15,7 +17,7 @@ import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 /**
  * Spring Data JPA repository for the SubmittedAnswer entity.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Repository
 public interface SubmittedAnswerRepository extends JpaRepository<SubmittedAnswer, Long> {
 

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.security.jwt;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
@@ -27,7 +29,7 @@ import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import tech.jhipster.config.JHipsterProperties;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Component
 public class TokenProvider {
 
