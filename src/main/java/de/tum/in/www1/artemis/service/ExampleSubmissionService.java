@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -14,7 +16,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class ExampleSubmissionService {
 

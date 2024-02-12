@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
  */
 @Profile("lti")
 @RestController
-@RequestMapping("api/lti/")
+@RequestMapping("api/")
 public class LtiResource {
 
     private final LtiDeepLinkingService ltiDeepLinkingService;

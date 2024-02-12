@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -17,7 +19,7 @@ import de.tum.in.www1.artemis.service.user.UserService;
 /**
  * Rest controller for managing GuidedTourSetting
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class GuidedTourSettingsResource {

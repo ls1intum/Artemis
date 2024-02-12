@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import java.util.List;
@@ -27,7 +28,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
  * <p>
  * This services uses the participant scores tables for performance reason
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class ExerciseScoresChartService {
 

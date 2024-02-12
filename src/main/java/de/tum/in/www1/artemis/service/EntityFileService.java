@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
@@ -17,7 +19,7 @@ import org.springframework.context.annotation.Profile;
 /**
  * Service for handling file operations for entities.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class EntityFileService {
 

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 
 import java.io.IOException;
@@ -17,7 +18,7 @@ import de.tum.in.www1.artemis.service.PlantUmlService;
  * Created by Josias Montag on 14.12.16.
  */
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping(PlantUmlResource.Endpoints.ROOT)
 public class PlantUmlResource {

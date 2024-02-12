@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 
 import org.hibernate.Hibernate;
@@ -28,7 +30,7 @@ import io.swagger.annotations.ApiResponses;
 /**
  * REST controller for managing ModelingAssessment.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class ModelingAssessmentResource extends AssessmentResource {

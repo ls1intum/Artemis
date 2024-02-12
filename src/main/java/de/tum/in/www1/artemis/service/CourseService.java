@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.enumeration.ComplaintType.COMPLAINT;
 import static de.tum.in.www1.artemis.domain.enumeration.ComplaintType.MORE_FEEDBACK;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
@@ -65,7 +66,7 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 /**
  * Service Implementation for managing Course.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class CourseService {
 

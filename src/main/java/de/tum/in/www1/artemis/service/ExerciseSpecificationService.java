@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Predicate;
@@ -17,7 +19,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup_;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class ExerciseSpecificationService {
 

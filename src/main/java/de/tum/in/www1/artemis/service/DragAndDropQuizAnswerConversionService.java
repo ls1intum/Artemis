@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.awt.*;
 import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
@@ -28,7 +30,7 @@ import de.tum.in.www1.artemis.domain.quiz.DropLocation;
 /**
  * Service for converting a DragAndDropSubmittedAnswer to a PDF file displaying the submitted answer.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class DragAndDropQuizAnswerConversionService {
 

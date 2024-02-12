@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.FILE_ENDING_PATTERN;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.io.File;
 import java.net.URI;
@@ -42,7 +43,7 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 /**
  * REST controller for managing FileUploadExercise.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping(FileUploadExerciseResource.Endpoints.ROOT)
 public class FileUploadExerciseResource {
