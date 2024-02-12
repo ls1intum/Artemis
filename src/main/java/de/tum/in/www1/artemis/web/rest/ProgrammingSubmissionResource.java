@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -36,7 +38,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * REST controller for managing ProgrammingSubmission.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class ProgrammingSubmissionResource {

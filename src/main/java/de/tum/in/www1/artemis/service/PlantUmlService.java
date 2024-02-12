@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -18,7 +20,7 @@ import org.springframework.util.StringUtils;
 
 import net.sourceforge.plantuml.*;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class PlantUmlService {
 

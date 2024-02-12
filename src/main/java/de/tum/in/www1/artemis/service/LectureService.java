@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -18,7 +20,7 @@ import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class LectureService {
 

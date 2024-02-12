@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -31,7 +33,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * REST controller for managing TextSubmission.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class TextSubmissionResource extends AbstractSubmissionResource {

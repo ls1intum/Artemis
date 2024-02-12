@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.util.stream.Collectors.toSet;
 
 import java.util.*;
@@ -37,7 +38,7 @@ import io.swagger.annotations.ApiResponses;
 /**
  * REST controller for managing TextAssessment.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class TextAssessmentResource extends AssessmentResource {

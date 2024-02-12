@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Objects;
 import java.util.Set;
 
@@ -27,7 +29,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
  * created, therefore a POST mapping is missing. A DELETE mapping is also not necessary as those categories can only be
  * deactivated but not deleted.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class StaticCodeAnalysisResource {

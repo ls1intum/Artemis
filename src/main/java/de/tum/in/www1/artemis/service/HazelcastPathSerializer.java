@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.HAZELCAST_PATH_SERIALIZER_ID;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -10,7 +11,7 @@ import org.springframework.context.annotation.Profile;
 
 import com.hazelcast.nio.serialization.ByteArraySerializer;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 public class HazelcastPathSerializer implements ByteArraySerializer<Path> {
 
     @Override

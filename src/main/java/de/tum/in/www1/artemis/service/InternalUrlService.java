@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Optional;
@@ -14,7 +16,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public abstract class InternalUrlService {
 

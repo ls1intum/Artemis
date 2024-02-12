@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +37,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class ProgrammingExerciseParticipationResource {

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -14,7 +16,7 @@ import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class ParticipationAuthorizationCheckService {
 

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
 
@@ -55,7 +56,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 /**
  * REST controller for managing ProgrammingExercise.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping(ROOT)
 public class ProgrammingExerciseExportImportResource {

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -24,7 +26,7 @@ import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping(SubmissionPolicyResource.ROOT)
 public class SubmissionPolicyResource {

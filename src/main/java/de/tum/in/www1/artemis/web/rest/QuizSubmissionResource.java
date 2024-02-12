@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 
 import javax.validation.Valid;
@@ -38,7 +40,7 @@ import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 /**
  * REST controller for managing QuizSubmission.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class QuizSubmissionResource {

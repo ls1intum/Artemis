@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -50,7 +52,7 @@ import tech.jhipster.web.util.ResponseUtil;
  * <p>
  * Another option would be to have a specific JPA entity graph to handle this case.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class UserResource {

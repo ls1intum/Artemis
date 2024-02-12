@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Set;
 
 import javax.validation.constraints.NotNull;
@@ -22,7 +24,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
  * @see LectureUnit
  * @see Exercise
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class LearningObjectService {
 

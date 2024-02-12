@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import java.time.ZonedDateTime;
@@ -20,7 +21,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.dto.ScoreDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class ParticipantScoreService {
 

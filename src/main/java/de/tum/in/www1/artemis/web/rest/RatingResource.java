@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -29,7 +31,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
  * REST controller for managing Rating.
  */
 @Validated
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class RatingResource {

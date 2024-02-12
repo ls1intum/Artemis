@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.in.www1.artemis.web.rest.util.StringUtil.stripIllegalCharacters;
 
@@ -41,7 +42,7 @@ import de.tum.in.www1.artemis.web.websocket.team.TeamWebsocketService;
 /**
  * REST controller for managing Teams.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class TeamResource {

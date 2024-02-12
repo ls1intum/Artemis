@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -29,7 +31,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 /**
  * REST controller for managing Submission.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class SubmissionResource {
