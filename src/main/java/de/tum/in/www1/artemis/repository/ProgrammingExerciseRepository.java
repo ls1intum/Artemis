@@ -77,6 +77,10 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             "auxiliaryRepositories" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesById(Long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results",
+            "auxiliaryRepositories", "plagiarismDetectionConfig", "buildPlanConfiguration", "buildScript", "templateParticipation", "solutionParticipation" })
+    Optional<ProgrammingExercise> findForCreationById(Long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = "testCases")
     Optional<ProgrammingExercise> findWithTestCasesById(Long exerciseId);
 
@@ -636,6 +640,33 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             throws EntityNotFoundException {
         Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesById(programmingExerciseId);
         return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
+
+    /**
+     * Find a programming exercise by its id, with eagerly loaded objects required for the creation of a programming exercise.
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     * @throws EntityNotFoundException the programming exercise could not be found.
+     */
+    @NotNull
+    default ProgrammingExercise findForCreationByIdElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = findForCreationById(programmingExerciseId);
+        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
+
+    /**
+     * Saves the given programming exercise to the database.
+     * <p>
+     * When saving a programming exercise Hibernates returns an exercise with references to proxy objects.
+     * Thus, we need to load the objects referenced by the programming exercise again.
+     *
+     * @param exercise The programming exercise that should be saved.
+     * @return The saved programming exercise.
+     */
+    default ProgrammingExercise saveForCreation(ProgrammingExercise exercise) {
+        this.saveAndFlush(exercise);
+        return this.findForCreationByIdElseThrow(exercise.getId());
     }
 
     /**

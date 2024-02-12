@@ -9,6 +9,7 @@
             "notificationSettings": "Notifications",
             "notificationSettingsFilterInfo": "These settings also filter the notification sidebar",
             "scienceSettings": "Science",
+            "scienceSettingsFeatureDisabled": "The science feature is currently disabled. You can still edit your settings in case the feature gets enabled again.",
             "scienceSettingsInfo": "Help Artemis to get better!",
             "accountInformationPage": {
                 "registrationNumber": "Registration Number",

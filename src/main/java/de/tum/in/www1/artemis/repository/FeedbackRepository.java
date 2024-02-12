@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -50,7 +51,7 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
      * @param gradingCriteria The grading criteria belongs to exercise in a specific course
      * @return list including feedback entries which are associated with the grading instructions
      */
-    default List<Feedback> findFeedbackByExerciseGradingCriteria(List<GradingCriterion> gradingCriteria) {
+    default List<Feedback> findFeedbackByExerciseGradingCriteria(Set<GradingCriterion> gradingCriteria) {
         List<Long> gradingInstructionsIds = gradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream())
                 .map(GradingInstruction::getId).toList();
         return findFeedbackByGradingInstructionIds(gradingInstructionsIds);

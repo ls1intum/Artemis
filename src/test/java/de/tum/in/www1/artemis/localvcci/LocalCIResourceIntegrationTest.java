@@ -66,7 +66,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
 
     @AfterEach
     void clearDataStructures() {
-        sharedQueueProcessingService.addListener();
+        sharedQueueProcessingService.init();
         queuedJobs.clear();
         processingJobs.clear();
         buildAgentInformation.clear();

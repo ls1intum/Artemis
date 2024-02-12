@@ -45,6 +45,8 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 @Profile("localci")
 public class LocalCITriggerService implements ContinuousIntegrationTriggerService {
 
+    private static final Logger log = LoggerFactory.getLogger(LocalCITriggerService.class);
+
     private final HazelcastInstance hazelcastInstance;
 
     private final AeolusTemplateService aeolusTemplateService;
@@ -64,8 +66,6 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     private IQueue<LocalCIBuildJobQueueItem> queue;
 
     private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
-
-    private static final Logger log = LoggerFactory.getLogger(LocalCITriggerService.class);
 
     public LocalCITriggerService(HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
