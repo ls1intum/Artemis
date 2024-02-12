@@ -53,12 +53,13 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             FROM ProgrammingExerciseStudentParticipation p
                 LEFT JOIN FETCH p.results pr
                 LEFT JOIN FETCH p.submissions
-            WHERE p.id = :participationId AND (pr.assessmentType = 'AUTOMATIC'
+            WHERE p.id = :participationId AND ((pr.assessmentType = 'AUTOMATIC'
                         OR (pr.completionDate IS NOT NULL
                             AND (p.exercise.assessmentDueDate IS NULL
-                                OR p.exercise.assessmentDueDate < :#{#dateTime})))
+                                OR p.exercise.assessmentDueDate < :#{#dateTime}))) OR pr.id IS NULL)
              """)
-    Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndRelatedSubmissions(@Param("participationId") Long participationId);
+    Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndRelatedSubmissions(@Param("participationId") Long participationId,
+            @Param("dateTime") ZonedDateTime dateTime);
 
     @EntityGraph(type = LOAD, attributePaths = { "results", "exercise", "team.students" })
     List<ProgrammingExerciseStudentParticipation> findWithResultsAndExerciseAndTeamStudentsByBuildPlanId(String buildPlanId);
@@ -177,6 +178,10 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
 
     default Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(Long participationId) {
         return findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId, ZonedDateTime.now());
+    }
+
+    default Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndRelatedSubmissions(Long participationId) {
+        return findByIdWithAllResultsAndRelatedSubmissions(participationId, ZonedDateTime.now());
     }
 
     default ProgrammingExerciseStudentParticipation findWithTeamStudentsByIdElseThrow(Long participationId) {

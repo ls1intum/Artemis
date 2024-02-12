@@ -82,7 +82,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
     }
 
-    private static Stream<Arguments> argumentsForGetParticipationWithLatestResult() {
+    private static Stream<Arguments> argumentsForGetParticipationResults() {
         ZonedDateTime someDate = ZonedDateTime.now();
         ZonedDateTime futureDate = ZonedDateTime.now().plusDays(3);
         ZonedDateTime pastDate = ZonedDateTime.now().minusDays(1);
@@ -103,7 +103,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @MethodSource("argumentsForGetParticipationWithLatestResult")
+    @MethodSource("argumentsForGetParticipationResults")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetParticipationWithLatestResultAsAStudent(AssessmentType assessmentType, ZonedDateTime completionDate, ZonedDateTime assessmentDueDate,
             boolean expectLastCreatedResult) throws Exception {
@@ -123,7 +123,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @MethodSource("argumentsForGetParticipationWithLatestResult")
+    @MethodSource("argumentsForGetParticipationResults")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetParticipationWithLatestResult_multipleResultsAvailable(AssessmentType assessmentType, ZonedDateTime completionDate, ZonedDateTime assessmentDueDate,
             boolean expectLastCreatedResult) throws Exception {
@@ -175,6 +175,86 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
                 TEST_PREFIX + "student1");
         request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.FORBIDDEN,
                 ProgrammingExerciseStudentParticipation.class);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @MethodSource("argumentsForGetParticipationResults")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetParticipationWithAllResults(AssessmentType assessmentType, ZonedDateTime completionDate, ZonedDateTime assessmentDueDate, boolean expectLastCreatedResult)
+            throws Exception {
+        // Add an automatic result first
+        var firstResult = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
+        programmingExercise.setAssessmentDueDate(assessmentDueDate);
+        programmingExerciseRepository.save(programmingExercise);
+        // Add another automatic result
+        var secondResult = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
+        programmingExercise.setAssessmentDueDate(assessmentDueDate);
+        programmingExerciseRepository.save(programmingExercise);
+        // Add a parameterized third result
+        var thirdResult = participationUtilService.addResultToParticipation(assessmentType, completionDate, programmingExerciseParticipation);
+        StudentParticipation participation = (StudentParticipation) thirdResult.getParticipation();
+
+        // Expect the request to always be ok because it should at least return the first automatic result
+        var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK,
+                ProgrammingExerciseStudentParticipation.class);
+
+        if (expectLastCreatedResult) {
+            assertThat(requestedParticipation.getResults()).hasSize(3);
+        }
+        else {
+            assertThat(requestedParticipation.getResults()).hasSize(2);
+        }
+        for (var result : requestedParticipation.getResults()) {
+            assertThat(result.getFeedbacks()).noneMatch(Feedback::isInvisible);
+            assertThat(result.getFeedbacks()).noneMatch(Feedback::isAfterDueDate);
+        }
+        firstResult.filterSensitiveInformation();
+        firstResult.filterSensitiveFeedbacks(true);
+        assertThat(requestedParticipation.getResults()).contains(firstResult);
+        secondResult.filterSensitiveInformation();
+        secondResult.filterSensitiveFeedbacks(true);
+        assertThat(requestedParticipation.getResults()).contains(secondResult);
+
+        // Depending on the parameters we expect to get the third result too
+        if (expectLastCreatedResult) {
+            thirdResult.filterSensitiveInformation();
+            thirdResult.filterSensitiveFeedbacks(true);
+            assertThat(requestedParticipation.getResults()).contains(thirdResult);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetParticipationWithAllResultsAsAnInstructor_noCompletionDate_notFound() throws Exception {
+        var result = addStudentParticipationWithResult(AssessmentType.SEMI_AUTOMATIC, null);
+        StudentParticipation participation = (StudentParticipation) result.getParticipation();
+        request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.NOT_FOUND, ProgrammingExerciseStudentParticipation.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
+    void testGetParticipationWithAllResults_cannotAccessParticipation1() throws Exception {
+        // student4 should have no connection to student1's participation and should thus receive a Forbidden HTTP status.
+        var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
+        StudentParticipation participation = (StudentParticipation) result.getParticipation();
+        request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.FORBIDDEN, ProgrammingExerciseStudentParticipation.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
+    void testGetParticipationWithAllResults_cannotAccessParticipation2() throws Exception {
+        // student4 should have no connection to student1's participation and should thus receive a Forbidden HTTP status.
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student1");
+        request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.FORBIDDEN, ProgrammingExerciseStudentParticipation.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetAllResultsAsTutor() throws Exception {
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student1");
+        request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK, Result.class);
     }
 
     @Test
