@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository.metis;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.repository.specs.MessageSpecs.*;
 
 import java.util.List;
@@ -23,7 +24,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data repository for the Message (Post) entity.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Repository
 public interface ConversationMessageRepository extends JpaRepository<Post, Long>, JpaSpecificationExecutor<Post> {
 

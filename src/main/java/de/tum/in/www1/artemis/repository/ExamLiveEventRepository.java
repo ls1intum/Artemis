@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.*;
 
 import javax.transaction.Transactional;
@@ -15,7 +17,7 @@ import de.tum.in.www1.artemis.domain.exam.event.ExamLiveEvent;
 /**
  * Spring Data JPA repository for the ExamLiveEvent entity.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Repository
 public interface ExamLiveEventRepository extends JpaRepository<ExamLiveEvent, Long> {
 

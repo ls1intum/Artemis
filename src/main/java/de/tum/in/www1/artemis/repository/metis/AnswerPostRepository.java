@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository.metis;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 
 import javax.validation.constraints.NotNull;
@@ -14,7 +16,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data repository for the AnswerPost entity.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Repository
 public interface AnswerPostRepository extends JpaRepository<AnswerPost, Long> {
 

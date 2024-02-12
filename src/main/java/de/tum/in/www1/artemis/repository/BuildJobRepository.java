@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -12,7 +14,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.DockerImageBuild;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Repository
 public interface BuildJobRepository extends JpaRepository<BuildJob, Long> {
 

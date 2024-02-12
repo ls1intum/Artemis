@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 import java.util.Set;
 
@@ -15,7 +17,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for a data export entity.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Repository
 public interface DataExportRepository extends JpaRepository<DataExport, Long> {
 

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository.hestia;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Optional;
 import java.util.Set;
 
@@ -17,7 +19,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data repository for the ExerciseHint entity.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Repository
 public interface ExerciseHintRepository extends JpaRepository<ExerciseHint, Long> {
 

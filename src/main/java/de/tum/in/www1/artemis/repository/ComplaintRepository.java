@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.List;
@@ -23,7 +24,7 @@ import de.tum.in.www1.artemis.domain.leaderboard.tutor.*;
 /**
  * Spring Data JPA repository for the Complaint entity.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Repository
 public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
 

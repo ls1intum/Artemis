@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -18,7 +20,7 @@ import de.tum.in.www1.artemis.domain.PersistentAuditEvent;
 /**
  * An implementation of Spring Boot's {@link AuditEventRepository}.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Repository
 public class CustomAuditEventRepository implements AuditEventRepository {
 

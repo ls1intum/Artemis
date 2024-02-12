@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
@@ -14,7 +16,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the Bonus entity
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Repository
 public interface BonusRepository extends JpaRepository<Bonus, Long> {
 
