@@ -6,6 +6,9 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ScienceService } from 'app/shared/science/science.service';
+import { MockScienceService } from '../../../helpers/mocks/service/mock-science-service';
+import { ScienceEventType } from 'app/shared/science/science.model';
 
 describe('TextUnitFormComponent', () => {
     const exampleName = 'Test';
@@ -14,22 +17,27 @@ describe('TextUnitFormComponent', () => {
     let textUnitComponentFixture: ComponentFixture<TextUnitComponent>;
     let textUnitComponent: TextUnitComponent;
     let textUnit: TextUnit;
+    let scienceService: ScienceService;
+    let logEventStub: jest.SpyInstance;
 
     beforeEach(() => {
         textUnit = new TextUnit();
+        textUnit.id = 1;
         textUnit.name = exampleName;
         textUnit.content = exampleMarkdown;
 
         TestBed.configureTestingModule({
             imports: [MockDirective(NgbTooltip), MockDirective(NgbCollapse)],
             declarations: [TextUnitComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
-            schemas: [],
+            providers: [{ provide: ScienceService, useClass: MockScienceService }],
         })
             .compileComponents()
             .then(() => {
                 textUnitComponentFixture = TestBed.createComponent(TextUnitComponent);
                 textUnitComponent = textUnitComponentFixture.componentInstance;
                 textUnitComponent.textUnit = textUnit;
+                scienceService = TestBed.inject(ScienceService);
+                logEventStub = jest.spyOn(scienceService, 'logEvent');
             });
     });
 
@@ -104,4 +112,11 @@ describe('TextUnitFormComponent', () => {
             textUnitComponent.handleClick(new Event('click'), false);
         });
     }, 1000);
+
+    it('should log event on open', () => {
+        textUnitComponent.isCollapsed = true;
+        textUnitComponentFixture.detectChanges(); // ngInit
+        textUnitComponent.handleCollapse(new Event('click'));
+        expect(logEventStub).toHaveBeenCalledExactlyOnceWith(ScienceEventType.LECTURE__OPEN_UNIT, textUnit.id!);
+    });
 });
