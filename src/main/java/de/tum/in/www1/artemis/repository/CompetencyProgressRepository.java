@@ -85,7 +85,7 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
                 AND cp.progress >= :progress
                 AND cp.confidence >= :confidence
             """)
-    Long countByCompetencyAndProgressAndConfidenceGreaterThanEqual(@Param("competencyId") long competencyId, @Param("progress") Double progress,
-            @Param("confidence") Double confidence);
+    Long countByCompetencyAndProgressAndConfidenceGreaterThanEqual(@Param("competencyId") long competencyId, @Param("progress") double progress,
+            @Param("confidence") double confidence);
 
 }
