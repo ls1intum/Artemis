@@ -52,8 +52,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             SELECT DISTINCT p
             FROM ProgrammingExerciseStudentParticipation p
                 LEFT JOIN FETCH p.results pr
-                LEFT JOIN FETCH pr.feedbacks f
-                LEFT JOIN FETCH f.testCase
                 LEFT JOIN FETCH p.submissions
             WHERE p.id = :participationId
              """)

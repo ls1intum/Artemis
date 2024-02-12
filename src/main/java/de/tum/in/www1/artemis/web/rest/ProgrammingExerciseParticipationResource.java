@@ -260,7 +260,7 @@ public class ProgrammingExerciseParticipationResource {
      */
     @GetMapping("programming-exercise-participations/{participationId}/commit-history")
     @EnforceAtLeastStudent
-    List<CommitInfoDTO> getCommitHistoryForParticipationRepo(@PathVariable long participationId) {
+    public List<CommitInfoDTO> getCommitHistoryForParticipationRepo(@PathVariable long participationId) {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
         return programmingExerciseParticipationService.getCommitInfos(participation);

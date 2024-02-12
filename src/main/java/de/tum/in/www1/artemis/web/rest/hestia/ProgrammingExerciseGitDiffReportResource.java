@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGitDiffReportDTO;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
  * REST controller for managing ProgrammingExerciseGitDiffReports and its entries.
@@ -38,6 +39,8 @@ public class ProgrammingExerciseGitDiffReportResource {
     private final ProgrammingSubmissionRepository submissionRepository;
 
     private final ParticipationAuthorizationCheckService participationAuthCheckService;
+
+    private static final String ENTITY_NAME = "programmingExerciseGitDiffReportEntry";
 
     public ProgrammingExerciseGitDiffReportResource(AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseGitDiffReportService gitDiffReportService, ProgrammingSubmissionRepository submissionRepository,
@@ -147,7 +150,8 @@ public class ProgrammingExerciseGitDiffReportResource {
         // would support that,
         // it would lead to confusing results displayed in the client because the client interface hasn't been designed for this use case.
         if (!submission1.getParticipation().getExercise().getId().equals(exerciseId) || !submission2.getParticipation().getExercise().getId().equals(exerciseId)) {
-            throw new IllegalArgumentException("The submissions do not belong to the exercise");
+            throw new ConflictException("A git diff report entry can only be retrieved if the submissions exercise id match with the exercise id", ENTITY_NAME,
+                    "exerciseIdsMismatch");
         }
         participationAuthCheckService.checkCanAccessParticipationElseThrow(submission1.getParticipation());
         participationAuthCheckService.checkCanAccessParticipationElseThrow(submission2.getParticipation());
@@ -174,7 +178,8 @@ public class ProgrammingExerciseGitDiffReportResource {
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         var submission = submissionRepository.findById(submissionId1).orElseThrow();
         if (!submission.getParticipation().getExercise().getId().equals(exerciseId)) {
-            throw new IllegalArgumentException("The submission does not belong to the exercise");
+            throw new ConflictException("A git diff report entry can only be retrieved if the submissions exercise id matches with the exercise id", ENTITY_NAME,
+                    "exerciseIdsMismatch");
         }
         participationAuthCheckService.checkCanAccessParticipationElseThrow(submission.getParticipation());
         var report = gitDiffReportService.createReportForSubmissionWithTemplate(exercise, submission);
