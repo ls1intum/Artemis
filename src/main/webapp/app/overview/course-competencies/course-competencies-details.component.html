@@ -13,14 +13,12 @@
             <div class="row align-items-center">
                 <div class="general-info col">
                     <h3 class="mb-0">
-                        @if (competency.taxonomy) {
-                            <fa-icon
-                                [icon]="getIcon(competency.taxonomy)"
-                                [fixedWidth]="true"
-                                [ngbTooltip]="'artemisApp.competency.taxonomies.' + competency.taxonomy | artemisTranslate"
-                                container="body"
-                            ></fa-icon>
-                        }
+                        <fa-icon
+                            [icon]="getIcon(competency.taxonomy)"
+                            [fixedWidth]="true"
+                            [ngbTooltip]="'artemisApp.competency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
+                            container="body"
+                        ></fa-icon>
                         <span>{{ competency!.title }}</span>
                         @if (isMastered) {
                             <span class="badge text-white text-bg-success" jhiTranslate="artemisApp.competency.mastered">Mastered</span>

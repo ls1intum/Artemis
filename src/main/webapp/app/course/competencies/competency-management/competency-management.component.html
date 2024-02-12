@@ -178,12 +178,10 @@
                                 </td>
                                 <td class="markdown-preview" [innerHTML]="competency.description | htmlForMarkdown"></td>
                                 <td>
-                                    @if (competency.taxonomy) {
-                                        <div>
-                                            <fa-icon [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" container="body"></fa-icon>
-                                            {{ 'artemisApp.competency.taxonomies.' + competency.taxonomy | artemisTranslate }}
-                                        </div>
-                                    }
+                                    <div>
+                                        <fa-icon [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" container="body"></fa-icon>
+                                        {{ 'artemisApp.competency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate }}
+                                    </div>
                                 </td>
                                 <td>
                                     {{ competency.softDueDate | artemisDate }}
@@ -254,12 +252,10 @@
                                 </td>
                                 <td class="markdown-preview" [innerHTML]="prerequisite.description | htmlForMarkdown"></td>
                                 <td>
-                                    @if (prerequisite.taxonomy) {
-                                        <div>
-                                            <fa-icon [icon]="getIcon(prerequisite.taxonomy)" [fixedWidth]="true" container="body"></fa-icon>
-                                            {{ 'artemisApp.competency.taxonomies.' + prerequisite.taxonomy | artemisTranslate }}
-                                        </div>
-                                    }
+                                    <div>
+                                        <fa-icon [icon]="getIcon(prerequisite.taxonomy)" [fixedWidth]="true" container="body"></fa-icon>
+                                        {{ 'artemisApp.competency.taxonomies.' + (prerequisite.taxonomy ?? 'none') | artemisTranslate }}
+                                    </div>
                                 </td>
                                 <td>
                                     @if (prerequisite.course) {

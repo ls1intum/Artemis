@@ -28,7 +28,7 @@
                 "ANALYZE": "Analysieren",
                 "EVALUATE": "Evaluieren",
                 "CREATE": "Erstellen",
-                "undefined": ""
+                "none": "Keine Taxonomie"
             },
             "keywords": {
                 "REMEMBER": "definieren, duplizieren, auflisten, notieren, wiederholen, erkennen, reproduzieren, benennen",

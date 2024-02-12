@@ -28,7 +28,7 @@
                 "ANALYZE": "Analyze",
                 "EVALUATE": "Evaluate",
                 "CREATE": "Create",
-                "undefined": ""
+                "none": "No Taxonomy"
             },
             "keywords": {
                 "REMEMBER": "define, duplicate, list, note, repeat, recognize, reproduce, name",

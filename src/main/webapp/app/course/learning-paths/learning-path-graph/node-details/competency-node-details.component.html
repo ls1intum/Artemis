@@ -2,14 +2,12 @@
     <div class="row">
         <div class="col-9">
             <h3 class="mb-0">
-                @if (competency.taxonomy) {
-                    <fa-icon
-                        [icon]="getIcon(competency.taxonomy)"
-                        [fixedWidth]="true"
-                        [ngbTooltip]="'artemisApp.competency.taxonomies.' + competency.taxonomy | artemisTranslate"
-                        container="body"
-                    ></fa-icon>
-                }
+                <fa-icon
+                    [icon]="getIcon(competency.taxonomy)"
+                    [fixedWidth]="true"
+                    [ngbTooltip]="'artemisApp.competency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
+                    container="body"
+                ></fa-icon>
                 <span>{{ competency.title }}</span>
                 @if (this.mastery >= 100) {
                     <span class="badge text-white text-bg-success" jhiTranslate="artemisApp.competency.mastered">Mastered</span>
