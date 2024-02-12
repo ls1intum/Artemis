@@ -6,6 +6,7 @@ import org.springframework.core.env.Environment;
 import de.tum.in.www1.artemis.aop.logging.LoggingAspect;
 import tech.jhipster.config.JHipsterConstants;
 
+@Profile(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)
 @Configuration
 @EnableAspectJAutoProxy
 public class LoggingAspectConfiguration {

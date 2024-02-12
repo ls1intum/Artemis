@@ -19,10 +19,14 @@ import org.eclipse.jgit.api.Git;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.slf4j.Logger;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.stereotype.*;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.tngtech.archunit.base.DescribedPredicate;
@@ -171,6 +175,15 @@ class ArchitectureTest extends AbstractArchitectureTest {
         notUseHazelcastInConstructor.check(allClasses);
     }
 
+    @Test
+    void ensureSpringComponentsAreProfileAnnotated() {
+        ArchRule rule = classes().that().areAnnotatedWith(Controller.class).or().areAnnotatedWith(RestController.class).or().areAnnotatedWith(Repository.class).or()
+                .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class).should(beProfileAnnotated())
+                .because("we want to be able to exclude these classes from application startup by specifying profiles");
+
+        rule.check(productionClasses);
+    }
+
     // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes
 
     private DescribedPredicate<? super JavaAnnotation<?>> simpleNameAnnotation(String name) {
@@ -212,6 +225,20 @@ class ArchitectureTest extends AbstractArchitectureTest {
                         .allMatch(annotations -> annotations.stream().anyMatch(annotationPredicate));
                 if (!satisfied) {
                     events.add(violated(item, String.format("Method %s has parameter violating %s", item.getFullName(), annotationPredicate.getDescription())));
+                }
+            }
+        };
+    }
+
+    private static ArchCondition<JavaClass> beProfileAnnotated() {
+        return new ArchCondition<JavaClass>("be annotated with @Profile") {
+
+            @Override
+            public void check(JavaClass item, ConditionEvents events) {
+                boolean hasProfileAnnotation = item.isAnnotatedWith(Profile.class);
+                if (!hasProfileAnnotation) {
+                    String message = String.format("Class %s is not annotated with @Profile", item.getFullName());
+                    events.add(SimpleConditionEvent.violated(item, message));
                 }
             }
         };

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static tech.jhipster.config.logging.LoggingUtils.*;
 
 import java.util.HashMap;
@@ -8,6 +9,7 @@ import java.util.Map;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,6 +20,7 @@ import tech.jhipster.config.JHipsterProperties;
 /*
  * Configures the console and Logstash log appender from the app properties
  */
+@Profile({ PROFILE_CORE, "buildagent" })
 @Configuration
 public class LoggingConfiguration {
 

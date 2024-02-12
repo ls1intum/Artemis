@@ -20,9 +20,9 @@ import tech.jhipster.config.metric.JHipsterMetricsEndpoint;
  * CustomMetricsExtensionConfiguration.
  * Configuration for custom Artemis metrics.
  */
-@Profile(PROFILE_CORE)
 public class CustomMetricsExtensionConfiguration {
 
+    @Profile(PROFILE_CORE)
     @Configuration
     @ConditionalOnClass(Timed.class)
     @AutoConfigureAfter(JHipsterMetricsEndpointConfiguration.class)

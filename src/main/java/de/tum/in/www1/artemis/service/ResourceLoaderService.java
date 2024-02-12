@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -18,6 +20,7 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternResolver;
@@ -27,6 +30,7 @@ import org.springframework.stereotype.Service;
 /**
  * Service class to load resources from the file system (if possible) and the classpath (as fallback).
  */
+@Profile({ PROFILE_CORE, "buildagent" })
 @Service
 public class ResourceLoaderService {
 

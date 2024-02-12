@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,6 +17,7 @@ import org.apache.commons.compress.utils.FileNameUtils;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import net.lingala.zip4j.ZipFile;
@@ -22,6 +25,7 @@ import net.lingala.zip4j.ZipFile;
 /**
  * A service class to create zip files
  */
+@Profile({ PROFILE_CORE, "buildagent" })
 @Service
 public class ZipFileService {
 
