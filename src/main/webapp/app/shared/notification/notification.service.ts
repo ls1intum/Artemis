@@ -50,7 +50,7 @@ import { NotificationSettingsService } from 'app/shared/user-settings/notificati
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
-import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 const notificationsPerPage = 25;
 
@@ -556,7 +556,7 @@ export class NotificationService {
 
     private shouldNotify(postDTO: MetisPostDTO, userId: number | undefined) {
         if (
-            !getAsChannelDto(postDTO.post.conversation)?.isCourseWide ||
+            !getAsChannelDTO(postDTO.post.conversation)?.isCourseWide ||
             postDTO.action !== MetisPostAction.UPDATE ||
             !userId ||
             postDTO.notification?.title === MENTIONED_IN_MESSAGE_TITLE
