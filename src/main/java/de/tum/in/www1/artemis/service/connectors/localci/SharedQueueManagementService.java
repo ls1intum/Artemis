@@ -8,6 +8,7 @@ import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.collection.IQueue;
@@ -56,7 +57,7 @@ public class SharedQueueManagementService {
     }
 
     /**
-     * Initialize all hazelcast data structures used by the shared queue management service.
+     * Initialize relevant data from hazelcast
      */
     @PostConstruct
     public void init() {
@@ -66,15 +67,16 @@ public class SharedQueueManagementService {
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
         this.canceledBuildJobsTopic = hazelcastInstance.getTopic("canceledBuildJobsTopic");
         this.dockerImageCleanupInfo = this.hazelcastInstance.getMap("dockerImageCleanupInfo");
-        pushDockerImageCleanupInfo();
+        this.dockerImageCleanupInfo = this.hazelcastInstance.getMap("dockerImageCleanupInfo");
     }
 
     /**
-     * Pushes the last build dates for all docker images to the hazelcast map dockerImageCleanupInfo.
+     * Pushes the last build dates for all docker images to the hazelcast map dockerImageCleanupInfo
      */
+    @Scheduled(fixedRate = 90000, initialDelay = Long.MAX_VALUE)
     public void pushDockerImageCleanupInfo() {
+        dockerImageCleanupInfo.clear();
         Set<DockerImageBuild> lastBuildDatesForDockerImages = buildJobRepository.findAllLastBuildDatesForDockerImages();
-
         for (DockerImageBuild dockerImageBuild : lastBuildDatesForDockerImages) {
             dockerImageCleanupInfo.put(dockerImageBuild.dockerImage(), dockerImageBuild.lastBuildCompletionDate());
         }
