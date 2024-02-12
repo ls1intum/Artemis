@@ -17,7 +17,7 @@
                             <fa-icon
                                 [icon]="getIcon(competency.taxonomy)"
                                 [fixedWidth]="true"
-                                [ngbTooltip]="getIconTooltip(competency.taxonomy) | artemisTranslate"
+                                [ngbTooltip]="'artemisApp.competency.taxonomies.' + competency.taxonomy | artemisTranslate"
                                 container="body"
                             ></fa-icon>
                         }

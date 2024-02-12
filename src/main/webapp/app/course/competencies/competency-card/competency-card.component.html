@@ -10,7 +10,12 @@
     }
     <div class="col-auto d-none d-sm-block">
         <a class="exercise-row-icon">
-            <fa-icon [icon]="getIcon(competency.taxonomy)" size="2x" [ngbTooltip]="getIconTooltip(competency.taxonomy) | artemisTranslate" container="body"></fa-icon>
+            <fa-icon
+                [icon]="getIcon(competency.taxonomy)"
+                size="2x"
+                [ngbTooltip]="'artemisApp.competency.taxonomies' + competency.taxonomy | artemisTranslate"
+                container="body"
+            ></fa-icon>
         </a>
     </div>
     <div class="col">

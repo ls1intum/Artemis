@@ -27,7 +27,8 @@
                 "APPLY": "Apply",
                 "ANALYZE": "Analyze",
                 "EVALUATE": "Evaluate",
-                "CREATE": "Create"
+                "CREATE": "Create",
+                "undefined": ""
             },
             "keywords": {
                 "REMEMBER": "define, duplicate, list, note, repeat, recognize, reproduce, name",

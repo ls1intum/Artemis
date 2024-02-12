@@ -27,7 +27,8 @@
                 "APPLY": "Anwenden",
                 "ANALYZE": "Analysieren",
                 "EVALUATE": "Evaluieren",
-                "CREATE": "Erstellen"
+                "CREATE": "Erstellen",
+                "undefined": ""
             },
             "keywords": {
                 "REMEMBER": "definieren, duplizieren, auflisten, notieren, wiederholen, erkennen, reproduzieren, benennen",

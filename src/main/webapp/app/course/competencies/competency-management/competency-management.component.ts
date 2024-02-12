@@ -11,7 +11,6 @@ import {
     CourseCompetencyProgress,
     dtoToCompetencyRelation,
     getIcon,
-    getIconTooltip,
 } from 'app/entities/competency.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, finalize, map, switchMap } from 'rxjs/operators';
@@ -53,7 +52,6 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     update$: Subject<boolean> = new Subject<boolean>();
 
     readonly getIcon = getIcon;
-    readonly getIconTooltip = getIconTooltip;
     readonly documentationType: DocumentationType = 'Competencies';
 
     // Icons

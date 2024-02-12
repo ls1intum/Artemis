@@ -118,23 +118,6 @@ export function getIcon(competencyTaxonomy?: CompetencyTaxonomy): IconProp {
     return icons[competencyTaxonomy] as IconProp;
 }
 
-export function getIconTooltip(competencyTaxonomy?: CompetencyTaxonomy): string {
-    if (!competencyTaxonomy) {
-        return '';
-    }
-
-    const tooltips = {
-        [CompetencyTaxonomy.REMEMBER]: 'artemisApp.competency.taxonomies.REMEMBER',
-        [CompetencyTaxonomy.UNDERSTAND]: 'artemisApp.competency.taxonomies.UNDERSTAND',
-        [CompetencyTaxonomy.APPLY]: 'artemisApp.competency.taxonomies.APPLY',
-        [CompetencyTaxonomy.ANALYZE]: 'artemisApp.competency.taxonomies.ANALYZE',
-        [CompetencyTaxonomy.EVALUATE]: 'artemisApp.competency.taxonomies.EVALUATE',
-        [CompetencyTaxonomy.CREATE]: 'artemisApp.competency.taxonomies.CREATE',
-    };
-
-    return tooltips[competencyTaxonomy];
-}
-
 export function getProgress(competencyProgress: CompetencyProgress) {
     return Math.round(competencyProgress?.progress ?? 0);
 }
