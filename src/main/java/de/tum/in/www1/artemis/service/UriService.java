@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -11,7 +13,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class UriService {
 

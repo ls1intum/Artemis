@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -24,7 +26,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.StudentsAppearMultipleTimesException;
 import de.tum.in.www1.artemis.web.rest.errors.StudentsNotFoundException;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class TeamService {
 

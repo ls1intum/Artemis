@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
@@ -14,7 +16,7 @@ import org.springframework.stereotype.Service;
 /**
  * This service sends out websocket messages.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class WebsocketMessagingService {
 

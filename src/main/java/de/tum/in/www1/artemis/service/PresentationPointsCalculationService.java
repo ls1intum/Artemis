@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 import static java.util.stream.Collectors.toSet;
 
@@ -18,7 +19,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ScoreDTO;
 /**
  * Service for calculating the presentation points for a course or student.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class PresentationPointsCalculationService {
 

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,7 +34,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * This service contains the functions to manage QuizPool entity.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQuestionsGenerator {
 

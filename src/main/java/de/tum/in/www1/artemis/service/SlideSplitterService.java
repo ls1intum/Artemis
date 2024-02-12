@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -29,7 +31,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 /**
  * Service Implementation for managing the split of AttachmentUnit into single slides and save them as PNG.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class SlideSplitterService {
 

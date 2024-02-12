@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.hibernate.Hibernate.isInitialized;
 
 import java.util.List;
@@ -18,7 +19,7 @@ import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class TextAssessmentService extends AssessmentService {
 

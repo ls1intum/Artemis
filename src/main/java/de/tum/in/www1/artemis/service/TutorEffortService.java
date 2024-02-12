@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.lang.Math.toIntExact;
 import static java.util.stream.Collectors.groupingBy;
 
@@ -16,7 +17,7 @@ import de.tum.in.www1.artemis.repository.TextAssessmentEventRepository;
 /**
  * Contains business logic needed to calculate tutor efforts.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class TutorEffortService {
 

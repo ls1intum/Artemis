@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
@@ -16,7 +18,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class QuizMessagingService {
 

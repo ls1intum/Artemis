@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -11,7 +13,7 @@ import de.tum.in.www1.artemis.repository.SystemNotificationRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class SystemNotificationService {
 

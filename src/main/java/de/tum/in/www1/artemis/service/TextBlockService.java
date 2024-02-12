@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.lang.Integer.compare;
 
 import java.text.BreakIterator;
@@ -12,7 +13,7 @@ import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class TextBlockService {
 

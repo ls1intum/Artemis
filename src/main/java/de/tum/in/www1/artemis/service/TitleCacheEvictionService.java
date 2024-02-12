@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import javax.persistence.EntityManagerFactory;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -27,7 +29,7 @@ import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
  * Listens to Hibernate events and invalidates the cached titles of an entity if the title changed.
  * This is used in endpoints that return only the title of an entity which are consumed by breadcrumbs in the client.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class TitleCacheEvictionService implements PostUpdateEventListener, PostDeleteEventListener {
 

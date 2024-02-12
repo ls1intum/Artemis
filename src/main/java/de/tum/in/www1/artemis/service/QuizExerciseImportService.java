@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.*;
@@ -17,7 +19,7 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class QuizExerciseImportService extends ExerciseImportService {
 
