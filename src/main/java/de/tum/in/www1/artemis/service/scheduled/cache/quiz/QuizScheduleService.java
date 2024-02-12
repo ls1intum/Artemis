@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
+import javax.annotation.PostConstruct;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
@@ -55,10 +56,6 @@ public class QuizScheduleService {
 
     private static final String HAZELCAST_PROCESS_CACHE_HANDLER = QuizProcessCacheTask.HAZELCAST_PROCESS_CACHE_TASK + "-handler";
 
-    private final IScheduledExecutorService threadPoolTaskScheduler;
-
-    private final IAtomicReference<ScheduledTaskHandler> scheduledProcessQuizSubmissions;
-
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final UserRepository userRepository;
@@ -71,11 +68,17 @@ public class QuizScheduleService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final QuizCache quizCache;
+    private final HazelcastInstance hazelcastInstance;
 
     private final QuizExerciseRepository quizExerciseRepository;
 
     private final Optional<LtiNewResultService> ltiNewResultService;
+
+    private QuizCache quizCache;
+
+    private IScheduledExecutorService threadPoolTaskScheduler;
+
+    private IAtomicReference<ScheduledTaskHandler> scheduledProcessQuizSubmissions;
 
     private final TeamRepository teamRepository;
 
@@ -90,11 +93,16 @@ public class QuizScheduleService {
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizMessagingService = quizMessagingService;
         this.quizStatisticService = quizStatisticService;
+        this.ltiNewResultService = ltiNewResultService;
+        this.hazelcastInstance = hazelcastInstance;
+        this.teamRepository = teamRepository;
+    }
+
+    @PostConstruct
+    public void init() {
         this.scheduledProcessQuizSubmissions = hazelcastInstance.getCPSubsystem().getAtomicReference(HAZELCAST_PROCESS_CACHE_HANDLER);
         this.threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_QUIZ_SCHEDULER);
         this.quizCache = new QuizCache(hazelcastInstance);
-        this.ltiNewResultService = ltiNewResultService;
-        this.teamRepository = teamRepository;
     }
 
     /**

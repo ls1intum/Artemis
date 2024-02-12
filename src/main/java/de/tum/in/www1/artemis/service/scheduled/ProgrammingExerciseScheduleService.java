@@ -960,6 +960,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         }
 
         return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).thenApply(ignore -> {
+            threadPool.shutdown();
             log.info("Finished executing (scheduled) task '{}' for programming exercise with id {}.", operationName, programmingExercise.getId());
             if (!failedOperations.isEmpty()) {
                 var failedIds = failedOperations.stream().map(participation -> participation.getId().toString()).collect(Collectors.joining(","));
