@@ -32,6 +32,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { PROFILE_IRIS } from 'app/app.constants';
 
 // eslint-disable-next-line @angular-eslint/component-selector
 @Component({ selector: 'ngx-graph', template: '' })
@@ -142,7 +143,7 @@ describe('CompetencyManagementComponent', () => {
         profileService = TestBed.inject(ProfileService);
         irisSettingsService = TestBed.inject(IrisSettingsService);
         const profileInfoResponse = {
-            activeProfiles: ['iris'],
+            activeProfiles: [PROFILE_IRIS],
         } as ProfileInfo;
         const irisSettingsResponse = {
             irisCompetencyGenerationSettings: {
