@@ -406,7 +406,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                             this.isExamMode = true;
                             this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
                                 this.programmingExercise.exerciseGroup = res.body!;
-                                if (this.programmingExercise.exerciseGroup.exam?.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
+                                if (!params['exerciseId'] && this.programmingExercise.exerciseGroup.exam?.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
                                     this.selectedProgrammingLanguage = this.programmingExercise.exerciseGroup.exam.course.defaultProgrammingLanguage;
                                 }
                             });
@@ -420,7 +420,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                             this.isExamMode = false;
                             this.courseService.find(this.courseId).subscribe((res) => {
                                 this.programmingExercise.course = res.body!;
-                                if (this.programmingExercise.course?.defaultProgrammingLanguage && !this.isImportFromFile && !this.selectedProgrammingLanguage) {
+                                if (!params['exerciseId'] && this.programmingExercise.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
                                     this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
                                 }
                                 this.exerciseCategories = this.programmingExercise.categories || [];

@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
@@ -319,13 +319,14 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         expectElementToBeDisabled(checkbox);
     });
 
-    it('should calculate form validation status', () => {
-        const datePicker = { dateInput: { valueChanges: new Subject(), valid: true } } as any as ProgrammingExerciseTestScheduleDatePickerComponent;
+    it('should calculate form validation status', fakeAsync(() => {
+        const datePicker = { dateInput: { valueChanges: new Subject(), valid: true, value: new Date() } } as any as ProgrammingExerciseTestScheduleDatePickerComponent;
         comp.datePickerComponents = { changes: new Subject(), toArray: () => [datePicker] } as any as QueryList<ProgrammingExerciseTestScheduleDatePickerComponent>;
         comp.ngAfterViewInit();
         (comp.datePickerComponents.changes as Subject<any>).next({ toArray: () => [datePicker] });
         (datePicker.dateInput.valueChanges as Subject<boolean>).next(true);
+        tick();
         expect(comp.formValid).toBeTrue();
         expect(comp.formEmpty).toBeTrue();
-    });
+    }));
 });
