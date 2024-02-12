@@ -227,7 +227,12 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                                     this.assessmentDateField?.dateInput.valid)),
                     ),
                     empty:
-                        !this.isExamMode && (!this.textExercise.startDate || !this.textExercise.dueDate || !this.textExercise.assessmentDueDate || !this.textExercise.releaseDate),
+                        !this.isExamMode &&
+                        // if a dayjs object contains an empty date, it is considered "invalid"
+                        (!this.textExercise.startDate?.isValid() ||
+                            !this.textExercise.dueDate?.isValid() ||
+                            !this.textExercise.assessmentDueDate?.isValid() ||
+                            !this.textExercise.releaseDate?.isValid()),
                 },
             ];
         }

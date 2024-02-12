@@ -150,6 +150,15 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
+            WHERE p.id = :participationId
+            """)
+    Optional<StudentParticipation> findByIdWithEagerTeamStudents(@Param("participationId") Long participationId);
+
+    @Query("""
+            SELECT DISTINCT p
+            FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results
             WHERE p.exercise.id = :exerciseId
@@ -556,7 +565,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results sr
                 LEFT JOIN FETCH sr.feedbacks
-                LEFT JOIN p.team.students
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
             WHERE p.id = :participationId
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
                 AND (rs.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR rs.type IS NULL)
@@ -808,6 +818,11 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @NotNull
     default StudentParticipation findByIdWithLegalSubmissionsElseThrow(long participationId) {
         return findWithEagerLegalSubmissionsById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+    }
+
+    @NotNull
+    default StudentParticipation findByIdWithEagerTeamStudentsElseThrow(long participationId) {
+        return findByIdWithEagerTeamStudents(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
     }
 
     /**
