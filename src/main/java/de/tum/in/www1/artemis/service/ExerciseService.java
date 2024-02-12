@@ -634,7 +634,7 @@ public class ExerciseService {
      * @param gradingCriteria grading criteria list of exercise
      * @param exercise        exercise to update *
      */
-    public void checkExerciseIfStructuredGradingInstructionFeedbackUsed(List<GradingCriterion> gradingCriteria, Exercise exercise) {
+    public void checkExerciseIfStructuredGradingInstructionFeedbackUsed(Set<GradingCriterion> gradingCriteria, Exercise exercise) {
         List<Feedback> feedback = feedbackRepository.findFeedbackByExerciseGradingCriteria(gradingCriteria);
 
         if (!feedback.isEmpty()) {
@@ -651,7 +651,7 @@ public class ExerciseService {
      * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not *
      */
     public void reEvaluateExercise(Exercise exercise, boolean deleteFeedbackAfterGradingInstructionUpdate) {
-        List<GradingCriterion> gradingCriteria = exercise.getGradingCriteria();
+        Set<GradingCriterion> gradingCriteria = exercise.getGradingCriteria();
         // retrieve the feedback associated with the structured grading instructions
         List<Feedback> feedbackToBeUpdated = feedbackRepository.findFeedbackByExerciseGradingCriteria(gradingCriteria);
 
@@ -718,7 +718,7 @@ public class ExerciseService {
         if (deleteFeedbackAfterGradingInstructionUpdate) {
             Set<Long> updatedInstructionIds = gradingInstructions.stream().map(GradingInstruction::getId).collect(Collectors.toCollection(HashSet::new));
             // retrieve the grading instructions from database for backup
-            List<GradingCriterion> backupGradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+            Set<GradingCriterion> backupGradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
             List<Long> backupInstructionIds = backupGradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream())
                     .map(GradingInstruction::getId).toList();
 
