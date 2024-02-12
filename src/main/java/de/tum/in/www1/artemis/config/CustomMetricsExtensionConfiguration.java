@@ -22,7 +22,7 @@ import tech.jhipster.config.metric.JHipsterMetricsEndpoint;
  */
 public class CustomMetricsExtensionConfiguration {
 
-    @Profile(PROFILE_CORE)
+    @Profile({ PROFILE_CORE, "buildagent" })
     @Configuration
     @ConditionalOnClass(Timed.class)
     @AutoConfigureAfter(JHipsterMetricsEndpointConfiguration.class)
