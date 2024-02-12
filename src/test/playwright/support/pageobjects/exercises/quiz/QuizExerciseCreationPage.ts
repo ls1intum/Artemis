@@ -90,6 +90,6 @@ export class QuizExerciseCreationPage {
     async import() {
         const responsePromise = this.page.waitForResponse(`${BASE_API}quiz-exercises`);
         await this.page.locator('#quiz-save').click();
-        await responsePromise;
+        return await responsePromise;
     }
 }

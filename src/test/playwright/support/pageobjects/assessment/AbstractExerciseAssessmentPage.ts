@@ -29,15 +29,15 @@ export abstract class AbstractExerciseAssessmentPage {
     async submit() {
         const responsePromise = this.page.waitForResponse(`${BASE_API}participations/*/manual-results?submit=true`);
         await this.submitWithoutInterception();
-        await responsePromise;
+        return await responsePromise;
     }
 
     async rejectComplaint(response: string, examMode: boolean, exerciseType: ExerciseType) {
-        return this.handleComplaint(response, false, exerciseType, examMode);
+        return await this.handleComplaint(response, false, exerciseType, examMode);
     }
 
     async acceptComplaint(response: string, examMode: boolean, exerciseType: ExerciseType) {
-        return this.handleComplaint(response, true, exerciseType, examMode);
+        return await this.handleComplaint(response, true, exerciseType, examMode);
     }
 
     async checkComplaintMessage(message: string) {
@@ -72,6 +72,6 @@ export abstract class AbstractExerciseAssessmentPage {
         } else {
             await this.page.locator('#rejectComplaintButton').click();
         }
-        await responsePromise;
+        return await responsePromise;
     }
 }

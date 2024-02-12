@@ -75,7 +75,7 @@ export class OnlineEditorPage {
         await getExercise(this.page, exerciseID).locator('#file-browser-create-node').press('Enter');
         const response = await responsePromise;
         expect(response.status()).toBe(200);
-        await expect(this.findFileBrowser(exerciseID, fileName)).toBeVisible();
+        await expect(this.findFileBrowser(exerciseID).filter({ hasText: fileName })).toBeVisible();
         await this.page.waitForTimeout(500);
     }
 
@@ -90,7 +90,7 @@ export class OnlineEditorPage {
         await getExercise(this.page, exerciseID).locator('#file-browser-create-node').press('Enter');
         const response = await responsePromise;
         expect(response.status()).toBe(200);
-        await expect(this.findFileBrowser(exerciseID, fileName)).toBeVisible();
+        await expect(this.findFileBrowser(exerciseID).filter({ hasText: fileName })).toBeVisible();
         await this.page.waitForTimeout(500);
     }
 
@@ -115,7 +115,7 @@ export class OnlineEditorPage {
         await getExercise(this.page, exerciseID).locator('#compress_tree').click();
     }
 
-    async makeSubmissionAndVerifyResults(exerciseID: number, submission: ProgrammingExerciseSubmission, verifyOutput: () => void) {
+    async makeSubmissionAndVerifyResults(exerciseID: number, submission: ProgrammingExerciseSubmission, verifyOutput: () => Promise<void>) {
         // Decompress the file tree to access the parent folder
         await this.toggleCompressFileTree(exerciseID);
         // We delete all existing files, so we can create new files and don't have to delete their already existing content
@@ -124,7 +124,7 @@ export class OnlineEditorPage {
         }
         await this.typeSubmission(exerciseID, submission);
         await this.submit(exerciseID);
-        verifyOutput();
+        await verifyOutput();
     }
 
     async startParticipation(courseId: number, exerciseId: number, credentials: UserCredentials) {

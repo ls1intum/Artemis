@@ -39,7 +39,7 @@ export class CreateModelingExercisePage {
     async import() {
         const responsePromise = this.page.waitForResponse(`${BASE_API}modeling-exercises/import/*`);
         await this.page.click('#modeling-exercise-creation-save');
-        await responsePromise;
+        return await responsePromise;
     }
 
     async setReleaseDate(date: Dayjs) {

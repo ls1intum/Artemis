@@ -50,7 +50,7 @@ export class ProgrammingExerciseCreationPage {
     async import() {
         const responsePromise = this.page.waitForResponse(`${BASE_API}programming-exercises/import/*`);
         await this.page.locator('#save-entity').click();
-        await responsePromise;
+        return await responsePromise;
     }
 
     /**

@@ -39,6 +39,23 @@ import { StudentExamManagementPage } from './pageobjects/exam/StudentExamManagem
 import { TextExerciseCreationPage } from './pageobjects/exercises/text/TextExerciseCreationPage';
 import { CreateModelingExercisePage } from './pageobjects/exercises/modeling/CreateModelingExercisePage';
 import { ExamTestRunPage } from './pageobjects/exam/ExamTestRunPage';
+import { CourseManagementExercisesPage } from './pageobjects/course/CourseManagementExercisesPage';
+import { TextExerciseExampleSubmissionsPage } from './pageobjects/exercises/text/TextExerciseExampleSubmissionsPage';
+import { TextExerciseExampleSubmissionCreationPage } from './pageobjects/exercises/text/TextExerciseExampleSubmissionCreationPage';
+import { TextExerciseAssessmentPage } from './pageobjects/assessment/TextExerciseAssessmentPage';
+import { ExerciseResultPage } from './pageobjects/exercises/ExerciseResultPage';
+import { TextExerciseFeedbackPage } from './pageobjects/exercises/text/TextExerciseFeedbackPage';
+import { ShortAnswerQuiz } from './pageobjects/exercises/quiz/ShortAnswerQuiz';
+import { DragAndDropQuiz } from './pageobjects/exercises/quiz/DragAndDropQuiz';
+import { ModelingExerciseFeedbackPage } from './pageobjects/exercises/modeling/ModelingExerciseFeedbackPage';
+import { ProgrammingExerciseAssessmentPage } from './pageobjects/assessment/ProgrammingExerciseAssessmentPage';
+import { ProgrammingExerciseFeedbackPage } from './pageobjects/exercises/programming/ProgrammingExerciseFeedbackPage';
+import { CodeAnalysisGradingPage } from './pageobjects/exercises/programming/CodeAnalysisGradingPage';
+import { ScaFeedbackModal } from './pageobjects/exercises/programming/ScaFeedbackModal';
+import { FileUploadExerciseCreationPage } from './pageobjects/exercises/file-upload/FileUploadExerciseCreationPage';
+import { FileUploadEditorPage } from './pageobjects/exercises/file-upload/FileUploadEditorPage';
+import { FileUploadExerciseAssessmentPage } from './pageobjects/assessment/FileUploadExerciseAssessmentPage';
+import { FileUploadExerciseFeedbackPage } from './pageobjects/exercises/file-upload/FileUploadExerciseFeedbackPage';
 
 /*
  * Define custom types for fixtures
@@ -53,9 +70,13 @@ export type ArtemisPageObjects = {
     courseAssessment: CourseAssessmentDashboardPage;
     examAssessment: ExamAssessmentPage;
     exerciseAssessment: ExerciseAssessmentDashboardPage;
+    fileUploadExerciseAssessment: FileUploadExerciseAssessmentPage;
     modelingExerciseAssessment: ModelingExerciseAssessmentEditor;
+    programmingExerciseAssessment: ProgrammingExerciseAssessmentPage;
     studentAssessment: StudentAssessmentPage;
+    textExerciseAssessment: TextExerciseAssessmentPage;
     courseManagement: CourseManagementPage;
+    courseManagementExercises: CourseManagementExercisesPage;
     courseCreation: CourseCreationPage;
     courseList: CoursesPage;
     courseOverview: CourseOverviewPage;
@@ -73,14 +94,27 @@ export type ArtemisPageObjects = {
     examStartEnd: ExamStartEndPage;
     examTestRun: ExamTestRunPage;
     studentExamManagement: StudentExamManagementPage;
+    fileUploadExerciseCreation: FileUploadExerciseCreationPage;
+    fileUploadExerciseEditor: FileUploadEditorPage;
+    fileUploadExerciseFeedback: FileUploadExerciseFeedbackPage;
     modelingExerciseCreation: CreateModelingExercisePage;
     modelingExerciseEditor: ModelingEditor;
+    modelingExerciseFeedback: ModelingExerciseFeedbackPage;
     programmingExerciseCreation: ProgrammingExerciseCreationPage;
     programmingExerciseEditor: OnlineEditorPage;
+    programmingExerciseFeedback: ProgrammingExerciseFeedbackPage;
+    programmingExercisesScaConfig: CodeAnalysisGradingPage;
+    programmingExerciseScaFeedback: ScaFeedbackModal;
     quizExerciseCreation: QuizExerciseCreationPage;
+    quizExerciseDragAndDropQuiz: DragAndDropQuiz;
     quizExerciseMultipleChoice: MultipleChoiceQuiz;
-    textExerciseEditor: TextEditorPage;
+    quizExerciseShortAnswerQuiz: ShortAnswerQuiz;
     textExerciseCreation: TextExerciseCreationPage;
+    textExerciseEditor: TextEditorPage;
+    textExerciseExampleSubmissions: TextExerciseExampleSubmissionsPage;
+    textExerciseExampleSubmissionCreation: TextExerciseExampleSubmissionCreationPage;
+    textExerciseFeedback: TextExerciseFeedbackPage;
+    exerciseResult: ExerciseResultPage;
 };
 
 export type ArtemisRequests = {
@@ -115,14 +149,26 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     exerciseAssessment: async ({ page }, use) => {
         await use(new ExerciseAssessmentDashboardPage(page));
     },
+    fileUploadExerciseAssessment: async ({ page }, use) => {
+        await use(new FileUploadExerciseAssessmentPage(page));
+    },
     modelingExerciseAssessment: async ({ page }, use) => {
         await use(new ModelingExerciseAssessmentEditor(page));
+    },
+    programmingExerciseAssessment: async ({ page }, use) => {
+        await use(new ProgrammingExerciseAssessmentPage(page));
     },
     studentAssessment: async ({ page }, use) => {
         await use(new StudentAssessmentPage(page));
     },
+    textExerciseAssessment: async ({ page }, use) => {
+        await use(new TextExerciseAssessmentPage(page));
+    },
     courseManagement: async ({ page }, use) => {
         await use(new CourseManagementPage(page));
+    },
+    courseManagementExercises: async ({ page }, use) => {
+        await use(new CourseManagementExercisesPage(page));
     },
     courseCreation: async ({ page }, use) => {
         await use(new CourseCreationPage(page));
@@ -190,11 +236,23 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     studentExamManagement: async ({ page }, use) => {
         await use(new StudentExamManagementPage(page));
     },
+    fileUploadExerciseCreation: async ({ page }, use) => {
+        await use(new FileUploadExerciseCreationPage(page));
+    },
+    fileUploadExerciseEditor: async ({ page }, use) => {
+        await use(new FileUploadEditorPage(page));
+    },
+    fileUploadExerciseFeedback: async ({ page }, use) => {
+        await use(new FileUploadExerciseFeedbackPage(page));
+    },
     modelingExerciseCreation: async ({ page }, use) => {
         await use(new CreateModelingExercisePage(page));
     },
     modelingExerciseEditor: async ({ page }, use) => {
         await use(new ModelingEditor(page));
+    },
+    modelingExerciseFeedback: async ({ page }, use) => {
+        await use(new ModelingExerciseFeedbackPage(page));
     },
     programmingExerciseCreation: async ({ page }, use) => {
         await use(new ProgrammingExerciseCreationPage(page));
@@ -202,17 +260,44 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     programmingExerciseEditor: async ({ page, courseList, courseOverview }, use) => {
         await use(new OnlineEditorPage(page, courseList, courseOverview));
     },
+    programmingExerciseFeedback: async ({ page }, use) => {
+        await use(new ProgrammingExerciseFeedbackPage(page));
+    },
+    programmingExercisesScaConfig: async ({ page }, use) => {
+        await use(new CodeAnalysisGradingPage(page));
+    },
+    programmingExerciseScaFeedback: async ({ page }, use) => {
+        await use(new ScaFeedbackModal(page));
+    },
     quizExerciseCreation: async ({ page }, use) => {
         await use(new QuizExerciseCreationPage(page));
+    },
+    quizExerciseDragAndDropQuiz: async ({ page }, use) => {
+        await use(new DragAndDropQuiz(page));
     },
     quizExerciseMultipleChoice: async ({ page }, use) => {
         await use(new MultipleChoiceQuiz(page));
     },
-    textExerciseEditor: async ({ page }, use) => {
-        await use(new TextEditorPage(page));
+    quizExerciseShortAnswerQuiz: async ({ page }, use) => {
+        await use(new ShortAnswerQuiz(page));
     },
     textExerciseCreation: async ({ page }, use) => {
         await use(new TextExerciseCreationPage(page));
+    },
+    textExerciseEditor: async ({ page }, use) => {
+        await use(new TextEditorPage(page));
+    },
+    textExerciseExampleSubmissions: async ({ page }, use) => {
+        await use(new TextExerciseExampleSubmissionsPage(page));
+    },
+    textExerciseExampleSubmissionCreation: async ({ page }, use) => {
+        await use(new TextExerciseExampleSubmissionCreationPage(page));
+    },
+    textExerciseFeedback: async ({ page }, use) => {
+        await use(new TextExerciseFeedbackPage(page));
+    },
+    exerciseResult: async ({ page }, use) => {
+        await use(new ExerciseResultPage(page));
     },
     courseManagementAPIRequests: async ({ page }, use) => {
         await use(new CourseManagementAPIRequests(page));

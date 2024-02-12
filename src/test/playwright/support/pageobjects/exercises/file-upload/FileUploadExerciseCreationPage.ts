@@ -1,9 +1,9 @@
-import { Page } from '@playwright/test';
+import { Page } from 'playwright';
+import { BASE_API } from '../../../constants';
 import { Dayjs } from 'dayjs';
 import { enterDate } from '../../../utils';
-import { BASE_API } from '../../../constants';
 
-export class TextExerciseCreationPage {
+export class FileUploadExerciseCreationPage {
     private readonly page: Page;
 
     constructor(page: Page) {
@@ -11,9 +11,7 @@ export class TextExerciseCreationPage {
     }
 
     async typeTitle(title: string) {
-        const titleField = this.page.locator('#field_title');
-        await titleField.clear();
-        await titleField.fill(title);
+        await this.page.locator('#field_title').fill(title);
     }
 
     async setReleaseDate(date: Dayjs) {
@@ -32,12 +30,16 @@ export class TextExerciseCreationPage {
         await this.page.locator('#field_points').fill(maxPoints.toString());
     }
 
+    async setFilePattern(pattern: string) {
+        await this.typeText('#field_filePattern', pattern);
+    }
+
     async typeProblemStatement(statement: string) {
-        await this.typeText('#problemStatement', statement);
+        await this.typeText('#field_problemStatement', statement);
     }
 
     async typeExampleSolution(statement: string) {
-        await this.typeText('#exampleSolution', statement);
+        await this.typeText('#field_exampleSolution', statement);
     }
 
     async typeAssessmentInstructions(statement: string) {
@@ -45,20 +47,12 @@ export class TextExerciseCreationPage {
     }
 
     async create() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}text-exercises`);
-        await this.page.locator('#submit-entity').click();
-        return await responsePromise;
-    }
-
-    async import() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}text-exercises/import/*`);
-        await this.page.locator('#submit-entity').click();
+        const responsePromise = this.page.waitForResponse(BASE_API + 'file-upload-exercises');
+        await this.page.locator('#save-entity').click();
         return await responsePromise;
     }
 
     private async typeText(selector: string, text: string) {
-        const textField = this.page.locator(selector).locator('.ace_content');
-        await textField.click();
-        await textField.pressSequentially(text);
+        await this.page.locator(selector).locator('.ace_content').fill(text);
     }
 }

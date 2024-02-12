@@ -36,11 +36,20 @@ export class CourseManagementPage {
     }
 
     /**
-     * Opens the students overview page of a course.
-     * @param courseId the id of the course
+     * Opens the exercises of a course.
+     * @param courseID the id of the course
      */
-    async openStudentOverviewOfCourse(courseId: number) {
-        await this.page.locator('#open-student-management-' + courseId).click();
+    async openExercisesOfCourse(courseID: number) {
+        await this.getCourse(courseID).locator('#course-card-open-exercises').click();
+        await this.page.waitForURL('**/exercises**');
+    }
+
+    /**
+     * Opens the students overview page of a course.
+     * @param courseID the id of the course
+     */
+    async openStudentOverviewOfCourse(courseID: number) {
+        await this.page.locator('#open-student-management-' + courseID).click();
     }
 
     /**
@@ -97,7 +106,12 @@ export class CourseManagementPage {
      */
     async openExamsOfCourse(courseID: number) {
         await this.getCourse(courseID).locator('#course-card-open-exams').click();
-        await this.page.waitForURL(/\/exams/);
+        await this.page.waitForURL('**/exams**');
+    }
+
+    async openAssessmentDashboardOfCourse(courseID: number) {
+        await this.getCourse(courseID).locator('#course-card-open-assessment-dashboard').click();
+        await this.page.waitForURL('**/assessment-dashboard**');
     }
 
     /*
