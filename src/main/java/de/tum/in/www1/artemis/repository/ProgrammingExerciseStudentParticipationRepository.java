@@ -53,7 +53,10 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             FROM ProgrammingExerciseStudentParticipation p
                 LEFT JOIN FETCH p.results pr
                 LEFT JOIN FETCH p.submissions
-            WHERE p.id = :participationId
+            WHERE p.id = :participationId AND (pr.assessmentType = 'AUTOMATIC'
+                        OR (pr.completionDate IS NOT NULL
+                            AND (p.exercise.assessmentDueDate IS NULL
+                                OR p.exercise.assessmentDueDate < :#{#dateTime})))
              """)
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndRelatedSubmissions(@Param("participationId") Long participationId);
 
