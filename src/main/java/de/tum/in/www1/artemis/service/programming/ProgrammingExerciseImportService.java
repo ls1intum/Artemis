@@ -292,7 +292,6 @@ public class ProgrammingExerciseImportService {
         if (recreateBuildPlans) {
             // Create completely new build plans for the exercise
             programmingExerciseService.setupBuildPlansForNewExercise(importedProgrammingExercise, false);
-            programmingExerciseService.triggerBaseAndSolutionBuildPlansForNewExercise(importedProgrammingExercise);
         }
         else {
             // We have removed the automatic build trigger from test to base for new programming exercises.
