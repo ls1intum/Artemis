@@ -98,15 +98,13 @@ public class ProgrammingExerciseParticipationResource {
      * @param participationId for which to retrieve the student participation with all results and feedbacks.
      * @return the ResponseEntity with status 200 (OK) and the participation with all results and feedbacks in the body.
      */
-    @GetMapping("/programming-exercise-participations/{participationId}/student-participation-with-all-results-and-feedbacks")
+    @GetMapping("/programming-exercise-participations/{participationId}/student-participation-with-all-results")
     @EnforceAtLeastStudent
     public ResponseEntity<ProgrammingExerciseStudentParticipation> getParticipationWithAllResultsForStudentParticipation(@PathVariable Long participationId) {
-        ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository
-                .findByIdWithAllResultsAndFeedbacksAndRelatedSubmissions(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+        ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdWithAllResultsAndRelatedSubmissions(participationId)
+                .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
-        // hide details that should not be shown to the students
-        resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
         return ResponseEntity.ok(participation);
     }
 

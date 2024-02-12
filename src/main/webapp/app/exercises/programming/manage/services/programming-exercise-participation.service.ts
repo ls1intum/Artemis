@@ -53,7 +53,7 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
      * @param participationId of the participation to get the student participation for
      */
     getStudentParticipationWithAllResults(participationId: number): Observable<ProgrammingExerciseStudentParticipation> {
-        return this.http.get<ProgrammingExerciseStudentParticipation>(this.resourceUrl + participationId + '/student-participation-with-all-results-and-feedbacks').pipe(
+        return this.http.get<ProgrammingExerciseStudentParticipation>(this.resourceUrl + participationId + '/student-participation-with-all-results').pipe(
             tap((res) => {
                 if (res.exercise) {
                     this.sendTitlesToEntityTitleService(res);

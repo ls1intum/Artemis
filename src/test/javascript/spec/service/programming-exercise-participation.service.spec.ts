@@ -76,7 +76,7 @@ describe('ProgrammingExerciseParticipation Service', () => {
 
             service.getStudentParticipationWithAllResults(participation.id).subscribe((resp) => expect(resp).toEqual(expected));
 
-            const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}${participation.id}/student-participation-with-all-results-and-feedbacks` });
+            const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}${participation.id}/student-participation-with-all-results` });
             req.flush(participation);
             tick();
             expect(titleSpy).toHaveBeenCalledExactlyOnceWith(participation);

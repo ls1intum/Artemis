@@ -55,7 +55,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
                 LEFT JOIN FETCH p.submissions
             WHERE p.id = :participationId
              """)
-    Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndFeedbacksAndRelatedSubmissions(@Param("participationId") Long participationId);
+    Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndRelatedSubmissions(@Param("participationId") Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results", "exercise", "team.students" })
     List<ProgrammingExerciseStudentParticipation> findWithResultsAndExerciseAndTeamStudentsByBuildPlanId(String buildPlanId);
