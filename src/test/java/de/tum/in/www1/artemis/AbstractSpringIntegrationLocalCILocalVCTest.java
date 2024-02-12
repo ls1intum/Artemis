@@ -65,7 +65,8 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "localci", "localvc", "scheduling", "ldap-only", "lti", "aeolus", "buildagent", "core" })
 
 // Note: the server.port property must correspond to the port used in the artemis.version-control.url property.
-@TestPropertySource(properties = { "server.port=49152", "artemis.version-control.url=http://localhost:49152", "artemis.version-control.local-vcs-repo-path=${java.io.tmpdir}",
+@TestPropertySource(properties = { "server.port=49152", "artemis.version-control.url=http://localhost:49152", "artemis.version-control.user=artemis_admin",
+        "artemis.version-control.password=artemis_admin", "artemis.version-control.local-vcs-repo-path=${java.io.tmpdir}",
         "artemis.continuous-integration.specify-concurrent-builds=true", "artemis.continuous-integration.concurrent-build-size=1",
         "artemis.continuous-integration.asynchronous=false", "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
         "artemis.continuous-integration.image-cleanup.enabled=true", "artemis.user-management.use-external=false" })
