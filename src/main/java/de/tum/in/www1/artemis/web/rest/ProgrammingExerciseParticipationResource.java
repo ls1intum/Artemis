@@ -105,6 +105,8 @@ public class ProgrammingExerciseParticipationResource {
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
+        // hide details that should not be shown to the students
+        resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
         return ResponseEntity.ok(participation);
     }
 
