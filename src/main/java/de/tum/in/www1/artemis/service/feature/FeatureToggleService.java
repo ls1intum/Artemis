@@ -22,11 +22,20 @@ public class FeatureToggleService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final Map<Feature, Boolean> features;
+    private final HazelcastInstance hazelcastInstance;
+
+    private Map<Feature, Boolean> features;
 
     public FeatureToggleService(WebsocketMessagingService websocketMessagingService, HazelcastInstance hazelcastInstance) {
         this.websocketMessagingService = websocketMessagingService;
+        this.hazelcastInstance = hazelcastInstance;
+    }
 
+    /**
+     * Initialize relevant data from hazelcast
+     */
+    @PostConstruct
+    public void init() {
         // The map will automatically be distributed between all instances by Hazelcast.
         features = hazelcastInstance.getMap("features");
 
@@ -37,10 +46,7 @@ public class FeatureToggleService {
                 features.put(feature, true);
             }
         }
-    }
-
-    @PostConstruct
-    public void initScienceFeatureFromConfig() {
+        // init science feature from config
         if (!features.containsKey(Feature.Science)) {
             features.put(Feature.Science, scienceEnabledOnStart);
         }

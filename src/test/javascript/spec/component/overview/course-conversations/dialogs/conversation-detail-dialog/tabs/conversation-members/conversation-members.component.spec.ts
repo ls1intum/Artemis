@@ -4,7 +4,7 @@ import { ConversationMembersComponent } from 'app/overview/course-conversations/
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
@@ -23,7 +23,7 @@ import { NgbPaginationMocksModule } from '../../../../../../../helpers/mocks/dir
 @Component({ selector: '[jhi-conversation-member-row]', template: '' })
 class ConversationMemberRowStubComponent {
     @Input()
-    activeConversation: ConversationDto;
+    activeConversation: ConversationDTO;
 
     @Input()
     course: Course;
@@ -34,7 +34,7 @@ class ConversationMemberRowStubComponent {
     @Input()
     conversationMember: ConversationUserDTO;
 }
-const examples: ConversationDto[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
 examples.forEach((activeConversation) => {
     describe('ConversationMembersComponent with ' + activeConversation.type, () => {
