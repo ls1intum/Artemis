@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
@@ -22,7 +24,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data repository for the Lecture entity.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Repository
 public interface LectureRepository extends JpaRepository<Lecture, Long> {
 
