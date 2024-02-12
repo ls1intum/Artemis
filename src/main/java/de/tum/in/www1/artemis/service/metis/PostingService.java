@@ -117,8 +117,9 @@ public abstract class PostingService {
      * @return Set of ConversationNotificationRecipientSummary
      */
     private Set<ConversationNotificationRecipientSummary> getConversationParticipantsAsSummaries(Conversation postConversation) {
-        return conversationParticipantRepository.findConversationParticipantByConversationId(postConversation.getId()).stream()
-                .map(participant -> new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsHidden() != null && participant.getIsHidden(), false))
+        return conversationParticipantRepository.findConversationParticipantsByConversationId(postConversation.getId()).stream()
+                .map(participant -> new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsMuted(),
+                        participant.getIsHidden() != null && participant.getIsHidden(), false))
                 .collect(Collectors.toSet());
     }
 
@@ -131,12 +132,13 @@ public abstract class PostingService {
     protected Stream<ConversationNotificationRecipientSummary> getNotificationRecipients(Conversation conversation) {
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
             Course course = conversation.getCourse();
-            return userRepository.findAllWebSocketRecipientsInCourseForConversation(conversation.getId(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),
+            return userRepository.findAllNotificationRecipientsInCourseForConversation(conversation.getId(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),
                     course.getEditorGroupName(), course.getInstructorGroupName()).stream();
         }
 
-        return conversationParticipantRepository.findConversationParticipantWithUserGroupsByConversationId(conversation.getId()).stream()
-                .map(participant -> new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsHidden() != null && participant.getIsHidden(),
+        return conversationParticipantRepository.findConversationParticipantsWithUserGroupsByConversationId(conversation.getId()).stream()
+                .map(participant -> new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsMuted(),
+                        participant.getIsHidden() != null && participant.getIsHidden(),
                         authorizationCheckService.isAtLeastTeachingAssistantInCourse(conversation.getCourse(), participant.getUser())));
     }
 
@@ -274,7 +276,7 @@ public abstract class PostingService {
      * @return null or the provided notification
      */
     private Notification getNotificationForRecipient(ConversationNotificationRecipientSummary recipient, Notification notification, Set<User> mentionedUsers) {
-        if (recipient.isConversationHidden() && notification instanceof ConversationNotification && !mentionedUsers.contains(new User(recipient.userId()))) {
+        if (notification instanceof ConversationNotification && !recipient.shouldNotifyRecipient() && !mentionedUsers.contains(new User(recipient.userId()))) {
             return null;
         }
 

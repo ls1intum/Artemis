@@ -130,6 +130,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 user.lastName,
                 user.langKey,
                 user.email,
+                CASE WHEN cp.isMuted = true THEN true ELSE false END,
                 CASE WHEN cp.isHidden IS TRUE THEN TRUE ELSE FALSE END,
                 CASE WHEN ug.group = :teachingAssistantGroupName
                     OR ug.group = :editorGroupName
@@ -147,7 +148,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                     OR ug.group = :instructorGroupName
                 )
             """)
-    Set<ConversationNotificationRecipientSummary> findAllWebSocketRecipientsInCourseForConversation(@Param("conversationId") Long conversationId,
+    Set<ConversationNotificationRecipientSummary> findAllNotificationRecipientsInCourseForConversation(@Param("conversationId") Long conversationId,
             @Param("studentGroupName") String studentGroupName, @Param("teachingAssistantGroupName") String teachingAssistantGroupName,
             @Param("editorGroupName") String editorGroupName, @Param("instructorGroupName") String instructorGroupName);
 

@@ -100,7 +100,7 @@ public class ChannelResource extends ConversationManagementResource {
         var channels = channelRepository.findChannelsByCourseId(courseId).stream();
 
         var filteredChannels = isOnlyStudent ? conversationService.filterVisibleChannelsForStudents(channels) : channels;
-        var channelDTOs = filteredChannels.map(channel -> conversationDTOService.convertChannelToDto(requestingUser, channel));
+        var channelDTOs = filteredChannels.map(channel -> conversationDTOService.convertChannelToDTO(requestingUser, channel));
 
         // only instructors / system admins can see all channels
         if (!isAtLeastInstructor) {
@@ -157,7 +157,7 @@ public class ChannelResource extends ConversationManagementResource {
         }
         checkChannelMembership(channel, requestingUser);
 
-        return ResponseEntity.ok(conversationDTOService.convertChannelToDto(requestingUser, channel));
+        return ResponseEntity.ok(conversationDTOService.convertChannelToDTO(requestingUser, channel));
     }
 
     /**
@@ -183,7 +183,7 @@ public class ChannelResource extends ConversationManagementResource {
         }
         checkChannelMembership(channel, requestingUser);
 
-        return ResponseEntity.ok(conversationDTOService.convertChannelToDto(requestingUser, channel));
+        return ResponseEntity.ok(conversationDTOService.convertChannelToDTO(requestingUser, channel));
     }
 
     /**
@@ -214,7 +214,7 @@ public class ChannelResource extends ConversationManagementResource {
         }
 
         var createdChannel = channelService.createChannel(course, channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
-        return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(conversationDTOService.convertChannelToDto(requestingUser, createdChannel));
+        return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(conversationDTOService.convertChannelToDTO(requestingUser, createdChannel));
     }
 
     /**
@@ -243,7 +243,7 @@ public class ChannelResource extends ConversationManagementResource {
         }
 
         var updatedChannel = channelService.updateChannel(originalChannel.getId(), courseId, channelDTO);
-        return ResponseEntity.ok().body(conversationDTOService.convertChannelToDto(requestingUser, updatedChannel));
+        return ResponseEntity.ok().body(conversationDTOService.convertChannelToDTO(requestingUser, updatedChannel));
     }
 
     /**
@@ -269,7 +269,7 @@ public class ChannelResource extends ConversationManagementResource {
             throw new BadRequestAlertException("The channel belongs to tutorial group " + tutorialGroup.getTitle(), CHANNEL_ENTITY_NAME, "channel.tutorialGroup.mismatch");
         }, Optional::empty);
 
-        var usersToNotify = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId()).stream().map(ConversationParticipant::getUser)
+        var usersToNotify = conversationParticipantRepository.findConversationParticipantsByConversationId(channel.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
         conversationService.deleteConversation(channel);
         usersToNotify.forEach(

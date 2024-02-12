@@ -32,15 +32,11 @@ public class LocalCIQueueWebsocketService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIQueueWebsocketService.class);
 
-    private final IQueue<LocalCIBuildJobQueueItem> queue;
-
-    private final IMap<Long, LocalCIBuildJobQueueItem> processingJobs;
-
-    private final IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
-
     private final LocalCIWebsocketMessagingService localCIWebsocketMessagingService;
 
     private final SharedQueueManagementService sharedQueueManagementService;
+
+    private final HazelcastInstance hazelcastInstance;
 
     /**
      * Instantiates a new Local ci queue websocket service.
@@ -51,21 +47,22 @@ public class LocalCIQueueWebsocketService {
      */
     public LocalCIQueueWebsocketService(HazelcastInstance hazelcastInstance, LocalCIWebsocketMessagingService localCIWebsocketMessagingService,
             SharedQueueManagementService sharedQueueManagementService) {
+        this.hazelcastInstance = hazelcastInstance;
         this.localCIWebsocketMessagingService = localCIWebsocketMessagingService;
         this.sharedQueueManagementService = sharedQueueManagementService;
-        this.queue = hazelcastInstance.getQueue("buildJobQueue");
-        this.processingJobs = hazelcastInstance.getMap("processingJobs");
-        this.buildAgentInformation = hazelcastInstance.getMap("buildAgentInformation");
     }
 
     /**
      * Add listeners for build job queue changes.
      */
     @PostConstruct
-    public void addListeners() {
-        this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
-        this.processingJobs.addEntryListener(new ProcessingBuildJobItemListener(), true);
-        this.buildAgentInformation.addEntryListener(new BuildAgentListener(), true);
+    public void init() {
+        IQueue<LocalCIBuildJobQueueItem> queue = hazelcastInstance.getQueue("buildJobQueue");
+        IMap<Long, LocalCIBuildJobQueueItem> processingJobs = hazelcastInstance.getMap("processingJobs");
+        IMap<String, LocalCIBuildAgentInformation> buildAgentInformation = hazelcastInstance.getMap("buildAgentInformation");
+        queue.addItemListener(new QueuedBuildJobItemListener(), true);
+        processingJobs.addEntryListener(new ProcessingBuildJobItemListener(), true);
+        buildAgentInformation.addEntryListener(new BuildAgentListener(), true);
     }
 
     private void sendQueuedJobsOverWebsocket(long courseId) {
