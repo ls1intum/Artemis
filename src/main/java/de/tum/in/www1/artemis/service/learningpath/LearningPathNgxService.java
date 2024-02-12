@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.learningpath;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -25,7 +27,7 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 /**
  * Service Implementation for the generation of ngx representations of learning paths.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class LearningPathNgxService {
 

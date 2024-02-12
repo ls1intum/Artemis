@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.export;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.export.DataExportQuizExerciseCreationService.TXT_FILE_EXTENSION;
 import static de.tum.in.www1.artemis.service.export.DataExportUtil.createDirectoryIfNotExistent;
 import static de.tum.in.www1.artemis.service.export.DataExportUtil.retrieveCourseDirPath;
@@ -41,7 +42,7 @@ import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
  * It is responsible for creating the export for programming exercises and modeling, text, and file upload exercises.
  * For quiz exercises it delegates the creation of the export to {@link DataExportQuizExerciseCreationService}.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class DataExportExerciseCreationService {
 

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.export;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
@@ -30,7 +32,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
  * This service is responsible for downloading, deleting data exports and checking if a data export can be requested.
  * For creating data exports, see {@link DataExportCreationService}.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class DataExportService {
 

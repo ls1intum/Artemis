@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.learningpath;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -25,7 +27,7 @@ import de.tum.in.www1.artemis.service.competency.CompetencyProgressService;
 /**
  * Service Implementation for the recommendation of competencies and learning objects in learning paths.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class LearningPathRecommendationService {
 

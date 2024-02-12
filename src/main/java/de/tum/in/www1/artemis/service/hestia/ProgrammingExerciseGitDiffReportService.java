@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.hestia;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -40,7 +42,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 /**
  * The service handling ProgrammingExerciseGitDiffReport and their ProgrammingExerciseGitDiffEntries.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingExerciseGitDiffReportService {
 

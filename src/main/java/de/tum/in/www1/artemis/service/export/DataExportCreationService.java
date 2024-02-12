@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.export;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.export.DataExportExerciseCreationService.CSV_FILE_EXTENSION;
 
 import java.io.IOException;
@@ -35,7 +36,7 @@ import de.tum.in.www1.artemis.service.user.UserService;
  * This service is responsible for creating the data export, delegating most tasks to the {@link DataExportExerciseCreationService} and {@link DataExportExamCreationService}
  * and notifying the user about the creation.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class DataExportCreationService {
 

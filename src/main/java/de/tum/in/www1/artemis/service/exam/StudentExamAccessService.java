@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 
 import org.springframework.context.annotation.Profile;
@@ -20,7 +22,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 /**
  * Service implementation to check student exam access.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class StudentExamAccessService {
 

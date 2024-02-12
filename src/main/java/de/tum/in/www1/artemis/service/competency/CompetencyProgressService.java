@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.competency;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -30,7 +32,7 @@ import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 /**
  * Service for calculating the progress of a student in a competency.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class CompetencyProgressService {
 

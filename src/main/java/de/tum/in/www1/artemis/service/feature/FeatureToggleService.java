@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.feature;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 import java.util.Map;
 
@@ -13,7 +15,7 @@ import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class FeatureToggleService {
 

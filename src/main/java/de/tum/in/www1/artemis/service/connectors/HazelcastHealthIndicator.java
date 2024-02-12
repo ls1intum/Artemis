@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,7 +12,7 @@ import org.springframework.stereotype.Component;
 
 import com.hazelcast.core.HazelcastInstance;
 
-@Profile({ "core", "buildagent" })
+@Profile({ PROFILE_CORE, "buildagent" })
 @Component
 public class HazelcastHealthIndicator implements HealthIndicator {
 

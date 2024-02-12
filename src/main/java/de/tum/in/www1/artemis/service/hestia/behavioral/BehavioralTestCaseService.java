@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.hestia.behavioral;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.*;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -22,7 +24,7 @@ import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.*;
 /**
  * Service for handling Solution Entries of behavioral Test Cases.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class BehavioralTestCaseService {
 

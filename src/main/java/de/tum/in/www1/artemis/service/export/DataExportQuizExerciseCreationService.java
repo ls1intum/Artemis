@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.export;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -28,7 +30,7 @@ import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
  * Additionally, the results can be included in the export if the due date is over.
  * This service is also used to export the student submissions for archival.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class DataExportQuizExerciseCreationService {
 

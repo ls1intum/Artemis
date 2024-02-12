@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.export;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -27,7 +29,7 @@ import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
  * Service for exporting Exercises with the student submissions.
  */
 // We cannot remove the abstract as this breaks the Spring Dependency Injection because then Spring doesn't know which bean to inject
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public abstract class ExerciseWithSubmissionsExportService {
 

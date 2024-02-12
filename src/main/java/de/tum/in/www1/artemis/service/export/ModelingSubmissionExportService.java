@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.export;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 
@@ -13,7 +15,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ZipFileService;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class ModelingSubmissionExportService extends SubmissionExportService {
 

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +26,7 @@ import de.tum.in.www1.artemis.service.WebsocketMessagingService;
  * Additionally, the service will maintain a log of all events that happened during the exam,
  * so we can display them to the user if they reconnect to the exam or join late.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class ExamLiveEventsService {
 

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.feature;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Arrays;
 
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -11,7 +13,7 @@ import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Component
 @Aspect
 public class FeatureToggleAspect {

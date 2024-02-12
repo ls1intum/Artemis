@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,7 +30,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 /**
  * Service Implementation for managing Exam Users.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class ExamUserService {
 

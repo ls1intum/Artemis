@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.export;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.export.DataExportExerciseCreationService.CSV_FILE_EXTENSION;
 import static de.tum.in.www1.artemis.service.export.DataExportUtil.createDirectoryIfNotExistent;
 import static de.tum.in.www1.artemis.service.export.DataExportUtil.retrieveCourseDirPath;
@@ -30,7 +31,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
  * This includes exercise participations and general information such as working time.
  * Results are only included if the results are already published.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class DataExportExamCreationService {
 

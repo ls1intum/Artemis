@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.exam;
 
 import static de.tum.in.www1.artemis.config.Constants.EXAM_EXERCISE_START_STATUS;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.HashSet;
 import java.util.List;
@@ -32,7 +33,7 @@ import de.tum.in.www1.artemis.service.ExerciseDeletionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class ExamDeletionService {
 

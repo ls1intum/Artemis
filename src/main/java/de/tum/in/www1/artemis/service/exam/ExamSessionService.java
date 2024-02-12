@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.function.BiFunction;
@@ -22,7 +24,7 @@ import inet.ipaddr.IPAddressString;
 /**
  * Service Implementation for managing ExamSession.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class ExamSessionService {
 

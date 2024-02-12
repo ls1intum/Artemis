@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.hestia;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -30,7 +32,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
  * Service for managing testwise coverage data and interacts with both CoverageReport, CoverageFileReport
  * and TestwiseCoverageReportEntry
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class TestwiseCoverageService {
 

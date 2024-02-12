@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -13,7 +15,7 @@ import de.tum.in.www1.artemis.service.dto.athena.*;
 /**
  * Service to convert exercises, submissions and feedback to DTOs for Athena.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class AthenaDTOConverter {
 

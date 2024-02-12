@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.iris;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -18,7 +20,7 @@ import de.tum.in.www1.artemis.service.ResourceLoaderService;
 /**
  * Service that loads default Iris templates from the resources/templates/iris folder.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Component
 public final class IrisDefaultTemplateService {
 

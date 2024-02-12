@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.competency;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.*;
 
 import javax.validation.constraints.NotNull;
@@ -27,7 +29,7 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 /**
  * Service for managing competencies.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class CompetencyService {
 

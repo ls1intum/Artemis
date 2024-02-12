@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.hestia.structural;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
@@ -33,7 +35,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 /**
  * Service for handling Solution Entries of structural Test Cases.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class StructuralTestCaseService {
 
