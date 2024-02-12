@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
@@ -24,7 +26,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureServ
 /**
  * Service for triggering plagiarism checks.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 @Component
 public class PlagiarismDetectionService {

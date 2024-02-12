@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.notifications;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.EXERCISE_SUBMISSION_ASSESSED;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.extractNotificationUrl;
 
@@ -43,7 +44,7 @@ import tech.jhipster.config.JHipsterProperties;
  * <p>
  * We use the @Async annotation to send emails asynchronously.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class MailService implements InstantNotificationService {
 

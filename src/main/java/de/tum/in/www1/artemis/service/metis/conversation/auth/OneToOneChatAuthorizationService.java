@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.metis.conversation.auth;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.metis.conversation.ConversationSettings.MAX_ONE_TO_ONE_CHATS_PER_USER_PER_COURSE;
 
 import javax.validation.constraints.NotNull;
@@ -16,7 +17,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class OneToOneChatAuthorizationService extends ConversationAuthorizationService {
 

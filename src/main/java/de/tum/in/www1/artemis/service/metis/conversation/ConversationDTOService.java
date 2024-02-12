@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.metis.conversation;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -23,7 +25,7 @@ import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.*;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class ConversationDTOService {
 

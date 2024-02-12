@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO;
 import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingMessagingService {
 

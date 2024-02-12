@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.util.function.Predicate.isEqual;
 import static java.util.function.Predicate.not;
 
@@ -27,7 +28,7 @@ import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonReposito
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class PlagiarismService {
 

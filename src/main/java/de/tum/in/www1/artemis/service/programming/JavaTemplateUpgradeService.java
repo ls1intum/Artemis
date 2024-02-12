@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.*;
 import java.nio.file.Path;
 import java.util.*;
@@ -32,7 +34,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 /**
  * Service for upgrading of Java template files
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class JavaTemplateUpgradeService implements TemplateUpgradeService {
 

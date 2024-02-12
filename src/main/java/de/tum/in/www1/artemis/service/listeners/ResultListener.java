@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.listeners;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import javax.persistence.PostPersist;
 import javax.persistence.PostUpdate;
 import javax.persistence.PreRemove;
@@ -19,7 +21,7 @@ import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
  *
  * @see ParticipantScoreScheduleService
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Component
 public class ResultListener {
 

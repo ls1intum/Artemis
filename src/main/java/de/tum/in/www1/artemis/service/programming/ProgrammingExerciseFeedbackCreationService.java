@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -32,7 +33,7 @@ import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 /**
  * Service for creating feedback for programming exercises.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingExerciseFeedbackCreationService {
 

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Collections;
@@ -22,7 +24,7 @@ import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismSubmissionReposito
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismVerdictDTO;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class PlagiarismCaseService {
 

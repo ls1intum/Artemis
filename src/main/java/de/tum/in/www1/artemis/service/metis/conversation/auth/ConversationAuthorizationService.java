@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.metis.conversation.auth;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import javax.persistence.Persistence;
 
 import org.springframework.context.annotation.Profile;
@@ -10,7 +12,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class ConversationAuthorizationService {
 

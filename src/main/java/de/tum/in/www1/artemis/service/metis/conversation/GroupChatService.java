@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.metis.conversation;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Set;
 
 import javax.validation.Valid;
@@ -17,7 +19,7 @@ import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.GroupChatDTO;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class GroupChatService {
 

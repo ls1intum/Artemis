@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
 import static com.google.gson.JsonParser.parseString;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.plagiarism.PlagiarismService.hasMinimumScore;
 
 import java.io.IOException;
@@ -25,7 +26,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 import de.tum.in.www1.artemis.service.plagiarism.cache.PlagiarismCacheService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class ModelingPlagiarismDetectionService {
 

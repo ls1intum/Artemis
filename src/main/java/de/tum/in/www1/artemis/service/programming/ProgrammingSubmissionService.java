@@ -37,7 +37,7 @@ import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportSer
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 // TODO: this class has too many dependencies to other services. We should reduce this
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class ProgrammingSubmissionService extends SubmissionService {
 

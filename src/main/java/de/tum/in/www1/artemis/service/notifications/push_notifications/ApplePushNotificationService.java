@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.notifications.push_notifications;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -17,7 +19,7 @@ import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepo
 /**
  * Handles the sending of iOS Notifications to the Relay Service
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 @EnableAsync(proxyTargetClass = true)
 public class ApplePushNotificationService extends PushNotificationService {

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.notifications;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.notification.ConversationNotificationFactory.createConversationMessageNotification;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 
@@ -25,7 +26,7 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ConversationNotifica
 /**
  * Service for sending notifications about new messages in conversations.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class ConversationNotificationService {
 

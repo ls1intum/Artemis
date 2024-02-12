@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -15,7 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.PlagiarismCheckState;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class PlagiarismWebsocketService {
 
