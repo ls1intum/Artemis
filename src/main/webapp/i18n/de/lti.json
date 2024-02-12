@@ -17,7 +17,6 @@
                     "confirm": "Bestätigen"
                 }
             },
-            "version10": "LTI 1.0",
             "version13": "LTI 1.3",
             "dynamicRegistrationUrl": "Dynamic Registration URL",
             "deepLinkingUrl": "Deep Linking URL",

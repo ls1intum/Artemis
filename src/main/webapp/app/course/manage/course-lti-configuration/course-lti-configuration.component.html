@@ -27,14 +27,10 @@
                 </dd>
                 <div class="form-group">
                     <dt>
-                        <span for="ltiVersion">{{ 'LTI Version' }}</span>
+                        <span>{{ 'LTI Version' }}</span>
                     </dt>
                     <dd>
-                        <select class="form-control" id="ltiVersion" [(ngModel)]="selectedLtiVersionKey" name="ltiVersion">
-                            @for (key of Object.keys(ltiVersions); track key) {
-                                <option [value]="key" jhiTranslate="{{ key }}"></option>
-                            }
-                        </select>
+                        <span>{{ 'artemisApp.lti.version13' | artemisTranslate }}</span>
                     </dd>
                 </div>
                 <div>
