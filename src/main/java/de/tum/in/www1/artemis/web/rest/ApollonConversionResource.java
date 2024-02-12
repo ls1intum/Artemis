@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.service.connectors.apollon.dto.ApollonModelDTO;
  */
 @Profile("apollon")
 @RestController
-@RequestMapping("api/apollon/")
+@RequestMapping("api/")
 public class ApollonConversionResource {
 
     private static final Logger log = LoggerFactory.getLogger(ApollonConversionResource.class);

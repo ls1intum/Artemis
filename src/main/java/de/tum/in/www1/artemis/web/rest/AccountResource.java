@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Optional;
 
 import javax.validation.Valid;
@@ -20,7 +22,7 @@ import de.tum.in.www1.artemis.web.rest.errors.*;
 /**
  * REST controller for managing the current user's account.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class AccountResource {

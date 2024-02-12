@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -26,7 +28,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 /**
  * REST controller for managing ApollonDiagram.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class ApollonDiagramResource {

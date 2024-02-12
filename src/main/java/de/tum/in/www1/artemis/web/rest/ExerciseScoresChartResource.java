@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -28,7 +30,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
 /**
  * Controller to provides endpoints to query the necessary data for the exercise-scores-chart.component.ts in the client
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class ExerciseScoresChartResource {

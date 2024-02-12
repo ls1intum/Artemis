@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.time.ZonedDateTime.now;
 
 import java.io.File;
@@ -67,7 +68,7 @@ import tech.jhipster.web.util.PaginationUtil;
 /**
  * REST controller for managing Course.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class CourseResource {

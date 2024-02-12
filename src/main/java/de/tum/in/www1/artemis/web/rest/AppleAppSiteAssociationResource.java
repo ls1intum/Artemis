@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,7 +16,7 @@ import de.tum.in.www1.artemis.security.annotations.ManualConfig;
 /**
  * REST controller for the apple-app-site-association json
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping(".well-known")
 public class AppleAppSiteAssociationResource {

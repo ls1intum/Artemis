@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.tutorialgroups;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.getFirstDateOfWeekDay;
 
 import java.time.*;
@@ -21,7 +22,7 @@ import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepo
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.errors.ScheduleOverlapsWithSessionException;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class TutorialGroupScheduleService {
 

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.user;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -13,7 +15,7 @@ import de.tum.in.www1.artemis.config.SecurityConfiguration;
  * a) {@link SecurityConfiguration#passwordEncoder()}
  * b) The passwordEncoder in every other class using password hashing or matching
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class PasswordService {
 

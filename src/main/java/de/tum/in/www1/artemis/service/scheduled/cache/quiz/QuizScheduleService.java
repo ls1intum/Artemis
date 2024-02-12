@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.scheduled.cache.quiz;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 
 import java.time.Duration;
@@ -48,7 +49,7 @@ import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class QuizScheduleService {
 

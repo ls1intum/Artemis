@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -7,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.security.annotations.ManualConfig;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Controller
 public class ClientForwardResource {
 

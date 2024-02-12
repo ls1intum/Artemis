@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 
@@ -13,7 +15,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public abstract class AbstractQuizSubmissionService<T extends AbstractQuizSubmission> {
 

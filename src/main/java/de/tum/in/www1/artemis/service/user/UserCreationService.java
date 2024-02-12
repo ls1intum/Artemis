@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.user;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.security.Role.*;
 
 import java.time.Instant;
@@ -33,7 +34,7 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 import tech.jhipster.security.RandomUtil;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class UserCreationService {
 

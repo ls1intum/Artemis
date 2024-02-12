@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 import static java.time.ZonedDateTime.now;
 
@@ -58,7 +59,7 @@ import tech.jhipster.web.util.PaginationUtil;
 /**
  * REST controller for managing Exam.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class ExamResource {

@@ -53,7 +53,7 @@ import tech.jhipster.security.RandomUtil;
 /**
  * Service class for managing users.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class UserService {
 

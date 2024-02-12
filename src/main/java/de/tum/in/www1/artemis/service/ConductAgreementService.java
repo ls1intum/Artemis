@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -11,7 +13,7 @@ import de.tum.in.www1.artemis.repository.ConductAgreementRepository;
 /**
  * Service Implementation for managing a user's agreement to a course's code of conduct.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class ConductAgreementService {
 

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
@@ -19,7 +21,7 @@ import de.tum.in.www1.artemis.service.ExerciseLifecycleService;
 import de.tum.in.www1.artemis.service.ParticipationLifecycleService;
 import de.tum.in.www1.artemis.service.util.Tuple;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class ScheduleService {
 

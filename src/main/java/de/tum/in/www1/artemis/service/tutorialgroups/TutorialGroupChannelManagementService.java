@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.tutorialgroups;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static javax.persistence.Persistence.getPersistenceUtil;
 
 import java.util.Optional;
@@ -27,7 +28,7 @@ import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 /**
  * Service for managing the channel connected to a tutorial group.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class TutorialGroupChannelManagementService {
 

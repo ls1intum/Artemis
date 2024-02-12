@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.*;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -29,7 +31,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * REST controller for data exports.
  * It contains the REST endpoints for requesting, downloading data exports and checking if a data export can be requested or downloaded.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class DataExportResource {

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.user;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -11,7 +13,7 @@ import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.config.Constants;
 
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Component
 public class UserManagementInfoContributor implements InfoContributor {
 

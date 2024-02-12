@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -22,7 +24,7 @@ import de.tum.in.www1.artemis.service.dto.ConsistencyErrorDTO;
 /**
  * REST controller for consistency checks
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class ConsistencyCheckResource {

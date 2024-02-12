@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,7 +18,7 @@ import tech.jhipster.config.metric.JHipsterMetricsEndpoint;
  * Extends the default JHI Metrics with custom metrics for Artemis.
  */
 @Component
-@Profile("core")
+@Profile(PROFILE_CORE)
 @EndpointWebExtension(endpoint = JHipsterMetricsEndpoint.class)
 public class CustomMetricsExtension {
 

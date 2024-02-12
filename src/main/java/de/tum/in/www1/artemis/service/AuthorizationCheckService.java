@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -38,7 +40,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 /**
  * Service used to check whether user is authorized to perform actions on the entity.
  */
-@Profile("core")
+@Profile(PROFILE_CORE)
 @Service
 public class AuthorizationCheckService {
 
