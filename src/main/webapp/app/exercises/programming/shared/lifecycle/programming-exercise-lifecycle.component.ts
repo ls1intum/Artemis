@@ -81,14 +81,17 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     }
 
     calculateFormStatus() {
-        this.formValid = every(this.datePickerComponents.toArray(), (picker) => picker.dateInput.valid);
-        this.formEmpty = every(this.datePickerComponents.toArray(), (picker) => !picker.selectedDate);
+        const datePickers = this.datePickerComponents.toArray();
+        this.formValid = every(datePickers, (picker) => picker.dateInput.valid);
+        this.formEmpty = !every(datePickers, (picker) => picker.selectedDate);
         this.formValidChanges.next(this.formValid);
     }
 
     setupDateFieldSubscriptions() {
         this.unsubscribeDateFieldSubscriptions();
-        this.datePickerComponents.toArray().forEach((picker) => this.inputfieldSubscriptions.push(picker.dateInput?.valueChanges?.subscribe(() => this.calculateFormStatus())));
+        this.datePickerComponents
+            .toArray()
+            .forEach((picker) => this.inputfieldSubscriptions.push(picker.dateInput?.valueChanges?.subscribe(() => setTimeout(() => this.calculateFormStatus()))));
     }
 
     unsubscribeDateFieldSubscriptions() {
