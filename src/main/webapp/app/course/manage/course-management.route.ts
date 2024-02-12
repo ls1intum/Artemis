@@ -26,6 +26,7 @@ import { LearningPathManagementComponent } from 'app/course/learning-paths/learn
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
 import { LocalCIGuard } from 'app/localci/localci-guard.service';
+import { IrisGuard } from 'app/iris/iris-guard.service';
 
 export const courseManagementState: Routes = [
     {
@@ -233,7 +234,7 @@ export const courseManagementState: Routes = [
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'artemisApp.competency.generate.title',
                                 },
-                                canActivate: [UserRouteAccessService],
+                                canActivate: [UserRouteAccessService, IrisGuard],
                                 canDeactivate: [PendingChangesGuard],
                             },
                         ],
