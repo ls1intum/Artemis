@@ -3329,7 +3329,7 @@ public class CourseTestService {
         for (Course course : coursesExpected) {
             Optional<CourseForImportDTO> found = courses.stream().filter(c -> Objects.equals(c.id(), course.getId())).findFirst();
             assertThat(found).as("Course is available").isPresent();
-            CourseForImportDTO courseFound = found.orElseThrow();
+            found.orElseThrow();
         }
     }
 }
