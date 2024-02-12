@@ -10,7 +10,7 @@
             required
             class="form-select"
             [ngModel]="programmingExerciseCreationConfig.selectedProgrammingLanguage"
-            (ngModelChange)="programmingExerciseCreationConfig.selectedProgrammingLanguage = programmingExerciseCreationConfig.onProgrammingLanguageChange($event)"
+            (ngModelChange)="select.model = programmingExerciseCreationConfig.onProgrammingLanguageChange($event)"
             name="programmingLanguage"
             id="field_programmingLanguage"
             [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || !!programmingExercise.id || programmingExerciseCreationConfig.isImportFromFile"

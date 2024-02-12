@@ -64,7 +64,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     categoriesChanged = (categories: ExerciseCategory[]) => this.updateCategories(categories);
     projectTypeChanged = (projectType: ProjectType) => this.onProjectTypeChange(projectType);
     staticCodeAnalysisChanged = () => this.onStaticCodeAnalysisChanged();
-    repositoryNameChanged = (editedRepository: AuxiliaryRepository) => this.updateRepositoryName(editedRepository);
 
     auxiliaryRepositoryDuplicateNames: boolean;
     auxiliaryRepositoryDuplicateDirectories: boolean;
@@ -421,7 +420,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                             this.isExamMode = false;
                             this.courseService.find(this.courseId).subscribe((res) => {
                                 this.programmingExercise.course = res.body!;
-                                if (this.programmingExercise.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
+                                if (this.programmingExercise.course?.defaultProgrammingLanguage && !this.isImportFromFile && !this.selectedProgrammingLanguage) {
                                     this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
                                 }
                                 this.exerciseCategories = this.programmingExercise.categories || [];
@@ -1056,7 +1055,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
             titleNamePattern: this.titleNamePattern,
             shortNamePattern: this.shortNamePattern,
-            updateRepositoryName: this.repositoryNameChanged,
+            updateRepositoryName: this.updateRepositoryName,
             updateCheckoutDirectory: this.updateCheckoutDirectory,
             refreshAuxiliaryRepositoryChecks: this.refreshAuxiliaryRepositoryChecks,
             exerciseCategories: this.exerciseCategories,
