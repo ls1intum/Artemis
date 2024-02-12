@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis;
 import static com.tngtech.archunit.base.DescribedPredicate.*;
 import static com.tngtech.archunit.core.domain.JavaCall.Predicates.target;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.*;
+import static com.tngtech.archunit.core.domain.JavaCodeUnit.Predicates.constructor;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
 import static com.tngtech.archunit.core.domain.properties.HasType.Predicates.rawType;
@@ -24,6 +25,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
+import com.hazelcast.core.HazelcastInstance;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.*;
 import com.tngtech.archunit.lang.*;
@@ -162,6 +164,15 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testNoHazelcastUsageInConstructors() {
+        // CacheHandler and QuizCache are exceptions because these classes are not created during startup
+        var exceptions = or(declaredClassSimpleName("QuizCache"), declaredClassSimpleName("CacheHandler"));
+        var notUseHazelcastInConstructor = methods().that().areDeclaredIn(HazelcastInstance.class).should().onlyBeCalled().byCodeUnitsThat(is(not(constructor()).or(exceptions)))
+                .because("Calling Hazelcast during Application startup might be slow since the Network gets used. Use @PostConstruct-methods instead.");
+        notUseHazelcastInConstructor.check(allClasses);
+    }
+
+    @Test
     void testJPQLStyle() {
         methods().that().areAnnotatedWith(Query.class).should(useUpperCaseSQLStyle()).check(allClasses);
     }
@@ -174,6 +185,10 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     private DescribedPredicate<? super JavaAnnotation<?>> resideInPackageAnnotation(String packageName) {
         return equalTo(packageName).as("Annotation in package " + packageName).onResultOf(annotation -> annotation.getRawType().getPackageName());
+    }
+
+    private DescribedPredicate<? super JavaCodeUnit> declaredClassSimpleName(String name) {
+        return equalTo(name).as("Declared in class with simple name " + name).onResultOf(unit -> unit.getOwner().getSimpleName());
     }
 
     private ArchCondition<JavaMethod> notHaveAnyParameterAnnotatedWith(DescribedPredicate<? super JavaAnnotation<?>> annotationPredicate) {

@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { PROFILE_LTI } from 'app/app.constants';
+import { PROFILE_IRIS, PROFILE_LTI } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Subscription, firstValueFrom } from 'rxjs';
 import { Course } from 'app/entities/course.model';
@@ -91,7 +91,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         this.tutorialEnabled = await firstValueFrom(this.featureToggleService.getFeatureToggleActive(FeatureToggle.TutorialGroups));
         const profileInfo = await firstValueFrom(this.profileService.getProfileInfo());
         this.ltiEnabled = profileInfo?.activeProfiles.includes(PROFILE_LTI);
-        this.irisEnabled = profileInfo?.activeProfiles.includes('iris');
+        this.irisEnabled = profileInfo?.activeProfiles.includes(PROFILE_IRIS);
         if (this.irisEnabled) {
             const irisSettings = await firstValueFrom(this.irisSettingsService.getGlobalSettings());
             this.irisChatEnabled = irisSettings?.irisChatSettings?.enabled ?? false;
