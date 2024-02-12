@@ -39,6 +39,9 @@ public class ConversationParticipant extends DomainObject {
     @Column(name = "is_hidden")
     private Boolean isHidden;
 
+    @Column(name = "is_muted")
+    private boolean isMuted;
+
     @Column(name = "last_read")
     private ZonedDateTime lastRead;
 
@@ -59,8 +62,9 @@ public class ConversationParticipant extends DomainObject {
         participant.setUser(user);
         participant.setConversation(conversation);
         participant.setIsModerator(false);
-        participant.setIsHidden(false);
         participant.setIsFavorite(false);
+        participant.setIsHidden(false);
+        participant.setIsMuted(false);
         // set the last reading time of a participant in the past when creating conversation for the first time!
         participant.setLastRead(ZonedDateTime.now().minusYears(2));
         participant.setUnreadMessagesCount(0L);
@@ -125,5 +129,13 @@ public class ConversationParticipant extends DomainObject {
 
     public void setIsHidden(Boolean hidden) {
         isHidden = hidden;
+    }
+
+    public boolean getIsMuted() {
+        return isMuted;
+    }
+
+    public void setIsMuted(boolean isMuted) {
+        this.isMuted = isMuted;
     }
 }

@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
@@ -8,12 +8,12 @@ import {
     ConversationDetailDialogComponent,
     ConversationDetailTabs,
 } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
-import { ChannelDTO, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { EMPTY, Subject, from, takeUntil } from 'rxjs';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { canAddUsersToConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
-import { getAsGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { getAsGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/overview/course-conversations/other/conversation.util';
 import { catchError } from 'rxjs/operators';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -30,7 +30,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     MEMBERS = ConversationDetailTabs.MEMBERS;
 
     course: Course;
-    activeConversation?: ConversationDto;
+    activeConversation?: ConversationDTO;
 
     activeConversationAsChannel?: ChannelDTO;
     channelSubTypeReferenceTranslationKey?: string;
@@ -47,7 +47,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
         private metisService: MetisService,
     ) {}
 
-    getAsGroupChat = getAsGroupChatDto;
+    getAsGroupChat = getAsGroupChatDTO;
 
     canAddUsers = canAddUsersToConversation;
 
@@ -62,9 +62,9 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     }
 
     private subscribeToActiveConversation() {
-        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDto) => {
+        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
             this.activeConversation = conversation;
-            this.activeConversationAsChannel = getAsChannelDto(conversation);
+            this.activeConversationAsChannel = getAsChannelDTO(conversation);
             this.channelSubTypeReferenceTranslationKey = getChannelSubTypeReferenceTranslationKey(this.activeConversationAsChannel?.subType);
             this.channelSubTypeReferenceRouterLink = this.metisService.getLinkForChannelSubType(this.activeConversationAsChannel);
         });

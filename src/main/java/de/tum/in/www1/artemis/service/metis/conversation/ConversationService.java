@@ -222,7 +222,7 @@ public class ConversationService {
      * @param memberLimit  the maximum number of members in the conversation
      */
     public void registerUsersToConversation(Course course, Set<User> users, Conversation conversation, Optional<Integer> memberLimit) {
-        var existingUsers = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
+        var existingUsers = conversationParticipantRepository.findConversationParticipantsByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
         var usersToBeRegistered = users.stream().filter(user -> !existingUsers.contains(user)).collect(Collectors.toSet());
 
@@ -250,7 +250,7 @@ public class ConversationService {
      * @param conversation conversation which members to notify
      */
     public void notifyAllConversationMembersAboutUpdate(Conversation conversation) {
-        var usersToContact = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
+        var usersToContact = conversationParticipantRepository.findConversationParticipantsByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
         broadcastOnConversationMembershipChannel(conversation.getCourse(), MetisCrudAction.UPDATE, conversation, usersToContact);
     }
@@ -274,7 +274,7 @@ public class ConversationService {
      * @param conversation the conversation from which the users are removed
      */
     public void deregisterUsersFromAConversation(Course course, Set<User> users, Conversation conversation) {
-        var existingUsers = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
+        var existingUsers = conversationParticipantRepository.findConversationParticipantsByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
         var usersToBeDeregistered = users.stream().filter(existingUsers::contains).collect(Collectors.toSet());
         var remainingUsers = existingUsers.stream().filter(user -> !usersToBeDeregistered.contains(user)).collect(Collectors.toSet());
@@ -381,7 +381,7 @@ public class ConversationService {
      * @param requestingUser the user that wants to switch the favorite status
      * @param favoriteStatus the new favorite status
      */
-    public void switchFavoriteStatus(Long conversationId, User requestingUser, Boolean favoriteStatus) {
+    public void setIsFavorite(Long conversationId, User requestingUser, Boolean favoriteStatus) {
         ConversationParticipant conversationParticipant = getOrCreateConversationParticipant(conversationId, requestingUser);
         conversationParticipant.setIsFavorite(favoriteStatus);
         conversationParticipantRepository.save(conversationParticipant);
@@ -394,9 +394,22 @@ public class ConversationService {
      * @param requestingUser the user that wants to switch the hidden status
      * @param hiddenStatus   the new hidden status
      */
-    public void switchHiddenStatus(Long conversationId, User requestingUser, Boolean hiddenStatus) {
+    public void setIsHidden(Long conversationId, User requestingUser, Boolean hiddenStatus) {
         ConversationParticipant conversationParticipant = getOrCreateConversationParticipant(conversationId, requestingUser);
         conversationParticipant.setIsHidden(hiddenStatus);
+        conversationParticipantRepository.save(conversationParticipant);
+    }
+
+    /**
+     * Set the muted status of a conversation for a user
+     *
+     * @param conversationId the id of the conversation
+     * @param requestingUser the user that wants to switch the muted status
+     * @param isMuted        the new muted status
+     */
+    public void setIsMuted(Long conversationId, User requestingUser, boolean isMuted) {
+        var conversationParticipant = getOrCreateConversationParticipant(conversationId, requestingUser);
+        conversationParticipant.setIsMuted(isMuted);
         conversationParticipantRepository.save(conversationParticipant);
     }
 
