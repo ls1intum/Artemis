@@ -187,10 +187,16 @@ public class TutorialGroupFreePeriodResource {
     public ResponseEntity<Void> delete(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId, @PathVariable Long tutorialGroupFreePeriodId)
             throws URISyntaxException {
         log.debug("REST request to delete TutorialGroupFreePeriod: {}", tutorialGroupFreePeriodId);
+        log.info("REST request to delete TutorialGroupFreePeriod: {} of tutorial group configuration {} of course: {}", tutorialGroupFreePeriodId, tutorialGroupsConfigurationId,
+                courseId);
         TutorialGroupFreePeriod tutorialGroupFreePeriod = tutorialGroupFreePeriodRepository.findByIdElseThrow(tutorialGroupFreePeriodId);
         checkEntityIdMatchesPathIds(tutorialGroupFreePeriod, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFreePeriod.getTutorialGroupsConfiguration().getCourse(), null);
         Optional<TutorialGroupsConfiguration> configurationOptional = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriods(courseId);
+        log.info("Configuration optional: {}", configurationOptional);
+        if (configurationOptional.isEmpty()) {
+            throw new BadRequestException("The course has no tutorial groups configuration");
+        }
         TutorialGroupsConfiguration configuration = configurationOptional.get();
         tutorialGroupFreePeriodService.updateOverlappingSessions(configuration.getCourse(), tutorialGroupFreePeriod, true);
         tutorialGroupFreePeriodRepository.delete(tutorialGroupFreePeriod); // TODO: Whenever a Session overlaps with 2 free Periods
