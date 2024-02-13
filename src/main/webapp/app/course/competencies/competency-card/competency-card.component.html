@@ -10,16 +10,19 @@
     }
     <div class="col-auto d-none d-sm-block">
         <a class="exercise-row-icon">
-            <fa-icon [icon]="getIcon(competency.taxonomy)" size="2x" [ngbTooltip]="getIconTooltip(competency.taxonomy) | artemisTranslate" container="body"></fa-icon>
+            <fa-icon
+                [icon]="getIcon(competency.taxonomy)"
+                size="2x"
+                [ngbTooltip]="'artemisApp.competency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
+                container="body"
+            ></fa-icon>
         </a>
     </div>
     <div class="col">
         <div class="row">
             <div class="col-auto d-sm-none">
                 <h4 class="fw-medium">
-                    @if (competency.taxonomy) {
-                        <fa-icon [icon]="getIcon(competency.taxonomy)"></fa-icon>
-                    }
+                    <fa-icon [icon]="getIcon(competency.taxonomy)"></fa-icon>
                 </h4>
             </div>
             <div class="col-sm col py-2">

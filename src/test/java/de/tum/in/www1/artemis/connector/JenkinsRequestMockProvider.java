@@ -128,8 +128,17 @@ public class JenkinsRequestMockProvider {
     public void mockCreateBuildPlan(String projectKey, String planKey, boolean jobAlreadyExists) throws IOException {
         var job = projectKey + "-" + planKey;
         mockCreateJobInFolder(projectKey, job, jobAlreadyExists);
+        mockCreateBuildPlan(projectKey, job);
+    }
+
+    private void mockCreateBuildPlan(String projectKey, String job) throws IOException {
         mockGivePlanPermissions(projectKey, job);
         mockTriggerBuild(projectKey, job, false);
+    }
+
+    public void mockCreateCustomBuildPlan(String projectKey, String planKey) throws IOException {
+        var job = projectKey + "-" + planKey;
+        mockCreateBuildPlan(projectKey, job);
     }
 
     public void mockCreateJobInFolder(String jobFolder, String job, boolean jobAlreadyExists) throws IOException {
