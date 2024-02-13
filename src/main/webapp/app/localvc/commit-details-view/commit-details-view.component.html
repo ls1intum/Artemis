@@ -5,26 +5,21 @@
 
     <div>
         <p>
-            <strong>{{ 'artemisApp.repository.commitHistory.commitDetails.commitHash' | artemisTranslate }}</strong
-            ><br />
-            <span class="text-primary">{{ currentCommit.hash }}</span>
-        </p>
-        <p>
-            <strong>{{ 'artemisApp.repository.commitHistory.commitDetails.author' | artemisTranslate }}</strong
-            ><br />
-            {{ currentCommit.author }}, <span class="text-primary">{{ currentCommit.authorEmail }}</span>
-        </p>
-        <p>
-            <strong>{{ 'artemisApp.repository.commitHistory.commitDetails.date' | artemisTranslate }}</strong
-            ><br />
-            {{ currentCommit.timestamp | artemisDate: 'long' : true }}
-        </p>
-        <p>
-            <strong>{{ 'artemisApp.repository.commitHistory.commitDetails.commitMessage' | artemisTranslate }}</strong
-            ><br />
-            {{ currentCommit.message }}
+            <span
+                ><strong>{{ 'artemisApp.repository.commitHistory.commitDetails.author' | artemisTranslate }}</strong
+                >: {{ currentCommit.author }}, <span class="text-primary">{{ currentCommit.authorEmail }}</span></span
+            >
+            <span style="margin-left: 40px"
+                ><strong>{{ 'artemisApp.repository.commitHistory.commitDetails.date' | artemisTranslate }}</strong
+                >: {{ currentCommit.timestamp | artemisDate: 'long' : true }}</span
+            >
+            <span style="margin-left: 40px"
+                ><strong>{{ 'artemisApp.repository.commitHistory.commitDetails.commitMessage' | artemisTranslate }}</strong
+                >: {{ currentCommit.message }}</span
+            >
         </p>
     </div>
+    <br />
 
     @if (report && leftCommitFileContentByPath && rightCommitFileContentByPath) {
         <jhi-git-diff-report
@@ -32,6 +27,7 @@
             [diffForTemplateAndSolution]="diffForTemplateAndSolution"
             [templateFileContentByPath]="leftCommitFileContentByPath"
             [solutionFileContentByPath]="rightCommitFileContentByPath"
+            [isRepositoryView]="true"
         ></jhi-git-diff-report>
     }
 }

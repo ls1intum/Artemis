@@ -7,17 +7,27 @@
                     : 'artemisApp.programmingExercise.diffReport.previousSubmission'
                 ) | artemisTranslate
             }}
+            <span class="text-primary">
+                @if (isRepositoryView) {
+                    {{ report.leftCommitHash?.substring(0, 10) }}
+                }
+            </span>
         </h4>
     </div>
-    <div class="col-2">
+    <div class="col-4">
         <h4 class="ps-2">
             {{
                 (diffForTemplateAndSolution ? 'artemisApp.programmingExercise.diffReport.solution' : 'artemisApp.programmingExercise.diffReport.currentSubmission')
                     | artemisTranslate
             }}
+            <span class="text-primary">
+                @if (isRepositoryView) {
+                    {{ report.rightCommitHash?.substring(0, 10) }}
+                }
+            </span>
         </h4>
     </div>
-    <div class="col-4 text-end fw-bold">
+    <div class="col-2 text-end fw-bold">
         <jhi-git-diff-line-stat
             [addedLineCount]="addedLineCount"
             [removedLineCount]="removedLineCount"

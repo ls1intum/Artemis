@@ -17,6 +17,8 @@ export class GitDiffReportComponent implements OnInit {
 
     @Input() diffForTemplateAndSolution = true;
 
+    @Input() isRepositoryView = false;
+
     // TODO: Make this configurable by the user
     numberOfContextLines = 3;
     entries: ProgrammingExerciseGitDiffEntry[];
