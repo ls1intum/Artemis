@@ -191,8 +191,6 @@ zonky:
                         max_parallel_workers_per_gather: 4
                         max_parallel_workers: 8
                         max_parallel_maintenance_workers: 4
-                        checkpoint_timeout: 86400 # we don't need checkpoints for tests
-                        fsync: off # we don't need to sync to the disk for tests
             mysql:
                 docker:
                     image: "mysql:8.2.0"
@@ -218,34 +216,34 @@ management:
             enabled: true
 
 sentry:
-  dsn: https://not-activated@sentry.io/0000000
-  send-default-pii: true
-  logging:
-    enabled: false
+    dsn: https://not-activated@sentry.io/0000000
+    send-default-pii: true
+    logging:
+        enabled: false
 
 # Properties to be exposed on the /info management endpoint
 info:
-  # Comma separated list of profiles that will trigger the ribbon to show
-  display-ribbon-on-profiles: "dev"
-  sentry:
-    dsn: https://8c6b41ec2d4245e8bd3ec9541d53f625@sentry.io/1440029
-  guided-tour:
-    courseShortName: 'artemistutorial'
-    tours:
-      -   cancel_tour: ''
-      -   code_editor_tour: 'test'
-      -   course_overview_tour: ''
-      -   course_exercise_overview_tour: 'test'
-      -   modeling_tour: 'UML Class Diagram'
-      -   programming_exercise_fail_tour: 'test'
-      -   programming_exercise_success_tour: 'test'
-      -   tutor_assessment_tour: 'Patterns in Software Engineering'
-  # Allowed Orion version range. Should only be changed on major version releases
-  allowed-minimum-orion-version: 1.0.0
-  # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
-  # default value set to true for tests
-  text-assessment-analytics-enabled: true
-  student-exam-store-session-data: true
+    # Comma separated list of profiles that will trigger the ribbon to show
+    display-ribbon-on-profiles: "dev"
+    sentry:
+        dsn: https://8c6b41ec2d4245e8bd3ec9541d53f625@sentry.io/1440029
+    guided-tour:
+        courseShortName: 'artemistutorial'
+        tours:
+            -   cancel_tour: ''
+            -   code_editor_tour: 'test'
+            -   course_overview_tour: ''
+            -   course_exercise_overview_tour: 'test'
+            -   modeling_tour: 'UML Class Diagram'
+            -   programming_exercise_fail_tour: 'test'
+            -   programming_exercise_success_tour: 'test'
+            -   tutor_assessment_tour: 'Patterns in Software Engineering'
+    # Allowed Orion version range. Should only be changed on major version releases
+    allowed-minimum-orion-version: 1.0.0
+    # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
+    # default value set to true for tests
+    text-assessment-analytics-enabled: true
+    student-exam-store-session-data: true
 
 jhipster:
     clientApp:
