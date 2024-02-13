@@ -162,27 +162,27 @@ jobs:
               artemis-test6.artemis.cit.tum.de ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBI5x3Yh7ecWwh+oitXTMwRnjyVRwlikkIqvmpYb4TF6rgSxBAxfkiWHiEyTWS7eBtdhp/v0FmhJV9dsehZSxZYQ=
               artemis-test6.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMZdVOmY8K39PId1WPGMZaQwJvtDbGqJTdJX26YtDXgI
 
-          #- environment: artemis-test7.artemis.cit.tum.de
-          #  label-identifier: artemis-test7
-          #  url: https://artemis-test7.artemis.cit.tum.de
-          #  user: deployment
-          #  hosts: artemis-test7.artemis.cit.tum.de
-          #  folder: /opt/artemis
-          #  host_keys: |
-          #    artemis-test7.artemis.cit.tum.de ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDPBbRDLfjS+OBEv+qRPyAqZGB4VzXporexFM1xzBRq6S+q5SSuik9uXJ+ZJE3m4jrXmU0S+41dRhPIVhjtzqQgRkFe4zBjbbinQJhVlb6u8PQp35+pgDFzMswELj3wv3FWeJSkCNivhyTe7R5ZF3KrzyuEzlgMmmuqogyaNwJeGapaCDxYIMKb6HokKVlwl2RVxPeT7wRLIwPF5bujCA3ZUGDPvVNJT2h0nX0u1vpAYIDK1+5G7Sod7OLhRO0C1T0WBF5bPRAZfFLP1eZMCeUjIY9Xsc+0TwRSBGDy1DA+hmrzD83BS2Juy2nEnSG3oC8J0DOfJ0hreTm/0EA4F1y5oz9x0qgnmVqtz/+R16OLCo8mEOmBSwVLeeQJKy75/NRMxoeQ+jl8GEvO8gwfgxbYwBg6nHQzAgslCTMxBCIWvufRLK7n9IAc0zQHDJEcn6o9dN4RvUkC8DnlUqW6C2RVfjqr1qiwa3pS5wDjLqD9ctzZzxwXK7tYyZIqKOsaj7k=
-          #    artemis-test7.artemis.cit.tum.de ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBOVPCPO7KIjhJs8ISnVLjyDyKIid42AIBylpyp6PIKCVwLM8GNVbdQtZEkzpLnR4tIXdf7fJvg9OyIu36Lf21po=
-          #    artemis-test7.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMCmfbFQB7wbdaocZlWn45BYn8CaMfFHKuymHcLNq+JA
+          - environment: artemis-test7.artemis.cit.tum.de
+            label-identifier: artemis-test7
+            url: https://artemis-test7.artemis.cit.tum.de
+            user: deployment
+            hosts: artemis-test7.artemis.cit.tum.de
+            folder: /opt/artemis
+            host_keys: |
+              artemis-test7.artemis.cit.tum.de ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDPBbRDLfjS+OBEv+qRPyAqZGB4VzXporexFM1xzBRq6S+q5SSuik9uXJ+ZJE3m4jrXmU0S+41dRhPIVhjtzqQgRkFe4zBjbbinQJhVlb6u8PQp35+pgDFzMswELj3wv3FWeJSkCNivhyTe7R5ZF3KrzyuEzlgMmmuqogyaNwJeGapaCDxYIMKb6HokKVlwl2RVxPeT7wRLIwPF5bujCA3ZUGDPvVNJT2h0nX0u1vpAYIDK1+5G7Sod7OLhRO0C1T0WBF5bPRAZfFLP1eZMCeUjIY9Xsc+0TwRSBGDy1DA+hmrzD83BS2Juy2nEnSG3oC8J0DOfJ0hreTm/0EA4F1y5oz9x0qgnmVqtz/+R16OLCo8mEOmBSwVLeeQJKy75/NRMxoeQ+jl8GEvO8gwfgxbYwBg6nHQzAgslCTMxBCIWvufRLK7n9IAc0zQHDJEcn6o9dN4RvUkC8DnlUqW6C2RVfjqr1qiwa3pS5wDjLqD9ctzZzxwXK7tYyZIqKOsaj7k=
+              artemis-test7.artemis.cit.tum.de ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBOVPCPO7KIjhJs8ISnVLjyDyKIid42AIBylpyp6PIKCVwLM8GNVbdQtZEkzpLnR4tIXdf7fJvg9OyIu36Lf21po=
+              artemis-test7.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMCmfbFQB7wbdaocZlWn45BYn8CaMfFHKuymHcLNq+JA
 
-          #- environment: artemis-test8.artemis.cit.tum.de
-          #  label-identifier: artemis-test8
-          #  url: https://artemis-test8.artemis.cit.tum.de
-          #  user: deployment
-          #  hosts: artemis-test8.artemis.cit.tum.de
-          #  folder: /opt/artemis
-          #  host_keys: |
-          #    artemis-test8.artemis.cit.tum.de ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDAioy2yTY0p/deKM6j7gMJA4tj7NadooMcPjkMkIHCFhVSsUPlhvBC1KzBm/JyfiXN/3kFZE9bZXnYn8aor2j4eiPXGEl3H070bTVPYCBuz3KHD/1zKpo/j317bacYSZivDb9HQmaGKBezDlx4R7+lZoAloozqXOfQU2AVOLD14bn75Xfxe+uB8gjNy0bACgolleKOHDTMMkLPc2O6i2X6yOa8c/kgbGzXZXEq9/rB81ggw8TBcf1FXaCgSlQMjoO69rbNBliMtybMnsdMZxan79xBT35LvlQtRezCGzT5U9NNaPluxkWBMgGCfIaj6CG8tliw6IQY0oKkpVEdsMZkltEzbgZ39Fn/telz0G8RL/GDC/1ew0b0dfE0IknExp7XzFrVokrmPcfF5D11s+F8ZeIYdyOUyLP9gEgscethj9MNTpVwoeiCvMyzOvypMF8DHxKxs73cqJ5W/vRacMepSPwv/KJCT7geX8KjO4ABbQG7GToiZ6wQYsnvTjtcWPs=
-          #    artemis-test8.artemis.cit.tum.de ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBGxtzUJPdHMAIfaL4Dr8OLMySCNInARsqnNN3e0JqHG/Y6xCVDVF9ZTOGUqMO9woMhsyTU6EOo6KaVfIVrw7SEA=
-          #    artemis-test8.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFN6fu1oNKX3xFE1pe6Ichl5XJ/eTYhihywVvkH0mWRF
+          - environment: artemis-test8.artemis.cit.tum.de
+            label-identifier: artemis-test8
+            url: https://artemis-test8.artemis.cit.tum.de
+            user: deployment
+            hosts: artemis-test8.artemis.cit.tum.de
+            folder: /opt/artemis
+            host_keys: |
+              artemis-test8.artemis.cit.tum.de ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDAioy2yTY0p/deKM6j7gMJA4tj7NadooMcPjkMkIHCFhVSsUPlhvBC1KzBm/JyfiXN/3kFZE9bZXnYn8aor2j4eiPXGEl3H070bTVPYCBuz3KHD/1zKpo/j317bacYSZivDb9HQmaGKBezDlx4R7+lZoAloozqXOfQU2AVOLD14bn75Xfxe+uB8gjNy0bACgolleKOHDTMMkLPc2O6i2X6yOa8c/kgbGzXZXEq9/rB81ggw8TBcf1FXaCgSlQMjoO69rbNBliMtybMnsdMZxan79xBT35LvlQtRezCGzT5U9NNaPluxkWBMgGCfIaj6CG8tliw6IQY0oKkpVEdsMZkltEzbgZ39Fn/telz0G8RL/GDC/1ew0b0dfE0IknExp7XzFrVokrmPcfF5D11s+F8ZeIYdyOUyLP9gEgscethj9MNTpVwoeiCvMyzOvypMF8DHxKxs73cqJ5W/vRacMepSPwv/KJCT7geX8KjO4ABbQG7GToiZ6wQYsnvTjtcWPs=
+              artemis-test8.artemis.cit.tum.de ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBGxtzUJPdHMAIfaL4Dr8OLMySCNInARsqnNN3e0JqHG/Y6xCVDVF9ZTOGUqMO9woMhsyTU6EOo6KaVfIVrw7SEA=
+              artemis-test8.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFN6fu1oNKX3xFE1pe6Ichl5XJ/eTYhihywVvkH0mWRF
 
           - environment: artemis-test9.artemis.cit.tum.de
             label-identifier: artemis-test9
@@ -212,8 +212,8 @@ jobs:
       TS4: ${{ steps.filter.outputs.artemis-test4 || '' }}
       TS5: ${{ steps.filter.outputs.artemis-test5 || '' }}
       TS6: ${{ steps.filter.outputs.artemis-test6 || '' }}
-      #TS7: ${{ steps.filter.outputs.artemis-test7 || '' }}
-      #TS8: ${{ steps.filter.outputs.artemis-test8 || '' }}
+      TS7: ${{ steps.filter.outputs.artemis-test7 || '' }}
+      TS8: ${{ steps.filter.outputs.artemis-test8 || '' }}
       TS9: ${{ steps.filter.outputs.artemis-test9 || '' }}
       #TS10: ${{ steps.filter.outputs.artemis-test10 || '' }}
     steps:
