@@ -57,7 +57,7 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final BuildScriptGenerationService buildScriptGenerationService;
 
-    @Value("${artemis.continuous-integration.hades.url}")
+    @Value("${artemis.continuous-integration.url}")
     private String hadesServerUrl;
 
     @Value("${artemis.continuous-integration.hades.username}")
