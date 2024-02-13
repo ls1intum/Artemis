@@ -73,7 +73,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
         textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
-        when(textExerciseRepository.findByIdWithGradingCriteriaElseThrow(textExercise.getId())).thenReturn(textExercise);
+        when(textExerciseRepository.findWithGradingCriteriaByIdElseThrow(textExercise.getId())).thenReturn(textExercise);
 
         textSubmission = new TextSubmission(2L).text("Test - This is what the feedback references - Submission");
 
