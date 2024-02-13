@@ -30,7 +30,7 @@ public interface StaticCodeAnalysisCategoryRepository extends JpaRepository<Stat
 
     Logger log = LoggerFactory.getLogger(StaticCodeAnalysisCategoryRepository.class);
 
-    Set<StaticCodeAnalysisCategory> findByExerciseId(Long exerciseId);
+    Set<StaticCodeAnalysisCategory> findByExerciseId(long exerciseId);
 
     @Query("""
             SELECT s
@@ -38,7 +38,7 @@ public interface StaticCodeAnalysisCategoryRepository extends JpaRepository<Stat
                 LEFT JOIN FETCH s.exercise
             WHERE s.exercise.id = :exerciseId
             """)
-    Set<StaticCodeAnalysisCategory> findWithExerciseByExerciseId(@Param("exerciseId") Long exerciseId);
+    Set<StaticCodeAnalysisCategory> findWithExerciseByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Links the categories of an exercise with the default category mappings.

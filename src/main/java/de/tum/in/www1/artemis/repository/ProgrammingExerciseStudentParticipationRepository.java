@@ -46,7 +46,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
                     )
                 ) OR pr.id IS NULL)
             """)
-    Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(@Param("participationId") Long participationId,
+    Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(@Param("participationId") long participationId,
             @Param("dateTime") ZonedDateTime dateTime);
 
     @EntityGraph(type = LOAD, attributePaths = { "results", "exercise", "team.students" })
@@ -61,24 +61,24 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             """)
     List<ProgrammingExerciseStudentParticipation> findAllWithBuildPlanIdWithResults();
 
-    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(Long exerciseId, String username);
+    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(long exerciseId, String username);
 
-    default ProgrammingExerciseStudentParticipation findByExerciseIdAndStudentLoginOrThrow(Long exerciseId, String username) {
+    default ProgrammingExerciseStudentParticipation findByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
         return findByExerciseIdAndStudentLogin(exerciseId, username).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", exerciseId));
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
-    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLogin(Long exerciseId, String username);
+    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLogin(long exerciseId, String username);
 
-    default ProgrammingExerciseStudentParticipation findWithSubmissionsByExerciseIdAndStudentLoginOrThrow(Long exerciseId, String username) {
+    default ProgrammingExerciseStudentParticipation findWithSubmissionsByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
         return findWithSubmissionsByExerciseIdAndStudentLogin(exerciseId, username)
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", exerciseId));
     }
 
-    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLoginAndTestRun(Long exerciseId, String username, boolean testRun);
+    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun);
 
     @EntityGraph(type = LOAD, attributePaths = { "team" })
-    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(Long exerciseId, Long teamId);
+    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(long exerciseId, long teamId);
 
     @Query("""
             SELECT DISTINCT participation
@@ -88,7 +88,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             WHERE participation.exercise.id = :exerciseId
                 AND participation.team.shortName = :teamShortName
             """)
-    Optional<ProgrammingExerciseStudentParticipation> findWithEagerStudentsByExerciseIdAndTeamShortName(@Param("exerciseId") Long exerciseId,
+    Optional<ProgrammingExerciseStudentParticipation> findWithEagerStudentsByExerciseIdAndTeamShortName(@Param("exerciseId") long exerciseId,
             @Param("teamShortName") String teamShortName);
 
     @Query("""
@@ -100,19 +100,19 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             WHERE participation.exercise.id = :exerciseId
                 AND participation.team.shortName = :teamShortName
             """)
-    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndEagerStudentsByExerciseIdAndTeamShortName(@Param("exerciseId") Long exerciseId,
+    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndEagerStudentsByExerciseIdAndTeamShortName(@Param("exerciseId") long exerciseId,
             @Param("teamShortName") String teamShortName);
 
-    List<ProgrammingExerciseStudentParticipation> findByExerciseId(Long exerciseId);
+    List<ProgrammingExerciseStudentParticipation> findByExerciseId(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsById(long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
-    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseId(Long exerciseId);
+    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseId(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "team.students" })
-    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndTeamStudentsByExerciseId(Long exerciseId);
+    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndTeamStudentsByExerciseId(long exerciseId);
 
     /**
      * Will return the participations matching the provided participation ids, but only if they belong to the given exercise.
@@ -128,7 +128,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             WHERE participation.exercise.id = :exerciseId
                 AND participation.id IN :participationIds
             """)
-    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndParticipationIds(@Param("exerciseId") Long exerciseId,
+    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndParticipationIds(@Param("exerciseId") long exerciseId,
             @Param("participationIds") Collection<Long> participationIds);
 
     @Query("""
@@ -139,7 +139,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
                 AND participation.student.login = :username
                 AND participation.testRun = :testRun
             """)
-    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") Long exerciseId,
+    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") long exerciseId,
             @Param("username") String username, @Param("testRun") boolean testRun);
 
     @Query("""
@@ -150,24 +150,24 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
                 AND participation.student.login = :username
             ORDER BY participation.testRun ASC
             """)
-    List<ProgrammingExerciseStudentParticipation> findAllWithSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") Long exerciseId, @Param("username") String username);
+    List<ProgrammingExerciseStudentParticipation> findAllWithSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("username") String username);
 
     @EntityGraph(type = LOAD, attributePaths = "student")
-    Optional<ProgrammingExerciseStudentParticipation> findWithStudentById(Long participationId);
+    Optional<ProgrammingExerciseStudentParticipation> findWithStudentById(long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = "team.students")
-    Optional<ProgrammingExerciseStudentParticipation> findWithTeamStudentsById(Long participationId);
+    Optional<ProgrammingExerciseStudentParticipation> findWithTeamStudentsById(long participationId);
 
     @NotNull
-    default ProgrammingExerciseStudentParticipation findByIdElseThrow(Long participationId) {
+    default ProgrammingExerciseStudentParticipation findByIdElseThrow(long participationId) {
         return findById(participationId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", participationId));
     }
 
-    default Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(Long participationId) {
+    default Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(long participationId) {
         return findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId, ZonedDateTime.now());
     }
 
-    default ProgrammingExerciseStudentParticipation findWithTeamStudentsByIdElseThrow(Long participationId) {
+    default ProgrammingExerciseStudentParticipation findWithTeamStudentsByIdElseThrow(long participationId) {
         return findWithTeamStudentsById(participationId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", participationId));
     }
 
@@ -178,7 +178,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             SET p.locked = :locked
             WHERE p.id = :participationId
             """)
-    void updateLockedById(@Param("participationId") Long participationId, @Param("locked") boolean locked);
+    void updateLockedById(@Param("participationId") long participationId, @Param("locked") boolean locked);
 
     @Query("""
             SELECT DISTINCT p
