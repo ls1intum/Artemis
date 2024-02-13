@@ -71,7 +71,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
                     OR e.testExam IS TRUE
                 )
             """)
-    Set<Exam> findByCourseIdsForUser(@Param("courseIds") Set<Long> courseIds, @Param("userId") Long userId, @Param("groupNames") Set<String> groupNames,
+    Set<Exam> findByCourseIdsForUser(@Param("courseIds") Set<Long> courseIds, @Param("userId") long userId, @Param("groupNames") Set<String> groupNames,
             @Param("now") ZonedDateTime now);
 
     @Query("""
@@ -91,7 +91,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             FROM Exam exam
             WHERE exam.course.testCourse IS FALSE
                 AND exam.endDate >= :date
-            ORDER BY exam.startDate asc
+            ORDER BY exam.startDate ASC
             """)
     List<Exam> findAllByEndDateGreaterThanEqual(@Param("date") ZonedDateTime date);
 
@@ -386,7 +386,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             WHERE e.id = :examId
             """)
     @Cacheable(cacheNames = "examTitle", key = "#examId", unless = "#result == null")
-    String getExamTitle(@Param("examId") Long examId);
+    String getExamTitle(@Param("examId") long examId);
 
     @NotNull
     default Exam findByIdElseThrow(long examId) throws EntityNotFoundException {
@@ -504,5 +504,5 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
                 AND e.testExam IS FALSE
                 AND registeredUsers.user.id = :userId
             """)
-    Set<Exam> findActiveExams(@Param("courseIds") Set<Long> courseIds, @Param("userId") Long userId, @Param("visible") ZonedDateTime visible, @Param("end") ZonedDateTime end);
+    Set<Exam> findActiveExams(@Param("courseIds") Set<Long> courseIds, @Param("userId") long userId, @Param("visible") ZonedDateTime visible, @Param("end") ZonedDateTime end);
 }
