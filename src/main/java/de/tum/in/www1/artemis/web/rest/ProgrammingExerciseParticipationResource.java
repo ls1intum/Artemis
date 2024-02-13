@@ -296,7 +296,7 @@ public class ProgrammingExerciseParticipationResource {
     public ModelAndView redirectGetParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long participationId, @PathVariable String commitId) {
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content-commit-details/" + commitId);
+        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content/" + commitId);
     }
 
 }

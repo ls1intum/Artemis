@@ -17,7 +17,6 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -175,33 +174,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @return a map with the file path as key and the file content as value
      */
     @GetMapping(value = "/repository/{participationId}/files-content/{commitId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @EnforceAtLeastInstructor
-    public ResponseEntity<Map<String, String>> getFilesAtCommit(@PathVariable long participationId, @PathVariable String commitId) {
-        return getMapResponseEntityForFilesAtCommit(participationId, commitId);
-    }
-
-    /**
-     * GET /repository/{participationId}/files/{commitId} : Gets the files of the repository with the given participationId at the given commitId.
-     * The commit details view is also for students, so we enforce at least student access rights.
-     *
-     * @param participationId the participationId of the repository we want to get the files from
-     * @param commitId        the commitId of the repository we want to get the files from
-     * @return a map with the file path as key and the file content as value
-     */
-    @GetMapping(value = "/repository/{participationId}/files-content-commit-details/{commitId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
-    public ResponseEntity<Map<String, String>> getFilesAtCommitForCommitDetails(@PathVariable long participationId, @PathVariable String commitId) {
-        return getMapResponseEntityForFilesAtCommit(participationId, commitId);
-    }
-
-    /**
-     * Helper method to get the files of the repository with the given participationId at the given commitId.
-     *
-     * @param participationId the participationId of the repository we want to get the files from
-     * @param commitId        the commitId of the repository we want to get the files from
-     * @return a map with the file path as key and the file content as value
-     */
-    private ResponseEntity<Map<String, String>> getMapResponseEntityForFilesAtCommit(long participationId, String commitId) {
+    public ResponseEntity<Map<String, String>> getFilesAtCommit(@PathVariable long participationId, @PathVariable String commitId) {
         log.debug("REST request to files for domainId {} at commitId {}", participationId, commitId);
         var participation = getProgrammingExerciseParticipation(participationId);
         var programmingExercise = programmingExerciseRepository.findByParticipationIdOrElseThrow(participationId);
