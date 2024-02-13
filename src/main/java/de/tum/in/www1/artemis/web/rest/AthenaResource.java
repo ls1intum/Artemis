@@ -97,7 +97,7 @@ public class AthenaResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         // Check if feedback suggestions are actually enabled
-        if (!exercise.isFeedbackSuggestionsEnabled()) {
+        if (!exercise.areFeedbackSuggestionsEnabled()) {
             throw new InternalServerErrorException("Feedback suggestions are not enabled for this exercise");
         }
 
@@ -155,7 +155,7 @@ public class AthenaResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         try {
-            var modules = athenaModuleService.getAthenaProgrammingModulesForCourse(course);
+            List<String> modules = athenaModuleService.getAthenaProgrammingModulesForCourse(course);
             return ResponseEntity.ok(modules);
         }
         catch (NetworkingException e) {
@@ -177,9 +177,9 @@ public class AthenaResource {
         log.debug("REST request to get available Athena modules for text exercises in Course {}", course.getTitle());
 
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-        // todo error handling
+
         try {
-            var modules = athenaModuleService.getAthenaTextModulesForCourse(course);
+            List<String> modules = athenaModuleService.getAthenaTextModulesForCourse(course);
             return ResponseEntity.ok(modules);
         }
         catch (NetworkingException e) {

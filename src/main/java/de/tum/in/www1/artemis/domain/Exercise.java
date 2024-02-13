@@ -790,7 +790,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.feedbackSuggestionModule = feedbackSuggestionModule;
     }
 
-    public boolean isFeedbackSuggestionsEnabled() {
+    public boolean areFeedbackSuggestionsEnabled() {
         return feedbackSuggestionModule != null;
     }
 

@@ -117,7 +117,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
      * Send feedback to Athena (if enabled for both the Artemis instance and the exercise).
      */
     private void sendFeedbackToAthena(final ProgrammingExercise exercise, final ProgrammingSubmission programmingSubmission, final List<Feedback> feedbacks) {
-        if (athenaFeedbackSendingService.isPresent() && exercise.isFeedbackSuggestionsEnabled()) {
+        if (athenaFeedbackSendingService.isPresent() && exercise.areFeedbackSuggestionsEnabled()) {
             athenaFeedbackSendingService.get().sendFeedback(exercise, programmingSubmission, feedbacks);
         }
     }
