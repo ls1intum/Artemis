@@ -168,6 +168,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     /**
      * GET /repository/{participationId}/files/{commitId} : Gets the files of the repository with the given participationId at the given commitId.
+     * This enforces at least instructor access rights.
      *
      * @param participationId the participationId of the repository we want to get the files from
      * @param commitId        the commitId of the repository we want to get the files from
@@ -198,6 +199,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     /**
      * GET /repository/{participationId}/files/{commitId} : Gets the files of the repository with the given participationId at the given commitId.
+     * The commit details view is also for students, so we enforce at least student access rights.
      *
      * @param participationId the participationId of the repository we want to get the files from
      * @param commitId        the commitId of the repository we want to get the files from
