@@ -215,9 +215,16 @@ public class TutorialGroupSessionResource {
                 .body(TutorialGroupSession.preventCircularJsonConversion(newSession));
     }
 
+    /**
+     * Updates the status and associated free period of a tutorial group session based on the presence of an overlapping free period.
+     *
+     * @param newSession        The tutorial group session to be updated.
+     * @param overlappingPeriod An Optional that may contain a TutorialGroupFreePeriod if there is an overlapping free period.
+     */
     public static void updateTutorialGroupSession(TutorialGroupSession newSession, Optional<TutorialGroupFreePeriod> overlappingPeriod) {
         if (overlappingPeriod.isPresent()) {
             newSession.setStatus(TutorialGroupSessionStatus.CANCELLED);
+            // the status explanation is set to null, as it is specified in the TutorialGroupFreePeriod
             newSession.setStatusExplanation(null);
             newSession.setTutorialGroupFreePeriod(overlappingPeriod.get());
         }
