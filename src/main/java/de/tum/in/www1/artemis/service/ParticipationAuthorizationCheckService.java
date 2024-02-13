@@ -44,6 +44,7 @@ public class ParticipationAuthorizationCheckService {
      */
     public void checkCanAccessParticipationElseThrow(final ParticipationInterface participation) {
         if (participation == null) {
+            log.error("Cannot access null participation");
             throw new AccessForbiddenException("participation");
         }
         else if (!canAccessParticipation(participation)) {
@@ -75,12 +76,15 @@ public class ParticipationAuthorizationCheckService {
             studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
         }
         if (participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation) {
+            log.error("Checking if user can access programming participation");
             return canAccessProgrammingParticipation(programmingExerciseParticipation, user);
         }
         else if (participation instanceof StudentParticipation studentParticipation) {
+            log.error("Checking if user can access student participation");
             return userHasPermissionsToAccessParticipation(studentParticipation, user);
         }
         else {
+            log.error("canAccessParticipation: unknown participation type");
             // null or unknown participation type (should not exist unless class hierarchy changes): do not give access
             return false;
         }
@@ -98,6 +102,7 @@ public class ParticipationAuthorizationCheckService {
     private boolean canAccessProgrammingParticipation(final ProgrammingExerciseParticipation participation, final User user) {
         // If the current user is owner of the participation, they are allowed to access it
         if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && studentParticipation.isOwnedBy(user)) {
+            log.debug("User {} is owner of participation {}", user.getLogin(), participation.getId());
             return true;
         }
 
