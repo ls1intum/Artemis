@@ -107,6 +107,7 @@ public class ParticipationAuthorizationCheckService {
             // Cannot access a programming participation that has no programming exercise associated with it
             return false;
         }
+
         return authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user);
     }
 
