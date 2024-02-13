@@ -664,7 +664,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 AND p.exercise IN :exercises
                 AND (p.testRun IS FALSE OR :includeTestRuns IS TRUE)
             """)
-    Set<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(@Param("studentId") Long studentId,
+    Set<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(@Param("studentId") long studentId,
             @Param("exercises") Collection<Exercise> exercises, @Param("includeTestRuns") boolean includeTestRuns);
 
     @Query("""
