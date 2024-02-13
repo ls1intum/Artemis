@@ -59,29 +59,4 @@ jhi-exam-students {
             animation-timing-function: ease-out;
         }
     }
-
-    .datatable-header {
-        width: 100% !important;
-        flex: 1;
-    }
-
-    .datatable-header-inner {
-        width: 100% !important;
-    }
-
-    .datatable-row-center {
-        flex: 1;
-        min-width: 400px;
-    }
-
-    .datatable-body-cell {
-        flex: 1;
-        .img-fluid {
-            max-height: 100%;
-        }
-    }
-
-    .datatable-header-cell {
-        flex: 1;
-    }
 }
