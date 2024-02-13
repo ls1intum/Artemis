@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -70,7 +71,8 @@ public class DataExportScheduleService {
         ExecutorService executor = Executors.newFixedThreadPool(10);
         dataExportsToBeCreated.forEach(dataExport -> executor.execute(() -> createDataExport(dataExport, successfulDataExports)));
         executor.shutdown();
-        var dataExportsToBeDeleted = dataExportRepository.findAllToBeDeleted();
+        ZonedDateTime thresholdDate = ZonedDateTime.now().minusDays(7);
+        var dataExportsToBeDeleted = dataExportRepository.findAllToBeDeleted(thresholdDate);
         dataExportsToBeDeleted.forEach(this::deleteDataExport);
         Optional<User> admin = userService.findInternalAdminUser();
         if (admin.isEmpty()) {
