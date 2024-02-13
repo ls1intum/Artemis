@@ -75,8 +75,7 @@ public class ParticipationAuthorizationCheckService {
             // eager load the team with students so their information can be used for the access check below
             studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
         }
-        log.error(participation.getClass().getName());
-        if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseParticipation) {
+        if (participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation) {
             log.error("Checking if user can access programming participation");
             return canAccessProgrammingParticipation(programmingExerciseParticipation, user);
         }
@@ -100,9 +99,9 @@ public class ParticipationAuthorizationCheckService {
      * @param participation to check permissions for.
      * @return true if the user can access the participation, false if not. Also returns false if the participation is not from a programming exercise.
      */
-    private boolean canAccessProgrammingParticipation(final ProgrammingExerciseStudentParticipation participation, final User user) {
+    private boolean canAccessProgrammingParticipation(final ProgrammingExerciseParticipation participation, final User user) {
         // If the current user is owner of the participation, they are allowed to access it
-        if (participation.isOwnedBy(user)) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && studentParticipation.isOwnedBy(user)) {
             log.error("User {} is owner of participation {}", user.getLogin(), participation.getId());
             return true;
         }
