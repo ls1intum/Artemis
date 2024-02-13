@@ -298,7 +298,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         var exercise = courseExercise.stream().findFirst();
         assertThat(exercise).isPresent();
 
-        var user = userRepo.findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName()).stream().findFirst();
+        var user = userRepo.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()).stream().findFirst();
         assertThat(user).isPresent();
 
         gitlabRequestMockProvider.mockFailToUpdateOldGroupMembers(exercise.get(), user.get());

@@ -28,9 +28,11 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.offbytwo.jenkins.JenkinsServer;
 
+import de.tum.in.www1.artemis.connector.AeolusRequestMockProvider;
 import de.tum.in.www1.artemis.connector.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.connector.JenkinsRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -47,7 +49,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @ResourceLock("AbstractSpringIntegrationJenkinsGitlabTest")
 @AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "gitlab", "jenkins", "athena", "scheduling", "lti" })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "gitlab", "jenkins", "athena", "scheduling", "lti", "aeolus" })
 @TestPropertySource(properties = { "info.guided-tour.course-group-tutors=artemis-artemistutorial-tutors", "info.guided-tour.course-group-students=artemis-artemistutorial-students",
         "info.guided-tour.course-group-editors=artemis-artemistutorial-editors", "info.guided-tour.course-group-instructors=artemis-artemistutorial-instructors",
         "artemis.user-management.use-external=false", "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!authorizationservicestudent2).*$" })
@@ -71,6 +73,9 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     @Autowired
     protected GitlabRequestMockProvider gitlabRequestMockProvider;
 
+    @Autowired
+    protected AeolusRequestMockProvider aeolusRequestMockProvider;
+
     @AfterEach
     protected void resetSpyBeans() {
         Mockito.reset(continuousIntegrationService, versionControlService, jenkinsServer);
@@ -78,7 +83,8 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject) throws Exception {
+    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject, boolean useCustomBuildPlanDefinition, boolean useCustomBuildPlanWorked)
+            throws Exception {
         final var projectKey = exercise.getProjectKey();
         final var exerciseRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
         final var solutionRepoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
@@ -91,8 +97,26 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
         jenkinsRequestMockProvider.mockCreateProjectForExercise(exercise, failToCreateCiProject);
-        jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, TEMPLATE.getName(), false);
-        jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, SOLUTION.getName(), false);
+        if (useCustomBuildPlanDefinition) {
+            aeolusRequestMockProvider.enableMockingOfRequests();
+            if (useCustomBuildPlanWorked) {
+                aeolusRequestMockProvider.mockSuccessfulPublishBuildPlan(AeolusTarget.JENKINS, projectKey + "-" + TEMPLATE.getName());
+                aeolusRequestMockProvider.mockSuccessfulPublishBuildPlan(AeolusTarget.JENKINS, projectKey + "-" + SOLUTION.getName());
+            }
+            else {
+                aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
+                aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
+                jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, TEMPLATE.getName(), false);
+                jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, SOLUTION.getName(), false);
+            }
+            jenkinsRequestMockProvider.mockCreateCustomBuildPlan(projectKey, TEMPLATE.getName());
+            jenkinsRequestMockProvider.mockCreateCustomBuildPlan(projectKey, SOLUTION.getName());
+
+        }
+        else {
+            jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, TEMPLATE.getName(), false);
+            jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, SOLUTION.getName(), false);
+        }
         jenkinsRequestMockProvider.mockTriggerBuild(projectKey, TEMPLATE.getName(), false);
         jenkinsRequestMockProvider.mockTriggerBuild(projectKey, SOLUTION.getName(), false);
     }
@@ -117,7 +141,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
     @Override
     public void mockConnectorRequestForImportFromFile(ProgrammingExercise exerciseForImport) throws Exception {
-        mockConnectorRequestsForSetup(exerciseForImport, false);
+        mockConnectorRequestsForSetup(exerciseForImport, false, false, false);
     }
 
     @Override

@@ -11,7 +11,6 @@ import {
     CourseCompetencyProgress,
     dtoToCompetencyRelation,
     getIcon,
-    getIconTooltip,
 } from 'app/entities/competency.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, finalize, map, switchMap } from 'rxjs/operators';
@@ -26,6 +25,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { CompetencyImportCourseComponent, ImportAllFromCourseResult } from 'app/course/competencies/competency-management/competency-import-course.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { PROFILE_IRIS } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-competency-management',
@@ -53,7 +53,6 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     update$: Subject<boolean> = new Subject<boolean>();
 
     readonly getIcon = getIcon;
-    readonly getIconTooltip = getIconTooltip;
     readonly documentationType: DocumentationType = 'Competencies';
 
     // Icons
@@ -145,7 +144,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
 
     private loadIrisEnabled() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            const irisEnabled = profileInfo.activeProfiles.includes('iris');
+            const irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
             if (irisEnabled) {
                 this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
                     this.irisCompetencyGenerationEnabled = settings?.irisCompetencyGenerationSettings?.enabled ?? false;

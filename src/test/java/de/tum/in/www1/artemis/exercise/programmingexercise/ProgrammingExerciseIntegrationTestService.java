@@ -1451,7 +1451,7 @@ class ProgrammingExerciseIntegrationTestService {
 
         mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, true);
         mockDelegate.mockConnectorRequestsForImport(programmingExercise, exerciseToBeImported, false, false);
-        mockDelegate.mockConnectorRequestsForSetup(exerciseToBeImported, false);
+        mockDelegate.mockConnectorRequestsForSetup(exerciseToBeImported, false, false, false);
         mockBuildPlanAndRepositoryCheck(programmingExercise);
         doNothing().when(versionControlService).addWebHooksForExercise(any());
         doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any(), any());
@@ -2107,7 +2107,7 @@ class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockGetBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanName, true, true, false, false);
         mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanName, false);
         mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanName, false);
-        mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false);
+        mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false, false, false);
 
         var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, false, true);
         request.put(defaultResetEndpoint(), resetOptions, HttpStatus.OK);
@@ -2185,7 +2185,7 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setShortName("ExerciseTitle");
         programmingExercise.setTitle("Title");
         if (expectedStatus == HttpStatus.CREATED) {
-            mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false);
+            mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false, false, false);
             mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());
         }
         request.postWithResponseBody(defaultAuxiliaryRepositoryEndpoint(), programmingExercise, ProgrammingExercise.class, expectedStatus);
