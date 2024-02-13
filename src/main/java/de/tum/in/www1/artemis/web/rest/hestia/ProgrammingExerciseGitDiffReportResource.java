@@ -129,7 +129,7 @@ public class ProgrammingExerciseGitDiffReportResource {
 
     /**
      * GET exercises/:exerciseId/submissions/:submissionId1/diff-report-commit-details/:submissionId2 : Get the diff report for two submissions of a programming exercise.
-     * To fetch the diff report for the commit details view,the current user needs to have access to the participation of the submissions.
+     * To fetch the diff report for the commit details view, the current user needs to have access to the participation of the submissions.
      *
      * @param exerciseId    the id of the exercise the two submissions belong to
      * @param submissionId1 the id of the first (older) submission
