@@ -54,7 +54,7 @@ import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/sha
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
 import { hasEditableBuildPlan } from 'app/shared/layouts/profiles/profile-info.model';
-import { PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_IRIS, PROFILE_LOCALVC } from 'app/app.constants';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
@@ -202,7 +202,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         this.supportsAuxiliaryRepositories =
                             this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ?? false;
                         this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-                        this.irisEnabled = profileInfo.activeProfiles.includes('iris');
+                        this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
                         if (this.irisEnabled) {
                             this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
                                 this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
