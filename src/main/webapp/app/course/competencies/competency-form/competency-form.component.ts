@@ -132,6 +132,10 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
         return this.form.get('optional');
     }
 
+    get taxonomyControl() {
+        return this.form.get('taxonomy') as FormControl;
+    }
+
     /**
      * Updates description form on markdown change
      * @param content markdown content
@@ -160,7 +164,7 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
         if (this.isEditMode && this.formData && this.formData.title) {
             initialTitle = this.formData.title;
         }
-        this.form = this.fb.group({
+        this.form = this.fb.nonNullable.group({
             title: [
                 undefined as string | undefined,
                 [Validators.required, Validators.maxLength(255)],
@@ -168,7 +172,7 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
             ],
             description: [undefined as string | undefined, [Validators.maxLength(10000)]],
             softDueDate: [undefined],
-            taxonomy: [undefined, [Validators.pattern('^(' + Object.keys(this.competencyTaxonomy).join('|') + ')$')]],
+            taxonomy: [undefined as CompetencyTaxonomy | undefined],
             masteryThreshold: [undefined, [Validators.min(0), Validators.max(100)]],
             optional: [false],
         });
@@ -207,13 +211,6 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Keeps order of elements as-is in the keyvalue pipe
-     */
-    keepOrder = () => {
-        return 0;
-    };
-
-    /**
      * Suggest some taxonomies based on keywords used in the title or description.
      * Triggered after the user changes the title or description input field.
      */
@@ -222,8 +219,8 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
         const title = this.titleControl?.value?.toLowerCase() ?? '';
         const description = this.descriptionControl?.value?.toLowerCase() ?? '';
         for (const taxonomy in this.competencyTaxonomy) {
-            const keywords = this.translateService.instant('artemisApp.competency.keywords.' + taxonomy.toLowerCase()).split(', ');
-            const taxonomyName = this.translateService.instant('artemisApp.competency.taxonomies.' + taxonomy.toLowerCase());
+            const keywords = this.translateService.instant('artemisApp.competency.keywords.' + taxonomy).split(', ');
+            const taxonomyName = this.translateService.instant('artemisApp.competency.taxonomies.' + taxonomy);
             keywords.push(taxonomyName);
             if (keywords.map((keyword: string) => keyword.toLowerCase()).some((keyword: string) => title.includes(keyword) || description.includes(keyword))) {
                 this.suggestedTaxonomies.push(taxonomyName);
