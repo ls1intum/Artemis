@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { CompetencyTaxonomy, CompetencyValidators } from 'app/entities/competency.model';
+import { CompetencyValidators } from 'app/entities/competency.model';
 import { faChevronRight, faEdit, faSave, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FormGroup, Validators } from '@angular/forms';
@@ -26,7 +26,6 @@ export class CompetencyRecommendationDetailComponent implements OnInit {
     protected readonly faEdit = faEdit;
 
     //Other constants for html
-    protected readonly competencyTaxonomy = CompetencyTaxonomy;
     protected readonly competencyValidators = CompetencyValidators;
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
@@ -84,13 +83,6 @@ export class CompetencyRecommendationDetailComponent implements OnInit {
     }
 
     /**
-     * Keeps order of elements as-is in the keyvalue pipe
-     */
-    keepOrder = () => {
-        return 0;
-    };
-
-    /**
      * Only allows save if no form controls have validation errors
      */
     get isSavePossible() {
@@ -105,6 +97,10 @@ export class CompetencyRecommendationDetailComponent implements OnInit {
 
     get descriptionControl() {
         return this.form.controls.competency.controls.description;
+    }
+
+    get taxonomyControl() {
+        return this.form.controls.competency.controls.taxonomy;
     }
 
     get viewedControl() {
