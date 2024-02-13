@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCISharedBuildJobQueueService;
+import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 
@@ -18,11 +18,11 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueu
 @RequestMapping("/api/admin")
 public class AdminBuildJobQueueResource {
 
-    private final LocalCISharedBuildJobQueueService localCIBuildJobQueueService;
+    private final SharedQueueManagementService localCIBuildJobQueueService;
 
     private static final Logger log = LoggerFactory.getLogger(AdminBuildJobQueueResource.class);
 
-    public AdminBuildJobQueueResource(LocalCISharedBuildJobQueueService localCIBuildJobQueueService) {
+    public AdminBuildJobQueueResource(SharedQueueManagementService localCIBuildJobQueueService) {
         this.localCIBuildJobQueueService = localCIBuildJobQueueService;
     }
 

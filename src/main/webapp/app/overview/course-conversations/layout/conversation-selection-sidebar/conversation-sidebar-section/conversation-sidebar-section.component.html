@@ -15,7 +15,7 @@
         }
     </div>
     <div [(ngbCollapse)]="isCollapsed">
-        @if (visibleConversations.length > 0 || hiddenConversations.length > 0) {
+        @if (visibleConversations.length || mutedConversations.length || hiddenConversations.length) {
             <ul class="conversation-list">
                 @for (conversation of visibleConversations; track conversationsTrackByFn($index, conversation)) {
                     <li
@@ -24,16 +24,30 @@
                         [course]="course"
                         jhi-conversation-sidebar-entry
                         (click)="conversationSelected.emit(conversation)"
-                        (settingsChanged)="settingsChanged.emit()"
-                        (conversationFavoriteStatusChange)="conversationFavoriteStatusChange.emit()"
-                        (conversationHiddenStatusChange)="conversationHiddenStatusChange.emit()"
+                        (settingsDidChange)="settingsDidChange.emit()"
+                        (conversationIsFavoriteDidChange)="conversationIsFavoriteDidChange.emit()"
+                        (conversationIsMutedDidChange)="conversationIsMutedDidChange.emit()"
+                        (conversationIsHiddenDidChange)="conversationIsHiddenDidChange.emit()"
+                    ></li>
+                }
+                @for (conversation of mutedConversations; track conversationsTrackByFn($index, conversation)) {
+                    <li
+                        [conversation]="conversation"
+                        [activeConversation]="activeConversation"
+                        [course]="course"
+                        jhi-conversation-sidebar-entry
+                        (click)="conversationSelected.emit(conversation)"
+                        (settingsDidChange)="settingsDidChange.emit()"
+                        (conversationIsFavoriteDidChange)="conversationIsFavoriteDidChange.emit()"
+                        (conversationIsMutedDidChange)="conversationIsMutedDidChange.emit()"
+                        (conversationIsHiddenDidChange)="conversationIsHiddenDidChange.emit()"
                     ></li>
                 }
                 @if (hiddenConversations && hiddenConversations.length > 0) {
-                    <li (click)="showHiddenConversations = !showHiddenConversations" class="hidden-conversation-divider text-center">
+                    <li (click)="isHiddenConversationListPresented = !isHiddenConversationListPresented" class="hidden-conversation-divider text-center">
                         {{ hiddenConversations.length }}
                         {{
-                            showHiddenConversations
+                            isHiddenConversationListPresented
                                 ? ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.shown' | artemisTranslate)
                                 : ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.hidden' | artemisTranslate)
                         }}
@@ -41,7 +55,7 @@
                             <fa-icon [icon]="faMessage" class="text-info"></fa-icon>
                         </span>
                     </li>
-                    @if (showHiddenConversations) {
+                    @if (isHiddenConversationListPresented) {
                         @for (conversation of hiddenConversations; track conversationsTrackByFn($index, conversation)) {
                             <li
                                 [conversation]="conversation"
@@ -49,9 +63,10 @@
                                 [course]="course"
                                 jhi-conversation-sidebar-entry
                                 (click)="conversationSelected.emit(conversation)"
-                                (settingsChanged)="settingsChanged.emit()"
-                                (conversationFavoriteStatusChange)="conversationFavoriteStatusChange.emit()"
-                                (conversationHiddenStatusChange)="conversationHiddenStatusChange.emit()"
+                                (settingsDidChange)="settingsDidChange.emit()"
+                                (conversationIsFavoriteDidChange)="conversationIsFavoriteDidChange.emit()"
+                                (conversationIsMutedDidChange)="conversationIsMutedDidChange.emit()"
+                                (conversationIsHiddenDidChange)="conversationIsHiddenDidChange.emit()"
                             ></li>
                         }
                     }
