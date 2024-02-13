@@ -21,6 +21,7 @@ import { CourseDescriptionFormComponent } from 'app/course/competencies/generate
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { IrisModule } from 'app/iris/iris.module';
 import { CompetencyImportCourseComponent } from 'app/course/competencies/competency-management/competency-import-course.component';
+import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
 
 @NgModule({
     imports: [
@@ -49,6 +50,7 @@ import { CompetencyImportCourseComponent } from 'app/course/competencies/compete
         PrerequisiteImportComponent,
         CompetencyImportComponent,
         CompetencyImportCourseComponent,
+        TaxonomySelectComponent,
     ],
     exports: [CompetencyCardComponent, CompetenciesPopoverComponent, CompetencyFormComponent, CompetencyRingsComponent],
 })
