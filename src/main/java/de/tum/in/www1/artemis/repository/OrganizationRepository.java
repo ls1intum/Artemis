@@ -27,13 +27,29 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface OrganizationRepository extends JpaRepository<Organization, Long> {
 
-    @Query("select organization from Organization organization left join fetch organization.courses oc where organization.id = :#{#organizationId}")
+    @Query("""
+            SELECT organization
+            FROM Organization organization
+                LEFT JOIN FETCH organization.courses
+            WHERE organization.id = :organizationId
+            """)
     Optional<Organization> findByIdWithEagerCourses(@Param("organizationId") long organizationId);
 
-    @Query("select organization from Organization organization left join fetch organization.users ou where organization.id = :#{#organizationId}")
+    @Query("""
+            SELECT organization
+            FROM Organization organization
+                LEFT JOIN FETCH organization.users
+            WHERE organization.id = :organizationId
+            """)
     Optional<Organization> findByIdWithEagerUsers(@Param("organizationId") long organizationId);
 
-    @Query("select organization from Organization organization left join fetch organization.users ou left join fetch organization.courses oc where organization.id = :#{#organizationId}")
+    @Query("""
+            SELECT organization
+            FROM Organization organization
+                LEFT JOIN FETCH organization.users
+                LEFT JOIN FETCH organization.courses
+            WHERE organization.id = :organizationId
+            """)
     Optional<Organization> findByIdWithEagerUsersAndCourses(@Param("organizationId") long organizationId);
 
     /**
@@ -42,7 +58,12 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
      * @param userId the id of the user used to retrieve the organizations
      * @return a Set of all organizations the given user is currently in
      */
-    @Query("select distinct organization from Organization organization join organization.users ou where ou.id = :#{#userId}")
+    @Query("""
+            SELECT DISTINCT organization
+            FROM Organization organization
+                JOIN organization.users ou
+            WHERE ou.id = :userId
+            """)
     Set<Organization> findAllOrganizationsByUserId(@Param("userId") long userId);
 
     /**
@@ -51,7 +72,12 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
      * @param courseId the id of the course used to retrieve the organizations
      * @return a Set of all organizations the given course is currently in
      */
-    @Query("select distinct organization from Organization organization join organization.courses oc where oc.id = :#{#courseId}")
+    @Query("""
+            SELECT DISTINCT organization
+            FROM Organization organization
+                JOIN organization.courses oc
+            WHERE oc.id = :courseId
+            """)
     Set<Organization> findAllOrganizationsByCourseId(@Param("courseId") long courseId);
 
     /**
@@ -60,7 +86,13 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
      * @param organizationId the id of the organization where the users are in
      * @return the number of users contained in the organization
      */
-    @Query("select count(users.id) as num_user from Organization organization left join organization.users users where organization.id = :#{#organizationId} group by organization.id")
+    @Query("""
+            SELECT COUNT(users.id) AS num_user
+            FROM Organization organization
+                LEFT JOIN organization.users users
+            WHERE organization.id = :organizationId
+            GROUP BY organization.id
+            """)
     Long getNumberOfUsersByOrganizationId(@Param("organizationId") long organizationId);
 
     /**
@@ -69,7 +101,13 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
      * @param organizationId the id of the organization where the courses are in
      * @return the number of courses contained in the organization
      */
-    @Query("select count(courses.id) as num_courses from Organization organization left join organization.courses courses where organization.id = :#{#organizationId} group by organization.id")
+    @Query("""
+            SELECT COUNT(courses.id) AS num_courses
+            FROM Organization organization
+                LEFT JOIN organization.courses courses
+            WHERE organization.id = :organizationId
+            GROUP BY organization.id
+            """)
     Long getNumberOfCoursesByOrganizationId(@Param("organizationId") long organizationId);
 
     /**

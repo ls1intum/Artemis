@@ -473,7 +473,7 @@ public class MetricsBean {
 
         final List<Course> courses = courseRepository.findAllActiveWithoutTestCourses(now);
         // We set the number of students once to prevent multiple queries for the same date
-        courses.forEach(course -> course.setNumberOfStudents(userRepository.countByGroupsIsContaining(course.getStudentGroupName())));
+        courses.forEach(course -> course.setNumberOfStudents(userRepository.countByIsDeletedIsFalseAndGroupsContains(course.getStudentGroupName())));
         ensureCourseInformationIsSet(courses);
 
         final List<Long> courseIds = courses.stream().mapToLong(Course::getId).boxed().toList();

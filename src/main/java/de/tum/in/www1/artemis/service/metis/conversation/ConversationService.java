@@ -436,14 +436,14 @@ public class ConversationService {
     public Set<User> findUsersInDatabase(Course course, boolean findAllStudents, boolean findAllTutors, boolean findAllInstructors) {
         Set<User> users = new HashSet<>();
         if (findAllStudents) {
-            users.addAll(userRepository.findAllInGroupWithAuthorities(course.getStudentGroupName()));
+            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getStudentGroupName()));
         }
         if (findAllTutors) {
-            users.addAll(userRepository.findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName()));
-            users.addAll(userRepository.findAllInGroupWithAuthorities(course.getEditorGroupName()));
+            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()));
+            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getEditorGroupName()));
         }
         if (findAllInstructors) {
-            users.addAll(userRepository.findAllInGroupWithAuthorities(course.getInstructorGroupName()));
+            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()));
         }
         return users;
     }

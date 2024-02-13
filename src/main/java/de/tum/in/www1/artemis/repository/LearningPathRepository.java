@@ -51,14 +51,20 @@ public interface LearningPathRepository extends JpaRepository<LearningPath, Long
     @Query("""
             SELECT lp
             FROM LearningPath lp
-            WHERE (lp.course.id = :courseId) AND (lp.user.login LIKE %:searchTerm% OR CONCAT(lp.user.firstName, ' ', lp.user.lastName) LIKE %:searchTerm%)
+            WHERE (lp.course.id = :courseId)
+                AND (
+                    lp.user.login LIKE %:searchTerm%
+                    OR CONCAT(lp.user.firstName, ' ', lp.user.lastName) LIKE %:searchTerm%
+                )
             """)
     Page<LearningPath> findByLoginOrNameInCourse(@Param("searchTerm") String searchTerm, @Param("courseId") long courseId, Pageable pageable);
 
     @Query("""
             SELECT COUNT (learningPath)
             FROM LearningPath learningPath
-            WHERE learningPath.course.id = :courseId AND learningPath.user.isDeleted = false AND learningPath.course.studentGroupName MEMBER OF learningPath.user.groups
+            WHERE learningPath.course.id = :courseId
+                AND learningPath.user.isDeleted IS FALSE
+                AND learningPath.course.studentGroupName MEMBER OF learningPath.user.groups
             """)
     long countLearningPathsOfEnrolledStudentsInCourse(@Param("courseId") long courseId);
 

@@ -21,19 +21,17 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
 
     @Transactional // ok because of delete
     @Modifying
-    @Query("DELETE FROM CompetencyProgress cp WHERE cp.competency.id = :competencyId")
-    void deleteAllByCompetencyId(@Param("competencyId") Long competencyId);
+    @Query("""
+            DELETE FROM CompetencyProgress cp
+            WHERE cp.competency.id = :competencyId
+            """)
+    void deleteAllByCompetencyId(@Param("competencyId") long competencyId);
 
     @Transactional // ok because of delete
     @Modifying
     void deleteAllByUserId(Long userId);
 
-    @Query("""
-            SELECT cp
-            FROM CompetencyProgress cp
-            WHERE cp.competency.id = :competencyId
-            """)
-    List<CompetencyProgress> findAllByCompetencyId(@Param("competencyId") Long competencyId);
+    List<CompetencyProgress> findAllByCompetencyId(long competencyId);
 
     @Query("""
             SELECT cp
@@ -41,7 +39,7 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
             WHERE cp.competency.id = :competencyId
                 AND cp.user.id = :userId
             """)
-    Optional<CompetencyProgress> findByCompetencyIdAndUserId(@Param("competencyId") Long competencyId, @Param("userId") Long userId);
+    Optional<CompetencyProgress> findByCompetencyIdAndUserId(@Param("competencyId") long competencyId, @Param("userId") long userId);
 
     @Query("""
             SELECT cp
@@ -50,7 +48,7 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
             WHERE cp.competency in :competencies
                 AND cp.user.id = :userId
             """)
-    Set<CompetencyProgress> findByCompetenciesAndUser(@Param("competencies") Collection<Competency> competencies, @Param("userId") Long userId);
+    Set<CompetencyProgress> findByCompetenciesAndUser(@Param("competencies") Collection<Competency> competencies, @Param("userId") long userId);
 
     @Query("""
             SELECT cp
@@ -60,7 +58,7 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
             WHERE cp.competency.id = :competencyId
                 AND cp.user.id = :userId
             """)
-    Optional<CompetencyProgress> findEagerByCompetencyIdAndUserId(@Param("competencyId") Long competencyId, @Param("userId") Long userId);
+    Optional<CompetencyProgress> findEagerByCompetencyIdAndUserId(@Param("competencyId") long competencyId, @Param("userId") long userId);
 
     @Query("""
             SELECT cp
@@ -75,23 +73,23 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
             FROM CompetencyProgress cp
             WHERE cp.competency.id = :competencyId
             """)
-    Optional<Double> findAverageConfidenceByCompetencyId(@Param("competencyId") Long competencyId);
+    Optional<Double> findAverageConfidenceByCompetencyId(@Param("competencyId") long competencyId);
 
     @Query("""
             SELECT COUNT(cp)
             FROM CompetencyProgress cp
             WHERE cp.competency.id = :competencyId
             """)
-    Long countByCompetency(@Param("competencyId") Long competencyId);
+    Long countByCompetency(@Param("competencyId") long competencyId);
 
     @Query("""
-            SELECT count(cp)
+            SELECT COUNT(cp)
             FROM CompetencyProgress cp
             WHERE cp.competency.id = :competencyId
                 AND cp.progress >= :progress
                 AND cp.confidence >= :confidence
             """)
-    Long countByCompetencyAndProgressAndConfidenceGreaterThanEqual(@Param("competencyId") Long competencyId, @Param("progress") Double progress,
-            @Param("confidence") Double confidence);
+    Long countByCompetencyAndProgressAndConfidenceGreaterThanEqual(@Param("competencyId") long competencyId, @Param("progress") double progress,
+            @Param("confidence") double confidence);
 
 }

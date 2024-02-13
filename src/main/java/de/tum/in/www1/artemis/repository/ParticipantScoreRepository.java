@@ -39,7 +39,8 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
      * @return A list of outdated participant scores
      */
     @Query("""
-            SELECT p FROM ParticipantScore p
+            SELECT p
+            FROM ParticipantScore p
             WHERE p.lastResult IS NULL
             """)
     List<ParticipantScore> findAllOutdated();
@@ -54,7 +55,10 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
 
     @Query("""
             SELECT p
-            FROM ParticipantScore p LEFT JOIN FETCH p.exercise LEFT JOIN FETCH p.lastResult LEFT JOIN FETCH p.lastRatedResult
+            FROM ParticipantScore p
+                LEFT JOIN FETCH p.exercise
+                LEFT JOIN FETCH p.lastResult
+                LEFT JOIN FETCH p.lastRatedResult
             """)
     List<ParticipantScore> findAllEagerly();
 
@@ -118,7 +122,11 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
     Optional<Instant> getLatestModifiedDate();
 
     @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresAggregatedInformation(p.exercise.id, AVG(p.lastRatedScore), MAX(p.lastRatedScore))
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresAggregatedInformation(
+                p.exercise.id,
+                AVG(p.lastRatedScore),
+                MAX(p.lastRatedScore)
+            )
             FROM ParticipantScore p
             WHERE p.exercise IN :exercises
             GROUP BY p.exercise.id

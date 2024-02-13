@@ -23,9 +23,9 @@ public interface SubmissionPolicyRepository extends JpaRepository<SubmissionPoli
     SubmissionPolicy findByProgrammingExerciseId(Long exerciseId);
 
     @Query("""
-                SELECT s
-                FROM SubmissionPolicy s
-                WHERE s.programmingExercise.id IN :exerciseIds
+            SELECT s
+            FROM SubmissionPolicy s
+            WHERE s.programmingExercise.id IN :exerciseIds
             """)
     Set<SubmissionPolicy> findAllByProgrammingExerciseIds(@Param("exerciseIds") Collection<Long> exerciseIds);
 }

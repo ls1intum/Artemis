@@ -129,7 +129,7 @@ public class TextSubmissionService extends SubmissionService {
      */
     public Optional<TextSubmission> getRandomTextSubmissionEligibleForNewAssessment(TextExercise textExercise, boolean skipAssessmentQueue, boolean examMode, int correctionRound) {
         return super.getRandomAssessableSubmission(textExercise, skipAssessmentQueue, examMode, correctionRound,
-                textSubmissionRepository::findByIdWithEagerParticipationExerciseResultAssessor);
+                textSubmissionRepository::findWithEagerParticipationExerciseResultAssessorById);
     }
 
     /**

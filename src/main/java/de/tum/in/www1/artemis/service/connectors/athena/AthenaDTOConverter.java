@@ -44,7 +44,7 @@ public class AthenaDTOConverter {
         switch (exercise.getExerciseType()) {
             case TEXT -> {
                 // Fetch text exercise with grade criteria
-                var textExercise = textExerciseRepository.findByIdWithGradingCriteriaElseThrow(exercise.getId());
+                var textExercise = textExerciseRepository.findWithGradingCriteriaByIdElseThrow(exercise.getId());
                 return TextExerciseDTO.of(textExercise);
             }
             case PROGRAMMING -> {
