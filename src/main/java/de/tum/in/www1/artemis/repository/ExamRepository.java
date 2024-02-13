@@ -361,7 +361,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             SELECT exam.id, COUNT(registeredUsers)
             FROM Exam exam
                 LEFT JOIN exam.examUsers registeredUsers
-            WHERE exam.id in :examIds
+            WHERE exam.id IN :examIds
             GROUP BY exam.id
             """)
     List<long[]> countExamUsersByExamIds(@Param("examIds") List<Long> examIds);
