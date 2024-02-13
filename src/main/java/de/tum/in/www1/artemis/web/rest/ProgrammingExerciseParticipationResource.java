@@ -307,6 +307,7 @@ public class ProgrammingExerciseParticipationResource {
             log.error("User is not allowed to access participation with id {}", participationId);
             throw e;
         }
+        log.error("User is allowed to access participation with id {} in order to view the files content", participationId);
 
         return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content-commit-details/" + commitId);
     }
