@@ -48,14 +48,20 @@ public interface LearningPathRepository extends JpaRepository<LearningPath, Long
     @Query("""
             SELECT lp
             FROM LearningPath lp
-            WHERE (lp.course.id = :courseId) AND (lp.user.login LIKE %:searchTerm% OR CONCAT(lp.user.firstName, ' ', lp.user.lastName) LIKE %:searchTerm%)
+            WHERE (lp.course.id = :courseId)
+                AND (
+                    lp.user.login LIKE %:searchTerm%
+                    OR CONCAT(lp.user.firstName, ' ', lp.user.lastName) LIKE %:searchTerm%
+                )
             """)
     Page<LearningPath> findByLoginOrNameInCourse(@Param("searchTerm") String searchTerm, @Param("courseId") long courseId, Pageable pageable);
 
     @Query("""
             SELECT COUNT (learningPath)
             FROM LearningPath learningPath
-            WHERE learningPath.course.id = :courseId AND learningPath.user.isDeleted = false AND learningPath.course.studentGroupName MEMBER OF learningPath.user.groups
+            WHERE learningPath.course.id = :courseId
+                AND learningPath.user.isDeleted IS FALSE
+                AND learningPath.course.studentGroupName MEMBER OF learningPath.user.groups
             """)
     long countLearningPathsOfEnrolledStudentsInCourse(@Param("courseId") long courseId);
 
@@ -74,7 +80,7 @@ public interface LearningPathRepository extends JpaRepository<LearningPath, Long
             FROM LearningPath learningPath
                 LEFT JOIN FETCH learningPath.competencies competencies
                 LEFT JOIN competencies.userProgress progress
-                    ON competencies.id = progress.learningGoal.id AND progress.user.id = learningPath.user.id
+                    ON competencies.id = progress.competency.id AND progress.user.id = learningPath.user.id
                 LEFT JOIN FETCH competencies.lectureUnits lectureUnits
                 LEFT JOIN lectureUnits.completedUsers completedUsers
                     ON lectureUnits.id = completedUsers.lectureUnit.id AND completedUsers.user.id = learningPath.user.id

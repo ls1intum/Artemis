@@ -4,12 +4,12 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AddUsersFormData } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
-import { getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { getAsGroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { getAsGroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { MAX_GROUP_CHAT_PARTICIPANTS } from 'app/shared/metis/conversations/conversation-settings';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
@@ -25,7 +25,7 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
     private ngUnsubscribe = new Subject<void>();
 
     @Input() course: Course;
-    @Input() activeConversation: ConversationDto;
+    @Input() activeConversation: ConversationDTO;
 
     isInitialized = false;
     maxSelectable: number | undefined;
@@ -33,7 +33,7 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
     initialize() {
         super.initialize(['course', 'activeConversation']);
         if (this.isInitialized) {
-            if (isGroupChatDto(this.activeConversation)) {
+            if (isGroupChatDTO(this.activeConversation)) {
                 this.maxSelectable = MAX_GROUP_CHAT_PARTICIPANTS - (this.activeConversation?.numberOfMembers ?? 0);
             }
         }
@@ -59,13 +59,13 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
         this.addUsers(selectedUsers ?? [], addAllStudents, addAllTutors, addAllInstructors);
     }
 
-    getAsChannel = getAsChannelDto;
-    getAsGroupChat = getAsGroupChatDto;
+    getAsChannel = getAsChannelDTO;
+    getAsGroupChat = getAsGroupChatDTO;
 
     private addUsers(usersToAdd: UserPublicInfoDTO[], addAllStudents: boolean, addAllTutors: boolean, addAllInstructors: boolean) {
         const userLogins = usersToAdd.map((user) => user.login!);
 
-        if (isChannelDto(this.activeConversation)) {
+        if (isChannelDTO(this.activeConversation)) {
             this.channelService
                 .registerUsersToChannel(this.course.id!, this.activeConversation.id!, addAllStudents, addAllTutors, addAllInstructors, userLogins)
                 .pipe(
@@ -78,7 +78,7 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
                         onError(this.alertService, errorResponse);
                     },
                 });
-        } else if (isGroupChatDto(this.activeConversation)) {
+        } else if (isGroupChatDTO(this.activeConversation)) {
             this.groupChatService
                 .addUsersToGroupChat(this.course.id!, this.activeConversation.id!, userLogins)
                 .pipe(
