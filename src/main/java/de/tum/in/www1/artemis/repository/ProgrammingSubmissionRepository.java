@@ -83,9 +83,6 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
             """)
     List<ProgrammingSubmission> findGradedByParticipationIdOrderBySubmissionDateDesc(@Param("participationId") long participationId, Pageable pageable);
 
-    @EntityGraph(type = LOAD, attributePaths = "results")
-    Optional<ProgrammingSubmission> findWithEagerResultsById(long submissionId);
-
     @EntityGraph(type = LOAD, attributePaths = "results.feedbacks")
     Optional<ProgrammingSubmission> findWithEagerResultsAndFeedbacksById(long submissionId);
 
