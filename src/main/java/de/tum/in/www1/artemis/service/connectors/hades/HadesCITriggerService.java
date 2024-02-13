@@ -36,13 +36,14 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
     @Value("${artemis.user-management.internal-admin.password}")
     private String gitPassword;
 
-    @Value("${artemis.hades.images.clone-image}")
+    @Value("${artemis.continuous-integration.hades.images.clone-image}")
     private String cloneDockerIamge;
 
-    @Value("${artemis.hades.images.result-image}")
+    @Value("${artemis.continuous-integration.hades.images.result-image}")
     private String resultDockerIamge;
 
-    @Value("${artemis.continuous-integration.token}")
+    // TODO: The value has a very bad naming schema - since this is a breaking change we need to coordinate with artemis users
+    @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
     private String resultToken;
 
     @Value("${server.url}")
@@ -56,13 +57,13 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final BuildScriptGenerationService buildScriptGenerationService;
 
-    @Value("${artemis.hades.url}")
+    @Value("${artemis.continuous-integration.hades.url}")
     private String hadesServerUrl;
 
-    @Value("${artemis.hades.username}")
+    @Value("${artemis.continuous-integration.hades.username}")
     private String hadesUsername;
 
-    @Value("${artemis.hades.password}")
+    @Value("${artemis.continuous-integration.hades.password}")
     private String hadesPassword;
 
     public HadesCITriggerService(RestTemplate restTemplate, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
