@@ -25,7 +25,7 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
                 LEFT JOIN FETCH s.results
             WHERE p.id = :participationId
             """)
-    Optional<Participation> findByIdWithResultsAndSubmissionsResults(@Param("participationId") Long participationId);
+    Optional<Participation> findByIdWithResultsAndSubmissionsResults(@Param("participationId") long participationId);
 
     @Query("""
             SELECT p
