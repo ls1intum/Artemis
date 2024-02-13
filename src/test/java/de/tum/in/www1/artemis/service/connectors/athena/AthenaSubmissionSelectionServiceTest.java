@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
+import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
+import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -56,14 +58,14 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
         athenaRequestMockProvider.enableMockingOfRequests();
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
-        textExercise.setFeedbackSuggestionsEnabled(true);
+        textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
         textExercise.setGradingCriteria(Set.of(new GradingCriterion()));
         textExerciseRepository.save(textExercise);
         textSubmission1 = new TextSubmission(1L);
         textSubmission2 = new TextSubmission(2L);
 
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
-        programmingExercise.setFeedbackSuggestionsEnabled(true);
+        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         programmingExercise.setGradingCriteria(Set.of(new GradingCriterion()));
         programmingExerciseRepository.save(programmingExercise);
         programmingSubmission1 = new ProgrammingSubmission();
