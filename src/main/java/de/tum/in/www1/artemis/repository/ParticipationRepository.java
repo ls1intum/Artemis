@@ -106,7 +106,7 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             WHERE p.exercise.id = :exerciseId
                 AND p.individualDueDate IS NOT NULL
             """)
-    Set<Participation> findWithIndividualDueDateByExerciseId(@Param("exerciseId") Long exerciseId);
+    Set<Participation> findWithIndividualDueDateByExerciseId(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT p
