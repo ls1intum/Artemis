@@ -9,12 +9,16 @@ actions:
     results:
       - name: spotbugs
         path: target/spotbugsXml.xml
+        type: static-code-analysis
       - name: checkstyle
         path: target/checkstyle-result.xml
+        type: static-code-analysis
       - name: pmd
         path: target/pmd.xml
+        type: static-code-analysis
       - name: pmd_cpd
         path: target/cpd.xml
+        type: static-code-analysis
       - name: junit
         path: '**/target/surefire-reports/*.xml'
         type: junit
