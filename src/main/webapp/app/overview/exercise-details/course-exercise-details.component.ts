@@ -97,7 +97,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     private discussionComponent?: DiscussionSectionComponent;
     baseResource: string;
     isExamExercise: boolean;
-    submissionPolicy: SubmissionPolicy;
+    submissionPolicy?: SubmissionPolicy;
     exampleSolutionCollapsed: boolean;
     plagiarismCaseInfo?: PlagiarismCaseInfo;
     availableExerciseHints: ExerciseHint[];
