@@ -148,7 +148,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                     OR ug.group = :instructorGroupName
                 )
             """)
-    Set<ConversationNotificationRecipientSummary> findAllNotificationRecipientsInCourseForConversation(@Param("conversationId") Long conversationId,
+    Set<ConversationNotificationRecipientSummary> findAllNotificationRecipientsInCourseForConversation(@Param("conversationId") long conversationId,
             @Param("studentGroupName") String studentGroupName, @Param("teachingAssistantGroupName") String teachingAssistantGroupName,
             @Param("editorGroupName") String editorGroupName, @Param("instructorGroupName") String instructorGroupName);
 
@@ -246,7 +246,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             ORDER BY CONCAT_WS(' ', user.firstName, user.lastName)
             """)
     Page<User> searchAllByLoginOrNameInGroupsNotUserId(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames,
-            @Param("idOfUser") Long idOfUser);
+            @Param("idOfUser") long idOfUser);
 
     /**
      * Search for all users by login or name within the provided groups
@@ -295,7 +295,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                     OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
                 )
             """)
-    Page<User> searchAllByLoginOrNameInConversation(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") Long conversationId);
+    Page<User> searchAllByLoginOrNameInConversation(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId);
 
     @Query(value = """
             SELECT DISTINCT user
@@ -324,7 +324,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                     OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
                 ) AND userGroup IN :groupNames
             """)
-    Page<User> searchAllByLoginOrNameInConversationWithCourseGroups(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") Long conversationId,
+    Page<User> searchAllByLoginOrNameInConversationWithCourseGroups(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
             @Param("groupNames") Set<String> groupNames);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
@@ -342,7 +342,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                     OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
                 ) AND conversationParticipant.isModerator IS TRUE
             """)
-    Page<User> searchChannelModeratorsByLoginOrNameInConversation(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") Long conversationId);
+    Page<User> searchChannelModeratorsByLoginOrNameInConversation(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId);
 
     /**
      * Search for all users by login or name in a group and convert them to {@link UserDTO}
@@ -422,7 +422,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                     OR course.instructorGroupName MEMBER OF user.groups
                 )
             """)
-    Page<User> searchAllByLoginOrNameInCourse(Pageable page, @Param("loginOrName") String loginOrName, @Param("courseId") Long courseId);
+    Page<User> searchAllByLoginOrNameInCourse(Pageable page, @Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     Page<User> findAllWithGroupsByIsDeletedIsFalse(Pageable pageable);
@@ -437,7 +437,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             SET user.lastNotificationRead = :lastNotificationRead
             WHERE user.id = :userId
             """)
-    void updateUserNotificationReadDate(@Param("userId") Long userId, @Param("lastNotificationRead") ZonedDateTime lastNotificationRead);
+    void updateUserNotificationReadDate(@Param("userId") long userId, @Param("lastNotificationRead") ZonedDateTime lastNotificationRead);
 
     /**
      * Update user notification hide until property for current user
@@ -456,7 +456,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             SET user.hideNotificationsUntil = :hideNotificationUntil
             WHERE user.id = :userId
             """)
-    void updateUserNotificationVisibility(@Param("userId") Long userId, @Param("hideNotificationUntil") ZonedDateTime hideNotificationUntil);
+    void updateUserNotificationVisibility(@Param("userId") long userId, @Param("hideNotificationUntil") ZonedDateTime hideNotificationUntil);
 
     @Modifying
     @Transactional // ok because of modifying query
@@ -465,7 +465,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             SET user.langKey = :languageKey
             WHERE user.id = :userId
             """)
-    void updateUserLanguageKey(@Param("userId") Long userId, @Param("languageKey") String languageKey);
+    void updateUserLanguageKey(@Param("userId") long userId, @Param("languageKey") String languageKey);
 
     @Modifying
     @Transactional
@@ -474,7 +474,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             SET user.irisAccepted = :acceptDatetime
             WHERE user.id = :userId
             """)
-    void updateIrisAcceptedToDate(@Param("userId") Long userId, @Param("acceptDatetime") ZonedDateTime acceptDatetime);
+    void updateIrisAcceptedToDate(@Param("userId") long userId, @Param("acceptDatetime") ZonedDateTime acceptDatetime);
 
     @Query("""
             SELECT DISTINCT user
@@ -494,7 +494,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 AND team.exercise.course.id = :courseId
                 AND team.shortName = :teamShortName
             """)
-    Set<User> findAllInTeam(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
+    Set<User> findAllInTeam(@Param("courseId") long courseId, @Param("teamShortName") String teamShortName);
 
     /**
      * Get all managed users

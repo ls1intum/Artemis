@@ -73,7 +73,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             ORDER BY s.submissionDate ASC
             """)
     List<StatisticsEntry> getTotalSubmissionsForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
-            @Param("exerciseId") Long exerciseId);
+            @Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
@@ -153,7 +153,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             AND p.exercise.id = :exerciseId
             ORDER BY submission.submissionDate ASC
             """)
-    List<StatisticsEntry> getActiveUsersForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") Long exerciseId);
+    List<StatisticsEntry> getActiveUsersForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
@@ -246,7 +246,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             GROUP BY e.endDate
             ORDER BY e.endDate ASC
             """)
-    List<StatisticsEntry> getConductedExamsForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") Long courseId);
+    List<StatisticsEntry> getConductedExamsForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") long courseId);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
@@ -276,7 +276,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             GROUP BY e.endDate
             ORDER BY e.endDate ASC
             """)
-    List<StatisticsEntry> getExamParticipationsForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") Long courseId);
+    List<StatisticsEntry> getExamParticipationsForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") long courseId);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
@@ -302,7 +302,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             GROUP BY e.endDate
             ORDER BY e.endDate ASC
             """)
-    List<StatisticsEntry> getExamRegistrationsForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") Long courseId);
+    List<StatisticsEntry> getExamRegistrationsForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") long courseId);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
@@ -354,7 +354,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 ) AND r.assessor.login NOT LIKE '%test%'
                 AND r.participation.exercise.id = :exerciseId
             """)
-    List<StatisticsEntry> getActiveTutorsForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") Long exerciseId);
+    List<StatisticsEntry> getActiveTutorsForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
@@ -397,7 +397,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             GROUP BY r.completionDate
             ORDER BY r.completionDate
             """)
-    List<StatisticsEntry> getCreatedResultsForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") Long exerciseId);
+    List<StatisticsEntry> getCreatedResultsForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
@@ -439,7 +439,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             GROUP BY r.completionDate
             ORDER BY r.completionDate
             """)
-    List<StatisticsEntry> getResultFeedbacksForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") Long exerciseId);
+    List<StatisticsEntry> getResultFeedbacksForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
@@ -454,7 +454,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             GROUP BY post.creationDate
             ORDER BY post.creationDate ASC
             """)
-    List<StatisticsEntry> getPostsForCourseInDateRange(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") Long courseId);
+    List<StatisticsEntry> getPostsForCourseInDateRange(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") long courseId);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
@@ -469,7 +469,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             ORDER BY post.creationDate ASC
             """)
     List<StatisticsEntry> getPostsForExerciseInDateRange(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
-            @Param("exerciseId") Long exerciseId);
+            @Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT COUNT(post)
@@ -477,7 +477,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 LEFT JOIN TREAT (post.conversation AS Channel) channel
             WHERE channel.exercise.id = :exerciseId
             """)
-    long getNumberOfExercisePosts(@Param("exerciseId") Long exerciseId);
+    long getNumberOfExercisePosts(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT COUNT(DISTINCT post.id)
@@ -487,7 +487,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             WHERE channel.exercise.id = :exerciseId
                 AND answer.resolvesPost IS TRUE
             """)
-    long getNumberOfResolvedExercisePosts(@Param("exerciseId") Long exerciseId);
+    long getNumberOfResolvedExercisePosts(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
@@ -504,7 +504,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             GROUP BY answer.creationDate
             ORDER BY answer.creationDate ASC
             """)
-    List<StatisticsEntry> getResolvedCoursePostsInDateRange(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") Long courseId);
+    List<StatisticsEntry> getResolvedCoursePostsInDateRange(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") long courseId);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
@@ -521,21 +521,21 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             ORDER BY answer.creationDate ASC
             """)
     List<StatisticsEntry> getResolvedExercisePostsInDateRange(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
-            @Param("exerciseId") Long exerciseId);
+            @Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT e.id
             FROM Exercise e
             WHERE e.course.id = :courseId
             """)
-    List<Long> findExerciseIdsByCourseId(@Param("courseId") Long courseId);
+    List<Long> findExerciseIdsByCourseId(@Param("courseId") long courseId);
 
     @Query("""
             SELECT e
             FROM Exercise e
             WHERE e.course.id = :courseId
             """)
-    Set<Exercise> findExercisesByCourseId(@Param("courseId") Long courseId);
+    Set<Exercise> findExercisesByCourseId(@Param("courseId") long courseId);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.statistics.CourseStatisticsAverageScore(
