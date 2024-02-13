@@ -47,7 +47,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             WHERE p.exercise.course.id = :courseId
                 AND (r.rated IS NULL OR r.rated IS TRUE)
             """)
-    List<StudentParticipation> findByCourseIdWithEagerRatedResults(@Param("courseId") Long courseId);
+    List<StudentParticipation> findByCourseIdWithEagerRatedResults(@Param("courseId") long courseId);
 
     @Query("""
             SELECT DISTINCT p
