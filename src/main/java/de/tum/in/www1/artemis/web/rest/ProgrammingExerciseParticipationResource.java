@@ -285,7 +285,7 @@ public class ProgrammingExerciseParticipationResource {
     /**
      * GET /programming-exercise-participations/{participationId}/files-content-commit-details/{commitId} : Get the content of the files of a programming exercise participation.
      * This method is specifically for the commit details view, where not only Instructors and Admins should have access to the files content as in
-     * redirectGetParticipationRepositoryFiles.
+     * redirectGetParticipationRepositoryFiles but also students and tutors that have access to the participation.
      *
      * @param participationId the id of the participation for which to retrieve the files content
      * @param commitId        the id of the commit for which to retrieve the files content
