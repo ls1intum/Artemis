@@ -84,7 +84,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
 
                 this.course = data.course;
                 this.exam.course = data.course;
-                this.exam.courseName = data.course.title;
+                this.exam.courseName = this.exam.courseName ?? data.course.title;
                 this.hideChannelNameInput = (!!exam.id && !exam.channelName) || !isMessagingOrCommunicationEnabled(this.course);
             });
     }

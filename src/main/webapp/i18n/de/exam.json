@@ -480,7 +480,8 @@
                 "examModeTooltip": "Testklausuren können von Studierenden an einem frei wählbaren Zeitpunkt innerhalb des Bearbeitungsfensters begonnen werden, zur Durchführung steht die gewählte Arbeitszeit zur Verfügung. Nach dem Durchlauf erhalten die Studierenden automatisiertes Feedback. HINWEIS: Der Modus kann nach der Erstellung nicht mehr geändert werden!",
                 "startDate": "Beginn Bearbeitungsfenster",
                 "endDate": "Ende Bearbeitungsfenster",
-                "workingTimeTooltip": "Die erlaubte Bearbeitungszeit je Durchlauf"
+                "workingTimeTooltip": "Die erlaubte Bearbeitungszeit je Durchlauf",
+                "courseNameTooltip": "Dieses Feld legt den Kursnamen fest, der auf der ersten Seite der Klausur angezeigt wird."
             },
             "import": {
                 "search": "Suche nach einer Klausur"

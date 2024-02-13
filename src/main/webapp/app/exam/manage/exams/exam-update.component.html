@@ -21,7 +21,8 @@
                 @if (exam.course) {
                     <div class="form-group">
                         <label class="form-control-label" for="course" jhiTranslate="artemisApp.examManagement.courseTitle">Course Title</label>
-                        <input id="course" name="course" readonly type="text" class="form-control" [value]="exam.course.title" />
+                        <jhi-help-icon text="artemisApp.examManagement.testExam.courseNameTooltip"></jhi-help-icon>
+                        <input id="course" name="course" type="text" class="form-control" [(ngModel)]="exam.courseName" />
                     </div>
                 }
                 @if (exam.id) {
