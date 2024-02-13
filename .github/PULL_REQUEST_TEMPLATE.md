@@ -82,6 +82,8 @@ Prerequisites:
 ![](https://byob.yarr.is/ls1intum/Artemis/artemis-test4)
 ![](https://byob.yarr.is/ls1intum/Artemis/artemis-test5)
 ![](https://byob.yarr.is/ls1intum/Artemis/artemis-test6)
+![](https://byob.yarr.is/ls1intum/Artemis/artemis-test7)
+![](https://byob.yarr.is/ls1intum/Artemis/artemis-test8)
 ![](https://byob.yarr.is/ls1intum/Artemis/artemis-test9)
 
 ### Review Progress
