@@ -124,7 +124,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         // then
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
         var firstMondayOfAugustSession = sessions.get(0);
-        assertScheduledSessionIsCancelledOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY_00_00.toLocalDate(), tutorialGroup.getId(), persistedSchedule);
+        assertScheduledSessionIsCancelledOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY, tutorialGroup.getId(), persistedSchedule);
 
         // cleanup
         tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());
@@ -145,7 +145,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         assertThat(createdPeriod).isNull();
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
         var firstMondayOfAugustSession = sessions.get(0);
-        assertScheduledSessionIsActiveOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY_00_00.toLocalDate(), tutorialGroup.getId(), persistedSchedule);
+        assertScheduledSessionIsActiveOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY, tutorialGroup.getId(), persistedSchedule);
 
         // cleanup
         tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());
@@ -164,7 +164,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         // then
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
         var firstMondayOfAugustSession = sessions.get(0);
-        assertScheduledSessionIsActiveOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY_00_00.toLocalDate(), tutorialGroup.getId(), persistedSchedule);
+        assertScheduledSessionIsActiveOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY, tutorialGroup.getId(), persistedSchedule);
 
         // cleanup
         tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());
@@ -184,7 +184,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         // then
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
         var firstMondayOfAugustSession = sessions.get(0);
-        assertScheduledSessionIsActiveOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY_00_00.toLocalDate(), tutorialGroup.getId(), persistedSchedule);
+        assertScheduledSessionIsActiveOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY, tutorialGroup.getId(), persistedSchedule);
 
         // cleanup
         tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());
@@ -204,7 +204,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         // then
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
         var firstMondayOfAugustSession = sessions.get(0);
-        assertScheduledSessionIsCancelledOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY_00_00.toLocalDate(), tutorialGroup.getId(), persistedSchedule);
+        assertScheduledSessionIsCancelledOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY, tutorialGroup.getId(), persistedSchedule);
 
         // cleanup
         tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());
@@ -224,7 +224,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         // then
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
         var firstMondayOfAugustSession = sessions.get(0);
-        assertScheduledSessionIsActiveOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY_00_00.toLocalDate(), tutorialGroup.getId(), persistedSchedule);
+        assertScheduledSessionIsActiveOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY, tutorialGroup.getId(), persistedSchedule);
 
         // cleanup
         tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());

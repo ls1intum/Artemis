@@ -115,6 +115,8 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
 
     final LocalDate FOURTH_AUGUST_MONDAY = LocalDate.of(2022, 8, 22);
 
+    final LocalDate FIRST_SEPTEMBER_MONDAY = LocalDate.of(2022, 9, 5);
+
     final LocalDateTime FIRST_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 1, 0, 0, 0);
 
     final LocalDateTime FIRST_AUGUST_MONDAY_08_00 = LocalDateTime.of(2022, 8, 1, 8, 0, 0);
