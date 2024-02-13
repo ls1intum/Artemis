@@ -50,6 +50,7 @@ public class ParticipationAuthorizationCheckService {
         else if (!canAccessParticipation(participation)) {
             throw new AccessForbiddenException("participation", participation.getId());
         }
+        log.error("User has access to participation {}", participation.getId());
     }
 
     /**
