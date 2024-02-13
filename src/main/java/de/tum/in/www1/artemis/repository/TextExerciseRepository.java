@@ -29,7 +29,7 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
                 LEFT JOIN FETCH e.categories
             WHERE e.course.id = :courseId
             """)
-    List<TextExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
+    List<TextExercise> findByCourseIdWithCategories(@Param("courseId") long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencies" })
     Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(Long exerciseId);
