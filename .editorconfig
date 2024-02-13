@@ -24,3 +24,11 @@ ij_java_class_count_to_use_import_on_demand = 4
 
 [{*.yml,*.yaml}]
 indent_size = 2
+
+[{*.ats,*.cts,*.mts,*.ts}]
+ij_typescript_use_double_quotes = false
+ij_typescript_spaces_within_imports = true
+
+[{*.cjs,*.js}]
+ij_javascript_use_double_quotes = false
+ij_javascript_spaces_within_imports = true

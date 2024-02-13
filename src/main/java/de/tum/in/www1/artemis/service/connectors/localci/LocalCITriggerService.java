@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import javax.annotation.PostConstruct;
+
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
@@ -42,6 +45,8 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 @Profile("localci")
 public class LocalCITriggerService implements ContinuousIntegrationTriggerService {
 
+    private static final Logger log = LoggerFactory.getLogger(LocalCITriggerService.class);
+
     private final HazelcastInstance hazelcastInstance;
 
     private final AeolusTemplateService aeolusTemplateService;
@@ -58,9 +63,9 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final LocalCIBuildConfigurationService localCIBuildConfigurationService;
 
-    private final IQueue<LocalCIBuildJobQueueItem> queue;
+    private IQueue<LocalCIBuildJobQueueItem> queue;
 
-    private static final Logger log = LoggerFactory.getLogger(LocalCITriggerService.class);
+    private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
 
     public LocalCITriggerService(HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
@@ -75,7 +80,12 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         this.versionControlService = versionControlService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.localCIBuildConfigurationService = localCIBuildConfigurationService;
+    }
+
+    @PostConstruct
+    public void init() {
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
+        this.dockerImageCleanupInfo = this.hazelcastInstance.getMap("dockerImageCleanupInfo");
     }
 
     /**
@@ -120,9 +130,9 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(buildJobId, participation.getBuildPlanId(), null, participation.getId(), courseId,
                 programmingExercise.getId(), 0, priority, null, repositoryInfo, jobTimingInfo, buildConfig);
 
-        localCIBuildConfigurationService.createBuildScript(participation, buildJobId);
-
         queue.add(buildJobQueueItem);
+
+        dockerImageCleanupInfo.put(buildConfig.dockerImage(), jobTimingInfo.submissionDate());
     }
 
     // -------Helper methods for triggerBuild()-------
@@ -218,7 +228,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         String dockerImage;
         try {
             windfile = programmingExercise.getWindfile();
-            dockerImage = windfile.getMetadata().getDocker().getImage();
+            dockerImage = windfile.getMetadata().getDocker().getFullImageName();
         }
         catch (NullPointerException e) {
             log.warn("Could not retrieve windfile for programming exercise {}. Using default windfile instead.", programmingExercise.getId());
@@ -228,7 +238,10 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         List<String> resultPaths = getTestResultPaths(windfile);
 
-        return new BuildConfig(dockerImage, commitHash, branch, programmingLanguage, projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled, testwiseCoverageEnabled,
-                resultPaths);
+        // Todo: If build agent does not have access to filesystem, we need to send the build script to the build agent and execute it there.
+        String buildScript = localCIBuildConfigurationService.createBuildScript(participation);
+
+        return new BuildConfig(buildScript, dockerImage, commitHash, branch, programmingLanguage, projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled,
+                testwiseCoverageEnabled, resultPaths);
     }
 }
