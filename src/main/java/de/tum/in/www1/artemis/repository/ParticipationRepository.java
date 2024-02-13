@@ -44,7 +44,7 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             WHERE p.id = :participationId
                 AND (s.id = (SELECT MAX(s2.id) FROM p.submissions s2) OR s.id IS NULL)
             """)
-    Optional<Participation> findByIdWithLatestSubmission(@Param("participationId") Long participationId);
+    Optional<Participation> findByIdWithLatestSubmission(@Param("participationId") long participationId);
 
     default Participation findByIdWithLatestSubmissionElseThrow(Long participationId) {
         return findByIdWithLatestSubmission(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
