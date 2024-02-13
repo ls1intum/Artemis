@@ -36,7 +36,7 @@ public interface ProgrammingExerciseTestRepository extends JpaRepository<Program
                 LEFT JOIN FETCH p.plagiarismDetectionConfig
             WHERE p.id = :exerciseId
             """)
-    ProgrammingExercise findOneWithEagerEverything(@Param("exerciseId") Long exerciseId);
+    ProgrammingExercise findOneWithEagerEverything(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT DISTINCT pe
