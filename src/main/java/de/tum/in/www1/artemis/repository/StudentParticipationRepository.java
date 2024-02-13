@@ -517,7 +517,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 ) AND s.submitted IS TRUE
                 AND s.id = (SELECT MAX(s.id) FROM p.submissions s)
             """)
-    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDateIgnoreTestRuns(@Param("exerciseId") Long exerciseId,
+    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDateIgnoreTestRuns(@Param("exerciseId") long exerciseId,
             @Param("now") ZonedDateTime now);
 
     @Query("""
