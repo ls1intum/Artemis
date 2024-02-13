@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.service.tutorialgroups;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import org.springframework.stereotype.Service;
 
@@ -57,6 +55,7 @@ public class TutorialGroupFreePeriodService {
      */
     public void updateOverlappingSessions(Course course, TutorialGroupFreePeriod tutorialGroupFreePeriod, boolean onDeletion) {
         Set<TutorialGroupSession> overlappingSessions = tutorialGroupSessionRepository.findAllBetween(course, tutorialGroupFreePeriod.getStart(), tutorialGroupFreePeriod.getEnd());
+
         findAndUpdateStillCanceledSessions(course, tutorialGroupFreePeriod, overlappingSessions, onDeletion);
         findAndUpdateSessionsToReactivate(course, tutorialGroupFreePeriod, overlappingSessions);
     }
@@ -83,7 +82,7 @@ public class TutorialGroupFreePeriodService {
             // if the FreePeriod should get deleted and the session was cancelled because of the free period, we update the TutorialFreePeriod to another free period
             if (onDeletion && session.getTutorialGroupFreePeriod().equals(tutorialGroupFreePeriod)) {
                 TutorialGroupFreePeriod replacementFreePeriod = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(course, session.getStart(), session.getEnd()).stream()
-                        .filter(period -> !period.equals(tutorialGroupFreePeriod)).findFirst().get();
+                        .filter(period -> !period.equals(tutorialGroupFreePeriod)).findFirst().orElseThrow(() -> new IllegalStateException("No replacement FreePeriod found"));
                 session.setStatus(TutorialGroupSessionStatus.CANCELLED);
                 session.setStatusExplanation(null);
                 session.setTutorialGroupFreePeriod(replacementFreePeriod);
