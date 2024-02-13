@@ -73,19 +73,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
      */
     private handleCommits() {
         this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.participationId).subscribe((commits) => {
-            this.commits = [];
-            const sortedCommits = this.sortCommitsByTimestampDesc(commits);
-            for (let i = 0; i < sortedCommits.length - 1; i++) {
-                const hasSubmission = this.studentParticipation.submissions?.some((submission) => {
-                    const programmingSubmission = submission as ProgrammingSubmission;
-                    return programmingSubmission.commitHash === sortedCommits[i].hash;
-                });
-                if (hasSubmission) {
-                    this.commits.push(sortedCommits[i]);
-                }
-            }
-            // push template commit extra as it has no submission
-            this.commits.push(sortedCommits[sortedCommits.length - 1]);
+            this.commits = this.sortCommitsByTimestampDesc(commits);
             this.setCommitResults();
         });
     }
