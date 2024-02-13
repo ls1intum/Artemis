@@ -23,7 +23,7 @@ import { of } from 'rxjs';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { HttpResponse } from '@angular/common/http';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
-import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -162,7 +162,7 @@ describe('PostComponent', () => {
         expect(component.contextInformation.routerLinkComponents).toEqual(expect.arrayContaining(['messages']));
         expect(component.contextInformation.routerLinkComponents).toEqual(expect.arrayContaining([component.posting?.conversation?.course?.id]));
         expect(component.contextInformation.displayName).toBeDefined();
-        expect(component.contextInformation.displayName).toEqual(getAsChannelDto(component.posting?.conversation)?.name);
+        expect(component.contextInformation.displayName).toEqual(getAsChannelDTO(component.posting?.conversation)?.name);
         expect(contextLink).not.toBeNull();
     });
 

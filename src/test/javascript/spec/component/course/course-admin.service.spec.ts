@@ -4,13 +4,14 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { take } from 'rxjs/operators';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
+import { UMLDiagramType } from '@ls1intum/apollon';
 
 describe('Course Admin Service', () => {
     let courseAdminService: CourseAdminService;

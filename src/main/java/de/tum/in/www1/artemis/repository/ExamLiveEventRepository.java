@@ -27,7 +27,8 @@ public interface ExamLiveEventRepository extends JpaRepository<ExamLiveEvent, Lo
     @Query("""
             SELECT DISTINCT event
             FROM ExamLiveEvent event
-            WHERE event.studentExamId = :studentExamId OR (event.studentExamId IS NULL AND event.examId = :examId)
+            WHERE event.studentExamId = :studentExamId
+                OR (event.studentExamId IS NULL AND event.examId = :examId)
             ORDER BY event.id DESC
             """)
     List<ExamLiveEvent> findAllByStudentExamIdOrGlobalByExamId(@Param("examId") Long examId, @Param("studentExamId") Long studentExamId);

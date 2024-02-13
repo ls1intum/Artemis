@@ -15,7 +15,13 @@ import { CompetencyRingsComponent } from 'app/course/competencies/competency-rin
 import { CompetencyImportComponent } from 'app/course/competencies/competency-management/competency-import.component';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
+import { GenerateCompetenciesComponent } from 'app/course/competencies/generate-competencies/generate-competencies.component';
+import { CompetencyRecommendationDetailComponent } from 'app/course/competencies/generate-competencies/competency-recommendation-detail.component';
+import { CourseDescriptionFormComponent } from 'app/course/competencies/generate-competencies/course-description-form.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { IrisModule } from 'app/iris/iris.module';
+import { CompetencyImportCourseComponent } from 'app/course/competencies/competency-management/competency-import-course.component';
+import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
 
 @NgModule({
     imports: [
@@ -28,17 +34,23 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
         FormDateTimePickerModule,
         NgbAccordionModule,
         ArtemisMarkdownModule,
+        IrisModule,
     ],
     declarations: [
         CompetencyFormComponent,
         CompetencyRingsComponent,
         CreateCompetencyComponent,
         EditCompetencyComponent,
+        GenerateCompetenciesComponent,
+        CompetencyRecommendationDetailComponent,
+        CourseDescriptionFormComponent,
         CompetencyManagementComponent,
         CompetencyCardComponent,
         CompetenciesPopoverComponent,
         PrerequisiteImportComponent,
         CompetencyImportComponent,
+        CompetencyImportCourseComponent,
+        TaxonomySelectComponent,
     ],
     exports: [CompetencyCardComponent, CompetenciesPopoverComponent, CompetencyFormComponent, CompetencyRingsComponent],
 })
