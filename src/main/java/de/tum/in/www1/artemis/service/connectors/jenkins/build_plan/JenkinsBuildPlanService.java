@@ -412,9 +412,12 @@ public class JenkinsBuildPlanService {
         try {
             // Retrieve the TAs and instructors that will be given access to the plan of the programming exercise
             Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-            var teachingAssistants = userRepository.findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
-            var editors = userRepository.findAllInGroupWithAuthorities(course.getEditorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
-            var instructors = userRepository.findAllInGroupWithAuthorities(course.getInstructorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
+            var teachingAssistants = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()).stream()
+                    .map(User::getLogin).collect(Collectors.toSet());
+            var editors = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getEditorGroupName()).stream().map(User::getLogin)
+                    .collect(Collectors.toSet());
+            var instructors = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()).stream().map(User::getLogin)
+                    .collect(Collectors.toSet());
 
             // The build plan of the exercise is inside the course folder
             var jobFolder = programmingExercise.getProjectKey();
