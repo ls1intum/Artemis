@@ -79,7 +79,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 AND r.rated IS TRUE
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
-    List<StudentParticipation> findByExamIdWithEagerLegalSubmissionsRatedResults(@Param("examId") Long examId);
+    List<StudentParticipation> findByExamIdWithEagerLegalSubmissionsRatedResults(@Param("examId") long examId);
 
     @Query("""
             SELECT DISTINCT p
