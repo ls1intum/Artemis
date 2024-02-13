@@ -9,7 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Base64Utils;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -56,6 +59,12 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
     @Value("${artemis.hades.url}")
     private String hadesServerUrl;
 
+    @Value("${artemis.hades.username}")
+    private String hadesUsername;
+
+    @Value("${artemis.hades.password}")
+    private String hadesPassword;
+
     public HadesCITriggerService(RestTemplate restTemplate, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
             BuildScriptGenerationService buildScriptGenerationService) {
         this.restTemplate = restTemplate;
@@ -84,7 +93,11 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
 
     private void postJob(HadesBuildJobDTO job) {
         try {
-            var response = restTemplate.postForEntity(hadesServerUrl + "/build", job, JsonNode.class);
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.AUTHORIZATION, "Basic " + Base64Utils.encodeToString((hadesUsername + ":" + hadesPassword).getBytes()));
+            HttpEntity<HadesBuildJobDTO> request = new HttpEntity<>(job, headers);
+
+            var response = restTemplate.postForEntity(hadesServerUrl + "/build", request, JsonNode.class);
             log.debug("Hades response: {}", response);
         }
         catch (Exception e) {
