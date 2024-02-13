@@ -20,6 +20,8 @@ public abstract class Action {
 
     private boolean runAlways;
 
+    private String platform;
+
     public Map<String, Object> getParameters() {
         return parameters;
     }
@@ -66,5 +68,13 @@ public abstract class Action {
 
     public void setWorkdir(String workdir) {
         this.workdir = workdir;
+    }
+
+    public String getPlatform() {
+        return platform;
+    }
+
+    public void setPlatform(String platform) {
+        this.platform = platform;
     }
 }
