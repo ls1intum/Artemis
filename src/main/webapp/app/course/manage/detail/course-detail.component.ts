@@ -92,7 +92,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         this.tutorialEnabled = await firstValueFrom(this.featureToggleService.getFeatureToggleActive(FeatureToggle.TutorialGroups));
         const profileInfo = await firstValueFrom(this.profileService.getProfileInfo());
         this.ltiEnabled = profileInfo?.activeProfiles.includes(PROFILE_LTI);
-        this.isAthenaEnabled = profileInfo.activeProfiles.includes(PROFILE_ATHENA);
+        this.isAthenaEnabled = profileInfo?.activeProfiles.includes(PROFILE_ATHENA);
         this.irisEnabled = profileInfo?.activeProfiles.includes(PROFILE_IRIS);
         if (this.irisEnabled) {
             const irisSettings = await firstValueFrom(this.irisSettingsService.getGlobalSettings());
