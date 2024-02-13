@@ -608,7 +608,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         submissions = submissionRepository.findAll();
 
         // After a push to the test repository, only the solution and template repository are built.
-        List<Result> results = resultRepository.findAllByExerciseId(exerciseId);
+        Set<Result> results = resultRepository.findAllByParticipationExerciseId(exerciseId);
         assertThat(results).isEmpty();
         solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).map(Participation::getResults)
                 .ifPresent(results::addAll);
