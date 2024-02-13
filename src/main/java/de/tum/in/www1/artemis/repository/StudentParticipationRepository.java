@@ -443,7 +443,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                         OR prs.type IS NULL
                 ) OR r.id IS NULL)
             """)
-    Optional<StudentParticipation> findByExerciseIdAndStudentIdAndTestRunWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId,
+    Optional<StudentParticipation> findByExerciseIdAndStudentIdAndTestRunWithLatestResult(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId,
             @Param("testRun") boolean testRun);
 
     /**
