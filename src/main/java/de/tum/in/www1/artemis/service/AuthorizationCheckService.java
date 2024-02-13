@@ -10,8 +10,6 @@ import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -41,8 +39,6 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
  */
 @Service
 public class AuthorizationCheckService {
-
-    private static final Logger log = LoggerFactory.getLogger(AuthorizationCheckService.class);
 
     private final UserRepository userRepository;
 
@@ -531,11 +527,9 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isOwnerOfParticipation(@NotNull StudentParticipation participation) {
         if (participation.getParticipant() == null) {
-            log.error("participation {} has no participant", participation.getId());
             return false;
         }
         else {
-            log.error("Checking if user is owner of participation {}", participation.getId());
             return participation.isOwnedBy(SecurityUtils.getCurrentUserLogin().orElseThrow());
         }
     }

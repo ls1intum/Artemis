@@ -7,8 +7,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
@@ -39,8 +37,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @RestController
 @RequestMapping("/api")
 public class ProgrammingExerciseParticipationResource {
-
-    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseParticipationResource.class);
 
     private static final String ENTITY_NAME = "programmingExerciseParticipation";
 
@@ -299,16 +295,7 @@ public class ProgrammingExerciseParticipationResource {
     @EnforceAtLeastStudent
     public ModelAndView redirectGetParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long participationId, @PathVariable String commitId) {
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
-        try {
-            participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-        }
-        catch (AccessForbiddenException e) {
-            // If the user is not allowed to access the participation, we want to show the commit details view, but not the files content.
-            log.error("User is not allowed to access participation with id {}", participationId);
-            throw e;
-        }
-        log.error("User is allowed to access participation with id {} in order to view the files content", participationId);
-
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
         return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content-commit-details/" + commitId);
     }
 
