@@ -304,7 +304,7 @@ public class ProgrammingExerciseParticipationResource {
         }
         catch (AccessForbiddenException e) {
             // If the user is not allowed to access the participation, we want to show the commit details view, but not the files content.
-            log.debug("User is not allowed to access participation with id {}", participationId);
+            log.error("User is not allowed to access participation with id {}", participationId);
             throw e;
         }
 
