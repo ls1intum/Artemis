@@ -124,6 +124,7 @@ public class ParticipationAuthorizationCheckService {
      */
     private boolean userHasPermissionsToAccessParticipation(final StudentParticipation participation, final User user) {
         if (authCheckService.isOwnerOfParticipation(participation)) {
+            log.debug("User {} is owner of participation {}", user.getLogin(), participation.getId());
             return true;
         }
 
