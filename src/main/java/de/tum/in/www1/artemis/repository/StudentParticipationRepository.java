@@ -58,7 +58,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 AND (p.student.id = :studentId OR ts.id = :studentId)
                 AND (r.rated IS NULL OR r.rated IS TRUE)
             """)
-    List<StudentParticipation> findByCourseIdAndStudentIdWithEagerRatedResults(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
+    List<StudentParticipation> findByCourseIdAndStudentIdWithEagerRatedResults(@Param("courseId") long courseId, @Param("studentId") long studentId);
 
     @Query("""
             SELECT COUNT(p.id) > 0
