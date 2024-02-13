@@ -52,7 +52,7 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
     Optional<TextExercise> findWithExampleSubmissionsAndResultsById(@Param("exerciseId") Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
-    Optional<TextExercise> findWithStudentParticipationsAndSubmissionsById(Long exerciseId);
+    Optional<TextExercise> findWithStudentParticipationsAndSubmissionsById(long exerciseId);
 
     @NotNull
     default TextExercise findByIdElseThrow(long exerciseId) {
