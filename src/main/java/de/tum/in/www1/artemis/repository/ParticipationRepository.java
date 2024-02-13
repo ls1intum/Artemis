@@ -57,7 +57,7 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             WHERE p.id = :participationId
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
-    Optional<Participation> findWithEagerLegalSubmissionsById(@Param("participationId") Long participationId);
+    Optional<Participation> findWithEagerLegalSubmissionsById(@Param("participationId") long participationId);
 
     @NotNull
     default Participation findByIdWithLegalSubmissionsElseThrow(long participationId) {
