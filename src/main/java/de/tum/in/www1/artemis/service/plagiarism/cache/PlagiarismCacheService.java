@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service.plagiarism.cache;
 
 import static de.tum.in.www1.artemis.config.Constants.HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE;
 
+import javax.annotation.PostConstruct;
+
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.collection.ISet;
@@ -10,10 +12,17 @@ import com.hazelcast.core.HazelcastInstance;
 @Service
 public class PlagiarismCacheService {
 
+    private final HazelcastInstance hazelcastInstance;
+
     // Every course in this set is currently doing a plagiarism check
-    private final ISet<Long> activePlagiarismChecksPerCourse;
+    private ISet<Long> activePlagiarismChecksPerCourse;
 
     public PlagiarismCacheService(HazelcastInstance hazelcastInstance) {
+        this.hazelcastInstance = hazelcastInstance;
+    }
+
+    @PostConstruct
+    public void init() {
         this.activePlagiarismChecksPerCourse = hazelcastInstance.getSet(HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE);
     }
 

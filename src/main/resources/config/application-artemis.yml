@@ -89,7 +89,7 @@ artemis:
         notification-plugin: "ls1tum/artemis-notification-plugin:1.0.0" # Docker image for the generic notification plugin. This value is set in an CI variable in GitLab CI.
     git:
         name: Artemis
-        email: artemis.in@tum.de
+        email: artemis@xcit.tum.de
     athena:
         url: http://localhost:5000
         secret: abcdef12345
@@ -107,3 +107,7 @@ artemis:
 
     plagiarism-checks:
         plagiarism-results-limit: 100
+
+    science: # The science module is used for research purposes such as the collection of data.
+        event-logging: # event logging is used to collect data for research purposes. It is disabled by default.
+          enable: false # Set this to true to enable the feature toggle for the science module on startup.

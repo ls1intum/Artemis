@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
+import static de.tum.in.www1.artemis.service.plagiarism.PlagiarismService.filterParticipationMinimumScore;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
@@ -30,8 +32,8 @@ import de.jplag.reporting.reportobject.ReportObjectFactory;
 import de.tum.in.www1.artemis.domain.PlagiarismCheckState;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -58,6 +60,8 @@ public class ProgrammingPlagiarismDetectionService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final PlagiarismService plagiarismService;
+
     private final GitService gitService;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -76,12 +80,13 @@ public class ProgrammingPlagiarismDetectionService {
 
     private final AuthorizationCheckService authCheckService;
 
-    public ProgrammingPlagiarismDetectionService(FileService fileService, ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService,
-            StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseExportService programmingExerciseExportService,
+    public ProgrammingPlagiarismDetectionService(FileService fileService, ProgrammingExerciseRepository programmingExerciseRepository, PlagiarismService plagiarismService,
+            GitService gitService, StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseExportService programmingExerciseExportService,
             PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService, UriService uriService,
             ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService, AuthorizationCheckService authCheckService) {
         this.fileService = fileService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.plagiarismService = plagiarismService;
         this.gitService = gitService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseExportService = programmingExerciseExportService;
@@ -323,18 +328,9 @@ public class ProgrammingPlagiarismDetectionService {
         var studentParticipations = studentParticipationRepository.findAllForPlagiarism(programmingExercise.getId());
 
         return studentParticipations.parallelStream().filter(participation -> !participation.isPracticeMode())
-                .filter(participation -> participation instanceof ProgrammingExerciseParticipation).filter(participation -> participation.getStudent().isPresent())
-                .filter(participation -> !authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, participation.getStudent().get()))
+                .filter(participation -> participation instanceof ProgrammingExerciseStudentParticipation).filter(plagiarismService.filterForStudents())
                 .map(participation -> (ProgrammingExerciseParticipation) participation).filter(participation -> participation.getVcsRepositoryUri() != null)
-                .filter(participation -> {
-                    Submission submission = participation.findLatestSubmission().orElse(null);
-                    // filter empty submissions
-                    if (submission == null) {
-                        return false;
-                    }
-                    return minimumScore == 0
-                            || submission.getLatestResult() != null && submission.getLatestResult().getScore() != null && submission.getLatestResult().getScore() >= minimumScore;
-                }).toList();
+                .filter(filterParticipationMinimumScore(minimumScore)).toList();
     }
 
     private Optional<Repository> cloneTemplateRepository(ProgrammingExercise programmingExercise, String targetPath) {

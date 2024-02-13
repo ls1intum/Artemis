@@ -11,11 +11,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCIDockerService;
+import de.tum.in.www1.artemis.service.connectors.localci.buildagent.LocalCIDockerService;
 
 class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -24,6 +26,9 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
 
     @Autowired
     private BuildJobRepository buildJobRepository;
+
+    @Autowired
+    private HazelcastInstance hazelcastInstance;
 
     @AfterEach
     void tearDown() {
@@ -38,6 +43,10 @@ class LocalCIDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTe
         BuildJob buildJob = new BuildJob();
         buildJob.setDockerImage("test-image-name");
         buildJob.setBuildStartDate(buildStartDate);
+
+        IMap<String, ZonedDateTime> dockerImageCleanupInfo = hazelcastInstance.getMap("dockerImageCleanupInfo");
+
+        dockerImageCleanupInfo.put("test-image-name", buildStartDate);
 
         buildJobRepository.save(buildJob);
 

@@ -8,6 +8,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,7 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exercise.GradingCriterionUtil;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -129,16 +131,18 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
         gradingCriterion.setId(1L);
         gradingCriterion.setTitle("Test");
         gradingCriterion.setExercise(textExercise);
-        gradingCriterion.setStructuredGradingInstructions(List.of(gradingInstruction));
+        gradingCriterion.setStructuredGradingInstructions(Set.of(gradingInstruction));
         return gradingCriterion;
     }
 
     @Test
     void testFeedbackSendingTextWithGradingInstruction() {
-        textExercise.setGradingCriteria(List.of(createExampleGradingCriterion()));
+        textExercise.setGradingCriteria(Set.of(createExampleGradingCriterion()));
         textExerciseRepository.save(textExercise);
 
-        textFeedback.setGradingInstruction(textExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0));
+        final GradingInstruction instruction = GradingCriterionUtil.findAnyInstructionWhere(textExercise.getGradingCriteria(),
+                gradingInstruction -> "Give this feedback if xyz".equals(gradingInstruction.getInstructionDescription())).orElseThrow();
+        textFeedback.setGradingInstruction(instruction);
 
         athenaRequestMockProvider.mockSendFeedbackAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()), jsonPath("$.exercise.gradingCriteria[0].id").value(1),
                 jsonPath("$.exercise.gradingCriteria[0].title").value("Test"), jsonPath("$.exercise.gradingCriteria[0].structuredGradingInstructions[0].id").value(101),

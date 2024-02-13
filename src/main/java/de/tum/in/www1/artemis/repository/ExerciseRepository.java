@@ -52,7 +52,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             SELECT e
             FROM Exercise e
             WHERE e.course.id = :courseId
-            	AND e.mode = 'TEAM'
+            	AND e.mode = de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.TEAM
             """)
     Set<Exercise> findAllTeamExercisesByCourseId(@Param("courseId") Long courseId);
 
@@ -72,7 +72,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Optional<Exercise> findByIdWithCompetencies(@Param("exerciseId") Long exerciseId);
 
     @Query("""
-            SELECT e FROM Exercise e
+            SELECT e
+            FROM Exercise e
                 LEFT JOIN FETCH e.competencies c
                 LEFT JOIN FETCH c.exercises
             WHERE e.id = :exerciseId
@@ -80,7 +81,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Optional<Exercise> findByIdWithCompetenciesBidirectional(@Param("exerciseId") Long exerciseId);
 
     @Query("""
-            SELECT e FROM Exercise e
+            SELECT e
+            FROM Exercise e
             WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :now
             ORDER BY e.dueDate ASC
@@ -95,11 +97,14 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
-            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(e.id))
+            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(
+                TYPE(e),
+                COUNT(e.id)
+            )
             FROM Exercise e
-            WHERE e.course.testCourse = FALSE
-            	AND (e.dueDate >= :#{#now} OR e.dueDate IS NULL)
-            	AND (e.releaseDate <= :#{#now} OR e.releaseDate IS NULL)
+            WHERE e.course.testCourse IS FALSE
+            	AND (e.dueDate >= :now OR e.dueDate IS NULL)
+            	AND (e.releaseDate <= :now OR e.releaseDate IS NULL)
             GROUP BY TYPE(e)
             """)
     List<ExerciseTypeMetricsEntry> countActiveExercisesGroupByExerciseType(@Param("now") ZonedDateTime now);
@@ -111,9 +116,12 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
-            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(e.id))
+            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(
+                TYPE(e),
+                COUNT(e.id)
+            )
             FROM Exercise e
-            WHERE e.course.testCourse = FALSE
+            WHERE e.course.testCourse IS FALSE
             GROUP BY TYPE(e)
             """)
     List<ExerciseTypeMetricsEntry> countExercisesGroupByExerciseType();
@@ -127,11 +135,14 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
-            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(e.id))
+            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(
+                TYPE(e),
+                COUNT(e.id)
+            )
             FROM Exercise e
-            WHERE e.course.testCourse = FALSE
-            	AND e.dueDate >= :#{#minDate}
-            	AND e.dueDate <= :#{#maxDate}
+            WHERE e.course.testCourse IS FALSE
+            	AND e.dueDate >= :minDate
+            	AND e.dueDate <= :maxDate
             GROUP BY TYPE(e)
             """)
     List<ExerciseTypeMetricsEntry> countExercisesWithEndDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
@@ -145,12 +156,15 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
-            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(DISTINCT user.id))
+            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(
+                TYPE(e),
+                COUNT(DISTINCT user.id)
+            )
             FROM Exercise e
-            JOIN User user ON e.course.studentGroupName member of user.groups
-            WHERE e.course.testCourse = FALSE
-            	AND e.dueDate >= :#{#minDate}
-            	AND e.dueDate <= :#{#maxDate}
+                JOIN User user ON e.course.studentGroupName MEMBER OF user.groups
+            WHERE e.course.testCourse IS FALSE
+            	AND e.dueDate >= :minDate
+            	AND e.dueDate <= :maxDate
             GROUP BY TYPE(e)
             """)
     List<ExerciseTypeMetricsEntry> countStudentsInExercisesWithDueDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
@@ -165,13 +179,16 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
-            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(DISTINCT user.id))
+            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(
+                TYPE(e),
+                COUNT(DISTINCT user.id)
+            )
             FROM Exercise e
-            JOIN User user ON e.course.studentGroupName member of user.groups
-            WHERE e.course.testCourse = FALSE
-            	AND e.dueDate >= :#{#minDate}
-            	AND e.dueDate <= :#{#maxDate}
-                AND user.login IN :#{#activeUserLogins}
+                JOIN User user ON e.course.studentGroupName MEMBER OF user.groups
+            WHERE e.course.testCourse IS FALSE
+            	AND e.dueDate >= :minDate
+            	AND e.dueDate <= :maxDate
+                AND user.login IN :activeUserLogins
             GROUP BY TYPE(e)
             """)
     List<ExerciseTypeMetricsEntry> countActiveStudentsInExercisesWithDueDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate,
@@ -186,11 +203,14 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
-            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(e.id))
+            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(
+                TYPE(e),
+                COUNT(e.id)
+            )
             FROM Exercise e
-            WHERE e.course.testCourse = FALSE
-            	AND e.releaseDate >= :#{#minDate}
-            	AND e.releaseDate <= :#{#maxDate}
+            WHERE e.course.testCourse IS FALSE
+            	AND e.releaseDate >= :minDate
+            	AND e.releaseDate <= :maxDate
             GROUP BY TYPE(e)
             """)
     List<ExerciseTypeMetricsEntry> countExercisesWithReleaseDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
@@ -204,12 +224,15 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
-            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(DISTINCT user.id))
+            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(
+                TYPE(e),
+                COUNT(DISTINCT user.id)
+            )
             FROM Exercise e
-            JOIN User user ON e.course.studentGroupName member of user.groups
-            WHERE e.course.testCourse = FALSE
-            	AND e.releaseDate >= :#{#minDate}
-            	AND e.releaseDate <= :#{#maxDate}
+                JOIN User user ON e.course.studentGroupName MEMBER OF user.groups
+            WHERE e.course.testCourse IS FALSE
+            	AND e.releaseDate >= :minDate
+            	AND e.releaseDate <= :maxDate
             GROUP BY TYPE(e)
             """)
     List<ExerciseTypeMetricsEntry> countStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate,
@@ -225,40 +248,46 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
-            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(DISTINCT user.id))
+            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(
+                TYPE(e),
+                COUNT(DISTINCT user.id)
+            )
             FROM Exercise e
-            JOIN User user ON e.course.studentGroupName member of user.groups
-            WHERE e.course.testCourse = FALSE
-            	AND e.releaseDate >= :#{#minDate}
-            	AND e.releaseDate <= :#{#maxDate}
-                AND user.login IN :#{#activeUserLogins}
+                JOIN User user ON e.course.studentGroupName MEMBER OF user.groups
+            WHERE e.course.testCourse IS FALSE
+            	AND e.releaseDate >= :minDate
+            	AND e.releaseDate <= :maxDate
+                AND user.login IN :activeUserLogins
             GROUP BY TYPE(e)
             """)
     List<ExerciseTypeMetricsEntry> countActiveStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate,
             @Param("maxDate") ZonedDateTime maxDate, @Param("activeUserLogins") List<String> activeUserLogins);
 
     @Query("""
-            SELECT e FROM Exercise e
+            SELECT e
+            FROM Exercise e
                 LEFT JOIN FETCH e.plagiarismDetectionConfig c
                 LEFT JOIN FETCH e.studentParticipations p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results
             WHERE e.dueDate >= :time
-                AND c.continuousPlagiarismControlEnabled = TRUE
+                AND c.continuousPlagiarismControlEnabled IS TRUE
             """)
     Set<Exercise> findAllExercisesWithDueDateOnOrAfterAndContinuousPlagiarismControlEnabledIsTrue(@Param("time") ZonedDateTime time);
 
     @Query("""
-            SELECT e FROM Exercise e
-            WHERE e.course.testCourse = FALSE
+            SELECT e
+            FROM Exercise e
+            WHERE e.course.testCourse IS FALSE
             	AND e.releaseDate >= :now
             ORDER BY e.dueDate ASC
             """)
     Set<Exercise> findAllExercisesWithCurrentOrUpcomingReleaseDate(@Param("now") ZonedDateTime now);
 
     @Query("""
-            SELECT e FROM Exercise e
-            WHERE e.course.testCourse = FALSE
+            SELECT e
+            FROM Exercise e
+            WHERE e.course.testCourse IS FALSE
             	AND e.assessmentDueDate >= :now
             ORDER BY e.dueDate ASC
             """)
@@ -272,25 +301,31 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return list of exercises
      */
     @Query("""
-            SELECT e FROM Exercise e
-            WHERE e.course.id = :#{#courseId}
-            AND EXISTS (
-            	SELECT l FROM LtiOutcomeUrl l
-            	WHERE e = l.exercise
-            	AND l.user.login = :#{#login})
+            SELECT e
+            FROM Exercise e
+            WHERE e.course.id = :courseId
+                AND EXISTS (
+                    SELECT l
+                    FROM LtiOutcomeUrl l
+                    WHERE e = l.exercise
+                        AND l.user.login = :login
+                )
             """)
     Set<Exercise> findByCourseIdWhereLtiOutcomeUrlExists(@Param("courseId") Long courseId, @Param("login") String login);
 
     @Query("""
-             SELECT DISTINCT c FROM Exercise e JOIN e.categories c
-             WHERE e.course.id = :#{#courseId}
+            SELECT DISTINCT c
+            FROM Exercise e
+               JOIN e.categories c
+            WHERE e.course.id = :courseId
             """)
     Set<String> findAllCategoryNames(@Param("courseId") Long courseId);
 
     @Query("""
-             SELECT DISTINCT e FROM Exercise e
-             LEFT JOIN FETCH e.studentParticipations
-             WHERE e.id = :#{#exerciseId}
+            SELECT DISTINCT e
+            FROM Exercise e
+                LEFT JOIN FETCH e.studentParticipations
+            WHERE e.id = :exerciseId
             """)
     Optional<Exercise> findByIdWithEagerParticipations(@Param("exerciseId") Long exerciseId);
 
@@ -298,20 +333,22 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Optional<Exercise> findWithEagerCategoriesAndTeamAssignmentConfigById(Long exerciseId);
 
     @Query("""
-             SELECT DISTINCT e from Exercise e
-             LEFT JOIN FETCH e.exampleSubmissions examplesub
-             LEFT JOIN FETCH examplesub.submission exsub
-             LEFT JOIN FETCH exsub.results
-             WHERE e.id = :#{#exerciseId}
+            SELECT DISTINCT e
+            FROM Exercise e
+                LEFT JOIN FETCH e.exampleSubmissions examplesub
+                LEFT JOIN FETCH examplesub.submission exsub
+                LEFT JOIN FETCH exsub.results
+            WHERE e.id = :exerciseId
             """)
     Optional<Exercise> findByIdWithEagerExampleSubmissions(@Param("exerciseId") Long exerciseId);
 
     @Query("""
-            SELECT DISTINCT e from Exercise e
-            LEFT JOIN FETCH e.posts
-            LEFT JOIN FETCH e.categories
-            WHERE e.id = :#{#exerciseId}
-                """)
+            SELECT DISTINCT e
+            FROM Exercise e
+                LEFT JOIN FETCH e.posts
+                LEFT JOIN FETCH e.categories
+            WHERE e.id = :exerciseId
+            """)
     Optional<Exercise> findByIdWithDetailsForStudent(@Param("exerciseId") Long exerciseId);
 
     /**
@@ -319,9 +356,11 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return all exercise-ids which belong to the course
      */
     @Query("""
-            SELECT e.id FROM Exercise e LEFT JOIN e.course c
+            SELECT e.id
+            FROM Exercise e
+                LEFT JOIN e.course c
             WHERE c.id = :courseId
-                """)
+            """)
     Set<Long> findAllIdsByCourseId(@Param("courseId") Long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
@@ -334,11 +373,10 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return the name/title of the exercise or null if the exercise does not exist
      */
     @Query("""
-            SELECT
-                CASE WHEN exerciseGroup IS NOT NULL
-                     THEN exerciseGroup.title
-                     ELSE exercise.title
-                END AS title
+            SELECT CASE WHEN exerciseGroup IS NOT NULL
+                THEN exerciseGroup.title
+                ELSE exercise.title
+            END AS title
             FROM Exercise exercise
                 LEFT JOIN exercise.exerciseGroup exerciseGroup
             WHERE exercise.id = :exerciseId
@@ -354,7 +392,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      */
     @Query("""
             SELECT DISTINCT e
-            FROM Exercise e LEFT JOIN FETCH e.categories
+            FROM Exercise e
+                LEFT JOIN FETCH e.categories
             WHERE e.course.id = :courseId
             """)
     Set<Exercise> getExercisesForCourseManagementOverview(@Param("courseId") Long courseId);
@@ -386,8 +425,10 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             SELECT DISTINCT e
             FROM Exercise e
             WHERE e.course.id = :courseId
-                AND (e.assessmentDueDate IS NOT NULL AND e.assessmentDueDate < :now
-                OR e.assessmentDueDate IS NULL AND e.dueDate IS NOT NULL AND e.dueDate < :now)
+                AND (
+                    e.assessmentDueDate IS NOT NULL AND e.assessmentDueDate < :now
+                    OR e.assessmentDueDate IS NULL AND e.dueDate IS NOT NULL AND e.dueDate < :now
+                )
             """)
     List<Exercise> getPastExercisesForCourseManagementOverview(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
 
@@ -405,8 +446,10 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             WHERE e.releaseDate IS NOT NULL
                 AND e.releaseDate < :now
                 AND e.releaseDate > :daysAgo
-                AND ((e.dueDate IS NOT NULL AND e.dueDate > :now)
-                    OR e.dueDate IS NULL)
+                AND (
+                    (e.dueDate IS NOT NULL AND e.dueDate > :now)
+                    OR e.dueDate IS NULL
+                )
             """)
     Set<Exercise> findAllExercisesForSummary(@Param("now") ZonedDateTime now, @Param("daysAgo") ZonedDateTime daysAgo);
 
@@ -432,7 +475,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      */
     @Query("""
             SELECT COUNT(DISTINCT p.team.id)
-            FROM Exercise e JOIN e.studentParticipations p
+            FROM Exercise e
+                JOIN e.studentParticipations p
             WHERE e.id = :exerciseId
             """)
     Long getTeamParticipationCountById(@Param("exerciseId") Long exerciseId);
@@ -513,19 +557,19 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return a set of exercises the user has participated in with eager participations, submissions, results and feedbacks
      */
     @Query("""
-             SELECT e
-             FROM Course c
-                 LEFT JOIN c.exercises e
-                 LEFT JOIN FETCH e.studentParticipations p
-                 LEFT JOIN p.team.students students
-                 LEFT JOIN FETCH p.submissions s
-                 LEFT JOIN FETCH s.results r
-                 LEFT JOIN FETCH r.feedbacks f
-                 LEFT JOIN FETCH f.testCase
+            SELECT e
+            FROM Course c
+                LEFT JOIN c.exercises e
+                LEFT JOIN FETCH e.studentParticipations p
+                LEFT JOIN p.team.students students
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
             WHERE p.student.id = :userId
-                  OR students.id = :userId
+                OR students.id = :userId
              """)
-    Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksTestCasesByUserId(long userId);
+    Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksTestCasesByUserId(@Param("userId") long userId);
 
     /**
      * Finds all exercises filtered by feedback suggestion modules not null and due date.
@@ -568,13 +612,12 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return a list of exercises with potential plagiarism
      */
     @Query("""
-                SELECT e
-                FROM Exercise e
-                    LEFT JOIN e.exerciseGroup eg
-                    WHERE eg IS NOT NULL
-                        AND eg.exam.id = :examId
-                        AND TYPE (e) IN (ModelingExercise, TextExercise, ProgrammingExercise)
-
+            SELECT e
+            FROM Exercise e
+                LEFT JOIN e.exerciseGroup eg
+            WHERE eg IS NOT NULL
+                AND eg.exam.id = :examId
+                AND TYPE (e) IN (ModelingExercise, TextExercise, ProgrammingExercise)
             """)
-    Set<Exercise> findAllExercisesWithPotentialPlagiarismByExamId(long examId);
+    Set<Exercise> findAllExercisesWithPotentialPlagiarismByExamId(@Param("examId") long examId);
 }

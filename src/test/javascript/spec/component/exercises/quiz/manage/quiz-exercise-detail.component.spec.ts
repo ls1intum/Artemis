@@ -81,11 +81,5 @@ describe('QuizExercise Details Component', () => {
         await Promise.resolve();
 
         expect(comp.detailOverviewSections).toBeDefined();
-
-        for (const section of comp.detailOverviewSections) {
-            for (const detail of section.details) {
-                expect(detail).toBeDefined();
-            }
-        }
     });
 });

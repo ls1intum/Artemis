@@ -22,6 +22,7 @@ import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
 import { NgModel } from '@angular/forms';
 import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
+import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
@@ -202,6 +203,7 @@ describe('TextExercise Management Update Component', () => {
             const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
             comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { formValidChanges: new Subject() } } as ExerciseTitleChannelNameComponent;
             comp.exerciseUpdatePlagiarismComponent = { formValidChanges: new Subject(), formValid: true } as ExerciseUpdatePlagiarismComponent;
+            comp.teamConfigFormGroupComponent = { formValidChanges: new Subject() } as TeamConfigFormGroupComponent;
             comp.bonusPoints = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
             comp.points = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
 

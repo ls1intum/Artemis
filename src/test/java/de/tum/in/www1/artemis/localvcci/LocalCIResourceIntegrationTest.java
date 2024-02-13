@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.localvcci;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.*;
@@ -14,8 +15,9 @@ import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
+import de.tum.in.www1.artemis.domain.enumeration.BuildJobResult;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCISharedBuildJobQueueService;
+import de.tum.in.www1.artemis.service.connectors.localci.buildagent.SharedQueueProcessingService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.*;
 
 class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
@@ -30,7 +32,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     private HazelcastInstance hazelcastInstance;
 
     @Autowired
-    private LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService;
+    private SharedQueueProcessingService sharedQueueProcessingService;
 
     protected IQueue<LocalCIBuildJobQueueItem> queuedJobs;
 
@@ -41,16 +43,16 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @BeforeEach
     void createJobs() {
         // temporarily remove listener to avoid triggering build job processing
-        localCISharedBuildJobQueueService.removeListener();
+        sharedQueueProcessingService.removeListener();
 
         JobTimingInfo jobTimingInfo = new JobTimingInfo(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2));
-        BuildConfig buildConfig = new BuildConfig("test", "test", "test", null, null, false, false, false, null);
+        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", null, null, false, false, false, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
-        job1 = new LocalCIBuildJobQueueItem("1", "job1", "address1", 1, course.getId(), 1, 1, 1, repositoryInfo, jobTimingInfo, buildConfig);
-        job2 = new LocalCIBuildJobQueueItem("2", "job2", "address1", 2, course.getId(), 1, 1, 1, repositoryInfo, jobTimingInfo, buildConfig);
+        job1 = new LocalCIBuildJobQueueItem("1", "job1", "address1", 1, course.getId(), 1, 1, 1, BuildJobResult.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig);
+        job2 = new LocalCIBuildJobQueueItem("2", "job2", "address1", 2, course.getId(), 1, 1, 1, BuildJobResult.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig);
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
-        agent1 = new LocalCIBuildAgentInformation(memberAddress, 1, 0, null, false);
+        agent1 = new LocalCIBuildAgentInformation(memberAddress, 1, 0, null, false, new ArrayList<>(List.of()));
 
         queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
         processingJobs = hazelcastInstance.getMap("processingJobs");
@@ -64,7 +66,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
 
     @AfterEach
     void clearDataStructures() {
-        localCISharedBuildJobQueueService.addListener();
+        sharedQueueProcessingService.init();
         queuedJobs.clear();
         processingJobs.clear();
         buildAgentInformation.clear();
