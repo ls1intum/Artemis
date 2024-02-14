@@ -513,7 +513,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 LEFT JOIN FETCH Rating rating ON rating.result = r
             WHERE r.completionDate IS NOT NULL
                 AND e.id = :exerciseId
-            GROUP BY a.id
+            GROUP BY r.assessor.id
+
             """)
     List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByExerciseId(@Param("exerciseId") long exerciseId);
 
@@ -535,7 +536,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 LEFT JOIN FETCH Rating rating on rating.result = r
             WHERE r.completionDate IS NOT NULL
                 AND ex.id = :examId
-            GROUP BY a.id
+            GROUP BY r.assessor.id
             """)
     List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByExamId(@Param("examId") long examId);
 
