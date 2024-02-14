@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -25,9 +26,7 @@ public interface DataExportRepository extends JpaRepository<DataExport, Long> {
      * @throws EntityNotFoundException if the data export could not be found
      */
     default DataExport findByIdElseThrow(long dataExportId) {
-        return findById(dataExportId).orElseThrow(() -> {
-            throw new EntityNotFoundException("Could not find data export with id: " + dataExportId);
-        });
+        return findById(dataExportId).orElseThrow(() -> new EntityNotFoundException("Could not find data export with id: " + dataExportId));
     }
 
     /**
@@ -40,22 +39,24 @@ public interface DataExportRepository extends JpaRepository<DataExport, Long> {
     @Query("""
             SELECT dataExport
             FROM DataExport dataExport
-            WHERE dataExport.dataExportState = 0 OR dataExport.dataExportState = 1
+            WHERE dataExport.dataExportState = 0
+                OR dataExport.dataExportState = 1
             """)
     Set<DataExport> findAllToBeCreated();
 
     /**
      * Find all data exports that need to be deleted. This includes all data exports that have a creation date older than 7 days
      *
+     * @param thresholdDate the date to filter data exports, typically 7 days before today.
      * @return a set of data exports that need to be deleted
      */
     @Query("""
             SELECT dataExport
             FROM DataExport dataExport
-            WHERE dataExport.creationFinishedDate is NOT NULL
-                  AND dataExport.creationFinishedDate < :#{T(java.time.ZonedDateTime).now().minusDays(7)}
+            WHERE dataExport.creationFinishedDate IS NOT NULL
+                AND dataExport.creationFinishedDate < :thresholdDate
             """)
-    Set<DataExport> findAllToBeDeleted();
+    Set<DataExport> findAllToBeDeleted(@Param("thresholdDate") ZonedDateTime thresholdDate);
 
     /**
      * Find all data exports for the given user ordered by their request date descending.

@@ -12,6 +12,7 @@ import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
+import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
 
 describe('CompetencyRecommendationDetailComponent', () => {
     let competencyRecommendationDetailComponentFixture: ComponentFixture<CompetencyRecommendationDetailComponent>;
@@ -28,6 +29,7 @@ describe('CompetencyRecommendationDetailComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(HtmlForMarkdownPipe),
                 MockComponent(MarkdownEditorComponent),
+                MockComponent(TaxonomySelectComponent),
             ],
             providers: [],
         })

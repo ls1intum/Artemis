@@ -63,8 +63,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
     private LocalRepository assignmentRepository;
 
-    private LocalRepository auxiliaryRepository;
-
     private String teamShortName;
 
     private String teamRepositorySlug;
@@ -243,7 +241,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         programmingExercise.setAuxiliaryRepositories(auxiliaryRepositories);
         programmingExerciseRepository.save(programmingExercise);
 
-        auxiliaryRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, auxiliaryRepositorySlug);
+        LocalRepository auxiliaryRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, auxiliaryRepositorySlug);
 
         // Students should not be able to fetch and push.
         localVCLocalCITestService.testFetchReturnsError(auxiliaryRepository.localGit, student1Login, projectKey1, auxiliaryRepositorySlug, NOT_AUTHORIZED);

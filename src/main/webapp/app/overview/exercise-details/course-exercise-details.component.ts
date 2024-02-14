@@ -49,6 +49,7 @@ import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
+import { PROFILE_IRIS } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-course-exercise-details',
@@ -234,7 +235,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
             this.profileService
                 .getProfileInfo()
                 .pipe(
-                    filter((profileInfo) => profileInfo?.activeProfiles?.includes('iris')),
+                    filter((profileInfo) => profileInfo?.activeProfiles?.includes(PROFILE_IRIS)),
                     switchMap(() => this.irisSettingsService.getCombinedProgrammingExerciseSettings(this.exercise!.id!)),
                 )
                 .subscribe((settings) => {

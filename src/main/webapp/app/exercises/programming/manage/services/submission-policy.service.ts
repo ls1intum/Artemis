@@ -25,8 +25,13 @@ export class SubmissionPolicyService implements ISubmissionPolicyService {
      * @param exerciseId of the programming exercise for which the submission policy should be loaded
      */
     getSubmissionPolicyOfProgrammingExercise(exerciseId: number): Observable<SubmissionPolicy | undefined> {
-        // using undefined as fallback to avoid null values
-        return this.http.get<SubmissionPolicy>(this.requestUrl(exerciseId)).pipe(map((submissionPolicy) => submissionPolicy ?? undefined));
+        return this.http.get<SubmissionPolicy | undefined>(this.requestUrl(exerciseId)).pipe(
+            // using any as it can be null
+            map((response: any) => {
+                // Ensure that null is replaced by undefined
+                return response === null ? undefined : response;
+            }),
+        );
     }
 
     /**
