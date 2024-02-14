@@ -10,8 +10,9 @@ import { MockAlertService } from '../helpers/mocks/service/mock-alert.service';
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { UMLModel } from '@ls1intum/apollon';
+import { Detail } from 'app/detail-overview-list/detail.model';
 
-const sections = [
+const sections: DetailOverviewSection[] = [
     {
         headline: 'headline.1',
         details: [
@@ -23,7 +24,7 @@ const sections = [
             false,
         ],
     },
-] as DetailOverviewSection[];
+];
 
 describe('DetailOverviewList', () => {
     let component: DetailOverviewListComponent;
@@ -42,7 +43,6 @@ describe('DetailOverviewList', () => {
                 { provide: ModelingExerciseService, useValue: { convertToPdf: jest.fn() } },
             ],
         })
-            .overrideTemplate(DetailOverviewListComponent, '')
             .compileComponents()
             .then(() => {
                 modalService = fixture.debugElement.injector.get(NgbModal);
@@ -60,6 +60,21 @@ describe('DetailOverviewList', () => {
         expect(component.headlines).toStrictEqual([{ id: 'headline-1', translationKey: 'headline.1' }]);
         expect(component.headlinesRecord).toStrictEqual({ 'headline.1': 'headline-1' });
         expect(DetailOverviewListComponent).not.toBeNull();
+    });
+
+    it('should escape all falsy values', () => {
+        component.sections = [
+            { headline: 'some-section', details: [null as any as Detail, undefined, false, { type: DetailType.Text, title: 'title', data: { text: 'A Title' } }] },
+        ];
+        fixture.detectChanges();
+        const detailListTitleDOMElements = fixture.nativeElement.querySelectorAll('dt[id^=detail-title]');
+        expect(detailListTitleDOMElements).toHaveLength(1);
+        const titleDetailTitle = fixture.nativeElement.querySelector('dt[id=detail-title-title]');
+        const titleDetailValue = fixture.nativeElement.querySelector('dd[id=detail-value-title]');
+        expect(titleDetailTitle).toBeDefined();
+        expect(titleDetailValue).toBeDefined();
+        expect(titleDetailTitle.textContent).toContain('title');
+        expect(titleDetailValue.textContent).toContain('A Title');
     });
 
     it('should open git diff modal', () => {
