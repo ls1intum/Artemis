@@ -55,7 +55,7 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationIndependentTest {
     private ProgrammingExerciseTaskService programmingExerciseTaskService;
 
     @Autowired
-    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     @Autowired
     private ExerciseHintActivationRepository exerciseHintActivationRepository;
