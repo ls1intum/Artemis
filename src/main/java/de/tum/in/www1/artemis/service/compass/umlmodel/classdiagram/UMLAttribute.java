@@ -114,7 +114,7 @@ public class UMLAttribute extends UMLElement implements Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), parentElement, name, attributeType);
+        return Objects.hash(super.hashCode(), name, attributeType);
     }
 
     @Override
