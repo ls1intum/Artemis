@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.Set;
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.config.Constants;
 import tech.jhipster.config.JHipsterConstants;
 
-@Profile({ PROFILE_CORE, "buildagent" })
+@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
 @Service
 public class ProfileService {
 

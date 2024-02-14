@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config.localvcci;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
+
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -29,7 +31,7 @@ import de.tum.in.www1.artemis.exception.LocalCIException;
  * This includes a Docker client and an executor service that manages the queue of build jobs.
  */
 @Configuration
-@Profile({ "localci", "buildagent" })
+@Profile({ "localci", PROFILE_BUILDAGENT })
 public class LocalCIConfiguration {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;

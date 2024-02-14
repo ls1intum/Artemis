@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static org.mockito.Mockito.*;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
@@ -49,7 +50,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @ResourceLock("AbstractSpringIntegrationGitlabCIGitlabSamlTest")
 @AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "gitlabci", "gitlab", "saml2", "scheduling", "lti", "core" })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "gitlabci", "gitlab", "saml2", "scheduling", "lti", PROFILE_CORE })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false" })
 public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends AbstractArtemisIntegrationTest {
 

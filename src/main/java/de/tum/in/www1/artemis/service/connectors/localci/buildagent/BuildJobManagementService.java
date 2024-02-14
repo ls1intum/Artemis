@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
+
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -26,7 +28,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
  * It handles timeouts as well as exceptions that occur during the execution of the build job.
  */
 @Service
-@Profile("buildagent")
+@Profile(PROFILE_BUILDAGENT)
 public class BuildJobManagementService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobManagementService.class);

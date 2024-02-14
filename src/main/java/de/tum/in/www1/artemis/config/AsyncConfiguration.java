@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.concurrent.Executor;
@@ -19,7 +20,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import tech.jhipster.async.ExceptionHandlingAsyncTaskExecutor;
 
-@Profile({ PROFILE_CORE, "buildagent" })
+@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
 @Configuration
 @EnableAsync(proxyTargetClass = true)
 @EnableScheduling

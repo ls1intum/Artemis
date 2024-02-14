@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import org.springframework.context.annotation.*;
@@ -8,7 +9,7 @@ import org.springframework.core.env.Environment;
 import de.tum.in.www1.artemis.aop.logging.LoggingAspect;
 import tech.jhipster.config.JHipsterConstants;
 
-@Profile({ PROFILE_CORE, "buildagent" })
+@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
 @Configuration
 @EnableAspectJAutoProxy
 public class LoggingAspectConfiguration {

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static tech.jhipster.config.logging.LoggingUtils.*;
 
@@ -20,7 +21,7 @@ import tech.jhipster.config.JHipsterProperties;
 /*
  * Configures the console and Logstash log appender from the app properties
  */
-@Profile({ PROFILE_CORE, "buildagent" })
+@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
 @Configuration
 public class LoggingConfiguration {
 

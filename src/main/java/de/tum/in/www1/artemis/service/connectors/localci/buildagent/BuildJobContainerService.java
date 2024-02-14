@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -43,7 +44,7 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService
  * It is closely related to the {@link BuildJobExecutionService} which contains the methods that are used to execute the build jobs.
  */
 @Service
-@Profile("buildagent")
+@Profile(PROFILE_BUILDAGENT)
 public class BuildJobContainerService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobContainerService.class);

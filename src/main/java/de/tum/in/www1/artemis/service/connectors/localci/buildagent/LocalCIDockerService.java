@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
+
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -31,8 +33,7 @@ import de.tum.in.www1.artemis.exception.LocalCIException;
  * Service for Docker related operations in local CI
  */
 @Service
-@Profile("buildagent")
-
+@Profile(PROFILE_BUILDAGENT)
 public class LocalCIDockerService {
 
     private final ReentrantLock lock = new ReentrantLock();

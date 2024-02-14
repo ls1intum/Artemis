@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.io.ByteArrayOutputStream;
@@ -61,7 +62,7 @@ import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.web.rest.dto.CommitInfoDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-@Profile({ PROFILE_CORE, "buildagent" })
+@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
 @Service
 public class GitService {
 

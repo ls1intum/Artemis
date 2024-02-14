@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
+
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
@@ -29,7 +31,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.*;
 /**
  * Includes functionality for processing build jobs from the shared build job queue.
  */
-@Profile("buildagent")
+@Profile(PROFILE_BUILDAGENT)
 @Service
 public class SharedQueueProcessingService {
 

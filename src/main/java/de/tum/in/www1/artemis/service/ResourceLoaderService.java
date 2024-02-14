@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.io.File;
@@ -30,7 +31,7 @@ import org.springframework.stereotype.Service;
 /**
  * Service class to load resources from the file system (if possible) and the classpath (as fallback).
  */
-@Profile({ PROFILE_CORE, "buildagent" })
+@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
 @Service
 public class ResourceLoaderService {
 
