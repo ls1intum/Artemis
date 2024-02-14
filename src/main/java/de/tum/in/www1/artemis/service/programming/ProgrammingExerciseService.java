@@ -145,6 +145,10 @@ public class ProgrammingExerciseService {
 
     private final Optional<BuildScriptGenerationService> buildScriptGenerationService;
 
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    private final ProfileService profileService;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -157,7 +161,8 @@ public class ProgrammingExerciseService {
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, ChannelService channelService,
             ProgrammingSubmissionService programmingSubmissionService, Optional<IrisSettingsService> irisSettingsService, Optional<AeolusTemplateService> aeolusTemplateService,
-            Optional<BuildScriptGenerationService> buildScriptGenerationService) {
+            Optional<BuildScriptGenerationService> buildScriptGenerationService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -187,6 +192,8 @@ public class ProgrammingExerciseService {
         this.irisSettingsService = irisSettingsService;
         this.aeolusTemplateService = aeolusTemplateService;
         this.buildScriptGenerationService = buildScriptGenerationService;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.profileService = profileService;
     }
 
     /**
@@ -256,8 +263,9 @@ public class ProgrammingExerciseService {
         // Step 7: Make sure that plagiarism detection config does not use existing id
         Optional.ofNullable(savedProgrammingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
 
-        // Step 8: For LocalCI and Aeolus, we store the build plan definition in the database as a windfile
-        if (aeolusTemplateService.isPresent() && programmingExercise.getBuildPlanConfiguration() == null) {
+        // Step 8: For LocalCI and Aeolus, we store the build plan definition in the database as a windfile, we don't do that for Jenkins or Bamboo as
+        // we want to use the default approach of Jenkinsfiles and Build Plans if no customizations are made
+        if (aeolusTemplateService.isPresent() && programmingExercise.getBuildPlanConfiguration() == null && !(profileService.isJenkins() || profileService.isBamboo())) {
             Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(programmingExercise);
             if (windfile != null) {
                 savedProgrammingExercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
@@ -507,6 +515,22 @@ public class ProgrammingExerciseService {
             @Nullable String notificationText) {
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
+
+        if (continuousIntegrationService.isPresent()) {
+            if (!Objects.equals(programmingExerciseBeforeUpdate.getBuildPlanConfiguration(), updatedProgrammingExercise.getBuildPlanConfiguration())) {
+                if (updatedProgrammingExercise.getBuildPlanConfiguration() != null) {
+                    // we only update the build plan configuration if it has changed and is not null, otherwise we
+                    // do not have a valid exercise anymore
+                    continuousIntegrationService.get().deleteProject(updatedProgrammingExercise.getProjectKey());
+                    continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
+                    continuousIntegrationService.get().recreateBuildPlansForExercise(updatedProgrammingExercise);
+                    resetAllStudentBuildPlanIdsForExercise(updatedProgrammingExercise);
+                }
+                else {
+                    updatedProgrammingExercise.setBuildPlanConfiguration(programmingExerciseBeforeUpdate.getBuildPlanConfiguration());
+                }
+            }
+        }
 
         channelService.updateExerciseChannel(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
@@ -872,5 +896,9 @@ public class ProgrammingExerciseService {
                 .map(ProgrammingExerciseTestCase::getSolutionEntries).flatMap(Collection::stream).collect(Collectors.toSet());
         programmingExerciseTaskRepository.deleteAll(tasks);
         programmingExerciseSolutionEntryRepository.deleteAll(solutionEntries);
+    }
+
+    private void resetAllStudentBuildPlanIdsForExercise(ProgrammingExercise programmingExercise) {
+        programmingExerciseStudentParticipationRepository.unsetBuildPlanIdForExercise(programmingExercise.getId());
     }
 }

@@ -36,6 +36,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.connector.*;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
@@ -212,7 +213,8 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject) throws Exception {
+    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject, boolean useCustomBuildPlanDefinition, boolean useCustomBuildPlanWorked)
+            throws Exception {
         final var exerciseRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
         final var solutionRepoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
         final var testRepoName = exercise.generateRepositoryName(RepositoryType.TESTS);
@@ -230,28 +232,45 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
             bitbucketRequestMockProvider.mockCreateRepository(exercise, auxiliaryRepoName);
         }
         bitbucketRequestMockProvider.mockAddWebHooks(exercise);
-        mockBambooBuildPlanCreation(exercise, failToCreateCiProject, templateBuildPlanId, solutionBuildPlanId);
+        mockBambooBuildPlanCreation(exercise, failToCreateCiProject, useCustomBuildPlanDefinition, useCustomBuildPlanWorked, templateBuildPlanId, solutionBuildPlanId);
     }
 
-    private void mockBambooBuildPlanCreation(ProgrammingExercise exercise, boolean failToCreateCiProject, String templateBuildPlanId, String solutionBuildPlanId)
-            throws IOException, URISyntaxException {
+    private void mockBambooBuildPlanCreation(ProgrammingExercise exercise, boolean failToCreateCiProject, boolean useCustomBuildPlanDefinition, boolean useCustomBuildPlanWorked,
+            String templateBuildPlanId, String solutionBuildPlanId) throws IOException, URISyntaxException {
         if (!failToCreateCiProject) {
             // TODO: check the actual plan and plan permissions that get passed here
             doReturn(null).when(bambooServer).publish(any());
             bambooRequestMockProvider.mockRemoveAllDefaultProjectPermissions(exercise);
             bambooRequestMockProvider.mockGiveProjectPermissions(exercise);
 
+            if (useCustomBuildPlanDefinition) {
+                aeolusRequestMockProvider.enableMockingOfRequests();
+                if (useCustomBuildPlanWorked) {
+                    aeolusRequestMockProvider.mockSuccessfulPublishBuildPlan(AeolusTarget.BAMBOO, templateBuildPlanId);
+                    aeolusRequestMockProvider.mockSuccessfulPublishBuildPlan(AeolusTarget.BAMBOO, solutionBuildPlanId);
+                }
+                else {
+                    aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.BAMBOO);
+                    aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.BAMBOO);
+                }
+            }
+
             bambooRequestMockProvider.mockTriggerBuild(templateBuildPlanId);
             bambooRequestMockProvider.mockTriggerBuild(solutionBuildPlanId);
         }
         else {
-            doThrow(BambooSpecsPublishingException.class).when(bambooServer).publish(any());
+            if (useCustomBuildPlanDefinition) {
+                aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.BAMBOO);
+            }
+            else {
+                doThrow(BambooSpecsPublishingException.class).when(bambooServer).publish(any());
+            }
         }
     }
 
     @Override
     public void mockConnectorRequestForImportFromFile(ProgrammingExercise exerciseForImport) throws Exception {
-        mockConnectorRequestsForSetup(exerciseForImport, false);
+        mockConnectorRequestsForSetup(exerciseForImport, false, false, false);
 
     }
 
@@ -270,7 +289,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         }
         else {
             // Mocks for recreating the build plans
-            mockBambooBuildPlanCreation(exerciseToBeImported, false, templateBuildPlanId, solutionBuildPlanId);
+            mockBambooBuildPlanCreation(exerciseToBeImported, false, false, false, templateBuildPlanId, solutionBuildPlanId);
         }
         if (addAuxRepos) {
             mockUpdatePlanRepository(exerciseToBeImported, "auxrepo", "auxrepo", "auxrepo");
