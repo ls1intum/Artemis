@@ -218,11 +218,11 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void getCourseScores_asInstructorOfCourse_shouldReturnCourseScores() throws Exception {
         List<ScoreDTO> courseScores = request.getList("/api/courses/" + courseId + "/course-scores", HttpStatus.OK, ScoreDTO.class);
         assertThat(courseScores).hasSize(3);
-        ScoreDTO scoreOfStudent1 = courseScores.stream().filter(scoreDTO -> scoreDTO.studentId.equals(student1.getId())).findFirst().orElseThrow();
-        assertThat(scoreOfStudent1.studentLogin).isEqualTo(TEST_PREFIX + "student1");
-        assertThat(scoreOfStudent1.pointsAchieved).isEqualTo(10.0);
-        assertThat(scoreOfStudent1.scoreAchieved).isEqualTo(50.0);
-        assertThat(scoreOfStudent1.regularPointsAchievable).isEqualTo(20.0);
+        ScoreDTO scoreOfStudent1 = courseScores.stream().filter(scoreDTO -> scoreDTO.studentId() == student1.getId()).findFirst().orElseThrow();
+        assertThat(scoreOfStudent1.studentLogin()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(scoreOfStudent1.pointsAchieved()).isEqualTo(10.0);
+        assertThat(scoreOfStudent1.scoreAchieved()).isEqualTo(50.0);
+        assertThat(scoreOfStudent1.regularPointsAchievable()).isEqualTo(20.0);
     }
 
     @Test
@@ -239,11 +239,11 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         List<ScoreDTO> courseScores = request.getList("/api/courses/" + courseId + "/course-scores", HttpStatus.OK, ScoreDTO.class);
         assertThat(courseScores).hasSize(3);
-        ScoreDTO scoreOfStudent1 = courseScores.stream().filter(scoreDTO -> scoreDTO.studentId.equals(student1.getId())).findFirst().orElseThrow();
-        assertThat(scoreOfStudent1.studentLogin).isEqualTo(TEST_PREFIX + "student1");
-        assertThat(scoreOfStudent1.pointsAchieved).isEqualTo(15.0);
-        assertThat(scoreOfStudent1.scoreAchieved).isEqualTo(60.0);
-        assertThat(scoreOfStudent1.regularPointsAchievable).isEqualTo(25.0);
+        ScoreDTO scoreOfStudent1 = courseScores.stream().filter(scoreDTO -> scoreDTO.studentId() == student1.getId()).findFirst().orElseThrow();
+        assertThat(scoreOfStudent1.studentLogin()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(scoreOfStudent1.pointsAchieved()).isEqualTo(15.0);
+        assertThat(scoreOfStudent1.scoreAchieved()).isEqualTo(60.0);
+        assertThat(scoreOfStudent1.regularPointsAchievable()).isEqualTo(25.0);
     }
 
     @Test
@@ -251,10 +251,10 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void getExamScores_asInstructorOfCourse_shouldReturnExamScores() throws Exception {
         List<ScoreDTO> courseScores = request.getList("/api/exams/" + idOfExam + "/exam-scores", HttpStatus.OK, ScoreDTO.class);
         assertThat(courseScores).hasSize(1);
-        ScoreDTO scoreOfStudent1 = courseScores.stream().filter(scoreDTO -> scoreDTO.studentId.equals(student1.getId())).findFirst().orElseThrow();
-        assertThat(scoreOfStudent1.studentLogin).isEqualTo(TEST_PREFIX + "student1");
-        assertThat(scoreOfStudent1.pointsAchieved).isEqualTo(5.0);
-        assertThat(scoreOfStudent1.scoreAchieved).isEqualTo(5.6);
-        assertThat(scoreOfStudent1.regularPointsAchievable).isEqualTo(90.0);
+        ScoreDTO scoreOfStudent1 = courseScores.stream().filter(scoreDTO -> scoreDTO.studentId() == student1.getId()).findFirst().orElseThrow();
+        assertThat(scoreOfStudent1.studentLogin()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(scoreOfStudent1.pointsAchieved()).isEqualTo(5.0);
+        assertThat(scoreOfStudent1.scoreAchieved()).isEqualTo(5.6);
+        assertThat(scoreOfStudent1.regularPointsAchievable()).isEqualTo(90.0);
     }
 }

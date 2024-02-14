@@ -4,6 +4,8 @@ import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifi
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.Stream;
@@ -117,26 +119,18 @@ public class ParticipantScoreService {
             return List.of();
         }
 
-        Set<Exercise> individualExercises = exercises.stream().filter(exercise -> !exercise.isTeamMode()).collect(Collectors.toSet());
+        Set<Exercise> individualExercises = exercises.stream().filter(Predicate.not(Exercise::isTeamMode)).collect(Collectors.toSet());
         Set<Exercise> teamExercises = exercises.stream().filter(Exercise::isTeamMode).collect(Collectors.toSet());
 
         Course course = exercises.stream().findAny().orElseThrow(() -> new EntityNotFoundException("The result you are referring to does not exist"))
                 .getCourseViaExerciseGroupOrCourseMember();
 
-        // For every student we want to calculate the score
-        Map<Long, ScoreDTO> userIdToScores = users.stream().collect(Collectors.toMap(User::getId, user -> new ScoreDTO(user.getId(), user.getLogin(), 0.0, 0.0, 0.0)));
-
         // individual exercises
         // [0] -> User
         // [1] -> sum of achieved points in exercises
         List<Object[]> studentAndAchievedPoints = studentScoreRepository.getAchievedPointsOfStudents(individualExercises);
-        for (Object[] rawData : studentAndAchievedPoints) {
-            User user = (User) rawData[0];
-            double achievedPoints = rawData[1] != null ? ((Number) rawData[1]).doubleValue() : 0.0;
-            if (userIdToScores.containsKey(user.getId())) {
-                userIdToScores.get(user.getId()).pointsAchieved += achievedPoints;
-            }
-        }
+        Map<Long, Double> pointsAchieved = studentAndAchievedPoints.stream().collect(Collectors.toMap(rawData -> ((User) ((Object[]) rawData)[0]).getId(),
+                rawData -> ((Object[]) rawData)[1] != null ? ((Number) ((Object[]) rawData)[1]).doubleValue() : 0D));
 
         // team exercises
         // [0] -> Team ID
@@ -144,28 +138,28 @@ public class ParticipantScoreService {
         // We have to retrieve this separately because the students are not directly retrievable due to the taxonomy structure
         List<Object[]> teamAndAchievedPoints = teamScoreRepository.getAchievedPointsOfTeams(teamExercises);
         List<Long> teamIds = teamAndAchievedPoints.stream().map(rawData -> ((Long) rawData[0])).toList();
-        Map<Long, Team> teamIdToTeam = teamRepository.findAllWithStudentsByIdIn(teamIds).stream().collect(Collectors.toMap(Team::getId, team -> team));
+        Map<Long, Team> teamIdToTeam = teamRepository.findAllWithStudentsByIdIn(teamIds).stream().collect(Collectors.toMap(Team::getId, Function.identity()));
+        final Set<Long> userIds = users.stream().map(User::getId).collect(Collectors.toSet());
         for (Object[] rawData : teamAndAchievedPoints) {
             Team team = teamIdToTeam.get((Long) rawData[0]);
             double achievedPoints = rawData[1] != null ? ((Number) rawData[1]).doubleValue() : 0.0;
             for (User student : team.getStudents()) {
-                if (userIdToScores.containsKey(student.getId())) {
-                    userIdToScores.get(student.getId()).pointsAchieved += achievedPoints;
+                if (userIds.contains(student.getId())) {
+                    pointsAchieved.put(student.getId(), pointsAchieved.getOrDefault(student.getId(), 0.0) + achievedPoints);
                 }
             }
         }
 
-        // add presentationPoints to ScoreDTOs
-        presentationPointsCalculationService.addPresentationPointsToScoreDTOs(gradingScale, userIdToScores.values(), achievablePresentationPoints);
+        // add presentationPoints to pointsAchieved
+        presentationPointsCalculationService.addPresentationPointsToPointsAchieved(gradingScale, pointsAchieved, achievablePresentationPoints);
 
-        // calculating achieved score
-        for (ScoreDTO scoreDTO : userIdToScores.values()) {
-            scoreDTO.scoreAchieved = roundScoreSpecifiedByCourseSettings((scoreDTO.pointsAchieved / scoreCalculationDenominator) * 100.0, course);
-            // sending this for debugging purposes to find out why the scores' calculation could be wrong
-            scoreDTO.regularPointsAchievable = scoreCalculationDenominator;
-        }
+        // calculating achieved scores
+        Map<Long, Double> scoreAchieved = pointsAchieved.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> roundScoreSpecifiedByCourseSettings(entry.getValue() / scoreCalculationDenominator * 100.0, course)));
 
-        return new ArrayList<>(userIdToScores.values());
+        return users.stream()
+                .map(user -> ScoreDTO.of(user, pointsAchieved.getOrDefault(user.getId(), 0D), scoreAchieved.getOrDefault(user.getId(), 0D), scoreCalculationDenominator))
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**
