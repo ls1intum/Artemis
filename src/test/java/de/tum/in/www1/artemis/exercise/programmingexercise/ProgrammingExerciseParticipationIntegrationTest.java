@@ -241,6 +241,15 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
+    void testGetParticipationWithAllResults_cannotAccessParticipation2() throws Exception {
+        // student4 should have no connection to student1's participation and should thus receive a Forbidden HTTP status.
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student1");
+        request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.FORBIDDEN, ProgrammingExerciseStudentParticipation.class);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetAllResultsAsTutor() throws Exception {
         // tutor should have access
