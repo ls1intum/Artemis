@@ -9,7 +9,7 @@
             }}
             <span class="text-primary">
                 @if (isRepositoryView) {
-                    {{ report.leftCommitHash?.substring(0, 10) }}
+                    {{ leftCommit }}
                 }
             </span>
         </h4>
@@ -22,7 +22,7 @@
             }}
             <span class="text-primary">
                 @if (isRepositoryView) {
-                    {{ report.rightCommitHash?.substring(0, 10) }}
+                    {{ rightCommit }}
                 }
             </span>
         </h4>

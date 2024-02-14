@@ -19,6 +19,10 @@ export class GitDiffReportComponent implements OnInit {
 
     @Input() isRepositoryView = false;
 
+    leftCommit: string;
+
+    rightCommit: string;
+
     // TODO: Make this configurable by the user
     numberOfContextLines = 3;
     entries: ProgrammingExerciseGitDiffEntry[];
@@ -82,5 +86,7 @@ export class GitDiffReportComponent implements OnInit {
                 this.entries.filter((entry) => entry.filePath === filePath),
             );
         });
+        this.leftCommit = this.report.leftCommitHash?.substring(0, 10)!;
+        this.rightCommit = this.report.rightCommitHash?.substring(0, 10)!;
     }
 }
