@@ -6,17 +6,19 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
+
+import de.tum.in.www1.artemis.config.CoreNotSchedulingCondition;
 
 /**
  * This service is only active on a node that does not run with the 'scheduling' profile.
  * All requests are forwarded to a Hazelcast topic and a node with the 'scheduling' profile will then process it.
  */
 @Service
-@Profile("!scheduling && core")
+@Conditional(CoreNotSchedulingCondition.class)
 public class DistributedInstanceMessageSendService implements InstanceMessageSendService {
 
     private static final Logger log = LoggerFactory.getLogger(DistributedInstanceMessageSendService.class);

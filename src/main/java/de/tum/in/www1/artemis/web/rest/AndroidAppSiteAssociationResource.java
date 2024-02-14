@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.security.annotations.ManualConfig;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping(".well-known")
+@RequestMapping(".well-known/")
 public class AndroidAppSiteAssociationResource {
 
     @Value("${artemis.androidAppPackage: #{null}}")

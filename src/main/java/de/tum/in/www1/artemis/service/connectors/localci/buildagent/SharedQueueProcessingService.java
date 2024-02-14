@@ -241,20 +241,20 @@ public class SharedQueueProcessingService {
             checkAvailabilityAndProcessNextBuild();
 
         }).exceptionally(ex -> {
-            JobTimingInfo jobTimingInfo = new JobTimingInfo(buildJob.jobTimingInfo().submissionDate(), buildJob.jobTimingInfo().buildStartDate(), ZonedDateTime.now());
+            ZonedDateTime completionDate = ZonedDateTime.now();
 
             LocalCIBuildJobQueueItem job;
+            BuildJobResult result;
 
-            if (ex.getCause() instanceof CancellationException && ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
-                job = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(), buildJob.participationId(), buildJob.courseId(),
-                        buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildJobResult.CANCELLED, buildJob.repositoryInfo(), jobTimingInfo,
-                        buildJob.buildConfig());
+            if (!(ex.getCause() instanceof CancellationException) || !ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
+                result = BuildJobResult.FAILED;
+                log.error("Error while processing build job: {}", buildJob, ex);
             }
             else {
-                log.error("Error while processing build job: {}", buildJob, ex);
-                job = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(), buildJob.participationId(), buildJob.courseId(),
-                        buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildJobResult.FAILED, buildJob.repositoryInfo(), jobTimingInfo, buildJob.buildConfig());
+                result = BuildJobResult.CANCELLED;
             }
+
+            job = new LocalCIBuildJobQueueItem(buildJob, completionDate, result);
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(null, job, ex);
             resultQueue.add(resultQueueItem);
