@@ -26,6 +26,7 @@ import { IrisStateStore } from 'app/iris/state-store.service';
 import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
 import { IrisEnabledComponent } from 'app/iris/settings/shared/iris-enabled.component';
 import { IrisExerciseCreationWebsocketService } from 'app/iris/exercise-creation-websocket.service';
+import { IrisCompetencyGenerationSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-competency-generation-sub-settings-update/iris-competency-generation-sub-settings-update.component';
 import { IrisLogoButtonComponent } from 'app/iris/iris-logo-button/iris-logo-button.component';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 
@@ -44,6 +45,7 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
         IrisLogoComponent,
         IrisChatSubSettingsUpdateComponent,
         IrisHestiaSubSettingsUpdateComponent,
+        IrisCompetencyGenerationSubSettingsUpdateComponent,
         IrisGlobalAutoupdateSettingsUpdateComponent,
         IrisCodeEditorSubSettingsUpdateComponent,
         IrisEnabledComponent,

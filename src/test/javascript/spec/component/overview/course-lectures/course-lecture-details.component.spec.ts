@@ -1,5 +1,5 @@
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -38,11 +38,12 @@ import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-hea
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { MockFileService } from '../../../helpers/mocks/service/mock-file.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { NgbCollapse, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ScienceService } from 'app/shared/science/science.service';
+import * as DownloadUtils from 'app/shared/util/download.util';
 
-describe('CourseLectureDetails', () => {
+describe('CourseLectureDetailsComponent', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
     let courseLecturesDetailsComponent: CourseLectureDetailsComponent;
     let lecture: Lecture;
@@ -116,7 +117,6 @@ describe('CourseLectureDetails', () => {
                 MockProvider(LectureUnitService),
                 MockProvider(AlertService),
                 { provide: FileService, useClass: MockFileService },
-                { provide: Router, useValue: MockRouter },
                 { provide: TranslateService, useClass: MockTranslateService },
                 {
                     provide: ActivatedRoute,
@@ -125,8 +125,8 @@ describe('CourseLectureDetails', () => {
                     },
                 },
                 MockProvider(Router),
+                MockProvider(ScienceService),
             ],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {
@@ -247,17 +247,19 @@ describe('CourseLectureDetails', () => {
         fixture.detectChanges();
 
         const downloadAttachmentStub = jest.spyOn(courseLecturesDetailsComponent, 'downloadMergedFiles');
+        const downloadStreamStub = jest.spyOn(DownloadUtils, 'downloadStream').mockImplementation(() => {});
         const downloadButton = debugElement.query(By.css('#downloadButton'));
         expect(downloadButton).not.toBeNull();
 
         downloadButton.nativeElement.click();
+        tick();
         expect(downloadAttachmentStub).toHaveBeenCalledOnce();
+        expect(downloadStreamStub).toHaveBeenCalledExactlyOnceWith(null, 'application/pdf', 'Test lecture');
     }));
 
     it('should set lecture unit as completed', fakeAsync(() => {
         const lectureUnitService = TestBed.inject(LectureUnitService);
-        const completeSpy = jest.spyOn(lectureUnitService, 'setCompletion');
-        completeSpy.mockReturnValue(of(new HttpResponse<any>()));
+        const completeSpy = jest.spyOn(lectureUnitService, 'completeLectureUnit');
 
         courseLecturesDetailsComponent.lecture = lecture;
         courseLecturesDetailsComponent.ngOnInit();
@@ -265,54 +267,7 @@ describe('CourseLectureDetails', () => {
 
         expect(lectureUnit3.completed).toBeFalsy();
         courseLecturesDetailsComponent.completeLectureUnit({ lectureUnit: lectureUnit3, completed: true });
-        expect(completeSpy).toHaveBeenCalledOnce();
-        expect(completeSpy).toHaveBeenCalledWith(lectureUnit3.id, lecture.id, true);
-        expect(lectureUnit3.completed).toBeTrue();
-    }));
-
-    it('should set lecture unit as uncompleted', fakeAsync(() => {
-        const lectureUnitService = TestBed.inject(LectureUnitService);
-        const completeSpy = jest.spyOn(lectureUnitService, 'setCompletion');
-        completeSpy.mockReturnValue(of(new HttpResponse<any>()));
-
-        lectureUnit3.completed = true;
-        courseLecturesDetailsComponent.lecture = lecture;
-        courseLecturesDetailsComponent.ngOnInit();
-        fixture.detectChanges();
-
-        expect(lectureUnit3.completed).toBeTrue();
-        courseLecturesDetailsComponent.completeLectureUnit({ lectureUnit: lectureUnit3, completed: false });
-        expect(completeSpy).toHaveBeenCalledOnce();
-        expect(completeSpy).toHaveBeenCalledWith(lectureUnit3.id, lecture.id, false);
-        expect(lectureUnit3.completed).toBeFalse();
-    }));
-
-    it('should not set completion status if already completed', fakeAsync(() => {
-        const lectureUnitService = TestBed.inject(LectureUnitService);
-        const completeSpy = jest.spyOn(lectureUnitService, 'setCompletion');
-        completeSpy.mockReturnValue(of(new HttpResponse<any>()));
-
-        courseLecturesDetailsComponent.lecture = lecture;
-        courseLecturesDetailsComponent.ngOnInit();
-        fixture.detectChanges();
-
-        lectureUnit3.completed = true;
-        courseLecturesDetailsComponent.completeLectureUnit({ lectureUnit: lectureUnit3, completed: true });
-        expect(completeSpy).not.toHaveBeenCalled();
-    }));
-
-    it('should not set completion status if not visible', fakeAsync(() => {
-        const lectureUnitService = TestBed.inject(LectureUnitService);
-        const completeSpy = jest.spyOn(lectureUnitService, 'setCompletion');
-        completeSpy.mockReturnValue(of(new HttpResponse<any>()));
-
-        courseLecturesDetailsComponent.lecture = lecture;
-        courseLecturesDetailsComponent.ngOnInit();
-        fixture.detectChanges();
-
-        lectureUnit3.visibleToStudents = false;
-        courseLecturesDetailsComponent.completeLectureUnit({ lectureUnit: lectureUnit3, completed: true });
-        expect(completeSpy).not.toHaveBeenCalled();
+        expect(completeSpy).toHaveBeenCalledExactlyOnceWith(lecture, { lectureUnit: lectureUnit3, completed: true });
     }));
 });
 

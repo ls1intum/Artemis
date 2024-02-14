@@ -149,7 +149,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
      */
 
     @Override
-    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject) {
+    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject, boolean useCustomBuildPlanDefinition, boolean useCustomBuildPlanWorked) {
         // Not implemented for local VC and local CI
     }
 
