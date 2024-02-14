@@ -49,14 +49,9 @@
 /* tablet breakpoint */
 @media (min-width: 768px) {
     .section > *:nth-child(1) {
-        width: calc(100% / 4 * 3);
+        width: 76%;
     }
     .section > *:nth-child(2) {
-        width: calc(100% / 4);
+        width: 24%;
     }
-}
-
-.flexbox {
-    display: flex;
-    justify-content: space-around;
 }

@@ -33,8 +33,8 @@
         }
     </div>
 
-    <div class="section">
-        @if (isShowingWizardMode) {
+    @if (isShowingWizardMode) {
+        <div class="section">
             <jhi-programming-exercise-update-wizard
                 (onNextStep)="nextWizardStep()"
                 [currentStep]="currentWizardModeStep"
@@ -46,8 +46,13 @@
                 [(exercise)]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
             ></jhi-programming-exercise-update-wizard>
-        }
-        @if (!isShowingWizardMode) {
+            @if (isIrisEnabled()) {
+                <jhi-exercise-creation-chatbot-button [paramsOnSend]="getFormDataAndProblemStatement"></jhi-exercise-creation-chatbot-button>
+            }
+        </div>
+    }
+    @if (!isShowingWizardMode) {
+        <div style="display: flex">
             <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)" style="flex-grow">
                 <div class="update-programming-exercise">
                     <div class="form-group" [hidden]="isImportFromExistingExercise || !programmingExercise.id">
@@ -120,9 +125,9 @@
                     </div>
                 </div>
             </form>
-        }
-        @if (isIrisEnabled()) {
-            <jhi-exercise-creation-chatbot-button [paramsOnSend]="getFormDataAndProblemStatement"></jhi-exercise-creation-chatbot-button>
-        }
-    </div>
+            @if (isIrisEnabled()) {
+                <jhi-exercise-creation-chatbot-button [paramsOnSend]="getFormDataAndProblemStatement"></jhi-exercise-creation-chatbot-button>
+            }
+        </div>
+    }
 </div>
