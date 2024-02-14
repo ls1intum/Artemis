@@ -150,7 +150,7 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
     }
 
     // @formatter:off
-    public record CodeEditorChatDTO(
+    record CodeEditorChatDTO(
             String problemStatement,
             Map<String, String> solutionRepository,
             Map<String, String> templateRepository,
@@ -286,7 +286,7 @@ public class IrisCodeEditorSessionService implements IrisChatBasedFeatureInterfa
     }
 
     // @formatter:off
-    public record CodeEditorChangeDTO(
+    record CodeEditorChangeDTO(
             String problemStatement,
             Map<String, String> solutionRepository,
             Map<String, String> templateRepository,

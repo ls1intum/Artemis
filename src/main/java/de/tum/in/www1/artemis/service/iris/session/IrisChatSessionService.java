@@ -144,7 +144,7 @@ public class IrisChatSessionService implements IrisChatBasedFeatureInterface<Iri
     }
 
     // @formatter:off
-    public record IrisChatRequestDTO(
+    record IrisChatRequestDTO(
             ProgrammingExercise exercise,
             Course course,
             ProgrammingSubmission latestSubmission,

@@ -78,7 +78,7 @@ public class IrisHestiaSessionService implements IrisButtonBasedFeatureInterface
     }
 
     // @formatter:off
-    public record HestiaDTO(
+    record HestiaDTO(
             CodeHint codeHint,
             IrisHestiaSession session,
             ProgrammingExercise exercise
