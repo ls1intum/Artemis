@@ -7,7 +7,7 @@ artemis:
     repo-clone-path: ./repos
     repo-download-clone-path: ./repos-download
     version-control:
-        url: https://artemislocal.cit.tum.de  # TODO: is this really needed for build agents?
+        url: http://localhost:8000  # TODO: is this really needed for build agents?
         user: "demo"                    # not needed for build agents / TODO: remove this requirement in GitService
         password: "demo"                # not needed for build agents / TODO: remove this requirement in GitService
     continuous-integration:
