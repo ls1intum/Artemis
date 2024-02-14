@@ -144,6 +144,11 @@ public class UMLMethod extends UMLElement implements Serializable {
     }
 
     @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), parentElement, completeName, name, returnType, parameters);
+    }
+
+    @Override
     public boolean equals(Object obj) {
         if (!super.equals(obj)) {
             return false;

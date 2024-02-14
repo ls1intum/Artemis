@@ -24,6 +24,11 @@ public abstract class TempIdObject extends DomainObject {
         this.tempIDTransient = tempID;
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), tempIDTransient);
+    }
+
     /**
      * checks the tempId first and then the database id
      *

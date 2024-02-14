@@ -59,6 +59,11 @@ public abstract class UMLActivityElement extends UMLElement implements Serializa
     }
 
     @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), name, parentActivity);
+    }
+
+    @Override
     public boolean equals(Object obj) {
         if (!super.equals(obj)) {
             return false;
