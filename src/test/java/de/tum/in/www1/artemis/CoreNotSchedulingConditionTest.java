@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -23,7 +22,8 @@ class CoreNotSchedulingConditionTest {
         CoreNotSchedulingCondition condition = new CoreNotSchedulingCondition();
         ConditionContext context = createConditionContext(environment);
 
-        assertTrue(condition.matches(context, new StandardAnnotationMetadata(CoreNotSchedulingConditionTest.class)), "Condition should match when only core profile is active");
+        assertThat(condition.matches(context, new StandardAnnotationMetadata(CoreNotSchedulingConditionTest.class))).as("Condition should match when only core profile is active")
+                .isTrue();
     }
 
     @Test
@@ -35,8 +35,8 @@ class CoreNotSchedulingConditionTest {
         CoreNotSchedulingCondition condition = new CoreNotSchedulingCondition();
         ConditionContext context = createConditionContext(environment);
 
-        assertFalse(condition.matches(context, new StandardAnnotationMetadata(CoreNotSchedulingConditionTest.class)),
-                "Condition should not match when both core and scheduling profiles are active");
+        assertThat(condition.matches(context, new StandardAnnotationMetadata(CoreNotSchedulingConditionTest.class)))
+                .as("Condition should not match when both core and scheduling profiles are active").isFalse();
     }
 
     @Test
@@ -47,8 +47,8 @@ class CoreNotSchedulingConditionTest {
         CoreNotSchedulingCondition condition = new CoreNotSchedulingCondition();
         ConditionContext context = createConditionContext(environment);
 
-        assertFalse(condition.matches(context, new StandardAnnotationMetadata(CoreNotSchedulingConditionTest.class)),
-                "Condition should not match when only scheduling profile is active");
+        assertThat(condition.matches(context, new StandardAnnotationMetadata(CoreNotSchedulingConditionTest.class)))
+                .as("Condition should not match when only scheduling profile is active").isFalse();
     }
 
     private ConditionContext createConditionContext(MockEnvironment environment) {

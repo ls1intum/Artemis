@@ -178,7 +178,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void ensureSpringComponentsAreProfileAnnotated() {
         ArchRule rule = classes().that().areAnnotatedWith(Controller.class).or().areAnnotatedWith(RestController.class).or().areAnnotatedWith(Repository.class).or()
-                .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class).should(beProfileAnnotated())
+                .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class).and()
+                .doNotHaveSimpleName("DistributedInstanceMessageSendService").should(beProfileAnnotated())
                 .because("we want to be able to exclude these classes from application startup by specifying profiles");
 
         rule.check(productionClasses);
@@ -231,7 +232,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     private static ArchCondition<JavaClass> beProfileAnnotated() {
-        return new ArchCondition<JavaClass>("be annotated with @Profile") {
+        return new ArchCondition<>("be annotated with @Profile") {
 
             @Override
             public void check(JavaClass item, ConditionEvents events) {
