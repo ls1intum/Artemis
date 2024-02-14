@@ -55,7 +55,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
     private ResultRepository resultRepository;
 
     @Autowired
-    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     @Autowired
     private ExerciseRepository exerciseRepository;
