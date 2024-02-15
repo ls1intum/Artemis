@@ -49,7 +49,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
  */
 @Service
 @Profile("iris")
-public class IrisExerciseCreationSessionService implements IrisSessionSubServiceInterface {
+public class IrisExerciseCreationSessionService implements IrisChatBasedFeatureInterface<IrisExerciseCreationSession> {
 
     private static String loadTemplate(String fileName) {
         try {
@@ -231,22 +231,20 @@ public class IrisExerciseCreationSessionService implements IrisSessionSubService
     }
 
     @Override
-    public void checkHasAccessToIrisSession(IrisSession irisSession, User user) {
-        var session = castToSessionType(irisSession, IrisExerciseCreationSession.class);
+    public void checkHasAccessTo(User user, IrisExerciseCreationSession session) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, session.getCourse(), user);
         if (!Objects.equals(session.getUser(), user)) {
             throw new AccessForbiddenException("Iris Exercise Creation Session", session.getId());
         }
     }
 
+    /**
+     * Checks if the feature is active for the context (e.g. an exercise) of the session.
+     *
+     * @param session The session to check
+     */
     @Override
-    public void checkRateLimit(User user) {
-        // No rate limit implemented yet for exercise creation
-    }
-
-    @Override
-    public void checkIsIrisActivated(IrisSession irisSession) {
-        var session = castToSessionType(irisSession, IrisExerciseCreationSession.class);
+    public void checkIsFeatureActivatedFor(IrisExerciseCreationSession session) {
         if (!irisSettingsService.getCombinedIrisSettingsFor(session.getCourse(), false).irisCodeEditorSettings().isEnabled()) {
             throw new UnsupportedOperationException("Iris exercise creation is not activated");
         }

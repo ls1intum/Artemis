@@ -5,6 +5,8 @@ import javax.ws.rs.BadRequestException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
@@ -99,14 +101,15 @@ public class IrisSessionService {
      * Sends a request to Iris to get a message for the given session.
      * It decides which Iris subsystem should handle it based on the session type.
      *
-     * @param session The session to get a message for
-     * @param <S>     The type of the session
+     * @param <S>         The type of the session
+     * @param session     The session to get a message for
+     * @param extraParams any feature-specific options to send
      * @throws BadRequestException If the session type is invalid
      */
-    public <S extends IrisSession> void requestMessageFromIris(S session) {
+    public <S extends IrisSession> void requestMessageFromIris(S session, JsonNode extraParams) {
         var wrapper = getIrisSessionSubService(session);
         if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface<S> chatWrapper) {
-            chatWrapper.requestAndHandleResponse(wrapper.irisSession);
+            chatWrapper.requestAndHandleResponse(wrapper.irisSession, extraParams);
         }
         else {
             throw new BadRequestException("Invalid Iris session type " + session.getClass().getSimpleName());
@@ -166,8 +169,8 @@ public class IrisSessionService {
         if (session instanceof IrisCodeEditorSession codeEditorSession) {
             return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisCodeEditorSessionService, codeEditorSession);
         }
-        if (session instanceof IrisExerciseCreationSession) {
-            return irisExerciseCreationSessionService;
+        if (session instanceof IrisExerciseCreationSession exerciseCreationSession) {
+            return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisExerciseCreationSessionService, exerciseCreationSession);
         }
         if (session instanceof IrisCompetencyGenerationSession irisCompetencyGenerationSession) {
             return (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisCompetencyGenerationSessionService, irisCompetencyGenerationSession);
