@@ -64,7 +64,7 @@ public class ProgrammingExercise extends Exercise {
     private Boolean allowOnlineEditor;
 
     @Column(name = "allow_online_editor_read_only_mode", table = "programming_exercise_details")
-    private Boolean allowOnlineEditorReadOnlyMode;
+    private boolean allowOnlineEditorReadOnlyMode = false;
 
     @Column(name = "allow_offline_ide", table = "programming_exercise_details")
     private Boolean allowOfflineIde;
@@ -272,11 +272,11 @@ public class ProgrammingExercise extends Exercise {
         this.allowOnlineEditor = allowOnlineEditor;
     }
 
-    public Boolean isAllowOnlineEditorReadOnlyMode() {
+    public boolean isAllowOnlineEditorReadOnlyMode() {
         return allowOnlineEditorReadOnlyMode;
     }
 
-    public void setAllowOnlineEditorReadOnlyMode(Boolean allowOnlineEditorReadOnlyMode) {
+    public void setAllowOnlineEditorReadOnlyMode(boolean allowOnlineEditorReadOnlyMode) {
         this.allowOnlineEditorReadOnlyMode = allowOnlineEditorReadOnlyMode;
     }
 
@@ -748,9 +748,9 @@ public class ProgrammingExercise extends Exercise {
     public String toString() {
         return "ProgrammingExercise{" + "id=" + getId() + ", templateRepositoryUri='" + getTemplateRepositoryUri() + "'" + ", solutionRepositoryUri='" + getSolutionRepositoryUri()
                 + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", publishBuildPlanUrl='"
-                + isPublishBuildPlanUrl() + "'" + ", allowOnlineEditor='" + isAllowOnlineEditor() + "'" + "'" + ", allowOnlineEditorReadOnlyMode='"
-                + isAllowOnlineEditorReadOnlyMode() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'" + ", packageName='" + getPackageName() + "'"
-                + ", testCasesChanged='" + testCasesChanged + "'" + "}";
+                + isPublishBuildPlanUrl() + "'" + ", allowOnlineEditor='" + isAllowOnlineEditor() + "'" + ", allowOnlineEditorReadOnlyMode='" + isAllowOnlineEditorReadOnlyMode()
+                + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'" + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='" + testCasesChanged + "'"
+                + "}";
     }
 
     public boolean getCheckoutSolutionRepository() {
