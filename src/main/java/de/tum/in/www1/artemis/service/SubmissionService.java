@@ -425,12 +425,18 @@ public class SubmissionService {
      */
     public Result createResultAfterComplaintResponse(Submission submission, Result oldResult, List<Feedback> feedbacks, String assessmentNoteText) {
         Result newResult = new Result();
+        updateAssessmentNoteAfterComplaintResponse(newResult, assessmentNoteText, oldResult.getAssessmentNote());
         newResult.setParticipation(submission.getParticipation());
         copyFeedbackToResult(newResult, feedbacks);
         newResult = copyResultContentAndAddToSubmission(submission, newResult, oldResult);
-        newResult.setAssessmentNote(oldResult.getAssessmentNote());
-        newResult.getAssessmentNote().setNote(assessmentNoteText);
         return newResult;
+    }
+
+    private void updateAssessmentNoteAfterComplaintResponse(Result newResult, String assessmentNoteText, AssessmentNote oldNote) {
+        AssessmentNote newNote = new AssessmentNote();
+        newNote.setCreator(oldNote.getCreator());
+        newNote.setNote(assessmentNoteText);
+        newResult.setAssessmentNote(newNote);
     }
 
     /**
@@ -450,12 +456,6 @@ public class SubmissionService {
         submission.addResult(savedResult);
         submissionRepository.save(submission);
         return savedResult;
-    }
-
-    private Result updateAssessmentNote(Result newResult, Result oldResult, String assessmentNote) {
-        newResult.setAssessmentNote(oldResult.getAssessmentNote());
-        newResult.getAssessmentNote().setNote(assessmentNote);
-        return resultRepository.save(newResult);
     }
 
     /**
