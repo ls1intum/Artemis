@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core
 import { DebugElement } from '@angular/core';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { ArtemisTestModule } from '../../test.module';
@@ -66,6 +66,7 @@ import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiari
 import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
 import { IrisExerciseCreationChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-creation-chatbot-button.component';
 import {
     ExerciseMetadata,
@@ -132,6 +133,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 MockComponent(ProgrammingExerciseGradingComponent),
                 MockComponent(ProgrammingExerciseProblemComponent),
                 MockComponent(DocumentationButtonComponent),
+                MockComponent(FormStatusBarComponent),
                 MockPipe(RemoveKeysPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(CustomMinDirective),
@@ -950,40 +952,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         }));
     });
 
-    it('should toggle the wizard mode', fakeAsync(() => {
-        const route = TestBed.inject(ActivatedRoute);
-        route.params = of({ courseId });
-        route.url = of([{ path: 'new' } as UrlSegment]);
-        route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
-
-        const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
-        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
-
-        fixture.detectChanges();
-        tick();
-
-        expect(comp.isShowingWizardMode).toBeFalse();
-        comp.toggleWizardMode();
-        expect(comp.isShowingWizardMode).toBeTrue();
-    }));
-
-    it('should increase the wizard step', fakeAsync(() => {
-        const route = TestBed.inject(ActivatedRoute);
-        route.params = of({ courseId });
-        route.url = of([{ path: 'new' } as UrlSegment]);
-        route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
-
-        const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
-        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
-
-        fixture.detectChanges();
-        tick();
-
-        expect(comp.currentWizardModeStep).toBe(1);
-        comp.nextWizardStep();
-        expect(comp.currentWizardModeStep).toBe(2);
-    }));
-
     it('should return the exercise creation config', fakeAsync(() => {
         const route = TestBed.inject(ActivatedRoute);
         route.params = of({ courseId });
@@ -1078,6 +1046,47 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.programmingExercise.problemStatement).toBe('problem statement');
             flush();
         }));
+    });
+
+    it('should validate form sections', () => {
+        const calculateFormValidSectionsSpy = jest.spyOn(comp, 'calculateFormStatusSections');
+        comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
+        comp.exerciseInfoComponent = { formValidChanges: new Subject(), formValid: true } as ProgrammingExerciseInformationComponent;
+        comp.exerciseDifficultyComponent = {
+            teamConfigComponent: {
+                formValidChanges: new Subject(),
+                formValid: true,
+            },
+        } as ProgrammingExerciseDifficultyComponent;
+        comp.exerciseLanguageComponent = { formValidChanges: new Subject(), formValid: true } as ProgrammingExerciseLanguageComponent;
+        comp.exerciseGradingComponent = { formValidChanges: new Subject(), formValid: true } as ProgrammingExerciseGradingComponent;
+        comp.exercisePlagiarismComponent = { formValidChanges: new Subject(), formValid: true } as ExerciseUpdatePlagiarismComponent;
+
+        comp.ngAfterViewInit();
+        expect(comp.inputFieldSubscriptions).toHaveLength(5);
+        comp.calculateFormStatusSections();
+
+        for (const section of comp.formStatusSections) {
+            expect(section.valid).toBeTrue();
+        }
+
+        comp.exerciseInfoComponent.formValid = false;
+        comp.exerciseInfoComponent.formValidChanges.next(false);
+
+        expect(comp.formStatusSections[0].valid).toBeFalse();
+
+        comp.exerciseLanguageComponent.formValidChanges.next(false);
+        comp.exerciseGradingComponent.formValidChanges.next(false);
+        comp.exerciseDifficultyComponent.teamConfigComponent.formValidChanges.next(false);
+        comp.exercisePlagiarismComponent.formValidChanges.next(false);
+
+        expect(calculateFormValidSectionsSpy).toHaveBeenCalledTimes(6);
+
+        comp.ngOnDestroy();
+
+        for (const subscription of comp.inputFieldSubscriptions) {
+            expect(subscription?.closed ?? true).toBeTrue();
+        }
     });
 
     function verifyImport(importedProgrammingExercise: ProgrammingExercise) {

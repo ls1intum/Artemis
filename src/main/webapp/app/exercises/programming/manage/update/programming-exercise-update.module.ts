@@ -18,9 +18,6 @@ import { ArtemisTableModule } from 'app/shared/table/table.module';
 import { RemoveAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/remove-auxiliary-repository-button.component';
 import { SubmissionPolicyUpdateModule } from 'app/exercises/shared/submission-policy/submission-policy-update.module';
 import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
-import { ProgrammingExerciseUpdateWizardComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
-import { ProgrammingExerciseUpdateWizardStepComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-step.component';
-import { ProgrammingExerciseUpdateWizardBottomBarComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-bottom-bar.component';
 import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-information.component';
 import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-difficulty.component';
 import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-language.component';
@@ -34,6 +31,7 @@ import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-edito
 import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-build-plan.component';
 import { ProgrammingExerciseDockerImageComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-docker-image/programming-exercise-docker-image.component';
 import { IrisModule } from 'app/iris/iris.module';
+import { FormsModule } from 'app/forms/forms.module';
 
 @NgModule({
     imports: [
@@ -56,13 +54,11 @@ import { IrisModule } from 'app/iris/iris.module';
         ExerciseUpdateNotificationModule,
         ExerciseUpdatePlagiarismModule,
         AceEditorModule,
+        FormsModule,
         IrisModule,
     ],
     declarations: [
         ProgrammingExerciseUpdateComponent,
-        ProgrammingExerciseUpdateWizardComponent,
-        ProgrammingExerciseUpdateWizardStepComponent,
-        ProgrammingExerciseUpdateWizardBottomBarComponent,
         ProgrammingExerciseInformationComponent,
         ProgrammingExerciseDifficultyComponent,
         ProgrammingExerciseCustomAeolusBuildPlanComponent,
@@ -75,6 +71,6 @@ import { IrisModule } from 'app/iris/iris.module';
         AddAuxiliaryRepositoryButtonComponent,
         RemoveAuxiliaryRepositoryButtonComponent,
     ],
-    exports: [ProgrammingExerciseUpdateComponent, ProgrammingExerciseUpdateWizardComponent, ProgrammingExercisePlansAndRepositoriesPreviewComponent],
+    exports: [ProgrammingExerciseUpdateComponent, ProgrammingExercisePlansAndRepositoriesPreviewComponent],
 })
 export class ArtemisProgrammingExerciseUpdateModule {}
