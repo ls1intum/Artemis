@@ -51,6 +51,7 @@ public class TutorialGroupFreePeriodService {
     /**
      * Update all tutorial group sessions that were cancelled because of the given free period. Sessions that overlap with another free period are not activated.
      *
+     * @param course                  the course in which the free period is defined
      * @param tutorialGroupFreePeriod the free period
      * @param onDeletion              True if the free period is deleted, false otherwise.
      */
