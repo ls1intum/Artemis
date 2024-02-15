@@ -49,8 +49,12 @@
     Rewrite the exercise metadata to be consistent with the problem statement and the user requirements.
     The metadata must be a JSON object matching the current metadata schema:
     {{metadata}}
+    Consider the following requirements:
+    - The exercise title must not include any special characters except space.
+    - The exercise short name must not contain any special characters, including space.
     Do not surround the JSON object with ```.
     Do not justify your response.
+
 {{~/system}}
 {{#assistant~}}
     {{gen 'updatedMetadata' temperature=0.5 max_tokens=300}}
