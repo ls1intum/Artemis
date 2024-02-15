@@ -15,10 +15,8 @@ export class AnalyticsService {
             return;
         }
 
-        if (profileInfo.postHog) {
-            posthog.init(profileInfo.postHog?.token, {
-                api_host: profileInfo.postHog.host,
-            });
-        }
+        posthog.init(profileInfo.postHog?.token, {
+            api_host: profileInfo.postHog.host,
+        });
     }
 }
