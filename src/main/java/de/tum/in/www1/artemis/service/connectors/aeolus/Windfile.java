@@ -129,18 +129,21 @@ public class Windfile {
     /**
      * Sets the pre-processing metadata for the windfile.
      *
-     * @param id             the id of the windfile.
-     * @param name           the name of the windfile.
-     * @param gitCredentials the git credentials of the windfile.
-     * @param resultHook     the result hook of the windfile.
-     * @param description    the description of the windfile.
-     * @param repositories   the repositories of the windfile.
+     * @param id                    the id of the windfile.
+     * @param name                  the name of the windfile.
+     * @param gitCredentials        the git credentials of the windfile.
+     * @param resultHook            the result hook of the windfile.
+     * @param description           the description of the windfile.
+     * @param repositories          the repositories of the windfile.
+     * @param resultHookCredentials the credentials for the result hook of the windfile.
      */
-    public void setPreProcessingMetadata(String id, String name, String gitCredentials, String resultHook, String description, Map<String, AeolusRepository> repositories) {
+    public void setPreProcessingMetadata(String id, String name, String gitCredentials, String resultHook, String description, Map<String, AeolusRepository> repositories,
+            String resultHookCredentials) {
         this.setId(id);
         this.setName(name);
         this.setGitCredentials(gitCredentials);
         this.setResultHook(resultHook);
+        this.setResultHookCredentials(resultHookCredentials);
         this.setDescription(description);
         this.setRepositories(repositories);
     }
@@ -170,5 +173,15 @@ public class Windfile {
             results.addAll(action.getResults());
         }
         return results;
+    }
+
+    /**
+     * Sets the result hook credentials for the windfile.
+     *
+     * @param resultHookCredentials the result hook credentials for the windfile.
+     */
+    public void setResultHookCredentials(String resultHookCredentials) {
+        checkMetadata();
+        this.metadata.setResultHookCredentials(resultHookCredentials);
     }
 }
