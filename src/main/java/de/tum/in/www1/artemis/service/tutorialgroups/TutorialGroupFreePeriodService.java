@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service.tutorialgroups;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
