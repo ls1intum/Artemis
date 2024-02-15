@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.CompetencyPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 @Service
@@ -57,7 +58,7 @@ public class CompetencyService {
      * Search for all competencies fitting a {@link PageableSearchDTO search query}. The result is paged.
      *
      * @param search The search query defining the search term and the size of the returned page
-     * @param user   The user for whom to fetch all available lectures
+     * @param user   The user for whom to the competencies
      * @return A wrapper object containing a list of all found competencies and the total number of pages
      */
     public SearchResultPageDTO<Competency> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
@@ -69,6 +70,30 @@ public class CompetencyService {
         }
         else {
             competencyPage = competencyRepository.findByTitleInLectureOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
+        }
+        return new SearchResultPageDTO<>(competencyPage.getContent(), competencyPage.getTotalPages());
+    }
+
+    /**
+     * Search for all competencies fitting a {@link CompetencyPageableSearchDTO search query}. The result is paged.
+     *
+     * @param search The search query defining the search terms and the size of the returned page
+     * @param user   The user for whom to fetch the competencies
+     * @return A wrapper object containing a list of all found competencies and the total number of pages
+     */
+    public SearchResultPageDTO<Competency> getOnPageWithSizeForImport(final CompetencyPageableSearchDTO search, final User user) {
+        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.COMPETENCY);
+        final String title = search.getTitle().isBlank() ? null : search.getTitle();
+        final String description = search.getDescription().isBlank() ? null : search.getDescription();
+        final String courseTitle = search.getCourseTitle().isBlank() ? null : search.getCourseTitle();
+        final String semester = search.getSemester().isBlank() ? null : search.getSemester();
+
+        final Page<Competency> competencyPage;
+        if (authCheckService.isAdmin(user)) {
+            competencyPage = competencyRepository.findForImport(title, description, courseTitle, semester, pageable);
+        }
+        else {
+            competencyPage = competencyRepository.findForImportAndUserHasAccessToCourse(title, description, courseTitle, semester, user.getGroups(), pageable);
         }
         return new SearchResultPageDTO<>(competencyPage.getContent(), competencyPage.getTotalPages());
     }

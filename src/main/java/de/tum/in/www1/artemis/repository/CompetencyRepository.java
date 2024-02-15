@@ -138,6 +138,51 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
             @Param("groups") Set<String> groups, Pageable pageable);
 
     /**
+     * Query which fetches all competencies for which the user is editor or instructor in the course and
+     * matching the search criteria.
+     *
+     * @param partialTitle       competency title search term
+     * @param partialDescription competency description search term
+     * @param partialCourseTitle course title search term
+     * @param semester           semester search term
+     * @param groups             user groups
+     * @param pageable           Pageable
+     * @return Page with search results
+     */
+    @Query("""
+            SELECT c
+            FROM Competency c
+            WHERE (c.course.instructorGroupName IN :groups OR c.course.editorGroupName IN :groups)
+                AND (:partialTitle IS NULL OR c.title LIKE %:partialTitle%)
+                AND (:partialDescription IS NULL OR c.description LIKE %:partialDescription%)
+                AND (:partialCourseTitle IS NULL OR c.course.title LIKE %:partialCourseTitle%)
+                AND (:semester IS NULL OR c.course.semester = :semester)
+            """)
+    Page<Competency> findForImportAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialDescription") String partialDescription,
+            @Param("partialCourseTitle") String partialCourseTitle, @Param("semester") String semester, @Param("groups") Set<String> groups, Pageable pageable);
+
+    /**
+     * Query which fetches all competencies matching the search criteria.
+     *
+     * @param partialTitle       competency title search term
+     * @param partialDescription competency description search term
+     * @param partialCourseTitle course title search term
+     * @param semester           semester search term
+     * @param pageable           Pageable
+     * @return Page with search results
+     */
+    @Query("""
+            SELECT c
+            FROM Competency c
+            WHERE (:partialTitle IS NULL OR c.title LIKE %:partialTitle%)
+                AND (:partialDescription IS NULL OR c.description LIKE %:partialDescription%)
+                AND (:partialCourseTitle IS NULL OR c.course.title LIKE %:partialCourseTitle%)
+                AND (:semester IS NULL OR c.course.semester = :semester)
+            """)
+    Page<Competency> findForImport(@Param("partialTitle") String partialTitle, @Param("partialDescription") String partialDescription,
+            @Param("partialCourseTitle") String partialCourseTitle, @Param("semester") String semester, Pageable pageable);
+
+    /**
      * Returns the title of the competency with the given id.
      *
      * @param competencyId the id of the competency
