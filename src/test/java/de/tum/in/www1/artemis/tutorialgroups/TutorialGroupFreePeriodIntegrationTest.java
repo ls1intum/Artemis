@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +19,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupFreePeriod;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupFreePeriodResource;
 
@@ -250,6 +252,62 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         // cleanup
         tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());
         tutorialGroupFreePeriodRepository.deleteById(createdPeriod.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void create_overlapsWithSessionAlreadyCancelledDueToFreePeriod_shouldNotUpdateTutorialFreePeriod() throws Exception {
+        // given
+        this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, FIRST_AUGUST_MONDAY_00_00);
+        TutorialGroupFreePeriodResource.TutorialGroupFreePeriodDTO dto = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_10_00, FIRST_AUGUST_MONDAY_11_00, "Holiday");
+        TutorialGroupFreePeriodResource.TutorialGroupFreePeriodDTO dto2 = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_11_00, FIRST_AUGUST_MONDAY_13_00, "Holiday");
+
+        // when
+        TutorialGroupFreePeriod createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
+        TutorialGroupFreePeriod createdPeriod2 = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto2, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
+
+        // then
+        List<TutorialGroupSession> sessions = this.getTutorialGroupSessionsAscending(exampleTutorialGroupId);
+        TutorialGroupSession firstMondayOfAugustSession = sessions.get(0);
+        assertIndividualSessionIsCancelledOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY_00_00, exampleTutorialGroupId, null);
+        assert (firstMondayOfAugustSession.getTutorialGroupFreePeriod().getId()).equals(createdPeriod.getId());
+        assertTutorialGroupFreePeriodCreatedCorrectlyFromDTO(firstMondayOfAugustSession.getTutorialGroupFreePeriod(), dto);
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());
+        tutorialGroupFreePeriodRepository.deleteById(createdPeriod.getId());
+        tutorialGroupFreePeriodRepository.deleteById(createdPeriod2.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void delete_cancelledSessionStillOverlapsWithAnotherFreePeriod_shouldNotActivateSession() throws Exception {
+        // given
+        TutorialGroupSession firstMondayOfAugustSession = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, FIRST_AUGUST_MONDAY_00_00);
+        TutorialGroupFreePeriodResource.TutorialGroupFreePeriodDTO dto = createTutorialGroupFreePeriodDTO(
+                FIRST_AUGUST_MONDAY_10_00.atZone(ZoneId.of(exampleTimeZone)).toLocalDateTime(), FIRST_AUGUST_MONDAY_11_00.atZone(ZoneId.of(exampleTimeZone)).toLocalDateTime(),
+                "Holiday");
+        TutorialGroupFreePeriodResource.TutorialGroupFreePeriodDTO dto2 = createTutorialGroupFreePeriodDTO(
+                FIRST_AUGUST_MONDAY_11_00.atZone(ZoneId.of(exampleTimeZone)).toLocalDateTime(), FIRST_AUGUST_MONDAY_13_00.atZone(ZoneId.of(exampleTimeZone)).toLocalDateTime(),
+                "Holiday");
+
+        TutorialGroupFreePeriod createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
+        TutorialGroupFreePeriod createdPeriod2 = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto2, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
+
+        firstMondayOfAugustSession = tutorialGroupSessionRepository.findByIdElseThrow(firstMondayOfAugustSession.getId());
+        assertIndividualSessionIsCancelledOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY_00_00, exampleTutorialGroupId, null);
+
+        // when
+        request.delete(getTutorialGroupFreePeriodsPath() + createdPeriod.getId(), HttpStatus.NO_CONTENT);
+
+        // then
+        firstMondayOfAugustSession = tutorialGroupSessionRepository.findByIdElseThrow(firstMondayOfAugustSession.getId());
+        assertIndividualSessionIsCancelledOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY_00_00, exampleTutorialGroupId, null);
+        assert (firstMondayOfAugustSession.getTutorialGroupFreePeriod().getId()).equals(createdPeriod2.getId());
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());
+        tutorialGroupFreePeriodRepository.deleteById(createdPeriod2.getId());
     }
 
     @Test
