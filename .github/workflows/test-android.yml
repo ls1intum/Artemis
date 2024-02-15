@@ -74,7 +74,7 @@ jobs:
 
         # Use check to wait for the artemis server to come online. Periodically ping the server for sign of life.
       - name: Wait for Artemis Server to be healthy
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
         with:
           timeout_minutes: 10
           retry_wait_seconds: 10
