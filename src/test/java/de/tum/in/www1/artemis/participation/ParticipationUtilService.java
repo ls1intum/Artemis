@@ -73,7 +73,7 @@ public class ParticipationUtilService {
     private TextSubmissionRepository textSubmissionRepo;
 
     @Autowired
-    private ProgrammingSubmissionRepository programmingSubmissionRepo;
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepo;
 
     @Autowired
     private ExampleSubmissionRepository exampleSubmissionRepo;
