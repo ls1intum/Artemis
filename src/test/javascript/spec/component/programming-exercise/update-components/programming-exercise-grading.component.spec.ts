@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -163,4 +163,18 @@ describe('ProgrammingExerciseGradingComponent', () => {
 
         expect(replacedString).toBe('"exerciseType2"');
     }));
+
+    it('should update form section calculation', () => {
+        const calculateFormStatusSpy = jest.spyOn(comp, 'calculateFormStatus');
+
+        comp.submissionPolicyUpdateComponent = { form: { valueChanges: new Subject() } } as any as SubmissionPolicyUpdateComponent;
+        comp.lifecycleComponent = { formValidChanges: new Subject() } as any as ProgrammingExerciseLifecycleComponent;
+
+        comp.ngAfterViewInit();
+
+        (comp.submissionPolicyUpdateComponent.form.valueChanges as Subject<boolean>).next(false);
+        comp.lifecycleComponent.formValidChanges.next(false);
+
+        expect(calculateFormStatusSpy).toHaveBeenCalledTimes(2);
+    });
 });

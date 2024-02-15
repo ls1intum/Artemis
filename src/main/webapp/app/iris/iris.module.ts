@@ -26,6 +26,9 @@ import { IrisStateStore } from 'app/iris/state-store.service';
 import { IrisChatbotDialogWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-dialog-widget.component';
 import { IrisEnabledComponent } from 'app/iris/settings/shared/iris-enabled.component';
 import { IrisExerciseCreationWebsocketService } from 'app/iris/exercise-creation-websocket.service';
+import { IrisCompetencyGenerationSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-competency-generation-sub-settings-update/iris-competency-generation-sub-settings-update.component';
+import { IrisLogoButtonComponent } from 'app/iris/iris-logo-button/iris-logo-button.component';
+import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { ExerciseCreationWidgetComponent } from 'app/iris/exercise-chatbot/widget/exercise-creation-widget.component';
 
 @NgModule({
@@ -44,12 +47,24 @@ import { ExerciseCreationWidgetComponent } from 'app/iris/exercise-chatbot/widge
         IrisLogoComponent,
         IrisChatSubSettingsUpdateComponent,
         IrisHestiaSubSettingsUpdateComponent,
+        IrisCompetencyGenerationSubSettingsUpdateComponent,
         IrisGlobalAutoupdateSettingsUpdateComponent,
         IrisCodeEditorSubSettingsUpdateComponent,
         IrisEnabledComponent,
+        IrisLogoButtonComponent,
     ],
-    imports: [CommonModule, MatDialogModule, FormsModule, FontAwesomeModule, ArtemisSharedModule, ArtemisMarkdownModule, ArtemisSharedComponentModule, RouterModule],
+    imports: [
+        CommonModule,
+        MatDialogModule,
+        FormsModule,
+        FontAwesomeModule,
+        ArtemisSharedModule,
+        ArtemisMarkdownModule,
+        ArtemisSharedComponentModule,
+        RouterModule,
+        FeatureToggleModule,
+    ],
     providers: [IrisExerciseCreationWebsocketService, IrisCodeEditorWebsocketService, IrisStateStore],
-    exports: [IrisCodeEditorChatbotButtonComponent, IrisTutorChatbotButtonComponent, IrisEnabledComponent, IrisExerciseCreationChatbotButtonComponent],
+    exports: [IrisCodeEditorChatbotButtonComponent, IrisTutorChatbotButtonComponent, IrisEnabledComponent, IrisExerciseCreationChatbotButtonComponent, IrisLogoButtonComponent],
 })
 export class IrisModule {}

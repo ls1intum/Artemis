@@ -24,7 +24,7 @@ public class IrisHealthIndicator implements HealthIndicator {
     @Value("${artemis.iris.url}")
     private URI irisUrl;
 
-    public IrisHealthIndicator(@Qualifier("irisRestTemplate") RestTemplate restTemplate) {
+    public IrisHealthIndicator(@Qualifier("shortTimeoutIrisRestTemplate") RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 

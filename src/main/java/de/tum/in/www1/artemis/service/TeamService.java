@@ -202,9 +202,9 @@ public class TeamService {
         // Check group name is not null, a list of logins is given and it is not empty
         if (groupName != null && logins != null && !logins.isEmpty()) {
             // Find all users whose login is in the given login list and who have the given group name
-            existingStudentsWithLogin = userRepository.findAllByLoginsInGroup(groupName, new HashSet<>(logins));
+            existingStudentsWithLogin = userRepository.findAllWithGroupsByIsDeletedIsFalseAndGroupsContainsAndLoginIn(groupName, new HashSet<>(logins));
             // Get the list of logins of found users
-            List<String> existingLogins = existingStudentsWithLogin.stream().map(User::getLogin).toList();
+            Set<String> existingLogins = existingStudentsWithLogin.stream().map(User::getLogin).collect(Collectors.toCollection(HashSet::new));
             // Add logins that are in given login list but not in found users to notFoundLogins
             notFoundLogins = logins.stream().filter(login -> !existingLogins.contains(login)).toList();
         }
@@ -235,15 +235,18 @@ public class TeamService {
         // Check group name is not null, list of logins is given, list of registration numbers is given and it is not empty
         if (groupName != null && logins != null && registrationNumbers != null && !registrationNumbers.isEmpty()) {
             // Find all users whose login is in the given registration number list and who have the given group name
-            existingStudentsWithRegistrationNumber = userRepository.findAllByRegistrationNumbersInGroup(groupName, new HashSet<>(registrationNumbers));
+            existingStudentsWithRegistrationNumber = userRepository.findAllWithGroupsByIsDeletedIsFalseAndGroupsContainsAndRegistrationNumberIn(groupName,
+                    new HashSet<>(registrationNumbers));
             // Find users whose login is in given logins
-            List<User> usersWhoAppearsMoreThanOnce = existingStudentsWithRegistrationNumber.stream().filter(student -> logins.contains(student.getLogin())).toList();
+            Set<String> loginsSet = new HashSet<>(logins);
+            List<User> usersWhoAppearsMoreThanOnce = existingStudentsWithRegistrationNumber.stream().filter(student -> loginsSet.contains(student.getLogin())).toList();
             // If there is a user whose login is in given logins, throw StudentsAppearMultipleTimesException
             if (!usersWhoAppearsMoreThanOnce.isEmpty()) {
                 throw new StudentsAppearMultipleTimesException(usersWhoAppearsMoreThanOnce);
             }
             // Get the list of registration numbers of found users
-            List<String> existingRegistrationNumbers = existingStudentsWithRegistrationNumber.stream().map(User::getRegistrationNumber).toList();
+            Set<String> existingRegistrationNumbers = existingStudentsWithRegistrationNumber.stream().map(User::getRegistrationNumber)
+                    .collect(Collectors.toCollection(HashSet::new));
             // Add registration numbers that are in given registration number list but not in found users to notFoundRegistrationNumbers
             notFoundRegistrationNumbers = registrationNumbers.stream().filter(registrationNumber -> !existingRegistrationNumbers.contains(registrationNumber)).toList();
         }

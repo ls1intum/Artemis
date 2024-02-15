@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20240113131313" author="morrien">
+        <createTable tableName="iris_json_message_content">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints primaryKey="true"
+                             primaryKeyName="pk_iris_json_message_content"
+                             referencedTableName="iris_message_content"
+                             referencedColumnNames="id"
+                             foreignKeyName="fk_json_id_to_content_id"
+                             nullable="false"/>
+            </column>
+            <column name="json_content" type="LONGTEXT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

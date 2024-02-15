@@ -6,7 +6,7 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { PROFILE_LOCALCI, VERSION } from 'app/app.constants';
+import { PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI, VERSION } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -38,6 +38,7 @@ import {
     faHeart,
     faList,
     faLock,
+    faPuzzlePiece,
     faRobot,
     faSignOutAlt,
     faStamp,
@@ -88,6 +89,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     examActiveCheckFuture?: ReturnType<typeof setTimeout>;
     irisEnabled: boolean;
     localCIActive: boolean = false;
+    ltiEnabled: boolean;
 
     // Icons
     faBars = faBars;
@@ -113,6 +115,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     faUserPlus = faUserPlus;
     faSignOutAlt = faSignOutAlt;
     faGears = faGears;
+    faPuzzlePiece = faPuzzlePiece;
 
     private authStateSubscription: Subscription;
     private routerEventSubscription: Subscription;
@@ -194,8 +197,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.gitBranchName = profileInfo.git.branch;
                 this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
                 this.gitUsername = profileInfo.git.commit.user.name;
-                this.irisEnabled = profileInfo.activeProfiles.includes('iris');
+                this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
                 this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
+                this.ltiEnabled = profileInfo?.activeProfiles.includes(PROFILE_LTI);
             }
         });
 
@@ -340,7 +344,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         suspicious_sessions: 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title',
         exam_timeline: 'artemisApp.examTimeline.breadcrumb',
         iris_settings: 'artemisApp.iris.settings.title.breadcrumb',
+        generate: 'entity.action.generate',
         build_queue: 'artemisApp.buildQueue.title',
+        build_agents: 'artemisApp.buildAgents.title',
     };
 
     studentPathBreadcrumbTranslations = {

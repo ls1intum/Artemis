@@ -27,7 +27,7 @@ describe('Text exercise management', () => {
         });
     });
 
-    it('Creates a text exercise in the UI', () => {
+    it('Creates a text exercise in the UI', { scrollBehavior: 'center' }, () => {
         cy.visit('/');
         navigationBar.openCourseManagement();
         courseManagement.openExercisesOfCourse(course.id!);

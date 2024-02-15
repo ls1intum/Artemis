@@ -23,9 +23,9 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
                 LEFT JOIN FETCH p.results
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results
-            WHERE p.id = :#{#participationId}
+            WHERE p.id = :participationId
             """)
-    Optional<Participation> findByIdWithResultsAndSubmissionsResults(@Param("participationId") Long participationId);
+    Optional<Participation> findByIdWithResultsAndSubmissionsResults(@Param("participationId") long participationId);
 
     @Query("""
             SELECT p
@@ -33,18 +33,18 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
             WHERE p.id = :participationId
-                AND (s.id = (SELECT max(s2.id) FROM p.submissions s2) OR s.id = NULL)
+                AND (s.id = (SELECT MAX(s2.id) FROM p.submissions s2) OR s.id IS NULL)
             """)
-    Optional<Participation> findByIdWithLatestSubmissionAndResult(@Param("participationId") Long participationId);
+    Optional<Participation> findByIdWithLatestSubmissionAndResult(@Param("participationId") long participationId);
 
     @Query("""
             SELECT p
             FROM Participation p
                 LEFT JOIN FETCH p.submissions s
             WHERE p.id = :participationId
-                AND (s.id = (SELECT max(s2.id) FROM p.submissions s2) OR s.id = NULL)
+                AND (s.id = (SELECT MAX(s2.id) FROM p.submissions s2) OR s.id IS NULL)
             """)
-    Optional<Participation> findByIdWithLatestSubmission(@Param("participationId") Long participationId);
+    Optional<Participation> findByIdWithLatestSubmission(@Param("participationId") long participationId);
 
     default Participation findByIdWithLatestSubmissionElseThrow(Long participationId) {
         return findByIdWithLatestSubmission(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
@@ -55,9 +55,9 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             FROM Participation p
                 LEFT JOIN FETCH p.submissions s
             WHERE p.id = :participationId
-                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+                AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
-    Optional<Participation> findWithEagerLegalSubmissionsById(@Param("participationId") Long participationId);
+    Optional<Participation> findWithEagerLegalSubmissionsById(@Param("participationId") long participationId);
 
     @NotNull
     default Participation findByIdWithLegalSubmissionsElseThrow(long participationId) {
@@ -68,13 +68,15 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             SELECT p
             FROM Participation p
                 LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
             WHERE p.id = :participationId
             """)
-    Optional<Participation> findWithEagerSubmissionsById(@Param("participationId") Long participationId);
+    Optional<Participation> findWithEagerSubmissionsByIdWithTeamStudents(@Param("participationId") Long participationId);
 
     @NotNull
-    default Participation findByIdWithSubmissionsElseThrow(long participationId) {
-        return findWithEagerSubmissionsById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+    default Participation findWithEagerSubmissionsByIdWithTeamStudentsElseThrow(long participationId) {
+        return findWithEagerSubmissionsByIdWithTeamStudents(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
     }
 
     @NotNull
@@ -83,28 +85,28 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
     }
 
     @Query("""
-            SELECT max(p.individualDueDate)
+            SELECT MAX(p.individualDueDate)
             FROM Participation p
             WHERE p.exercise.id = :exerciseId
-                AND p.individualDueDate IS NOT null
+                AND p.individualDueDate IS NOT NULL
             """)
-    Optional<ZonedDateTime> findLatestIndividualDueDate(@Param("exerciseId") Long exerciseId);
+    Optional<ZonedDateTime> findLatestIndividualDueDate(@Param("exerciseId") long exerciseId);
 
     @Query("""
-            SELECT min(p.individualDueDate)
+            SELECT MIN(p.individualDueDate)
             FROM Participation p
             WHERE p.exercise.id = :exerciseId
-                AND p.individualDueDate IS NOT null
+                AND p.individualDueDate IS NOT NULL
             """)
-    Optional<ZonedDateTime> findEarliestIndividualDueDate(@Param("exerciseId") Long exerciseId);
+    Optional<ZonedDateTime> findEarliestIndividualDueDate(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT p
             FROM Participation p
             WHERE p.exercise.id = :exerciseId
-                AND p.individualDueDate IS NOT null
+                AND p.individualDueDate IS NOT NULL
             """)
-    Set<Participation> findWithIndividualDueDateByExerciseId(@Param("exerciseId") Long exerciseId);
+    Set<Participation> findWithIndividualDueDateByExerciseId(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT p

@@ -1,8 +1,7 @@
 import { Component, ContentChild, EventEmitter, Input, OnInit, Output, TemplateRef, ViewEncapsulation } from '@angular/core';
 import { faChevronRight, faMessage } from '@fortawesome/free-solid-svg-icons';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { Course } from 'app/entities/course.model';
 import { LocalStorageService } from 'ngx-webstorage';
 
@@ -13,30 +12,50 @@ import { LocalStorageService } from 'ngx-webstorage';
     encapsulation: ViewEncapsulation.None,
 })
 export class ConversationSidebarSectionComponent implements OnInit {
-    @Output() conversationSelected = new EventEmitter<ConversationDto>();
-    @Output() settingsChanged = new EventEmitter<void>();
-    @Output() conversationHiddenStatusChange = new EventEmitter<void>();
-    @Output() conversationFavoriteStatusChange = new EventEmitter<void>();
+    @Output() conversationSelected = new EventEmitter<ConversationDTO>();
+    @Output() settingsDidChange = new EventEmitter<void>();
+    @Output() conversationIsFavoriteDidChange = new EventEmitter<void>();
+    @Output() conversationIsHiddenDidChange = new EventEmitter<void>();
+    @Output() conversationIsMutedDidChange = new EventEmitter<void>();
 
     @Input() label: string;
     @Input() course: Course;
-    @Input() activeConversation?: ConversationDto;
+    @Input() activeConversation?: ConversationDTO;
     @Input() headerKey: string;
     @Input() searchTerm: string;
     @Input() hideIfEmpty = true;
+
+    @Input() set conversations(conversations: ConversationDTO[]) {
+        this.hiddenConversations = [];
+        this.mutedConversations = [];
+        this.visibleConversations = [];
+        this.allConversations = conversations ?? [];
+        conversations.forEach((conversation) => {
+            if (conversation.isHidden) {
+                this.hiddenConversations.push(conversation);
+            } else {
+                if (conversation.isMuted && !conversation.isFavorite) {
+                    this.mutedConversations.push(conversation);
+                } else {
+                    this.visibleConversations.push(conversation);
+                }
+            }
+        });
+        this.numberOfConversations = this.allConversations.length;
+    }
 
     @ContentChild(TemplateRef) sectionButtons: TemplateRef<any>;
 
     readonly prefix = 'collapsed.';
 
     isCollapsed: boolean;
+    isHiddenConversationListPresented = false;
 
-    hiddenConversations: ConversationDto[] = [];
-    visibleConversations: ConversationDto[] = [];
-    allConversations: ConversationDto[] = [];
     numberOfConversations = 0;
-
-    getAsChannel = getAsChannelDto;
+    allConversations: ConversationDTO[] = [];
+    visibleConversations: ConversationDTO[] = [];
+    mutedConversations: ConversationDTO[] = [];
+    hiddenConversations: ConversationDTO[] = [];
 
     // icon imports
     faChevronRight = faChevronRight;
@@ -52,18 +71,8 @@ export class ConversationSidebarSectionComponent implements OnInit {
         this.localStorageService.store(this.storageKey, this.isCollapsed);
     }
 
-    @Input() set conversations(conversations: ConversationDto[]) {
-        this.hiddenConversations = [];
-        this.visibleConversations = [];
-        this.allConversations = conversations ?? [];
-        conversations.forEach((conversation) => {
-            if (conversation.isHidden) {
-                this.hiddenConversations.push(conversation);
-            } else {
-                this.visibleConversations.push(conversation);
-            }
-        });
-        this.numberOfConversations = this.allConversations.length;
+    get storageKey() {
+        return this.prefix + this.headerKey;
     }
 
     get anyConversationUnread(): boolean {
@@ -91,7 +100,7 @@ export class ConversationSidebarSectionComponent implements OnInit {
                 conversation.unreadMessagesCount &&
                 conversation.unreadMessagesCount > 0 &&
                 !(this.activeConversation && this.activeConversation.id === conversation.id) &&
-                !this.showHiddenConversations
+                !this.isHiddenConversationListPresented
             ) {
                 containsUnreadConversation = true;
                 break;
@@ -100,16 +109,11 @@ export class ConversationSidebarSectionComponent implements OnInit {
         return containsUnreadConversation;
     }
 
+    conversationsTrackByFn = (index: number, conversation: ConversationDTO): number => conversation.id!;
+
     toggleCollapsed() {
         this.isCollapsed = !this.isCollapsed;
         this.localStorageService.store(this.storageKey, this.isCollapsed);
-    }
-
-    conversationsTrackByFn = (index: number, conversation: ConversationDto): number => conversation.id!;
-    showHiddenConversations = false;
-
-    get storageKey() {
-        return this.prefix + this.headerKey;
     }
 
     hide() {

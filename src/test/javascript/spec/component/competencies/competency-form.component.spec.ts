@@ -17,6 +17,8 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { TranslateService } from '@ngx-translate/core';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import dayjs from 'dayjs/esm';
+import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
+import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
 
 describe('CompetencyFormComponent', () => {
     let competencyFormComponentFixture: ComponentFixture<CompetencyFormComponent>;
@@ -27,7 +29,14 @@ describe('CompetencyFormComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ReactiveFormsModule, NgbDropdownModule, MockModule(NgbTooltipModule)],
-            declarations: [CompetencyFormComponent, MockPipe(ArtemisTranslatePipe), MockPipe(KeysPipe), MockComponent(FormDateTimePickerComponent)],
+            declarations: [
+                CompetencyFormComponent,
+                MockComponent(MarkdownEditorComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(KeysPipe),
+                MockComponent(FormDateTimePickerComponent),
+                MockComponent(TaxonomySelectComponent),
+            ],
             providers: [MockProvider(CompetencyService), MockProvider(LectureUnitService), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
@@ -89,6 +98,7 @@ describe('CompetencyFormComponent', () => {
 
         const submitButton = competencyFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
+        competencyFormComponentFixture.detectChanges();
 
         competencyFormComponentFixture.whenStable().then(() => {
             expect(submitFormSpy).toHaveBeenCalledOnce();
@@ -120,26 +130,42 @@ describe('CompetencyFormComponent', () => {
         expect(competencyFormComponent.selectedLectureUnitsInTable).toEqual(formData.connectedLectureUnits);
     });
 
-    it.each(['title', 'description'])('should suggest taxonomy when input is changed', (inputField: string) => {
+    it('should suggest taxonomy when title changes', () => {
         const suggestTaxonomySpy = jest.spyOn(competencyFormComponent, 'suggestTaxonomies');
-        const translateSpy = jest.spyOn(translateService, 'instant').mockImplementation((key) => {
+        const translateSpy = createTranslateSpy();
+        competencyFormComponentFixture.detectChanges();
+
+        const titleInput = competencyFormComponentFixture.nativeElement.querySelector('#title');
+        titleInput.value = 'Building a tool: create a plan and implement something!';
+        titleInput.dispatchEvent(new Event('input'));
+
+        expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
+        expect(translateSpy).toHaveBeenCalledTimes(12);
+        expect(competencyFormComponent.suggestedTaxonomies).toEqual(['artemisApp.competency.taxonomies.REMEMBER', 'artemisApp.competency.taxonomies.UNDERSTAND']);
+    });
+
+    it('should suggest taxonomy when description changes', () => {
+        const suggestTaxonomySpy = jest.spyOn(competencyFormComponent, 'suggestTaxonomies');
+        const translateSpy = createTranslateSpy();
+        competencyFormComponentFixture.detectChanges();
+
+        competencyFormComponent.updateDescriptionControl('Building a tool: create a plan and implement something!');
+
+        expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
+        expect(translateSpy).toHaveBeenCalledTimes(12);
+        expect(competencyFormComponent.suggestedTaxonomies).toEqual(['artemisApp.competency.taxonomies.REMEMBER', 'artemisApp.competency.taxonomies.UNDERSTAND']);
+    });
+
+    function createTranslateSpy() {
+        return jest.spyOn(translateService, 'instant').mockImplementation((key) => {
             switch (key) {
-                case 'artemisApp.competency.keywords.remember':
+                case 'artemisApp.competency.keywords.REMEMBER':
                     return 'Something';
-                case 'artemisApp.competency.keywords.understand':
+                case 'artemisApp.competency.keywords.UNDERSTAND':
                     return 'invent, build';
                 default:
                     return key;
             }
         });
-        competencyFormComponentFixture.detectChanges();
-
-        const input = competencyFormComponentFixture.nativeElement.querySelector(`#${inputField}`);
-        input.value = 'Building a tool: create a plan and implement something!';
-        input.dispatchEvent(new Event('input'));
-
-        expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
-        expect(translateSpy).toHaveBeenCalledTimes(12);
-        expect(competencyFormComponent.suggestedTaxonomies).toEqual(['artemisApp.competency.taxonomies.remember', 'artemisApp.competency.taxonomies.understand']);
-    });
+    }
 });

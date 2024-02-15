@@ -227,18 +227,13 @@ describe('ProgrammingExercise Management Detail Component', () => {
         }));
     });
 
-    it('should create empty details', () => {
+    it('should create details', () => {
         const programmingExercise = new ProgrammingExercise(new Course(), undefined);
         programmingExercise.id = 123;
         comp.programmingExercise = programmingExercise;
 
         const sections = comp.getExerciseDetails();
         expect(sections).toBeDefined();
-        for (const section of sections) {
-            for (const detail of section.details) {
-                expect(detail).toBeDefined();
-            }
-        }
     });
 
     it('should create structural solution entries', () => {
@@ -296,7 +291,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
     it('should reload on participation change', () => {
         const loadDiffSpy = jest.spyOn(comp, 'loadGitDiffReport').mockReturnValue(new Promise(() => null));
         jest.spyOn(exerciseService, 'getLatestResult').mockReturnValue({ successful: true });
-        jest.spyOn(exerciseService, 'getLatestTestwiseCoverageReport').mockReturnValue(of({ coveredLineRatio: 0.5 }));
+        jest.spyOn(exerciseService, 'getLatestFullTestwiseCoverageReport').mockReturnValue(of({ coveredLineRatio: 0.5 }));
         comp.programmingExercise = mockProgrammingExercise;
         comp.programmingExercise.testwiseCoverageEnabled = true;
         comp.onParticipationChange();

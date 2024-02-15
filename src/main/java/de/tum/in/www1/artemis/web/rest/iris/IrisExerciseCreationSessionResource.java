@@ -76,7 +76,7 @@ public class IrisExerciseCreationSessionResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         var session = irisExerciseCreationSessionRepository.findNewestByExerciseIdAndUserIdElseThrow(course.getId(), user.getId());
-        irisSessionService.checkHasAccessToIrisSession(session, user);
+        irisSessionService.checkHasAccessTo(user, session);
         return ResponseEntity.ok(session);
     }
 
@@ -97,7 +97,7 @@ public class IrisExerciseCreationSessionResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         var sessions = irisExerciseCreationSessionRepository.findByCourseIdAndUserIdElseThrow(course.getId(), user.getId());
-        sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
+        sessions.forEach(s -> irisSessionService.checkHasAccessTo(user, s));
         return ResponseEntity.ok(sessions);
     }
 
@@ -137,8 +137,8 @@ public class IrisExerciseCreationSessionResource {
     public ResponseEntity<Boolean> isIrisActive(@PathVariable Long sessionId) {
         var session = irisExerciseCreationSessionRepository.findByIdElseThrow(sessionId);
         var user = userRepository.getUser();
-        irisSessionService.checkHasAccessToIrisSession(session, user);
-        irisSessionService.checkIsIrisActivated(session);
+        irisSessionService.checkHasAccessTo(user, session);
+        irisSessionService.checkIsFeatureActivatedFor(session);
         var settings = irisSettingsService.getCombinedIrisSettingsFor(session.getCourse(), false);
         var health = irisHealthIndicator.health();
         IrisStatusDTO[] modelStatuses = (IrisStatusDTO[]) health.getDetails().get("modelStatuses");

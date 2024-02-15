@@ -21,19 +21,19 @@
             <table class="table table-striped flex">
                 <thead class="thead-dark">
                     <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" (sortChange)="sortRows()" class="flex-row">
-                        <th jhiSortBy="{{ column.ID }}" class="col-1">
+                        <th jhiSortBy="ID" class="col-1">
                             <span>#</span>
                             <fa-icon [icon]="faSort"></fa-icon>
                         </th>
-                        <th jhiSortBy="{{ column.TITLE }}" class="col-4">
+                        <th jhiSortBy="TITLE" class="col-4">
                             <span jhiTranslate="artemisApp.exercise.import.table.title">Title</span>
                             <fa-icon [icon]="faSort"></fa-icon>
                         </th>
-                        <th jhiSortBy="{{ column.COURSE_TITLE }}" class="col-4">
+                        <th jhiSortBy="COURSE_TITLE" class="col-4">
                             <span jhiTranslate="artemisApp.exercise.import.table.course">Course</span>
                             <fa-icon [icon]="faSort"></fa-icon>
                         </th>
-                        <th jhiSortBy="{{ column.EXAM_MODE }}" class="col-4">
+                        <th jhiSortBy="EXAM_MODE" class="col-4">
                             <span jhiTranslate="artemisApp.examManagement.testExam.examMode">Exam Mode</span>
                             <fa-icon [icon]="faSort"></fa-icon>
                         </th>
@@ -62,7 +62,7 @@
                             </td>
                             <td class="col-1">
                                 @if (!subsequentExerciseGroupSelection) {
-                                    <jhi-button (onClick)="forwardSelectedExam(exam)" [title]="'artemisApp.exercise.import.table.doImport'"></jhi-button>
+                                    <jhi-button (onClick)="selectImport(exam)" [title]="'artemisApp.exercise.import.table.doImport'"></jhi-button>
                                 }
                                 @if (subsequentExerciseGroupSelection) {
                                     <jhi-button (onClick)="openExerciseSelection(exam)" [title]="'artemisApp.examManagement.exerciseGroup.selectExerciseGroup'"></jhi-button>

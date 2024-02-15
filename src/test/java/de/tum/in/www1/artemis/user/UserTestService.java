@@ -578,7 +578,7 @@ public class UserTestService {
 
     // Test
     public void getUsers_asAdmin_isSuccessful() throws Exception {
-        var usersDb = userRepository.findAllWithGroupsAndAuthorities().stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
+        var usersDb = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalse().stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
         userRepository.saveAll(usersDb);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
@@ -766,7 +766,7 @@ public class UserTestService {
         user.setPassword(password);
         user.setInternal(false);
         user.setActivated(false);
-        user = userRepository.save(user);
+        userRepository.save(user);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
 

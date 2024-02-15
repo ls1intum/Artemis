@@ -34,7 +34,11 @@ public class IrisRequestMockProvider {
 
     private final RestTemplate restTemplate;
 
+    private final RestTemplate shortTimeoutRestTemplate;
+
     private MockRestServiceServer mockServer;
+
+    private MockRestServiceServer shortTimeoutMockServer;
 
     @Value("${artemis.iris.url}/api/v1/messages")
     private URL messagesApiV1URL;
@@ -53,12 +57,14 @@ public class IrisRequestMockProvider {
 
     private AutoCloseable closeable;
 
-    public IrisRequestMockProvider(@Qualifier("irisRestTemplate") RestTemplate restTemplate) {
+    public IrisRequestMockProvider(@Qualifier("irisRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutIrisRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.restTemplate = restTemplate;
+        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
 
     public void enableMockingOfRequests() {
         mockServer = MockRestServiceServer.createServer(restTemplate);
+        shortTimeoutMockServer = MockRestServiceServer.createServer(shortTimeoutRestTemplate);
         closeable = MockitoAnnotations.openMocks(this);
     }
 
@@ -160,7 +166,7 @@ public class IrisRequestMockProvider {
         var irisStatusDTOArray = new IrisStatusDTO[] { new IrisStatusDTO("TEST_MODEL_UP", IrisStatusDTO.ModelStatus.UP),
                 new IrisStatusDTO("TEST_MODEL_DOWN", IrisStatusDTO.ModelStatus.DOWN), new IrisStatusDTO("TEST_MODEL_NA", IrisStatusDTO.ModelStatus.NOT_AVAILABLE) };
         // @formatter:off
-        mockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString()))
+        shortTimeoutMockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString()))
                 .andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess(mapper.writeValueAsString(irisStatusDTOArray), MediaType.APPLICATION_JSON));
         // @formatter:on

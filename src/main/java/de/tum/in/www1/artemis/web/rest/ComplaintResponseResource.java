@@ -32,9 +32,9 @@ public class ComplaintResponseResource {
 
     private final UserRepository userRepository;
 
-    public ComplaintResponseResource(ComplaintResponseService complaintResponseService, UserRepository userRepository, ComplaintRepository complaintRepository) {
-        this.complaintResponseService = complaintResponseService;
+    public ComplaintResponseResource(ComplaintRepository complaintRepository, ComplaintResponseService complaintResponseService, UserRepository userRepository) {
         this.complaintRepository = complaintRepository;
+        this.complaintResponseService = complaintResponseService;
         this.userRepository = userRepository;
     }
 

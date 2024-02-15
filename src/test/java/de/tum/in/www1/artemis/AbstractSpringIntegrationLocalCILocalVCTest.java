@@ -62,12 +62,12 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @ResourceLock("AbstractSpringIntegrationLocalCILocalVCTest")
 @AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "localci", "localvc", "scheduling", "ldap-only", "lti", "aeolus" })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "localci", "localvc", "scheduling", "ldap-only", "lti", "aeolus", "buildagent" })
 // Note: the server.port property must correspond to the port used in the artemis.version-control.url property.
 @TestPropertySource(properties = { "server.port=49152", "artemis.version-control.url=http://localhost:49152", "artemis.version-control.local-vcs-repo-path=${java.io.tmpdir}",
         "artemis.continuous-integration.specify-concurrent-builds=true", "artemis.continuous-integration.concurrent-build-size=1",
         "artemis.continuous-integration.asynchronous=false", "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
-        "artemis.user-management.use-external=false" })
+        "artemis.continuous-integration.image-cleanup.enabled=true", "artemis.user-management.use-external=false" })
 @ContextConfiguration(classes = LocalCITestConfiguration.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
 
@@ -130,6 +130,12 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     protected static final Path FAULTY_FILES_TEST_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "test-results", "java-gradle", "faulty-files");
 
+    protected static final Path SPOTBUGS_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "static-code-analysis", "reports", "spotbugsXml.xml");
+
+    protected static final Path CHECKSTYLE_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "static-code-analysis", "reports", "checkstyle-result.xml");
+
+    protected static final Path PMD_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "static-code-analysis", "reports", "pmd.xml");
+
     @AfterEach
     protected void resetSpyBeans() {
         Mockito.reset(versionControlService, continuousIntegrationService, resourceLoaderService, programmingMessagingService);
@@ -143,7 +149,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
      */
 
     @Override
-    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject) {
+    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject, boolean useCustomBuildPlanDefinition, boolean useCustomBuildPlanWorked) {
         // Not implemented for local VC and local CI
     }
 
