@@ -64,8 +64,7 @@ describe('TutorialFreePeriodFormComponent', () => {
         expect(component).not.toBeNull();
     });
 
-    it('should correctly set form values in edit mode for freeDay', () => {
-        component.isEditMode = true;
+    it('should correctly set timeFrame in edit mode for freeDay', () => {
         const formData: TutorialGroupFreePeriodFormData = {
             startDate: validStartDateBerlin,
             endDate: undefined,
@@ -73,21 +72,29 @@ describe('TutorialFreePeriodFormComponent', () => {
             endTime: undefined,
             reason: validReason,
         };
-        component.formData = formData;
-        component.ngOnChanges();
+        timeFrameTestHelperMethod(TimeFrame.Day, formData);
+    });
 
-        // For a Free Day, the end date should be undefined
-        formData.endDate = undefined;
-        const formControlNames = ['startDate', 'endDate', 'startTime', 'endTime', 'reason'];
-        formControlNames.forEach((control) => {
-            const formValue = component.form.get(control)!.value;
-            const expectedValue = formData[control];
-            if (formValue === null && expectedValue === undefined) {
-                expect(formValue).toBeNull();
-            } else {
-                expect(formValue).toEqual(expectedValue);
-            }
-        });
+    it('should correctly set form values and timeFrame in edit mode for freePeriod', () => {
+        const formData: TutorialGroupFreePeriodFormData = {
+            startDate: validStartDateBerlin,
+            endDate: validEndDateBerlinFreePeriod,
+            startTime: undefined,
+            endTime: undefined,
+            reason: validReason,
+        };
+        timeFrameTestHelperMethod(TimeFrame.Period, formData);
+    });
+
+    it('should correctly set form values and timeFrame in edit mode for freePeriodWithinDay', () => {
+        const formData: TutorialGroupFreePeriodFormData = {
+            startDate: validStartDateBerlin,
+            endDate: undefined,
+            startTime: validEndTimeBerlin,
+            endTime: validEndTimeBerlin,
+            reason: validReason,
+        };
+        timeFrameTestHelperMethod(TimeFrame.PeriodWithinDay, formData);
     });
 
     it('should submit valid form', fakeAsync(() => {
@@ -156,6 +163,170 @@ describe('TutorialFreePeriodFormComponent', () => {
         expect(component.timeFrameControl).toBe(TimeFrame.PeriodWithinDay);
     });
 
+    it('should allow submit when time frame is day and form is valid', () => {
+        testIsSubmitPossibleHelperMethod(
+            TimeFrame.Day,
+            {
+                startDate: validStartDateBerlin,
+                endDate: undefined,
+                startTime: undefined,
+                endTime: undefined,
+                reason: validReason,
+            },
+            true,
+        );
+    });
+
+    it('should not allow submit when time frame is day and form is invalid', () => {
+        testIsSubmitPossibleHelperMethod(
+            TimeFrame.Day,
+            {
+                startDate: undefined,
+                endDate: undefined,
+                startTime: undefined,
+                endTime: undefined,
+                reason: validReason,
+            },
+            false,
+        );
+    });
+
+    it('should allow submit when time frame is Period and form is valid', () => {
+        testIsSubmitPossibleHelperMethod(
+            TimeFrame.Period,
+            {
+                startDate: validStartDateBerlin,
+                endDate: validEndDateBerlinFreePeriod,
+                startTime: undefined,
+                endTime: undefined,
+                reason: validReason,
+            },
+            true,
+        );
+    });
+
+    it('should not allow submit when time frame is Period and form is invalid', () => {
+        // missing start date
+        testIsSubmitPossibleHelperMethod(
+            TimeFrame.Period,
+            {
+                startDate: undefined,
+                endDate: validEndDateBerlinFreeDay,
+                startTime: undefined,
+                endTime: undefined,
+                reason: validReason,
+            },
+            false,
+        );
+
+        // missing end date
+        testIsSubmitPossibleHelperMethod(
+            TimeFrame.Period,
+            {
+                startDate: validStartDateBerlin,
+                endDate: undefined,
+                startTime: undefined,
+                endTime: undefined,
+                reason: validReason,
+            },
+            false,
+        );
+
+        // missing start and end date
+        testIsSubmitPossibleHelperMethod(
+            TimeFrame.Period,
+            {
+                startDate: undefined,
+                endDate: undefined,
+                startTime: undefined,
+                endTime: undefined,
+                reason: validReason,
+            },
+            false,
+        );
+
+        // end date before start date
+        testIsSubmitPossibleHelperMethod(
+            TimeFrame.Period,
+            {
+                startDate: validEndDateBerlinFreeDay,
+                endDate: validStartDateBerlin,
+                startTime: undefined,
+                endTime: undefined,
+                reason: validReason,
+            },
+            false,
+        );
+    });
+
+    it('should allow submit when time frame is PeriodWithinDay and form is valid', () => {
+        testIsSubmitPossibleHelperMethod(
+            TimeFrame.PeriodWithinDay,
+            {
+                startDate: validStartDateBerlin,
+                endDate: undefined,
+                startTime: validStartTimeBerlin,
+                endTime: validEndTimeBerlin,
+                reason: validReason,
+            },
+            true,
+        );
+    });
+
+    it('should not allow submit when time frame is PeriodWithinDay and form is invalid', () => {
+        // missing start date
+        testIsSubmitPossibleHelperMethod(
+            TimeFrame.PeriodWithinDay,
+            {
+                startDate: undefined,
+                endDate: undefined,
+                startTime: validStartTimeBerlin,
+                endTime: validEndTimeBerlin,
+                reason: validReason,
+            },
+            false,
+        );
+
+        // missing start time
+        testIsSubmitPossibleHelperMethod(
+            TimeFrame.PeriodWithinDay,
+            {
+                startDate: validStartDateBerlin,
+                endDate: undefined,
+                startTime: undefined,
+                endTime: validEndTimeBerlin,
+                reason: validReason,
+            },
+            false,
+        );
+
+        // missing end time
+        testIsSubmitPossibleHelperMethod(
+            TimeFrame.PeriodWithinDay,
+            {
+                startDate: validStartDateBerlin,
+                endDate: undefined,
+                startTime: validStartTimeBerlin,
+                endTime: undefined,
+                reason: validReason,
+            },
+            false,
+        );
+
+        // end time before start time
+        testIsSubmitPossibleHelperMethod(
+            TimeFrame.PeriodWithinDay,
+            {
+                startDate: validEndDateBerlinFreeDay,
+                endDate: undefined,
+                startTime: validEndTimeBerlin,
+                endTime: validStartTimeBerlin,
+                reason: validReason,
+            },
+            false,
+        );
+    });
+
     // === helper functions ===
     const setFormValues = (startDate: Date | undefined, endDate: Date | undefined, startTime: Date | undefined, endTime: Date | undefined, reason: string) => {
         component.startDateControl!.setValue(startDate);
@@ -199,4 +370,17 @@ describe('TutorialFreePeriodFormComponent', () => {
             expect(component.form.get('endTime')!.value).toBeFalsy();
         }
     };
+
+    function timeFrameTestHelperMethod(expectedTimeFrame: TimeFrame, formData: TutorialGroupFreePeriodFormData): void {
+        component.isEditMode = true;
+        component.formData = formData;
+        component.ngOnChanges();
+        expect(component.timeFrameControl).toBe(expectedTimeFrame);
+    }
+
+    function testIsSubmitPossibleHelperMethod(selectedTimeFrame: TimeFrame, formData: TutorialGroupFreePeriodFormData, submitShouldBePossible: boolean): void {
+        component.form.patchValue(formData);
+        component.setTimeFrame(selectedTimeFrame);
+        expect(component.isSubmitPossible).toBe(submitShouldBePossible);
+    }
 });
