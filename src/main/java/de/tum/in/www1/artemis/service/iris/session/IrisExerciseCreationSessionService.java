@@ -25,18 +25,12 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.domain.iris.session.IrisExerciseCreationSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
-import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisExerciseCreationSessionRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.RepositoryService;
-import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisMessageResponseV2DTO;
-import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
-import de.tum.in.www1.artemis.service.iris.IrisDefaultTemplateService;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisParseResponseException;
 import de.tum.in.www1.artemis.service.iris.session.exercisecreation.IrisExerciseMetadataDTO;
@@ -74,41 +68,20 @@ public class IrisExerciseCreationSessionService implements IrisChatBasedFeatureI
 
     private final IrisExerciseCreationSessionRepository irisExerciseCreationSessionRepository;
 
-    private final VersionControlService versionControlService;
-
-    private final GitService gitService;
-
-    private final RepositoryService repositoryService;
-
-    private final TemplateProgrammingExerciseParticipationRepository templateParticipationRepository;
-
-    private final SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository;
-
     private final IrisSessionRepository irisSessionRepository;
-
-    private final IrisDefaultTemplateService irisDefaultTemplateService;
 
     private final ObjectMapper objectMapper;
 
     public IrisExerciseCreationSessionService(IrisConnectorService irisConnectorService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
             IrisExerciseCreationWebsocketService irisExerciseCreationWebsocketService, AuthorizationCheckService authCheckService,
-            IrisExerciseCreationSessionRepository irisExerciseCreationSessionRepository, VersionControlService versionControlService, GitService gitService,
-            RepositoryService repositoryService, TemplateProgrammingExerciseParticipationRepository templateParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository, IrisSessionRepository irisSessionRepository,
-            IrisDefaultTemplateService irisDefaultTemplateService, ObjectMapper objectMapper) {
+            IrisExerciseCreationSessionRepository irisExerciseCreationSessionRepository, IrisSessionRepository irisSessionRepository, ObjectMapper objectMapper) {
         this.irisConnectorService = irisConnectorService;
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
         this.irisExerciseCreationWebsocketService = irisExerciseCreationWebsocketService;
         this.authCheckService = authCheckService;
         this.irisExerciseCreationSessionRepository = irisExerciseCreationSessionRepository;
-        this.versionControlService = versionControlService;
-        this.gitService = gitService;
-        this.repositoryService = repositoryService;
-        this.templateParticipationRepository = templateParticipationRepository;
-        this.solutionParticipationRepository = solutionParticipationRepository;
         this.irisSessionRepository = irisSessionRepository;
-        this.irisDefaultTemplateService = irisDefaultTemplateService;
         this.objectMapper = objectMapper;
     }
 
