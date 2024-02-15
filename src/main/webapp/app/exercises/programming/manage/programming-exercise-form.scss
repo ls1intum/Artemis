@@ -39,19 +39,16 @@
 .section {
     display: flex;
     flex-wrap: wrap;
+    gap: 0.5em;
 }
 
-/* columns */
-.section > * {
-    width: 100%;
-}
-
-/* tablet breakpoint */
 @media (min-width: 768px) {
     .section > *:nth-child(1) {
-        width: 76%;
+        flex: 1;
+        min-width: min(100%, 20em);
     }
     .section > *:nth-child(2) {
-        width: 24%;
+        flex: none;
+        max-width: 100%;
     }
 }
