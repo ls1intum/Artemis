@@ -336,3 +336,9 @@ cdk-global-scrollblock {
     width: 100%;
     overflow-y: auto;
 }
+
+.chatbot-position {
+    position: sticky;
+    top: 0;
+    z-index: 7;
+}
