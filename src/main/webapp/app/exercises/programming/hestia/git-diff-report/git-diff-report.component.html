@@ -8,7 +8,7 @@
                 ) | artemisTranslate
             }}
             <span class="text-primary">
-                @if (isRepositoryView) {
+                @if (isRepositoryView && leftCommit) {
                     {{ leftCommit }}
                 }
             </span>
@@ -21,7 +21,7 @@
                     | artemisTranslate
             }}
             <span class="text-primary">
-                @if (isRepositoryView) {
+                @if (isRepositoryView && rightCommit) {
                     {{ rightCommit }}
                 }
             </span>
