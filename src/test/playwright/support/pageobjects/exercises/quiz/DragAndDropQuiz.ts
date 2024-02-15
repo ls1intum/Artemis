@@ -30,6 +30,8 @@ export class DragAndDropQuiz {
     async dragUsingCoordinates(x: number, y: number) {
         const classElement = this.page.locator('#modeling-editor-sidebar').locator('div').nth(2);
         const modelingEditorCanvas = this.page.locator(MODELING_EDITOR_CANVAS);
+        const box = await modelingEditorCanvas.boundingBox();
+        console.log('Boumding box: ', box);
         await classElement.dragTo(modelingEditorCanvas, { targetPosition: { x: x, y: y } });
     }
 
@@ -65,9 +67,9 @@ export class DragAndDropQuiz {
     async markElementAsInteractive(nthElementOnCanvas: number, nthChildOfElement: number) {
         const modelingEditorCanvas = this.page.locator(MODELING_EDITOR_CANVAS);
         const canvasElements = modelingEditorCanvas.locator('g').locator('svg').nth(0);
-        const nthElement = canvasElements.locator('svg').nth(nthElementOnCanvas);
+        const nthElement = canvasElements.locator('svg', { has: this.page.locator('svg') }).nth(nthElementOnCanvas);
         const nthChild = nthElement.locator('g').locator('svg').nth(nthChildOfElement);
-        await nthChild.click();
+        await nthChild.click({ force: true });
     }
 
     async generateQuizExercise() {

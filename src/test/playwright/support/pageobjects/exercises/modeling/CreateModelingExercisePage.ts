@@ -20,7 +20,7 @@ export class CreateModelingExercisePage {
         for (const category of categories) {
             await this.page.locator('#field_categories').type(category);
             // this line is a hack so the category ends
-            await this.page.locator('#id').click({ force: true });
+            // await this.page.locator('#id').click({ force: true });
         }
     }
 

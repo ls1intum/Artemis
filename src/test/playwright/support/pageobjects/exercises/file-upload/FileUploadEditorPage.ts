@@ -1,6 +1,7 @@
 import { Page } from 'playwright';
 import { BASE_API } from '../../../constants';
 import { expect } from '@playwright/test';
+import { Fixtures } from '../../../../fixtures/fixtures';
 
 export class FileUploadEditorPage {
     private readonly page: Page;
@@ -10,7 +11,8 @@ export class FileUploadEditorPage {
     }
 
     async attachFile(filePath: string) {
-        await this.page.locator('#fileUploadInput').setInputFiles(filePath);
+        console.log('Attaching a file: ', filePath);
+        await this.page.locator('#fileUploadInput').setInputFiles(Fixtures.getAbsoluteFilePath(filePath));
     }
 
     async attachFileExam(filePath: string) {

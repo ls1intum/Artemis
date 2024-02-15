@@ -10,4 +10,8 @@ export class Fixtures {
             console.error(`Error reading fixture file: ${error.message}`);
         }
     }
+
+    static getAbsoluteFilePath(filePath: string) {
+        return `${__dirname}/${filePath}`;
+    }
 }

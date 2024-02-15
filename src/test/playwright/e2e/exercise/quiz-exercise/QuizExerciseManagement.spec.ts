@@ -50,7 +50,7 @@ test.describe('Quiz Exercise Management', () => {
         // });
     });
 
-    test.describe('Quiz Exercise deletion', () => {
+    test.describe('Quiz Exercise Deletion', () => {
         let quizExercise: QuizExercise;
 
         test.beforeEach('Create quiz exercise', async ({ login, exerciseAPIRequests }) => {

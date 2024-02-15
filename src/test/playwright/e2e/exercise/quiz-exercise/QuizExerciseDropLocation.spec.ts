@@ -22,9 +22,10 @@ test.describe('Quiz Exercise Drop Location Spec', () => {
         });
 
         test('Checks drop locations', async ({ page, quizExerciseDragAndDropQuiz }) => {
-            await quizExerciseDragAndDropQuiz.dragUsingCoordinates(310, 320);
-            await quizExerciseDragAndDropQuiz.dragUsingCoordinates(730, 500);
-            await quizExerciseDragAndDropQuiz.dragUsingCoordinates(730, 320);
+            // 318 227
+            await quizExerciseDragAndDropQuiz.dragUsingCoordinates(0, 100);
+            await quizExerciseDragAndDropQuiz.dragUsingCoordinates(410, 240);
+            await quizExerciseDragAndDropQuiz.dragUsingCoordinates(420, 90);
 
             await quizExerciseDragAndDropQuiz.activateInteractiveMode();
 

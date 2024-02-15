@@ -6,7 +6,7 @@ import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 
-describe('File upload exercise participation', () => {
+test.describe('File upload exercise participation', () => {
     let course: Course;
     let exercise: FileUploadExercise;
 
@@ -17,7 +17,7 @@ describe('File upload exercise participation', () => {
         exercise = await exerciseAPIRequests.createFileUploadExercise({ course });
     });
 
-    test('Creates a file upload exercise in the UI', async ({ login, courseOverview, fileUploadExerciseEditor }) => {
+    test('Starts a file upload exercise in the UI', async ({ login, courseOverview, fileUploadExerciseEditor }) => {
         await login(studentOne, `/courses/${course.id}/exercises`);
         await courseOverview.startExercise(exercise.id!);
         await courseOverview.openRunningExercise(exercise.id!);

@@ -9,7 +9,8 @@ export class ProgrammingExerciseAssessmentPage extends AbstractExerciseAssessmen
 
     async provideFeedbackOnCodeLine(lineIndex: number, points: number, feedback: string) {
         // We can't change elements from the ace editor, so we can't use custom ids here
-        await this.page.locator('.ace_gutter-cell').nth(lineIndex).locator('svg').click({ force: true });
+        const addFeedbackButton = this.page.locator('.ace_gutter-cell').nth(lineIndex).locator('svg');
+        await addFeedbackButton.dispatchEvent('click');
         await this.typeIntoFeedbackEditor(feedback, lineIndex);
         await this.typePointsIntoFeedbackEditor(points, lineIndex);
         await this.saveFeedback(lineIndex);
