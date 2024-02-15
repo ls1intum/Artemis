@@ -9,7 +9,7 @@
         }
         <jhi-documentation-button [type]="documentationType" />
         @if (isIrisEnabled()) {
-            <jhi-exercise-creation-chatbot-button [paramsOnSend]="getFormDataAndProblemStatement"></jhi-exercise-creation-chatbot-button>
+            <jhi-exercise-creation-chatbot-button [paramsOnSend]="getFormDataAndProblemStatement" />
         }
     </div>
     <jhi-form-status-bar [formStatusSections]="formStatusSections" />
