@@ -53,21 +53,6 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
         return findByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participationId, commitHash).stream().findFirst().orElse(null);
     }
 
-    @Query("""
-            SELECT s
-            FROM ProgrammingSubmission s
-                LEFT JOIN FETCH s.results
-            WHERE (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
-                AND s.participation.id = :participationId
-                AND s.id = (
-                    SELECT MAX(s2.id)
-                    FROM ProgrammingSubmission s2
-                    WHERE s2.participation.id = :participationId
-                        AND (s2.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s2.type IS NULL)
-                )
-            """)
-    Optional<ProgrammingSubmission> findFirstByParticipationIdOrderByLegalSubmissionDateDesc(@Param("participationId") long participationId);
-
     @EntityGraph(type = LOAD, attributePaths = "results")
     Optional<ProgrammingSubmission> findFirstByParticipationIdOrderBySubmissionDateDesc(long participationId);
 
@@ -97,9 +82,6 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
             ORDER BY s.submissionDate DESC
             """)
     List<ProgrammingSubmission> findGradedByParticipationIdOrderBySubmissionDateDesc(@Param("participationId") long participationId, Pageable pageable);
-
-    @EntityGraph(type = LOAD, attributePaths = "results")
-    Optional<ProgrammingSubmission> findWithEagerResultsById(long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = "results.feedbacks")
     Optional<ProgrammingSubmission> findWithEagerResultsAndFeedbacksById(long submissionId);
