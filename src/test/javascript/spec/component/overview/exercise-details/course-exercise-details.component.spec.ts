@@ -66,11 +66,12 @@ import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exe
 import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-button/reset-repo-button.component';
 import { ProblemStatementComponent } from 'app/overview/exercise-details/problem-statement/problem-statement.component';
 import { ExerciseInfoComponent } from 'app/exercises/shared/exercise-info/exercise-info.component';
-import { IrisSettingsService } from '../../../../../../main/webapp/app/iris/settings/shared/iris-settings.service';
-import { IrisSettings } from '../../../../../../main/webapp/app/entities/iris/settings/iris-settings.model';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { ScienceService } from 'app/shared/science/science.service';
 import { MockScienceService } from '../../../helpers/mocks/service/mock-science-service';
 import { ScienceEventType } from 'app/shared/science/science.model';
+import { PROFILE_IRIS } from 'app/app.constants';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -365,7 +366,7 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(alertServiceSpy).toHaveBeenCalledWith(error.message);
     }));
 
-    it.each<[string[]]>([[[]], [['iris']]])(
+    it.each<[string[]]>([[[]], [[PROFILE_IRIS]]])(
         'should load iris settings only if profile iris is active',
         fakeAsync((activeProfiles: string[]) => {
             // Setup
@@ -395,7 +396,7 @@ describe('CourseExerciseDetailsComponent', () => {
             comp.ngOnInit();
             tick();
 
-            if (activeProfiles.includes('iris')) {
+            if (activeProfiles.includes(PROFILE_IRIS)) {
                 // Should have called getCombinedProgrammingExerciseSettings if 'iris' is active
                 expect(getCombinedProgrammingExerciseSettingsMock).toHaveBeenCalled();
                 expect(comp.irisSettings).toBe(fakeSettings);

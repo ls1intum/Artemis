@@ -112,7 +112,7 @@ describe('Exam management', () => {
             examExerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, modelingExerciseTitle);
         });
 
-        it('Adds a programming exercise', () => {
+        it('Adds a programming exercise', { scrollBehavior: 'center' }, () => {
             cy.visit(`/course-management/${course.id}/exams`);
             examManagement.openExerciseGroups(exam.id!);
             examExerciseGroups.clickAddProgrammingExercise(exerciseGroup.id!);

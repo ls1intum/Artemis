@@ -73,16 +73,7 @@
                                 <small> ({{ 'artemisApp.competency.createCompetency.suggestedTaxonomy' | artemisTranslate }}: {{ suggestedTaxonomies.join(', ') }}) </small>
                             }
                         </label>
-                        <select class="form-select mb-2" id="taxonomy" formControlName="taxonomy">
-                            <option [ngValue]="undefined" selected></option>
-                            @for (taxonomy of competencyTaxonomy | keyvalue: keepOrder; track taxonomy; let i = $index) {
-                                <option [ngValue]="taxonomy.key">
-                                    {{ '&ThinSpace;'.repeat(i) }}&boxur;
-                                    {{ 'artemisApp.competency.taxonomies.' + taxonomy.value.toLowerCase() | artemisTranslate }}
-                                    ({{ 'artemisApp.competency.keywords.' + taxonomy.value.toLowerCase() | artemisTranslate }})
-                                </option>
-                            }
-                        </select>
+                        <jhi-taxonomy-select selectId="taxonomy" [form]="taxonomyControl" />
                     </div>
                 }
                 @if (!isInConnectMode) {
