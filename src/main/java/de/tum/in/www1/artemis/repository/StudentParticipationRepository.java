@@ -44,10 +44,10 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH p.results r
                 LEFT JOIN FETCH p.team t
                 LEFT JOIN FETCH t.students
-            WHERE p.exercise.course.id = :#{#courseId}
-                AND (r.rated IS NULL OR r.rated = true)
+            WHERE p.exercise.course.id = :courseId
+                AND (r.rated IS NULL OR r.rated IS TRUE)
             """)
-    List<StudentParticipation> findByCourseIdWithEagerRatedResults(@Param("courseId") Long courseId);
+    List<StudentParticipation> findByCourseIdWithEagerRatedResults(@Param("courseId") long courseId);
 
     @Query("""
             SELECT DISTINCT p
@@ -56,9 +56,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN p.team.students ts
             WHERE p.exercise.course.id = :courseId
                 AND (p.student.id = :studentId OR ts.id = :studentId)
-                AND (r.rated IS NULL OR r.rated = true)
+                AND (r.rated IS NULL OR r.rated IS TRUE)
             """)
-    List<StudentParticipation> findByCourseIdAndStudentIdWithEagerRatedResults(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
+    List<StudentParticipation> findByCourseIdAndStudentIdWithEagerRatedResults(@Param("courseId") long courseId, @Param("studentId") long studentId);
 
     @Query("""
             SELECT COUNT(p.id) > 0
@@ -74,20 +74,20 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
-            WHERE p.testRun = false
+            WHERE p.testRun IS FALSE
                 AND p.exercise.exerciseGroup.exam.id = :examId
-                AND r.rated = true
+                AND r.rated IS TRUE
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
-    List<StudentParticipation> findByExamIdWithEagerLegalSubmissionsRatedResults(@Param("examId") Long examId);
+    List<StudentParticipation> findByExamIdWithEagerLegalSubmissionsRatedResults(@Param("examId") long examId);
 
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
             WHERE p.exercise.course.id = :courseId
-            AND p.team.shortName = :teamShortName
+                AND p.team.shortName = :teamShortName
             """)
-    List<StudentParticipation> findAllByCourseIdAndTeamShortName(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
+    List<StudentParticipation> findAllByCourseIdAndTeamShortName(@Param("courseId") long courseId, @Param("teamShortName") String teamShortName);
 
     List<StudentParticipation> findByTeamId(Long teamId);
 
@@ -146,6 +146,15 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsAndTeamStudentsByExerciseIdAndTeamId(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
+
+    @Query("""
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
+            WHERE p.id = :participationId
+            """)
+    Optional<StudentParticipation> findByIdWithEagerTeamStudents(@Param("participationId") Long participationId);
 
     @Query("""
             SELECT DISTINCT p
@@ -211,7 +220,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH r.submission s
                 LEFT JOIN FETCH p.submissions
             WHERE p.exercise.id = :exerciseId
-                AND (r.id = (SELECT max(p_r.id) FROM p.results p_r)
+                AND (
+                    r.id = (SELECT MAX(p_r.id) FROM p.results p_r)
                     OR r.assessmentType <> de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
                     OR r IS NULL
                 )
@@ -225,7 +235,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH r.submission s
                 LEFT JOIN FETCH p.submissions
             WHERE p.exercise.id = :exerciseId
-                AND (r.id = (SELECT max(p_r.id) FROM p.results p_r WHERE p_r.rated = true)
+                AND (
+                    r.id = (SELECT MAX(p_r.id) FROM p.results p_r WHERE p_r.rated IS TRUE)
                     OR r.assessmentType <> de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
                     OR r IS NULL
                 )
@@ -241,13 +252,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 AND p.testRun = :testRun
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
                 AND r.assessmentType <> de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
-                AND r.id = (
-                    SELECT max(r2.id)
-                    FROM p.results r2
-                    WHERE r2.completionDate IS NOT NULL
-                )
+                AND r.id = (SELECT MAX(r2.id) FROM p.results r2 WHERE r2.completionDate IS NOT NULL)
             """)
-    Set<StudentParticipation> findByExerciseIdAndTestRunWithEagerLegalSubmissionsAndLatestResultWithCompletionDate(@Param("exerciseId") Long exerciseId,
+    Set<StudentParticipation> findByExerciseIdAndTestRunWithEagerLegalSubmissionsAndLatestResultWithCompletionDate(@Param("exerciseId") long exerciseId,
             @Param("testRun") boolean testRun);
 
     /**
@@ -265,10 +272,10 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH r.submission s
             WHERE p.exercise.id = :exerciseId
                 AND (r.id = (
-                    SELECT max(pr.id)
+                    SELECT MAX(pr.id)
                     FROM p.results pr
                         LEFT JOIN pr.submission prs
-                    WHERE pr.assessmentType = 'AUTOMATIC'
+                    WHERE pr.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
                         AND (
                             prs.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL
                             OR prs.type IS NULL
@@ -297,10 +304,10 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH r.submission s
             WHERE p.id = :participationId
                 AND (r.id = (
-                    SELECT max(pr.id)
+                    SELECT MAX(pr.id)
                     FROM p.results pr
                         LEFT JOIN pr.submission prs
-                    WHERE pr.assessmentType = 'AUTOMATIC'
+                    WHERE pr.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
                         AND (
                             prs.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL
                             OR prs.type IS NULL
@@ -319,9 +326,12 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH r.submission s
             WHERE p.exercise.id = :exerciseId
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
-                AND (r.assessmentType = 'MANUAL' OR r.assessmentType = 'SEMI_AUTOMATIC')
+                AND (
+                    r.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.MANUAL
+                    OR r.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.SEMI_AUTOMATIC
+                )
             """)
-    List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacksAndTestCases(@Param("exerciseId") Long exerciseId);
+    List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacksAndTestCases(@Param("exerciseId") long exerciseId);
 
     default List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacksAndTestCasesWithoutIndividualDueDate(Long exerciseId) {
         return findByExerciseIdWithManualResultAndFeedbacksAndTestCases(exerciseId).stream().filter(participation -> participation.getIndividualDueDate() == null).toList();
@@ -336,7 +346,10 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH r.submission s
             WHERE p.id = :participationId
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
-                AND (r.assessmentType = 'MANUAL' OR r.assessmentType = 'SEMI_AUTOMATIC')
+                AND (
+                    r.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.MANUAL
+                    OR r.assessmentType = de.tum.in.www1.artemis.domain.enumeration.AssessmentType.SEMI_AUTOMATIC
+                )
             """)
     Optional<StudentParticipation> findByIdWithManualResultAndFeedbacks(@Param("participationId") Long participationId);
 
@@ -422,17 +435,15 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             WHERE p.exercise.id = :exerciseId
                 AND p.student.id = :studentId
                 AND p.testRun = :testRun
-                AND (
-                    r.id = (
-                        SELECT max(pr.id)
-                        FROM p.results pr
-                            LEFT JOIN pr.submission prs
-                        WHERE prs.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL
-                            OR prs.type IS NULL
-                    ) OR r.id IS NULL
-                )
+                AND (r.id = (
+                    SELECT MAX(pr.id)
+                    FROM p.results pr
+                        LEFT JOIN pr.submission prs
+                    WHERE prs.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL
+                        OR prs.type IS NULL
+                ) OR r.id IS NULL)
             """)
-    Optional<StudentParticipation> findByExerciseIdAndStudentIdAndTestRunWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId,
+    Optional<StudentParticipation> findByExerciseIdAndStudentIdAndTestRunWithLatestResult(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId,
             @Param("testRun") boolean testRun);
 
     /**
@@ -455,18 +466,18 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH feedbacks.testCase
                 LEFT JOIN FETCH result.assessor
             WHERE p.exercise.id = :exerciseId
-                AND p.testRun = FALSE
+                AND p.testRun IS FALSE
                 AND 0L = (
                     SELECT COUNT(r2)
                     FROM Result r2
                     WHERE r2.assessor IS NOT NULL
-                        AND (r2.rated IS NULL OR r2.rated = FALSE)
+                        AND (r2.rated IS NULL OR r2.rated IS FALSE)
                         AND r2.submission = submission
                 ) AND :correctionRound = (
                     SELECT COUNT(r)
                     FROM Result r
                     WHERE r.assessor IS NOT NULL
-                        AND r.rated = TRUE
+                        AND r.rated IS TRUE
                         AND r.submission = submission
                         AND r.completionDate IS NOT NULL
                         AND r.assessmentType IN (
@@ -474,16 +485,16 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                             de.tum.in.www1.artemis.domain.enumeration.AssessmentType.SEMI_AUTOMATIC
                         ) AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)
                 ) AND :correctionRound = (
-                    SELECT COUNT (prs)
+                    SELECT COUNT(prs)
                     FROM p.results prs
                     WHERE prs.assessmentType IN (
                         de.tum.in.www1.artemis.domain.enumeration.AssessmentType.MANUAL,
                         de.tum.in.www1.artemis.domain.enumeration.AssessmentType.SEMI_AUTOMATIC
                     )
                 ) AND submission.submitted = true
-                AND submission.id = (SELECT max(s.id) FROM p.submissions s)
+                AND submission.id = (SELECT MAX(s.id) FROM p.submissions s)
             """)
-    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(@Param("exerciseId") Long exerciseId,
+    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(@Param("exerciseId") long exerciseId,
             @Param("correctionRound") long correctionRound);
 
     @Query("""
@@ -495,17 +506,18 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH f.testCase
             WHERE p.exercise.id = :exerciseId
                 AND (p.individualDueDate IS NULL OR p.individualDueDate <= :now)
-                AND p.testRun = false
+                AND p.testRun IS FALSE
                 AND NOT EXISTS (
-                    SELECT prs FROM p.results prs
+                    SELECT prs
+                    FROM p.results prs
                     WHERE prs.assessmentType IN (
                         de.tum.in.www1.artemis.domain.enumeration.AssessmentType.MANUAL,
                         de.tum.in.www1.artemis.domain.enumeration.AssessmentType.SEMI_AUTOMATIC
                     )
-                ) AND s.submitted = true
-                AND s.id = (SELECT max(s.id) FROM p.submissions s)
+                ) AND s.submitted IS TRUE
+                AND s.id = (SELECT MAX(s.id) FROM p.submissions s)
             """)
-    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDateIgnoreTestRuns(@Param("exerciseId") Long exerciseId,
+    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDateIgnoreTestRuns(@Param("exerciseId") long exerciseId,
             @Param("now") ZonedDateTime now);
 
     @Query("""
@@ -556,7 +568,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results sr
                 LEFT JOIN FETCH sr.feedbacks
-                LEFT JOIN p.team.students
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
             WHERE p.id = :participationId
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
                 AND (rs.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR rs.type IS NULL)
@@ -564,7 +577,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     Optional<StudentParticipation> findWithEagerLegalSubmissionsResultsFeedbacksById(@Param("participationId") Long participationId);
 
     @Query("""
-            SELECT p from StudentParticipation p
+            SELECT p
+            FROM StudentParticipation p
                 LEFT JOIN FETCH p.results r
                 LEFT JOIN FETCH r.submission rs
                 LEFT JOIN FETCH p.submissions s
@@ -585,7 +599,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH r.assessor a
             WHERE p.exercise.id = :exerciseId
-                AND p.testRun = FALSE
+                AND p.testRun IS FALSE
             """)
     List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
@@ -634,7 +648,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results sr
             WHERE p.exercise.id = :exerciseId
-                AND p.testRun = FALSE
+                AND p.testRun IS FALSE
                 AND p.submissions IS NOT EMPTY
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
                 AND (rs.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR rs.type IS NULL)
@@ -648,9 +662,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH s.results r
             WHERE p.student.id = :studentId
                 AND p.exercise IN :exercises
-                AND (p.testRun = FALSE OR :includeTestRuns = TRUE)
+                AND (p.testRun IS FALSE OR :includeTestRuns IS TRUE)
             """)
-    Set<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(@Param("studentId") Long studentId,
+    Set<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(@Param("studentId") long studentId,
             @Param("exercises") Collection<Exercise> exercises, @Param("includeTestRuns") boolean includeTestRuns);
 
     @Query("""
@@ -658,7 +672,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
-            WHERE p.testRun = FALSE
+            WHERE p.testRun IS FALSE
                 AND p.student.id = :studentId
                 AND p.exercise IN :exercises
             """)
@@ -669,7 +683,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
-            WHERE p.testRun = FALSE
+            WHERE p.testRun IS FALSE
                 AND p.student.id = :studentId
                 AND p.exercise IN :exercises
             """)
@@ -682,7 +696,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH r.assessor
-            WHERE p.testRun = FALSE
+            WHERE p.testRun IS FALSE
                 AND p.student.id = :studentId
                 AND p.exercise IN :exercises
             """)
@@ -694,7 +708,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
-            WHERE p.testRun = true
+            WHERE p.testRun IS true
                 AND p.student.id = :studentId
                 AND p.exercise IN :exercises
             """)
@@ -705,7 +719,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
-            WHERE p.testRun = true
+            WHERE p.testRun IS true
                 AND p.student.id = :studentId
                 AND p.exercise IN :exercises
             """)
@@ -773,17 +787,18 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     // TODO SE Improve - maybe leave out max id line?
     @Query("""
-            SELECT DISTINCT p FROM StudentParticipation p
+            SELECT DISTINCT p
+            FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
             WHERE p.exercise.id = :exerciseId
-                AND p.testRun = FALSE
-                AND s.id = (SELECT max(s1.id) FROM p.submissions s1)
+                AND p.testRun IS FALSE
+                AND s.id = (SELECT MAX(s1.id) FROM p.submissions s1)
                 AND EXISTS (
                     SELECT s1
                     FROM p.submissions s1
                     WHERE s1.participation.id = p.id
-                        AND s1.submitted = TRUE
+                        AND s1.submitted IS TRUE
                         AND (r.assessor = :assessor OR r.assessor.id IS NULL)
                 )
             """)
@@ -808,6 +823,11 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @NotNull
     default StudentParticipation findByIdWithLegalSubmissionsElseThrow(long participationId) {
         return findWithEagerLegalSubmissionsById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+    }
+
+    @NotNull
+    default StudentParticipation findByIdWithEagerTeamStudentsElseThrow(long participationId) {
+        return findByIdWithEagerTeamStudents(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
     }
 
     /**
@@ -854,9 +874,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @return an unmodifiable list of filtered participations
      */
     private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations, boolean resultInSubmission) {
-
         return participations.stream()
-
                 // Filter out participations without Students
                 // These participations are used e.g. to store template and solution build plans in programming exercises
                 .filter(participation -> participation.getParticipant() != null)
@@ -1050,12 +1068,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     }
 
     @Query("""
-            SELECT
-            new de.tum.in.www1.artemis.domain.quiz.QuizSubmittedAnswerCount(
-                COUNT(a.id),
-                s.id,
-                p.id
-            )
+            SELECT new de.tum.in.www1.artemis.domain.quiz.QuizSubmittedAnswerCount(COUNT(a.id), s.id, p.id)
             FROM SubmittedAnswer a
                 LEFT JOIN a.submission s
                 LEFT JOIN s.participation p
@@ -1076,8 +1089,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             FROM StudentParticipation p
                 LEFT JOIN p.team.students ts
             WHERE p.exercise.course.id = :courseId
-                 AND p.presentationScore IS NOT NULL
-                 AND (p.student.id = :studentId OR ts.id = :studentId)
+                AND p.presentationScore IS NOT NULL
+                AND (p.student.id = :studentId OR ts.id = :studentId)
             """)
     double sumPresentationScoreByStudentIdAndCourseId(@Param("courseId") long courseId, @Param("studentId") long studentId);
 
@@ -1094,15 +1107,16 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             FROM StudentParticipation p
                 LEFT JOIN p.team.students ts
             WHERE p.exercise.course.id = :courseId
-                 AND p.presentationScore IS NOT NULL
-                 AND (p.student.id IN :studentIds OR ts.id IN :studentIds)
+                AND p.presentationScore IS NOT NULL
+                AND (p.student.id IN :studentIds OR ts.id IN :studentIds)
             GROUP BY COALESCE(p.student.id, ts.id)
             """)
     Set<IdToPresentationScoreSum> sumPresentationScoreByStudentIdsAndCourseId(@Param("courseId") long courseId, @Param("studentIds") Set<Long> studentIds);
 
     @Query("""
-            SELECT p FROM StudentParticipation p
-                  LEFT JOIN FETCH p.submissions s
+            SELECT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.submissions s
             WHERE p.exercise.id = :exerciseId
             """)
     Set<StudentParticipation> findByExerciseIdWithEagerSubmissions(@Param("exerciseId") long exerciseId);
@@ -1140,7 +1154,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             FROM StudentParticipation p
                 LEFT JOIN p.team.students ts
             WHERE p.exercise.course.id = :courseId
-                 AND p.presentationScore IS NOT NULL
+                AND p.presentationScore IS NOT NULL
             """)
     double getAvgPresentationScoreByCourseId(@Param("courseId") long courseId);
 }
