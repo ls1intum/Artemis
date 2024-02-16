@@ -17,7 +17,7 @@
                     {{ 'artemisApp.pages.tutorialFreePeriodsManagement.timeZoneExplanation' | artemisTranslate: { timeZone: course.timeZone } }}
                 </div>
             </div>
-          
+
             <!-- List of free Periods -->
             @if (freePeriods && freePeriods.length > 0) {
                 <jhi-tutorial-group-free-periods-table
@@ -26,7 +26,7 @@
                     [tutorialGroupFreePeriods]="freePeriods"
                     [labelText]="'artemisApp.forms.tutorialFreePeriodForm.timeFrame.period'"
                     [loadAll]="loadAll.bind(this)"
-                ></jhi-tutorial-group-free-periods-table>
+                />
             }
 
             <!-- List of TutorialGroupFreeDays -->
@@ -37,7 +37,7 @@
                     [tutorialGroupFreePeriods]="freeDays"
                     [labelText]="'artemisApp.forms.tutorialFreePeriodForm.timeFrame.day'"
                     [loadAll]="loadAll.bind(this)"
-                ></jhi-tutorial-group-free-periods-table>
+                />
             }
 
             <!-- FreePeriodWithinDay -->
@@ -48,7 +48,7 @@
                     [tutorialGroupFreePeriods]="freePeriodsWithinDay"
                     [labelText]="'artemisApp.forms.tutorialFreePeriodForm.timeFrame.periodWithinDay'"
                     [loadAll]="loadAll.bind(this)"
-                ></jhi-tutorial-group-free-periods-table>
+                />
             }
         </div>
     }
