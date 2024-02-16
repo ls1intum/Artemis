@@ -522,7 +522,7 @@ public class ExamResource {
     public ResponseEntity<Exam> getExamForImportWithExercises(@PathVariable Long examId) {
         log.debug("REST request to get exam : {} for import with exercises", examId);
 
-        Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
+        Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, true);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(exam.getCourse().getId(), examId);
 
         return ResponseEntity.ok(exam);

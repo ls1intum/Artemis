@@ -82,4 +82,10 @@ describe('ProgrammingExerciseTestScheduleDatePickerComponent', () => {
         expect(comp.selectedDate).toBeUndefined();
         expect(spy).toHaveBeenCalledOnce();
     });
+
+    it('should call all functions', () => {
+        const someFunction = jest.fn();
+        comp.registerOnChange(someFunction);
+        expect(comp._onChange).toBe(someFunction);
+    });
 });

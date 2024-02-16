@@ -18,8 +18,7 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
                 class="text-warning"
                 size="2x"
                 ngbTooltip="{{ 'artemisApp.programmingExercise.configureGrading.updatedGradingConfigTooltip' | artemisTranslate }}"
-            >
-            </fa-icon>
+            />
         }
     `,
 })

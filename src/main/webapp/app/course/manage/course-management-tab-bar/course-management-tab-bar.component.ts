@@ -31,7 +31,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
+import { PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 
 @Component({
@@ -109,7 +109,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
 
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
-                this.irisEnabled = profileInfo.activeProfiles.includes('iris');
+                this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
                 this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LTI);
                 this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
             }

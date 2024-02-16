@@ -1,7 +1,7 @@
 <h4 class="mb-4" jhiTranslate="artemisApp.examTimeline.title" [translateValues]="{ username: studentExam.user!.login! }">Exam timeline</h4>
 @if (studentExam) {
     <div>
-        <ngx-slider class="mb-5" #slider [(value)]="selectedTimestamp" [options]="options" (userChange)="onSliderInputChange($event)"></ngx-slider>
+        <ngx-slider class="mb-5" #slider [(value)]="selectedTimestamp" [options]="options" (userChange)="onSliderInputChange($event)" />
         <jhi-exam-navigation-bar
             #examNavigationBar
             id="exam-navigation-bar"
@@ -10,7 +10,7 @@
             [exerciseIndex]="exerciseIndex"
             [examTimeLineView]="true"
             (onPageChanged)="onPageChange($event)"
-        ></jhi-exam-navigation-bar>
+        />
         <!-- exercises -->
         @for (exercise of studentExam.exercises; track exercise; let i = $index) {
             @if (exercise && exercise.studentParticipations && exercise.studentParticipations[0]) {
@@ -24,7 +24,7 @@
                                     [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                                     [readonly]="true"
                                     [examTimeline]="true"
-                                ></jhi-quiz-submission-exam>
+                                />
                             }
                             @case (ExerciseType.FILE_UPLOAD) {
                                 <jhi-file-upload-submission-exam
@@ -32,7 +32,7 @@
                                     [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                                     [readonly]="true"
                                     [examTimeline]="true"
-                                ></jhi-file-upload-submission-exam>
+                                />
                             }
                             @case (ExerciseType.TEXT) {
                                 <jhi-text-editor-exam
@@ -40,7 +40,7 @@
                                     [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                                     [readonly]="true"
                                     [examTimeline]="true"
-                                ></jhi-text-editor-exam>
+                                />
                             }
                             @case (ExerciseType.MODELING) {
                                 <jhi-modeling-submission-exam
@@ -48,14 +48,14 @@
                                     [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                                     [readonly]="true"
                                     [examTimeline]="true"
-                                ></jhi-modeling-submission-exam>
+                                />
                             }
                             @case (ExerciseType.PROGRAMMING) {
                                 <jhi-programming-exam-diff
                                     [exercise]="exercise"
                                     [studentParticipation]="exercise.studentParticipations[0]"
                                     [(cachedDiffReports)]="cachedDiffReports"
-                                ></jhi-programming-exam-diff>
+                                />
                             }
                         }
                     </div>

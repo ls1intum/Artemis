@@ -6,14 +6,14 @@
         </h5>
         @if (course?.isAtLeastEditor) {
             <div class="ms-auto">
-                <ng-content select="[exerciseCreateButtons]"></ng-content>
+                <ng-content select="[exerciseCreateButtons]" />
             </div>
         }
         <button class="btn question-collapse" (click)="isCollapsed = !isCollapsed" [attr.aria-expanded]="!isCollapsed" [attr.aria-controls]="'collapseQuestion'">
-            <fa-icon size="2x" [icon]="isCollapsed ? faAngleRight : faAngleDown"></fa-icon>
+            <fa-icon size="2x" [icon]="isCollapsed ? faAngleRight : faAngleDown" />
         </button>
     </div>
     <div class="card-body question-card-body" [ngbCollapse]="isCollapsed">
-        <ng-content select="[exercises]"></ng-content>
+        <ng-content select="[exercises]" />
     </div>
 </div>

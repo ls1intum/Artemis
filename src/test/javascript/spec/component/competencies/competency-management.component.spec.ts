@@ -28,6 +28,11 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgbAccordionBody, NgbAccordionButton, NgbAccordionCollapse, NgbAccordionDirective, NgbAccordionHeader, NgbAccordionItem } from '@ng-bootstrap/ng-bootstrap';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { CompetencyImportCourseComponent } from 'app/course/competencies/competency-management/competency-import-course.component';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { PROFILE_IRIS } from 'app/app.constants';
 
 // eslint-disable-next-line @angular-eslint/component-selector
 @Component({ selector: 'ngx-graph', template: '' })
@@ -37,6 +42,8 @@ describe('CompetencyManagementComponent', () => {
     let fixture: ComponentFixture<CompetencyManagementComponent>;
     let component: CompetencyManagementComponent;
     let competencyService: CompetencyService;
+    let profileService: ProfileService;
+    let irisSettingsService: IrisSettingsService;
     let modalService: NgbModal;
 
     let getAllForCourseSpy: any;
@@ -130,6 +137,30 @@ describe('CompetencyManagementComponent', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    it('should show generate button if IRIS is enabled', () => {
+        profileService = TestBed.inject(ProfileService);
+        irisSettingsService = TestBed.inject(IrisSettingsService);
+        const profileInfoResponse = {
+            activeProfiles: [PROFILE_IRIS],
+        } as ProfileInfo;
+        const irisSettingsResponse = {
+            irisCompetencyGenerationSettings: {
+                enabled: true,
+            },
+        } as IrisCourseSettings;
+        const getProfileInfoSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfoResponse));
+        const getIrisSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettingsResponse));
+
+        fixture.detectChanges();
+        return fixture.whenStable().then(() => {
+            const generateButton = fixture.debugElement.query(By.css('#generateButton'));
+
+            expect(getProfileInfoSpy).toHaveBeenCalled();
+            expect(getIrisSettingsSpy).toHaveBeenCalled();
+            expect(generateButton).not.toBeNull();
+        });
     });
 
     it('should load competency and associated progress', () => {
