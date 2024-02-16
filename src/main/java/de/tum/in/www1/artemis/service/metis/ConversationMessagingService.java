@@ -151,6 +151,7 @@ public class ConversationMessagingService extends PostingService {
         ConversationNotification notification = conversationNotificationService.createNotification(createdMessage, conversation, course,
                 createdConversationMessage.mentionedUsers());
         PostDTO postDTO = new PostDTO(createdMessage, MetisCrudAction.CREATE, notification);
+        createdMessage.getConversation().hideDetails();
         if (createdConversationMessage.completeConversation() instanceof Channel channel && channel.getIsCourseWide()) {
             // We don't need the list of participants for course-wide channels. We can delay the db query and send the WS messages first
             if (conversationService.isChannelVisibleToStudents(channel)) {
