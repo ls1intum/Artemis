@@ -24,7 +24,6 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     @Input() labelTooltip: string;
     @Input() value: Competency[] = [];
     @Input() disabled: boolean;
-    @Input() error: boolean;
     @Input() competencies: Competency[];
 
     @Output() valueChange = new EventEmitter();

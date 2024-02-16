@@ -28,9 +28,7 @@
                             [disabled]="disabled"
                         />
                         <label for="competency-{{ competency.id }}">
-                            @if (competency.taxonomy) {
-                                <fa-icon [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" />
-                            }
+                            <fa-icon [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" />
                             {{ competency.title }}
                         </label>
                     </div>
