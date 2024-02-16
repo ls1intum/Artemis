@@ -56,7 +56,7 @@
                         </p>
                     }
                     <button id="save" type="submit" class="btn btn-primary mt-2" [disabled]="!form.valid || isWorkingTimeFormDisabled">
-                        <fa-icon [icon]="faSave"></fa-icon>
+                        <fa-icon [icon]="faSave" />
                         <span jhiTranslate="entity.action.save">Save</span>
                     </button>
                 </form>
@@ -66,7 +66,7 @@
             <div class="mb-3">
                 <h5 jhiTranslate="artemisApp.studentExams.workingTime">Working time</h5>
                 <span jhiTranslate="artemisApp.studentExams.usedWorkingTime">Used working time</span>:
-                <jhi-testexam-working-time [studentExam]="studentExam"></jhi-testexam-working-time>
+                <jhi-testexam-working-time [studentExam]="studentExam" />
             </div>
         }
         <div class="mb-3">

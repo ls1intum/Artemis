@@ -4,7 +4,6 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam.model';
@@ -48,7 +47,6 @@ export class ComplaintsStudentViewComponent implements OnInit {
 
     constructor(
         private complaintService: ComplaintService,
-        private activatedRoute: ActivatedRoute,
         private serverDateService: ArtemisServerDateService,
         private accountService: AccountService,
     ) {}

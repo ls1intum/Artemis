@@ -35,7 +35,7 @@
                 exercise &&
                 !exercise.isAtLeastInstructor &&
                 hasComplaint &&
-                complaintType != ComplaintType.COMPLAINT &&
+                complaintType !== ComplaintType.COMPLAINT &&
                 !complaintHandled &&
                 exercise.assessmentType !== AssessmentType.AUTOMATIC
             ) {
@@ -48,7 +48,7 @@
                 exercise &&
                 !exercise.isAtLeastInstructor &&
                 hasComplaint &&
-                complaintType != ComplaintType.COMPLAINT &&
+                complaintType !== ComplaintType.COMPLAINT &&
                 exercise.assessmentType === AssessmentType.AUTOMATIC &&
                 !complaintHandled &&
                 !exercise.teamMode
@@ -57,7 +57,7 @@
                     You may respond to the feedback request.
                 </span>
             }
-            @if (isAssessor && exercise && !exercise.isAtLeastInstructor && hasComplaint && complaintType == ComplaintType.COMPLAINT && !complaintHandled && exercise.teamMode) {
+            @if (isAssessor && exercise && !exercise.isAtLeastInstructor && hasComplaint && complaintType === ComplaintType.COMPLAINT && !complaintHandled && exercise.teamMode) {
                 <span id="teamComplaint" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.teamComplaint"> You have to respond to the complaint. </span>
             }
             @if (
@@ -65,7 +65,7 @@
                 exercise &&
                 !exercise.isAtLeastInstructor &&
                 hasComplaint &&
-                complaintType == ComplaintType.COMPLAINT &&
+                complaintType === ComplaintType.COMPLAINT &&
                 exercise.assessmentType === AssessmentType.AUTOMATIC &&
                 !complaintHandled &&
                 !exercise.teamMode
@@ -80,7 +80,7 @@
                 !exercise.isAtLeastInstructor &&
                 hasComplaint &&
                 exercise.assessmentType !== AssessmentType.AUTOMATIC &&
-                complaintType == ComplaintType.COMPLAINT &&
+                complaintType === ComplaintType.COMPLAINT &&
                 !complaintHandled &&
                 !exercise.teamMode
             ) {
@@ -127,9 +127,9 @@
                         [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + S'"
                     >
                         @if (saveBusy) {
-                            <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
+                            <fa-icon [icon]="faSpinner" [spin]="true" />
                         }
-                        <fa-icon [icon]="faSave"></fa-icon>
+                        <fa-icon [icon]="faSave" />
                         <span jhiTranslate="entity.action.save">Save</span>
                     </button>
                     <button
@@ -140,7 +140,7 @@
                         [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + Enter'"
                     >
                         @if (submitBusy) {
-                            <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
+                            <fa-icon [icon]="faSpinner" [spin]="true" />
                         }
                         <span jhiTranslate="entity.action.submit">Submit</span>
                     </button>
@@ -151,7 +151,7 @@
                             [disabled]="!(exercise?.isAtLeastInstructor || isAssessor) || saveBusy || submitBusy || cancelBusy"
                         >
                             @if (cancelBusy) {
-                                <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
+                                <fa-icon [icon]="faSpinner" [spin]="true" />
                             }
                             <span jhiTranslate="entity.action.cancel">Cancel</span>
                         </button>
@@ -165,7 +165,7 @@
                         [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + Enter'"
                     >
                         @if (submitBusy) {
-                            <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
+                            <fa-icon [icon]="faSpinner" [spin]="true" />
                         }
                         <span jhiTranslate="artemisApp.assessment.button.overrideAssessment">Override Assessment</span>
                     </button>
@@ -173,14 +173,13 @@
                 @if (result?.completionDate && exercise?.isAtLeastInstructor && (exercise!.type === ExerciseType.MODELING || exercise!.type === ExerciseType.TEXT)) {
                     <button class="btn m-1 btn-primary" id="useAsExampleSubmission" (click)="onUseAsExampleSolutionClicked()">
                         @if (submitBusy) {
-                            <fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>
+                            <fa-icon [icon]="faSpinner" [spin]="true" />
                         }
                         <span jhiTranslate="artemisApp.assessment.button.useAsExampleSubmission">Use as Example Submission</span>
                     </button>
                 }
                 <ng-template #nextSubmissionShortcut>
-                    {{ 'artemisApp.assessment.button.control' | artemisTranslate }} + Shift +
-                    <fa-icon [icon]="faSquareCaretRight"></fa-icon>
+                    {{ 'artemisApp.assessment.button.control' | artemisTranslate }} + Shift + <fa-icon [icon]="faSquareCaretRight" />
                 </ng-template>
                 @if (assessNextVisible) {
                     <button
@@ -191,7 +190,7 @@
                         [ngbTooltip]="nextSubmissionShortcut"
                     >
                         @if (nextSubmissionBusy) {
-                            <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
+                            <fa-icon [icon]="faSpinner" [spin]="true" />
                         }
                         <span jhiTranslate="artemisApp.assessment.button.nextSubmission">Next Submission</span>
                     </button>
@@ -204,5 +203,5 @@
     }
 </h3>
 @if (exercise) {
-    <jhi-assessment-warning [exercise]="exercise"></jhi-assessment-warning>
+    <jhi-assessment-warning [exercise]="exercise" />
 }
