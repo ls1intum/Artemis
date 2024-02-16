@@ -3,7 +3,7 @@
 </td>
 <td class="align-middle" style="font-size: 1.35rem">
     @if (exercise && exercise.type) {
-        <fa-icon [icon]="getIcon(exercise.type)"></fa-icon>
+        <fa-icon [icon]="getIcon(exercise.type)" />
     }
 </td>
 <td class="align-middle">
@@ -48,7 +48,7 @@
                         [routerLink]="getAssessmentLink(exercise, submission, result.id)"
                         class="btn btn-primary btn-sm mb-1"
                     >
-                        <fa-icon [fixedWidth]="true" [icon]="faFolderOpen"></fa-icon>
+                        <fa-icon [fixedWidth]="true" [icon]="faFolderOpen" />
                         <span jhiTranslate="artemisApp.studentExamDetail.openLatestAssessment"></span>
                     </a>
                 </div>
@@ -62,7 +62,7 @@
                         [routerLink]="getAssessmentLink(exercise, submission)"
                         class="btn btn-primary btn-sm mb-1"
                     >
-                        <fa-icon [fixedWidth]="true" [icon]="faFolderOpen"></fa-icon>
+                        <fa-icon [fixedWidth]="true" [icon]="faFolderOpen" />
                         {{ 'artemisApp.assessment.dashboard.actions.assess' | artemisTranslate }}
                     </a>
                 </div>
@@ -70,7 +70,7 @@
             @if (exercise.type === ExerciseType.PROGRAMMING) {
                 <div>
                     <a [class.disabled]="busy" [routerLink]="getAssessmentLink(exercise)" class="btn btn-primary btn-sm mb-1">
-                        <fa-icon [fixedWidth]="true" [icon]="faFolderOpen"></fa-icon>
+                        <fa-icon [fixedWidth]="true" [icon]="faFolderOpen" />
                         {{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}
                     </a>
                 </div>

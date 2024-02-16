@@ -19,14 +19,14 @@
                 <div class="mt-3 text-center">
                     @if (inconsistencies != undefined && inconsistencies.length == 0) {
                         <div>
-                            <span class="h1 text-success"><fa-icon [icon]="faCheck"></fa-icon></span>
+                            <span class="h1 text-success"><fa-icon [icon]="faCheck" /></span>
                             <br />
                             <span jhiTranslate="artemisApp.consistencyCheck.noInconsistencies">No inconsistencies found</span>
                         </div>
                     }
                     @if (inconsistencies != undefined && inconsistencies.length > 0) {
                         <div>
-                            <span class="h1 text-danger"><fa-icon [icon]="faTimes"></fa-icon></span>
+                            <span class="h1 text-danger"><fa-icon [icon]="faTimes" /></span>
                             <br />
                             <span jhiTranslate="artemisApp.consistencyCheck.inconsistenciesFound">Following inconsistencies have been found</span>
                         </div>

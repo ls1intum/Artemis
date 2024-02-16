@@ -2,7 +2,7 @@
     <div class="course-info-bar course-info-bar--participation" id="participation-header">
         <div class="row">
             <div class="col-12 col-sm-12 col-lg-5 d-flex flex-column justify-content-center">
-                <h4 class="fw-medium"><ng-content select="[pagetitle]"></ng-content></h4>
+                <h4 class="fw-medium"><ng-content select="[pagetitle]" /></h4>
                 <div class="d-flex align-items-center">
                     <h6 class="me-2 mb-0 fw-medium">{{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | artemisTranslate }}</h6>
                     <span>{{ (dueDate | artemisDate) || 'N/A' }}</span>
@@ -39,10 +39,10 @@
                                     }
                                 </span>
                                 @if (exercise.difficulty) {
-                                    <jhi-difficulty-badge class="ms-1" [exercise]="exercise"></jhi-difficulty-badge>
+                                    <jhi-difficulty-badge class="ms-1" [exercise]="exercise" />
                                 }
                                 @if (exercise.includedInOverallScore && exercise.includedInOverallScore != IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                                    <jhi-included-in-score-badge class="ms-1" [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
+                                    <jhi-included-in-score-badge class="ms-1" [includedInOverallScore]="exercise.includedInOverallScore" />
                                 }
                             </td>
                         </tr>
@@ -63,11 +63,11 @@
             <div class="col-12 col-sm-auto flex-sm-grow-1 col-lg-3 mt-4 mt-md-0 d-flex flex-column justify-content-center align-items-end">
                 @if (participation && resultsPublished) {
                     <div class="row">
-                        <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="participation"></jhi-submission-result-status>
+                        <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="participation" />
                     </div>
                 }
                 <div class="mt-2">
-                    <ng-content select="[submitbutton]"></ng-content>
+                    <ng-content select="[submitbutton]" />
                 </div>
             </div>
         </div>

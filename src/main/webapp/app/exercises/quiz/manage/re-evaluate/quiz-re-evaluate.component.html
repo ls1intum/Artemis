@@ -6,7 +6,7 @@
         </h1>
         @if (!quizExercise.course) {
             <h5>
-                <fa-icon class="text-warning" [icon]="faExclamationTriangle"></fa-icon>
+                <fa-icon class="text-warning" [icon]="faExclamationTriangle" />
                 <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.exam"></span>
             </h5>
         }
@@ -35,7 +35,7 @@
                                     (click)="resetQuizTitle()"
                                     [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuizTitle' | artemisTranslate"
                                 >
-                                    <fa-icon [icon]="faUndo"></fa-icon>
+                                    <fa-icon [icon]="faUndo" />
                                 </button>
                             </span>
                         </div>
@@ -50,7 +50,7 @@
                                     labelName="{{ 'artemisApp.quizExercise.startTime' | artemisTranslate }}"
                                     [(ngModel)]="quizExercise.releaseDate"
                                     [disabled]="true"
-                                ></jhi-date-time-picker>
+                                />
                             </div>
                         </div>
                         <div class="row">
@@ -76,7 +76,7 @@
                                         [includedInOverallScore]="quizExercise.includedInOverallScore!"
                                         (includedInOverallScoreChange)="includedInOverallScoreChange($event)"
                                         [allowNotIncluded]="!!quizExercise.course"
-                                    ></jhi-included-in-overall-score-picker>
+                                    />
                                 }
                             </div>
                         </div>
@@ -106,8 +106,7 @@
                                 (questionDeleted)="deleteQuestion(question)"
                                 (questionMoveUp)="moveUp(question)"
                                 (questionMoveDown)="moveDown(question)"
-                            >
-                            </jhi-re-evaluate-multiple-choice-question>
+                            />
                         </div>
                     }
                     @if (question.type === DRAG_AND_DROP) {
@@ -119,8 +118,7 @@
                                 (questionDeleted)="deleteQuestion(question)"
                                 (questionMoveUp)="moveUp(question)"
                                 (questionMoveDown)="moveDown(question)"
-                            >
-                            </jhi-re-evaluate-drag-and-drop-question>
+                            />
                         </div>
                     }
                     @if (question.type === SHORT_ANSWER) {
@@ -132,8 +130,7 @@
                                 (questionDeleted)="deleteQuestion(question)"
                                 (questionMoveUp)="moveUp(question)"
                                 (questionMoveDown)="moveDown(question)"
-                            >
-                            </jhi-re-evaluate-short-answer-question>
+                            />
                         </div>
                     }
                 </div>
@@ -182,7 +179,7 @@
                         </ng-template>
                         @if (!quizIsValid) {
                             <span class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right auto">
-                                <fa-icon [icon]="faExclamationCircle"></fa-icon>
+                                <fa-icon [icon]="faExclamationCircle" />
                                 <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
                                 <span>({{ invalidReasons.length }})</span>
                             </span>
