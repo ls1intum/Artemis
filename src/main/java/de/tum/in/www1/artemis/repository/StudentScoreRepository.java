@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
+import de.tum.in.www1.artemis.web.rest.dto.score.StudentScoreSumDTO;
 
 @Repository
 public interface StudentScoreRepository extends JpaRepository<StudentScore, Long> {
@@ -42,13 +43,13 @@ public interface StudentScoreRepository extends JpaRepository<StudentScore, Long
 
     // TODO: use a custom object instead of Object[] (as in the example above with ParticipantScoreAverageDTO)
     @Query("""
-            SELECT u, SUM(sc.lastRatedPoints)
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.score.StudentScoreSumDTO(u.id, SUM(sc.lastRatedPoints))
             FROM StudentScore sc
                 LEFT JOIN sc.user u
             WHERE sc.exercise IN :exercises
             GROUP BY u.id
             """)
-    List<Object[]> getAchievedPointsOfStudents(@Param("exercises") Set<Exercise> exercises);
+    Set<StudentScoreSumDTO> getAchievedPointsOfStudents(@Param("exercises") Set<Exercise> exercises);
 
     @Query("""
             SELECT s
