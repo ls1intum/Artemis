@@ -24,7 +24,7 @@
         <div class="table-responsive">
             <table class="table table-sm table-striped" aria-describedby="audits-page-heading">
                 <thead>
-                    @if (canLoad()) {
+                    @if (canLoad) {
                         <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="transition()">
                             <th scope="col" jhiSortBy="auditEventDate"><span jhiTranslate="audits.table.header.date">Date</span> <fa-icon [icon]="faSort" /></th>
                             <th scope="col" jhiSortBy="principal"><span jhiTranslate="audits.table.header.principal">User</span> <fa-icon [icon]="faSort" /></th>
