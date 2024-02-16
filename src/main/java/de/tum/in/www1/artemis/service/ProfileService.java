@@ -30,7 +30,7 @@ public class ProfileService {
     }
 
     public boolean isGitlabCiOrJenkins() {
-        return isProfileActive("gitlabci") || isProfileActive("jenkins");
+        return isProfileActive("gitlabci") || isJenkins();
     }
 
     /**
@@ -49,6 +49,15 @@ public class ProfileService {
      */
     public boolean isLocalVcs() {
         return isProfileActive(Constants.PROFILE_LOCALVC);
+    }
+
+    /**
+     * Checks if the jenkins profile is active
+     *
+     * @return true if the jenkins profile is active, false otherwise
+     */
+    public boolean isJenkins() {
+        return isProfileActive("jenkins");
     }
 
     private boolean isProfileActive(String profile) {

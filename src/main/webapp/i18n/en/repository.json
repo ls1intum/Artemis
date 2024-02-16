@@ -1,0 +1,19 @@
+{
+    "artemisApp": {
+        "repository": {
+            "title": "Repository",
+            "commitHistory": {
+                "title": "Commit History",
+                "openCommitHistory": "Open Commit History",
+                "commitDetails": {
+                    "title": "Commit Details",
+                    "commitMessage": "Commit Message",
+                    "commitHash": "Commit Hash",
+                    "author": "Author",
+                    "date": "Date",
+                    "commit": "Commit"
+                }
+            }
+        }
+    }
+}

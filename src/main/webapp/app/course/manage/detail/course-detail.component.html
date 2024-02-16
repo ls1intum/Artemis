@@ -11,7 +11,7 @@
                             [currentPercentage]="courseDTO?.currentPercentageAssessments"
                             [currentAbsolute]="courseDTO?.currentAbsoluteAssessments"
                             [currentMax]="courseDTO?.currentMaxAssessments"
-                        ></jhi-course-detail-doughnut-chart>
+                        />
                         @if (course.complaintsEnabled) {
                             <jhi-course-detail-doughnut-chart
                                 class="doughnut-container col-sm-6 my-3"
@@ -20,7 +20,7 @@
                                 [currentPercentage]="courseDTO?.currentPercentageComplaints"
                                 [currentAbsolute]="courseDTO?.currentAbsoluteComplaints"
                                 [currentMax]="courseDTO?.currentMaxComplaints"
-                            ></jhi-course-detail-doughnut-chart>
+                            />
                         }
                         @if (course.requestMoreFeedbackEnabled) {
                             <jhi-course-detail-doughnut-chart
@@ -30,7 +30,7 @@
                                 [currentPercentage]="courseDTO?.currentPercentageMoreFeedbacks"
                                 [currentAbsolute]="courseDTO?.currentAbsoluteMoreFeedbacks"
                                 [currentMax]="courseDTO?.currentMaxMoreFeedbacks"
-                            ></jhi-course-detail-doughnut-chart>
+                            />
                         }
                         <jhi-course-detail-doughnut-chart
                             class="doughnut-container col-sm-6 my-3"
@@ -39,19 +39,14 @@
                             [currentPercentage]="courseDTO?.currentPercentageAverageScore"
                             [currentAbsolute]="courseDTO?.currentAbsoluteAverageScore"
                             [currentMax]="courseDTO?.currentMaxAverageScore"
-                        ></jhi-course-detail-doughnut-chart>
+                        />
                     </div>
                 </div>
-                <jhi-course-detail-line-chart
-                    class="col-xxl-8"
-                    [course]="course"
-                    [numberOfStudentsInCourse]="course.numberOfStudents!"
-                    [initialStats]="activeStudents"
-                ></jhi-course-detail-line-chart>
+                <jhi-course-detail-line-chart class="col-xxl-8" [course]="course" [numberOfStudentsInCourse]="course.numberOfStudents!" [initialStats]="activeStudents" />
             </div>
         </div>
     }
     @if (courseDetailSections) {
-        <jhi-detail-overview-list [sections]="courseDetailSections" class="col-12"></jhi-detail-overview-list>
+        <jhi-detail-overview-list [sections]="courseDetailSections" class="col-12" />
     }
 </div>
