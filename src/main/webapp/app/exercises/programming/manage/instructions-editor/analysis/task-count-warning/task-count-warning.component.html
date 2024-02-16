@@ -1,11 +1,11 @@
 @if (numOfTasks > advisedMaxNumOfTasks) {
     <div id="instruction_analysis_num-of-tasks-issues" class="editable-instruction-container__status__item">
-        <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="tasksTooltipContent"></fa-icon>
+        <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="tasksTooltipContent" />
         <span class="text-info" jhiTranslate="artemisApp.programmingExercise.tasksAnalysis.issues">Task issues.</span>
     </div>
 } @else {
     <div id="instruction_analysis_num-of-tasks-ok" class="editable-instruction-container__status__item">
-        <fa-icon [icon]="faCheckCircle" class="text-success me-1"></fa-icon>
+        <fa-icon [icon]="faCheckCircle" class="text-success me-1" />
         <span class="text-info" jhiTranslate="artemisApp.programmingExercise.tasksAnalysis.ok">Tasks ok.</span>
     </div>
 }

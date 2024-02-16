@@ -8,6 +8,6 @@
     <p>
         {{ 'artemisApp.studentDashboard.enroll.notInCourseButCanEnroll' | artemisTranslate }}
     </p>
-    <jhi-course-prerequisites-button [course]="course!"></jhi-course-prerequisites-button>
-    <jhi-course-registration-button [course]="course!" (onRegistration)="redirectToCoursePage()"></jhi-course-registration-button>
+    <jhi-course-prerequisites-button [course]="course!" />
+    <jhi-course-registration-button [course]="course!" (onRegistration)="redirectToCoursePage()" />
 }

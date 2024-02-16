@@ -10,6 +10,10 @@ import { MockAlertService } from '../helpers/mocks/service/mock-alert.service';
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { UMLModel } from '@ls1intum/apollon';
+import { Router } from '@angular/router';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';
+import { MockRouter } from '../helpers/mocks/mock-router';
 
 const sections = [
     {
@@ -39,6 +43,8 @@ describe('DetailOverviewList', () => {
             providers: [
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: AlertService, useClass: MockAlertService },
+                { provide: Router, useClass: MockRouter },
+                { provide: ProfileService, useClass: MockProfileService },
                 { provide: ModelingExerciseService, useValue: { convertToPdf: jest.fn() } },
             ],
         })
@@ -54,12 +60,15 @@ describe('DetailOverviewList', () => {
         component = fixture.componentInstance;
     });
 
-    it('should initialize', () => {
+    it('should initialize and destroy', () => {
         component.sections = sections;
         fixture.detectChanges();
         expect(component.headlines).toStrictEqual([{ id: 'headline-1', translationKey: 'headline.1' }]);
         expect(component.headlinesRecord).toStrictEqual({ 'headline.1': 'headline-1' });
         expect(DetailOverviewListComponent).not.toBeNull();
+
+        component.ngOnDestroy();
+        expect(component.profileSub?.closed).toBeTruthy();
     });
 
     it('should open git diff modal', () => {

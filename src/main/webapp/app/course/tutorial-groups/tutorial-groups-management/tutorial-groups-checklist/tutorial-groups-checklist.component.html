@@ -16,7 +16,7 @@
                         {{ 'artemisApp.pages.checklist.timeZone' | artemisTranslate }}
                     </label>
                     <a [routerLink]="['/course-management', course.id!, 'edit']" class="btn btn-warning btn-md my-2">
-                        <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span>{{ 'artemisApp.pages.checklist.editCourse' | artemisTranslate }}</span>
+                        <fa-icon [icon]="faWrench" />&nbsp;<span>{{ 'artemisApp.pages.checklist.editCourse' | artemisTranslate }}</span>
                     </a>
                 </div>
             </div>
@@ -34,7 +34,7 @@
                             class="btn btn-primary btn-md my-2"
                             [class.disabled]="!isTimeZoneConfigured"
                         >
-                            <fa-icon [icon]="faPlus"></fa-icon>&nbsp;<span>{{ 'artemisApp.pages.tutorialGroupsManagement.editConfigurationButton' | artemisTranslate }}</span>
+                            <fa-icon [icon]="faPlus" />&nbsp;<span>{{ 'artemisApp.pages.tutorialGroupsManagement.editConfigurationButton' | artemisTranslate }}</span>
                         </a>
                     }
                     @if (!isTutorialGroupConfigurationCreated) {
@@ -43,7 +43,7 @@
                             class="btn btn-primary btn-md my-2"
                             [class.disabled]="!isTimeZoneConfigured"
                         >
-                            <fa-icon [icon]="faPlus"></fa-icon>&nbsp;<span>{{ 'artemisApp.pages.checklist.createConfiguration' | artemisTranslate }}</span>
+                            <fa-icon [icon]="faPlus" />&nbsp;<span>{{ 'artemisApp.pages.checklist.createConfiguration' | artemisTranslate }}</span>
                         </a>
                     }
                 </table>
