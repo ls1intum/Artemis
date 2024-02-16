@@ -65,11 +65,12 @@ export class ExamManagementPage {
      * Opens the exam assessment dashboard
      * @param courseID the id of the course
      * @param examID the id of the exam
+     * @param timeout timeout of waiting for assessment dashboard button
      */
-    async openAssessmentDashboard(courseID: number, examID: number) {
+    async openAssessmentDashboard(courseID: number, examID: number, timeout = 60000) {
         await this.page.goto(`/course-management/${courseID}/exams`);
         const assessmentButton = this.page.locator(`#exercises-button-${examID}`);
-        await assessmentButton.waitFor({ state: 'attached' });
+        await assessmentButton.waitFor({ state: 'attached', timeout: timeout });
         await assessmentButton.click();
     }
 

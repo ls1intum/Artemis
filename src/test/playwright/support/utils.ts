@@ -95,3 +95,21 @@ export async function clearTextField(textField: Locator) {
     await textField.selectText();
     await textField.press('Backspace');
 }
+
+export async function hasAttributeWithValue(page: Page, selector: string, value: string): Promise<boolean> {
+    return page.evaluate(
+        ({ selector, value }) => {
+            console.log('Getting attributes of a selector ', selector);
+            const element = document.querySelector(selector);
+            if (!element) return false;
+            console.log('Attributes: ', element.attributes);
+            for (const attr of element.attributes) {
+                if (attr.value === value) {
+                    return true;
+                }
+            }
+            return false;
+        },
+        { selector, value },
+    );
+}
