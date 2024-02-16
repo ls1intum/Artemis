@@ -91,7 +91,6 @@
             "importAll": {
                 "title": "Alle Kompetenzen eines Kurses importieren",
                 "search": "Suche nach einem Kurs:",
-                "importRelations": "Relationen importieren?",
                 "table": {
                     "TITLE": "Titel",
                     "SEMESTER": "Semester",

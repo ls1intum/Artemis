@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { Column } from 'app/shared/import/import.component';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
@@ -10,7 +10,7 @@ import { Subject } from 'rxjs';
     selector: 'jhi-competency-table',
     templateUrl: './competency-table.component.html',
 })
-export class CompetencyTableComponent<T extends BaseEntity> {
+export class CompetencyTableComponent<T extends BaseEntity> implements OnInit {
     @Input() public disabledIds: number[] = [];
     @Input() entityName: string;
 
@@ -34,7 +34,7 @@ export class CompetencyTableComponent<T extends BaseEntity> {
 
     protected readonly sort = new Subject<void>();
 
-    protected constructor(private sortService: SortService) {}
+    public constructor(private sortService: SortService) {}
 
     ngOnInit(): void {
         this.content = { resultsOnPage: [], numberOfPages: 0 };
