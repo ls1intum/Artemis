@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.science;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,14 +14,27 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.science.ScienceEventType;
 import de.tum.in.www1.artemis.repository.science.ScienceEventRepository;
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.web.rest.dto.science.ScienceEventDTO;
 
 class ScienceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
-    private static final String TEST_PREFIX = "scienceintegration";
-
     @Autowired
     private ScienceEventRepository scienceEventRepository;
+
+    @Autowired
+    private FeatureToggleService featureToggleService;
+
+    @BeforeEach
+    void enableFeatureToggle() {
+        featureToggleService.enableFeature(Feature.Science);
+    }
+
+    @AfterEach
+    void disableFeatureToggle() {
+        featureToggleService.disableFeature(Feature.Science);
+    }
 
     private void sendPutRequest(ScienceEventDTO event) throws Exception {
         request.put("/api/science", event, HttpStatus.OK);

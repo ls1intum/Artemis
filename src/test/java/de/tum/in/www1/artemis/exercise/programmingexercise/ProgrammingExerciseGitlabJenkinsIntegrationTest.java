@@ -81,6 +81,20 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
                 programmingLanguageFeatureService.getProgrammingLanguageFeatures(language));
     }
 
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(value = ProgrammingLanguage.class, names = { "VHDL", "ASSEMBLER", "OCAML", "C" }, mode = EnumSource.Mode.EXCLUDE)
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createProgrammingExercise_custom_build_plan_validExercise_created(ProgrammingLanguage language) throws Exception {
+        programmingExerciseTestService.createProgrammingExercise_custom_build_plan_validExercise_created(language, true);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(value = ProgrammingLanguage.class, names = { "VHDL", "ASSEMBLER", "OCAML", "C" }, mode = EnumSource.Mode.EXCLUDE)
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createProgrammingExercise_failed_custom_build_plan_validExercise_created(ProgrammingLanguage language) throws Exception {
+        programmingExerciseTestService.createProgrammingExercise_custom_build_plan_validExercise_created(language, false);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_validExercise_bonusPointsIsNull() throws Exception {

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { UserSettingsDirective } from 'app/shared/user-settings/user-settings.directive';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
@@ -7,22 +7,28 @@ import { AlertService } from 'app/core/util/alert.service';
 import { faInfoCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ScienceSetting } from 'app/shared/user-settings/science-settings/science-settings-structure';
 import { ScienceSettingsService } from 'app/shared/user-settings/science-settings/science-settings.service';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-science-settings',
     templateUrl: 'science-settings.component.html',
     styleUrls: ['../user-settings.scss'],
 })
-export class ScienceSettingsComponent extends UserSettingsDirective implements OnInit {
+export class ScienceSettingsComponent extends UserSettingsDirective implements OnInit, OnDestroy {
     // Icons
     faSave = faSave;
     faInfoCircle = faInfoCircle;
+
+    private featureToggleActiveSubscription: Subscription;
+    featureToggleActive = false;
 
     constructor(
         userSettingsService: UserSettingsService,
         changeDetector: ChangeDetectorRef,
         alertService: AlertService,
         private scienceSettingsService: ScienceSettingsService,
+        private featureToggleService: FeatureToggleService,
     ) {
         super(userSettingsService, alertService, changeDetector);
     }
@@ -43,6 +49,17 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
             this.userSettings = this.userSettingsService.loadSettingsSuccessAsSettingsStructure(newestScienceSettings, this.userSettingsCategory);
             this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
             this.changeDetector.detectChanges();
+        }
+
+        // subscribe to feature toggle changes
+        this.featureToggleService.getFeatureToggleActive(FeatureToggle.Science).subscribe((active) => {
+            this.featureToggleActive = active;
+        });
+    }
+
+    ngOnDestroy(): void {
+        if (this.featureToggleActiveSubscription) {
+            this.featureToggleActiveSubscription.unsubscribe();
         }
     }
 

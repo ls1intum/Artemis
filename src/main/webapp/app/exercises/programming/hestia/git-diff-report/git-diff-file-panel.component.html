@@ -18,10 +18,9 @@
                             : 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReportExamTimeline'
                         ) | artemisTranslate
                     }}"
-                >
-                </jhi-git-diff-line-stat>
+                />
                 <button ngbAccordionToggle class="btn ms-1">
-                    <fa-icon [icon]="!fileDiffPanel.collapsed ? faAngleUp : faAngleDown"></fa-icon>
+                    <fa-icon [icon]="!fileDiffPanel.collapsed ? faAngleUp : faAngleDown" />
                 </button>
             </div>
         </div>
@@ -32,7 +31,7 @@
                     [templateFileContent]="templateFileContent"
                     [solutionFileContent]="solutionFileContent"
                     [numberOfContextLines]="numberOfContextLines"
-                ></jhi-git-diff-file>
+                />
             </div>
         </div>
     </div>

@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.exercise.GradingCriterionUtil;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.UriService;
@@ -72,7 +73,7 @@ public class ParticipationUtilService {
     private TextSubmissionRepository textSubmissionRepo;
 
     @Autowired
-    private ProgrammingSubmissionRepository programmingSubmissionRepo;
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepo;
 
     @Autowired
     private ExampleSubmissionRepository exampleSubmissionRepo;
@@ -806,12 +807,14 @@ public class ParticipationUtilService {
         resultRepo.save(result);
 
         assertThat(exercise.getGradingCriteria()).isNotNull();
-        assertThat(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions()).isNotNull();
+        assertThat(exercise.getGradingCriteria()).allMatch(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions() != null);
 
         // add feedback which is associated with structured grading instructions
+        GradingInstruction anyInstruction = GradingCriterionUtil.findAnyInstructionWhere(exercise.getGradingCriteria(), gradingInstruction -> true).orElseThrow();
         Feedback feedback = new Feedback();
-        feedback.setGradingInstruction(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0));
+        feedback.setGradingInstruction(anyInstruction);
         addFeedbackToResult(feedback, result);
+
         return studentParticipation;
     }
 
