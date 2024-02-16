@@ -69,7 +69,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @Override
     boolean canAccessRepository(Long exerciseId) {
         try {
-            repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(true, programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId),
+            repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId),
                     userRepository.getUserWithGroupsAndAuthorities(), "test");
         }
         catch (AccessForbiddenException e) {

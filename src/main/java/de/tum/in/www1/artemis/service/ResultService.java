@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -272,7 +273,9 @@ public class ResultService {
         results.forEach(result -> {
             boolean isBeforeDueDateOrAutomaticAndBeforeLatestDueDate = participationBeforeDueDate
                     || (AssessmentType.AUTOMATIC.equals(result.getAssessmentType()) && beforeLatestDueDate);
-            result.filterSensitiveFeedbacks(isBeforeDueDateOrAutomaticAndBeforeLatestDueDate);
+            if (Hibernate.isInitialized(result.getFeedbacks())) {
+                result.filterSensitiveFeedbacks(isBeforeDueDateOrAutomaticAndBeforeLatestDueDate);
+            }
 
             boolean assessmentTypeSetAndNonAutomatic = result.getAssessmentType() != null && result.getAssessmentType() != AssessmentType.AUTOMATIC;
             boolean beforeAssessmentDueDate = !ExerciseDateService.isAfterAssessmentDueDate(exercise);
@@ -280,7 +283,9 @@ public class ResultService {
             // A tutor is allowed to access all feedback, but filter for a student the manual feedback if the assessment due date is not over yet
             if (assessmentTypeSetAndNonAutomatic && beforeAssessmentDueDate) {
                 // filter all non-automatic feedbacks
-                result.getFeedbacks().removeIf(feedback -> feedback.getType() != FeedbackType.AUTOMATIC);
+                if (Hibernate.isInitialized(result.getFeedbacks())) {
+                    result.getFeedbacks().removeIf(feedback -> feedback.getType() != FeedbackType.AUTOMATIC);
+                }
             }
         });
     }

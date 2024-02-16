@@ -347,6 +347,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         generate: 'entity.action.generate',
         build_queue: 'artemisApp.buildQueue.title',
         build_agents: 'artemisApp.buildAgents.title',
+        commit_history: 'artemisApp.repository.commitHistory.title',
+        commit_details: 'artemisApp.repository.commitHistory.commitDetails.title',
+        repository: 'artemisApp.repository.title',
     };
 
     studentPathBreadcrumbTranslations = {
@@ -427,6 +430,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             switch (this.lastRouteUrlSegment) {
                 case 'code-editor':
                 case 'test-exam':
+                case 'repository':
                 case 'participate':
                     this.addTranslationAsCrumb(currentPath, this.lastRouteUrlSegment);
                     return;
@@ -442,11 +446,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     break;
             }
         }
-
         switch (this.lastRouteUrlSegment) {
             // Displays the path segment as breadcrumb (no other title exists)
             case 'system-notification-management':
             case 'teams':
+            case 'repository':
             case 'code-editor':
                 this.addBreadcrumb(currentPath, segment, false);
                 break;
@@ -535,13 +539,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
         const isStudentPath = currentPath.startsWith('/courses');
 
         if (isStudentPath) {
+            if (segment === 'repository') {
+                return;
+            }
             const exercisesMatcher = segment?.match(/.+-exercises/);
             if (exercisesMatcher) {
                 this.addTranslationAsCrumb(currentPath.replace(exercisesMatcher[0], 'exercises'), 'exercises');
                 return;
             }
         }
-
         // When we're not dealing with an ID we need to translate the current part
         // The translation might still depend on the previous parts
         switch (segment) {
