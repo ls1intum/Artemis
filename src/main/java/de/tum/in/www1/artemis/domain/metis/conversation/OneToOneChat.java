@@ -20,9 +20,9 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class OneToOneChat extends Conversation {
 
-    public OneToOneChat(User creator, Set<ConversationParticipant> conversationParticipants, Set<Post> posts, Course course, ZonedDateTime creationDate,
+    public OneToOneChat(Long id, User creator, Set<ConversationParticipant> conversationParticipants, Set<Post> posts, Course course, ZonedDateTime creationDate,
             ZonedDateTime lastMessageDate) {
-        super(creator, conversationParticipants, posts, course, creationDate, lastMessageDate);
+        super(id, creator, conversationParticipants, posts, course, creationDate, lastMessageDate);
     }
 
     public OneToOneChat() {
@@ -43,6 +43,6 @@ public class OneToOneChat extends Conversation {
 
     @Override
     public Conversation copy() {
-        return new OneToOneChat(getCreator(), getConversationParticipants(), getPosts(), getCourse(), getCreationDate(), getLastMessageDate());
+        return new OneToOneChat(getId(), getCreator(), getConversationParticipants(), getPosts(), getCourse(), getCreationDate(), getLastMessageDate());
     }
 }

@@ -96,10 +96,10 @@ public class Channel extends Conversation {
     @JsonIgnoreProperties("channel")
     private Exam exam;
 
-    public Channel(User creator, Set<ConversationParticipant> conversationParticipants, Set<Post> posts, Course course, ZonedDateTime creationDate, ZonedDateTime lastMessageDate,
-            String name, @Nullable String description, @Nullable String topic, Boolean isPublic, Boolean isAnnouncementChannel, Boolean isArchived, boolean isCourseWide,
-            Lecture lecture, Exercise exercise, Exam exam) {
-        super(creator, conversationParticipants, posts, course, creationDate, lastMessageDate);
+    public Channel(Long id, User creator, Set<ConversationParticipant> conversationParticipants, Set<Post> posts, Course course, ZonedDateTime creationDate,
+            ZonedDateTime lastMessageDate, String name, @Nullable String description, @Nullable String topic, Boolean isPublic, Boolean isAnnouncementChannel, Boolean isArchived,
+            boolean isCourseWide, Lecture lecture, Exercise exercise, Exam exam) {
+        super(id, creator, conversationParticipants, posts, course, creationDate, lastMessageDate);
         this.name = name;
         this.description = description;
         this.topic = topic;
@@ -218,7 +218,7 @@ public class Channel extends Conversation {
 
     @Override
     public Conversation copy() {
-        return new Channel(getCreator(), getConversationParticipants(), getPosts(), getCourse(), getCreationDate(), getLastMessageDate(), getName(), getDescription(), getTopic(),
-                getIsPublic(), getIsAnnouncementChannel(), getIsArchived(), getIsCourseWide(), getLecture(), getExercise(), getExam());
+        return new Channel(getId(), getCreator(), getConversationParticipants(), getPosts(), getCourse(), getCreationDate(), getLastMessageDate(), getName(), getDescription(),
+                getTopic(), getIsPublic(), getIsAnnouncementChannel(), getIsArchived(), getIsCourseWide(), getLecture(), getExercise(), getExam());
     }
 }

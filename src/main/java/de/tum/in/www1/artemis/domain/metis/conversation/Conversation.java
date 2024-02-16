@@ -59,8 +59,9 @@ public abstract class Conversation extends DomainObject {
     @Column(name = "last_message_date")
     private ZonedDateTime lastMessageDate;
 
-    public Conversation(User creator, Set<ConversationParticipant> conversationParticipants, Set<Post> posts, Course course, ZonedDateTime creationDate,
+    public Conversation(Long id, User creator, Set<ConversationParticipant> conversationParticipants, Set<Post> posts, Course course, ZonedDateTime creationDate,
             ZonedDateTime lastMessageDate) {
+        this.setId(id);
         this.creator = creator;
         this.conversationParticipants = conversationParticipants;
         this.posts = posts;

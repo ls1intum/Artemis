@@ -33,9 +33,9 @@ public class GroupChat extends Conversation {
     @Size(min = 1, max = 20)
     private String name;
 
-    public GroupChat(User creator, Set<ConversationParticipant> conversationParticipants, Set<Post> posts, Course course, ZonedDateTime creationDate, ZonedDateTime lastMessageDate,
-            String name) {
-        super(creator, conversationParticipants, posts, course, creationDate, lastMessageDate);
+    public GroupChat(Long id, User creator, Set<ConversationParticipant> conversationParticipants, Set<Post> posts, Course course, ZonedDateTime creationDate,
+            ZonedDateTime lastMessageDate, String name) {
+        super(id, creator, conversationParticipants, posts, course, creationDate, lastMessageDate);
         this.name = name;
     }
 
@@ -78,6 +78,6 @@ public class GroupChat extends Conversation {
 
     @Override
     public Conversation copy() {
-        return new GroupChat(getCreator(), getConversationParticipants(), getPosts(), getCourse(), getCreationDate(), getLastMessageDate(), getName());
+        return new GroupChat(getId(), getCreator(), getConversationParticipants(), getPosts(), getCourse(), getCreationDate(), getLastMessageDate(), getName());
     }
 }
