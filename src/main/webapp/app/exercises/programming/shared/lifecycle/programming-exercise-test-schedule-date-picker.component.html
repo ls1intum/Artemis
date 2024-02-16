@@ -6,7 +6,7 @@
         }
     </div>
     <div class="invisible-date-time-picker">
-        <input class="form-control" [ngModel]="selectedDate" [min]="min" [max]="max" (ngModelChange)="writeValue($event)" [owlDateTime]="dt" />
+        <input #dateInput="ngModel" class="form-control" [ngModel]="selectedDate" [min]="min" [max]="max" (ngModelChange)="writeValue($event)" [owlDateTime]="dt" />
     </div>
     @if (!selectedDate && readOnly) {
         <button type="button" class="btn btn-light btn-lifecycle" [class.btn-lifecycle--deactivated]="!selectedDate" [class.btn-lifecycle--disabled]="readOnly">

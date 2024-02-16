@@ -25,6 +25,11 @@ export enum CompetencyRelationError {
     NONE = 'NONE',
 }
 
+export enum CompetencyValidators {
+    TITLE_MAX = 255,
+    DESCRIPTION_MAX = 10000,
+}
+
 export class Competency implements BaseEntity {
     public id?: number;
     public title?: string;
@@ -67,6 +72,35 @@ export class CompetencyRelation implements BaseEntity {
     constructor() {}
 }
 
+export class CompetencyRelationDTO implements BaseEntity {
+    id?: number;
+    tailCompetencyId?: number;
+    headCompetencyId?: number;
+    relationType?: string;
+
+    constructor() {}
+}
+
+/**
+ * Converts a CompetencyRelationDTO to a CompetencyRelation
+ * @param competencyRelationDTO
+ */
+export function dtoToCompetencyRelation(competencyRelationDTO: CompetencyRelationDTO): CompetencyRelation {
+    return {
+        id: competencyRelationDTO.id,
+        tailCompetency: { id: competencyRelationDTO.tailCompetencyId },
+        headCompetency: { id: competencyRelationDTO.headCompetencyId },
+        type: competencyRelationDTO.relationType,
+    };
+}
+
+export class CompetencyWithTailRelationDTO {
+    competency?: Competency;
+    tailRelations?: CompetencyRelationDTO[];
+
+    constructor() {}
+}
+
 export function getIcon(competencyTaxonomy?: CompetencyTaxonomy): IconProp {
     if (!competencyTaxonomy) {
         return faQuestion as IconProp;
@@ -82,23 +116,6 @@ export function getIcon(competencyTaxonomy?: CompetencyTaxonomy): IconProp {
     };
 
     return icons[competencyTaxonomy] as IconProp;
-}
-
-export function getIconTooltip(competencyTaxonomy?: CompetencyTaxonomy): string {
-    if (!competencyTaxonomy) {
-        return '';
-    }
-
-    const tooltips = {
-        [CompetencyTaxonomy.REMEMBER]: 'artemisApp.competency.taxonomies.remember',
-        [CompetencyTaxonomy.UNDERSTAND]: 'artemisApp.competency.taxonomies.understand',
-        [CompetencyTaxonomy.APPLY]: 'artemisApp.competency.taxonomies.apply',
-        [CompetencyTaxonomy.ANALYZE]: 'artemisApp.competency.taxonomies.analyze',
-        [CompetencyTaxonomy.EVALUATE]: 'artemisApp.competency.taxonomies.evaluate',
-        [CompetencyTaxonomy.CREATE]: 'artemisApp.competency.taxonomies.create',
-    };
-
-    return tooltips[competencyTaxonomy];
 }
 
 export function getProgress(competencyProgress: CompetencyProgress) {

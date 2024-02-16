@@ -115,7 +115,7 @@ import de.tum.in.www1.artemis.repository.ExamSessionRepository;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
@@ -169,7 +169,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private ExamSessionRepository examSessionRepository;
 
     @Autowired
-    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
@@ -1256,19 +1256,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 HttpStatus.OK, StudentExam.class);
         for (var exercise : studentExamResponse.getExercises()) {
             var participation = exercise.getStudentParticipations().iterator().next();
-            Submission submission = null;
-            if (exercise instanceof ProgrammingExercise) {
-                submission = new ProgrammingSubmission();
-            }
-            else if (exercise instanceof TextExercise) {
-                submission = new TextSubmission();
-            }
-            else if (exercise instanceof ModelingExercise) {
-                submission = new ModelingSubmission();
-            }
-            else if (exercise instanceof QuizExercise) {
-                submission = new QuizSubmission();
-            }
+            final var submission = createSubmission(exercise);
             if (submission != null) {
                 submission.addResult(new Result());
                 Set<Submission> submissions = new HashSet<>();
@@ -1294,6 +1282,22 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             }
         }
         deleteExamWithInstructor(exam1);
+    }
+
+    private static Submission createSubmission(Exercise exercise) {
+        if (exercise instanceof ProgrammingExercise) {
+            return new ProgrammingSubmission();
+        }
+        else if (exercise instanceof TextExercise) {
+            return new TextSubmission();
+        }
+        else if (exercise instanceof ModelingExercise) {
+            return new ModelingSubmission();
+        }
+        else if (exercise instanceof QuizExercise) {
+            return new QuizSubmission();
+        }
+        return null;
     }
 
     @Test
@@ -1515,28 +1519,28 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         int saSpotIndex = 1;
         int mcSelectedOptionIndex = 0;
         quizExercise.getQuizQuestions().forEach(quizQuestion -> {
-            if (quizQuestion instanceof DragAndDropQuestion) {
+            if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
                 var submittedAnswer = new DragAndDropSubmittedAnswer();
                 DragAndDropMapping dndMapping = new DragAndDropMapping();
                 dndMapping.setDragItemIndex(dndDragItemIndex);
-                dndMapping.setDragItem(((DragAndDropQuestion) quizQuestion).getDragItems().get(dndDragItemIndex));
+                dndMapping.setDragItem(dragAndDropQuestion.getDragItems().get(dndDragItemIndex));
                 dndMapping.setDropLocationIndex(dndLocationIndex);
-                dndMapping.setDropLocation(((DragAndDropQuestion) quizQuestion).getDropLocations().get(dndLocationIndex));
+                dndMapping.setDropLocation(dragAndDropQuestion.getDropLocations().get(dndLocationIndex));
                 submittedAnswer.getMappings().add(dndMapping);
-                submittedAnswer.setQuizQuestion(quizQuestion);
+                submittedAnswer.setQuizQuestion(dragAndDropQuestion);
                 quizSubmission.getSubmittedAnswers().add(submittedAnswer);
             }
-            else if (quizQuestion instanceof ShortAnswerQuestion) {
+            else if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
                 var submittedAnswer = new ShortAnswerSubmittedAnswer();
                 ShortAnswerSubmittedText shortAnswerSubmittedText = new ShortAnswerSubmittedText();
                 shortAnswerSubmittedText.setText(shortAnswerText);
-                shortAnswerSubmittedText.setSpot(((ShortAnswerQuestion) quizQuestion).getSpots().get(saSpotIndex));
+                shortAnswerSubmittedText.setSpot(shortAnswerQuestion.getSpots().get(saSpotIndex));
                 submittedAnswer.getSubmittedTexts().add(shortAnswerSubmittedText);
-                submittedAnswer.setQuizQuestion(quizQuestion);
+                submittedAnswer.setQuizQuestion(shortAnswerQuestion);
                 quizSubmission.getSubmittedAnswers().add(submittedAnswer);
             }
-            else if (quizQuestion instanceof MultipleChoiceQuestion) {
-                var answerOptions = ((MultipleChoiceQuestion) quizQuestion).getAnswerOptions();
+            else if (quizQuestion instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
+                var answerOptions = multipleChoiceQuestion.getAnswerOptions();
                 var submittedAnswer = new MultipleChoiceSubmittedAnswer();
                 submittedAnswer.addSelectedOptions(answerOptions.get(mcSelectedOptionIndex));
                 submittedAnswer.setQuizQuestion(quizQuestion);
@@ -1932,8 +1936,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 textSubmission.setText(newText);
                 request.put("/api/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
             }
-            else if (exercise instanceof QuizExercise) {
-                submitQuizInExam((QuizExercise) exercise, (QuizSubmission) submission);
+            else if (exercise instanceof QuizExercise quizExercise) {
+                submitQuizInExam(quizExercise, (QuizSubmission) submission);
             }
         }
         return studentExamFromServer;
