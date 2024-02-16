@@ -49,6 +49,19 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(@Param("participationId") long participationId,
             @Param("dateTime") ZonedDateTime dateTime);
 
+    @Query("""
+            SELECT DISTINCT p
+            FROM ProgrammingExerciseStudentParticipation p
+                LEFT JOIN FETCH p.results pr
+                LEFT JOIN FETCH p.submissions
+            WHERE p.id = :participationId AND ((pr.assessmentType = 'AUTOMATIC'
+                        OR (pr.completionDate IS NOT NULL
+                            AND (p.exercise.assessmentDueDate IS NULL
+                                OR p.exercise.assessmentDueDate < :#{#dateTime}))) OR pr.id IS NULL)
+             """)
+    Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndRelatedSubmissions(@Param("participationId") long participationId,
+            @Param("dateTime") ZonedDateTime dateTime);
+
     @EntityGraph(type = LOAD, attributePaths = { "results", "exercise", "team.students" })
     List<ProgrammingExerciseStudentParticipation> findWithResultsAndExerciseAndTeamStudentsByBuildPlanId(String buildPlanId);
 
@@ -167,6 +180,10 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
         return findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId, ZonedDateTime.now());
     }
 
+    default Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndRelatedSubmissions(long participationId) {
+        return findByIdWithAllResultsAndRelatedSubmissions(participationId, ZonedDateTime.now());
+    }
+
     default ProgrammingExerciseStudentParticipation findWithTeamStudentsByIdElseThrow(long participationId) {
         return findWithTeamStudentsById(participationId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", participationId));
     }
@@ -194,4 +211,21 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
                 OR p.repositoryUri IS NOT NULL
             """)
     Page<ProgrammingExerciseStudentParticipation> findAllWithRepositoryUriOrBuildPlanId(Pageable pageable);
+
+    /**
+     * Remove the build plan id from all participations of the given exercise.
+     * This is used when the build plan is changed for an exercise and we want to remove the old build plan id from all participations.
+     * By deleting the build plan in the CI platform and unsetting the build plan id in the participations, the build plan is effectively removed
+     * and will be regenerated/recreated on the next submission.
+     *
+     * @param exerciseId the id of the exercise for which the build plan id should be removed
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ProgrammingExerciseStudentParticipation p
+            SET p.buildPlanId = NULL
+            WHERE p.exercise.id = :#{#exerciseId}
+            """)
+    void unsetBuildPlanIdForExercise(@Param("exerciseId") Long exerciseId);
 }

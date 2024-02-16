@@ -93,6 +93,24 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
+     * Get the given student participation with all results and feedbacks.
+     *
+     * @param participationId for which to retrieve the student participation with all results and feedbacks.
+     * @return the ResponseEntity with status 200 (OK) and the participation with all results and feedbacks in the body.
+     */
+    @GetMapping("/programming-exercise-participations/{participationId}/student-participation-with-all-results")
+    @EnforceAtLeastStudent
+    public ResponseEntity<ProgrammingExerciseStudentParticipation> getParticipationWithAllResultsForStudentParticipation(@PathVariable Long participationId) {
+        ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdWithAllResultsAndRelatedSubmissions(participationId)
+                .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+
+        // hide details that should not be shown to the students
+        resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
+        return ResponseEntity.ok(participation);
+    }
+
+    /**
      * Get the latest result for a given programming exercise participation including its result.
      *
      * @param participationId for which to retrieve the programming exercise participation with latest result and feedbacks.
@@ -233,6 +251,22 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
+     * GET /programming-exercise-participations/{participationId}/commits-history : Get the commit history of a programming exercise participation.
+     * Here we check is at least a teaching assistant for the exercise. If true the user can have access to the commit history of any participation of the exercise.
+     * If the user is a student, we check if the user is the owner of the participation.
+     *
+     * @param participationId the id of the participation for which to retrieve the commit history
+     * @return A list of commitInfo DTOs with the commits information of the participation
+     */
+    @GetMapping("programming-exercise-participations/{participationId}/commit-history")
+    @EnforceAtLeastStudent
+    public List<CommitInfoDTO> getCommitHistoryForParticipationRepo(@PathVariable long participationId) {
+        ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        return programmingExerciseParticipationService.getCommitInfos(participation);
+    }
+
+    /**
      * GET /programming-exercise-participations/{participationId}/files-content : Get the content of the files of a programming exercise participation.
      *
      * @param participationId the id of the participation for which to retrieve the files content
@@ -245,6 +279,23 @@ public class ProgrammingExerciseParticipationResource {
         ProgrammingExercise exercise = programmingExerciseRepository.findByParticipationId(participationId).orElseThrow();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
+        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content/" + commitId);
+    }
+
+    /**
+     * GET /programming-exercise-participations/{participationId}/files-content-commit-details/{commitId} : Get the content of the files of a programming exercise participation.
+     * This method is specifically for the commit details view, where not only Instructors and Admins should have access to the files content as in
+     * redirectGetParticipationRepositoryFiles but also students and tutors that have access to the participation.
+     *
+     * @param participationId the id of the participation for which to retrieve the files content
+     * @param commitId        the id of the commit for which to retrieve the files content
+     * @return a redirect to the endpoint returning the files with content
+     */
+    @GetMapping("programming-exercise-participations/{participationId}/files-content-commit-details/{commitId}")
+    @EnforceAtLeastStudent
+    public ModelAndView redirectGetParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long participationId, @PathVariable String commitId) {
+        var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
         return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content/" + commitId);
     }
 

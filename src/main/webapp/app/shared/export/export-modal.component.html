@@ -77,10 +77,10 @@
     <div class="modal-footer justify-content-between">
         <div class="flex-grow-1 d-flex justify-content-end">
             <button type="button" class="btn btn-default cancel me-1" data-dismiss="modal" (click)="cancel()">
-                <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
             <button class="btn btn-success" id="finish-button" (click)="onFinish()">
-                <fa-icon [icon]="faDownload" class="me-2"></fa-icon>
+                <fa-icon [icon]="faDownload" class="me-2" />
                 @if (activeTab === 1) {
                     <span jhiTranslate="export.excelFile.buttonText">Export as Excel</span>
                 } @else {
