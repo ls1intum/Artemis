@@ -18,7 +18,7 @@
                 [exercise]="exercise"
                 [generateHtmlEvents]="generateHtmlSubject.asObservable()"
                 [personalParticipation]="false"
-            ></jhi-programming-exercise-instructions>
+            />
         </jhi-markdown-editor>
     }
     @if (editMode) {
@@ -30,10 +30,10 @@
             [ngClass]="savingInstructions || !unsavedChangesValue ? 'btn-light' : 'btn-primary'"
         >
             @if (!savingInstructions) {
-                <fa-icon [icon]="faSave" class="me-2"></fa-icon>
+                <fa-icon [icon]="faSave" class="me-2" />
             }
             @if (savingInstructions) {
-                <fa-icon [icon]="faCircleNotch" [spin]="true" class="me-2"></fa-icon>
+                <fa-icon [icon]="faCircleNotch" [spin]="true" class="me-2" />
             }
             <span jhiTranslate="entity.action.save"></span>
         </button>
@@ -43,11 +43,7 @@
             <div class="instructions-status">
                 @if (!unsavedChangesValue && !savingInstructions) {
                     <div>
-                        <fa-icon
-                            [icon]="faCheckCircle"
-                            class="text-success me-1"
-                            ngbTooltip="{{ 'artemisApp.programmingExercise.editable.savedTooltip' | artemisTranslate }}"
-                        ></fa-icon>
+                        <fa-icon [icon]="faCheckCircle" class="text-success me-1" ngbTooltip="{{ 'artemisApp.programmingExercise.editable.savedTooltip' | artemisTranslate }}" />
                         <span class="text-info" jhiTranslate="artemisApp.programmingExercise.editable.saved">Saved.</span>
                     </div>
                 }
@@ -57,13 +53,13 @@
                             [icon]="faExclamationTriangle"
                             class="text-warning me-1"
                             ngbTooltip="{{ 'artemisApp.programmingExercise.editable.unsavedTooltip' | artemisTranslate }}"
-                        ></fa-icon>
+                        />
                         <span class="text-info" jhiTranslate="artemisApp.programmingExercise.editable.unsaved">Unsaved.</span>
                     </div>
                 }
                 @if (savingInstructions) {
                     <div>
-                        <fa-icon [icon]="faCircleNotch" class="me-1" ngbTooltip="{{ 'artemisApp.programmingExercise.editable.savingTooltip' | artemisTranslate }}"></fa-icon>
+                        <fa-icon [icon]="faCircleNotch" class="me-1" ngbTooltip="{{ 'artemisApp.programmingExercise.editable.savingTooltip' | artemisTranslate }}" />
                         <span class="text-info" jhiTranslate="artemisApp.programmingExercise.editable.saving">Saving...</span>
                     </div>
                 }
@@ -75,7 +71,7 @@
                     [taskRegex]="taskRegex"
                     (problemStatementAnalysis)="onAnalysisUpdate($event)"
                     class="editable-instruction-container__status__testcase"
-                ></jhi-programming-exercise-instruction-instructor-analysis>
+                />
             }
         </div>
     }

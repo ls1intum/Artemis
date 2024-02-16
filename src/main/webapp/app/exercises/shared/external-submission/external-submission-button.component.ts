@@ -15,7 +15,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
                 [icon]="faPlus"
                 [title]="'entity.action.addExternalSubmission'"
                 (onClick)="openExternalSubmissionDialog($event)"
-            ></jhi-button>
+            />
         }
     `,
 })

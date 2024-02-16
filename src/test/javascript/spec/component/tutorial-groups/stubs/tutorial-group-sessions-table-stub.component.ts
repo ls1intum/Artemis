@@ -44,7 +44,7 @@ export class TutorialGroupSessionsTableStubComponent {
             }
             @if (extraColumn) {
                 <div>
-                    <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: session }"></ng-template>
+                    <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: session }" />
                 </div>
             }
         </div>

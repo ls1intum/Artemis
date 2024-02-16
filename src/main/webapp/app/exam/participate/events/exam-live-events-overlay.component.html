@@ -9,7 +9,7 @@
     }
     @if (unacknowledgedEvents.length > 1) {
         <button class="btn btn-primary w-100 mt-2" (click)="acknowledgeAllUnacknowledgedEvents()">
-            <fa-icon [icon]="faCheck"></fa-icon>
+            <fa-icon [icon]="faCheck" />
             <span jhiTranslate="artemisApp.exam.events.acknowledgeAll">Acknowledge all</span>
         </button>
     }
