@@ -157,6 +157,13 @@ public class CompetencyService {
         return idToImportedCompetency.values().stream().toList();
     }
 
+    /**
+     * Imports the given competencies into a course
+     *
+     * @param course       the course to import into
+     * @param competencies the competencies to import
+     * @return The list of imported competencies
+     */
     public List<Competency> importCompetencies(Course course, Set<Competency> competencies) {
         var importedCompetencies = new ArrayList<Competency>();
 
