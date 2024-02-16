@@ -203,7 +203,7 @@
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.fileUploadExercise.filePattern" for="field_filePattern">File Pattern </label>
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.fileUploadExercise.filePatternInfo' | artemisTranslate }}"></fa-icon>
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.fileUploadExercise.filePatternInfo' | artemisTranslate }}" />
             <input required minlength="2" type="text" class="form-control" name="filePattern" id="field_filePattern" [(ngModel)]="fileUploadExercise.filePattern" />
         </div>
         <jhi-presentation-score-checkbox [exercise]="fileUploadExercise" />
@@ -226,7 +226,7 @@
     </div>
     <div>
         <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
-            <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button
             type="submit"
@@ -241,7 +241,7 @@
             "
             class="btn btn-primary"
         >
-            <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+            <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save">Save</span>
         </button>
     </div>
 </form>

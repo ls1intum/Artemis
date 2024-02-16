@@ -20,7 +20,7 @@ class OnlineUnitFormStubComponent {
     @Output() formSubmitted: EventEmitter<OnlineUnitFormData> = new EventEmitter<OnlineUnitFormData>();
 }
 
-@Component({ selector: 'jhi-lecture-unit-layout', template: '<ng-content></ng-content>' })
+@Component({ selector: 'jhi-lecture-unit-layout', template: '<ng-content />' })
 class LectureUnitLayoutStubComponent {
     @Input()
     isLoading = false;

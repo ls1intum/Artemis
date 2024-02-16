@@ -18,7 +18,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
             [icon]="faDownload"
             [title]="'artemisApp.instructorDashboard.exportSubmissions.title'"
             (onClick)="openSubmissionExportDialog($event)"
-        ></jhi-button>
+        />
     `,
 })
 export class SubmissionExportButtonComponent {

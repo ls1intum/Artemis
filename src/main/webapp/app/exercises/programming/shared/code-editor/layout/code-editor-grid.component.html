@@ -1,13 +1,13 @@
 <div class="editor-wrapper">
     <!-- Top bar -->
     <nav class="editor-statusbar">
-        <ng-content select="[editorNavbar]"></ng-content>
+        <ng-content select="[editorNavbar]" />
     </nav>
     <div class="editor-main">
         <div class="editor-main__content">
             <!-- File browser -->
             <div #fileBrowser class="editor-sidebar-left collapsable">
-                <ng-content select="[editorSidebarLeft]"></ng-content>
+                <ng-content select="[editorSidebarLeft]" />
                 <!-- Required for resizing; don't remove empty span -->
                 @if (!fileBrowserIsCollapsed) {
                     <fa-icon [icon]="faGripLinesVertical" id="draggableIconForFileBrowser" class="rg-sidebar-left text-lightgrey">
@@ -20,7 +20,7 @@
             </div>
             <!-- Editor -->
             <div class="guided-tour-editor editor-center">
-                <ng-content select="[editorCenter]"></ng-content>
+                <ng-content select="[editorCenter]" />
             </div>
             <!-- Instructions -->
             <div #instructions class="editor-sidebar-right collapsable">
@@ -32,7 +32,7 @@
                 @if (rightPanelIsCollapsed) {
                     <span class="separator"></span>
                 }
-                <ng-content select="[editorSidebarRight]"></ng-content>
+                <ng-content select="[editorSidebarRight]" />
             </div>
         </div>
         <!-- Required for resizing; don't remove empty span -->
@@ -40,7 +40,7 @@
     </div>
     <!-- Build Output -->
     <div #buildOutput class="editor-bottom collapsable">
-        <ng-content select="[editorBottomArea]" class="editor-bottom-resizable"></ng-content>
+        <ng-content select="[editorBottomArea]" class="editor-bottom-resizable" />
         <!-- Required for resizing; don't remove empty span -->
         @if (!buildOutputIsCollapsed) {
             <fa-icon [icon]="faGripLines" id="draggableIconForBuildOutput" class="rg-bottom-bottom text-lightgrey"><span></span></fa-icon>
@@ -48,7 +48,7 @@
     </div>
     @if (isTutorAssessment) {
         <div>
-            <ng-content select="[editorBottom]"></ng-content>
+            <ng-content select="[editorBottom]" />
         </div>
     }
 </div>

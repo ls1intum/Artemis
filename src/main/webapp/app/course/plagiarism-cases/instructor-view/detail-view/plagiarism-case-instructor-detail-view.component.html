@@ -6,17 +6,17 @@
                     <h1 class="h2">{{ 'artemisApp.plagiarism.plagiarismCases.plagiarismCase' | artemisTranslate }}</h1>
                 </div>
                 <div class="col-12 col-lg-6 col-xl-3 d-flex align-items-center">
-                    <jhi-plagiarism-case-verdict [plagiarismCase]="plagiarismCase" class="my-2"></jhi-plagiarism-case-verdict>
+                    <jhi-plagiarism-case-verdict [plagiarismCase]="plagiarismCase" class="my-2" />
                 </div>
                 <div class="col-12 col-lg-6 col-xl-3 d-flex flex-column">
                     <p class="mb-1 text-truncate">
-                        <fa-icon [icon]="faUser"></fa-icon>
+                        <fa-icon [icon]="faUser" />
                         {{ plagiarismCase.student!.name }} ({{ plagiarismCase.student!.login }})
                     </p>
                     @if (plagiarismCase?.exercise) {
                         <p class="mb-0 text-truncate">
                             @if (plagiarismCase.exercise!.type!) {
-                                <fa-icon [icon]="getIcon(plagiarismCase.exercise!.type!)"></fa-icon>
+                                <fa-icon [icon]="getIcon(plagiarismCase.exercise!.type!)" />
                             }
                             {{ plagiarismCase.exercise!.title! }}
                         </p>
@@ -24,7 +24,7 @@
                 </div>
                 <div class="col-12 col-lg-6 col-xl-3 d-flex align-items-center justify-content-xl-end">
                     <button class="btn btn-secondary my-1" (click)="printPlagiarismCase()">
-                        <fa-icon [icon]="faPrint"></fa-icon>
+                        <fa-icon [icon]="faPrint" />
                     </button>
                     <div class="btn-group m-1">
                         <a
@@ -52,14 +52,14 @@
             <section>
                 <h3>{{ 'artemisApp.plagiarism.plagiarismCases.conversation' | artemisTranslate }}</h3>
                 @if (posts && posts.length > 0) {
-                    <jhi-posting-thread [post]="posts[0]" [showAnswers]="true"></jhi-posting-thread>
+                    <jhi-posting-thread [post]="posts[0]" [showAnswers]="true" />
                 }
                 @if ((!posts || posts.length === 0) && createdPost) {
                     <div>
                         <button class="btn btn-md btn-primary" (click)="createEditModal.open()">
                             {{ 'artemisApp.plagiarism.plagiarismCases.notifyStudent' | artemisTranslate }}
                         </button>
-                        <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="onStudentNotified($event)"></jhi-post-create-edit-modal>
+                        <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="onStudentNotified($event)" />
                     </div>
                 }
             </section>
@@ -80,7 +80,7 @@
                                         [translateText]="true"
                                         [disabled]="!!plagiarismCase.verdict || !isStudentNotified()"
                                         (onConfirm)="saveVerdict()"
-                                    ></jhi-confirm-button>
+                                    />
                                     <jhi-confirm-button
                                         title="artemisApp.plagiarism.plagiarismCases.verdict.noPlagiarism"
                                         confirmationText="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"
@@ -89,7 +89,7 @@
                                         [translateText]="true"
                                         [disabled]="!!plagiarismCase.verdict || !isStudentNotified()"
                                         (onConfirm)="saveNoPlagiarismVerdict()"
-                                    ></jhi-confirm-button>
+                                    />
                                 </div>
                             </ng-template>
                         </li>
@@ -119,7 +119,7 @@
                                         [translateText]="true"
                                         [disabled]="!!plagiarismCase.verdict || verdictPointDeduction < 0 || verdictPointDeduction > 100 || !isStudentNotified()"
                                         (onConfirm)="savePointDeductionVerdict()"
-                                    ></jhi-confirm-button>
+                                    />
                                 </div>
                             </ng-template>
                         </li>
@@ -148,7 +148,7 @@
                                         [translateText]="true"
                                         [disabled]="!!plagiarismCase.verdict || !isStudentNotified()"
                                         (onConfirm)="saveWarningVerdict()"
-                                    ></jhi-confirm-button>
+                                    />
                                 </div>
                             </ng-template>
                         </li>
@@ -156,7 +156,7 @@
                     <div class="mt-4" [ngbNavOutlet]="nav"></div>
                     @if (!isStudentNotified()) {
                         <div class="disabled-overlay">
-                            <fa-icon [icon]="faInfo" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faInfo" [fixedWidth]="true" />
                             <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.studentNotNotified">
                                 You must notify the student before determining the verdict.
                             </span>
@@ -164,7 +164,7 @@
                     }
                     @if (isStudentNotified() && plagiarismCase.verdict) {
                         <div class="disabled-overlay">
-                            <fa-icon [icon]="faCheck" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faCheck" [fixedWidth]="true" />
                             <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.alreadyDecided">
                                 An instructor already determined a verdict for this plagiarism case.
                             </span>
@@ -175,7 +175,7 @@
             <section>
                 <h3 class="mt-5">{{ 'artemisApp.plagiarism.plagiarismCases.comparisons' | artemisTranslate }}</h3>
                 <div class="container-fluid">
-                    <jhi-plagiarism-case-review [plagiarismCase]="plagiarismCase" [forStudent]="false"></jhi-plagiarism-case-review>
+                    <jhi-plagiarism-case-review [plagiarismCase]="plagiarismCase" [forStudent]="false" />
                 </div>
             </section>
         </div>
