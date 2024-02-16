@@ -9,9 +9,9 @@
         </div>
     </div>
     <div class="date">
-        <span><fa-icon [icon]="faPaperPlane"></fa-icon> {{ event.createdDate | artemisDate }}</span>
+        <span><fa-icon [icon]="faPaperPlane" /> {{ event.createdDate | artemisDate }}</span>
         @if (event.acknowledgeTimestamps?.user) {
-            <span>| <fa-icon [icon]="faEye"></fa-icon> {{ event.acknowledgeTimestamps!.user! | artemisDate: 'time' }}</span>
+            <span>| <fa-icon [icon]="faEye" /> {{ event.acknowledgeTimestamps!.user! | artemisDate: 'time' }}</span>
         }
     </div>
     <div class="content">
@@ -63,7 +63,7 @@
     </div>
     @if (showAcknowledge) {
         <button class="btn btn-primary w-100 mt-2" (click)="acknowledgeEvent()">
-            <fa-icon [icon]="faCheck"></fa-icon>
+            <fa-icon [icon]="faCheck" />
             <span jhiTranslate="artemisApp.exam.events.acknowledge">Acknowledge</span>
         </button>
     }

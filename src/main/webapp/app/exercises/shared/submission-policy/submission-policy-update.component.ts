@@ -34,7 +34,7 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
                                 for="field_submissionLimitExceededPenalty"
                                 >Submission limit</label
                             >
-                            <jhi-help-icon text="artemisApp.programmingExercise.submissionPolicy.submissionLimitDescription"></jhi-help-icon>
+                            <jhi-help-icon text="artemisApp.programmingExercise.submissionPolicy.submissionLimitDescription" />
                             <div class="input-group">
                                 <input
                                     required
@@ -64,7 +64,7 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
                                 for="field_submissionLimitExceededPenalty"
                                 >Penalty after Exceeding Submission limit</label
                             >
-                            <jhi-help-icon text="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.exceedingLimitDescription"></jhi-help-icon>
+                            <jhi-help-icon text="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.exceedingLimitDescription" />
                             <div class="input-group">
                                 <input
                                     required

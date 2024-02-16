@@ -5,11 +5,7 @@
 }
 @if (!isLoading && gitDiffReport) {
     <div>
-        <jhi-git-diff-report
-            [report]="gitDiffReport"
-            [templateFileContentByPath]="templateFileContentByPath"
-            [solutionFileContentByPath]="solutionFileContentByPath"
-        ></jhi-git-diff-report>
+        <jhi-git-diff-report [report]="gitDiffReport" [templateFileContentByPath]="templateFileContentByPath" [solutionFileContentByPath]="solutionFileContentByPath" />
     </div>
 }
 @if (!isLoading && !gitDiffReport) {

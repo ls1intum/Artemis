@@ -2,7 +2,7 @@
     <div class="col-auto pe-0">
         <span class="posting-header header-author-date">
             <span class="posting-author-role" ngbTooltip="{{ userAuthorityTooltip | artemisTranslate }}">
-                <fa-icon [icon]="userAuthorityIcon"></fa-icon>
+                <fa-icon [icon]="userAuthorityIcon" />
             </span>
             <span class="posting-author">
                 {{ posting.author!.name }}
@@ -21,7 +21,7 @@
                 [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
                 [icon]="faPencilAlt"
                 (click)="openPostingCreateEditModal.emit()"
-            ></fa-icon>
+            />
         }
         @if (mayEditOrDelete) {
             <jhi-confirm-icon
@@ -30,7 +30,7 @@
                 [ngClass]="'deleteIcon clickable icon'"
                 [initialTooltip]="'artemisApp.metis.deleteAnswer' | artemisTranslate"
                 [confirmTooltip]="'artemisApp.metis.confirmDeleteAnswer' | artemisTranslate"
-            ></jhi-confirm-icon>
+            />
         }
         @if (!!isCourseMessagesPage && (!lastReadDate || (lastReadDate && posting.creationDate && posting.creationDate.isAfter(lastReadDate))) && !isAuthorOfPosting) {
             <span class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</span>
@@ -49,13 +49,12 @@
                                     ? ('artemisApp.metis.unmarkAsResolvingAnswerTooltip' | artemisTranslate)
                                     : ('artemisApp.metis.resolvingAnswerTooltip' | artemisTranslate)
                             "
-                        >
-                        </fa-icon>
+                        />
                     </div>
                 } @else {
                     @if (isAtLeastTutorInCourse || isAuthorOfOriginalPost) {
                         <div>
-                            <fa-icon class="icon notResolved" [icon]="faCheck" [ngbTooltip]="'artemisApp.metis.markAsResolvingAnswerTooltip' | artemisTranslate"> </fa-icon>
+                            <fa-icon class="icon notResolved" [icon]="faCheck" [ngbTooltip]="'artemisApp.metis.markAsResolvingAnswerTooltip' | artemisTranslate" />
                         </div>
                     }
                 }

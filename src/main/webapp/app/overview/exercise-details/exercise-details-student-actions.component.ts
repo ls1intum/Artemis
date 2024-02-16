@@ -12,7 +12,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { finalize } from 'rxjs/operators';
-import { faComment, faExternalLinkAlt, faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faCodeBranch, faComment, faExternalLinkAlt, faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -53,6 +53,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     beforeDueDate: boolean;
     editorLabel?: string;
     localVCEnabled = false;
+    routerLink: string;
 
     // Icons
     faComment = faComment;
@@ -62,6 +63,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     faPlayCircle = faPlayCircle;
     faRedo = faRedo;
     faExternalLinkAlt = faExternalLinkAlt;
+    faCodeBranch = faCodeBranch;
 
     constructor(
         private alertService: AlertService,
@@ -74,6 +76,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     ) {}
 
     ngOnInit(): void {
+        this.routerLink = this.router.url;
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
             this.uninitializedQuiz = ArtemisQuizService.isUninitialized(quizExercise);
