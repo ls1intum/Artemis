@@ -37,7 +37,7 @@
                     : 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReportExamTimeline'
                 ) | artemisTranslate
             }}"
-        ></jhi-git-diff-line-stat>
+        />
     </div>
 </div>
 @for (filePath of filePaths; track filePath) {
@@ -49,7 +49,7 @@
                 [templateFileContent]="templateFileContentByPath.get(filePath)"
                 [solutionFileContent]="solutionFileContentByPath.get(filePath)"
                 [numberOfContextLines]="numberOfContextLines"
-            ></jhi-git-diff-file-panel>
+            />
         }
     </div>
 }

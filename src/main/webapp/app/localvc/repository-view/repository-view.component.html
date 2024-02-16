@@ -4,17 +4,16 @@
             <h1>Source</h1>
             <div style="text-align: right">
                 @if (result) {
-                    <jhi-result [result]="result" [showUngradedResults]="true" [showBadge]="true" [exercise]="exercise" style="padding-right: 20px"> </jhi-result>
+                    <jhi-result [result]="result" [showUngradedResults]="true" [showBadge]="true" [exercise]="exercise" style="padding-right: 20px" />
                 }
                 @if (routeCommitHistory) {
                     <a [routerLink]="routeCommitHistory" class="btn btn-primary">
-                        <fa-icon [icon]="faClockRotateLeft"></fa-icon>
+                        <fa-icon [icon]="faClockRotateLeft" />
                         <span jhiTranslate="artemisApp.repository.commitHistory.openCommitHistory">Open Commit History</span>
                     </a>
                 }
                 @if (exercise?.allowOfflineIde) {
-                    <jhi-clone-repo-button [loading]="!!exercise.loading" [smallButtons]="false" [repositoryUri]="repositoryUri" [exercise]="exercise" style="padding-left: 15px">
-                    </jhi-clone-repo-button>
+                    <jhi-clone-repo-button [loading]="!!exercise.loading" [smallButtons]="false" [repositoryUri]="repositoryUri" [exercise]="exercise" style="padding-left: 15px" />
                 }
             </div>
         </div>
@@ -32,7 +31,7 @@
                 [participation]="participation"
                 [personalParticipation]="true"
                 class="instructions-wrapper__content card-body p-0"
-            ></jhi-programming-exercise-instructions>
+            />
         </jhi-code-editor-container>
     }
 </ng-container>

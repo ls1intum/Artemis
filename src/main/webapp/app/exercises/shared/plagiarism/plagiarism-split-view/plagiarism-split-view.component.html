@@ -2,7 +2,7 @@
     <div class="plagiarism-split-pane" jhiPane>
         @if (plagiarismComparison) {
             @if (isModelingExercise) {
-                <jhi-modeling-submission-viewer [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionA()" [hideContent]="false"></jhi-modeling-submission-viewer>
+                <jhi-modeling-submission-viewer [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionA()" [hideContent]="false" />
             }
             @if (isProgrammingOrTextExercise) {
                 <jhi-text-submission-viewer [exercise]="exercise" [matches]="matchesA" [plagiarismSubmission]="getTextSubmissionA()" [hideContent]="false" />

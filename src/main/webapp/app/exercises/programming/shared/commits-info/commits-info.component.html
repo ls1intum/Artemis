@@ -45,10 +45,10 @@
                     @if (isRepositoryView) {
                         <td>
                             @if (commit.result) {
-                                <jhi-result [result]="commit.result" [showUngradedResults]="true" [showBadge]="true"> </jhi-result>
+                                <jhi-result [result]="commit.result" [showUngradedResults]="true" [showBadge]="true" />
                             } @else {
                                 <span class="text-body-secondary">
-                                    <fa-icon [icon]="faCircle" size="lg"></fa-icon>&nbsp;
+                                    <fa-icon [icon]="faCircle" size="lg" />&nbsp;
                                     <span> {{ 'artemisApp.result.noResult' | artemisTranslate }}</span>
                                 </span>
                             }
