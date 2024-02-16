@@ -7,7 +7,10 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.Git;
@@ -26,9 +29,17 @@ import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.ParticipationInterface;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
@@ -44,11 +55,11 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
 
     private static final String ERROR_MESSAGE = "Failed to migrate programming exercises within nine hours. Aborting migration.";
 
-    private static final int TIMEOUT_IN_HOURS = 9;
+    private static final int TIMEOUT_IN_HOURS = 24;
 
     private static final List<String> MIGRATABLE_PROFILES = List.of("bitbucket", "localvc");
 
-    private final Logger log = LoggerFactory.getLogger(MigrationEntry20240103_143700.class);
+    private final static Logger log = LoggerFactory.getLogger(MigrationEntry20240103_143700.class);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -216,6 +227,11 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         return cloneRepositoryFromBitbucketAndMoveToLocalVCS(programmingExercise, programmingExercise.getTestRepositoryUri());
     }
 
+    /**
+     * Migrate auxiliary repositories of the given programming exercise.
+     *
+     * @param programmingExercise the programming exercise to migrate the auxiliary repositories for
+     */
     private void migrateAuxiliaryRepositories(ProgrammingExercise programmingExercise) {
         if (programmingExercise.getAuxiliaryRepositories() == null) {
             return;
@@ -232,6 +248,12 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         }
     }
 
+    /**
+     * Migrate the solution participations. Also Migrates the test repository of the programming exercise since we have it
+     * in the solution participation already loaded from the database.
+     *
+     * @param solutionParticipations the solution participations to migrate
+     */
     private void migrateSolutions(List<SolutionProgrammingExerciseParticipation> solutionParticipations) {
         for (var solutionParticipation : solutionParticipations) {
             try {
@@ -251,6 +273,11 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         }
     }
 
+    /**
+     * Migrate the template participations.
+     *
+     * @param templateParticipations list of template participations to migrate
+     */
     private void migrateTemplates(List<TemplateProgrammingExerciseParticipation> templateParticipations) {
         for (var templateParticipation : templateParticipations) {
             try {
@@ -265,6 +292,12 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         }
     }
 
+    /**
+     * Migrate the student participations. This is the most time-consuming part of the migration as we have
+     * to clone the repository for each student.
+     *
+     * @param participations list of student participations to migrate
+     */
     private void migrateStudents(List<ProgrammingExerciseStudentParticipation> participations) {
         for (var participation : participations)
             try {
@@ -305,6 +338,16 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
                 + "the migration with author: {} and date_string: {} and then restarting Artemis.", author(), date());
     }
 
+    /**
+     * Clones the repository from Bitbucket and moves it to the local VCS.
+     * This is done by cloning the repository from Bitbucket and then creating a bare repository in the local VCS.
+     *
+     * @param exercise      the programming exercise
+     * @param repositoryUrl the repository URL
+     * @return the URL of the repository in the local VCS
+     * @throws GitAPIException    if an error occurs during the git operation
+     * @throws URISyntaxException if the repository URL is invalid
+     */
     private String cloneRepositoryFromBitbucketAndMoveToLocalVCS(ProgrammingExercise exercise, String repositoryUrl) throws GitAPIException, URISyntaxException {
         if (localVCService.isEmpty() || bitbucketService.isEmpty() || bitbucketLocalVCMigrationService.isEmpty()) {
             log.error("Failed to clone repository from Bitbucket: {}", repositoryUrl);
@@ -327,6 +370,14 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         return url.toString();
     }
 
+    /**
+     * Clones the repository from the old origin and creates a bare repository in the local VCS, just as a normal local VC repository would be created
+     * by Artemis.
+     *
+     * @param projectKey     the project key
+     * @param repositorySlug the repository slug
+     * @param oldOrigin      the old origin of the repository
+     */
     private void cloneRepo(String projectKey, String repositorySlug, String oldOrigin) {
         LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(projectKey, repositorySlug, bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl());
 
