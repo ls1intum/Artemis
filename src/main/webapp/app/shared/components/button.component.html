@@ -7,10 +7,10 @@
     [overwriteDisabled]="disabled || isLoading"
 >
     @if (isLoading) {
-        <fa-icon class="jhi-btn__loading" [icon]="faCircleNotch" [spin]="true" size="sm"></fa-icon>
+        <fa-icon class="jhi-btn__loading" [icon]="faCircleNotch" [spin]="true" size="sm" />
     }
     @if (icon && !isLoading) {
-        <fa-icon class="jhi-btn__icon" [icon]="icon" size="sm"></fa-icon>
+        <fa-icon class="jhi-btn__icon" [icon]="icon" size="sm" />
     }
     @if (title) {
         <span class="jhi-btn__title" [class.ms-1]="icon || isLoading" [jhiTranslate]="title"></span>

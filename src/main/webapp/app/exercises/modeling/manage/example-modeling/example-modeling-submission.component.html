@@ -18,7 +18,7 @@
                         <div>
                             <div class="text-start">
                                 <span>{{ 'artemisApp.exampleSubmission.assessmentTraining' | artemisTranslate }}</span>
-                                <jhi-help-icon [text]="'artemisApp.exampleSubmission.selectModelExplanation'"></jhi-help-icon>
+                                <jhi-help-icon [text]="'artemisApp.exampleSubmission.selectModelExplanation'" />
                             </div>
                             <div class="btn-group" role="group">
                                 <input
@@ -46,7 +46,7 @@
                             </div>
                         </div>
                         <button (click)="upsertExampleModelingSubmission()" class="btn btn-primary ms-2 button-resize">
-                            <fa-icon [icon]="faSave"></fa-icon>
+                            <fa-icon [icon]="faSave" />
                             @if (isNewSubmission) {
                                 <span jhiTranslate="artemisApp.modelingExercise.createNewExampleSubmission" id="new-modeling-example-submission"
                                     >Create new example submission</span
@@ -60,7 +60,7 @@
                 }
                 @if (assessmentMode) {
                     <button (click)="saveExampleAssessment()" class="btn btn-primary button-resize">
-                        <fa-icon [icon]="faSave"></fa-icon>
+                        <fa-icon [icon]="faSave" />
                         <span jhiTranslate="artemisApp.modelingExercise.saveExampleAssessment">Save example assessment</span>
                     </button>
                 }
@@ -68,13 +68,13 @@
                     <div class="mt-2 mb-3">
                         @if (!assessmentMode) {
                             <button class="btn btn-secondary button-resize" (click)="showAssessment()">
-                                <fa-icon [icon]="faChalkboardTeacher"></fa-icon>
+                                <fa-icon [icon]="faChalkboardTeacher" />
                                 <span jhiTranslate="artemisApp.modelingExercise.showExampleAssessment" id="show-modeling-example-assessment">Show assessment</span>
                             </button>
                         }
                         @if (assessmentMode) {
                             <button class="btn btn-secondary button-resize" (click)="showSubmission()">
-                                <fa-icon [icon]="faCodeBranch"></fa-icon>
+                                <fa-icon [icon]="faCodeBranch" />
                                 <span jhiTranslate="artemisApp.modelingExercise.showExampleSubmission">Show submission</span>
                             </button>
                         }
@@ -89,12 +89,8 @@
                     <div class="pe-5" style="display: inline-block">
                         <span>{{ legendElement.text | artemisTranslate }}</span>
                         <fa-layers>
-                            <fa-icon style="color: #e9ecef" [icon]="faCircle" size="2x"></fa-icon>
-                            <fa-icon
-                                [icon]="legendElement.icon"
-                                [styles]="{ width: '29px', color: legendElement.color, 'font-size': legendElement.size }"
-                                transform="shrink-6"
-                            ></fa-icon>
+                            <fa-icon style="color: #e9ecef" [icon]="faCircle" size="2x" />
+                            <fa-icon [icon]="legendElement.icon" [styles]="{ width: '29px', color: legendElement.color, 'font-size': legendElement.size }" transform="shrink-6" />
                         </fa-layers>
                     </div>
                 }
@@ -103,13 +99,13 @@
                     <div class="pe-5" style="display: inline-block">
                         <span>{{ legend[3].text | artemisTranslate }}</span>
                         <fa-layers>
-                            <fa-icon style="color: #e9ecef" [icon]="faCircle" size="2x"></fa-icon>
+                            <fa-icon style="color: #e9ecef" [icon]="faCircle" size="2x" />
                             <fa-icon
                                 [icon]="legend[3].icon"
                                 [styles]="{ color: '#ffc800', width: '29px', 'margin-top': '-9px', 'font-size': legend[3].size }"
                                 transform="shrink-6"
-                            ></fa-icon>
-                            <fa-icon [icon]="faExclamation" size="2x" [styles]="{ width: '29px', 'margin-top': '-8px' }" transform="shrink-10"></fa-icon>
+                            />
+                            <fa-icon [icon]="faExclamation" size="2x" [styles]="{ width: '29px', 'margin-top': '-8px' }" transform="shrink-10" />
                         </fa-layers>
                     </div>
                 }
@@ -117,7 +113,7 @@
             @if (readOnly) {
                 <div class="col-3 text-end mb-2">
                     <button (click)="readAndUnderstood()" class="btn btn-success">
-                        <fa-icon [icon]="faSave"></fa-icon>
+                        <fa-icon [icon]="faSave" />
                         <span jhiTranslate="artemisApp.exampleSubmission.readAndUnderstood">I have viewed and understood the example</span>
                     </button>
                 </div>
@@ -171,8 +167,7 @@
                                 [explanation]="explanationText"
                                 [highlightedElements]="highlightedElements"
                                 (feedbackChanged)="onReferencedFeedbackChanged($event)"
-                            >
-                            </jhi-modeling-assessment>
+                            />
                         }
                     </div>
                     <!--The explanation field is only visible a) in assessment mode, b) for example submissions in read and confirm mode and c) when in assessment dashboard (readonly = true)
@@ -186,7 +181,7 @@
                                         [icon]="faInfoCircle"
                                         title="{{ 'artemisApp.exampleSubmission.assessmentExplanationInfo' | artemisTranslate }}"
                                         style="color: #ffc107"
-                                    ></fa-icon>
+                                    />
                                 </small>
                             </sup>
                         </h3>
@@ -202,7 +197,7 @@
                             [readOnly]="readOnly"
                             [addReferenceIdForExampleSubmission]="true"
                             (feedbacksChange)="onUnReferencedFeedbackChanged($event)"
-                        ></jhi-unreferenced-feedback>
+                        />
                     }
                 </div>
                 @if (exercise) {
@@ -213,8 +208,7 @@
                         [collapsed]="!readOnly && !toComplete"
                         [isAssessmentTraining]="toComplete"
                         [showAssessmentInstructions]="assessmentMode"
-                    >
-                    </jhi-collapsable-assessment-instructions>
+                    />
                 }
             </div>
         </div>
