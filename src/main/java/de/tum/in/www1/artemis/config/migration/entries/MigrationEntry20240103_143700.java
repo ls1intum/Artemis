@@ -53,7 +53,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
 
     private static final int MAX_THREAD_COUNT = 32;
 
-    private static final String ERROR_MESSAGE = "Failed to migrate programming exercises within nine hours. Aborting migration.";
+    private static final String ERROR_MESSAGE = "Failed to migrate programming exercises within twenty four hours. Aborting migration.";
 
     private static final int TIMEOUT_IN_HOURS = 24;
 
