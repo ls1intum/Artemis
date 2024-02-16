@@ -1,6 +1,6 @@
 <!-- If the exercise is not loaded or not programming, show regular component-->
 @if (!exercise || exercise.type !== ExerciseType.PROGRAMMING || !orionState) {
-    <jhi-exercise-assessment-dashboard></jhi-exercise-assessment-dashboard>
+    <jhi-exercise-assessment-dashboard />
 } @else {
     @if (orionState.opened !== exerciseId || orionState.view !== ExerciseView.TUTOR) {
         <jhi-exercise-assessment-dashboard>
@@ -9,8 +9,7 @@
                     [buttonLoading]="orionState.cloning"
                     buttonLabel="{{ 'artemisApp.orionExerciseAssessmentDashboard.startYourParticipation' | artemisTranslate }}"
                     (clickHandler)="openAssessmentInOrion()"
-                >
-                </jhi-ide-button>
+                />
             </ng-template>
         </jhi-exercise-assessment-dashboard>
     } @else {
@@ -22,8 +21,7 @@
                     [disabled]="!!disabled"
                     buttonLabel="{{ 'artemisApp.orionExerciseAssessmentDashboard.' + buttonLabel | artemisTranslate }}"
                     (clickHandler)="downloadSubmissionInOrion(submission, queryParams['correction-round'], queryParams['testRun'])"
-                >
-                </jhi-ide-button>
+                />
             </ng-template>
         </jhi-exercise-assessment-dashboard>
     }
