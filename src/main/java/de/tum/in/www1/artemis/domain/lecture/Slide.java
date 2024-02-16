@@ -28,9 +28,6 @@ import de.tum.in.www1.artemis.service.FileService;
 public class Slide extends DomainObject {
 
     @Transient
-    private final transient FilePathService filePathService = new FilePathService();
-
-    @Transient
     private final transient FileService fileService = new FileService();
 
     @Transient
