@@ -82,6 +82,7 @@ jobs:
           timeout_minutes: 10
           retry_wait_seconds: 10
           max_attempts: 60
+          warning_on_retry: false
           command: wget -nv -t1 --spider http://localhost:8080/actuator/health || exit 1
 
         # The android tests depend on certain user accounts to be available. Create them here.
@@ -103,7 +104,7 @@ jobs:
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: Android E2E Test Results
-          path: ./android-repo/test-outputs/**/*.xml
+          path: android-repo/test-outputs/**/*.xml
           reporter: java-junit
 
       - name: Cleanup -> Stop artemis server
