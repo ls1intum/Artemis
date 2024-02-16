@@ -8,6 +8,7 @@ import { generateUUID } from '../../support/utils';
 
 import { expect } from '@playwright/test';
 import { test } from '../../support/fixtures';
+import { Fixtures } from '../../fixtures/fixtures';
 
 test.describe('Lecture management', () => {
     let course: Course;
@@ -19,8 +20,8 @@ test.describe('Lecture management', () => {
     });
 
     test('Creates a lecture', async ({ login, lectureManagement, lectureCreation }) => {
-        const lectureTitle = 'Lecture ' + generateUUID(); // Assuming generateUUID is available in the test context
-        await login(instructor, '/course-management/' + course.id);
+        const lectureTitle = 'Lecture ' + generateUUID();
+        await login(instructor, `/course-management/${course.id}`);
         await lectureManagement.getLectures().click();
         await lectureManagement.clickCreateLecture();
         await lectureCreation.setTitle(lectureTitle);
@@ -46,7 +47,7 @@ test.describe('Lecture management', () => {
         let lecture: Lecture;
 
         test.beforeEach(async ({ login, courseManagementAPIRequests }) => {
-            await login(instructor, '/course-management/' + course.id + '/lectures');
+            await login(instructor, `/course-management/${course.id}/lectures`);
             lecture = await courseManagementAPIRequests.createLecture(course);
         });
 
@@ -57,9 +58,9 @@ test.describe('Lecture management', () => {
         });
 
         test('Adds a text unit to the lecture', async ({ lectureManagement, page }) => {
-            const text = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit'; // Simplified for example purposes
+            const text = await Fixtures.get('loremIpsum-short.txt');
             await lectureManagement.openUnitsPage(lecture.id!);
-            await lectureManagement.addTextUnit('Text unit', text);
+            await lectureManagement.addTextUnit('Text unit', text!);
             await expect(page.getByText('Text unit')).toBeVisible();
         });
 
