@@ -112,20 +112,6 @@ public class Channel extends Conversation {
         this.exam = exam;
     }
 
-    public Channel(String name, @Nullable String description, @Nullable String topic, Boolean isPublic, Boolean isAnnouncementChannel, Boolean isArchived, boolean isCourseWide,
-            Lecture lecture, Exercise exercise, Exam exam) {
-        this.name = name;
-        this.description = description;
-        this.topic = topic;
-        this.isPublic = isPublic;
-        this.isAnnouncementChannel = isAnnouncementChannel;
-        this.isArchived = isArchived;
-        this.isCourseWide = isCourseWide;
-        this.lecture = lecture;
-        this.exercise = exercise;
-        this.exam = exam;
-    }
-
     public Channel() {
     }
 
