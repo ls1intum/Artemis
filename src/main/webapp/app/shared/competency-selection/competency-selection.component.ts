@@ -22,9 +22,11 @@ import { finalize } from 'rxjs';
 export class CompetencySelectionComponent implements OnInit, ControlValueAccessor {
     @Input() labelName: string;
     @Input() labelTooltip: string;
+    // selected competencies
     @Input() value: Competency[] = [];
     @Input() disabled: boolean;
-    @Input() competencies: Competency[];
+    // all course competencies
+    @Input() competencies: Competency[] = [];
 
     @Output() valueChange = new EventEmitter();
 

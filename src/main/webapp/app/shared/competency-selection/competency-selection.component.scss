@@ -7,4 +7,8 @@
     overflow-x: auto;
     border: var(--bs-border-width) solid var(--bs-border-color);
     border-radius: var(--bs-border-radius);
+
+    label {
+        display: contents;
+    }
 }

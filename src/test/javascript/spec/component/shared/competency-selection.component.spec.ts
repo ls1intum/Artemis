@@ -129,4 +129,39 @@ describe('CompetencySelection', () => {
 
         expect(detectChangesStub).toHaveBeenCalledOnce();
     });
+
+    it('should select / unselect competencies', () => {
+        const competency1 = { id: 1, optional: false } as Competency;
+        const competency2 = { id: 2, optional: true } as Competency;
+        const competency3 = { id: 3, optional: false } as Competency;
+        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency1, competency2, competency3] });
+
+        fixture.detectChanges();
+        expect(component.value).toBeEmpty();
+
+        component.toggleCompetency(competency1);
+        component.toggleCompetency(competency2);
+        component.toggleCompetency(competency3);
+
+        expect(component.value).toHaveLength(3);
+        expect(component.value).toContain(competency3);
+
+        component.toggleCompetency(competency2);
+
+        expect(component.value).toHaveLength(2);
+        expect(component.value).not.toContain(competency2);
+    });
+
+    it('should register onchange', () => {
+        const registerSpy = jest.fn();
+        component.registerOnChange(registerSpy);
+        component.toggleCompetency({ id: 1 });
+        expect(registerSpy).toHaveBeenCalled();
+    });
+
+    it('should set disabled state', () => {
+        component.disabled = true;
+        component.setDisabledState?.(false);
+        expect(component.disabled).toBeFalse();
+    });
 });
