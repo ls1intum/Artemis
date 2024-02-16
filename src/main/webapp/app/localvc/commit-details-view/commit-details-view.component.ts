@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ActivatedRoute } from '@angular/router';
 import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 @Component({

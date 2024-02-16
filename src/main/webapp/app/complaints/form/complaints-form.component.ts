@@ -17,7 +17,6 @@ export class ComplaintsFormComponent implements OnInit {
     @Input() exercise: Exercise;
     @Input() resultId: number;
     @Input() examId?: number;
-    @Input() remainingNumberOfComplaints: number;
     @Input() complaintType: ComplaintType;
     @Input() isCurrentUserSubmissionAuthor = false;
     // eslint-disable-next-line @angular-eslint/no-output-native

@@ -1,6 +1,6 @@
 @if (quizExercise.status === QuizStatus.CLOSED && quizExercise.isAtLeastEditor) {
     <button type="submit" (click)="openForPractice()" class="btn btn-warning btn-sm me-1 mb-1">
-        <fa-icon [icon]="faPlayCircle"></fa-icon>
+        <fa-icon [icon]="faPlayCircle" />
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.openForPractice"></span>
     </button>
 }
@@ -8,7 +8,7 @@
     (quizExercise.status === QuizStatus.VISIBLE || quizExercise.status === QuizStatus.INVISIBLE) && quizExercise.quizMode === QuizMode.SYNCHRONIZED && quizExercise.isAtLeastEditor
 ) {
     <button id="instructor-quiz-start-{{ quizExercise.id }}" type="submit" (click)="startQuiz()" class="btn btn-warning btn-sm me-1 mb-1">
-        <fa-icon [icon]="faPlayCircle"></fa-icon>
+        <fa-icon [icon]="faPlayCircle" />
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.startQuiz">Start Quiz</span>
     </button>
 }
@@ -27,7 +27,7 @@
             }
             @if (!batch.started) {
                 <button id="instructor-quiz-start-{{ quizExercise.id }}-{{ batch.id }}" type="submit" (click)="startBatch(batch.id!)" class="btn btn-warning btn-sm me-1 mb-1">
-                    <fa-icon [icon]="faPlayCircle"></fa-icon>
+                    <fa-icon [icon]="faPlayCircle" />
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.startQuiz">Start Quiz</span>
                 </button>
             }
@@ -35,7 +35,7 @@
     }
     <div>
         <button id="instructor-quiz-add-{{ quizExercise.id }}" type="submit" (click)="addBatch()" class="btn btn-primary btn-sm me-1 mb-1">
-            <fa-icon [icon]="faPlus"></fa-icon>
+            <fa-icon [icon]="faPlus" />
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.addBatch">Add Batch</span>
         </button>
     </div>
@@ -54,12 +54,12 @@
         (delete)="endQuiz()"
         [dialogError]="dialogError$"
     >
-        <fa-icon [icon]="faStopCircle"></fa-icon>
+        <fa-icon [icon]="faStopCircle" />
     </button>
 }
 @if (quizExercise.status === QuizStatus.INVISIBLE && quizExercise.isAtLeastEditor) {
     <button id="quiz-set-visible-{{ quizExercise.id }}" type="submit" (click)="showQuiz()" class="btn btn-warning btn-sm me-1 mb-1">
-        <fa-icon [icon]="faEye"></fa-icon>
+        <fa-icon [icon]="faEye" />
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.showNow">Set Visible</span>
     </button>
 }
