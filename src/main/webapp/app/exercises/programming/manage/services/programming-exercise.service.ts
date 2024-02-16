@@ -531,6 +531,7 @@ export class ProgrammingExerciseService {
 
     /**
      * Gets the git-diff report of a programming exercise for two specific submissions
+     * The user needs to have at least the 'instructor' authority to access this endpoint.
      * @param exerciseId The id of a programming exercise
      * @param olderSubmissionId The id of the older submission
      * @param newerSubmissionId The id of the newer submission
@@ -543,12 +544,46 @@ export class ProgrammingExerciseService {
 
     /**
      * Gets the git-diff report of a programming exercise for a specific submission with the template
+     * The user needs to have at least the 'instructor' authority to access this endpoint.
      * @param exerciseId The id of a programming exercise
      * @param submissionId The id of a submission
      */
     getDiffReportForSubmissionWithTemplate(exerciseId: number, submissionId: number): Observable<ProgrammingExerciseGitDiffReport | undefined> {
         return this.http
             .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/submissions/${submissionId}/diff-report-with-template`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
+    }
+
+    /**
+     * Gets the git-diff report of a programming exercise for two specific submissions. This report is used for the commit details view.
+     * The user needs to have access to the submssions partipation to access this endpoint.
+     * @param exerciseId The id of a programming exercise
+     * @param olderSubmissionId The id of the older submission
+     * @param newerSubmissionId The id of the newer submission
+     */
+    getDiffReportForCommitDetailsViewForSubmissions(
+        exerciseId: number,
+        olderSubmissionId: number,
+        newerSubmissionId: number,
+    ): Observable<ProgrammingExerciseGitDiffReport | undefined> {
+        return this.http
+            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/submissions/${olderSubmissionId}/diff-report-commit-details/${newerSubmissionId}`, {
+                observe: 'response',
+            })
+            .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
+    }
+
+    /**
+     * Gets the git-diff report of a programming exercise for a specific submission with the template. This report is used for the commit details view.
+     * The user needs to have access to the submssions partipation to access this endpoint.
+     * @param exerciseId The id of a programming exercise
+     * @param submissionId The id of a submission
+     */
+    getDiffReportForCommitDetailsViewForSubmissionWithTemplate(exerciseId: number, submissionId: number): Observable<ProgrammingExerciseGitDiffReport | undefined> {
+        return this.http
+            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/submissions/${submissionId}/diff-report-commit-details-with-template`, {
+                observe: 'response',
+            })
             .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
     }
 

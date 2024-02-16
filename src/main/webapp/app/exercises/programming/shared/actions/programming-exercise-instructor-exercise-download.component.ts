@@ -18,7 +18,7 @@ import { faDownload } from '@fortawesome/free-solid-svg-icons';
             [icon]="faDownload"
             [title]="'artemisApp.programmingExercise.export.downloadExercise'"
             (onClick)="exportExercise()"
-        ></jhi-button>
+        />
     `,
 })
 export class ProgrammingExerciseInstructorExerciseDownloadComponent {

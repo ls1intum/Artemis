@@ -18,6 +18,7 @@
             "openPracticeCodeEditor": "Übungs-Programmiereditor öffnen",
             "openGradedCodeEditor": "Bewerteten Programmiereditor öffnen",
             "openModelingEditor": "Modellierungseditor öffnen",
+            "openRepository": "Repository öffnen",
             "importIntoIntelliJ": "In IntelliJ öffnen",
             "practiceMode": {
                 "title": "Übungsmodus",
