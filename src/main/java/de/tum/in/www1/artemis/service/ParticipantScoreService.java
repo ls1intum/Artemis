@@ -138,8 +138,6 @@ public class ParticipantScoreService {
                 .getCourseViaExerciseGroupOrCourseMember();
 
         // individual exercises
-        // [0] -> User
-        // [1] -> sum of achieved points in exercises
         final var studentAndAchievedPoints = studentScoreRepository.getAchievedPointsOfStudents(individualExercises);
         Map<Long, Double> pointsAchieved = studentAndAchievedPoints.stream().collect(Collectors.toMap(StudentScoreSumDTO::userId, StudentScoreSumDTO::sumPointsAchieved));
 
