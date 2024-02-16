@@ -55,7 +55,7 @@ import tech.jhipster.security.RandomUtil;
 @Service
 public class UserService {
 
-    private final Logger log = LoggerFactory.getLogger(UserService.class);
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
     @Value("${artemis.user-management.use-external}")
     private Boolean useExternalUserManagement;
@@ -618,7 +618,7 @@ public class UserService {
      */
     public void removeGroupFromUsers(String groupName) {
         log.info("Remove group {} from users", groupName);
-        Set<User> users = userRepository.findAllInGroupWithAuthorities(groupName);
+        Set<User> users = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(groupName);
         log.info("Found {} users with group {}", users.size(), groupName);
         for (User user : users) {
             user.getGroups().remove(groupName);

@@ -18,4 +18,5 @@ export class PlagiarismCase {
     public verdictMessage?: string;
     public verdictBy?: User;
     public verdictPointDeduction?: number;
+    public createdByContinuousPlagiarismControl?: boolean;
 }

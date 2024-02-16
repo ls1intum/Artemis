@@ -140,4 +140,11 @@ describe('ProgrammingExerciseGradingService', () => {
         expect(testCasesExercise1Subscriber1).toEqual(newTestCasesOracle);
         expect(testCasesExercise1Subscriber2).toEqual(newTestCasesOracle);
     });
+
+    it('should reuse locally saved test cases if they exist and not send two rest requests', () => {
+        gradingService.getTestCases(exercise1.id).subscribe();
+        gradingService.getTestCases(exercise1.id).subscribe();
+
+        expect(getStub).toHaveBeenCalledOnce();
+    });
 });

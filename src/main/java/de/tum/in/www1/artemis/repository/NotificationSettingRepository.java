@@ -42,7 +42,7 @@ public interface NotificationSettingRepository extends JpaRepository<Notificatio
             SELECT setting
             FROM NotificationSetting setting
             WHERE setting.settingId = :settingId
-                AND setting.email = TRUE
+                AND setting.email IS TRUE
             """)
     Set<NotificationSetting> findAllNotificationSettingsForUsersWhoEnabledSpecifiedEmailSettingWithEagerGroupsAndAuthorities(@Param("settingId") String settingId);
 
@@ -54,4 +54,17 @@ public interface NotificationSettingRepository extends JpaRepository<Notificatio
         return findAllNotificationSettingsForUsersWhoEnabledSpecifiedEmailSettingWithEagerGroupsAndAuthorities(settingId).stream().map(NotificationSetting::getUser)
                 .collect(Collectors.toSet());
     }
+
+    /**
+     * Retrieves the ids for all muted conversations of the user with the provided id
+     *
+     * @param userId id of the user
+     * @return ids of the conversations the user has muted
+     */
+    @Query("""
+            SELECT cp.conversation.id
+            FROM ConversationParticipant cp
+            WHERE cp.user.id = :userId AND (cp.isMuted IS TRUE OR cp.isHidden IS TRUE)
+            """)
+    Set<Long> findMutedConversations(@Param("userId") long userId);
 }

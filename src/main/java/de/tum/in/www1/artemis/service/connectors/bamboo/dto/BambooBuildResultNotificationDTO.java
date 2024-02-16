@@ -12,7 +12,6 @@ import org.apache.commons.text.StringEscapeUtils;
 import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
@@ -99,7 +98,7 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
     }
 
     @Override
-    public List<BuildLogEntry> extractBuildLogs(ProgrammingLanguage programmingLanguage) {
+    public List<BuildLogEntry> extractBuildLogs() {
         List<BuildLogEntry> buildLogEntries = new ArrayList<>();
 
         // Store logs into database. Append logs of multiple jobs.

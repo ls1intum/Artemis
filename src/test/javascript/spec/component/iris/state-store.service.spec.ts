@@ -11,11 +11,12 @@ import {
     SessionReceivedAction,
     StudentMessageSentAction,
 } from 'app/iris/state-store.model';
-import { skip, take } from 'rxjs';
+import { firstValueFrom, skip, take } from 'rxjs';
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { mockClientMessage, mockServerMessage, mockState } from '../../helpers/sample/iris-sample-data';
 import { IrisErrorMessageKey, errorMessages } from 'app/entities/iris/iris-errors.model';
+import { IrisRateLimitInformation } from 'app/iris/websocket.service';
 
 describe('IrisStateStore', () => {
     let stateStore: IrisStateStore;
@@ -33,7 +34,7 @@ describe('IrisStateStore', () => {
         it('should keep the state when index is out of range', async () => {
             const action: RateMessageSuccessAction = new RateMessageSuccessAction(0, true);
             const obs = stateStore.getState();
-            const promise = obs.pipe(skip(1), take(1)).toPromise();
+            const promise = firstValueFrom(obs.pipe(skip(1), take(1)));
 
             stateStore.dispatch(action);
 
@@ -46,7 +47,7 @@ describe('IrisStateStore', () => {
             stateStore.dispatch(new SessionReceivedAction(123, [mockServerMessage, mockServerMessage]));
 
             const action: RateMessageSuccessAction = new RateMessageSuccessAction(0, true);
-            const promise = obs.pipe(skip(1), take(1)).toPromise();
+            const promise = firstValueFrom(obs.pipe(skip(1), take(1)));
 
             stateStore.dispatch(action);
 
@@ -72,7 +73,7 @@ describe('IrisStateStore', () => {
 
         const obs = stateStore.getState();
 
-        const promise = obs.pipe(skip(1), take(1)).toPromise();
+        const promise = firstValueFrom(obs.pipe(skip(1), take(1)));
 
         stateStore.dispatch(action);
 
@@ -89,7 +90,7 @@ describe('IrisStateStore', () => {
 
         const obs = stateStore.getState();
 
-        const promise = obs.pipe(skip(1), take(1)).toPromise();
+        const promise = firstValueFrom(obs.pipe(skip(1), take(1)));
 
         stateStore.dispatch(action);
 
@@ -106,7 +107,7 @@ describe('IrisStateStore', () => {
 
         const obs = stateStore.getState();
 
-        const promise = obs.pipe(skip(1), take(1)).toPromise();
+        const promise = firstValueFrom(obs.pipe(skip(1), take(1)));
 
         stateStore.dispatch(action);
 
@@ -128,7 +129,7 @@ describe('IrisStateStore', () => {
 
         const obs = stateStore.getState();
 
-        const promise = obs.pipe(skip(1), take(1)).toPromise();
+        const promise = firstValueFrom(obs.pipe(skip(1), take(1)));
 
         stateStore.dispatch(action);
 
@@ -162,7 +163,7 @@ describe('IrisStateStore', () => {
 
         const obs = stateStore.getState();
 
-        const promise1 = obs.pipe(skip(1), take(1)).toPromise();
+        const promise1 = firstValueFrom(obs.pipe(skip(1), take(1)));
 
         stateStore.dispatch(action1);
 
@@ -174,7 +175,7 @@ describe('IrisStateStore', () => {
             messages: [action1.message],
         });
 
-        const promise2 = obs.pipe(skip(1), take(1)).toPromise();
+        const promise2 = firstValueFrom(obs.pipe(skip(1), take(1)));
 
         stateStore.dispatch(action2);
 
@@ -187,7 +188,7 @@ describe('IrisStateStore', () => {
         });
 
         // the observable should only be aware of the previously emitted value
-        const promise3 = obs.pipe(skip(1), take(1)).toPromise();
+        const promise3 = firstValueFrom(obs.pipe(skip(1), take(1)));
 
         stateStore.dispatch(action3);
 
@@ -199,7 +200,7 @@ describe('IrisStateStore', () => {
             messages: [action1.message, action2.message, action3.message],
         });
 
-        const promise4 = obs.pipe(skip(1), take(1)).toPromise();
+        const promise4 = firstValueFrom(obs.pipe(skip(1), take(1)));
 
         stateStore.dispatch(action4);
 
@@ -215,7 +216,7 @@ describe('IrisStateStore', () => {
     it('should dispatch error occurrences', async () => {
         const obs = stateStore.getState();
 
-        const promise = obs.pipe(skip(1), take(1)).toPromise();
+        const promise = firstValueFrom(obs.pipe(skip(1), take(1)));
 
         stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.HISTORY_LOAD_FAILED));
 
@@ -236,7 +237,7 @@ describe('IrisStateStore', () => {
         };
 
         await stateStore.dispatchAndThen(action).then(async () => {
-            const promise = stateStore.getState().pipe(take(1)).toPromise();
+            const promise = firstValueFrom(stateStore.getState().pipe(take(1)));
             const state = (await promise) as MessageStoreState;
             expect(state).toEqual({
                 ...mockState,
@@ -249,7 +250,7 @@ describe('IrisStateStore', () => {
     it('should stay in fatal states', async () => {
         const obs1 = stateStore.getState();
 
-        const promise1 = obs1.pipe(skip(1), take(1)).toPromise();
+        const promise1 = firstValueFrom(obs1.pipe(skip(1), take(1)));
 
         stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.SESSION_LOAD_FAILED));
 
@@ -259,7 +260,7 @@ describe('IrisStateStore', () => {
 
         const obs2 = stateStore.getState();
 
-        const promise2 = obs2.pipe(skip(1), take(1)).toPromise();
+        const promise2 = firstValueFrom(obs2.pipe(skip(1), take(1)));
 
         stateStore.dispatch(new StudentMessageSentAction(mockClientMessage, null));
 
@@ -280,7 +281,7 @@ describe('IrisStateStore', () => {
 
         const obs1 = stateStore.getState();
 
-        const promise1 = obs1.pipe(skip(1), take(1)).toPromise();
+        const promise1 = firstValueFrom(obs1.pipe(skip(1), take(1)));
 
         stateStore.dispatch(action1);
 
@@ -308,7 +309,7 @@ describe('IrisStateStore', () => {
 
         const obs2 = stateStore.getState();
 
-        const promise2 = obs2.pipe(skip(1), take(1)).toPromise();
+        const promise2 = firstValueFrom(obs2.pipe(skip(1), take(1)));
 
         stateStore.dispatch(action2);
 
@@ -329,7 +330,7 @@ describe('IrisStateStore', () => {
 
         const obs1 = stateStore.getState();
 
-        const promise1 = obs1.pipe(skip(1), take(1)).toPromise();
+        const promise1 = firstValueFrom(obs1.pipe(skip(1), take(1)));
 
         stateStore.dispatch(action1);
 
@@ -357,7 +358,7 @@ describe('IrisStateStore', () => {
 
         const obs2 = stateStore.getState();
 
-        const promise2 = obs2.pipe(skip(1), take(1)).toPromise();
+        const promise2 = firstValueFrom(obs2.pipe(skip(1), take(1)));
 
         stateStore.dispatch(action2);
 
@@ -369,9 +370,9 @@ describe('IrisStateStore', () => {
     it('should update below rate limit state', async () => {
         const obs = stateStore.getState();
 
-        const promise = obs.pipe(skip(1), take(1)).toPromise();
+        const promise = firstValueFrom(obs.pipe(skip(1), take(1)));
 
-        stateStore.dispatch(new RateLimitUpdatedAction(1, 2));
+        stateStore.dispatch(new RateLimitUpdatedAction(new IrisRateLimitInformation(1, 2, 3)));
 
         const state = (await promise) as MessageStoreState;
 
@@ -380,15 +381,16 @@ describe('IrisStateStore', () => {
             error: null,
             currentMessageCount: 1,
             rateLimit: 2,
+            rateLimitTimeframeHours: 3,
         });
     });
 
     it('should update above rate limit state', async () => {
         const obs = stateStore.getState();
 
-        const promise = obs.pipe(skip(1), take(1)).toPromise();
+        const promise = firstValueFrom(obs.pipe(skip(1), take(1)));
 
-        stateStore.dispatch(new RateLimitUpdatedAction(2, 2));
+        stateStore.dispatch(new RateLimitUpdatedAction(new IrisRateLimitInformation(2, 2, 3)));
 
         const state = (await promise) as MessageStoreState;
 
@@ -397,6 +399,7 @@ describe('IrisStateStore', () => {
             error: errorMessages[IrisErrorMessageKey.RATE_LIMIT_EXCEEDED],
             currentMessageCount: 2,
             rateLimit: 2,
+            rateLimitTimeframeHours: 3,
         });
     });
 });
@@ -420,7 +423,7 @@ describe('IrisStateStore with an empty session state', () => {
 
         const obs = stateStore.getState();
 
-        const promise = obs.pipe(skip(1), take(1)).toPromise();
+        const promise = firstValueFrom(obs.pipe(skip(1), take(1)));
 
         stateStore.dispatch(action);
 

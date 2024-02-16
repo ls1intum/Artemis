@@ -1,6 +1,8 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewContainerRef } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewContainerRef } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-import { TranslateService } from '@ngx-translate/core';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { ShowdownExtension } from 'showdown';
 import { catchError, filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { Observable, Subscription, merge, of } from 'rxjs';
@@ -9,7 +11,6 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ProgrammingExerciseTaskExtensionWrapper } from './extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/exercises/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
-import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { TaskArray, TaskArrayWithExercise } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Feedback } from 'app/entities/feedback.model';
@@ -37,7 +38,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public onNoInstructionsAvailable = new EventEmitter();
 
     public problemStatement: string;
-    public participationSubscription: Subscription;
+    public participationSubscription?: Subscription;
+    private testCasesSubscription?: Subscription;
 
     public isInitial = true;
     public isLoading: boolean;
@@ -52,6 +54,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.programmingExerciseTaskWrapper.setExercise(this.exercise);
         this.programmingExerciseTaskWrapper.setLatestResult(this.latestResult);
         this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResult);
+        this.programmingExerciseTaskWrapper.setTestCases(this.testCases);
+        this.programmingExercisePlantUmlWrapper.setTestCases(this.testCases);
     }
 
     public tasks: TaskArray;
@@ -62,24 +66,28 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     private injectableContentFoundSubscription: Subscription;
     private tasksSubscription: Subscription;
     private generateHtmlSubscription: Subscription;
+    private themeChangeSubscription: Subscription;
+    private testCases?: ProgrammingExerciseTestCase[];
 
     // Icons
     faSpinner = faSpinner;
 
     constructor(
         public viewContainerRef: ViewContainerRef,
-        private translateService: TranslateService,
         private resultService: ResultService,
         private repositoryFileService: RepositoryFileService,
         private participationWebsocketService: ParticipationWebsocketService,
         private markdownService: ArtemisMarkdownService,
-        private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
         private programmingExerciseTaskWrapper: ProgrammingExerciseTaskExtensionWrapper,
         private programmingExercisePlantUmlWrapper: ProgrammingExercisePlantUmlExtensionWrapper,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private changeDetectorRef: ChangeDetectorRef,
+        private programmingExerciseGradingService: ProgrammingExerciseGradingService,
+        themeService: ThemeService,
     ) {
         this.programmingExerciseTaskWrapper.viewContainerRef = this.viewContainerRef;
+        this.themeChangeSubscription = themeService.getCurrentThemeObservable().subscribe(() => {
+            this.updateMarkdown();
+        });
     }
 
     /**
@@ -88,6 +96,19 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * @param changes
      */
     public ngOnChanges(changes: SimpleChanges) {
+        if (this.exercise?.isAtLeastTutor) {
+            if (this.testCasesSubscription) {
+                this.testCasesSubscription.unsubscribe();
+            }
+            this.testCasesSubscription = this.programmingExerciseGradingService
+                .getTestCases(this.exercise.id!)
+                .pipe(
+                    tap((testCases) => {
+                        this.testCases = testCases;
+                    }),
+                )
+                .subscribe();
+        }
         of(!!this.markdownExtensions)
             .pipe(
                 // Set up the markdown extensions if they are not set up yet so that tasks, UMLs, etc. can be parsed.
@@ -306,6 +327,12 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         }
         if (this.tasksSubscription) {
             this.tasksSubscription.unsubscribe();
+        }
+        if (this.testCasesSubscription) {
+            this.testCasesSubscription.unsubscribe();
+        }
+        if (this.themeChangeSubscription) {
+            this.themeChangeSubscription.unsubscribe();
         }
     }
 }

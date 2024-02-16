@@ -171,7 +171,7 @@ function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType: ExerciseTyp
         startDate: dayjs(),
         endDate: end,
         numberOfCorrectionRoundsInExam: 1,
-        examStudentReviewStart: resultDate.add(10, 'seconds'),
+        examStudentReviewStart: resultDate,
         examStudentReviewEnd: resultDate.add(1, 'minute'),
         publishResultsDate: resultDate,
         gracePeriod: 10,

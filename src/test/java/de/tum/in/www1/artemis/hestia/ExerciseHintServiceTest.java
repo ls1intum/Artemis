@@ -55,7 +55,7 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationIndependentTest {
     private ProgrammingExerciseTaskService programmingExerciseTaskService;
 
     @Autowired
-    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     @Autowired
     private ExerciseHintActivationRepository exerciseHintActivationRepository;
@@ -245,8 +245,8 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testGetAvailableExerciseHints_skippedTestsConsideredAsNegative() {
         // create result with feedbacks with "null" for attribute "positive"
         addResultWithSuccessfulTestCases(exercise.getTestCases());
-        var results = resultRepository.findAllByExerciseId(exercise.getId());
-        var optionalResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(results.get(0).getId());
+        var results = resultRepository.findAllByParticipationExerciseId(exercise.getId());
+        var optionalResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(results.iterator().next().getId());
         assertThat(optionalResult).isPresent();
 
         var result = optionalResult.get();
@@ -343,7 +343,7 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationIndependentTest {
         for (ProgrammingExerciseTestCase testCase : exercise.getTestCases()) {
             var feedback = new Feedback();
             feedback.setPositive(successfulTestCases.contains(testCase));
-            feedback.setText(testCase.getTestName());
+            feedback.setTestCase(testCase);
             feedback.setVisibility(Visibility.ALWAYS);
             feedback.setType(FeedbackType.AUTOMATIC);
             participationUtilService.addFeedbackToResult(feedback, result);

@@ -77,13 +77,17 @@ export class ExamParticipation {
         quizExerciseMultipleChoice.tickAnswerOption(exerciseID, 2, quizExerciseID);
     }
 
-    startParticipation(student: CypressCredentials, course: Course, exam: Exam) {
+    openExam(student: CypressCredentials, course: Course, exam: Exam) {
         cy.login(student, '/');
         cy.visit('/courses');
         courseList.openCourse(course.id!);
         courseOverview.openExamsTab();
         courseOverview.openExam(exam.id!);
         cy.url().should('contain', `/exams/${exam.id}`);
+    }
+
+    startParticipation(student: CypressCredentials, course: Course, exam: Exam) {
+        this.openExam(student, course, exam);
         examStartEnd.startExam(true);
     }
 
@@ -104,8 +108,8 @@ export class ExamParticipation {
     }
 
     getResultScore() {
-        cy.reloadUntilFound('#result-score');
-        return cy.get('#result-score');
+        cy.reloadUntilFound('#exercise-result-score');
+        return cy.get('#exercise-result-score');
     }
 
     checkExamFinishedTitle(title: string) {
@@ -128,12 +132,12 @@ export class ExamParticipation {
     }
 
     verifyExerciseTitleOnFinalPage(exerciseID: number, exerciseTitle: string) {
-        getExercise(exerciseID).find('.exercise-title').contains(exerciseTitle).should('be.visible');
+        getExercise(exerciseID).find(`#exercise-group-title-${exerciseID}`).contains(exerciseTitle).should('be.visible');
     }
 
     verifyTextExerciseOnFinalPage(textFixture: string) {
         cy.fixture(textFixture).then((submissionText) => {
-            cy.contains(submissionText).should('be.visible');
+            cy.get('textarea').should('have.value', submissionText);
         });
     }
 }

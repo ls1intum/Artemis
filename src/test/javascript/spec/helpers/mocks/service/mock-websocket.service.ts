@@ -10,6 +10,10 @@ export class MockWebsocketService implements IWebsocketService {
 
     enableReconnect(): void {}
 
+    isConnected(): boolean {
+        return true;
+    }
+
     receive(): Observable<any> {
         return of();
     }

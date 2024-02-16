@@ -128,6 +128,7 @@ a.btn {
 }
 
 .form-control,
+.form-control-sm,
 .form-select,
 .form-check-input,
 .form-control:not(.ace_editor):hover,
@@ -950,7 +951,7 @@ Course Info Bar
     box-shadow: 3px 3px 6px $mat-autocomplete-visible-box-shadow;
 }
 
-.mat-select-panel {
+.cdk-overlay-container .cdk-overlay-pane .mat-select-panel {
     background: $metis-course-discussion-select-bg;
     -webkit-box-shadow: 3px 3px 6px $mat-autocomplete-visible-box-shadow;
     -moz-box-shadow: 3px 3px 6px $mat-autocomplete-visible-box-shadow;
@@ -961,6 +962,11 @@ Course Info Bar
 .mat-form-field-outline {
     top: -0.1rem !important;
     color: $mat-form-field-outline;
+}
+
+.mat-form-field-appearance-outline {
+    --mdc-outlined-text-field-outline-width: 1px;
+    --mdc-outlined-text-field-container-shape: 4px;
 }
 
 /* Connection Warning Tooltip */

@@ -22,6 +22,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationGitlabCIGitlabSamlTest;
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
@@ -179,7 +180,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
 
         verify(gitlab, atLeastOnce()).getPipelineApi();
         verify(gitlab.getPipelineApi(), atLeastOnce()).createPipelineTrigger(any(), anyString());
-        verify(gitlab.getPipelineApi()).triggerPipeline(eq(urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl())), any(Trigger.class), anyString(),
+        verify(gitlab.getPipelineApi()).triggerPipeline(eq(uriService.getRepositoryPathFromRepositoryUri(participation.getVcsRepositoryUri())), any(Trigger.class), anyString(),
                 isNull());
     }
 
@@ -193,7 +194,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
         assertThatThrownBy(() -> continuousIntegrationTriggerService.triggerBuild(participation)).isInstanceOf(GitLabCIException.class);
 
         verify(gitlab, atLeastOnce()).getPipelineApi();
-        verify(gitlab.getPipelineApi(), never()).triggerPipeline(eq(urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl())), any(Trigger.class),
+        verify(gitlab.getPipelineApi(), never()).triggerPipeline(eq(uriService.getRepositoryPathFromRepositoryUri(participation.getVcsRepositoryUri())), any(Trigger.class),
                 anyString(), isNull());
     }
 
@@ -202,7 +203,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
     void testConfigureBuildPlanSuccess() throws Exception {
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
         final ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
-        final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl());
+        final String repositoryPath = uriService.getRepositoryPathFromRepositoryUri(participation.getVcsRepositoryUri());
         mockConfigureBuildPlan(participation, defaultBranch);
 
         continuousIntegrationService.configureBuildPlan(participation, defaultBranch);
@@ -222,7 +223,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
         mockAddBuildPlanToGitLabRepositoryConfiguration(true);
 
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
-        participation.setRepositoryUrl("http://some.test.url/PROJECTNAME/REPONAME-exercise.git");
+        participation.setRepositoryUri("http://some.test.url/PROJECTNAME/REPONAME-exercise.git");
         assertThatThrownBy(() -> continuousIntegrationService.configureBuildPlan(participation, "main")).isInstanceOf(GitLabCIException.class);
     }
 
@@ -230,12 +231,11 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateBuildPlanForExercise() throws GitLabApiException {
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
-        final TemplateProgrammingExerciseParticipation templateParticipation = exercise.getTemplateParticipation();
-        final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(templateParticipation.getVcsRepositoryUrl());
+        final ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        final String repositoryPath = uriService.getRepositoryPathFromRepositoryUri(participation.getVcsRepositoryUri());
         mockAddBuildPlanToGitLabRepositoryConfiguration(false);
 
-        continuousIntegrationService.createBuildPlanForExercise(exercise, "TEST-EXERCISE", templateParticipation.getVcsRepositoryUrl(), null, null);
+        continuousIntegrationService.createBuildPlanForExercise(exercise, "TEST-EXERCISE", participation.getVcsRepositoryUri(), null, null);
 
         verify(gitlab, atLeastOnce()).getProjectApi();
         verify(gitlab, atLeastOnce()).getGroupApi();
@@ -256,15 +256,20 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCopyBuildPlan() {
-        final String targetProjectKey = "TARGETPROJECTKEY";
+        final Course course = new Course();
+        final ProgrammingExercise targetExercise = new ProgrammingExercise();
+        course.addExercises(targetExercise);
+        targetExercise.generateAndSetProjectKey();
+
+        final String targetProjectKey = targetExercise.getProjectKey();
         final String targetPlanName1 = "TARGETPLANNAME1";
         final String targetPlanName2 = "target-plan-name-#2";
 
-        final String expectedBuildPlanKey1 = "TARGETPROJECTKEY-TARGETPLANNAME1";
-        final String expectedBuildPlanKey2 = "TARGETPROJECTKEY-TARGETPLANNAME2";
+        final String expectedBuildPlanKey1 = targetProjectKey + "-TARGETPLANNAME1";
+        final String expectedBuildPlanKey2 = targetProjectKey + "-TARGETPLANNAME2";
 
-        assertThat(continuousIntegrationService.copyBuildPlan(null, null, targetProjectKey, null, targetPlanName1, false)).isEqualTo(expectedBuildPlanKey1);
-        assertThat(continuousIntegrationService.copyBuildPlan(null, null, targetProjectKey, null, targetPlanName2, false)).isEqualTo(expectedBuildPlanKey2);
+        assertThat(continuousIntegrationService.copyBuildPlan(null, null, targetExercise, null, targetPlanName1, false)).isEqualTo(expectedBuildPlanKey1);
+        assertThat(continuousIntegrationService.copyBuildPlan(null, null, targetExercise, null, targetPlanName2, false)).isEqualTo(expectedBuildPlanKey2);
     }
 
     @Test

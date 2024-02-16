@@ -21,3 +21,25 @@
         margin-top: 10px;
     }
 }
+
+.rotate-icon {
+    transition: transform 0.3s ease;
+}
+
+.rotate180 {
+    transform: rotate(180deg);
+}
+
+.manage-button-container {
+    margin-left: 0.5em;
+}
+
+.manage-button {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.course-description {
+    overflow-wrap: anywhere;
+    justify-content: space-between;
+}

@@ -24,7 +24,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -63,6 +63,10 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationInd
 
     private Git localGit;
 
+    private File originRepoFile;
+
+    private Git originGit;
+
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
@@ -91,7 +95,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationInd
         GitService.commit(localGit).setMessage("add test3.json").setAuthor("test", "test@test.com").call();
 
         var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
-        doReturn(repository).when(gitService).getOrCheckoutRepository(any(VcsRepositoryUrl.class), anyString(), anyBoolean());
+        doReturn(repository).when(gitService).getOrCheckoutRepository(any(VcsRepositoryUri.class), anyString(), anyBoolean());
         doNothing().when(gitService).fetchAll(any());
         var objectId = localGit.reflog().call().iterator().next().getNewId();
         doReturn(objectId).when(gitService).getLastCommitHash(any());
@@ -102,11 +106,17 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationInd
 
     @AfterEach
     void tearDown() throws IOException {
+        if (localGit != null) {
+            localGit.close();
+        }
         if (localRepoFile != null && localRepoFile.exists()) {
             FileUtils.deleteDirectory(localRepoFile);
         }
-        if (localGit != null) {
-            localGit.close();
+        if (originGit != null) {
+            originGit.close();
+        }
+        if (originRepoFile != null && originRepoFile.exists()) {
+            FileUtils.deleteDirectory(originRepoFile);
         }
     }
 
@@ -126,34 +136,31 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationInd
                 .isThrownBy(() -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(Long.MAX_VALUE));
 
         assertThatExceptionOfType(EntityNotFoundException.class)
-                .isThrownBy(() -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationLatestResultElseThrow(Long.MAX_VALUE));
+                .isThrownBy(() -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationLatestResultFeedbackTestCasesElseThrow(Long.MAX_VALUE));
 
         assertThatExceptionOfType(EntityNotFoundException.class)
                 .isThrownBy(() -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesElseThrow(Long.MAX_VALUE));
 
         assertThatExceptionOfType(EntityNotFoundException.class)
                 .isThrownBy(() -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(Long.MAX_VALUE));
-
-        assertThatExceptionOfType(EntityNotFoundException.class)
-                .isThrownBy(() -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(Long.MAX_VALUE));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCombineTemplateRepositoryCommits() throws Exception {
-        File originRepoFile = Files.createTempDirectory("repoOrigin").toFile();
-        Git remoteGit = LocalRepository.initialize(originRepoFile, defaultBranch);
+        originRepoFile = Files.createTempDirectory("repoOrigin").toFile();
+        originGit = LocalRepository.initialize(originRepoFile, defaultBranch);
         StoredConfig config = localGit.getRepository().getConfig();
         config.setString("remote", "origin", "url", originRepoFile.getAbsolutePath());
         config.save();
         localGit.push().call();
         assertThat(getAllCommits(localGit)).hasSize(3);
-        assertThat(getAllCommits(remoteGit)).hasSize(3);
+        assertThat(getAllCommits(originGit)).hasSize(3);
 
         final var path = COMBINE_COMMITS_ENDPOINT.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(path, Void.class, HttpStatus.OK);
         assertThat(getAllCommits(localGit)).hasSize(1);
-        assertThat(getAllCommits(remoteGit)).hasSize(1);
+        assertThat(getAllCommits(originGit)).hasSize(1);
     }
 
     @Test

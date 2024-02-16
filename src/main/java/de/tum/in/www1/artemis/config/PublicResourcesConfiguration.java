@@ -23,7 +23,7 @@ import tech.jhipster.config.JHipsterProperties;
 @Configuration
 public class PublicResourcesConfiguration implements WebMvcConfigurer {
 
-    @Autowired
+    @Autowired // ok
     private JHipsterProperties jHipsterProperties;
 
     @Override

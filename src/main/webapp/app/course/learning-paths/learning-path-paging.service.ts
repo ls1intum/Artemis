@@ -4,21 +4,21 @@ import { PagingService } from 'app/exercises/shared/manage/paging.service';
 import { PageableSearch, SearchResult } from 'app/shared/table/pageable-table';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { LearningPathPageableSearchDTO } from 'app/entities/competency/learning-path.model';
+import { LearningPathInformationDTO } from 'app/entities/competency/learning-path.model';
 
-type EntityResponseType = SearchResult<LearningPathPageableSearchDTO>;
+type EntityResponseType = SearchResult<LearningPathInformationDTO>;
 @Injectable({ providedIn: 'root' })
-export class LearningPathPagingService extends PagingService {
+export class LearningPathPagingService extends PagingService<LearningPathInformationDTO> {
     public resourceUrl = 'api';
 
     constructor(private http: HttpClient) {
         super();
     }
 
-    searchForLearningPaths(pageable: PageableSearch, courseId: number): Observable<EntityResponseType> {
+    override search(pageable: PageableSearch, options: { courseId: number }): Observable<EntityResponseType> {
         const params = this.createHttpParams(pageable);
         return this.http
-            .get(`${this.resourceUrl}/courses/${courseId}/learning-paths`, { params, observe: 'response' })
+            .get(`${this.resourceUrl}/courses/${options.courseId}/learning-paths`, { params, observe: 'response' })
             .pipe(map((resp: HttpResponse<EntityResponseType>) => resp && resp.body!));
     }
 }

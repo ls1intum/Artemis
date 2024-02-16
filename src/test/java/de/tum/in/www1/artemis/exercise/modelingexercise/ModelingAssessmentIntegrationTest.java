@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
-import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingSubmissionElement;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
@@ -43,6 +42,7 @@ import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
+import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
 
 class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -1534,15 +1534,23 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
     void testCheckPlagiarismIdenticalLongModels() throws Exception {
         modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student1");
         modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student2");
+        modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "tutor1");
+        modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "instructor1");
         var path = "/api/modeling-exercises/" + classExercise.getId() + "/check-plagiarism";
-        var result = request.get(path, HttpStatus.OK, ModelingPlagiarismResult.class, plagiarismUtilService.getDefaultPlagiarismOptions());
-        assertThat(result.getComparisons()).hasSize(1);
-        assertThat(result.getExercise().getId()).isEqualTo(classExercise.getId());
+        var result = request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, plagiarismUtilService.getDefaultPlagiarismOptions());
+        assertThat(result.plagiarismResult().getComparisons()).hasSize(1);
+        assertThat(result.plagiarismResult().getExercise().getId()).isEqualTo(classExercise.getId());
 
-        PlagiarismComparison<ModelingSubmissionElement> comparison = result.getComparisons().iterator().next();
+        PlagiarismComparison<ModelingSubmissionElement> comparison = (PlagiarismComparison<ModelingSubmissionElement>) result.plagiarismResult().getComparisons().iterator().next();
 
         assertThat(comparison.getSimilarity()).isEqualTo(100.0, Offset.offset(0.1));
         assertThat(comparison.getStatus()).isEqualTo(PlagiarismStatus.NONE);
+
+        // verify plagiarism result stats
+        var stats = result.plagiarismResultStats();
+        assertThat(stats.numberOfDetectedSubmissions()).isEqualTo(2);
+        assertThat(stats.averageSimilarity()).isEqualTo(100.0, Offset.offset(0.1));
+        assertThat(stats.maximalSimilarity()).isEqualTo(100.0, Offset.offset(0.1));
     }
 
     @Test

@@ -14,11 +14,20 @@ public final class UMLDeploymentDiagrams {
 
     public static final String DEPLOYMENT_MODEL_3;
 
+    public static final String DEPLOYMENT_MODEL_1_V3;
+
+    public static final String DEPLOYMENT_MODEL_2_V3;
+
+    public static final String DEPLOYMENT_MODEL_3_V3;
+
     static {
         try {
             DEPLOYMENT_MODEL_1 = IOUtils.toString(UMLDeploymentDiagrams.class.getResource("deploymentModel1.json"), StandardCharsets.UTF_8);
             DEPLOYMENT_MODEL_2 = IOUtils.toString(UMLDeploymentDiagrams.class.getResource("deploymentModel2.json"), StandardCharsets.UTF_8);
             DEPLOYMENT_MODEL_3 = IOUtils.toString(UMLDeploymentDiagrams.class.getResource("deploymentModel3.json"), StandardCharsets.UTF_8);
+            DEPLOYMENT_MODEL_1_V3 = IOUtils.toString(UMLDeploymentDiagrams.class.getResource("deploymentModel1v3.json"), StandardCharsets.UTF_8);
+            DEPLOYMENT_MODEL_2_V3 = IOUtils.toString(UMLDeploymentDiagrams.class.getResource("deploymentModel2v3.json"), StandardCharsets.UTF_8);
+            DEPLOYMENT_MODEL_3_V3 = IOUtils.toString(UMLDeploymentDiagrams.class.getResource("deploymentModel3v3.json"), StandardCharsets.UTF_8);
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);

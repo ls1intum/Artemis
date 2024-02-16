@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
+import static de.tum.in.www1.artemis.service.plagiarism.PlagiarismService.filterParticipationMinimumScore;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
@@ -30,15 +32,14 @@ import de.jplag.reporting.reportobject.ReportObjectFactory;
 import de.tum.in.www1.artemis.domain.PlagiarismCheckState;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
@@ -47,16 +48,18 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
-class ProgrammingPlagiarismDetectionService {
+public class ProgrammingPlagiarismDetectionService {
 
     @Value("${artemis.repo-download-clone-path}")
     private Path repoDownloadClonePath;
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingPlagiarismDetectionService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingPlagiarismDetectionService.class);
 
     private final FileService fileService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final PlagiarismService plagiarismService;
 
     private final GitService gitService;
 
@@ -66,29 +69,27 @@ class ProgrammingPlagiarismDetectionService {
 
     private final ProgrammingExerciseExportService programmingExerciseExportService;
 
-    private final PlagiarismResultRepository plagiarismResultRepository;
-
     private final PlagiarismWebsocketService plagiarismWebsocketService;
 
     private final PlagiarismCacheService plagiarismCacheService;
 
-    private final UrlService urlService;
+    private final UriService uriService;
 
     private final ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService;
 
-    public ProgrammingPlagiarismDetectionService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
-            StudentParticipationRepository studentParticipationRepository, PlagiarismResultRepository plagiarismResultRepository,
-            ProgrammingExerciseExportService programmingExerciseExportService, PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService,
-            UrlService urlService, ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService) {
-        this.programmingExerciseRepository = programmingExerciseRepository;
+    public ProgrammingPlagiarismDetectionService(FileService fileService, ProgrammingExerciseRepository programmingExerciseRepository, PlagiarismService plagiarismService,
+            GitService gitService, StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseExportService programmingExerciseExportService,
+            PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService, UriService uriService,
+            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService) {
         this.fileService = fileService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.plagiarismService = plagiarismService;
         this.gitService = gitService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseExportService = programmingExerciseExportService;
-        this.plagiarismResultRepository = plagiarismResultRepository;
         this.plagiarismWebsocketService = plagiarismWebsocketService;
         this.plagiarismCacheService = plagiarismCacheService;
-        this.urlService = urlService;
+        this.uriService = uriService;
         this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
     }
 
@@ -98,6 +99,7 @@ class ProgrammingPlagiarismDetectionService {
      * @param programmingExerciseId the id of the programming exercises which should be checked
      * @param similarityThreshold   ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
      * @param minimumScore          consider only submissions whose score is greater or equal to this value
+     * @param minimumSize           consider only submissions whose number of lines in diff to template is greater or equal to this value
      * @return the text plagiarism result container with up to 500 comparisons with the highest similarity values
      * @throws ExitException is thrown if JPlag exits unexpectedly
      * @throws IOException   is thrown for file handling errors
@@ -126,7 +128,6 @@ class ProgrammingPlagiarismDetectionService {
 
                 log.info("Finished programmingExerciseExportService.checkPlagiarism call for {} comparisons in {}", textPlagiarismResult.getComparisons().size(),
                         TimeLogUtil.formatDurationFrom(start));
-                limitAndSavePlagiarismResult(textPlagiarismResult);
                 log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
                 return textPlagiarismResult;
             }
@@ -137,7 +138,6 @@ class ProgrammingPlagiarismDetectionService {
 
             log.info("JPlag programming comparison done in {}", TimeLogUtil.formatDurationFrom(start));
             plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());
-            limitAndSavePlagiarismResult(textPlagiarismResult);
             return textPlagiarismResult;
         }
         finally {
@@ -151,6 +151,7 @@ class ProgrammingPlagiarismDetectionService {
      * @param programmingExerciseId the id of the programming exercises which should be checked
      * @param similarityThreshold   ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
      * @param minimumScore          consider only submissions whose score is greater or equal to this value
+     * @param minimumSize           consider only submissions whose number of lines in diff to template is greater or equal to this value
      * @return a zip file that can be returned to the client
      */
     public File checkPlagiarismWithJPlagReport(long programmingExerciseId, float similarityThreshold, int minimumScore, int minimumSize) {
@@ -188,7 +189,7 @@ class ProgrammingPlagiarismDetectionService {
         final var projectKey = programmingExercise.getProjectKey();
         final var repoFolder = targetPath.resolve(projectKey).toFile();
         final var programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
-        final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
+        final var templateRepoName = uriService.getRepositorySlugFromRepositoryUri(programmingExercise.getTemplateParticipation().getVcsRepositoryUri());
 
         JPlagOptions options = new JPlagOptions(programmingLanguage, Set.of(repoFolder), Set.of())
                 // JPlag expects a value between 0.0 and 1.0
@@ -227,19 +228,6 @@ class ProgrammingPlagiarismDetectionService {
         }
 
         return result;
-    }
-
-    /**
-     * Sorts and limits the text plagiarism result amount to 500 and saves it into the database.
-     * Removes the previously saved result.
-     *
-     * @param textPlagiarismResult the plagiarism result to save
-     */
-    private void limitAndSavePlagiarismResult(TextPlagiarismResult textPlagiarismResult) {
-        // TODO: limit the amount temporarily because of database issues
-        textPlagiarismResult.sortAndLimit(100);
-        log.info("Limited number of comparisons to {} to avoid performance issues when saving to database", textPlagiarismResult.getComparisons().size());
-        plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(textPlagiarismResult);
     }
 
     /**
@@ -336,16 +324,9 @@ class ProgrammingPlagiarismDetectionService {
         var studentParticipations = studentParticipationRepository.findAllForPlagiarism(programmingExercise.getId());
 
         return studentParticipations.parallelStream().filter(participation -> !participation.isPracticeMode())
-                .filter(participation -> participation instanceof ProgrammingExerciseParticipation).map(participation -> (ProgrammingExerciseParticipation) participation)
-                .filter(participation -> participation.getVcsRepositoryUrl() != null).filter(participation -> {
-                    Submission submission = participation.findLatestSubmission().orElse(null);
-                    // filter empty submissions
-                    if (submission == null) {
-                        return false;
-                    }
-                    return minimumScore == 0
-                            || submission.getLatestResult() != null && submission.getLatestResult().getScore() != null && submission.getLatestResult().getScore() >= minimumScore;
-                }).toList();
+                .filter(participation -> participation instanceof ProgrammingExerciseStudentParticipation).filter(plagiarismService.filterForStudents())
+                .map(participation -> (ProgrammingExerciseParticipation) participation).filter(participation -> participation.getVcsRepositoryUri() != null)
+                .filter(filterParticipationMinimumScore(minimumScore)).toList();
     }
 
     private Optional<Repository> cloneTemplateRepository(ProgrammingExercise programmingExercise, String targetPath) {
@@ -355,7 +336,7 @@ class ProgrammingPlagiarismDetectionService {
             return Optional.of(templateRepo);
         }
         catch (GitException | GitAPIException ex) {
-            log.error("Clone template repository {} in exercise '{}' did not work as expected: {}", programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(),
+            log.error("Clone template repository {} in exercise '{}' did not work as expected: {}", programmingExercise.getTemplateParticipation().getVcsRepositoryUri(),
                     programmingExercise.getTitle(), ex.getMessage());
             return Optional.empty();
         }
@@ -366,8 +347,8 @@ class ProgrammingPlagiarismDetectionService {
             return true;
         }
 
-        var diffToTemplate = programmingExerciseGitDiffReportService.calculateNumberOfDiffLinesBetweenRepos(repo.getRemoteRepositoryUrl(), repo.getLocalPath(),
-                templateRepo.get().getRemoteRepositoryUrl(), templateRepo.get().getLocalPath());
+        var diffToTemplate = programmingExerciseGitDiffReportService.calculateNumberOfDiffLinesBetweenRepos(repo.getRemoteRepositoryUri(), repo.getLocalPath(),
+                templateRepo.get().getRemoteRepositoryUri(), templateRepo.get().getLocalPath());
         return diffToTemplate >= minimumSize;
     }
 
@@ -399,7 +380,7 @@ class ProgrammingPlagiarismDetectionService {
                 }
             }
             catch (GitException | GitAPIException | InvalidPathException ex) {
-                log.error("Clone student repository {} in exercise '{}' did not work as expected: {}", participation.getVcsRepositoryUrl(), programmingExercise.getTitle(),
+                log.error("Clone student repository {} in exercise '{}' did not work as expected: {}", participation.getVcsRepositoryUri(), programmingExercise.getTitle(),
                         ex.getMessage());
             }
         });

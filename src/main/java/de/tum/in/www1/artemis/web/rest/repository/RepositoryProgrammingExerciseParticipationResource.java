@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.RepositoryAccessService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCIConnectorService;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -60,9 +60,9 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             ParticipationAuthorizationCheckService participationAuthCheckService, GitService gitService, Optional<VersionControlService> versionControlService,
             RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService, Optional<LocalCIConnectorService> localCIConnectorService) {
+            SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService) {
         super(profileService, userRepository, authCheckService, gitService, repositoryService, versionControlService, programmingExerciseRepository, repositoryAccessService,
-                localCIConnectorService);
+                localVCServletService);
         this.participationAuthCheckService = participationAuthCheckService;
         this.participationService = participationService;
         this.buildLogService = buildLogService;
@@ -98,26 +98,38 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new AccessForbiddenException(e);
         }
 
-        var repositoryUrl = programmingParticipation.getVcsRepositoryUrl();
+        var repositoryUri = programmingParticipation.getVcsRepositoryUri();
 
         // This check reduces the amount of REST-calls that retrieve the default branch of a repository.
         // Retrieving the default branch is not necessary if the repository is already cached.
-        if (gitService.isRepositoryCached(repositoryUrl)) {
-            return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet);
+        if (gitService.isRepositoryCached(repositoryUri)) {
+            return gitService.getOrCheckoutRepository(repositoryUri, pullOnGet);
         }
         else {
             String branch = versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(programmingParticipation);
-            return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet, branch);
+            return gitService.getOrCheckoutRepository(repositoryUri, pullOnGet, branch);
         }
     }
 
     @Override
-    VcsRepositoryUrl getRepositoryUrl(Long participationId) throws IllegalArgumentException {
+    VcsRepositoryUri getRepositoryUri(Long participationId) throws IllegalArgumentException {
+        return getProgrammingExerciseParticipation(participationId).getVcsRepositoryUri();
+    }
+
+    /**
+     * Gets a programming exercise participation with the given id from the database.
+     *
+     * @param participationId the id of the participation to retrieve
+     * @throws IllegalArgumentException if the participation is not a programming exercise participation
+     * @return a programming exercise participation with the given id
+     */
+    private ProgrammingExerciseParticipation getProgrammingExerciseParticipation(long participationId) {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
+
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new IllegalArgumentException();
         }
-        return ((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl();
+        return (ProgrammingExerciseParticipation) participation;
     }
 
     @Override
@@ -154,8 +166,39 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     /**
-     * GET /repository/{participationId}/files-change
+     * GET /repository/{participationId}/files/{commitId} : Gets the files of the repository with the given participationId at the given commitId.
+     * This enforces at least instructor access rights.
      *
+     * @param participationId the participationId of the repository we want to get the files from
+     * @param commitId        the commitId of the repository we want to get the files from
+     * @return a map with the file path as key and the file content as value
+     */
+    @GetMapping(value = "/repository/{participationId}/files-content/{commitId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @EnforceAtLeastStudent
+    public ResponseEntity<Map<String, String>> getFilesAtCommit(@PathVariable long participationId, @PathVariable String commitId) {
+        log.debug("REST request to files for domainId {} at commitId {}", participationId, commitId);
+        var participation = getProgrammingExerciseParticipation(participationId);
+        var programmingExercise = programmingExerciseRepository.findByParticipationIdOrElseThrow(participationId);
+        try {
+            repositoryAccessService.checkAccessRepositoryElseThrow(participation, userRepository.getUserWithGroupsAndAuthorities(), programmingExercise, RepositoryActionType.READ);
+        }
+        catch (AccessUnauthorizedException e) {
+            // All methods calling this getRepository method only expect the AccessForbiddenException to determine whether a user has access to the repository.
+            // The local version control system, that also uses checkAccessRepositoryElseThrow, needs a more fine-grained check to return the correct HTTP status and thus expects
+            // both the AccessUnauthorizedException and the AccessForbiddenException.
+            throw new AccessForbiddenException(e);
+        }
+        return executeAndCheckForExceptions(() -> {
+            Repository repository = gitService.checkoutRepositoryAtCommit(getRepositoryUri(participationId), commitId, true);
+            Map<String, String> filesWithContent = super.repositoryService.getFilesWithContent(repository);
+            gitService.switchBackToDefaultBranchHead(repository);
+            return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
+        });
+    }
+
+    /**
+     * GET /repository/{participationId}/files-change
+     * <p>
      * Gets the files of the repository and checks whether they were changed during a student participation with respect to the initial template
      *
      * @param participationId participation of the student
@@ -184,7 +227,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     /**
      * GET /repository/{participationId}/files-content
-     *
+     * <p>
      * Gets the files of the repository with content
      *
      * @param participationId participation of the student/template/solution

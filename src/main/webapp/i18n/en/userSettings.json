@@ -8,6 +8,9 @@
             "accountInformation": "Account Information",
             "notificationSettings": "Notifications",
             "notificationSettingsFilterInfo": "These settings also filter the notification sidebar",
+            "scienceSettings": "Science",
+            "scienceSettingsFeatureDisabled": "The science feature is currently disabled. You can still edit your settings in case the feature gets enabled again.",
+            "scienceSettingsInfo": "Help Artemis to get better!",
             "accountInformationPage": {
                 "registrationNumber": "Registration Number",
                 "fullName": "Full Name",
@@ -16,18 +19,22 @@
                 "joinedArtemis": "Joined Artemis on"
             },
             "categories": {
-                "NOTIFICATION_SETTINGS": "Notification Settings"
+                "NOTIFICATION_SETTINGS": "Notification Settings",
+                "SCIENCE_SETTINGS": "Science Settings"
             },
             "settingGroupNames": {
                 "weeklySummary": "Weekly Summary",
                 "exerciseNotifications": "Exercise Notifications",
                 "lectureNotifications": "Lecture Notifications",
+                "examNotifications": "Exam Notifications",
                 "tutorialGroupNotifications": "Tutorial Group Notifications",
                 "conversationNotifications": "Conversation Notifications",
                 "courseWideDiscussionNotifications": "Course-wide Discussion Notifications",
+                "userMentionNotifications": "User Mention Notifications",
                 "tutorNotifications": "Tutor Notifications",
                 "editorNotifications": "Editor Notifications",
-                "instructorNotifications": "Instructor Notifications"
+                "instructorNotifications": "Instructor Notifications",
+                "general": "General"
             },
             "settingNames": {
                 "basicWeeklySummary": "Basic Weekly Summary",
@@ -35,13 +42,16 @@
                 "exerciseOpenForPractice": "Exercise Open for Practice",
                 "exerciseSubmissionAssessed": "Exercise Submission assessed",
                 "attachmentChanges": "Attachment Changes",
-                "newExercisePost": "New Exercise Post",
-                "newReplyForExercisePost": "New Reply for Exercise Post",
-                "newLecturePost": "New Lecture Post",
-                "newReplyForLecturePost": "New Reply for Lecture Post",
-                "newCoursePost": "New Course Post",
-                "newReplyForCoursePost": "New Reply for Course Post",
+                "newExercisePost": "New Exercise Message",
+                "newReplyForExercisePost": "New Reply for Exercise Message",
+                "newLecturePost": "New Lecture Message",
+                "newReplyForLecturePost": "New Reply for Lecture Message",
+                "newCoursePost": "New Course Message",
+                "newReplyForCoursePost": "New Reply for Course Message",
+                "newExamPost": "New Exam Message",
+                "newReplyForExamPost": "New Reply for Exam Message",
                 "newAnnouncementPost": "New Announcement",
+                "newUserMention": "New User Mention",
                 "courseAndExamArchivingStarted": "Course & Exam Archiving Started",
                 "fileSubmissionSuccessful": "File Submission Successful",
                 "programmingTestCasesChanged": "Changed Test Cases for Programming Exercises",
@@ -49,7 +59,8 @@
                 "newConversationMessages": "New messages in conversations",
                 "newReplyMessage": "New replies in conversations",
                 "tutorialGroupUpdateDelete": "Update and Delete of Tutorial Groups",
-                "assignUnassignTutorialGroup": "Assign and Unassign of Tutorial Groups"
+                "assignUnassignTutorialGroup": "Assign and Unassign of Tutorial Groups",
+                "activity": "Activity tracking"
             },
             "settingDescriptions": {
                 "basicWeeklySummaryDescription": "Receive a basic weekly summary every Friday at 5pm (e.g. what new exercises have been released this week and are still open)",
@@ -57,13 +68,16 @@
                 "exerciseOpenForPracticeDescription": "Get notified when an exercise has been opened for practice (e.g. Quiz)",
                 "exerciseSubmissionAssessedDescription": "Get notified when your exercise submissions get assessed",
                 "attachmentChangesDescription": "Receive a notification when an attachment was changed",
-                "newExercisePostDescription": "Get notified when a new exercise post has been created",
-                "newReplyForExercisePostDescription": "Get notified when a new reply for an exercise post has been created",
-                "newLecturePostDescription": "Get notified when a new lecture post has been created",
-                "newReplyForLecturePostDescription": "Get notified when a new reply for a lecture post has been created",
-                "newCoursePostDescription": "Receive a notification when a new course-wide post has been created",
-                "newReplyForCoursePostDescription": "Receive a notification when a new reply for a course-wide post has been created",
+                "newExercisePostDescription": "Get notified when a new exercise message has been created",
+                "newReplyForExercisePostDescription": "Get notified when a new reply for an exercise message has been created",
+                "newLecturePostDescription": "Get notified when a new lecture message has been created",
+                "newReplyForLecturePostDescription": "Get notified when a new reply for a lecture message has been created",
+                "newCoursePostDescription": "Receive a notification when a new course-wide message has been created",
+                "newReplyForCoursePostDescription": "Receive a notification when a new reply for a course-wide message has been created",
+                "newExamPostDescription": "Get notified when a new exam message has been created",
+                "newReplyForExamPostDescription": "Get notified when a new reply for an exam message has been created",
                 "newAnnouncementPostDescription": "Receive a notification when a new announcement has been created",
+                "newUserMentionDescription": "Receive a notifications, when you are mentioned in a message or reply",
                 "courseAndExamArchivingStartedDescription": "Receive a notification when the process of archiving a course or exam has been started",
                 "fileSubmissionSuccessfulDescription": "Receive a notification after you successfully submitted a file upload exercise",
                 "programmingTestCasesChangedDescription": "Get notified if test cases for a programming exercises have been changed",
@@ -72,7 +86,8 @@
                 "newConversationMessageDescription": "Get notified when you receive a new message in a conversation",
                 "conversationNewReplyMessageDescription": "Get notified when you receive a new reply in a conversation",
                 "tutorialGroupUpdateDeleteDescription": "Get notified when a tutorial group for which you are registered or a tutor was updated or deleted",
-                "assignUnassignTutorialGroupDescription": "Get notified when you were assigned or unassigned to lead a tutorial group"
+                "assignUnassignTutorialGroupDescription": "Get notified when you were assigned or unassigned to lead a tutorial group",
+                "activityDescription": "Share which features of Artemis you utilize and how you interact with them. The information is only accessible for administrators."
             }
         }
     }

@@ -14,6 +14,10 @@ import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/pl
 import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
 import { CodeHintGenerationOverviewComponent } from 'app/exercises/programming/hestia/generation-overview/code-hint-generation-overview/code-hint-generation-overview.component';
 import { BuildPlanEditorComponent } from 'app/exercises/programming/manage/build-plan-editor.component';
+import { RepositoryViewComponent } from 'app/localvc/repository-view/repository-view.component';
+import { CommitHistoryComponent } from 'app/localvc/commit-history/commit-history.component';
+import { CommitDetailsViewComponent } from 'app/localvc/commit-details-view/commit-details-view.component';
+import { LocalVCGuard } from 'app/localvc/localvc-guard.service';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
@@ -22,7 +26,7 @@ export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> 
     resolve(route: ActivatedRouteSnapshot) {
         const exerciseId = route.params['exerciseId'] ? route.params['exerciseId'] : undefined;
         if (exerciseId) {
-            return this.service.find(exerciseId).pipe(map((programmingExercise: HttpResponse<ProgrammingExercise>) => programmingExercise.body!));
+            return this.service.find(exerciseId, true).pipe(map((programmingExercise: HttpResponse<ProgrammingExercise>) => programmingExercise.body!));
         }
         return of(new ProgrammingExercise(undefined, undefined));
     }
@@ -139,6 +143,11 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: ':courseId/programming-exercises/:exerciseId/iris-settings',
+        loadChildren: () =>
+            import('app/iris/settings/iris-exercise-settings-update/iris-exercise-settings-update-routing.module').then((m) => m.IrisExerciseSettingsUpdateRoutingModule),
+    },
+    {
         path: ':courseId/programming-exercises/:exerciseId/edit-build-plan',
         component: BuildPlanEditorComponent,
         resolve: {
@@ -149,6 +158,54 @@ export const routes: Routes = [
             pageTitle: 'artemisApp.programmingExercise.buildPlanEditor',
         },
         canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/programming-exercises/:exerciseId/repository/:repositoryType',
+        component: RepositoryViewComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
+            pageTitle: 'artemisApp.repository.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [LocalVCGuard],
+    },
+    {
+        path: ':courseId/programming-exercises/:exerciseId/participations/:participationId/repository',
+        component: RepositoryViewComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
+            pageTitle: 'artemisApp.repository.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [LocalVCGuard],
+    },
+    {
+        path: ':courseId/programming-exercises/:exerciseId/participations/:participationId/repository/commit-history',
+        component: CommitHistoryComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
+            pageTitle: 'artemisApp.repository.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [LocalVCGuard],
+    },
+    {
+        path: ':courseId/programming-exercises/:exerciseId/participations/:participationId/repository/commit-history/:commitHash',
+        component: CommitDetailsViewComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
+            pageTitle: 'artemisApp.repository.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [LocalVCGuard],
     },
 ];
 

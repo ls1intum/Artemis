@@ -1,18 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { AlertService } from 'app/core/util/alert.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { UMLModel } from '@ls1intum/apollon';
+import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
+import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
 import dayjs from 'dayjs/esm';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { ResultService } from 'app/exercises/shared/result/result.service';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
-import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
@@ -74,12 +72,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     constructor(
         private alertService: AlertService,
-        private modalService: NgbModal,
         private router: Router,
         private route: ActivatedRoute,
         private modelingSubmissionService: ModelingSubmissionService,
-        private modelingExerciseService: ModelingExerciseService,
-        private resultService: ResultService,
         private modelingAssessmentService: ModelingAssessmentService,
         private accountService: AccountService,
         private location: Location,
@@ -323,7 +318,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     onSubmitAssessment() {
-        if ((this.model && this.referencedFeedback.length < this.model.elements.length) || !this.assessmentsAreValid) {
+        if ((this.model && this.referencedFeedback.length < Object.keys(this.model.elements).length) || !this.assessmentsAreValid) {
             const confirmationMessage = this.translateService.instant('artemisApp.modelingAssessmentEditor.messages.confirmSubmission');
 
             // if the assessment is before the assessment due date, don't show the confirm submission button
@@ -490,7 +485,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             : new Map<string, string>();
 
         const referenceIds = this.referencedFeedback.map((feedback) => feedback.referenceId);
-        for (const element of this.model.elements) {
+        for (const element of Object.values(this.model.elements)) {
             if (!referenceIds.includes(element.id)) {
                 this.highlightedElements.set(element.id, FeedbackHighlightColor.RED);
             }
@@ -534,16 +529,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      * and instead set the score boundaries on the server.
      */
     calculateTotalScore() {
-        this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.feedback);
-        // Cap totalScore to maxPoints
-        const maxPoints = this.modelingExercise!.maxPoints! + this.modelingExercise!.bonusPoints! ?? 0.0;
-        if (this.totalScore > maxPoints) {
-            this.totalScore = maxPoints;
-        }
-        // Do not allow negative score
-        if (this.totalScore < 0) {
-            this.totalScore = 0;
-        }
+        const maxPoints = getTotalMaxPoints(this.modelingExercise!);
+        const creditsTotalScore = this.structuredGradingCriterionService.computeTotalScore(this.feedback);
+        this.totalScore = getPositiveAndCappedTotalScore(creditsTotalScore, maxPoints);
     }
 
     /**

@@ -4,6 +4,7 @@ import { By } from '@angular/platform-browser';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { DebugElement } from '@angular/core';
+import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import dayjs from 'dayjs/esm';
 import { Subject, Subscription, of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
@@ -11,12 +12,12 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
 import { MockRepositoryFileService } from '../../helpers/mocks/service/mock-repository-file.service';
 import {
-    problemStatement,
     problemStatementBubbleSortFailsHtml,
     problemStatementBubbleSortNotExecutedHtml,
     problemStatementEmptySecondTask,
     problemStatementEmptySecondTaskNotExecutedHtml,
     problemStatementPlantUMLWithTest,
+    problemStatementWithIds,
 } from '../../helpers/sample/problemStatement.json';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
@@ -41,6 +42,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockModule } from 'ng-mocks';
+import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 
 describe('ProgrammingExerciseInstructionComponent', () => {
     let comp: ProgrammingExerciseInstructionComponent;
@@ -49,7 +51,9 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     let participationWebsocketService: ParticipationWebsocketService;
     let repositoryFileService: RepositoryFileService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
+    let programmingExerciseGradingService: ProgrammingExerciseGradingService;
     let modalService: NgbModal;
+    let themeService: ThemeService;
 
     let subscribeForLatestResultOfParticipationStub: jest.SpyInstance;
     let getFileStub: jest.SpyInstance;
@@ -78,6 +82,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: RepositoryFileService, useClass: MockRepositoryFileService },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: ProgrammingExerciseGradingService, useValue: { getTestCases: () => of() } },
             ],
         })
             .overrideModule(BrowserDynamicTestingModule, { set: {} })
@@ -88,8 +93,10 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 debugElement = fixture.debugElement;
                 participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
                 programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
+                programmingExerciseGradingService = debugElement.injector.get(ProgrammingExerciseGradingService);
                 repositoryFileService = debugElement.injector.get(RepositoryFileService);
                 modalService = debugElement.injector.get(NgbModal);
+                themeService = debugElement.injector.get(ThemeService);
 
                 subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
                 openModalStub = jest.spyOn(modalService, 'open');
@@ -105,11 +112,18 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     });
 
     it('should on participation change clear old subscription for participation results set up new one', () => {
-        const exercise: ProgrammingExercise = { id: 1, numberOfAssessmentsOfCorrectionRounds: [], secondCorrectionEnabled: false, studentAssignedTeamIdComputed: false };
+        const exercise: ProgrammingExercise = {
+            id: 1,
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+            isAtLeastTutor: true,
+        };
         const oldParticipation: Participation = { id: 1 };
         const result: Result = { id: 1 };
         const participation: Participation = { id: 2, results: [result] };
         const oldSubscription = new Subscription();
+        const getTestCasesSpy = jest.spyOn(programmingExerciseGradingService, 'getTestCases');
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
         comp.exercise = exercise;
         comp.participation = participation;
@@ -118,6 +132,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         triggerChanges(comp, { property: 'participation', currentValue: participation, previousValue: oldParticipation, firstChange: false });
         fixture.detectChanges();
 
+        expect(getTestCasesSpy).toHaveBeenCalledOnce();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(participation.id, true, exercise.id);
         expect(comp.participationSubscription).not.toEqual(oldSubscription);
@@ -320,12 +335,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const result: Result = {
             id: 1,
             completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
-            feedbacks: [{ text: 'testMergeSort', detailText: 'lorem ipsum', positive: true }],
+            feedbacks: [{ testCase: { testName: 'testMergeSort', id: 2 }, detailText: 'lorem ipsum', positive: true }],
         };
         const exercise: ProgrammingExercise = {
             id: 3,
             course: { id: 4 },
-            problemStatement,
+            problemStatement: problemStatementWithIds,
             showTestNamesToStudents: true,
             numberOfAssessmentsOfCorrectionRounds: [],
             secondCorrectionEnabled: false,
@@ -343,15 +358,15 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(comp.tasks).toHaveLength(2);
         expect(comp.tasks[0]).toEqual({
             id: 0,
-            completeString: '[task][Implement Bubble Sort](testBubbleSort)',
+            completeString: '[task][Implement Bubble Sort](<testid>1</testid>)',
             taskName: 'Implement Bubble Sort',
-            tests: ['testBubbleSort'],
+            testIds: [1],
         });
         expect(comp.tasks[1]).toEqual({
             id: 1,
-            completeString: '[task][Implement Merge Sort](testMergeSort)',
+            completeString: '[task][Implement Merge Sort](<testid>2</testid>)',
             taskName: 'Implement Merge Sort',
-            tests: ['testMergeSort'],
+            testIds: [2],
         });
         fixture.detectChanges();
 
@@ -373,7 +388,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             componentInstance: {
                 exercise,
                 exerciseType: ExerciseType.PROGRAMMING,
-                feedbackFilter: ['testBubbleSort'],
+                feedbackFilter: [1],
                 result,
                 taskName: 'Implement Bubble Sort',
                 numberOfNotExecutedTests: 1,
@@ -385,7 +400,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             componentInstance: {
                 exercise,
                 exerciseType: ExerciseType.PROGRAMMING,
-                feedbackFilter: ['testMergeSort'],
+                feedbackFilter: [2],
                 result,
                 taskName: 'Implement Merge Sort',
                 numberOfNotExecutedTests: 0,
@@ -397,12 +412,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const result: Result = {
             id: 1,
             completionDate: dayjs('2019-01-06T22:15:29.203+02:00'),
-            feedbacks: [{ text: 'testBubbleSort', detailText: 'lorem ipsum' }],
+            feedbacks: [{ testCase: { testName: 'testBubbleSort', id: 1 }, detailText: 'lorem ipsum' }],
         };
         const exercise: ProgrammingExercise = {
             id: 3,
             course: { id: 4 },
-            problemStatement,
+            problemStatement: problemStatementWithIds,
             numberOfAssessmentsOfCorrectionRounds: [],
             secondCorrectionEnabled: false,
             studentAssignedTeamIdComputed: false,
@@ -419,15 +434,15 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(comp.tasks).toHaveLength(2);
         expect(comp.tasks[0]).toEqual({
             id: 0,
-            completeString: '[task][Implement Bubble Sort](testBubbleSort)',
+            completeString: '[task][Implement Bubble Sort](<testid>1</testid>)',
             taskName: 'Implement Bubble Sort',
-            tests: ['testBubbleSort'],
+            testIds: [1],
         });
         expect(comp.tasks[1]).toEqual({
             id: 1,
-            completeString: '[task][Implement Merge Sort](testMergeSort)',
+            completeString: '[task][Implement Merge Sort](<testid>2</testid>)',
             taskName: 'Implement Merge Sort',
-            tests: ['testMergeSort'],
+            testIds: [2],
         });
         fixture.detectChanges();
 
@@ -449,7 +464,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             componentInstance: {
                 exercise,
                 exerciseType: ExerciseType.PROGRAMMING,
-                feedbackFilter: ['testBubbleSort'],
+                feedbackFilter: [1],
                 result,
                 taskName: 'Implement Bubble Sort',
                 numberOfNotExecutedTests: 0,
@@ -461,7 +476,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             componentInstance: {
                 exercise,
                 exerciseType: ExerciseType.PROGRAMMING,
-                feedbackFilter: ['testMergeSort'],
+                feedbackFilter: [2],
                 result,
                 taskName: 'Implement Merge Sort',
                 numberOfNotExecutedTests: 0,
@@ -473,7 +488,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const result: Result = {
             id: 1,
             completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
-            feedbacks: [{ text: 'testBubbleSort', detailText: 'lorem ipsum', positive: true }],
+            feedbacks: [{ testCase: { testName: 'testBubbleSort', id: 1 }, detailText: 'lorem ipsum', positive: true }],
         };
         const exercise: ProgrammingExercise = {
             id: 3,
@@ -496,15 +511,15 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(comp.tasks).toHaveLength(2);
         expect(comp.tasks[0]).toEqual({
             id: 0,
-            completeString: '[task][Bubble Sort](testBubbleSort)',
+            completeString: '[task][Bubble Sort](<testid>1</testid>)',
             taskName: 'Bubble Sort',
-            tests: ['testBubbleSort'],
+            testIds: [1],
         });
         expect(comp.tasks[1]).toEqual({
             id: 1,
             completeString: '[task][Merge Sort]()',
             taskName: 'Merge Sort',
-            tests: [],
+            testIds: [],
         });
         fixture.detectChanges();
 
@@ -526,7 +541,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             componentInstance: {
                 exercise,
                 exerciseType: ExerciseType.PROGRAMMING,
-                feedbackFilter: ['testBubbleSort'],
+                feedbackFilter: [1],
                 result,
                 taskName: 'Bubble Sort',
                 numberOfNotExecutedTests: 0,
@@ -543,8 +558,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             id: 1,
             completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
             feedbacks: [
-                { text: 'testMethods[Policy]', positive: true },
-                { text: 'testPolicy()', positive: false },
+                { testCase: { id: 1, testName: 'testMethods[Policy]' }, positive: true },
+                { testCase: { id: 2, testName: 'testPolicy()' }, positive: false },
             ],
         };
         const exercise: ProgrammingExercise = {
@@ -584,6 +599,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.exercise = { problemStatement: updatedProblemStatement } as ProgrammingExercise;
         comp.renderUpdatedProblemStatement();
         expect(comp.problemStatement).toBe(updatedProblemStatement);
+        expect(updateMarkdownStub).toHaveBeenCalledOnce();
+    });
+
+    it('should update the markdown on a theme change', () => {
+        const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
+        themeService.applyThemeExplicitly(Theme.DARK);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
     });
 

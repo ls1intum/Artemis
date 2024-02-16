@@ -1,0 +1,30 @@
+{
+  "version": "3.0.0",
+  "size": {
+    "width": 220,
+    "height": 960
+  },
+  "type": "ClassDiagram",
+  "interactive": {
+    "elements": {},
+    "relationships": {}
+  },
+  "elements": {
+    "6aba5764-d102-4740-9675-b2bd0a4f2123": {
+      "id": "6aba5764-d102-4740-9675-b2bd0a4f2123",
+      "name": "Foo",
+      "owner": null,
+      "type": "Class",
+      "bounds": {
+        "x": 660,
+        "y": 510,
+        "width": 200,
+        "height": 70
+      },
+      "attributes": [],
+      "methods": []
+    }
+  },
+  "relationships": {},
+  "assessments": {}
+}

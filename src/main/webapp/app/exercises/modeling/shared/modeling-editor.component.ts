@@ -1,6 +1,5 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, Renderer2, SimpleChanges } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { ApollonEditor, ApollonMode, UMLDiagramType, UMLElementType, UMLModel, UMLRelationship, UMLRelationshipType } from '@ls1intum/apollon';
-import { AlertService } from 'app/core/util/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { associationUML, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
@@ -36,8 +35,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     scrollListener: ((this: Document, ev: Event) => any) | undefined;
 
     constructor(
-        private alertService: AlertService,
-        private renderer: Renderer2,
         private modalService: NgbModal,
         private guidedTourService: GuidedTourService,
     ) {
@@ -132,7 +129,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      */
     private static removeAssessments(umlModel: UMLModel) {
         if (umlModel) {
-            umlModel.assessments = [];
+            umlModel.assessments = {};
         }
     }
 
@@ -219,7 +216,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             }
             // Check if the Inheritance association is correct
             case associationUML.name: {
-                personStudentAssociation = umlModel.relationships.find(
+                personStudentAssociation = Object.values(umlModel.relationships).find(
                     (relationship) =>
                         relationship.source.element === studentClass!.id &&
                         relationship.target.element === personClass!.id &&
@@ -237,7 +234,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      * @param umlModel current model that is assessed
      */
     elementWithClass(name: string, umlModel: UMLModel) {
-        return umlModel.elements.find((element) => element.name.trim() === name && element.type === UMLElementType.Class);
+        return Object.values(umlModel.elements).find((element) => element.name.trim() === name && element.type === UMLElementType.Class);
     }
 
     /**
@@ -246,7 +243,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      * @param umlModel current model that is assessed
      */
     elementWithAttribute(attribute: string, umlModel: UMLModel) {
-        return umlModel.elements.find((element) => element.name.includes(attribute) && element.type === UMLElementType.ClassAttribute);
+        return Object.values(umlModel.elements).find((element) => element.name.includes(attribute) && element.type === UMLElementType.ClassAttribute);
     }
 
     /**
@@ -255,7 +252,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      * @param umlModel current model that is assessed
      */
     elementWithMethod(method: string, umlModel: UMLModel) {
-        return umlModel.elements.find((element) => element.name.includes(method) && element.type === UMLElementType.ClassMethod);
+        return Object.values(umlModel.elements).find((element) => element.name.includes(method) && element.type === UMLElementType.ClassMethod);
     }
 
     /**

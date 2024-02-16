@@ -5,7 +5,7 @@
 services:
     postgres:
         container_name: artemis-postgres
-        image: docker.io/library/postgres:15.3-alpine
+        image: docker.io/library/postgres:16.1-alpine
         pull_policy: if_not_present
         user: postgres
         command: ["postgres", "-c", "max_connections=200"]
@@ -20,7 +20,7 @@ services:
         expose:
             - "5432"
         healthcheck:
-            test: pg_isready -U postgres -d Artemis
+            test: pg_isready -U Artemis -d Artemis
             interval: 5s
             timeout: 3s
             retries: 30

@@ -27,6 +27,10 @@ node_modules
 # exclude build binaries except a pre-built .war file
 build/*
 !build/libs/*.war
+# exlude the .cache of angular
+.cache
+# exclude the .gradle cache
+.gradle
 
 #########################
 # exclude Artemis configs
@@ -37,6 +41,13 @@ build/*
 
 # exclude the docker files and the /docker/.docker-data folders
 docker/
+
+######################
+# Artemis resources
+######################
+/src/main/resources/config/application-local*.yml
+/src/main/resources/id_*
+/src/main/resources/known_hosts
 
 # files inside of the root directory not needed
 CITATION.cff

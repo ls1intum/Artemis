@@ -1,9 +1,22 @@
 package de.tum.in.www1.artemis.exam;
 
-import static de.tum.in.www1.artemis.util.SensitiveInformationUtil.*;
-import static de.tum.in.www1.artemis.util.TestConstants.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static de.tum.in.www1.artemis.util.SensitiveInformationUtil.assertSensitiveInformationWasFilteredFileUploadExercise;
+import static de.tum.in.www1.artemis.util.SensitiveInformationUtil.assertSensitiveInformationWasFilteredModelingExercise;
+import static de.tum.in.www1.artemis.util.SensitiveInformationUtil.assertSensitiveInformationWasFilteredProgrammingExercise;
+import static de.tum.in.www1.artemis.util.SensitiveInformationUtil.assertSensitiveInformationWasFilteredTextExercise;
+import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
+import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_STRING;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.within;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import java.net.URISyntaxException;
 import java.time.Duration;
@@ -11,14 +24,24 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.json.JSONException;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
@@ -39,12 +62,26 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.assessment.GradingScaleUtilService;
 import de.tum.in.www1.artemis.bonus.BonusFactory;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.BonusStrategy;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.FileUploadSubmission;
+import de.tum.in.www1.artemis.domain.GradeType;
+import de.tum.in.www1.artemis.domain.GradingScale;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -54,13 +91,37 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
-import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.domain.quiz.AnswerOption;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropMapping;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropSubmittedAnswer;
+import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestion;
+import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceSubmittedAnswer;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedAnswer;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedText;
+import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.BonusRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExamSessionRepository;
+import de.tum.in.www1.artemis.repository.ExamUserRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.GradingScaleRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
+import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.SubmissionVersionRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -71,6 +132,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
+import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamAttendanceCheckEventDTO;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamLiveEventDTO;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamWideAnnouncementEventDTO;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.WorkingTimeUpdateEventDTO;
@@ -78,7 +140,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private static final Logger log = LoggerFactory.getLogger(StudentExamIntegrationTest.class);
 
     private static final String TEST_PREFIX = "studexam";
 
@@ -107,7 +169,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private ExamSessionRepository examSessionRepository;
 
     @Autowired
-    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
@@ -186,6 +248,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private static final int NUMBER_OF_STUDENTS = 2;
 
+    private static final boolean IS_TEST_RUN = false;
+
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 0, 2);
@@ -247,9 +311,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFindOneWithExercisesByUserIdAndExamId() {
-        var studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(Long.MAX_VALUE, exam1.getId());
+        var studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(Long.MAX_VALUE, exam1.getId(), IS_TEST_RUN);
         assertThat(studentExam).isEmpty();
-        studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student1.getId(), exam1.getId());
+        studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student1.getId(), exam1.getId(), IS_TEST_RUN);
         assertThat(studentExam).contains(studentExam1);
     }
 
@@ -466,7 +530,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         final var repoName = projectKey.toLowerCase() + "-" + student1.getLogin().toLowerCase();
         bitbucketRequestMockProvider.mockProtectBranches(programmingExercise, repoName);
 
-        StudentExam studentExamForStart = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/start", HttpStatus.OK, StudentExam.class);
+        StudentExam studentExamForStart = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/own-student-exam", HttpStatus.OK, StudentExam.class);
 
         final HttpHeaders headers = getHttpHeadersForExamSession();
         var response = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExamForStart.getId() + "/conduction", HttpStatus.OK,
@@ -814,6 +878,49 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExamAttendanceCheck() throws Exception {
+        exam1.setVisibleDate(ZonedDateTime.now().minusMinutes(1));
+        exam1 = examRepository.save(exam1);
+
+        var testMessage = "Test message";
+        var result = request.postWithPlainStringResponseBody(
+                "/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + studentExam1.getUser().getLogin() + "/attendance-check", testMessage,
+                ExamAttendanceCheckEventDTO.class, HttpStatus.OK);
+
+        assertThat(result.getId()).isGreaterThan(0L);
+        assertThat(result.getText()).isEqualTo(testMessage);
+        assertThat(result.getCreatedBy()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getName());
+        assertThat(result.getCreatedDate()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
+
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExamsCanNotBeSentBeforeVisibleDateForAttendance() throws Exception {
+        exam1.setVisibleDate(ZonedDateTime.now().plusMinutes(1));
+        exam1 = examRepository.save(exam1);
+
+        var testMessage = "Test message";
+        request.postWithPlainStringResponseBody(
+                "/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + studentExam1.getUser().getLogin() + "/attendance-check", testMessage,
+                ExamAttendanceCheckEventDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testExamAttendanceCheckForbidden() throws Exception {
+        exam1.setVisibleDate(ZonedDateTime.now().minusMinutes(1));
+        exam1 = examRepository.save(exam1);
+
+        var testMessage = "Test message";
+        request.postWithPlainStringResponseBody(
+                "/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + studentExam1.getUser().getLogin() + "/attendance-check", testMessage,
+                ExamAttendanceCheckEventDTO.class, HttpStatus.FORBIDDEN);
+
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitStudentExam_alreadySubmitted() throws Exception {
         // Set up an exercise
@@ -923,7 +1030,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         StudentExam submittedStudentExam = studentExamRepository.findById(studentExamForTestExam1.getId()).orElseThrow();
         assertThat(submittedStudentExam.isSubmitted()).isTrue();
 
-        verify(programmingExerciseParticipationService).lockStudentRepository(programmingExercise, participation);
+        verify(programmingExerciseParticipationService, timeout(1000)).lockStudentRepository(programmingExercise, participation);
         verify(programmingTriggerService, timeout(4000)).triggerBuildForParticipations(List.of(participation));
     }
 
@@ -1149,19 +1256,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 HttpStatus.OK, StudentExam.class);
         for (var exercise : studentExamResponse.getExercises()) {
             var participation = exercise.getStudentParticipations().iterator().next();
-            Submission submission = null;
-            if (exercise instanceof ProgrammingExercise) {
-                submission = new ProgrammingSubmission();
-            }
-            else if (exercise instanceof TextExercise) {
-                submission = new TextSubmission();
-            }
-            else if (exercise instanceof ModelingExercise) {
-                submission = new ModelingSubmission();
-            }
-            else if (exercise instanceof QuizExercise) {
-                submission = new QuizSubmission();
-            }
+            final var submission = createSubmission(exercise);
             if (submission != null) {
                 submission.addResult(new Result());
                 Set<Submission> submissions = new HashSet<>();
@@ -1187,6 +1282,22 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             }
         }
         deleteExamWithInstructor(exam1);
+    }
+
+    private static Submission createSubmission(Exercise exercise) {
+        if (exercise instanceof ProgrammingExercise) {
+            return new ProgrammingSubmission();
+        }
+        else if (exercise instanceof TextExercise) {
+            return new TextSubmission();
+        }
+        else if (exercise instanceof ModelingExercise) {
+            return new ModelingSubmission();
+        }
+        else if (exercise instanceof QuizExercise) {
+            return new QuizSubmission();
+        }
+        return null;
     }
 
     @Test
@@ -1408,28 +1519,28 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         int saSpotIndex = 1;
         int mcSelectedOptionIndex = 0;
         quizExercise.getQuizQuestions().forEach(quizQuestion -> {
-            if (quizQuestion instanceof DragAndDropQuestion) {
+            if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
                 var submittedAnswer = new DragAndDropSubmittedAnswer();
                 DragAndDropMapping dndMapping = new DragAndDropMapping();
                 dndMapping.setDragItemIndex(dndDragItemIndex);
-                dndMapping.setDragItem(((DragAndDropQuestion) quizQuestion).getDragItems().get(dndDragItemIndex));
+                dndMapping.setDragItem(dragAndDropQuestion.getDragItems().get(dndDragItemIndex));
                 dndMapping.setDropLocationIndex(dndLocationIndex);
-                dndMapping.setDropLocation(((DragAndDropQuestion) quizQuestion).getDropLocations().get(dndLocationIndex));
+                dndMapping.setDropLocation(dragAndDropQuestion.getDropLocations().get(dndLocationIndex));
                 submittedAnswer.getMappings().add(dndMapping);
-                submittedAnswer.setQuizQuestion(quizQuestion);
+                submittedAnswer.setQuizQuestion(dragAndDropQuestion);
                 quizSubmission.getSubmittedAnswers().add(submittedAnswer);
             }
-            else if (quizQuestion instanceof ShortAnswerQuestion) {
+            else if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
                 var submittedAnswer = new ShortAnswerSubmittedAnswer();
                 ShortAnswerSubmittedText shortAnswerSubmittedText = new ShortAnswerSubmittedText();
                 shortAnswerSubmittedText.setText(shortAnswerText);
-                shortAnswerSubmittedText.setSpot(((ShortAnswerQuestion) quizQuestion).getSpots().get(saSpotIndex));
+                shortAnswerSubmittedText.setSpot(shortAnswerQuestion.getSpots().get(saSpotIndex));
                 submittedAnswer.getSubmittedTexts().add(shortAnswerSubmittedText);
-                submittedAnswer.setQuizQuestion(quizQuestion);
+                submittedAnswer.setQuizQuestion(shortAnswerQuestion);
                 quizSubmission.getSubmittedAnswers().add(submittedAnswer);
             }
-            else if (quizQuestion instanceof MultipleChoiceQuestion) {
-                var answerOptions = ((MultipleChoiceQuestion) quizQuestion).getAnswerOptions();
+            else if (quizQuestion instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
+                var answerOptions = multipleChoiceQuestion.getAnswerOptions();
                 var submittedAnswer = new MultipleChoiceSubmittedAnswer();
                 submittedAnswer.addSelectedOptions(answerOptions.get(mcSelectedOptionIndex));
                 submittedAnswer.setQuizQuestion(quizQuestion);
@@ -1825,8 +1936,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 textSubmission.setText(newText);
                 request.put("/api/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
             }
-            else if (exercise instanceof QuizExercise) {
-                submitQuizInExam((QuizExercise) exercise, (QuizSubmission) submission);
+            else if (exercise instanceof QuizExercise quizExercise) {
+                submitQuizInExam(quizExercise, (QuizSubmission) submission);
             }
         }
         return studentExamFromServer;
@@ -2334,6 +2445,33 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         checkQuizSubmission(quizExercise.getId(), quizSubmission.getId());
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testTestRunGradeSummaryDoesNotReturn404() throws Exception {
+        StudentExam testRun = createTestRun();
+        testRun.setSubmitted(true);
+        studentExamRepository.save(testRun);
+
+        Exam exam = testRun.getExam();
+        exam.setPublishResultsDate(ZonedDateTime.now());
+        exam.setExampleSolutionPublicationDate(ZonedDateTime.now().plusDays(2));
+
+        List<ExerciseGroup> exerciseGroups = new ArrayList<>();
+        testRun.getExercises().forEach((exercise -> exerciseGroups.add(exercise.getExerciseGroup())));
+
+        exam.setExerciseGroups(exerciseGroups);
+        examRepository.save(exam);
+
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        User instructor1 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+
+        StudentExamWithGradeDTO studentExamGradeInfoFromServer = request.get(
+                "/api/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/grade-summary?userId=" + instructor1.getId() + "&isTestRun=true",
+                HttpStatus.OK, StudentExamWithGradeDTO.class);
+
+        assertThat(studentExamGradeInfoFromServer.achievedPointsPerExercise().size()).isEqualTo(testRunExam.getExerciseGroups().size());
+    }
+
     private void checkQuizSubmission(long quizExerciseId, long quizSubmissionId) {
 
         assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExerciseId)).hasSize(1);
@@ -2353,10 +2491,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
                 assertThat(submittedAnswer.getScoreInPoints()).isEqualTo(4D);
             } // DND submitted answers 0 points as one correct and two false -> PROPORTIONAL_WITH_PENALTY
-            else if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
-                assertThat(submittedAnswer.getScoreInPoints()).isZero();
-            } // SA submitted answers 0 points as one correct and one false -> PROPORTIONAL_WITHOUT_PENALTY
-            else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
+              // or
+              // SA submitted answers 0 points as one correct and one false -> PROPORTIONAL_WITHOUT_PENALTY
+            else if (submittedAnswer instanceof DragAndDropSubmittedAnswer || submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
                 assertThat(submittedAnswer.getScoreInPoints()).isZero();
             }
         }
@@ -2601,7 +2738,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         testExamWithExercises = examRepository.save(testExamWithExercises);
 
         // Step 1: Call /start
-        StudentExam studentExamForStart = request.get("/api/courses/" + course1.getId() + "/exams/" + testExamWithExercises.getId() + "/start", HttpStatus.OK, StudentExam.class);
+        StudentExam studentExamForStart = request.get("/api/courses/" + course1.getId() + "/exams/" + testExamWithExercises.getId() + "/own-student-exam", HttpStatus.OK,
+                StudentExam.class);
 
         assertThat(studentExamForStart.getUser()).isEqualTo(student1);
         assertThat(studentExamForStart.getExam().getId()).isEqualTo(testExamWithExercises.getId());

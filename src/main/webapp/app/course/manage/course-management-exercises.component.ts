@@ -13,6 +13,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 })
 export class CourseManagementExercisesComponent implements OnInit {
     readonly ExerciseType = ExerciseType;
+    readonly documentationType: DocumentationType = 'Exercise';
 
     course: Course;
     showSearch = false;
@@ -32,8 +33,6 @@ export class CourseManagementExercisesComponent implements OnInit {
     lectureWizardStepForGoingBack: number;
 
     faHandshakeAngle = faHandshakeAngle;
-
-    documentationType = DocumentationType.Exercise;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideGenerateAndImportButton') overrideGenerateAndImportButton: TemplateRef<any>;

@@ -2,10 +2,11 @@ import { EXERCISE_BASE, MODELING_EDITOR_CANVAS, POST } from '../../../constants'
 
 export class DragAndDropQuiz {
     createDnDQuiz(title: string) {
-        cy.get('#create-dd-quiz').should('be.visible').click();
+        cy.get('#quiz-import-apollon-dnd-question').should('be.visible').click();
         cy.get('#create-apollon-diagram').should('be.visible').click();
-        cy.get('#field_title').type(title);
+        cy.get('#field_diagram_title').type(title);
         cy.get('#save-dnd-quiz').click();
+        cy.get('#open-diagram').click();
     }
 
     dragItemIntoDragArea(itemIndex: number) {
@@ -61,11 +62,22 @@ export class DragAndDropQuiz {
 
     generateQuizExercise() {
         cy.get('#generate-quiz-exercise').click();
-        cy.get('#generate-quiz-exercise-save').click();
+        cy.get('#quiz-save').should('be.visible');
+        cy.wait(100);
+        cy.get('#quiz-save').click();
+    }
+
+    waitForQuizExerciseToBeGenerated() {
+        cy.get('#jhi-text-exercise-heading-edit').should('be.visible');
     }
 
     previewQuiz() {
         cy.get('#preview-quiz').click();
+    }
+
+    waitForQuizPreviewToLoad() {
+        cy.get('.drag-and-drop-area').should('be.visible');
+        cy.wait(200);
     }
 
     submit() {

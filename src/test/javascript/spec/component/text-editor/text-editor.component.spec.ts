@@ -113,6 +113,22 @@ describe('TextEditorComponent', () => {
         jest.restoreAllMocks();
     });
 
+    it('should use inputValues if present instead of loading new details', fakeAsync(() => {
+        comp.inputExercise = textExercise;
+        comp.inputParticipation = participation;
+
+        // @ts-ignore updateParticipation is private
+        const updateParticipationSpy = jest.spyOn(comp, 'updateParticipation');
+        // @ts-ignore setupComponentWithInputValuesSpy is private
+        const setupComponentWithInputValuesSpy = jest.spyOn(comp, 'setupComponentWithInputValues');
+
+        fixture.detectChanges();
+
+        expect(getTextForParticipationStub).not.toHaveBeenCalled();
+        expect(updateParticipationSpy).not.toHaveBeenCalled();
+        expect(setupComponentWithInputValuesSpy).toHaveBeenCalled();
+    }));
+
     it('should not allow to submit after the due date if there is no due date', fakeAsync(() => {
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
         getTextForParticipationStub.mockReturnValue(participationSubject);

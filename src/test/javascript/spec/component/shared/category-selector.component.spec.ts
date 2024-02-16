@@ -10,9 +10,8 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-selector.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
-describe('Category Selector Component', () => {
+describe('CategorySelectorComponent', () => {
     let comp: CategorySelectorComponent;
     let fixture: ComponentFixture<CategorySelectorComponent>;
     let emitSpy: jest.SpyInstance;
@@ -53,7 +52,6 @@ describe('Category Selector Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
-                FontAwesomeTestingModule,
                 MockModule(MatAutocompleteModule),
                 MockModule(MatFormFieldModule),
                 MockModule(MatChipsModule),
@@ -90,7 +88,11 @@ describe('Category Selector Component', () => {
 
     it('should open color selector', () => {
         fixture.detectChanges();
-        const mouseEvent = { x: 1, y: 2 } as MouseEvent;
+        const mouseEvent = new MouseEvent('click', {
+            clientX: 1,
+            clientY: 2,
+        });
+
         const openColorSelectorSpy = jest.spyOn(comp.colorSelector, 'openColorSelector');
         comp.openColorSelector(mouseEvent, category5);
 

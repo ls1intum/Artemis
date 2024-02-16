@@ -16,6 +16,9 @@ import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-butto
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { MockParticipationService } from '../../helpers/mocks/service/mock-participation.service';
+import { InitializationState } from 'app/entities/participation/participation.model';
+import dayjs from 'dayjs/esm';
+import { By } from '@angular/platform-browser';
 
 describe('JhiResetRepoButtonComponent', () => {
     let comp: ResetRepoButtonComponent;
@@ -49,11 +52,42 @@ describe('JhiResetRepoButtonComponent', () => {
     });
 
     it('should initialize correctly', () => {
+        comp.exercise = { numberOfAssessmentsOfCorrectionRounds: [], secondCorrectionEnabled: false, studentAssignedTeamIdComputed: false };
         comp.participations = [gradedParticipation, practiceParticipation];
         comp.ngOnInit();
 
         expect(comp.gradedParticipation).toEqual(gradedParticipation);
         expect(comp.practiceParticipation).toEqual(practiceParticipation);
+    });
+
+    it.each([
+        { participations: [{ testRun: false, initializationState: InitializationState.INITIALIZED }], exercise: {}, shouldShowButton: true },
+        { participations: [{ testRun: false, initializationState: InitializationState.INITIALIZED }], exercise: { dueDate: dayjs().add(1, 'day') }, shouldShowButton: true },
+        { participations: [{ testRun: false, initializationState: InitializationState.INITIALIZED }], exercise: { dueDate: dayjs().subtract(1, 'day') }, shouldShowButton: false },
+        { participations: [{ testRun: false, initializationState: InitializationState.INACTIVE }], exercise: { dueDate: dayjs().add(1, 'day') }, shouldShowButton: false },
+        {
+            participations: [{ testRun: false, initializationState: InitializationState.INITIALIZED, individualDueDate: dayjs().add(1, 'day') }],
+            exercise: { dueDate: dayjs().subtract(1, 'day') },
+            shouldShowButton: true,
+        },
+        {
+            participations: [
+                { testRun: false, initializationState: InitializationState.INACTIVE },
+                { testRun: true, initializationState: InitializationState.INITIALIZED },
+            ],
+            exercise: { dueDate: dayjs().subtract(1, 'day') },
+            shouldShowButton: true,
+        },
+    ])('should show button for correct configurations', ({ participations, exercise, shouldShowButton }) => {
+        comp.exercise = exercise as ProgrammingExercise;
+        comp.participations = participations;
+
+        comp.ngOnInit();
+
+        fixture.detectChanges();
+
+        const resetButton = fixture.debugElement.query(By.css('.btn-danger'));
+        expect(!!resetButton).toEqual(shouldShowButton);
     });
 
     it.each([

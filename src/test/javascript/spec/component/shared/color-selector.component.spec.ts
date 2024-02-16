@@ -25,10 +25,29 @@ describe('ColorSelectorComponent', () => {
         expect(component.colorSelectorPosition).toEqual({ left: 0, top: 0 });
     });
 
+    it('should register click event listener on init', () => {
+        //@ts-ignore spying on private method
+        const addEventListenerSpy = jest.spyOn(component, 'addEventListenerToCloseComponentOnClickOutside');
+
+        component.ngOnInit();
+
+        expect(addEventListenerSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should stop event propagation on openSelector', () => {
+        const event = { stopPropagation: jest.fn(), target: { closest: jest.fn() } };
+        const eventStopPropagationSpy = jest.spyOn(event, 'stopPropagation');
+        component.colorSelectorPosition = { left: 0, top: 0 };
+        component.openColorSelector(event as unknown as MouseEvent, 0, 0);
+
+        expect(eventStopPropagationSpy).toHaveBeenCalledOnce();
+    });
+
     it('should position the color selector after opening correctly', () => {
         const target = document.createElement('div');
         const event = {
             target,
+            stopPropagation: jest.fn(),
         } as unknown as MouseEvent;
         component.ngOnInit();
 
@@ -84,29 +103,31 @@ describe('ColorSelectorComponent', () => {
         expect(component.showColorSelector).toBeFalse();
     });
 
-    it('should close the color selector correctly', () => {
-        const target = {
-            className: 'color-selector',
-        };
-        const event = {
-            target,
-        };
-        component.showColorSelector = true;
+    describe('should handle close actions properly', () => {
+        beforeEach(() => {
+            // Make sure that the event Listener is registered
+            component.ngOnInit();
+            component.showColorSelector = true;
+        });
 
-        component.clickOutside(event);
+        it('and close when clicked outside', () => {
+            // Simulate a click event outside the component by dispatching a custom event
+            const clickEvent = new Event('click');
+            document.dispatchEvent(clickEvent);
 
-        expect(component.showColorSelector).toBeTrue();
+            expect(component.showColorSelector).toBeFalse();
+        });
 
-        target.className = 'color-preview';
+        it('and stay open when clicked inside but not clicking a color', () => {
+            expect(component.showColorSelector).toBeTrue();
 
-        component.clickOutside(event);
+            const insideDummyElement = document.createElement('div');
+            fixture.nativeElement.appendChild(insideDummyElement);
 
-        expect(component.showColorSelector).toBeTrue();
+            const clickEvent = new MouseEvent('click', { bubbles: true });
+            insideDummyElement.dispatchEvent(clickEvent);
 
-        target.className = 'jhi-alert';
-
-        component.clickOutside(event);
-
-        expect(component.showColorSelector).toBeFalse();
+            expect(component.showColorSelector).toBeTrue();
+        });
     });
 });

@@ -27,7 +27,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
@@ -60,7 +60,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
 
     private Optional<Long> sharedCredentialId = Optional.empty();
 
-    private final Logger log = LoggerFactory.getLogger(BambooMigrationService.class);
+    private static final Logger log = LoggerFactory.getLogger(BambooMigrationService.class);
 
     public BambooMigrationService(@Qualifier("bambooRestTemplate") RestTemplate restTemplate, BambooService bambooService, BambooInternalUrlService bambooInternalUrlService) {
         this.restTemplate = restTemplate;
@@ -116,7 +116,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
     }
 
     @Override
-    public void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl vcsRepositoryUrl) {
+    public void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUri repositoryUri) {
         Map<Long, String> notificationIds = getAllArtemisBuildPlanServerNotificationIds(buildPlanKey);
         log.info("Found {} notifications for build plan {}", notificationIds.size(), buildPlanKey);
 
@@ -133,7 +133,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
                 deleteBuildPlanServerNotificationId(buildPlanKey, id);
             }
             catch (RestClientException e) {
-                log.error("Could not delete notification with id " + id + " for build plan " + buildPlanKey, e);
+                log.error("Could not delete notification with id {} for build plan {}", id, buildPlanKey, e);
             }
         });
 
@@ -143,12 +143,12 @@ public class BambooMigrationService implements CIVCSMigrationService {
     }
 
     @Override
-    public void removeWebHook(VcsRepositoryUrl repositoryUrl) {
+    public void removeWebHook(VcsRepositoryUri repositoryUri) {
         // nothing to do
     }
 
     @Override
-    public void deleteBuildTriggers(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl) {
+    public void deleteBuildTriggers(String projectKey, String buildPlanKey, VcsRepositoryUri repositoryUri) {
         if (buildPlanKey == null) {
             return;
         }
@@ -158,7 +158,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
         }
         for (var id : triggerIds) {
             deleteBuildPlanTriggerId(buildPlanKey, id);
-            log.debug("Deleted trigger with id " + id + " for build plan " + buildPlanKey);
+            log.debug("Deleted trigger with id {} for build plan {}", id, buildPlanKey);
         }
     }
 
@@ -171,7 +171,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
     public void checkPrerequisites() throws ContinuousIntegrationException {
         Optional<Long> credentialsId = getSharedCredential();
         if (credentialsId.isEmpty()) {
-            log.error("No shared credentials found on Bamboo for git user " + gitUser + ". Migration will fail.");
+            log.error("No shared credentials found on Bamboo for git user {}. Migration will fail.", gitUser);
             throw new ContinuousIntegrationException("No shared credential found for git user " + gitUser
                     + " in Bamboo. Migration will fail. Please create a shared username and password credential for this user and run the migration again.");
         }
@@ -179,11 +179,11 @@ public class BambooMigrationService implements CIVCSMigrationService {
     }
 
     @Override
-    public void overrideBuildPlanRepository(String buildPlanId, String name, String repositoryUrl, String defaultBranch) {
+    public void overrideBuildPlanRepository(String buildPlanId, String name, String repositoryUri, String defaultBranch) {
         if (this.sharedCredentialId.isEmpty()) {
             Optional<Long> credentialsId = getSharedCredential();
             if (credentialsId.isEmpty()) {
-                log.error("No shared credential found for git user " + gitUser + ". Migration will fail.");
+                log.error("No shared credential found for git user {}. Migration will fail.", gitUser);
                 throw new ContinuousIntegrationException("No shared credential found for git user " + gitUser
                         + " in Bamboo. Migration will fail. Please create a shared username and password credential for this user and run the migration again.");
             }
@@ -196,14 +196,14 @@ public class BambooMigrationService implements CIVCSMigrationService {
                 // if we do not find the edge case "solution" repository in the build plan, we simply continue
                 return;
             }
-            log.info("Repository " + name + " not found for build plan " + buildPlanId + ", will be added now");
+            log.info("Repository {} not found for build plan {}, will be added now", name, buildPlanId);
         }
         else {
-            log.debug("Deleting repository " + name + " for build plan " + buildPlanId);
+            log.debug("Deleting repository {} for build plan {}", name, buildPlanId);
             deleteLinkedRepository(buildPlanId, repositoryId.get());
         }
-        log.debug("Adding repository " + name + " for build plan " + buildPlanId);
-        addGitRepository(buildPlanId, bambooInternalUrlService.toInternalVcsUrl(repositoryUrl), name, this.sharedCredentialId.orElseThrow(), defaultBranch);
+        log.debug("Adding repository {} for build plan {}", name, buildPlanId);
+        addGitRepository(buildPlanId, bambooInternalUrlService.toInternalVcsUrl(repositoryUri), name, this.sharedCredentialId.orElseThrow(), defaultBranch);
     }
 
     /**
@@ -251,6 +251,16 @@ public class BambooMigrationService implements CIVCSMigrationService {
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * Returns true if the build plan with the given id has a repository with the solution name.
+     *
+     * @param buildPlanId The key of the build plan, e.g. 'EIST16W1-BASE'.
+     * @return true if the build plan with the given id has a repository with the solution name
+     */
+    public boolean hasSolutionRepository(String buildPlanId) {
+        return getConnectedRepositoryId(buildPlanId, SOLUTION_REPO_NAME).isPresent();
     }
 
     @Override

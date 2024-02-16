@@ -34,6 +34,8 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { GradeStepsDTO } from 'app/entities/grade-step.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 
 describe('ParticipationComponent', () => {
     let component: ParticipationComponent;
@@ -41,10 +43,11 @@ describe('ParticipationComponent', () => {
     let participationService: ParticipationService;
     let exerciseService: ExerciseService;
     let submissionService: ProgrammingSubmissionService;
+    let alertService: AlertService;
 
     const exercise: Exercise = { numberOfAssessmentsOfCorrectionRounds: [], studentAssignedTeamIdComputed: false, id: 1, secondCorrectionEnabled: true };
 
-    const route = { params: of({ exerciseId: 1 } as Params) } as ActivatedRoute;
+    const route = { params: of({ exerciseId: '1' } as Params) } as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -67,6 +70,7 @@ describe('ParticipationComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
+                { provide: AlertService, useClass: MockAlertService },
                 MockProvider(ExerciseService),
                 MockProvider(ParticipationService),
             ],
@@ -78,12 +82,23 @@ describe('ParticipationComponent', () => {
                 participationService = TestBed.inject(ParticipationService);
                 exerciseService = TestBed.inject(ExerciseService);
                 submissionService = TestBed.inject(ProgrammingSubmissionService);
+                alertService = TestBed.inject(AlertService);
                 component.exercise = exercise;
             });
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    it('should initialize with exerciseId from route', () => {
+        // @ts-ignore
+        component.exercise = undefined;
+        const exerciseFindStub = jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+        component.ngOnInit();
+
+        expect(exerciseFindStub).toHaveBeenCalledExactlyOnceWith(exercise.id);
+        expect(component.exercise).toEqual(exercise);
     });
 
     it('should initialize for non programming exercise', fakeAsync(() => {
@@ -261,6 +276,13 @@ describe('ParticipationComponent', () => {
         expect(component.isSaving).toBeFalse();
     }));
 
+    it('should error on save changedDueDate', () => {
+        const errorSpy = jest.spyOn(alertService, 'error');
+        jest.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(throwError(new HttpResponse({ body: null })));
+        component.saveChangedDueDates();
+        expect(errorSpy).toHaveBeenCalledOnce();
+    });
+
     it('should remove a participation from the change map when it has been deleted', fakeAsync(() => {
         const participation1 = participationWithIndividualDueDate(1, dayjs());
         component.changedIndividualDueDate(participation1);
@@ -277,6 +299,14 @@ describe('ParticipationComponent', () => {
         expect(deleteStub).toHaveBeenCalledOnce();
         expect(component.participationsChangedDueDate).toEqual(new Map());
     }));
+
+    it('should update participation filter', async () => {
+        jest.useFakeTimers();
+        component.updateParticipationFilter(component.FilterProp.NO_SUBMISSIONS);
+        jest.runAllTimers();
+        expect(component.isLoading).toBeFalsy();
+        expect(component.participationCriteria.filterProp).toBe(component.FilterProp.NO_SUBMISSIONS);
+    });
 
     const participationWithIndividualDueDate = (participationId: number, dueDate?: dayjs.Dayjs): StudentParticipation => {
         const participation = new StudentParticipation();

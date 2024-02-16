@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.domain.iris.settings;
 
+import java.util.Set;
+import java.util.TreeSet;
+
 import javax.annotation.Nullable;
 import javax.persistence.*;
 
@@ -7,29 +10,47 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 
 /**
- * An IrisSubSettings object represents the settings for a specific feature of Iris.
- * {@link IrisSettings} is the parent of this class.
+ * IrisSubSettings is an abstract super class for the specific sub settings types.
+ * Sub Settings are settings for a specific feature of Iris.
+ * {@link IrisChatSubSettings} are used to specify settings for the chat feature.
+ * {@link IrisHestiaSubSettings} are used to specify settings for the Hestia integration.
+ * {@link IrisCodeEditorSubSettings} are used to specify settings for the code editor feature.
+ * {@link IrisCompetencyGenerationSubSettings} are used to specify settings for the competency generation feature.
+ * <p>
+ * Also see {@link de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService} for more information.
  */
 @Entity
 @Table(name = "iris_sub_settings")
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+// @formatter:off
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = IrisChatSubSettings.class, name = "chat"),
+    @JsonSubTypes.Type(value = IrisHestiaSubSettings.class, name = "hestia"),
+    @JsonSubTypes.Type(value = IrisCodeEditorSubSettings.class, name = "code-editor"),
+    @JsonSubTypes.Type(value = IrisCompetencyGenerationSubSettings.class, name = "competency-generation")
+})
+// @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class IrisSubSettings extends DomainObject {
+public abstract class IrisSubSettings extends DomainObject {
 
     @Column(name = "enabled")
     private boolean enabled = false;
 
-    @Nullable
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    private IrisTemplate template;
+    @Column(name = "allowed_models")
+    @Convert(converter = IrisModelListConverter.class)
+    private Set<String> allowedModels = new TreeSet<>();
 
     @Nullable
-    @Column(name = "preferredModel")
+    @Column(name = "preferred_model")
     private String preferredModel;
 
     public boolean isEnabled() {
@@ -40,13 +61,12 @@ public class IrisSubSettings extends DomainObject {
         this.enabled = enabled;
     }
 
-    @Nullable
-    public IrisTemplate getTemplate() {
-        return template;
+    public Set<String> getAllowedModels() {
+        return allowedModels;
     }
 
-    public void setTemplate(@Nullable IrisTemplate template) {
-        this.template = template;
+    public void setAllowedModels(Set<String> allowedModels) {
+        this.allowedModels = allowedModels;
     }
 
     @Nullable

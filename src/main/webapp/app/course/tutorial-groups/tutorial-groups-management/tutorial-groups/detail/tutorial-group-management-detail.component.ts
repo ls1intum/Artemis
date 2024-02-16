@@ -56,14 +56,6 @@ export class TutorialGroupManagementDetailComponent implements OnInit, OnDestroy
             .add(() => this.cdr.detectChanges());
     }
 
-    onCourseClicked = () => {
-        this.router.navigate(['/course-management', this.course.id!]);
-    };
-
-    onRegistrationsClicked = () => {
-        this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups', this.tutorialGroupId, 'registered-students']);
-    };
-
     onTutorialGroupDeleted = () => {
         this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups']);
     };

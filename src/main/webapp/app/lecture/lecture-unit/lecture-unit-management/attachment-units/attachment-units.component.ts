@@ -1,23 +1,24 @@
 import { Component, OnInit } from '@angular/core';
-import { faBan, faClock, faExclamationTriangle, faGlobe, faPlus, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faExclamationTriangle, faPlus, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { combineLatest } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { objectToJsonBlob } from 'app/utils/blob-util';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateService } from '@ngx-translate/core';
+import { Subject } from 'rxjs';
+import { debounceTime, repeat, switchMap } from 'rxjs/operators';
 
-type LectureUnitDTOS = {
+export type LectureUnitDTOS = {
     unitName: string;
     releaseDate?: dayjs.Dayjs;
     startPage: number;
     endPage: number;
 };
 
-type LectureUnitInformationDTO = {
+export type LectureUnitInformationDTO = {
     units: LectureUnitDTOS[];
     numberOfPages: number;
     removeSlidesCommaSeparatedKeyPhrases: string;
@@ -37,17 +38,21 @@ export class AttachmentUnitsComponent implements OnInit {
     numberOfPages: number;
     faSave = faSave;
     faBan = faBan;
-    faGlobe = faGlobe;
-    faClock = faClock;
     faTimes = faTimes;
     faPlus = faPlus;
     faExclamationTriangle = faExclamationTriangle;
     faQuestionCircle = faQuestionCircle;
 
-    file: File;
-    fileName: string;
     invalidUnitTableMessage?: string;
-    removeSlidesCommaSeparatedKeyPhrases: string;
+    //Comma-seperated keyphrases used to detect slides to be removed
+    keyphrases: string;
+    private search = new Subject<void>();
+    removedSlidesNumbers: number[];
+
+    file: File;
+    filename: string;
+    //time until the file gets uploaded again. Must be less or equal than minutesUntilDeletion in AttachmentUnitResource.java
+    readonly MINUTES_UNTIL_DELETION = 29;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -56,8 +61,7 @@ export class AttachmentUnitsComponent implements OnInit {
         private alertService: AlertService,
         private translateService: TranslateService,
     ) {
-        this.file = this.router.getCurrentNavigation()!.extras.state!.file;
-        this.fileName = this.router.getCurrentNavigation()!.extras.state!.fileName;
+        this.file = this.router.getCurrentNavigation()?.extras?.state?.file;
         const lectureRoute = this.activatedRoute.parent!.parent!;
         combineLatest([lectureRoute.paramMap, lectureRoute.parent!.paramMap]).subscribe(([params]) => {
             this.lectureId = Number(params.get('lectureId'));
@@ -65,60 +69,119 @@ export class AttachmentUnitsComponent implements OnInit {
         });
     }
 
+    /**
+     * Life cycle hook called by Angular to indicate that Angular is done creating the component
+     */
     ngOnInit(): void {
-        this.removeSlidesCommaSeparatedKeyPhrases = '';
+        this.keyphrases = '';
+        this.removedSlidesNumbers = [];
         this.isLoading = true;
         this.isProcessingMode = true;
 
-        const formData: FormData = new FormData();
-        formData.append('file', this.file);
+        if (!this.file) {
+            this.alertService.error(this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.noFile`));
+            this.isLoading = true;
+            return;
+        }
 
-        this.attachmentUnitService.getSplitUnitsData(this.lectureId, formData).subscribe({
-            next: (res: any) => {
-                if (res) {
-                    this.units = res.body.units;
-                    this.numberOfPages = res.body.numberOfPages;
+        //regularly re-upload the file when it gets deleted in the backend
+        setTimeout(
+            () => {
+                this.attachmentUnitService
+                    .uploadSlidesForProcessing(this.lectureId, this.file)
+                    .pipe(repeat({ delay: 1000 * 60 * this.MINUTES_UNTIL_DELETION }))
+                    .subscribe({
+                        next: (res) => {
+                            this.filename = res.body!;
+                        },
+                        error: (res: HttpErrorResponse) => {
+                            onError(this.alertService, res);
+                            this.isLoading = false;
+                        },
+                    });
+            },
+            1000 * 60 * this.MINUTES_UNTIL_DELETION,
+        );
+
+        this.attachmentUnitService
+            .uploadSlidesForProcessing(this.lectureId, this.file)
+            .pipe(
+                switchMap((res) => {
+                    if (res instanceof HttpErrorResponse) {
+                        throw new Error(res.message);
+                    } else {
+                        this.filename = res.body!;
+                        return this.attachmentUnitService.getSplitUnitsData(this.lectureId, this.filename);
+                    }
+                }),
+            )
+            .subscribe({
+                next: (res) => {
+                    this.units = res.body!.units;
+                    this.numberOfPages = res.body!.numberOfPages;
                     this.isLoading = false;
-                }
-            },
-            error: (res: HttpErrorResponse) => {
-                if (res.error.params === 'file' && res?.error?.title) {
-                    this.alertService.error(res.error.title);
-                } else {
+                },
+                error: (res: HttpErrorResponse) => {
                     onError(this.alertService, res);
-                }
-                this.isLoading = false;
-            },
-        });
+                    this.isLoading = false;
+                },
+            });
+
+        this.search
+            .pipe(
+                debounceTime(500),
+                switchMap(() => {
+                    return this.attachmentUnitService.getSlidesToRemove(this.lectureId, this.filename, this.keyphrases);
+                }),
+            )
+            .subscribe({
+                next: (res) => {
+                    if (res.body) {
+                        this.removedSlidesNumbers = res.body.map((n) => n + 1);
+                    }
+                },
+                error: (res: HttpErrorResponse) => {
+                    onError(this.alertService, res);
+                },
+            });
     }
 
+    /**
+     * Creates the attachment units with the information given on this page
+     */
     createAttachmentUnits(): void {
         if (this.validUnitInformation()) {
             this.isLoading = true;
-            const lectureUnitInformationDTOObj: LectureUnitInformationDTO = {
+            const lectureUnitInformation: LectureUnitInformationDTO = {
                 units: this.units,
                 numberOfPages: this.numberOfPages,
-                removeSlidesCommaSeparatedKeyPhrases: this.removeSlidesCommaSeparatedKeyPhrases,
+                removeSlidesCommaSeparatedKeyPhrases: this.keyphrases,
             };
-            const formData: FormData = new FormData();
-            formData.append('file', this.file);
-            formData.append('lectureUnitInformationDTO', objectToJsonBlob(lectureUnitInformationDTOObj));
 
-            this.attachmentUnitService.createUnits(this.lectureId, formData).subscribe({
+            this.attachmentUnitService.createUnits(this.lectureId, this.filename, lectureUnitInformation).subscribe({
                 next: () => {
                     this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                     this.isLoading = false;
                 },
                 error: (res: HttpErrorResponse) => {
-                    if (res.error.params === 'file' && res?.error?.title) {
-                        this.alertService.error(res.error.title);
-                    } else {
-                        onError(this.alertService, res);
-                    }
-                    this.isLoading = false;
+                    onError(this.alertService, res);
                 },
             });
         }
+    }
+
+    set searchTerm(searchTerm: string) {
+        //only consider non-empty searches for slide removal
+        if (searchTerm.trim() !== '') {
+            this.keyphrases = searchTerm;
+            this.search.next();
+        } else {
+            this.removedSlidesNumbers = [];
+        }
+    }
+
+    get searchTerm(): string {
+        return this.keyphrases;
     }
 
     /**

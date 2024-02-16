@@ -1,4 +1,4 @@
-<div class="row mb-2 col-12">
+<div class="row mb-2 mx-0" [class]="post.displayPriority === DisplayPriority.PINNED ? 'highlight-pinned' : ''">
     <div class="col-12">
         <jhi-post
             [readOnlyMode]="readOnlyMode"
@@ -9,8 +9,9 @@
             [isCommunicationPage]="isCommunicationPage"
             [hasChannelModerationRights]="hasChannelModerationRights"
             (openThread)="openThread.emit(post)"
-        >
-        </jhi-post>
+        />
     </div>
 </div>
-<div *ngIf="!isCourseMessagesPage" class="post-separation-line"></div>
+@if (!isCourseMessagesPage) {
+    <div class="post-separation-line"></div>
+}

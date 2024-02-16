@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.metis.conversation;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -12,7 +13,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -106,21 +108,59 @@ public class ConversationService {
     }
 
     /**
+     * Checks whether the user is a member of the conversation.
+     * <p>
+     * If the user is not a member, but the conversation is course-wide, a participant entry will be created.
+     * If the user is an instructor, they are granted the moderator role.
+     *
+     * @param conversationId the id of the conversation
+     * @param user           the user
+     * @param lastReadDate   Optional date being used for a newly created participant to set the last-read date
+     * @return an optional conversation
+     */
+    public Optional<Conversation> isMemberOrCreateForCourseWideElseThrow(Long conversationId, User user, Optional<ZonedDateTime> lastReadDate) {
+        if (isMember(conversationId, user.getId())) {
+            return Optional.empty();
+        }
+
+        Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
+
+        if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
+            ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(user, channel);
+            conversationParticipant.setIsModerator(authorizationCheckService.isAtLeastInstructorInCourse(channel.getCourse(), user));
+            lastReadDate.ifPresent(conversationParticipant::setLastRead);
+            conversationParticipantRepository.saveAndFlush(conversationParticipant);
+        }
+        else {
+            throw new AccessForbiddenException("User not allowed to access this conversation!");
+        }
+
+        return Optional.of(conversation);
+    }
+
+    /**
      * Gets the conversation in a course for which the user is a member
      *
-     * @param courseId       the id of the course
+     * @param course         the course
      * @param requestingUser the user for which the conversations are requested
      * @return the conversation in the course for which the user is a member
      */
-    public List<ConversationDTO> getConversationsOfUser(Long courseId, User requestingUser) {
-        var oneToOneChatsOfUser = oneToOneChatRepository.findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId());
-        var channelsOfUser = channelRepository.findChannelsOfUser(courseId, requestingUser.getId());
-        var groupChatsOfUser = groupChatRepository.findGroupChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId());
-
+    public List<ConversationDTO> getConversationsOfUser(Course course, User requestingUser) {
         var conversationsOfUser = new ArrayList<Conversation>();
-        conversationsOfUser.addAll(oneToOneChatsOfUser);
-        conversationsOfUser.addAll(groupChatsOfUser);
-        Course course = courseRepository.findByIdElseThrow(courseId);
+        List<Channel> channelsOfUser;
+        if (course.getCourseInformationSharingConfiguration().isMessagingEnabled()) {
+            var oneToOneChatsOfUser = oneToOneChatRepository.findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(course.getId(), requestingUser.getId());
+            conversationsOfUser.addAll(oneToOneChatsOfUser);
+
+            var groupChatsOfUser = groupChatRepository.findGroupChatsOfUserWithParticipantsAndUserGroups(course.getId(), requestingUser.getId());
+            conversationsOfUser.addAll(groupChatsOfUser);
+
+            channelsOfUser = channelRepository.findChannelsOfUser(course.getId(), requestingUser.getId());
+        }
+        else {
+            channelsOfUser = channelRepository.findCourseWideChannelsInCourse(course.getId());
+        }
+
         // if the user is only a student in the course, we filter out all channels that are not yet open
         var isOnlyStudent = authorizationCheckService.isOnlyStudentInCourse(course, requestingUser);
         var filteredChannels = isOnlyStudent ? filterVisibleChannelsForStudents(channelsOfUser.stream()).toList() : channelsOfUser;
@@ -136,7 +176,7 @@ public class ConversationService {
         for (Channel channel : filteredChannels) {
             if (channel.getIsCourseWide()) {
                 if (numberOfCourseMembers == null) {
-                    numberOfCourseMembers = courseRepository.countCourseMembers(courseId);
+                    numberOfCourseMembers = courseRepository.countCourseMembers(course.getId());
                 }
                 generalConversationInfos.get(channel.getId()).setNumberOfParticipants(numberOfCourseMembers);
             }
@@ -159,6 +199,10 @@ public class ConversationService {
         return conversationRepository.userHasUnreadMessageInCourse(courseId, requestingUser.getId());
     }
 
+    public void markAsRead(Long conversationId, Long userId) {
+        conversationParticipantRepository.updateLastReadAsync(userId, conversationId, ZonedDateTime.now());
+    }
+
     /**
      * Updates a conversation
      *
@@ -178,7 +222,7 @@ public class ConversationService {
      * @param memberLimit  the maximum number of members in the conversation
      */
     public void registerUsersToConversation(Course course, Set<User> users, Conversation conversation, Optional<Integer> memberLimit) {
-        var existingUsers = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
+        var existingUsers = conversationParticipantRepository.findConversationParticipantsByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
         var usersToBeRegistered = users.stream().filter(user -> !existingUsers.contains(user)).collect(Collectors.toSet());
 
@@ -206,7 +250,7 @@ public class ConversationService {
      * @param conversation conversation which members to notify
      */
     public void notifyAllConversationMembersAboutUpdate(Conversation conversation) {
-        var usersToContact = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
+        var usersToContact = conversationParticipantRepository.findConversationParticipantsByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
         broadcastOnConversationMembershipChannel(conversation.getCourse(), MetisCrudAction.UPDATE, conversation, usersToContact);
     }
@@ -230,13 +274,13 @@ public class ConversationService {
      * @param conversation the conversation from which the users are removed
      */
     public void deregisterUsersFromAConversation(Course course, Set<User> users, Conversation conversation) {
-        var existingUsers = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
+        var existingUsers = conversationParticipantRepository.findConversationParticipantsByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
         var usersToBeDeregistered = users.stream().filter(existingUsers::contains).collect(Collectors.toSet());
         var remainingUsers = existingUsers.stream().filter(user -> !usersToBeDeregistered.contains(user)).collect(Collectors.toSet());
         var participantsToRemove = conversationParticipantRepository.findConversationParticipantsByConversationIdAndUserIds(conversation.getId(),
                 usersToBeDeregistered.stream().map(User::getId).collect(Collectors.toSet()));
-        if (participantsToRemove.size() > 0) {
+        if (!participantsToRemove.isEmpty()) {
             conversationParticipantRepository.deleteAll(participantsToRemove);
             broadcastOnConversationMembershipChannel(course, MetisCrudAction.DELETE, conversation, usersToBeDeregistered);
             broadcastOnConversationMembershipChannel(course, MetisCrudAction.UPDATE, conversation, remainingUsers);
@@ -337,7 +381,7 @@ public class ConversationService {
      * @param requestingUser the user that wants to switch the favorite status
      * @param favoriteStatus the new favorite status
      */
-    public void switchFavoriteStatus(Long conversationId, User requestingUser, Boolean favoriteStatus) {
+    public void setIsFavorite(Long conversationId, User requestingUser, Boolean favoriteStatus) {
         ConversationParticipant conversationParticipant = getOrCreateConversationParticipant(conversationId, requestingUser);
         conversationParticipant.setIsFavorite(favoriteStatus);
         conversationParticipantRepository.save(conversationParticipant);
@@ -350,9 +394,22 @@ public class ConversationService {
      * @param requestingUser the user that wants to switch the hidden status
      * @param hiddenStatus   the new hidden status
      */
-    public void switchHiddenStatus(Long conversationId, User requestingUser, Boolean hiddenStatus) {
+    public void setIsHidden(Long conversationId, User requestingUser, Boolean hiddenStatus) {
         ConversationParticipant conversationParticipant = getOrCreateConversationParticipant(conversationId, requestingUser);
         conversationParticipant.setIsHidden(hiddenStatus);
+        conversationParticipantRepository.save(conversationParticipant);
+    }
+
+    /**
+     * Set the muted status of a conversation for a user
+     *
+     * @param conversationId the id of the conversation
+     * @param requestingUser the user that wants to switch the muted status
+     * @param isMuted        the new muted status
+     */
+    public void setIsMuted(Long conversationId, User requestingUser, boolean isMuted) {
+        var conversationParticipant = getOrCreateConversationParticipant(conversationId, requestingUser);
+        conversationParticipant.setIsMuted(isMuted);
         conversationParticipantRepository.save(conversationParticipant);
     }
 
@@ -375,14 +432,14 @@ public class ConversationService {
     public Set<User> findUsersInDatabase(Course course, boolean findAllStudents, boolean findAllTutors, boolean findAllInstructors) {
         Set<User> users = new HashSet<>();
         if (findAllStudents) {
-            users.addAll(userRepository.findAllInGroupWithAuthorities(course.getStudentGroupName()));
+            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getStudentGroupName()));
         }
         if (findAllTutors) {
-            users.addAll(userRepository.findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName()));
-            users.addAll(userRepository.findAllInGroupWithAuthorities(course.getEditorGroupName()));
+            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()));
+            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getEditorGroupName()));
         }
         if (findAllInstructors) {
-            users.addAll(userRepository.findAllInGroupWithAuthorities(course.getInstructorGroupName()));
+            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()));
         }
         return users;
     }

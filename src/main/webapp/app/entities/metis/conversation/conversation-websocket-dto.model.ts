@@ -1,7 +1,7 @@
 import { MetisPostAction } from 'app/shared/metis/metis.util';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 
 export class ConversationWebsocketDTO {
-    public conversation: ConversationDto;
-    public metisCrudAction: MetisPostAction;
+    public conversation: ConversationDTO;
+    public action: MetisPostAction;
 }

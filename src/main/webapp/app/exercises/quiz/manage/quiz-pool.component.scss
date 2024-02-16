@@ -1,0 +1,32 @@
+.title-container {
+    float: left;
+}
+
+.max-score-container {
+    float: right;
+}
+
+.max-score {
+    background: var(--quiz-exercise-detail-max-score-background);
+    color: var(--quiz-exercise-detail-max-score-color);
+}
+
+.edit-quiz-footer {
+    height: 100px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    box-shadow: 0 0 3px var(--edit-quiz-footer-box-shadow);
+    background: var(--edit-quiz-footer-background);
+    padding-top: 10px;
+
+    .container {
+        height: 100%;
+
+        .edit-quiz-footer-content {
+            flex-wrap: wrap;
+        }
+    }
+}

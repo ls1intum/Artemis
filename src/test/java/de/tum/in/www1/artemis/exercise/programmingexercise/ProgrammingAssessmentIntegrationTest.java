@@ -41,6 +41,10 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
 
     private static final String TEST_PREFIX = "programmingassessment";
 
+    private final String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+
+    private final Double offsetByTenThousandth = 0.0001;
+
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -51,7 +55,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
     private ResultRepository resultRepository;
 
     @Autowired
-    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     @Autowired
     private ExerciseRepository exerciseRepository;
@@ -94,19 +98,16 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
 
     private Result manualResult;
 
-    private final String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-
-    private final Double offsetByTenThousandth = 0.0001;
-
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 2);
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
-
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
+        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
+
         exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
         programmingSubmission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, TEST_PREFIX + "student1",
@@ -164,7 +165,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         assertThat(((StudentParticipation) updatedResult.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
 
         // Check that result and submission are properly connected
-        var submissionFromDb = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessor(programmingSubmission.getId());
+        var submissionFromDb = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessorTestCases(programmingSubmission.getId());
         var resultFromDb = resultRepository.findWithEagerSubmissionAndFeedbackById(programmingAssessment.getId()).orElseThrow();
         assertThat(submissionFromDb.getLatestResult()).isEqualTo(updatedResult);
         assertThat(resultFromDb.getSubmission()).isEqualTo(updatedResult.getSubmission());
@@ -284,7 +285,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         ProgrammingSubmission newSubmission = new ProgrammingSubmission().commitHash("asdf");
         manualResult.setSubmission(newSubmission);
         request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, HttpStatus.OK);
-        var submission = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessor(programmingExerciseStudentParticipation.getSubmissions().iterator().next().getId());
+        var submission = programmingSubmissionRepository
+                .findByIdWithResultsFeedbacksAssessorTestCases(programmingExerciseStudentParticipation.getSubmissions().iterator().next().getId());
         String commitHash = submission.getCommitHash();
 
         assertThat(commitHash).isEqualToIgnoringCase("123");
@@ -442,8 +444,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void createManualProgrammingExerciseResult_resultHasAutomaticFeedback() throws Exception {
+        var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "testCase");
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().credits(1.00).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().credits(1.00).type(FeedbackType.AUTOMATIC).testCase(testCase));
         feedbacks.add(new Feedback().credits(1.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
         feedbacks.add(new Feedback().credits(1.00).detailText("nice submission 2"));
         feedbacks.add(new Feedback().credits(1.00).type(FeedbackType.MANUAL).detailText("nice submission 1").text("manual feedback"));
@@ -457,7 +460,10 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
                 Result.class, HttpStatus.OK);
 
         assertThat(response.getScore()).isEqualTo(4);
-        assertThat(response.getFeedbacks()).anyMatch(feedback -> feedback.getType().equals(FeedbackType.AUTOMATIC));
+        assertThat(response.getFeedbacks()).anySatisfy(feedback -> {
+            assertThat(feedback.getType()).isEqualTo(FeedbackType.AUTOMATIC);
+            assertThat(feedback.getTestCase().getId()).isEqualTo(testCase.getId());
+        });
     }
 
     @Test
@@ -527,7 +533,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         assertThat(response.getFeedbacks()).hasSameSizeAs(manualResult.getFeedbacks());
 
         // Submission in response is lazy loaded therefore, we fetch submission and check if relation is correct
-        ProgrammingSubmission submissionFetch = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessor(programmingSubmission.getId());
+        ProgrammingSubmission submissionFetch = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessorTestCases(programmingSubmission.getId());
         assertThat(response.getId()).isEqualTo(submissionFetch.getLatestResult().getId());
         assertThat(submissionFetch.getId()).isEqualTo(programmingSubmission.getId());
     }
@@ -550,6 +556,100 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
                 HttpStatus.OK);
         assertThat(response.getParticipation()).isEqualTo(manualResult.getParticipation());
         assertThat(response.getFeedbacks()).hasSameSizeAs(manualResult.getFeedbacks());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void updateManualProgrammingExerciseResult_addFeedbackAfterManualLongFeedback() throws Exception {
+
+        List<Feedback> feedbacks = new ArrayList<>();
+        var manualLongFeedback = new Feedback().credits(1.00).type(FeedbackType.MANUAL_UNREFERENCED);
+        manualLongFeedback.setDetailText("abc".repeat(5000));
+        feedbacks.add(manualLongFeedback);
+
+        manualResult = setUpManualResultForUpdate(feedbacks);
+
+        // Overwrite the previous assessment with additional feedback.
+        manualResult.addFeedback(new Feedback().credits(1.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
+        double points = manualResult.calculateTotalPointsForProgrammingExercises();
+        manualResult.setScore(points);
+        Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, Result.class,
+                HttpStatus.OK);
+
+        Feedback savedAutomaticLongFeedback = response.getFeedbacks().stream().filter(Feedback::getHasLongFeedbackText).findFirst().orElse(null);
+
+        assertThat(savedAutomaticLongFeedback).isNotNull();
+
+        // Retrieve long feedback text with id.
+        String longFeedbackText = request.get(String.format("/api/results/%d/feedbacks/%d/long-feedback", response.getId(), savedAutomaticLongFeedback.getId()), HttpStatus.OK,
+                String.class);
+
+        assertThat(response.getScore()).isEqualTo(2);
+        assertThat(response.getFeedbacks()).anySatisfy(feedback -> {
+            assertThat(feedback.getHasLongFeedbackText()).isTrue();
+            assertThat(feedback.getType()).isEqualTo(FeedbackType.MANUAL_UNREFERENCED);
+        });
+        assertThat(longFeedbackText).isEqualTo(manualLongFeedback.getLongFeedback().map(LongFeedbackText::getText).orElse(""));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void updateManualProgrammingExerciseResult_addFeedbackAfterAutomaticLongFeedback() throws Exception {
+        var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "testCase");
+
+        List<Feedback> feedbacks = new ArrayList<>();
+        var automaticLongFeedback = new Feedback().credits(1.00).type(FeedbackType.AUTOMATIC);
+        automaticLongFeedback.testCase(testCase);
+        automaticLongFeedback.setDetailText("abc".repeat(5000));
+        automaticLongFeedback.setText("abc");
+        feedbacks.add(automaticLongFeedback);
+
+        manualResult = setUpManualResultForUpdate(feedbacks);
+
+        // Overwrite the previous assessment with additional feedback.
+        manualResult.addFeedback(new Feedback().credits(1.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
+        double points = manualResult.calculateTotalPointsForProgrammingExercises();
+        manualResult.setScore(points);
+        Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, Result.class,
+                HttpStatus.OK);
+
+        Feedback savedAutomaticLongFeedback = response.getFeedbacks().stream().filter(Feedback::getHasLongFeedbackText).findFirst().orElse(null);
+
+        assertThat(savedAutomaticLongFeedback).isNotNull();
+
+        // Retrieve long feedback text with id.
+        String longFeedbackText = request.get(String.format("/api/results/%d/feedbacks/%d/long-feedback", response.getId(), savedAutomaticLongFeedback.getId()), HttpStatus.OK,
+                String.class);
+
+        assertThat(response.getScore()).isEqualTo(2);
+        assertThat(response.getFeedbacks()).anySatisfy(feedback -> {
+            assertThat(feedback.getType()).isEqualTo(FeedbackType.AUTOMATIC);
+            assertThat(feedback.getHasLongFeedbackText()).isTrue();
+        });
+        assertThat(longFeedbackText).isEqualTo(automaticLongFeedback.getLongFeedback().map(LongFeedbackText::getText).orElse(""));
+    }
+
+    private Result setUpManualResultForUpdate(List<Feedback> feedbacks) {
+        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
+        programmingSubmission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, programmingSubmission, TEST_PREFIX + "student1");
+        var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
+
+        resultRepository.save(manualResult);
+
+        manualResult.setParticipation(participation);
+        manualResult.setSubmission(programmingSubmission);
+        programmingSubmission.addResult(manualResult);
+
+        programmingSubmissionRepository.save(programmingSubmission);
+
+        // Result has to be manual to be updated
+        manualResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+
+        // Remove feedbacks, change text and score.
+        manualResult.setFeedbacks(feedbacks);
+        double points = manualResult.calculateTotalPointsForProgrammingExercises();
+        manualResult.setScore(points);
+        return resultRepository.save(manualResult);
     }
 
     @Test
@@ -893,10 +993,13 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
 
         doNothing().when(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(participation);
 
-        var response = request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.OK);
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("submit", "true");
+        var response = request.putWithResponseBodyAndParams("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.OK, params);
 
-        var responseParticipation = response.getParticipation();
+        var responseParticipation = (ProgrammingExerciseStudentParticipation) response.getParticipation();
         assertThat(responseParticipation.getIndividualDueDate()).isNull();
+        assertThat(responseParticipation.isLocked()).isFalse();
 
         verify(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(participation);
     }

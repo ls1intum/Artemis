@@ -8,6 +8,7 @@ import { MessageReplyInlineInputComponent } from 'app/shared/metis/message/messa
 import { Post } from 'app/entities/metis/post.model';
 import { post } from '../../../../../helpers/sample/metis-sample-data';
 import { NgbTooltipMocksModule } from '../../../../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 describe('ConversationThreadSidebarComponent', () => {
     let component: ConversationThreadSidebarComponent;
@@ -43,5 +44,12 @@ describe('ConversationThreadSidebarComponent', () => {
         expect(component.createdAnswerPost).toBeDefined();
         expect(component.createdAnswerPost.content).toBe('');
         expect(component.createdAnswerPost.post).toEqual(newPost);
+    });
+
+    it.each([true, false])('should determine channel moderation rights based on active conversation', (hasModerationRights: boolean) => {
+        const conversation = new ChannelDTO();
+        conversation.hasChannelModerationRights = hasModerationRights;
+        component.activeConversation = conversation;
+        expect(component.hasChannelModerationRights).toBe(hasModerationRights);
     });
 });

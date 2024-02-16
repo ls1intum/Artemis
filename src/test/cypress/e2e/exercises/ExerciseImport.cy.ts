@@ -26,7 +26,7 @@ import {
 import { admin, instructor, studentOne } from '../../support/users';
 import { checkField, convertModelAfterMultiPart, generateUUID } from '../../support/utils';
 
-describe('Import exercises', () => {
+describe('Import exercises', { scrollBehavior: 'center' }, () => {
     let course: Course;
     let secondCourse: Course;
     let textExercise: TextExercise;
@@ -43,7 +43,7 @@ describe('Import exercises', () => {
                 textExercise = response.body;
             });
             exerciseAPIRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate]).then((response) => {
-                quizExercise = response.body;
+                quizExercise = convertModelAfterMultiPart(response);
             });
             exerciseAPIRequest.createModelingExercise({ course }).then((response) => {
                 modelingExercise = response.body;
@@ -57,6 +57,11 @@ describe('Import exercises', () => {
                 courseManagementAPIRequest.addInstructorToCourse(secondCourse, instructor);
             });
         });
+    });
+
+    after('Delete Courses', () => {
+        courseManagementAPIRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(secondCourse, admin);
     });
 
     it('Imports text exercise', () => {
@@ -153,6 +158,7 @@ describe('Import exercises', () => {
 
         programmingExerciseCreation.setTitle('Import Test');
         programmingExerciseCreation.setShortName('importtest' + generateUUID());
+        programmingExerciseCreation.setDueDate(dayjs().add(3, 'days'));
 
         programmingExerciseCreation.import().then((request: Interception) => {
             const exercise = request.response!.body;
@@ -163,10 +169,5 @@ describe('Import exercises', () => {
                 programmingExerciseEditor.getResultScore().contains(javaPartiallySuccessfulSubmission.expectedResult).and('be.visible');
             });
         });
-    });
-
-    after('Delete Courses', () => {
-        courseManagementAPIRequest.deleteCourse(course, admin);
-        courseManagementAPIRequest.deleteCourse(secondCourse, admin);
     });
 });

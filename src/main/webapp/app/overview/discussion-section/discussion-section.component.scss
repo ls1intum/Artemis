@@ -45,6 +45,13 @@ $discussion-section-card-min-width: 360px;
                 justify-content: center;
             }
         }
+
+        .card-body {
+            .items-container {
+                max-height: 700px;
+                overflow-y: auto;
+            }
+        }
     }
 }
 

@@ -22,6 +22,21 @@ export class ResizeableContainerComponent implements AfterViewInit {
     @HostBinding('class.flex-grow-1') flexGrow1 = true;
     @Input() collapsed = false;
     @Input() isExerciseParticipation = false;
+    @Input() examTimeline = false;
+
+    /**
+     * Expected to be set to true while the component is printed as PDF.
+     *
+     * <i>e.g. the case for printing the exam summary</i>
+     */
+    @Input() isBeingPrinted?: boolean = false;
+
+    /**
+     * Forces the problem statement to be expanded when the component is printed as PDF
+     *
+     * <i>e.g. the case for printing the exam summary</i>
+     */
+    @Input() expandProblemStatement?: boolean = false;
 
     // Icons
     faChevronRight = faChevronRight;

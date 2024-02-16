@@ -36,6 +36,18 @@ export function isMessagingEnabled(course: Course | undefined) {
     return config === CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING || config === CourseInformationSharingConfiguration.MESSAGING_ONLY;
 }
 
+/**
+ * Note: Keep in sync with method in CourseRepository.java
+ */
+export function isMessagingOrCommunicationEnabled(course: Course | undefined) {
+    const config = course?.courseInformationSharingConfiguration;
+    return (
+        config === CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING ||
+        config === CourseInformationSharingConfiguration.MESSAGING_ONLY ||
+        config === CourseInformationSharingConfiguration.COMMUNICATION_ONLY
+    );
+}
+
 export const enum Language {
     ENGLISH = 'ENGLISH',
     GERMAN = 'GERMAN',
@@ -86,6 +98,13 @@ export class Course implements BaseEntity {
     public numberOfEditors?: number;
     public numberOfInstructors?: number;
 
+    // helper attributes to determine if certain tabs in the client are shown
+    public numberOfLectures?: number;
+    public numberOfExams?: number;
+    public numberOfTutorialGroups?: number;
+    public numberOfCompetencies?: number;
+    public numberOfPrerequisites?: number;
+
     public exercises?: Exercise[];
     public lectures?: Lecture[];
     public competencies?: Competency[];
@@ -132,7 +151,7 @@ export class Course implements BaseEntity {
     /**
      * Correctly initializes a class instance from a typecasted object.
      * Returns a 'real' class instance that supports all class methods.
-     * @param object: The typecasted object
+     * @param object The typecasted object
      * @returns The class instance
      */
     static from(object: Course): Course {
@@ -145,6 +164,15 @@ export class Course implements BaseEntity {
         }
         return course;
     }
+}
+
+export class CourseForImportDTO {
+    id?: number;
+    title?: string;
+    shortName?: string;
+    semester?: string;
+
+    constructor() {}
 }
 
 export const enum CourseGroup {

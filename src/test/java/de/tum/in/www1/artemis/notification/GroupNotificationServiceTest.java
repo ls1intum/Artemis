@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
@@ -178,11 +179,12 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
         programmingExercise = new ProgrammingExercise();
         programmingExercise.setCourse(course);
+        Channel channel = new Channel();
+        channel.setId(123L);
+        channel.setName("test");
 
         post = new Post();
-        post.setExercise(exercise);
-        post.setLecture(lecture);
-        post.setCourse(course);
+        post.setConversation(channel);
         post.setAuthor(instructor);
         post.setTitle(POST_TITLE);
         post.setContent(POST_CONTENT);
@@ -469,12 +471,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    void testNotifyAllGroupsAboutNewPostForExercise() {
-        groupNotificationService.notifyAllGroupsAboutNewPostForExercise(post, course);
-        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(NUMBER_OF_ALL_GROUPS, NEW_EXERCISE_POST_TITLE);
-    }
-
-    @Test
     void testNotifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise() {
         groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, NOTIFICATION_TEXT);
         verifyRepositoryCallWithCorrectNotificationAndReturnNotification(2, DUPLICATE_TEST_CASE_TITLE);
@@ -484,49 +480,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
     void testNotifyInstructorGroupAboutIllegalSubmissionsForExercise() {
         groupNotificationService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(exercise, NOTIFICATION_TEXT);
         verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, ILLEGAL_SUBMISSION_TITLE);
-    }
-
-    @Test
-    void testNotifyAllGroupsAboutNewPostForLecture() {
-        groupNotificationService.notifyAllGroupsAboutNewPostForLecture(post, course);
-        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(NUMBER_OF_ALL_GROUPS, NEW_LECTURE_POST_TITLE);
-    }
-
-    @Test
-    void testNotifyAllGroupsAboutNewCoursePost() {
-        groupNotificationService.notifyAllGroupsAboutNewCoursePost(post, course);
-        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(NUMBER_OF_ALL_GROUPS, NEW_COURSE_POST_TITLE);
-    }
-
-    @Test
-    void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost() {
-        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewReplyForCoursePost(post, answerPost, course);
-        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(3, NEW_REPLY_FOR_COURSE_POST_TITLE);
-    }
-
-    @Test
-    void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise() {
-        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewReplyForExercise(post, answerPost, course);
-        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(3, NEW_REPLY_FOR_EXERCISE_POST_TITLE);
-    }
-
-    @Test
-    void testNotifyAllGroupsAboutNewAnnouncement() {
-        prepareNotificationSettingForTest(student, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST);
-        groupNotificationService.notifyAllGroupsAboutNewAnnouncement(post, course);
-        Notification notification = verifyRepositoryCallWithCorrectNotificationAndReturnNotificationAtIndex(NUMBER_OF_ALL_GROUPS, NEW_ANNOUNCEMENT_POST_TITLE, 3);
-
-        verifyEmail();
-        verifyPush(notification, Set.of(student), post);
-    }
-
-    /**
-     * Test for notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture method
-     */
-    @Test
-    void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture() {
-        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(post, answerPost, course);
-        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(3, NEW_REPLY_FOR_LECTURE_POST_TITLE);
     }
 
     /**

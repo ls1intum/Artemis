@@ -27,7 +27,7 @@ describe('Text exercise management', () => {
         });
     });
 
-    it('Creates a text exercise in the UI', () => {
+    it('Creates a text exercise in the UI', { scrollBehavior: 'center' }, () => {
         cy.visit('/');
         navigationBar.openCourseManagement();
         courseManagement.openExercisesOfCourse(course.id!);
@@ -40,7 +40,6 @@ describe('Text exercise management', () => {
         textExerciseCreation.setDueDate(dayjs().add(1, 'days'));
         textExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
         textExerciseCreation.typeMaxPoints(10);
-        textExerciseCreation.checkAutomaticAssessmentSuggestions();
         const problemStatement = 'This is a problem statement';
         const exampleSolution = 'E = mc^2';
         textExerciseCreation.typeProblemStatement(problemStatement);

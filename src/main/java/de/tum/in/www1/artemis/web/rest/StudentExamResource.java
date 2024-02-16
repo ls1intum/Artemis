@@ -22,7 +22,16 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.DomainObject;
@@ -34,16 +43,30 @@ import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.exam.event.ExamLiveEvent;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ExamLiveEventRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionPolicyRepository;
+import de.tum.in.www1.artemis.repository.SubmittedAnswerRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
-import de.tum.in.www1.artemis.service.exam.*;
+import de.tum.in.www1.artemis.service.exam.ExamAccessService;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.service.exam.ExamDeletionService;
+import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
+import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.service.exam.ExamSessionService;
+import de.tum.in.www1.artemis.service.exam.StudentExamAccessService;
+import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.ExamExerciseStartPreparationStatus;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
+import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamAttendanceCheckEventDTO;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamLiveEventDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -58,7 +81,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("/api")
 public class StudentExamResource {
 
-    private final Logger log = LoggerFactory.getLogger(StudentExamResource.class);
+    private static final Logger log = LoggerFactory.getLogger(StudentExamResource.class);
 
     private final ExamAccessService examAccessService;
 
@@ -97,6 +120,8 @@ public class StudentExamResource {
     private final ExamLiveEventsService examLiveEventsService;
 
     private final ExamLiveEventRepository examLiveEventRepository;
+
+    private static final boolean IS_TEST_RUN = false;
 
     @Value("${info.student-exam-store-session-data:#{true}}")
     private boolean storeSessionDataInStudentExamSession;
@@ -220,7 +245,7 @@ public class StudentExamResource {
         var savedStudentExam = studentExamRepository.save(studentExam);
 
         if (!savedStudentExam.isTestRun()) {
-            Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
+            Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
             if (now.isAfter(exam.getVisibleDate())) {
                 instanceMessageSendService.sendStudentExamIndividualWorkingTimeChangeDuringConduction(studentExamId);
                 examLiveEventsService.createAndSendWorkingTimeUpdateEvent(savedStudentExam, workingTime, originalWorkingTime, false, userRepository.getUser());
@@ -232,6 +257,38 @@ public class StudentExamResource {
         }
 
         return ResponseEntity.ok(savedStudentExam);
+    }
+
+    /**
+     * POST /courses/{courseId}/exams/{examId}/students/{studentLogin}/attendance-check : Throw attendance Check Event in the student exam
+     *
+     * @param courseId     the course to which the student exams belong to
+     * @param examId       the exam to which the student exams belong to
+     * @param studentLogin the id of the student exam to find
+     * @param message      the optional instructor message to be sent to the student
+     * @return the ResponseEntity with status 200 (OK) and with the updated student exam as body
+     */
+    @PostMapping("/courses/{courseId}/exams/{examId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}/attendance-check")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<ExamAttendanceCheckEventDTO> attendanceCheck(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable String studentLogin,
+            @RequestBody(required = false) String message) {
+        log.debug("REST request for attendance-check for student : {}", studentLogin);
+
+        var student = userRepository.getUserByLoginElseThrow(studentLogin);
+
+        StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), examId, IS_TEST_RUN).orElseThrow();
+
+        examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExam.getId());
+
+        var exam = studentExam.getExam();
+        if (!exam.isVisibleToStudents()) {
+            throw new BadRequestAlertException("Exam is not visible to students", "exam", "examNotVisible");
+        }
+
+        User currentUser = userRepository.getUser();
+        var event = examLiveEventsService.createAndSendExamAttendanceCheckEvent(studentExam, message, currentUser);
+
+        return ResponseEntity.ok(event.asDTO());
     }
 
     /**
@@ -384,8 +441,8 @@ public class StudentExamResource {
     }
 
     @NotNull
-    private StudentExam findStudentExamWithExercisesElseThrow(User user, Long examId, Long courseId) {
-        StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), examId)
+    private StudentExam findStudentExamWithExercisesElseThrow(User user, Long examId, Long courseId, boolean isTestRun) {
+        StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), examId, isTestRun)
                 .orElseThrow(() -> new EntityNotFoundException("No student exam found for examId " + examId + " and userId " + user.getId()));
         studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun(), false);
         return studentExam;
@@ -460,27 +517,28 @@ public class StudentExamResource {
      * <p>
      * See {@link StudentExamWithGradeDTO} for more explanation.
      *
-     * @param courseId the course to which the student exam belongs to
-     * @param examId   the exam to which the student exam belongs to
-     * @param userId   the user id of the student whose grade summary is requested
+     * @param courseId  the course to which the student exam belongs to
+     * @param examId    the exam to which the student exam belongs to
+     * @param userId    the user id of the student whose grade summary is requested
+     * @param isTestRun whether the student exam belongs to a test run by an instructor or not
      * @return the ResponseEntity with status 200 (OK) and with the StudentExamWithGradeDTO instance without the student exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/grade-summary")
     @EnforceAtLeastStudent
     public ResponseEntity<StudentExamWithGradeDTO> getStudentExamGradesForSummary(@PathVariable Long courseId, @PathVariable Long examId,
-            @RequestParam(required = false) Long userId) {
+            @RequestParam(required = false) Long userId, @RequestParam(required = false, defaultValue = "false") boolean isTestRun) {
         long start = System.currentTimeMillis();
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the student exam grades of user with id {} for exam {} by user {}", userId, examId, currentUser.getLogin());
         User targetUser = userId == null ? currentUser : userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
-        StudentExam studentExam = findStudentExamWithExercisesElseThrow(targetUser, examId, courseId);
+        StudentExam studentExam = findStudentExamWithExercisesElseThrow(targetUser, examId, courseId, isTestRun);
 
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
         if (!isAtLeastInstructor && !currentUser.getId().equals(targetUser.getId())) {
             throw new AccessForbiddenException("Current user cannot access grade info for target user");
         }
 
-        StudentExamWithGradeDTO studentExamWithGradeDTO = examService.getStudentExamGradesForSummaryAsStudent(targetUser, studentExam);
+        StudentExamWithGradeDTO studentExamWithGradeDTO = examService.getStudentExamGradesForSummary(targetUser, studentExam, isAtLeastInstructor);
 
         log.info("getStudentExamGradesForSummary done in {}ms for {} exercises for target user {} by caller user {}", System.currentTimeMillis() - start,
                 studentExam.getExercises().size(), targetUser.getLogin(), currentUser.getLogin());
@@ -771,11 +829,12 @@ public class StudentExamResource {
         if (studentExam.isSubmitted()) {
             throw new BadRequestException();
         }
-        if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(now())) {
-            throw new AccessForbiddenException("Exam", examId);
+        ZonedDateTime submissionTime = now();
+        if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(submissionTime)) {
+            throw new AccessForbiddenException("FORBIDDEN: You tried to toggle a student exam " + studentExamId + " to submitted before the individual end date "
+                    + studentExam.getIndividualEndDateWithGracePeriod());
         }
 
-        ZonedDateTime submissionTime = now();
         studentExam.setSubmissionDate(submissionTime);
         studentExam.setSubmitted(true);
 
@@ -809,7 +868,8 @@ public class StudentExamResource {
             throw new BadRequestException();
         }
         if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(now())) {
-            throw new AccessForbiddenException("Exam", examId);
+            throw new AccessForbiddenException("FORBIDDEN: You tried to toggle a student exam " + studentExamId + " to unsubmitted before the individual end date "
+                    + studentExam.getIndividualEndDateWithGracePeriod());
         }
 
         studentExam.setSubmissionDate(null);

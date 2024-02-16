@@ -10,7 +10,6 @@ import { AlertService } from 'app/core/util/alert.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ApollonDiagramListComponent } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram-list.component';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
-import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -18,10 +17,12 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { isEqual } from 'lodash-es';
+import { UMLDiagramType } from '@ls1intum/apollon';
 
 describe('ApollonDiagramList Component', () => {
     let apollonDiagramService: ApollonDiagramService;
     let courseService: CourseManagementService;
+    let modalService: NgbModal;
     let fixture: ComponentFixture<ApollonDiagramListComponent>;
 
     const course: Course = { id: 123 } as Course;
@@ -51,6 +52,7 @@ describe('ApollonDiagramList Component', () => {
                 const injector = fixture.debugElement.injector;
                 apollonDiagramService = injector.get(ApollonDiagramService);
                 courseService = injector.get(CourseManagementService);
+                modalService = injector.get(NgbModal);
             });
     });
 
@@ -87,5 +89,29 @@ describe('ApollonDiagramList Component', () => {
         fixture.componentInstance.apollonDiagrams = apollonDiagrams;
         fixture.componentInstance.delete(diagramToDelete);
         expect(fixture.componentInstance.apollonDiagrams.find((diagram) => diagram.id === diagramToDelete.id)).toBeFalsy();
+    });
+
+    it('openCreateDiagramDialog', () => {
+        const openModalSpy = jest.spyOn(modalService, 'open');
+        fixture.componentInstance.openCreateDiagramDialog(course.id!);
+        expect(openModalSpy).toHaveBeenCalledOnce();
+    });
+
+    it('getTitleForApollonDiagram', () => {
+        const apollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!);
+        apollonDiagram.title = 'Title ';
+        expect(fixture.componentInstance.getTitleForApollonDiagram(apollonDiagram)).toBe('Title');
+    });
+
+    it('handleOpenDialogClick', () => {
+        const emitOpenDiagramSpy = jest.spyOn(fixture.componentInstance.openDiagram, 'emit');
+        fixture.componentInstance.handleOpenDialogClick(1);
+        expect(emitOpenDiagramSpy).toHaveBeenCalledWith(1);
+    });
+
+    it('handleCloseDiagramClick', () => {
+        const emitCloseDialog = jest.spyOn(fixture.componentInstance.closeDialog, 'emit');
+        fixture.componentInstance.handleCloseDiagramClick();
+        expect(emitCloseDialog).toHaveBeenCalledOnce();
     });
 });

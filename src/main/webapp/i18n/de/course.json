@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "course": {
+            "searchForCourse": "Suchen Sie nach einem Kurs",
             "home": {
                 "title": "Kurse",
                 "createLabel": "Kurs erstellen",
@@ -65,6 +66,8 @@
             "startDate": "Start",
             "endDate": "Ende",
             "semester": "Semester",
+            "ltiConfiguration": "LTI Konfiguration",
+            "recentlyAccessed": "Zuletzt verwendet",
             "maxPoints": {
                 "title": "Maximale Punktzahl",
                 "info": "Dieser Wert wird für die Berechnung von Beispielen (z.B. im Notenschlüssel) verwendet und hat keinen Einfluss auf die Noten der Studierenden. Die Noten werden mit Hilfe der im Kurs erreichbaren Punkte berechnet."
@@ -94,10 +97,7 @@
                 "messagingEnabled": {
                     "label": "Nachrichten aktiviert",
                     "tooltip": "Ermöglicht den Nachrichtenaustausch zwischen Nutzer:innen in privaten oder öffentlichen Kanälen, Gruppenchats oder Direktnachrichten. Kanäle können nur von Lehrenden und Tutor:innen erstellt werden. Nutzer:innen können selbst öffentlichen Kanälen beitreten und müssen zu privaten Kanälen hinzugefügt werden. Alle Nutzer:innen können einen privaten Gruppenchat starten und andere Nutzer:innen hinzufügen. Ein Gruppenchat ist auf zehn Mitglieder:innen begrenzt. Alle Nutzer:innen können Direktnachrichten an andere Nutzer:innen senden. Die Chats finden im Nachrichtenbereich des Kurses statt.",
-                    "codeOfConduct": {
-                        "label": "Verhaltenskodex",
-                        "tooltip": "Der Verhaltenskodex gibt Nutzer:innen an, wie sie miteinander kommunizieren sollen und welche Konsequenzen bei Fehlverhalten drohen können, sowie einen Kontakt zur Berichterstattung."
-                    }
+                    "codeOfConduct": "Nachrichten: Code of Conduct"
                 }
             },
             "registrationEnabled": {
@@ -209,6 +209,12 @@
             },
             "detail": {
                 "title": "Kurs Details:",
+                "sections": {
+                    "general": "Informationen",
+                    "mode": "Modus",
+                    "enrollment": "Einschreibung",
+                    "messaging": "Nachrichten & Kommunikation"
+                },
                 "assessmentsTitle": "Insgesamte Bewertungen",
                 "complaintsTitle": "Insgesamte Beschwerden",
                 "moreFeedbackTitle": "Insgesamte Feedbackanfragen",
@@ -228,7 +234,6 @@
             "activeStudents": "Aktive Studierende",
             "activeStudentsExplanation": "Aktive Studierende sind Studierende, die in der entsprechenden Woche mindestens eine Lösung eingereicht haben.",
             "average": "Durchschnitt: ",
-            "meanReferenceLineCheckboxLabel": "Zeige den Durchschnitt als Referenz-Linie",
             "exerciseType": "Aufgabentyp",
             "programming": "Programmierung",
             "quiz": "Quiz",
@@ -242,10 +247,10 @@
             },
             "calendarWeek": "Kalenderwoche",
             "scopeButton": {
-                "recentWeekButton": "Jüngste Aktivität",
-                "recentWeekTooltip": "Zeigt die Aktivität der letzten 17 Wochen. Begann der Kurs vor weniger als 17 Wochen, beginnt die Anzeige zum Startdatum.",
-                "lifetimeOverviewButtonLabel": "Kursdauerüberblick",
-                "lifetimeOverviewTooltip": "Zeigt die Periode von Kurstart bis jetzt. Ist der Kurs bereits beendet, endet die Anzeige zum Enddatum des Kurses."
+                "period": "{{ amount }}W",
+                "periodTooltip": "Zeigt die Aktivität der letzten {{ amount }} Wochen.",
+                "overview": "Max",
+                "overviewTooltip": "Zeigt die Aktivität ab dem Kurstart bis jetzt."
             }
         }
     }

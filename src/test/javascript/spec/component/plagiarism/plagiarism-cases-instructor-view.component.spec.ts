@@ -14,6 +14,8 @@ import * as DownloadUtil from 'app/shared/util/download.util';
 import dayjs from 'dayjs/esm';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { MockComponent } from 'ng-mocks';
+import { NotificationService } from 'app/shared/notification/notification.service';
+import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),
@@ -89,6 +91,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
             declarations: [PlagiarismCasesInstructorViewComponent, MockComponent(DocumentationButtonComponent)],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
+                { provide: NotificationService, useClass: MockNotificationService },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();

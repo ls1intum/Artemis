@@ -15,11 +15,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Authority;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.Organization;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -46,7 +54,9 @@ public class AuthorizationCheckService {
     @Value("${artemis.user-management.course-enrollment.allowed-username-pattern:#{null}}")
     private Pattern allowedCourseEnrollmentUsernamePattern;
 
-    public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository, ExamDateService examDateService) {
+    private final TeamRepository teamRepository;
+
+    public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository, ExamDateService examDateService, TeamRepository teamRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examDateService = examDateService;
@@ -54,6 +64,7 @@ public class AuthorizationCheckService {
         if (allowedCourseEnrollmentUsernamePattern == null) {
             allowedCourseEnrollmentUsernamePattern = allowedCourseRegistrationUsernamePattern;
         }
+        this.teamRepository = teamRepository;
     }
 
     /**
@@ -333,11 +344,11 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * checks if the passed user is at least a teaching assistant in the given course
+     * checks if the passed user is at least a student in the given course
      *
      * @param course the course that needs to be checked
      * @param user   the user whose permissions should be checked
-     * @return true if the passed user is at least a teaching assistant in the course (also if the user is instructor or admin), false otherwise
+     * @return true if the passed user is at least a student in the course (also if the user is teaching assistant, instructor or admin), false otherwise
      */
     @CheckReturnValue
     public boolean isAtLeastStudentInCourse(@NotNull Course course, @Nullable User user) {
@@ -548,9 +559,12 @@ public class AuthorizationCheckService {
         if (participation.getParticipant() == null) {
             return false;
         }
-        else {
-            return participation.isOwnedBy(user);
+
+        if (participation.getParticipant() instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
+            participation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
         }
+
+        return participation.isOwnedBy(user);
     }
 
     /**
@@ -673,6 +687,7 @@ public class AuthorizationCheckService {
      * Checks if the currently logged-in user is allowed to retrieve the given result.
      * The user is allowed to retrieve the result if (s)he is an instructor of the course, or (s)he is at least a student in the corresponding course, the
      * submission is his/her submission, the assessment due date of the corresponding exercise is in the past (or not set) and the result is finished.
+     * Instructors are allowed to retrieve the results for test runs.
      *
      * @param exercise      the corresponding exercise
      * @param participation the participation the result belongs to
@@ -681,6 +696,10 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isUserAllowedToGetResult(Exercise exercise, StudentParticipation participation, Result result) {
+        if (isAtLeastInstructorForExercise(exercise) && participation.isTestRun()) {
+            return true;
+        }
+
         return isAtLeastStudentForExercise(exercise) && (isOwnerOfParticipation(participation) || isAtLeastInstructorForExercise(exercise))
                 && ExerciseDateService.isAfterAssessmentDueDate(exercise) && result.getAssessor() != null && result.getCompletionDate() != null;
     }

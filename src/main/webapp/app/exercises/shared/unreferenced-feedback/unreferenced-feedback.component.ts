@@ -15,6 +15,7 @@ export class UnreferencedFeedbackComponent {
 
     @Input() readOnly: boolean;
     @Input() highlightDifferences: boolean;
+    @Input() useDefaultFeedbackSuggestionBadgeText: boolean = false;
 
     /**
      * In order to make it possible to mark unreferenced feedback based on the correction status, we assign reference ids to the unreferenced feedback

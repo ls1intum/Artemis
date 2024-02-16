@@ -1,6 +1,5 @@
 import { Course } from 'app/entities/course.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-
 import multipleChoiceQuizTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answer/template.json';
 import { courseManagementAPIRequest, courseOverview, exerciseAPIRequest, quizExerciseMultipleChoice, quizExerciseShortAnswerQuiz } from '../../../support/artemis';
@@ -23,7 +22,7 @@ describe('Quiz Exercise Participation', () => {
         beforeEach('Create quiz exercise', () => {
             cy.login(admin);
             exerciseAPIRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate]).then((quizResponse) => {
-                quizExercise = quizResponse.body;
+                quizExercise = convertModelAfterMultiPart(quizResponse);
             });
         });
 
@@ -55,7 +54,7 @@ describe('Quiz Exercise Participation', () => {
         before('Create SA quiz', () => {
             cy.login(admin);
             exerciseAPIRequest.createQuizExercise({ course }, [shortAnswerQuizTemplate]).then((quizResponse) => {
-                quizExercise = quizResponse.body;
+                quizExercise = convertModelAfterMultiPart(quizResponse);
                 exerciseAPIRequest.setQuizVisible(quizExercise.id!);
                 exerciseAPIRequest.startQuizNow(quizExercise.id!);
             });

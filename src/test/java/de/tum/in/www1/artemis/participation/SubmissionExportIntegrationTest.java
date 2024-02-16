@@ -96,8 +96,8 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndepende
                     modelingSubmission3 = modelingExerciseUtilService.addModelingSubmissionFromResources(modelingExercise, "test-data/model-submission/model.54745.json",
                             TEST_PREFIX + "student3");
                 }
-                catch (Exception e) {
-                    e.printStackTrace();
+                catch (IOException e) {
+                    fail(e.getMessage(), e);
                 }
             }
             else if (exercise instanceof TextExercise) {

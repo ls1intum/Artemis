@@ -9,6 +9,7 @@ import { CompetencyService } from 'app/course/competencies/competency.service';
 import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltipMocksModule } from '../../../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 describe('CompetencyNodeDetailsComponent', () => {
     let fixture: ComponentFixture<CompetencyNodeDetailsComponent>;
@@ -21,7 +22,7 @@ describe('CompetencyNodeDetailsComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgbTooltipMocksModule],
-            declarations: [CompetencyNodeDetailsComponent, MockComponent(CompetencyRingsComponent), MockPipe(ArtemisTranslatePipe)],
+            declarations: [CompetencyNodeDetailsComponent, MockComponent(CompetencyRingsComponent), MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe)],
         })
             .compileComponents()
             .then(() => {
@@ -36,7 +37,6 @@ describe('CompetencyNodeDetailsComponent', () => {
                 competencyProgress = new CompetencyProgress();
                 competencyProgress.progress = 80;
                 competencyProgress.confidence = 70;
-                competency.userProgress = [competencyProgress];
 
                 competencyService = TestBed.inject(CompetencyService);
                 findByIdStub = jest.spyOn(competencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
@@ -54,7 +54,6 @@ describe('CompetencyNodeDetailsComponent', () => {
         expect(findByIdStub).toHaveBeenCalledOnce();
         expect(findByIdStub).toHaveBeenCalledWith(competency.id, 1);
         expect(comp.competency).toEqual(competency);
-        expect(comp.competencyProgress).toEqual(competencyProgress);
     });
 
     it('should not load competency on init if already present', () => {
@@ -62,14 +61,5 @@ describe('CompetencyNodeDetailsComponent', () => {
         comp.competencyProgress = competencyProgress;
         fixture.detectChanges();
         expect(findByIdStub).not.toHaveBeenCalled();
-    });
-
-    it('should default progress to zero if empty', () => {
-        competency.userProgress = undefined;
-        fixture.detectChanges();
-        expect(findByIdStub).toHaveBeenCalledOnce();
-        expect(findByIdStub).toHaveBeenCalledWith(competency.id, 1);
-        expect(comp.competency).toEqual(competency);
-        expect(comp.competencyProgress).toEqual({ confidence: 0, progress: 0 } as CompetencyProgress);
     });
 });

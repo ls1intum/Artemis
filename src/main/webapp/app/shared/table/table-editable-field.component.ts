@@ -1,4 +1,5 @@
-import { Component, ElementRef, Input, ViewChild } from '@angular/core';
+import { Component, Input, ViewChild } from '@angular/core';
+import { NgModel } from '@angular/forms';
 
 /**
  * An inline editing field to use for tables.
@@ -9,7 +10,7 @@ import { Component, ElementRef, Input, ViewChild } from '@angular/core';
     templateUrl: './table-editable-field.component.html',
 })
 export class TableEditableFieldComponent {
-    @ViewChild('editingInput', { static: false }) editingInput: ElementRef;
+    @ViewChild('editingInput') editingInput: NgModel;
 
     @Input() id: string;
     @Input() pattern?: RegExp;
@@ -30,9 +31,5 @@ export class TableEditableFieldComponent {
      */
     sendValueUpdate(event: any) {
         this.inputValue = this.onValueUpdate(event.target.value);
-    }
-
-    storeInputValue(event: any) {
-        this.inputValue = event.target.value;
     }
 }

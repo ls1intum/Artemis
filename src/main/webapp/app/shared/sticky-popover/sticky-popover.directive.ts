@@ -1,20 +1,5 @@
-import {
-    ApplicationRef,
-    ChangeDetectorRef,
-    Directive,
-    ElementRef,
-    Inject,
-    Injector,
-    Input,
-    NgZone,
-    OnDestroy,
-    OnInit,
-    Renderer2,
-    TemplateRef,
-    ViewContainerRef,
-} from '@angular/core';
-import { DOCUMENT } from '@angular/common';
-import { NgbPopover, NgbPopoverConfig } from '@ng-bootstrap/ng-bootstrap';
+import { Directive, ElementRef, Input, OnDestroy, OnInit, Renderer2, TemplateRef } from '@angular/core';
+import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 
 @Directive({
     selector: '[jhiStickyPopover]',
@@ -42,15 +27,8 @@ export class StickyPopoverDirective extends NgbPopover implements OnInit, OnDest
     constructor(
         private _elRef: ElementRef,
         private _render: Renderer2,
-        injector: Injector,
-        private viewContainerRef: ViewContainerRef,
-        config: NgbPopoverConfig,
-        ngZone: NgZone,
-        private changeRef: ChangeDetectorRef,
-        private applicationRef: ApplicationRef,
-        @Inject(DOCUMENT) _document: any,
     ) {
-        super(_elRef, _render, injector, viewContainerRef, config, ngZone, _document, changeRef, applicationRef);
+        super();
         this.triggers = 'manual';
         this.popoverTitle = '';
         this.container = 'body';

@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { Participation } from 'app/entities/participation/participation.model';
@@ -6,7 +6,8 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { Result } from 'app/entities/result.model';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { Observable, tap } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
+import { CommitInfo } from 'app/entities/programming-submission.model';
 
 export interface IProgrammingExerciseParticipationService {
     getLatestResultWithFeedback: (participationId: number, withSubmission: boolean) => Observable<Result | undefined>;
@@ -47,6 +48,21 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
         );
     }
 
+    /**
+     * Get the student participation with all results and feedbacks for the given participation id.
+     * @param participationId of the participation to get the student participation for
+     */
+    getStudentParticipationWithAllResults(participationId: number): Observable<ProgrammingExerciseStudentParticipation> {
+        return this.http.get<ProgrammingExerciseStudentParticipation>(this.resourceUrl + participationId + '/student-participation-with-all-results').pipe(
+            tap((res) => {
+                if (res.exercise) {
+                    this.sendTitlesToEntityTitleService(res);
+                    this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.exercise);
+                }
+            }),
+        );
+    }
+
     checkIfParticipationHasResult(participationId: number): Observable<boolean> {
         return this.http.get<boolean>(this.resourceUrl + participationId + '/has-result');
     }
@@ -69,5 +85,55 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
                 this.entityTitleService.setTitle(EntityType.COURSE, [course.id], course.title);
             }
         }
+    }
+
+    /**
+     * Get the repository files with content for a given participation id at a specific commit hash.
+     * The current user needs to be at least an instructor in the course of the participation.
+     * @param participationId of the participation to get the files for
+     * @param commitId of the commit to get the files for
+     */
+    getParticipationRepositoryFilesWithContentAtCommit(participationId: number, commitId: string): Observable<Map<string, string> | undefined> {
+        return this.http.get(`${this.resourceUrl}${participationId}/files-content/${commitId}`).pipe(
+            map((res: HttpResponse<any>) => {
+                // this mapping is required because otherwise the HttpResponse object would be parsed
+                // to an arbitrary object (and not a map)
+                return res && new Map(Object.entries(res));
+            }),
+        );
+    }
+
+    /**
+     * Get the repository files with content for a given participation id at a specific commit hash. This is used for the commit details view.
+     * The current user needs to be at least a teaching assistant in the course of the participation.
+     * If the user is not a teaching assistant, the user needs to be in the team or the owner of the participation.
+     * @param participationId of the participation to get the files for
+     * @param commitId of the commit to get the files for
+     */
+    getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(participationId: number, commitId: string): Observable<Map<string, string> | undefined> {
+        return this.http.get(`${this.resourceUrl}${participationId}/files-content-commit-details/${commitId}`).pipe(
+            map((res: HttpResponse<any>) => {
+                // this mapping is required because otherwise the HttpResponse object would be parsed
+                // to an arbitrary object (and not a map)
+                return res && new Map(Object.entries(res));
+            }),
+        );
+    }
+    /**
+     * Get the repository files with content for a given participation id at a specific commit hash.
+     * The current user needs to be at least a instructor in the course of the participation.
+     * @param participationId of the participation to get the commit infos for
+     */
+    retrieveCommitsInfoForParticipation(participationId: number): Observable<CommitInfo[]> {
+        return this.http.get<CommitInfo[]>(`${this.resourceUrl}${participationId}/commits-info`);
+    }
+
+    /**
+     * Get the repository files with content for a given participation id at a specific commit hash.
+     * The current user needs to be at least a student in the course of the participation.
+     * @param participationId of the participation to get the commit infos for
+     */
+    retrieveCommitHistoryForParticipation(participationId: number): Observable<CommitInfo[]> {
+        return this.http.get<CommitInfo[]>(`${this.resourceUrl}${participationId}/commit-history`);
     }
 }

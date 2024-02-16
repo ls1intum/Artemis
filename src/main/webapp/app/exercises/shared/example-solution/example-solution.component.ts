@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { Exercise } from 'app/entities/exercise.model';
@@ -10,9 +10,12 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
     templateUrl: './example-solution.component.html',
 })
 export class ExampleSolutionComponent implements OnInit {
-    private exerciseId: number;
+    private displayedExerciseId: number;
     public exercise?: Exercise;
     public exampleSolutionInfo?: ExampleSolutionInfo;
+
+    @Input() exerciseId?: number;
+    @Input() displayHeader?: boolean = true;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -22,8 +25,10 @@ export class ExampleSolutionComponent implements OnInit {
 
     ngOnInit() {
         this.route.params.subscribe((params) => {
-            const didExerciseChange = this.exerciseId !== parseInt(params['exerciseId'], 10);
-            this.exerciseId = parseInt(params['exerciseId'], 10);
+            const exerciseId = this.exerciseId || parseInt(params['exerciseId'], 10);
+
+            const didExerciseChange = this.displayedExerciseId !== exerciseId;
+            this.displayedExerciseId = exerciseId;
             if (didExerciseChange) {
                 this.loadExercise();
             }
@@ -32,7 +37,7 @@ export class ExampleSolutionComponent implements OnInit {
 
     loadExercise() {
         this.exercise = undefined;
-        this.exerciseService.getExerciseForExampleSolution(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
+        this.exerciseService.getExerciseForExampleSolution(this.displayedExerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             const newExercise = exerciseResponse.body!;
             this.exercise = newExercise;
             this.exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo(newExercise, this.artemisMarkdown);

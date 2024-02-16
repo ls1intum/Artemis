@@ -18,8 +18,8 @@ public interface TutorialGroupScheduleRepository extends JpaRepository<TutorialG
     @Query("""
             SELECT tutorialGroupSchedule
             FROM TutorialGroupSchedule tutorialGroupSchedule
-            LEFT JOIN FETCH tutorialGroupSchedule.tutorialGroupSessions
-            WHERE tutorialGroupSchedule.id = :#{#tutorialGroupScheduleId}
+                LEFT JOIN FETCH tutorialGroupSchedule.tutorialGroupSessions
+            WHERE tutorialGroupSchedule.id = :tutorialGroupScheduleId
             """)
     Optional<TutorialGroupSchedule> findByIdWithSessions(@Param("tutorialGroupScheduleId") long tutorialGroupScheduleId);
 

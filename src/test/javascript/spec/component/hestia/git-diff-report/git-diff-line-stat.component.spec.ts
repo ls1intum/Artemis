@@ -25,6 +25,7 @@ describe('Git-Diff line-stat Component', () => {
         [2, 3, 4, 6],
         [1, 4, 2, 8],
         [0, 5, 0, 100],
+        [1, 1, 0, 0],
     ];
 
     it.each(boxesTestTable)('Should show %s-%s boxes', (expectedAddedSquareCount, expectedRemovedSquareCount, addedLineCount, removedLineCount) => {

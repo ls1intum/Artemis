@@ -30,15 +30,15 @@ public interface StaticCodeAnalysisCategoryRepository extends JpaRepository<Stat
 
     Logger log = LoggerFactory.getLogger(StaticCodeAnalysisCategoryRepository.class);
 
-    Set<StaticCodeAnalysisCategory> findByExerciseId(Long exerciseId);
+    Set<StaticCodeAnalysisCategory> findByExerciseId(long exerciseId);
 
     @Query("""
-             SELECT s
-             FROM StaticCodeAnalysisCategory s
-                 LEFT JOIN FETCH s.exercise
-             WHERE s.exercise.id = :exerciseId
+            SELECT s
+            FROM StaticCodeAnalysisCategory s
+                LEFT JOIN FETCH s.exercise
+            WHERE s.exercise.id = :exerciseId
             """)
-    Set<StaticCodeAnalysisCategory> findWithExerciseByExerciseId(@Param("exerciseId") Long exerciseId);
+    Set<StaticCodeAnalysisCategory> findWithExerciseByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Links the categories of an exercise with the default category mappings.
@@ -90,8 +90,7 @@ public interface StaticCodeAnalysisCategoryRepository extends JpaRepository<Stat
                 // find the category for this issue
                 for (var categoryPair : categoryPairs) {
                     var categoryMappings = categoryPair.right;
-                    if (categoryMappings.stream()
-                            .anyMatch(mapping -> mapping.getTool().name().equals(feedback.getReference()) && mapping.getCategory().equals(issue.getCategory()))) {
+                    if (categoryMappings.stream().anyMatch(mapping -> mapping.tool().name().equals(feedback.getReference()) && mapping.category().equals(issue.getCategory()))) {
                         category = Optional.of(categoryPair.left);
                         break;
                     }

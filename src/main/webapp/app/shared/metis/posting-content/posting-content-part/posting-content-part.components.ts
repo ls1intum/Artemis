@@ -1,10 +1,25 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { PostingContentPart, ReferenceType } from '../../metis.util';
 import { FileService } from 'app/shared/http/file.service';
-import { faBan, faChalkboardUser, faCheckDouble, faFile, faFileUpload, faFont, faKeyboard, faMessage, faPaperclip, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
+
+import {
+    faAt,
+    faBan,
+    faChalkboardUser,
+    faCheckDouble,
+    faFile,
+    faFileUpload,
+    faFont,
+    faHashtag,
+    faKeyboard,
+    faMessage,
+    faPaperclip,
+    faProjectDiagram,
+} from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { EnlargeSlideImageComponent } from 'app/shared/metis/posting-content/enlarge-slide-image/enlarge-slide-image-component';
+import { EnlargeSlideImageComponent } from 'app/shared/metis/posting-content/enlarge-slide-image/enlarge-slide-image.component';
 import { MatDialog } from '@angular/material/dialog';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-posting-content-part',
@@ -13,20 +28,28 @@ import { MatDialog } from '@angular/material/dialog';
 })
 export class PostingContentPartComponent {
     @Input() postingContentPart: PostingContentPart;
+    @Output() userReferenceClicked = new EventEmitter<string>();
+    @Output() channelReferenceClicked = new EventEmitter<number>();
 
     imageNotFound = false;
+    hasClickedUserReference = false;
 
     // Only allow certain html tags and attributes
     allowedHtmlTags: string[] = ['a', 'b', 'br', 'blockquote', 'code', 'del', 'em', 'i', 'ins', 'li', 'mark', 'ol', 'p', 'pre', 'small', 'span', 'strong', 'sub', 'sup', 'ul'];
     allowedHtmlAttributes: string[] = ['href'];
 
     // icons
-    faFile = faFile;
-    faBan = faBan;
+    protected readonly faFile = faFile;
+    protected readonly faBan = faBan;
+    protected readonly faAt = faAt;
+    protected readonly faHashtag = faHashtag;
+
+    protected readonly ReferenceType = ReferenceType;
 
     constructor(
         private fileService: FileService,
         private dialog: MatDialog,
+        private accountService: AccountService,
     ) {}
 
     /**
@@ -77,6 +100,29 @@ export class PostingContentPartComponent {
                 return faFile;
             default:
                 return faPaperclip;
+        }
+    }
+
+    /**
+     * Emit an event if the clicked user reference is different from the current user
+     *
+     * @param referenceUserLogin login of the referenced user
+     */
+    onClickUserReference(referenceUserLogin: string | undefined) {
+        if (!this.hasClickedUserReference && referenceUserLogin && referenceUserLogin !== this.accountService.userIdentity?.login) {
+            this.hasClickedUserReference = true;
+            this.userReferenceClicked.emit(referenceUserLogin);
+        }
+    }
+
+    /**
+     * Emit an event if the clicked channel reference is clicked
+     *
+     * @param channelId login of the referenced user
+     */
+    onClickChannelReference(channelId: number | undefined) {
+        if (channelId) {
+            this.channelReferenceClicked.emit(channelId);
         }
     }
 }

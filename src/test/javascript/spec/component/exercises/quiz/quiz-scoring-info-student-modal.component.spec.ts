@@ -13,7 +13,6 @@ import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Result } from 'app/entities/result.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { SubmittedAnswer } from 'app/entities/quiz/submitted-answer.model';
@@ -168,9 +167,7 @@ describe('Quiz Scoring Info Student Modal Component', () => {
             question.answerOptions = [correctAnswer1, wrongAnswer1];
             comp.question = question;
 
-            const submittedExercise = new QuizExercise(undefined, undefined);
-            submittedExercise.quizQuestions = [question];
-            comp.submittedQuizExercise = submittedExercise;
+            comp.quizQuestions = [question];
 
             const submittedResult = new Result();
             comp.multipleChoiceSubmittedResult = submittedResult;

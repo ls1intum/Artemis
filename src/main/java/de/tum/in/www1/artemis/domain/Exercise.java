@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismDetectionConfig;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
@@ -71,7 +72,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     private String gradingInstructions;
 
     @ManyToMany
-    @JoinTable(name = "learning_goal_exercise", joinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"))
+    @JoinTable(name = "competency_exercise", joinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "competency_id", referencedColumnName = "id"))
     @JsonIgnoreProperties({ "exercises", "course" })
     @JsonView(QuizView.Before.class)
     private Set<Competency> competencies = new HashSet<>();
@@ -100,6 +101,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Column(name = "second_correction_enabled")
     private Boolean secondCorrectionEnabled = false;
 
+    @Column(name = "feedback_suggestions_enabled") // enables Athena
+    private Boolean feedbackSuggestionsEnabled = false;
+
     @ManyToOne
     @JsonView(QuizView.Before.class)
     private Course course;
@@ -111,7 +115,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "exercise", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private List<GradingCriterion> gradingCriteria = new ArrayList<>();
+    private Set<GradingCriterion> gradingCriteria = new HashSet<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -142,6 +146,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIncludeProperties({ "id" })
     private Set<PlagiarismCase> plagiarismCases = new HashSet<>();
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "plagiarism_detection_config_id")
+    @JsonIgnoreProperties("exercise")
+    private PlagiarismDetectionConfig plagiarismDetectionConfig;
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -400,6 +409,14 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.plagiarismCases = plagiarismCases;
     }
 
+    public PlagiarismDetectionConfig getPlagiarismDetectionConfig() {
+        return plagiarismDetectionConfig;
+    }
+
+    public void setPlagiarismDetectionConfig(PlagiarismDetectionConfig plagiarismDetectionConfig) {
+        this.plagiarismDetectionConfig = plagiarismDetectionConfig;
+    }
+
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     public Set<Competency> getCompetencies() {
@@ -443,34 +460,35 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     /**
+     * TODO: this method should be refactored/improved. It is almost static except the almost hidden part "exercise.equals(this)"
+     * In addition, it is implemented in an ambiguous way, because it's completely unclear, what relevant means here, in addition the method name does not fit to the return type
      * Find a relevant participation for this exercise (relevancy depends on InitializationState)
      *
      * @param participations the list of available participations
      * @return the found participation in an unmodifiable list or the empty list, if none exists
      */
-    public List<StudentParticipation> findRelevantParticipation(List<StudentParticipation> participations) {
+    public Set<StudentParticipation> findRelevantParticipation(Set<StudentParticipation> participations) {
         StudentParticipation relevantParticipation = null;
         for (StudentParticipation participation : participations) {
-            if (participation.getExercise() != null && participation.getExercise().equals(this)) {
+            var exercise = participation.getExercise();
+            if (exercise != null && exercise.equals(this)) {
                 if (participation.getInitializationState() == InitializationState.INITIALIZED) {
                     // InitializationState INITIALIZED is preferred
                     // => if we find one, we can return immediately
-                    return List.of(participation);
+                    return Set.of(participation);
                 }
-                else if (participation.getInitializationState() == InitializationState.INACTIVE) {
-                    // InitializationState INACTIVE is also ok
-                    // => if we can't find INITIALIZED, we return that one
-                    relevantParticipation = participation;
-                }
+                // InitializationState INACTIVE is also ok
+                // => if we can't find INITIALIZED, we return that one
+                // or
                 // this case handles FINISHED participations which typically happen when manual results are involved
-                else if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise
-                        || participation.getExercise() instanceof FileUploadExercise
-                        || (participation.getExercise() instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
-                    return List.of(participation);
+                else if (participation.getInitializationState() == InitializationState.INACTIVE || exercise instanceof ModelingExercise || exercise instanceof TextExercise
+                        || exercise instanceof FileUploadExercise
+                        || (exercise instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
+                    relevantParticipation = participation;
                 }
             }
         }
-        return relevantParticipation != null ? List.of(relevantParticipation) : Collections.emptyList();
+        return relevantParticipation != null ? Set.of(relevantParticipation) : Collections.emptySet();
     }
 
     /**
@@ -505,11 +523,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             boolean programmingAfterAssessmentOrAutomatic = isProgrammingExercise && ((result.isManual() && isAssessmentOver) || result.isAutomatic());
             if (ratedOrPractice && (noProgrammingAndAssessmentOver || programmingAfterAssessmentOrAutomatic)) {
                 // take the first found result that fulfills the above requirements
-                if (latestSubmission == null) {
-                    latestSubmission = submission;
-                }
+                // or
                 // take newer results and thus disregard older ones
-                else if (latestSubmission.getLatestResult().getCompletionDate().isBefore(result.getCompletionDate())) {
+                if (latestSubmission == null || latestSubmission.getLatestResult().getCompletionDate().isBefore(result.getCompletionDate())) {
                     latestSubmission = submission;
                 }
             }
@@ -766,7 +782,15 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.secondCorrectionEnabled = secondCorrectionEnabled;
     }
 
-    public List<GradingCriterion> getGradingCriteria() {
+    public boolean getFeedbackSuggestionsEnabled() {
+        return Boolean.TRUE.equals(feedbackSuggestionsEnabled);
+    }
+
+    public void setFeedbackSuggestionsEnabled(boolean feedbackSuggestionsEnabled) {
+        this.feedbackSuggestionsEnabled = feedbackSuggestionsEnabled;
+    }
+
+    public Set<GradingCriterion> getGradingCriteria() {
         return gradingCriteria;
     }
 
@@ -775,11 +799,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         gradingCriterion.setExercise(this);
     }
 
-    public void setGradingCriteria(List<GradingCriterion> gradingCriteria) {
+    public void setGradingCriteria(Set<GradingCriterion> gradingCriteria) {
         reconnectCriteriaWithExercise(gradingCriteria);
     }
 
-    private void reconnectCriteriaWithExercise(List<GradingCriterion> gradingCriteria) {
+    private void reconnectCriteriaWithExercise(Set<GradingCriterion> gradingCriteria) {
         this.gradingCriteria = gradingCriteria;
         if (gradingCriteria != null) {
             this.gradingCriteria.forEach(gradingCriterion -> gradingCriterion.setExercise(this));
@@ -845,8 +869,8 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return A clone of the grading criteria list
      */
-    public List<GradingCriterion> copyGradingCriteria(Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
-        List<GradingCriterion> newGradingCriteria = new ArrayList<>();
+    public Set<GradingCriterion> copyGradingCriteria(Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+        Set<GradingCriterion> newGradingCriteria = new HashSet<>();
         for (GradingCriterion originalGradingCriterion : getGradingCriteria()) {
             GradingCriterion newGradingCriterion = new GradingCriterion();
             newGradingCriterion.setExercise(this);
@@ -866,9 +890,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return A clone of the grading instruction list of the grading criterion
      */
-    private List<GradingInstruction> copyGradingInstruction(GradingCriterion originalGradingCriterion, GradingCriterion newGradingCriterion,
+    private Set<GradingInstruction> copyGradingInstruction(GradingCriterion originalGradingCriterion, GradingCriterion newGradingCriterion,
             Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
-        List<GradingInstruction> newGradingInstructions = new ArrayList<>();
+        Set<GradingInstruction> newGradingInstructions = new HashSet<>();
         for (GradingInstruction originalGradingInstruction : originalGradingCriterion.getStructuredGradingInstructions()) {
             GradingInstruction newGradingInstruction = new GradingInstruction();
             newGradingInstruction.setCredits(originalGradingInstruction.getCredits());
@@ -961,25 +985,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     private void validateExamExerciseIncludedInScoreCompletely() {
         if (isExamExercise() && includedInOverallScore == IncludedInOverallScore.NOT_INCLUDED) {
             throw new BadRequestAlertException("An exam exercise must be included in the score.", getTitle(), "examExerciseNotIncludedInScore");
-        }
-    }
-
-    /**
-     * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.TextExerciseService#getAllOnPageWithSize(PageableSearchDTO, User)}}
-     * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
-     */
-    public enum ExerciseSearchColumn {
-
-        ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title"), EXAM_TITLE("exerciseGroup.exam.title");
-
-        private final String mappedColumnName;
-
-        ExerciseSearchColumn(String mappedColumnName) {
-            this.mappedColumnName = mappedColumnName;
-        }
-
-        public String getMappedColumnName() {
-            return mappedColumnName;
         }
     }
 

@@ -63,6 +63,10 @@ import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
 import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
 import { ArtemisExerciseCreateButtonsModule } from 'app/exercises/shared/manage/exercise-create-buttons.module';
+import { ArtemisLearningPathManagementModule } from 'app/course/learning-paths/learning-path-management/learning-path-management.module';
+import { IrisModule } from 'app/iris/iris.module';
+import { DetailModule } from 'app/detail-overview-list/detail.module';
+import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
 
 @NgModule({
     imports: [
@@ -113,6 +117,9 @@ import { ArtemisExerciseCreateButtonsModule } from 'app/exercises/shared/manage/
         ExerciseCategoriesModule,
         NgbNavModule,
         ArtemisExerciseCreateButtonsModule,
+        ArtemisLearningPathManagementModule,
+        IrisModule,
+        DetailModule,
     ],
     declarations: [
         CourseManagementComponent,
@@ -132,6 +139,7 @@ import { ArtemisExerciseCreateButtonsModule } from 'app/exercises/shared/manage/
         CourseLtiConfigurationComponent,
         EditCourseLtiConfigurationComponent,
         CourseManagementTabBarComponent,
+        BuildQueueComponent,
     ],
 })
 export class ArtemisCourseManagementModule {}

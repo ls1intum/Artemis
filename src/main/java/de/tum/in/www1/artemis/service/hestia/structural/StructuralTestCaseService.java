@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 @Service
 public class StructuralTestCaseService {
 
-    private final Logger log = LoggerFactory.getLogger(StructuralTestCaseService.class);
+    private static final Logger log = LoggerFactory.getLogger(StructuralTestCaseService.class);
 
     private final GitService gitService;
 
@@ -81,8 +81,8 @@ public class StructuralTestCaseService {
             if (solutionParticipation.isEmpty()) {
                 return Collections.emptyList();
             }
-            solutionRepository = gitService.getOrCheckoutRepository(solutionParticipation.get().getVcsRepositoryUrl(), true);
-            testRepository = gitService.getOrCheckoutRepository(programmingExercise.getVcsTestRepositoryUrl(), true);
+            solutionRepository = gitService.getOrCheckoutRepository(solutionParticipation.get().getVcsRepositoryUri(), true);
+            testRepository = gitService.getOrCheckoutRepository(programmingExercise.getVcsTestRepositoryUri(), true);
 
             gitService.resetToOriginHead(solutionRepository);
             gitService.pullIgnoreConflicts(solutionRepository);

@@ -1,9 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParameterCodec, HttpParams } from '@angular/common/http';
 import { Cacheable } from 'ts-cacheable';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, Subject } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
+
+const themeChangedSubject = new Subject<void>();
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExercisePlantUmlService {
@@ -19,6 +21,10 @@ export class ProgrammingExercisePlantUmlService {
         private themeService: ThemeService,
     ) {
         this.encoder = new HttpUrlCustomEncoder();
+        this.themeService
+            .getCurrentThemeObservable()
+            .pipe(tap(() => themeChangedSubject.next()))
+            .subscribe();
     }
 
     /**
@@ -32,6 +38,7 @@ export class ProgrammingExercisePlantUmlService {
         maxCacheCount: 100,
         maxAge: 3600000, // ms
         slidingExpiration: true,
+        cacheBusterObserver: themeChangedSubject, // evict cache on theme change
     })
     getPlantUmlImage(plantUml: string) {
         return this.http
@@ -53,6 +60,7 @@ export class ProgrammingExercisePlantUmlService {
         maxCacheCount: 100,
         maxAge: 3600000, // ms
         slidingExpiration: true,
+        cacheBusterObserver: themeChangedSubject, // evict cache on theme change
     })
     getPlantUmlSvg(plantUml: string): Observable<string> {
         return this.http.get(`${this.resourceUrl}/svg`, {

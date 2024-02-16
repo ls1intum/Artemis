@@ -2,12 +2,10 @@ import { Component, Input, OnChanges, OnInit, Optional, SimpleChanges } from '@a
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { MissingResultInformation, ResultTemplateStatus, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { HttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import dayjs from 'dayjs/esm';
 import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Participation, ParticipationType, getExercise } from 'app/entities/participation/participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
@@ -18,13 +16,13 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { captureException } from '@sentry/angular-ivy';
-import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { faCircleNotch, faExclamationCircle, faExclamationTriangle, faFile } from '@fortawesome/free-solid-svg-icons';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
 import { Badge, ResultService } from 'app/exercises/shared/result/result.service';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
+import { prepareFeedbackComponentParameters } from 'app/exercises/shared/feedback/feedback.utils';
 
 @Component({
     selector: 'jhi-result',
@@ -73,10 +71,8 @@ export class ResultComponent implements OnInit, OnChanges {
     readonly faExclamationTriangle = faExclamationTriangle;
 
     constructor(
-        private jhiWebsocketService: JhiWebsocketService,
         private participationService: ParticipationService,
         private translateService: TranslateService,
-        private http: HttpClient,
         private modalService: NgbModal,
         private exerciseService: ExerciseService,
         @Optional() private exerciseCacheService: ExerciseCacheService,
@@ -211,34 +207,35 @@ export class ResultComponent implements OnInit, OnChanges {
      * @param result Result object whose details will be displayed.
      */
     showDetails(result: Result) {
-        if (!result.participation) {
-            result.participation = this.participation;
-        }
+        const exerciseService = this.exerciseCacheService ?? this.exerciseService;
+        const feedbackComponentParameters = prepareFeedbackComponentParameters(this.exercise, result, this.participation, this.templateStatus, this.latestDueDate, exerciseService);
 
         if (this.exercise?.type === ExerciseType.QUIZ) {
             // There is no feedback for quiz exercises.
             // Instead, the scoring is showed next to the different questions
-            return;
+            return undefined;
         }
 
         const modalRef = this.modalService.open(FeedbackComponent, { keyboard: true, size: 'xl' });
-        const componentInstance: FeedbackComponent = modalRef.componentInstance;
-        componentInstance.exercise = this.exercise;
-        componentInstance.result = result;
-        if (this.exercise) {
-            componentInstance.exerciseType = this.exercise.type!;
-            componentInstance.showScoreChart = true;
-        }
-        if (this.templateStatus === ResultTemplateStatus.MISSING) {
-            componentInstance.messageKey = 'artemisApp.result.notLatestSubmission';
-        }
+        const modalComponentInstance: FeedbackComponent = modalRef.componentInstance;
 
-        if (
-            this.result?.assessmentType === AssessmentType.AUTOMATIC &&
-            this.exercise?.type === ExerciseType.PROGRAMMING &&
-            hasExerciseDueDatePassed(this.exercise, this.participation)
-        ) {
-            this.determineShowMissingAutomaticFeedbackInformation(componentInstance);
+        modalComponentInstance.exercise = this.exercise;
+        modalComponentInstance.result = result;
+        if (feedbackComponentParameters.exerciseType) {
+            modalComponentInstance.exerciseType = feedbackComponentParameters.exerciseType;
+        }
+        if (feedbackComponentParameters.showScoreChart) {
+            modalComponentInstance.showScoreChart = feedbackComponentParameters.showScoreChart;
+        }
+        if (feedbackComponentParameters.messageKey) {
+            modalComponentInstance.messageKey = feedbackComponentParameters.messageKey;
+        }
+        if (feedbackComponentParameters.latestDueDate) {
+            this.latestDueDate = feedbackComponentParameters.latestDueDate;
+            modalComponentInstance.latestDueDate = feedbackComponentParameters.latestDueDate;
+        }
+        if (feedbackComponentParameters.showMissingAutomaticFeedbackInformation) {
+            modalComponentInstance.showMissingAutomaticFeedbackInformation = feedbackComponentParameters.showMissingAutomaticFeedbackInformation;
         }
     }
 
@@ -269,28 +266,5 @@ export class ResultComponent implements OnInit, OnChanges {
                 link.click();
             });
         }
-    }
-
-    /**
-     * Determines if some information about testcases could still be hidden because of later individual due dates
-     * @param componentInstance the detailed result view
-     */
-    private determineShowMissingAutomaticFeedbackInformation(componentInstance: FeedbackComponent) {
-        if (this.latestDueDate) {
-            this.setShowMissingAutomaticFeedbackInformation(componentInstance, this.latestDueDate);
-        } else {
-            const service = this.exerciseCacheService ?? this.exerciseService;
-            service.getLatestDueDate(this.exercise!.id!).subscribe((latestDueDate) => {
-                if (latestDueDate) {
-                    this.setShowMissingAutomaticFeedbackInformation(componentInstance, latestDueDate);
-                }
-            });
-        }
-    }
-
-    private setShowMissingAutomaticFeedbackInformation(componentInstance: FeedbackComponent, latestDueDate: dayjs.Dayjs) {
-        this.latestDueDate = latestDueDate;
-        componentInstance.showMissingAutomaticFeedbackInformation = dayjs().isBefore(latestDueDate);
-        componentInstance.latestDueDate = this.latestDueDate;
     }
 }

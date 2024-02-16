@@ -76,7 +76,7 @@ describe('Exam management', () => {
             });
         });
 
-        it('Adds a text exercise', () => {
+        it('Adds a text exercise', { scrollBehavior: 'center' }, () => {
             cy.visit(`/course-management/${course.id}/exams`);
             examManagement.openExerciseGroups(exam.id!);
             examExerciseGroups.clickAddTextExercise(exerciseGroup.id!);
@@ -100,7 +100,7 @@ describe('Exam management', () => {
             examExerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, quizExerciseTitle);
         });
 
-        it('Adds a modeling exercise', () => {
+        it('Adds a modeling exercise', { scrollBehavior: 'center' }, () => {
             cy.visit(`/course-management/${course.id}/exams`);
             examManagement.openExerciseGroups(exam.id!);
             examExerciseGroups.clickAddModelingExercise(exerciseGroup.id!);
@@ -112,7 +112,7 @@ describe('Exam management', () => {
             examExerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, modelingExerciseTitle);
         });
 
-        it('Adds a programming exercise', () => {
+        it('Adds a programming exercise', { scrollBehavior: 'center' }, () => {
             cy.visit(`/course-management/${course.id}/exams`);
             examManagement.openExerciseGroups(exam.id!);
             examExerciseGroups.clickAddProgrammingExercise(exerciseGroup.id!);

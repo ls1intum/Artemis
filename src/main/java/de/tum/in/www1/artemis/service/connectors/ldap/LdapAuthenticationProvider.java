@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 @ComponentScan("de.tum.in.www1.artemis.*")
 public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImpl implements ArtemisAuthenticationProvider {
 
-    private final Logger log = LoggerFactory.getLogger(LdapAuthenticationProvider.class);
+    private static final Logger log = LoggerFactory.getLogger(LdapAuthenticationProvider.class);
 
     private final LdapUserService ldapUserService;
 
@@ -85,7 +85,7 @@ public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImp
         // We create our own authorization and use the credentials of the user.
         byte[] passwordBytes = Utf8.encode(password);
         boolean passwordCorrect = ldapTemplate.compare(ldapUserDto.getUid().toString(), "userPassword", passwordBytes);
-        log.debug("Compare password with LDAP entry for user " + username + " to validate login");
+        log.debug("Compare password with LDAP entry for user {} to validate login", username);
         // this is the normal case, where the password is validated
         if (!passwordCorrect) {
             throw new BadCredentialsException("Wrong credentials");

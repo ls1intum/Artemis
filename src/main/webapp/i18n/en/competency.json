@@ -5,7 +5,7 @@
             "deleted": "Competency deleted",
             "updated": "Competency updated",
             "competencyButton": "Competencies",
-            "title": "Competencies",
+            "title": "Title",
             "description": "Description",
             "taxonomy": "Taxonomy",
             "softDueDate": "Recommended until",
@@ -22,20 +22,21 @@
             "masteredStudents": "Mastered students",
             "mastered": "Mastered",
             "taxonomies": {
-                "remember": "Remember",
-                "understand": "Understand",
-                "apply": "Apply",
-                "analyze": "Analyze",
-                "evaluate": "Evaluate",
-                "create": "Create"
+                "REMEMBER": "Remember",
+                "UNDERSTAND": "Understand",
+                "APPLY": "Apply",
+                "ANALYZE": "Analyze",
+                "EVALUATE": "Evaluate",
+                "CREATE": "Create",
+                "none": "No Taxonomy"
             },
             "keywords": {
-                "remember": "define, duplicate, list, note, repeat, recognize, reproduce, name",
-                "understand": "classify, describe, discuss, explain, identify, locate, recognize, report, restate, select, translate",
-                "apply": "execute, implement, solve, use, demonstrate, illustrate, operate, schedule, show, sketch",
-                "analyze": "differentiate, examine, experiment, question, relate, test, break down, contrast, distinguish",
-                "evaluate": "appraise, argue, choose, defend, judge, select, support, value, critique",
-                "create": "design, formulate, hypothesize, invent, plan, propose, write, assemble, construct, develop"
+                "REMEMBER": "define, duplicate, list, note, repeat, recognize, reproduce, name",
+                "UNDERSTAND": "classify, describe, discuss, explain, identify, locate, recognize, report, restate, select, translate",
+                "APPLY": "execute, implement, solve, use, demonstrate, illustrate, operate, schedule, show, sketch",
+                "ANALYZE": "differentiate, examine, experiment, question, relate, test, break down, contrast, distinguish",
+                "EVALUATE": "appraise, argue, choose, defend, judge, select, support, value, critique",
+                "CREATE": "design, formulate, hypothesize, invent, plan, propose, write, assemble, construct, develop"
             },
             "table": {
                 "panelHeader": "Your advancement"
@@ -43,27 +44,63 @@
             "manageCompetencies": {
                 "title": "Competency Management",
                 "import": "Import competency",
-                "create": "Create competency"
+                "create": "Create competency",
+                "generate": "Generate Competency Recommendations",
+                "importAll": "Import all competencies from another course"
             },
-            "importCompetency": {
-                "title": "Import a Competency",
+            "import": {
+                "label": "Import a Competency",
                 "search": "Search for a competency:",
                 "loading": "Loading...",
                 "table": {
-                    "title": "Title",
-                    "course": "Course",
-                    "semester": "Semester",
-                    "doSelect": "Select"
+                    "TITLE": "Title",
+                    "COURSE_TITLE": "Course",
+                    "SEMESTER": "Semester",
+                    "doImport": "Select"
                 }
+            },
+            "generate": {
+                "title": "Generate Competency Recommendations",
+                "listTitle": "Competency Recommendations",
+                "viewedLabel": "Viewed",
+                "deleteModalTitle": "Confirm Delete",
+                "deleteModalText": "Are you sure you want to delete \"{{title}}\"?",
+                "saveModalTitle": "Confirm Save",
+                "saveModalText": "You have not viewed all recommendations, do you still want to continue?",
+                "errorWarning": "You may not save because some competencies are invalid",
+                "loading": "Generating competency recommendations... This might take a while.",
+                "courseDescription": {
+                    "title": "Enter a Course Description",
+                    "placeholder": "Please enter a course description",
+                    "requiredValidationError": "Course description must not be empty",
+                    "minlengthValidationError": "Course description must be at least {{min}} characters long",
+                    "maxlengthValidationError": "Course description is limited to {{max}} characters",
+                    "regenerate": "Generate again",
+                    "regenerateTooltip": "Generate additional Competency Recommendations",
+                    "infoTooltip": "Enter a course description, focusing on the theoretical/practical content and learning objectives. Iris will then use it to generate recommendations for competencies you could add to your course."
+                }
+            },
+            "importAll": {
+                "title": "Import all Competencies from another course",
+                "search": "Search for a course:",
+                "importRelations": "Import Relations?",
+                "table": {
+                    "TITLE": "Title",
+                    "SEMESTER": "Semester",
+                    "SHORT_NAME": "Short Name",
+                    "doImport": "Select"
+                },
+                "success": "Imported {{ noOfCompetencies }} competencies from course \"{{ courseTitle }}\".",
+                "warning": "No competencies were found for course \"{{ courseTitle }}\"."
             },
             "createCompetency": {
                 "title": "Create a new competency",
                 "titlePlaceholder": "Give the competency a title",
                 "titleRequiredValidationError": "A competency needs to have a title",
-                "titleMaxLengthValidationError": "A competency title is limited to 255 characters",
+                "titleMaxLengthValidationError": "A competency title is limited to {{max}} characters",
                 "titleUniqueValidationError": "There already exists a competency with this title in the course",
                 "descriptionPlaceholder": "What do you expect students to learn? Example: \"You can explain the difference between call-by-value and call-by-reference.\"",
-                "descriptionMaxLengthValidationError": "A competency description is limited to 10 000 characters",
+                "descriptionMaxLengthValidationError": "A competency description is limited to {{max}} characters",
                 "softDueDate": "Recommended date of completion",
                 "softDueDateHint": "Guide students by selecting when you expect them to have mastered this competency. This is not a hard deadline.",
                 "suggestedTaxonomy": "Suggested",
@@ -122,14 +159,14 @@
                     "select": "Select Prerequisite"
                 },
                 "import": {
-                    "title": "Add prerequisites",
+                    "label": "Add prerequisites",
                     "table": {
-                        "title": "Title",
-                        "course": "Course",
-                        "semester": "Semester",
-                        "doSelect": "Select"
+                        "TITLE": "Title",
+                        "COURSE_TITLE": "Course",
+                        "SEMESTER": "Semester",
+                        "doImport": "Select"
                     },
-                    "searchCompetency": "Search competency:",
+                    "search": "Search competency:",
                     "loading": "Loading..."
                 }
             },
@@ -184,11 +221,6 @@
                     "name": "Name",
                     "login": "Login",
                     "progress": "Progress"
-                },
-                "progressNav": {
-                    "header": "Learning Path",
-                    "refresh": "Refresh",
-                    "center": "Center view"
                 }
             },
             "sideBar": {
@@ -197,11 +229,39 @@
                 "header": "Learning Path"
             },
             "participate": {
+                "viewProgress": "View current progress details",
                 "noTaskSelected": "Currently you have no lecture unit or exercise selected.",
-                "prev": "Back",
-                "prevHint": "Return to your previous lecture unit or exercise",
-                "next": "Continue",
+                "prevHint": "Go to previous recommendation",
                 "nextHint": "Go to next recommendation"
+            },
+            "graph": {
+                "progressNav": {
+                    "header": "Learning Path",
+                    "refresh": "Refresh",
+                    "center": "Center view"
+                },
+                "legend": {
+                    "competencyEnd": {
+                        "title": "Competency end",
+                        "tooltip": "This is the end of a competency. The nodes between the competency start and end help you to master this competency."
+                    },
+                    "matchStart": {
+                        "title": "Branch",
+                        "tooltip": "It's up to you with which competency you're going to continue. The competencies have been defined as equivalent by your instructor, i.e. mastering one of the competencies is sufficient."
+                    },
+                    "matchEnd": {
+                        "title": "Convergence",
+                        "tooltip": "Here the different competencies join again. The competencies have been defined as equivalent by your instructor, i.e. mastering one of the competencies is sufficient."
+                    },
+                    "learningObject": {
+                        "title": "Pending lecture unit / exercise",
+                        "tooltip": "A lecture unit or exercise that has not been sufficiently solved."
+                    },
+                    "completedLearningObject": {
+                        "title": "Completed lecture unit / exercise",
+                        "tooltip": "A lecture unit or exercise that has been sufficiently solved."
+                    }
+                }
             }
         }
     }

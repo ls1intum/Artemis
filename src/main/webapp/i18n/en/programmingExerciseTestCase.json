@@ -24,9 +24,9 @@
                 "Never": "Never"
             },
             "type": {
-                "null": "",
                 "STRUCTURAL": "Structural",
                 "BEHAVIORAL": "Behavior",
+                "DEFAULT": "Default",
                 "MIXED": "Mixed"
             }
         }

@@ -12,15 +12,15 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 public class TutorialGroupFactory {
 
     /**
-     * Generates an example tutorial group
+     * Generates a TutorialGroup with the given arguments.
      *
-     * @param title                 of tutorial group
-     * @param additionalInformation of tutorial group
-     * @param capacity              of tutorial group
-     * @param isOnline              of tutorial group
-     * @param language              of tutorial group
-     * @param campus                of tutorial group
-     * @return example tutorial gorup
+     * @param title                 The title of the TutorialGroup
+     * @param additionalInformation The additional information of the TutorialGroup
+     * @param capacity              The capacity of the TutorialGroup
+     * @param isOnline              True, if the TutorialGroup is online
+     * @param language              The language of the TutorialGroup
+     * @param campus                The campus of the TutorialGroup
+     * @return The generated TutorialGroup
      */
     public static TutorialGroup generateTutorialGroup(String title, String additionalInformation, Integer capacity, Boolean isOnline, String language, String campus) {
         TutorialGroup tutorialGroup = new TutorialGroup();
@@ -34,11 +34,11 @@ public class TutorialGroupFactory {
     }
 
     /**
-     * Generates an example tutorial group configuration
+     * Generates a TutorialGroupsConfiguration with the given arguments. The TutorialGroupsConfiguration's (public) tutorialGroupsChannel attribute is set to true.
      *
-     * @param start of configuration
-     * @param end   of configuration
-     * @return example configuration
+     * @param start The start date of the TutorialGroupsConfiguration
+     * @param end   The end date of the TutorialGroupsConfiguration
+     * @return The generated TutorialGroupsConfiguration
      */
     public static TutorialGroupsConfiguration generateTutorialGroupsConfiguration(LocalDate start, LocalDate end) {
         TutorialGroupsConfiguration tutorialGroupsConfiguration = new TutorialGroupsConfiguration();

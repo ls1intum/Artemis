@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.*;
 
@@ -8,8 +9,11 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -17,9 +21,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.ReflogEntry;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -30,6 +32,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.domain.FileType;
 import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.util.GitUtilService;
 
 class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -75,10 +78,10 @@ class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testCheckoutRepositoryNotOnServer() throws GitAPIException, IOException {
-        var repoUrl = gitUtilService.getRepoUrlByType(GitUtilService.REPOS.REMOTE);
+        var repoUri = gitUtilService.getRepoUriByType(GitUtilService.REPOS.REMOTE);
         gitUtilService.deleteRepo(GitUtilService.REPOS.LOCAL);
         gitUtilService.reinitializeLocalRepository();
-        try (var repo = gitService.getOrCheckoutRepository(repoUrl, true)) {
+        try (var repo = gitService.getOrCheckoutRepository(repoUri, true)) {
             assertThat(gitUtilService.isLocalEqualToRemote()).isTrue();
         }
     }
@@ -109,18 +112,87 @@ class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
         }
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void testCheckoutRepositoryAtCommit(boolean withUrl) throws GitAPIException {
+        // first commit
+        prepareRepositoryContent();
+        String commitHash = getCommitHash("my first commit");
+        if (withUrl) {
+            gitService.checkoutRepositoryAtCommit(gitUtilService.getRepoUriByType(GitUtilService.REPOS.LOCAL), commitHash, true);
+        }
+        else {
+            try (var repo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL)) {
+                gitService.checkoutRepositoryAtCommit(repo, commitHash);
+            }
+        }
+        assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1)).isEqualTo("lorem ipsum");
+        assertThat(gitUtilService.getLog(GitUtilService.REPOS.LOCAL)).hasSize(2);
+        assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2)).isEmpty();
+    }
+
+    @Test
+    void testCheckoutRepositoryAtCommitGitApiExceptionThrowsGitException() {
+        String commitHash = "someHash";
+        try (var repo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL)) {
+            assertThatThrownBy(() -> gitService.checkoutRepositoryAtCommit(repo, commitHash)).isInstanceOf(GitException.class);
+
+        }
+    }
+
+    @Test
+    void testSwitchBackToDefaultBranchHead() throws GitAPIException {
+        prepareRepositoryContent();
+        String commitHash = getCommitHash("my first commit");
+        // switch to different commit at branch
+        try (var repo = gitService.checkoutRepositoryAtCommit(gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL), commitHash)) {
+            assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1)).isEqualTo("lorem ipsum");
+            assertThat(gitUtilService.getLog(GitUtilService.REPOS.LOCAL)).hasSize(2);
+            assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2)).isEmpty();
+            // switch back
+            gitService.switchBackToDefaultBranchHead(repo);
+            assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2)).isEqualTo("lorem ipsum solet");
+            // switch to different branch
+            gitUtilService.checkoutBranch(GitUtilService.REPOS.LOCAL, "my-other-branch", true);
+            // switch back again
+            gitService.switchBackToDefaultBranchHead(repo);
+            assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1)).isEqualTo("lorem ipsum");
+            assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2)).isEqualTo("lorem ipsum solet");
+        }
+    }
+
+    @NotNull
+    private String getCommitHash(String msg) {
+        AtomicReference<String> commitHash = new AtomicReference<>();
+        gitUtilService.getLog(GitUtilService.REPOS.LOCAL).forEach(revCommit -> {
+            if (msg.equals(revCommit.getFullMessage())) {
+                commitHash.set(revCommit.getId().getName());
+            }
+        });
+        return commitHash.get();
+    }
+
+    private void prepareRepositoryContent() {
+        // first commit
+        gitUtilService.updateFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1, "lorem ipsum");
+        gitUtilService.stashAndCommitAll(GitUtilService.REPOS.LOCAL, "my first commit");
+        // second commit
+        gitUtilService.updateFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2, "lorem ipsum solet");
+        gitUtilService.stashAndCommitAll(GitUtilService.REPOS.LOCAL, "my second commit");
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "master", "main", "someOtherName" })
     void testPushSourceToTargetRepoWithBranch(String defaultBranch) throws GitAPIException, IOException {
         gitUtilService.initRepo(defaultBranch);
 
         Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.REMOTE);
-        var repoUrl = gitUtilService.getRepoUrlByType(GitUtilService.REPOS.REMOTE);
+        var repoUri = gitUtilService.getRepoUriByType(GitUtilService.REPOS.REMOTE);
 
         Git git = new Git(localRepo);
         assertThat(git.getRepository().getBranch()).isEqualTo(defaultBranch);
 
-        gitService.pushSourceToTargetRepo(localRepo, repoUrl, defaultBranch);
+        gitService.pushSourceToTargetRepo(localRepo, repoUri, defaultBranch);
 
         assertThat(git.getRepository().getBranch()).isEqualTo(this.defaultBranch);
 
@@ -137,17 +209,17 @@ class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         doReturn(localRepo.getLocalPath()).when(gitService).getLocalPathOfRepo(any(), any());
 
-        assertThat(gitService.isRepositoryCached(localRepo.getRemoteRepositoryUrl())).isFalse();
+        assertThat(gitService.isRepositoryCached(localRepo.getRemoteRepositoryUri())).isFalse();
 
-        gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.getLocalPath(), localRepo.getRemoteRepositoryUrl());
+        gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.getLocalPath(), localRepo.getRemoteRepositoryUri());
 
-        assertThat(gitService.isRepositoryCached(localRepo.getRemoteRepositoryUrl())).isTrue();
+        assertThat(gitService.isRepositoryCached(localRepo.getRemoteRepositoryUri())).isTrue();
 
         FileUtils.deleteDirectory(localRepo.getLocalPath().toFile());
 
-        Repository repo = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.getLocalPath(), localRepo.getRemoteRepositoryUrl());
+        Repository repo = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.getLocalPath(), localRepo.getRemoteRepositoryUri());
 
-        assertThat(gitService.isRepositoryCached(localRepo.getRemoteRepositoryUrl())).isFalse();
+        assertThat(gitService.isRepositoryCached(localRepo.getRemoteRepositoryUri())).isFalse();
         assertThat(repo).isNull();
     }
 
@@ -158,7 +230,7 @@ class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
 
-        Repository repo = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.getLocalPath(), localRepo.getRemoteRepositoryUrl(), defaultBranchArtemis);
+        Repository repo = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.getLocalPath(), localRepo.getRemoteRepositoryUri(), defaultBranchArtemis);
 
         assertThat(repo.getConfig().getString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranchArtemis, ConfigConstants.CONFIG_REMOTE_SECTION)).isEqualTo("origin");
         assertThat(repo.getConfig().getString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranchArtemis, ConfigConstants.CONFIG_MERGE_SECTION))
@@ -262,5 +334,19 @@ class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
             assertThat(fileContent2).isEqualTo(oldFileContent2);
             assertThat(fileContent3).isEqualTo(oldFileContent3);
         });
+    }
+
+    @Test
+    void testGetCommitsInfo() throws GitAPIException {
+        prepareRepositoryContent();
+        var commitsInfos = gitService.getCommitInfos(gitUtilService.getRepoUriByType(GitUtilService.REPOS.LOCAL));
+        assertThat(commitsInfos).hasSize(3);
+        assertThat(commitsInfos.get(0).hash()).isEqualTo(getCommitHash("my second commit"));
+        assertThat(commitsInfos.get(0).message()).isEqualTo("my second commit");
+        assertThat(commitsInfos.get(1).hash()).isEqualTo(getCommitHash("my first commit"));
+        assertThat(commitsInfos.get(1).message()).isEqualTo("my first commit");
+        assertThat(commitsInfos.get(2).hash()).isEqualTo(getCommitHash("initial commit"));
+        assertThat(commitsInfos.get(2).message()).isEqualTo("initial commit");
+        gitService.clearCachedRepositories();
     }
 }

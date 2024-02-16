@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.LearningPathService;
+import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 
 /**
  * Service responsible for initializing the database with specific testdata related to learning paths for use in integration tests.

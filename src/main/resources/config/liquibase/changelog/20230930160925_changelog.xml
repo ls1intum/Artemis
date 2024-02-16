@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="jakubriegel" id="20230930160925">
+        <createTable tableName="plagiarism_detection_config">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="plagiarism_detection_configPK"/>
+            </column>
+            <column name="continuous_plagiarism_control_enabled" type="boolean"/>
+            <column name="continuous_plagiarism_control_post_due_date_checks_enabled" type="boolean"/>
+            <column name="minimum_score" type="int"/>
+            <column name="minimum_size" type="int"/>
+            <column name="similarity_threshold" type="int"/>
+        </createTable>
+        <addColumn tableName="exercise">
+            <column name="plagiarism_detection_config_id" type="bigint"/>
+        </addColumn>
+        <addForeignKeyConstraint baseColumnNames="plagiarism_detection_config_id" baseTableName="exercise" constraintName="FK_EXERCISE_ON_PLAGIARISM_DETECTION_CONFIG" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="plagiarism_detection_config" validate="true"/>
+        <addColumn tableName="plagiarism_case">
+            <column name="created_by_continuous_plagiarism_control" type="boolean" defaultValueBoolean="false"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

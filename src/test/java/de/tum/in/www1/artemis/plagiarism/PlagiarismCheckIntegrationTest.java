@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 
+import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +17,9 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
+import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
 
 class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -69,9 +70,9 @@ class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationIndependen
         params.add("minimumScore", "0");
         params.add("minimumSize", "0");
 
-        PlagiarismResult<?> plagiarismResult = request.get(path, HttpStatus.OK, PlagiarismResult.class, params);
+        var result = (PlagiarismResultDTO<?>) request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, params);
 
-        for (PlagiarismComparison<?> comparison : plagiarismResult.getComparisons()) {
+        for (PlagiarismComparison<?> comparison : result.plagiarismResult().getComparisons()) {
             var submissionA = comparison.getSubmissionA();
             var submissionB = comparison.getSubmissionB();
 
@@ -81,6 +82,12 @@ class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationIndependen
             assertThat(submissionA.getPlagiarismComparison()).as("should have a bidirectional connection").isEqualTo(comparison);
             assertThat(submissionB.getPlagiarismComparison()).as("should have a bidirectional connection").isEqualTo(comparison);
         }
+
+        // verify plagiarism result stats
+        var stats = result.plagiarismResultStats();
+        assertThat(stats.numberOfDetectedSubmissions()).isEqualTo(5);
+        assertThat(stats.averageSimilarity()).isEqualTo(100.0, Offset.offset(1.0));
+        assertThat(stats.maximalSimilarity()).isEqualTo(100.0, Offset.offset(1.0));
     }
 
 }

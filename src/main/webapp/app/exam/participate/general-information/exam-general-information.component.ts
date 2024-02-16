@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exam } from 'app/entities/exam.model';
-import { endTime, getAdditionalWorkingTime, isExamOverMultipleDays, normalWorkingTime } from 'app/exam/participate/exam.utils';
+import { endTime, examWorkingTime, getAdditionalWorkingTime, isExamOverMultipleDays } from 'app/exam/participate/exam.utils';
 import dayjs from 'dayjs/esm';
 
 @Component({
@@ -14,8 +14,10 @@ export class ExamGeneralInformationComponent implements OnChanges {
     @Input() studentExam: StudentExam;
     @Input() reviewIsOpen?: boolean = false;
 
-    /** The exam cover will contain e.g. the number of exercises which is hidden in the exam summary as
-     * the information is shown in the {@link ExamResultOverviewComponent} */
+    /**
+     * The exam cover will contain e.g. the number of exercises which is hidden in the exam summary as
+     * the information is shown in the {@link ExamResultOverviewComponent}
+     */
     @Input() displayOnExamCover?: boolean = false;
 
     examEndDate?: dayjs.Dayjs;
@@ -27,7 +29,7 @@ export class ExamGeneralInformationComponent implements OnChanges {
 
     ngOnChanges(): void {
         this.examEndDate = endTime(this.exam, this.studentExam);
-        this.normalWorkingTime = normalWorkingTime(this.exam);
+        this.normalWorkingTime = examWorkingTime(this.exam);
         this.additionalWorkingTime = getAdditionalWorkingTime(this.exam, this.studentExam);
         this.isExamOverMultipleDays = isExamOverMultipleDays(this.exam, this.studentExam);
         this.isTestExam = this.exam?.testExam;

@@ -131,13 +131,13 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
      */
     private createAutomaticFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
         let title = undefined;
-        if (showTestDetails) {
+        if (showTestDetails && feedback.testCase?.testName) {
             if (feedback.positive === undefined) {
-                title = this.translateService.instant('artemisApp.result.detail.test.noInfo', { name: feedback.text });
+                title = this.translateService.instant('artemisApp.result.detail.test.noInfo', { name: feedback.testCase.testName });
             } else {
                 title = feedback.positive
-                    ? this.translateService.instant('artemisApp.result.detail.test.passed', { name: feedback.text })
-                    : this.translateService.instant('artemisApp.result.detail.test.failed', { name: feedback.text });
+                    ? this.translateService.instant('artemisApp.result.detail.test.passed', { name: feedback.testCase.testName })
+                    : this.translateService.instant('artemisApp.result.detail.test.failed', { name: feedback.testCase.testName });
             }
         }
 

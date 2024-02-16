@@ -13,7 +13,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import dayjs from 'dayjs/esm';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faClipboard, faEye, faListAlt, faPlus, faSort, faThList, faTimes, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faClipboard, faEye, faFileImport, faListAlt, faPlus, faSort, faThList, faTimes, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
@@ -24,7 +24,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
     styleUrls: ['./exam-management.component.scss'],
 })
 export class ExamManagementComponent implements OnInit, OnDestroy {
-    documentationType = DocumentationType.Exams;
+    readonly documentationType: DocumentationType = 'Exams';
 
     course: Course;
     exams: Exam[];
@@ -38,6 +38,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     // Icons
     faSort = faSort;
     faPlus = faPlus;
+    faFileImport = faFileImport;
     faTimes = faTimes;
     faEye = faEye;
     faWrench = faWrench;

@@ -41,18 +41,19 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     ngOnInit() {
         this.isLoading = true;
         this.exportInProgress = false;
-        this.repositoryExportOptions = {
-            exportAllParticipants: false,
-            filterLateSubmissions: false,
-            excludePracticeSubmissions: false,
-            addParticipantName: true,
-            combineStudentCommits: true,
-            anonymizeRepository: false,
-            normalizeCodeStyle: false, // disabled by default because it is rather unstable
-        };
         this.isRepoExportForMultipleExercises = this.programmingExercises.length > 1;
         this.isAtLeastInstructor = this.programmingExercises.every((exercise) => exercise.isAtLeastInstructor);
         this.isLoading = false;
+        this.repositoryExportOptions = {
+            exportAllParticipants: this.isRepoExportForMultipleExercises,
+            filterLateSubmissions: false,
+            excludePracticeSubmissions: false,
+            combineStudentCommits: true,
+            // we anonymize the export for tutors (double-blind)
+            anonymizeRepository: !this.isAtLeastInstructor,
+            addParticipantName: this.isAtLeastInstructor,
+            normalizeCodeStyle: false, // disabled by default because it is rather unstable
+        };
     }
 
     clear() {
@@ -60,7 +61,6 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     }
 
     exportRepos() {
-        this.repositoryExportOptions.exportAllParticipants = true;
         this.programmingExercises.forEach((exercise) => {
             if (!exercise.id) {
                 return;
@@ -68,32 +68,34 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
             this.exportInProgress = true;
             // The participation ids take priority over the participant identifiers (student login or team names).
             if (this.participationIdList?.length) {
-                // We anonymize the assessment process ("double-blind").
-                this.repositoryExportOptions.addParticipantName = false;
-                this.repositoryExportOptions.anonymizeRepository = true;
-                this.repoExportService.exportReposByParticipations(exercise.id, this.participationIdList, this.repositoryExportOptions).subscribe({
-                    next: this.handleExportRepoResponse,
-                    error: () => {
-                        this.exportInProgress = false;
-                    },
-                });
+                this.repoExportService
+                    .exportReposByParticipations(exercise.id, this.participationIdList, this.repositoryExportOptions)
+                    .subscribe({
+                        next: this.handleExportRepoResponseSuccess,
+                        error: () => this.handleExportRepoResponseError(exercise.id!),
+                    })
+                    .add(() => this.activeModal.dismiss(true));
                 return;
             }
-            const participantIdentifierList =
-                this.participantIdentifierList !== undefined && this.participantIdentifierList !== '' ? this.participantIdentifierList.split(',').map((e) => e.trim()) : ['ALL'];
+            const participantIdentifierList = this.repositoryExportOptions.exportAllParticipants ? ['ALL'] : this.participantIdentifierList.split(',').map((e) => e.trim());
 
-            this.repoExportService.exportReposByParticipantIdentifiers(exercise.id, participantIdentifierList, this.repositoryExportOptions).subscribe({
-                next: this.handleExportRepoResponse,
-                error: () => {
-                    this.exportInProgress = false;
-                },
-            });
+            this.repoExportService
+                .exportReposByParticipantIdentifiers(exercise.id, participantIdentifierList, this.repositoryExportOptions)
+                .subscribe({
+                    next: this.handleExportRepoResponseSuccess,
+                    error: () => this.handleExportRepoResponseError(exercise.id!),
+                })
+                .add(() => this.activeModal.dismiss(true));
         });
     }
 
-    handleExportRepoResponse = (response: HttpResponse<Blob>) => {
+    handleExportRepoResponseError = (exerciseId: number) => {
+        this.alertService.warning('artemisApp.programmingExercise.export.notFoundMessageRepos', { exerciseId });
+        this.exportInProgress = false;
+    };
+
+    handleExportRepoResponseSuccess = (response: HttpResponse<Blob>) => {
         this.alertService.success('artemisApp.programmingExercise.export.successMessageRepos');
-        this.activeModal.dismiss(true);
         this.exportInProgress = false;
         downloadZipFileFromResponse(response);
     };

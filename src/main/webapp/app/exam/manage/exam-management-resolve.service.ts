@@ -8,6 +8,27 @@ import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable, filter, map, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { Course } from 'app/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { catchError } from 'rxjs/operators';
+
+@Injectable({ providedIn: 'root' })
+export class CourseResolve implements Resolve<Course | null> {
+    constructor(private courseManagementService: CourseManagementService) {}
+
+    resolve(route: ActivatedRouteSnapshot): Observable<Course | null> {
+        const courseId = route.params['courseId'];
+
+        if (courseId) {
+            return this.courseManagementService.find(courseId).pipe(
+                map((response) => response.body),
+                catchError(() => of(null)),
+            );
+        }
+
+        return of(null);
+    }
+}
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {

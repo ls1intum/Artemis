@@ -5,7 +5,7 @@
             "deleted": "Kompetenz gelöscht",
             "updated": "Kompetenz bearbeitet",
             "competencyButton": "Kompetenzen",
-            "title": "Kompetenzen",
+            "title": "Titel",
             "description": "Beschreibung",
             "taxonomy": "Taxonomie",
             "softDueDate": "Empfohlen bis",
@@ -22,20 +22,21 @@
             "masteredStudents": "Studierende mit Kompetenz",
             "mastered": "Abgeschlossen",
             "taxonomies": {
-                "remember": "Erinnern",
-                "understand": "Verstehen",
-                "apply": "Anwenden",
-                "analyze": "Analysieren",
-                "evaluate": "Evaluieren",
-                "create": "Erstellen"
+                "REMEMBER": "Erinnern",
+                "UNDERSTAND": "Verstehen",
+                "APPLY": "Anwenden",
+                "ANALYZE": "Analysieren",
+                "EVALUATE": "Evaluieren",
+                "CREATE": "Erstellen",
+                "none": "Keine Taxonomie"
             },
             "keywords": {
-                "remember": "definieren, duplizieren, auflisten, notieren, wiederholen, erkennen, reproduzieren, benennen",
-                "understand": "klassifizieren, beschreiben, erörtern, erklären, identifizieren, lokalisieren, erkennen, berichten, angeben, wählen, übersetzen",
-                "apply": "ausführen, implementieren, lösen, benutzen, demonstrieren, illustrieren, arbeiten, festlegen, zeigen, skizzieren",
-                "analyze": "differenzieren, untersuchen, experimentieren, hinterfragen, beziehen, testen, zerlegen, kontrastieren, unterscheiden",
-                "evaluate": "beurteilen, argumentieren, wählen, verteidigen, bewerten, auswählen, unterstützen, einschätzen, kritisieren",
-                "create": "entwerfen, formulieren, postulieren, erfinden, planen, bieten, schreiben, konstruieren, entwickeln"
+                "REMEMBER": "definieren, duplizieren, auflisten, notieren, wiederholen, erkennen, reproduzieren, benennen",
+                "UNDERSTAND": "klassifizieren, beschreiben, erörtern, erklären, identifizieren, lokalisieren, erkennen, berichten, angeben, wählen, übersetzen",
+                "APPLY": "ausführen, implementieren, lösen, benutzen, demonstrieren, illustrieren, arbeiten, festlegen, zeigen, skizzieren",
+                "ANALYZE": "differenzieren, untersuchen, experimentieren, hinterfragen, beziehen, testen, zerlegen, kontrastieren, unterscheiden",
+                "EVALUATE": "beurteilen, argumentieren, wählen, verteidigen, bewerten, auswählen, unterstützen, einschätzen, kritisieren",
+                "CREATE": "entwerfen, formulieren, postulieren, erfinden, planen, bieten, schreiben, konstruieren, entwickeln"
             },
             "table": {
                 "panelHeader": "Deine Fortentwicklung",
@@ -44,27 +45,63 @@
             "manageCompetencies": {
                 "title": "Kompetenzmanagement",
                 "import": "Kompetenz importieren",
-                "create": "Kompetenz erstellen"
+                "create": "Kompetenz erstellen",
+                "generate": "Kompetenzvorschläge generieren",
+                "importAll": "Alle Kompetenzen eines Kurses importieren"
             },
-            "importCompetency": {
-                "title": "Kompetenz importieren",
+            "import": {
+                "label": "Kompetenz importieren",
                 "search": "Suche nach einer Kompetenz:",
                 "loading": "Lade...",
                 "table": {
-                    "title": "Titel",
-                    "course": "Kurs",
-                    "semester": "Semester",
-                    "doSelect": "Auswählen"
+                    "TITLE": "Titel",
+                    "COURSE_TITLE": "Kurs",
+                    "SEMESTER": "Semester",
+                    "doImport": "Auswählen"
                 }
+            },
+            "generate": {
+                "title": "Kompetenzvorschläge generieren",
+                "listTitle": "Kompetenzvorschläge",
+                "viewedLabel": "Gesehen",
+                "deleteModalTitle": "Löschen bestätigen",
+                "deleteModalText": "Bist du sicher, dass du \"{{title}}\" löschen willst?",
+                "saveModalTitle": "Speichern bestätigen",
+                "saveModalText": "Du hast nicht alle Empfehlungen angesehen, möchtest du trotzdem fortfahren?",
+                "errorWarning": "Speichern nicht möglich, weil fehlerhafte Kompetenzen vorliegen",
+                "loading": "Generiere Kompetenzvorschläge... Das kann eine Weile dauern.",
+                "courseDescription": {
+                    "title": "Kursbeschreibung eingeben",
+                    "placeholder": "Bitte gib eine Kursbeschreibung ein",
+                    "requiredValidationError": "Kursbeschreibung darf nicht leer sein",
+                    "minlengthValidationError": "Kursbeschreibung muss mindestens {{min}} Zeichen lang sein",
+                    "maxlengthValidationError": "Kursbeschreibung darf maximal {{max}} Zeichen lang sein",
+                    "regenerate": "Erneut generieren",
+                    "regenerateTooltip": "Zusätzliche Kompetenzvorschläge generieren",
+                    "infoTooltip": "Gib eine Beschreibung ein, die sich auf den theoretischen/praktischen Inhalt und Lernziele des Kurses fokussiert. Iris generiert daraus Vorschläge für Kompetenzen, die du in deinen Kurs einfügen könntest."
+                }
+            },
+            "importAll": {
+                "title": "Alle Kompetenzen eines Kurses importieren",
+                "search": "Suche nach einem Kurs:",
+                "importRelations": "Relationen importieren?",
+                "table": {
+                    "TITLE": "Titel",
+                    "SEMESTER": "Semester",
+                    "SHORT_NAME": "Kurzname",
+                    "doImport": "Auswählen"
+                },
+                "success": "{{ noOfCompetencies }} Kompetezen aus dem Kurs \"{{ courseTitle }}\" importiert.",
+                "warning": "Es wurden keine Kompetenzen für den Kurs \"{{ courseTitle }}\" gefunden."
             },
             "createCompetency": {
                 "title": "Erstelle eine neue Kompetenz",
                 "titlePlaceholder": "Gib der Kompetenz einen Titel",
                 "titleRequiredValidationError": "Eine Kompetenz braucht einen Titel",
-                "titleMaxLengthValidationError": "Der Titel einer Kompetenz ist auf maximal 255 Symbole beschränkt",
+                "titleMaxLengthValidationError": "Der Titel einer Kompetenz ist auf maximal {{max}} Symbole beschränkt",
                 "titleUniqueValidationError": "Es gibt bereits eine Kompetenz mit diesem Titel in dem Kurs",
                 "descriptionPlaceholder": "Was sollen die Studierenden lernen? Beispiel: \"Du kannst den Unterschied zwischen Rekursion und Schleifen erklären.\"",
-                "descriptionMaxLengthValidationError": "Die Beschreibung der Kompetenz ist auf maximal 10 000 Symbole beschränkt",
+                "descriptionMaxLengthValidationError": "Die Beschreibung der Kompetenz ist auf maximal {{max}} Symbole beschränkt",
                 "softDueDate": "Empfohlenes Fertigstellungsdatum",
                 "softDueDateHint": "Empfehle einen Zeitpunkt zu dem die Studierenden diese Kompetenz gemeistert haben sollten. Dies ist keine harte Frist.",
                 "suggestedTaxonomy": "Vorschlag",
@@ -123,14 +160,14 @@
                     "select": "Voraussetzung auswählen"
                 },
                 "import": {
-                    "title": "Voraussetzungen hinzufügen",
+                    "label": "Voraussetzungen hinzufügen",
                     "table": {
-                        "title": "Titel",
-                        "course": "Kurs",
-
-                        "doSelect": "Auswählen"
+                        "TITLE": "Titel",
+                        "COURSE_TITLE": "Kurs",
+                        "SEMESTER": "Semester",
+                        "doImport": "Auswählen"
                     },
-                    "searchCompetency": "Nach Kompetenz suchen:",
+                    "search": "Nach Kompetenz suchen:",
                     "loading": "Lade..."
                 }
             },
@@ -185,11 +222,6 @@
                     "name": "Name",
                     "login": "Login",
                     "progress": "Fortschritt"
-                },
-                "progressNav": {
-                    "header": "Lernpfad",
-                    "refresh": "Aktualisieren",
-                    "center": "Zentrieren"
                 }
             },
             "sideBar": {
@@ -198,11 +230,39 @@
                 "header": "Lernpfad"
             },
             "participate": {
+                "viewProgress": "Aktuellen Fortschritt im Detail ansehen",
                 "noTaskSelected": "Aktuell hast du keine Vorlesungseinheit oder Aufgabe ausgewählt.",
-                "prev": "Zurück",
-                "prevHint": "Zurück zur letzten Vorlesungseinheit oder Aufgabe",
-                "next": "Weiter",
+                "prevHint": "Zurück zur letzten Empfehlung",
                 "nextHint": "Weiter zur nächsten Empfehlung"
+            },
+            "graph": {
+                "progressNav": {
+                    "header": "Lernpfad",
+                    "refresh": "Aktualisieren",
+                    "center": "Zentrieren"
+                },
+                "legend": {
+                    "competencyEnd": {
+                        "title": "Kompetenzende",
+                        "tooltip": "Hier endet eine Kompetenz. Die Knoten zwischen Kompetenzbeginn und -ende sind Inhalte die dir beim erreichen dieser Kompetenz helfen."
+                    },
+                    "matchStart": {
+                        "title": "Verzweigung",
+                        "tooltip": "Hier hast du die Wahl an welcher der folgenden Kompetenzen du arbeiten möchtest. Die Kompetenzen wurden von deiner Lehrkraft als gleichbedeutend hinterlegt, d.h. eine der Kompetenzen zu meistern ist hinreichend."
+                    },
+                    "matchEnd": {
+                        "title": "Verzweigungsende",
+                        "tooltip": "Hier treffen die verschiedenen Kompetenzen wieder zusammen. Die Kompetenzen wurden von deiner Lehrkraft als gleichbedeutend hinterlegt, d.h. eine der Kompetenzen zu meistern ist hinreichend."
+                    },
+                    "learningObject": {
+                        "title": "Ausstehende Lerneinheit / Aufgabe",
+                        "tooltip": "Eine Lerneinheit oder Aufgabe die noch nicht hinreichend gelöst wurde."
+                    },
+                    "completedLearningObject": {
+                        "title": "Abgeschlossene Lerneinheit / Aufgabe",
+                        "tooltip": "Eine Lerneinheit oder Aufgabe die hinreichend gelöst wurde."
+                    }
+                }
             }
         }
     }

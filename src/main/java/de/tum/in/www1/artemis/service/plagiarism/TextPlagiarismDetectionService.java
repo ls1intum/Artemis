@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
+import static de.tum.in.www1.artemis.service.plagiarism.PlagiarismService.hasMinimumScore;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -31,9 +33,9 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
-class TextPlagiarismDetectionService {
+public class TextPlagiarismDetectionService {
 
-    private final Logger log = LoggerFactory.getLogger(TextPlagiarismDetectionService.class);
+    private static final Logger log = LoggerFactory.getLogger(TextPlagiarismDetectionService.class);
 
     private final TextSubmissionExportService textSubmissionExportService;
 
@@ -41,11 +43,14 @@ class TextPlagiarismDetectionService {
 
     private final PlagiarismCacheService plagiarismCacheService;
 
+    private final PlagiarismService plagiarismService;
+
     public TextPlagiarismDetectionService(TextSubmissionExportService textSubmissionExportService, PlagiarismWebsocketService plagiarismWebsocketService,
-            PlagiarismCacheService plagiarismCacheService) {
+            PlagiarismCacheService plagiarismCacheService, PlagiarismService plagiarismService) {
         this.textSubmissionExportService = textSubmissionExportService;
         this.plagiarismWebsocketService = plagiarismWebsocketService;
         this.plagiarismCacheService = plagiarismCacheService;
+        this.plagiarismService = plagiarismService;
     }
 
     /**
@@ -57,12 +62,10 @@ class TextPlagiarismDetectionService {
      * @return List containing the latest text submission for every participation
      */
     public List<TextSubmission> textSubmissionsForComparison(TextExercise exerciseWithParticipationsAndSubmissions, int minimumScore, int minimumSize) {
-        var textSubmissions = exerciseWithParticipationsAndSubmissions.getStudentParticipations().parallelStream().map(Participation::findLatestSubmission)
-                .filter(Optional::isPresent).map(Optional::get).filter(submission -> submission instanceof TextSubmission).map(submission -> (TextSubmission) submission)
-                .filter(submission -> minimumSize == 0 || submission.getText() != null && submission.countWords() >= minimumSize)
-                .filter(submission -> minimumScore == 0
-                        || submission.getLatestResult() != null && submission.getLatestResult().getScore() != null && submission.getLatestResult().getScore() >= minimumScore)
-                .toList();
+        var textSubmissions = exerciseWithParticipationsAndSubmissions.getStudentParticipations().parallelStream().filter(plagiarismService.filterForStudents())
+                .map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).filter(submission -> submission instanceof TextSubmission)
+                .map(submission -> (TextSubmission) submission).filter(submission -> minimumSize == 0 || submission.getText() != null && submission.countWords() >= minimumSize)
+                .filter(submission -> hasMinimumScore(submission, minimumScore)).toList();
 
         log.info("Found {} text submissions in exercise {}", textSubmissions.size(), exerciseWithParticipationsAndSubmissions.getId());
 

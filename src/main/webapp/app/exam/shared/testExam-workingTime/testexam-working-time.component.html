@@ -1,4 +1,6 @@
 <span>
     {{ usedWorkingTime | artemisDurationFromSeconds }}
-    <ng-container *ngIf="!!percentUsedWorkingTime">({{ percentUsedWorkingTime }}&thinsp;%)</ng-container>
+    @if (!!percentUsedWorkingTime) {
+        ({{ percentUsedWorkingTime }}&thinsp;%)
+    }
 </span>

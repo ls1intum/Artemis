@@ -12,15 +12,14 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-programming-exercise-grading-dirty-warning',
     template: `
-        <ng-container *ngIf="hasUpdatedGradingConfig">
+        @if (hasUpdatedGradingConfig) {
             <fa-icon
                 [icon]="faExclamationTriangle"
                 class="text-warning"
                 size="2x"
                 ngbTooltip="{{ 'artemisApp.programmingExercise.configureGrading.updatedGradingConfigTooltip' | artemisTranslate }}"
-            >
-            </fa-icon>
-        </ng-container>
+            />
+        }
     `,
 })
 export class ProgrammingExerciseGradingDirtyWarningComponent implements OnChanges, OnDestroy {

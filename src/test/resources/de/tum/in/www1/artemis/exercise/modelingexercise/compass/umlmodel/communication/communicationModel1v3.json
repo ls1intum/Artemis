@@ -1,0 +1,350 @@
+{
+  "version": "3.0.0",
+  "size": {
+    "width": 830,
+    "height": 640
+  },
+  "type": "CommunicationDiagram",
+  "interactive": {
+    "elements": {},
+    "relationships": {}
+  },
+  "elements": {
+    "88a80235-cb86-4b28-9f75-9f471038cd2c": {
+      "id": "88a80235-cb86-4b28-9f75-9f471038cd2c",
+      "name": "Jonas: Student",
+      "owner": null,
+      "type": "ObjectName",
+      "bounds": {
+        "x": 0,
+        "y": 180,
+        "width": 200,
+        "height": 70
+      },
+      "attributes": [],
+      "methods": [
+        "54c429da-6896-4437-8636-81fb5ea5f1be"
+      ]
+    },
+    "54c429da-6896-4437-8636-81fb5ea5f1be": {
+      "id": "54c429da-6896-4437-8636-81fb5ea5f1be",
+      "name": "receiveCertificate()",
+      "owner": "88a80235-cb86-4b28-9f75-9f471038cd2c",
+      "type": "ObjectMethod",
+      "bounds": {
+        "x": 0,
+        "y": 220,
+        "width": 200,
+        "height": 30
+      }
+    },
+    "02e688ce-f8f0-459d-9ea1-8bb1c1375882": {
+      "id": "02e688ce-f8f0-459d-9ea1-8bb1c1375882",
+      "name": "EIST: Course",
+      "owner": null,
+      "type": "ObjectName",
+      "bounds": {
+        "x": 370,
+        "y": 0,
+        "width": 200,
+        "height": 100
+      },
+      "attributes": [],
+      "methods": [
+        "e2428d92-8338-443f-acc8-2c98a1feb7a4",
+        "3874a3d7-7202-49ce-9e6f-cdb52a97b4a3"
+      ]
+    },
+    "e2428d92-8338-443f-acc8-2c98a1feb7a4": {
+      "id": "e2428d92-8338-443f-acc8-2c98a1feb7a4",
+      "name": "enroll(Student)",
+      "owner": "02e688ce-f8f0-459d-9ea1-8bb1c1375882",
+      "type": "ObjectMethod",
+      "bounds": {
+        "x": 370,
+        "y": 40,
+        "width": 200,
+        "height": 30
+      }
+    },
+    "3874a3d7-7202-49ce-9e6f-cdb52a97b4a3": {
+      "id": "3874a3d7-7202-49ce-9e6f-cdb52a97b4a3",
+      "name": "start()",
+      "owner": "02e688ce-f8f0-459d-9ea1-8bb1c1375882",
+      "type": "ObjectMethod",
+      "bounds": {
+        "x": 370,
+        "y": 70,
+        "width": 200,
+        "height": 30
+      }
+    },
+    "a5ccd828-ac7e-471e-9c30-80bc7e95a682": {
+      "id": "a5ccd828-ac7e-471e-9c30-80bc7e95a682",
+      "name": "Stephan: Lecturer",
+      "owner": null,
+      "type": "ObjectName",
+      "bounds": {
+        "x": 20,
+        "y": 490,
+        "width": 200,
+        "height": 70
+      },
+      "attributes": [],
+      "methods": [
+        "8d262dd9-cdf1-4ac9-9daa-b0699b40f0c4"
+      ]
+    },
+    "8d262dd9-cdf1-4ac9-9daa-b0699b40f0c4": {
+      "id": "8d262dd9-cdf1-4ac9-9daa-b0699b40f0c4",
+      "name": "evaluate()",
+      "owner": "a5ccd828-ac7e-471e-9c30-80bc7e95a682",
+      "type": "ObjectMethod",
+      "bounds": {
+        "x": 20,
+        "y": 530,
+        "width": 200,
+        "height": 30
+      }
+    },
+    "4f2ba2df-ca34-4bd0-b58e-2a45248b48a3": {
+      "id": "4f2ba2df-ca34-4bd0-b58e-2a45248b48a3",
+      "name": "Final: Exam",
+      "owner": null,
+      "type": "ObjectName",
+      "bounds": {
+        "x": 630,
+        "y": 510,
+        "width": 200,
+        "height": 130
+      },
+      "attributes": [],
+      "methods": [
+        "dd1661a5-4994-4c24-8669-8c65d4127b46",
+        "0695a2d8-763c-4b39-8637-bfe445cd36f5",
+        "96adc0f4-6d96-4bd8-8c02-085156ebcf70"
+      ]
+    },
+    "dd1661a5-4994-4c24-8669-8c65d4127b46": {
+      "id": "dd1661a5-4994-4c24-8669-8c65d4127b46",
+      "name": "prepare()",
+      "owner": "4f2ba2df-ca34-4bd0-b58e-2a45248b48a3",
+      "type": "ObjectMethod",
+      "bounds": {
+        "x": 630,
+        "y": 550,
+        "width": 200,
+        "height": 30
+      }
+    },
+    "0695a2d8-763c-4b39-8637-bfe445cd36f5": {
+      "id": "0695a2d8-763c-4b39-8637-bfe445cd36f5",
+      "name": "take(Student)",
+      "owner": "4f2ba2df-ca34-4bd0-b58e-2a45248b48a3",
+      "type": "ObjectMethod",
+      "bounds": {
+        "x": 630,
+        "y": 580,
+        "width": 200,
+        "height": 30
+      }
+    },
+    "96adc0f4-6d96-4bd8-8c02-085156ebcf70": {
+      "id": "96adc0f4-6d96-4bd8-8c02-085156ebcf70",
+      "name": "correct()",
+      "owner": "4f2ba2df-ca34-4bd0-b58e-2a45248b48a3",
+      "type": "ObjectMethod",
+      "bounds": {
+        "x": 630,
+        "y": 610,
+        "width": 200,
+        "height": 30
+      }
+    }
+  },
+  "relationships": {
+    "31bb8f7f-1c34-4f2b-8ae1-68d06ed998e2": {
+      "id": "31bb8f7f-1c34-4f2b-8ae1-68d06ed998e2",
+      "name": "",
+      "type": "CommunicationLink",
+      "source": {
+        "element": "88a80235-cb86-4b28-9f75-9f471038cd2c",
+        "direction": "Up"
+      },
+      "target": {
+        "element": "02e688ce-f8f0-459d-9ea1-8bb1c1375882",
+        "direction": "Left"
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 189.640625
+        },
+        {
+          "x": 0,
+          "y": 59.640625
+        },
+        {
+          "x": 270,
+          "y": 59.640625
+        }
+      ],
+      "bounds": {
+        "x": 100,
+        "y": -9.640625,
+        "width": 270,
+        "height": 189.640625
+      },
+      "messages": {
+        "undefined": {
+          "name": "1b: start()",
+          "direction": "target"
+        }
+      }
+    },
+    "38732c12-ba10-4d23-aa77-3e52745342df": {
+      "id": "38732c12-ba10-4d23-aa77-3e52745342df",
+      "name": "",
+      "type": "CommunicationLink",
+      "source": {
+        "element": "88a80235-cb86-4b28-9f75-9f471038cd2c",
+        "direction": "Down"
+      },
+      "target": {
+        "element": "a5ccd828-ac7e-471e-9c30-80bc7e95a682",
+        "direction": "Up"
+      },
+      "path": [
+        {
+          "x": 295.796875,
+          "y": 0
+        },
+        {
+          "x": 295.796875,
+          "y": 240
+        }
+      ],
+      "bounds": {
+        "x": -185.796875,
+        "y": 250,
+        "width": 401.734375,
+        "height": 240
+      },
+      "messages": {
+        "undefined": {
+          "name": "4: evaluate()",
+          "direction": "target"
+        }
+      }
+    },
+    "58941a9f-0f6e-4460-95a7-b459bd930182": {
+      "id": "58941a9f-0f6e-4460-95a7-b459bd930182",
+      "name": "",
+      "type": "CommunicationLink",
+      "source": {
+        "element": "a5ccd828-ac7e-471e-9c30-80bc7e95a682",
+        "direction": "Right"
+      },
+      "target": {
+        "element": "4f2ba2df-ca34-4bd0-b58e-2a45248b48a3",
+        "direction": "Left"
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 59.640625
+        },
+        {
+          "x": 410,
+          "y": 59.640625
+        }
+      ],
+      "bounds": {
+        "x": 220,
+        "y": 475.359375,
+        "width": 410,
+        "height": 59.640625
+      },
+      "messages": {
+        "undefined": {
+          "name": "2.3: correct()",
+          "direction": "target"
+        }
+      }
+    },
+    "b0189b08-c0db-4e0b-a542-fe6b30f20ace": {
+      "id": "b0189b08-c0db-4e0b-a542-fe6b30f20ace",
+      "name": "",
+      "type": "CommunicationLink",
+      "source": {
+        "element": "4f2ba2df-ca34-4bd0-b58e-2a45248b48a3",
+        "direction": "Up"
+      },
+      "target": {
+        "element": "88a80235-cb86-4b28-9f75-9f471038cd2c",
+        "direction": "Right"
+      },
+      "path": [
+        {
+          "x": 530,
+          "y": 295
+        },
+        {
+          "x": 530,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "bounds": {
+        "x": 200,
+        "y": 215,
+        "width": 530,
+        "height": 295
+      },
+      "messages": {}
+    },
+    "b315c647-2631-401e-b3d1-ea05440f20fc": {
+      "id": "b315c647-2631-401e-b3d1-ea05440f20fc",
+      "name": "",
+      "type": "CommunicationLink",
+      "source": {
+        "element": "4f2ba2df-ca34-4bd0-b58e-2a45248b48a3",
+        "direction": "Up"
+      },
+      "target": {
+        "element": "88a80235-cb86-4b28-9f75-9f471038cd2c",
+        "direction": "Right"
+      },
+      "path": [
+        {
+          "x": 530,
+          "y": 335.4375
+        },
+        {
+          "x": 530,
+          "y": 40.4375
+        },
+        {
+          "x": 0,
+          "y": 40.4375
+        }
+      ],
+      "bounds": {
+        "x": 200,
+        "y": 174.5625,
+        "width": 530,
+        "height": 335.4375
+      },
+      "messages": {
+        "undefined": {
+          "name": "2.2: take(Jonas)",
+          "direction": "target"
+        }
+      }
+    }
+  },
+  "assessments": {}
+}

@@ -1,5 +1,4 @@
 import { TIME_FORMAT } from './constants';
-import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import utc from 'dayjs/esm/plugin/utc';
 import { v4 as uuidv4 } from 'uuid';
@@ -46,11 +45,11 @@ export function dayjsToString(day: dayjs.Dayjs) {
 }
 
 /**
- * Converts the response object obtained from a multipart request to a Course object.
- * @param response - The Cypress.Response<Course> object obtained from a multipart request.
- * @returns The Course object parsed from the response.
+ * Converts the response object obtained from a multipart request to an entity object.
+ * @param response - The Cypress.Response<T> object obtained from a multipart request.
+ * @returns The entity object parsed from the response.
  */
-export function convertModelAfterMultiPart(response: Cypress.Response<Course>): Course {
+export function convertModelAfterMultiPart<T>(response: Cypress.Response<T>): T {
     // Cypress currently has some issues with our multipart request, parsing this not as an object but as an ArrayBuffer
     // Once this is fixed (and hence the expect statements below fail), we can remove the additional parsing
     expect(response.body).not.to.be.an('object');
@@ -103,12 +102,12 @@ export function getExercise(exerciseId: number) {
 }
 
 /**
- * Converts a boolean value to "Yes" if true, or "No" if false.
+ * Converts a boolean value to its related icon class.
  * @param boolean - The boolean value to be converted.
- * @returns The corresponding "Yes" or "No" string.
+ * @returns The corresponding ".checked" or ".unchecked" string.
  */
-export function convertBooleanToYesNo(boolean: boolean) {
-    return boolean ? 'Yes' : 'No';
+export function convertBooleanToCheckIconClass(boolean: boolean) {
+    return boolean ? '.checked' : '.unchecked';
 }
 
 /**

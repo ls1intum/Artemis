@@ -1,7 +1,15 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.after;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -24,8 +32,11 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationGitlabCIGitlabSamlTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
+import de.tum.in.www1.artemis.domain.enumeration.ParticipationLifecycle;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -34,7 +45,11 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -125,7 +140,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
         int callCount = wasCalled ? 1 : 0;
         for (StudentParticipation studentParticipation : studentParticipations) {
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
-            verify(versionControlService, timeout(timeoutInMs).times(callCount)).setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getVcsRepositoryUrl(),
+            verify(versionControlService, timeout(timeoutInMs).times(callCount)).setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getVcsRepositoryUri(),
                     programmingExercise.getProjectKey(), programmingExerciseStudentParticipation.getStudents());
             verify(programmingExerciseParticipationService, timeout(timeoutInMs).times(callCount)).lockStudentParticipation(programmingExerciseStudentParticipation);
         }
@@ -133,8 +148,8 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
 
     private void mockStudentRepoLocks() throws GitAPIException, GitLabApiException {
         for (final var participation : programmingExercise.getStudentParticipations()) {
-            final VcsRepositoryUrl repositoryUrl = ((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl();
-            gitlabRequestMockProvider.setRepositoryPermissionsToReadOnly(repositoryUrl, participation.getStudents());
+            final VcsRepositoryUri repositoryUri = ((ProgrammingExerciseParticipation) participation).getVcsRepositoryUri();
+            gitlabRequestMockProvider.setRepositoryPermissionsToReadOnly(repositoryUri, participation.getStudents());
             doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
                     .getOrCheckoutRepository((ProgrammingExerciseParticipation) participation);
         }
@@ -321,14 +336,14 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCombineTemplateBeforeRelease() throws Exception {
         ProgrammingExercise programmingExerciseWithTemplate = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
-        VcsRepositoryUrl repositoryUrl = programmingExerciseWithTemplate.getVcsTemplateRepositoryUrl();
-        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(repositoryUrl);
+        VcsRepositoryUri repositoryUri = programmingExerciseWithTemplate.getVcsTemplateRepositoryUri();
+        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(repositoryUri);
 
         programmingExercise.setReleaseDate(nowPlusMillis(DELAY_MS).plusSeconds(Constants.SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS));
         programmingExerciseRepository.saveAndFlush(programmingExercise);
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
-        verify(gitService, timeout(TIMEOUT_MS)).combineAllCommitsOfRepositoryIntoOne(repositoryUrl);
+        verify(gitService, timeout(TIMEOUT_MS)).combineAllCommitsOfRepositoryIntoOne(repositoryUri);
     }
 
     @Test
@@ -600,7 +615,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testExamWorkingTimeChangeDuringConduction() {
+    void testStudentExamIndividualWorkingTimeChangeDuringConduction() {
         ProgrammingExercise examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
         Exam exam = examExercise.getExamViaExerciseGroupOrCourseMember();
         exam.setStartDate(ZonedDateTime.now().minusMinutes(1));
@@ -615,8 +630,30 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
 
         instanceMessageReceiveService.processStudentExamIndividualWorkingTimeChangeDuringConduction(studentExam.getId());
 
-        verify(versionControlService, timeout(TIMEOUT_MS)).setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUrl(), examExercise.getProjectKey(),
+        verify(versionControlService, timeout(TIMEOUT_MS)).setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUri(), examExercise.getProjectKey(),
                 participation.getStudents());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testRescheduleExamDuringConduction() {
+        ProgrammingExercise examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        Exam exam = examExercise.getExamViaExerciseGroupOrCourseMember();
+        exam.setStartDate(ZonedDateTime.now().minusMinutes(1));
+        exam = examRepository.saveAndFlush(exam);
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, user);
+        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationUtilService
+                .addProgrammingParticipationWithResultForExercise(examExercise, TEST_PREFIX + "student1").getParticipation();
+        studentExam.setExercises(List.of(examExercise));
+        studentExam.setWorkingTime(1);
+        studentExamRepository.saveAndFlush(studentExam);
+
+        instanceMessageReceiveService.processRescheduleExamDuringConduction(exam.getId());
+
+        verify(versionControlService, timeout(TIMEOUT_MS)).setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUri(), examExercise.getProjectKey(),
+                participation.getStudents());
+        verify(programmingExerciseParticipationService, timeout(TIMEOUT_MS)).lockStudentRepositoryAndParticipation(examExercise, participation);
     }
 
     /**

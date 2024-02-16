@@ -3,10 +3,12 @@ package de.tum.in.www1.artemis.connectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.mockito.ArgumentCaptor.*;
 import static org.mockito.Mockito.*;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletResponse;
@@ -25,15 +27,15 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.nimbusds.jose.shaded.json.JSONObject;
-import com.nimbusds.jose.shaded.json.parser.JSONParser;
-import com.nimbusds.jose.shaded.json.parser.ParseException;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lti.LtiResourceLaunch;
 import de.tum.in.www1.artemis.domain.lti.Scopes;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
 import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
@@ -73,6 +75,12 @@ class Lti13ServiceTest {
     @Mock
     private RestTemplate restTemplate;
 
+    @Mock
+    private ArtemisAuthenticationProvider artemisAuthenticationProvider;
+
+    @Mock
+    private LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
+
     private OidcIdToken oidcIdToken;
 
     private String clientRegistrationId;
@@ -81,15 +89,20 @@ class Lti13ServiceTest {
 
     private AutoCloseable closeable;
 
+    private LtiPlatformConfiguration ltiPlatformConfiguration;
+
     @BeforeEach
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
         lti13Service = new Lti13Service(userRepository, exerciseRepository, courseRepository, launchRepository, ltiService, resultRepository, tokenRetriever,
-                onlineCourseConfigurationService, restTemplate);
+                onlineCourseConfigurationService, restTemplate, artemisAuthenticationProvider, ltiPlatformConfigurationRepository);
         clientRegistrationId = "clientId";
         onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.setUserPrefix("prefix");
         oidcIdToken = mock(OidcIdToken.class);
+
+        ltiPlatformConfiguration = new LtiPlatformConfiguration();
+        ltiPlatformConfiguration.setRegistrationId("client-registration");
     }
 
     @AfterEach
@@ -102,59 +115,26 @@ class Lti13ServiceTest {
 
     @Test
     void performLaunch_exerciseFound() {
-        long exerciseId = 134;
-        Exercise exercise = new TextExercise();
-        exercise.setId(exerciseId);
+        MockExercise result = getMockExercise(true);
 
-        long courseId = 12;
-        Course course = new Course();
-        course.setId(courseId);
-        course.setOnlineCourseConfiguration(new OnlineCourseConfiguration());
-        exercise.setCourse(course);
-        doReturn(Optional.of(exercise)).when(exerciseRepository).findById(exerciseId);
-        doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
-
-        when(oidcIdToken.getEmail()).thenReturn("testuser@email.com");
         when(oidcIdToken.getClaim("sub")).thenReturn("1");
-        when(oidcIdToken.getClaim("iss")).thenReturn("http://otherDomain.com");
+        when(oidcIdToken.getClaim("iss")).thenReturn("https://otherDomain.com");
         when(oidcIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID)).thenReturn("1");
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("id", "resourceLinkUrl");
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("id", "resourceLinkUrl");
         when(oidcIdToken.getClaim(Claims.RESOURCE_LINK)).thenReturn(jsonObject);
-        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/courses/" + courseId + "/exercises/" + exerciseId);
-
-        User user = new User();
-        doReturn(user).when(userRepository).getUserWithGroupsAndAuthorities();
-        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
-        doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
+        prepareForPerformLaunch(result.courseId(), result.exerciseId());
 
         lti13Service.performLaunch(oidcIdToken, clientRegistrationId);
 
-        verify(launchRepository).findByIssAndSubAndDeploymentIdAndResourceLinkId("http://otherDomain.com", "1", "1", "resourceLinkUrl");
+        verify(launchRepository).findByIssAndSubAndDeploymentIdAndResourceLinkId("https://otherDomain.com", "1", "1", "resourceLinkUrl");
         verify(launchRepository).save(any());
     }
 
     @Test
     void performLaunch_invalidToken() {
-        long exerciseId = 134;
-        Exercise exercise = new TextExercise();
-        exercise.setId(exerciseId);
-
-        long courseId = 12;
-        Course course = new Course();
-        course.setId(courseId);
-        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
-        exercise.setCourse(course);
-        doReturn(Optional.of(exercise)).when(exerciseRepository).findById(exerciseId);
-        doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
-
-        when(oidcIdToken.getEmail()).thenReturn("testuser@email.com");
-        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/courses/" + courseId + "/exercises/" + exerciseId);
-
-        User user = new User();
-        doReturn(user).when(userRepository).getUserWithGroupsAndAuthorities();
-        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
-        doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
+        MockExercise exercise = this.getMockExercise(true);
+        prepareForPerformLaunch(exercise.courseId, exercise.exerciseId);
 
         assertThatIllegalArgumentException().isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
 
@@ -222,19 +202,9 @@ class Lti13ServiceTest {
 
     @Test
     void performLaunch_notOnlineCourse() {
-        long exerciseId = 134;
-        Exercise exercise = new TextExercise();
-        exercise.setId(exerciseId);
-
-        long courseId = 12;
-        Course course = new Course();
-        course.setId(courseId);
-        exercise.setCourse(course);
-        doReturn(Optional.of(exercise)).when(exerciseRepository).findById(exerciseId);
-        doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
-
+        MockExercise exercise = this.getMockExercise(false);
         OidcIdToken oidcIdToken = mock(OidcIdToken.class);
-        doReturn("https://some-artemis-domain.org/courses/" + courseId + "/exercises/" + exerciseId).when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
+        doReturn("https://some-artemis-domain.org/courses/" + exercise.courseId + "/exercises/" + exercise.exerciseId).when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
 
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
     }
@@ -293,8 +263,7 @@ class Lti13ServiceTest {
 
     @Test
     void onNewResultNoOnlineCourseConfiguration() {
-        Course course = new Course();
-        course.setId(1L);
+        Course course = createOnlineCourse();
         Exercise exercise = new ProgrammingExercise();
         exercise.setCourse(course);
         StudentParticipation participation = new StudentParticipation();
@@ -302,6 +271,7 @@ class Lti13ServiceTest {
 
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
         doReturn(null).when(onlineCourseConfigurationService).getClientRegistration(any());
+        doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(any());
 
         lti13Service.onNewResult(participation);
 
@@ -311,8 +281,7 @@ class Lti13ServiceTest {
 
     @Test
     void onNewResultNoLaunchesForUser() {
-        Course course = new Course();
-        course.setId(1L);
+        Course course = createOnlineCourse();
         User user = new User();
         user.setId(1L);
         Exercise exercise = new ProgrammingExercise();
@@ -325,6 +294,7 @@ class Lti13ServiceTest {
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
         doReturn(mock(ClientRegistration.class)).when(onlineCourseConfigurationService).getClientRegistration(any());
         doReturn(Collections.emptyList()).when(launchRepository).findByUserAndExercise(user, exercise);
+        doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(any());
 
         lti13Service.onNewResult(participation);
 
@@ -334,8 +304,7 @@ class Lti13ServiceTest {
 
     @Test
     void onNewResultNoResultForUser() {
-        Course course = new Course();
-        course.setId(1L);
+        Course course = createOnlineCourse();
         User user = new User();
         user.setId(1L);
         Exercise exercise = new ProgrammingExercise();
@@ -350,7 +319,8 @@ class Lti13ServiceTest {
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
         doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());
         doReturn(Collections.singletonList(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
-        doReturn(Optional.empty()).when(resultRepository).findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        doReturn(Optional.empty()).when(resultRepository).findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(any());
 
         lti13Service.onNewResult(participation);
 
@@ -367,8 +337,7 @@ class Lti13ServiceTest {
         feedback.setDetailText("Not so good");
         result.addFeedback(feedback);
 
-        Course course = new Course();
-        course.setId(1L);
+        Course course = createOnlineCourse();
         User user = new User();
         user.setId(1L);
         Exercise exercise = new ProgrammingExercise();
@@ -383,7 +352,8 @@ class Lti13ServiceTest {
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
         doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());
         doReturn(Collections.singletonList(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
-        doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(any());
 
         lti13Service.onNewResult(participation);
 
@@ -411,8 +381,9 @@ class Lti13ServiceTest {
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
         doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());
         doReturn(Collections.singletonList(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
-        doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
         doReturn(null).when(tokenRetriever).getToken(eq(clientRegistration), eq(Scopes.AGS_SCORE));
+        doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(any());
 
         lti13Service.onNewResult(participation);
 
@@ -420,7 +391,7 @@ class Lti13ServiceTest {
     }
 
     @Test
-    void onNewResult() throws ParseException {
+    void onNewResult() {
         Result result = new Result();
         double scoreGiven = 60D;
         result.setScore(scoreGiven);
@@ -443,9 +414,9 @@ class Lti13ServiceTest {
         ClientRegistration clientRegistration = state.clientRegistration();
 
         doReturn(Collections.singletonList(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
-        doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
-
+        doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(clientRegistrationId);
         doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());
 
         String accessToken = "accessToken";
@@ -453,37 +424,58 @@ class Lti13ServiceTest {
 
         lti13Service.onNewResult(participation);
 
-        ArgumentCaptor<String> urlCapture = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<HttpEntity<String>> httpEntityCapture = ArgumentCaptor.forClass(HttpEntity.class);
+        ArgumentCaptor<String> urlCapture = forClass(String.class);
+        var httpEntityCapture = forClass(HttpEntity.class);
 
         verify(restTemplate).postForEntity(urlCapture.capture(), httpEntityCapture.capture(), any());
 
-        HttpEntity<String> httpEntity = httpEntityCapture.getValue();
+        HttpEntity<?> capturedHttpEntity = httpEntityCapture.getValue();
+        assertThat(capturedHttpEntity.getBody()).isInstanceOf(String.class);
+
+        HttpEntity<String> httpEntity = new HttpEntity<>((String) capturedHttpEntity.getBody(), capturedHttpEntity.getHeaders());
 
         List<String> authHeaders = httpEntity.getHeaders().get("Authorization");
         assertThat(authHeaders).as("Score publish request must contain an Authorization header").isNotNull();
         assertThat(authHeaders).as("Score publish request must contain the corresponding Authorization Bearer token").contains("Bearer " + accessToken);
 
-        JSONParser jsonParser = new JSONParser(JSONParser.MODE_JSON_SIMPLE);
-        JSONObject body = (JSONObject) jsonParser.parse(httpEntity.getBody());
-        assertThat(body.get("userId")).as("Invalid parameter in score publish request: userId").isEqualTo(launch.getSub());
-        assertThat(body.get("timestamp")).as("Parameter missing in score publish request: timestamp").isNotNull();
-        assertThat(body.get("activityProgress")).as("Parameter missing in score publish request: activityProgress").isNotNull();
-        assertThat(body.get("gradingProgress")).as("Parameter missing in score publish request: gradingProgress").isNotNull();
+        JsonObject body = JsonParser.parseString(Objects.requireNonNull(httpEntity.getBody())).getAsJsonObject();
+        assertThat(body.get("userId").getAsString()).as("Invalid parameter in score publish request: userId").isEqualTo(launch.getSub());
+        assertThat(body.get("timestamp").getAsString()).as("Parameter missing in score publish request: timestamp").isNotNull();
+        assertThat(body.get("activityProgress").getAsString()).as("Parameter missing in score publish request: activityProgress").isNotNull();
+        assertThat(body.get("gradingProgress").getAsString()).as("Parameter missing in score publish request: gradingProgress").isNotNull();
 
-        assertThat(body.get("comment")).as("Invalid parameter in score publish request: comment").isEqualTo("Good job. Not so good");
-        assertThat(body.get("scoreGiven")).as("Invalid parameter in score publish request: scoreGiven").isEqualTo(scoreGiven);
-        assertThat(body.get("scoreMaximum")).as("Invalid parameter in score publish request: scoreMaximum").isEqualTo(100d);
+        assertThat(body.get("comment").getAsString()).as("Invalid parameter in score publish request: comment").isEqualTo("Good job. Not so good");
+        assertThat(body.get("scoreGiven").getAsDouble()).as("Invalid parameter in score publish request: scoreGiven").isEqualTo(scoreGiven);
+        assertThat(body.get("scoreMaximum").getAsDouble()).as("Invalid parameter in score publish request: scoreMaximum").isEqualTo(100d);
 
         assertThat(launch.getScoreLineItemUrl() + "/scores").as("Score publish request was sent to a wrong URI").isEqualTo(urlCapture.getValue());
+
+    }
+
+    @Test
+    void startDeepLinkingLtiConfigurationFound() {
+        when(oidcIdToken.getEmail()).thenReturn("testuser@email.com");
+
+        doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(clientRegistrationId);
+        Optional<User> user = Optional.of(new User());
+        doReturn(user).when(userRepository).findOneWithGroupsAndAuthoritiesByLogin(any());
+        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
+        doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
+
+        lti13Service.startDeepLinking(oidcIdToken, clientRegistrationId);
+    }
+
+    @Test
+    void startDeepLinkingPlatformNotFound() {
+        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/lti/deep-linking");
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.startDeepLinking(oidcIdToken, clientRegistrationId));
     }
 
     private State getValidStateForNewResult(Result result) {
         User user = new User();
         user.setLogin("someone");
 
-        Course course = new Course();
-        course.setId(1L);
+        Course course = createOnlineCourse();
 
         Exercise exercise = new ProgrammingExercise();
         exercise.setMaxPoints(80d);
@@ -512,5 +504,45 @@ class Lti13ServiceTest {
      */
     private record State(LtiResourceLaunch ltiResourceLaunch, Exercise exercise, User user, StudentParticipation participation, Result result,
             ClientRegistration clientRegistration) {
+    }
+
+    private MockExercise getMockExercise(boolean isOnlineCourse) {
+        long exerciseId = 134;
+        Exercise exercise = new TextExercise();
+        exercise.setId(exerciseId);
+
+        long courseId = 12;
+        Course course = new Course();
+        course.setId(courseId);
+        if (isOnlineCourse) {
+            course.setOnlineCourseConfiguration(new OnlineCourseConfiguration());
+        }
+        exercise.setCourse(course);
+        doReturn(Optional.of(exercise)).when(exerciseRepository).findById(exerciseId);
+        doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
+        return new MockExercise(exerciseId, courseId);
+    }
+
+    private record MockExercise(long exerciseId, long courseId) {
+    }
+
+    private void prepareForPerformLaunch(long courseId, long exerciseId) {
+        when(oidcIdToken.getEmail()).thenReturn("testuser@email.com");
+        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/courses/" + courseId + "/exercises/" + exerciseId);
+
+        Optional<User> user = Optional.of(new User());
+        doReturn(user).when(userRepository).findOneWithGroupsAndAuthoritiesByLogin(any());
+        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
+        doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
+    }
+
+    private Course createOnlineCourse() {
+        Course course = new Course();
+        course.setId(1L);
+        OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
+        onlineCourseConfiguration.setLtiPlatformConfiguration(ltiPlatformConfiguration);
+        onlineCourseConfiguration.setCourse(course);
+        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+        return course;
     }
 }

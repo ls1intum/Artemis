@@ -9,6 +9,7 @@ import { MockTranslateService } from '../../../../helpers/mocks/service/mock-tra
 import { TranslateService } from '@ngx-translate/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { WorkingTimeChangeComponent } from 'app/exam/shared/working-time-change/working-time-change.component';
 
 describe('ExamLiveEventComponent', () => {
     let component: ExamLiveEventComponent;
@@ -16,7 +17,7 @@ describe('ExamLiveEventComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [ExamLiveEventComponent, ArtemisTranslatePipe, ArtemisDatePipe, HtmlForMarkdownPipe, ArtemisDurationFromSecondsPipe],
+            declarations: [ExamLiveEventComponent, WorkingTimeChangeComponent, ArtemisTranslatePipe, ArtemisDatePipe, HtmlForMarkdownPipe, ArtemisDurationFromSecondsPipe],
             imports: [FontAwesomeModule],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
@@ -38,6 +39,17 @@ describe('ExamLiveEventComponent', () => {
 
         expect(typeElement.textContent).toContain('artemisApp.exam.events.type.examWideAnnouncement');
         expect(authorElement.textContent).toBe('John Doe');
+    });
+
+    it('should display the attendance check event', () => {
+        component.event = {
+            eventType: ExamLiveEventType.EXAM_ATTENDANCE_CHECK,
+        } as ExamLiveEvent;
+
+        fixture.detectChanges();
+
+        const typeElement = fixture.debugElement.query(By.css('.type')).nativeElement;
+        expect(typeElement.textContent).toContain('artemisApp.exam.events.type.examAttendanceCheck');
     });
 
     it('should display exam-wide announcement text when event is of type EXAM_WIDE_ANNOUNCEMENT', () => {
@@ -62,8 +74,8 @@ describe('ExamLiveEventComponent', () => {
 
         fixture.detectChanges();
 
-        const previousTimeElement = fixture.debugElement.query(By.css('.previous > .time')).nativeElement;
-        const newTimeElement = fixture.debugElement.query(By.css('.new > .time')).nativeElement;
+        const previousTimeElement = fixture.debugElement.query(By.css('[data-testid="old-time"]')).nativeElement;
+        const newTimeElement = fixture.debugElement.query(By.css('[data-testid="new-time"]')).nativeElement;
         const titleElement = fixture.debugElement.query(By.css('.wt-title')).nativeElement;
 
         expect(previousTimeElement.textContent).toContain('5min');

@@ -1,8 +1,12 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins.build_plan;
 
+import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_API_PATH;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -31,14 +35,23 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.offbytwo.jenkins.JenkinsServer;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
+import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.in.www1.artemis.exception.JenkinsException;
+import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildPlanService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusRepository;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsEndpoints;
@@ -78,9 +91,23 @@ public class JenkinsBuildPlanService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final BuildPlanRepository buildPlanRepository;
+
+    private final Optional<AeolusBuildPlanService> aeolusBuildPlanService;
+
+    @Value("${server.url}")
+    private URL artemisServerUrl;
+
+    @Value("${artemis.continuous-integration.artemis-authentication-token-key}")
+    private String artemisAuthenticationTokenKey;
+
+    @Value("${artemis.continuous-integration.vcs-credentials}")
+    private String vcsCredentials;
+
     public JenkinsBuildPlanService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, JenkinsBuildPlanCreator jenkinsBuildPlanCreator,
             JenkinsJobService jenkinsJobService, JenkinsJobPermissionsService jenkinsJobPermissionsService, JenkinsInternalUrlService jenkinsInternalUrlService,
-            UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, JenkinsPipelineScriptCreator jenkinsPipelineScriptCreator) {
+            UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, JenkinsPipelineScriptCreator jenkinsPipelineScriptCreator,
+            BuildPlanRepository buildPlanRepository, Optional<AeolusBuildPlanService> aeolusBuildPlanService) {
         this.restTemplate = restTemplate;
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
@@ -90,6 +117,8 @@ public class JenkinsBuildPlanService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.jenkinsInternalUrlService = jenkinsInternalUrlService;
         this.jenkinsPipelineScriptCreator = jenkinsPipelineScriptCreator;
+        this.buildPlanRepository = buildPlanRepository;
+        this.aeolusBuildPlanService = aeolusBuildPlanService;
     }
 
     /**
@@ -97,33 +126,41 @@ public class JenkinsBuildPlanService {
      *
      * @param exercise      the programming exercise
      * @param planKey       the name of the plan
-     * @param repositoryURL the url of the vcs repository
+     * @param repositoryUri the uri of the vcs repository
      */
-    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL) {
-        final JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs internalRepositoryUrls = getInternalRepositoryUrls(exercise, repositoryURL);
+    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri) {
+        final JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs internalRepositoryUris = getInternalRepositoryUris(exercise, repositoryUri);
 
         final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
         final String buildPlanUrl = jenkinsPipelineScriptCreator.generateBuildPlanURL(exercise);
         final boolean checkoutSolution = exercise.getCheckoutSolutionRepository();
-        final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUrls, checkoutSolution,
+        final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUris, checkoutSolution,
                 buildPlanUrl);
 
-        // create build plan in database first, otherwise the job in Jenkins cannot find it for the initial build
-        jenkinsPipelineScriptCreator.createBuildPlanForExercise(exercise);
-
         final String jobFolder = exercise.getProjectKey();
-        final String job = jobFolder + "-" + planKey;
-        jenkinsJobService.createJobInFolder(jobConfig, jobFolder, job);
+        String job = jobFolder + "-" + planKey;
+        boolean couldCreateBuildPlan = false;
+
+        if (aeolusBuildPlanService.isPresent() && exercise.getBuildPlanConfiguration() != null) {
+            var createdJob = createCustomAeolusBuildPlanForExercise(exercise, jobFolder + "/" + job, internalRepositoryUris.assignmentRepositoryUri(),
+                    internalRepositoryUris.testRepositoryUri(), internalRepositoryUris.solutionRepositoryUri());
+            couldCreateBuildPlan = createdJob != null;
+        }
+        if (!couldCreateBuildPlan) {
+            // create build plan in database first, otherwise the job in Jenkins cannot find it for the initial build
+            jenkinsPipelineScriptCreator.createBuildPlanForExercise(exercise);
+            jenkinsJobService.createJobInFolder(jobConfig, jobFolder, job);
+        }
 
         givePlanPermissions(exercise, planKey);
         triggerBuild(jobFolder, job);
     }
 
-    private JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs getInternalRepositoryUrls(final ProgrammingExercise exercise, final VcsRepositoryUrl assignmentRepositoryUrl) {
-        final VcsRepositoryUrl assignmentUrl = jenkinsInternalUrlService.toInternalVcsUrl(assignmentRepositoryUrl);
-        final VcsRepositoryUrl testUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURL(RepositoryType.TESTS));
-        final VcsRepositoryUrl solutionUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURL(RepositoryType.SOLUTION));
+    private JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs getInternalRepositoryUris(final ProgrammingExercise exercise, final VcsRepositoryUri assignmentRepositoryUri) {
+        final VcsRepositoryUri assignmentUrl = jenkinsInternalUrlService.toInternalVcsUrl(assignmentRepositoryUri);
+        final VcsRepositoryUri testUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURL(RepositoryType.TESTS));
+        final VcsRepositoryUri solutionUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURL(RepositoryType.SOLUTION));
 
         return new JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs(assignmentUrl, testUrl, solutionUrl);
     }
@@ -161,8 +198,8 @@ public class JenkinsBuildPlanService {
 
         String projectKey = programmingExercise.getProjectKey();
         String planKey = participation.getBuildPlanId();
-        String templateRepoUrl = programmingExercise.getTemplateRepositoryUrl();
-        updateBuildPlanRepositories(projectKey, planKey, participation.getRepositoryUrl(), templateRepoUrl);
+        String templateRepoUri = programmingExercise.getTemplateRepositoryUri();
+        updateBuildPlanRepositories(projectKey, planKey, participation.getRepositoryUri(), templateRepoUri);
         enablePlan(projectKey, planKey);
 
         // Students currently always have access to the build plan in Jenkins
@@ -173,24 +210,52 @@ public class JenkinsBuildPlanService {
      *
      * @param buildProjectKey the project key of the programming exercise
      * @param buildPlanKey    the build plan id of the participation
-     * @param newRepoUrl      the repository url that will replace the old url
-     * @param existingRepoUrl the old repository url that will be replaced
+     * @param newRepoUri      the repository uri that will replace the old url
+     * @param existingRepoUri the old repository uri that will be replaced
      */
-    public void updateBuildPlanRepositories(String buildProjectKey, String buildPlanKey, String newRepoUrl, String existingRepoUrl) {
-        newRepoUrl = jenkinsInternalUrlService.toInternalVcsUrl(newRepoUrl);
-        existingRepoUrl = jenkinsInternalUrlService.toInternalVcsUrl(existingRepoUrl);
+    public void updateBuildPlanRepositories(String buildProjectKey, String buildPlanKey, String newRepoUri, String existingRepoUri) {
+        newRepoUri = jenkinsInternalUrlService.toInternalVcsUrl(newRepoUri);
+        existingRepoUri = jenkinsInternalUrlService.toInternalVcsUrl(existingRepoUri);
 
-        // remove potential username from repo URL. Jenkins uses the Artemis Admin user and will fail if other usernames are in the URL
-        final var repoUrl = newRepoUrl.replaceAll("(https?://)(.*@)(.*)", "$1$3");
+        // remove potential username from repo URI. Jenkins uses the Artemis Admin user and will fail if other usernames are in the URI
+        final var repoUri = newRepoUri.replaceAll("(https?://)(.*@)(.*)", "$1$3");
         final Document jobConfig = jenkinsJobService.getJobConfigForJobInFolder(buildProjectKey, buildPlanKey);
 
         try {
-            JenkinsBuildPlanUtils.replaceScriptParameters(jobConfig, repoUrl, existingRepoUrl);
+            JenkinsBuildPlanUtils.replaceScriptParameters(jobConfig, existingRepoUri, repoUri);
         }
         catch (IllegalArgumentException e) {
             log.error("Pipeline Script not found", e);
         }
 
+        postBuildPlanConfigChange(buildPlanKey, buildProjectKey, jobConfig);
+    }
+
+    /**
+     * Replaces the old build plan URL with a new one containing an updated exercise and access token.
+     *
+     * @param templateExercise The exercise containing the old build plan URL.
+     * @param newExercise      The exercise of which the build plan URL is updated.
+     * @param jobConfig        The job config in Jenkins for the new exercise.
+     */
+    private void updateBuildPlanURLs(ProgrammingExercise templateExercise, ProgrammingExercise newExercise, Document jobConfig) {
+        final Long previousExerciseId = templateExercise.getId();
+        final String previousBuildPlanAccessSecret = templateExercise.getBuildPlanAccessSecret();
+        final Long newExerciseId = newExercise.getId();
+        final String newBuildPlanAccessSecret = newExercise.getBuildPlanAccessSecret();
+
+        String toBeReplaced = String.format("/%d/build-plan?secret=%s", previousExerciseId, previousBuildPlanAccessSecret);
+        String replacement = String.format("/%d/build-plan?secret=%s", newExerciseId, newBuildPlanAccessSecret);
+
+        try {
+            JenkinsBuildPlanUtils.replaceScriptParameters(jobConfig, toBeReplaced, replacement);
+        }
+        catch (IllegalArgumentException e) {
+            log.error("Pipeline Script not found", e);
+        }
+    }
+
+    private void postBuildPlanConfigChange(String buildPlanKey, String buildProjectKey, Document jobConfig) {
         final var errorMessage = "Error trying to configure build plan in Jenkins " + buildPlanKey;
         try {
             URI uri = JenkinsEndpoints.PLAN_CONFIG.buildEndpoint(serverUrl.toString(), buildProjectKey, buildPlanKey).build(true).toUri();
@@ -233,17 +298,25 @@ public class JenkinsBuildPlanService {
     /**
      * Copies a build plan to another and replaces the old reference to the master and main branch with a reference to the default branch
      *
-     * @param sourceProjectKey the source project key
-     * @param sourcePlanName   the source plan name
-     * @param targetProjectKey the target project key
-     * @param targetPlanName   the target plan name
+     * @param sourceExercise the source exercise
+     * @param sourcePlanName the source plan name
+     * @param targetExercise the target exercise
+     * @param targetPlanName the target plan name
      * @return the key of the created build plan
      */
-    public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetPlanName) {
+    public String copyBuildPlan(ProgrammingExercise sourceExercise, String sourcePlanName, ProgrammingExercise targetExercise, String targetPlanName) {
+        buildPlanRepository.copyBetweenExercises(sourceExercise, targetExercise);
+
+        String sourceProjectKey = sourceExercise.getProjectKey();
+        String targetProjectKey = targetExercise.getProjectKey();
+
         final var cleanTargetName = getCleanPlanName(targetPlanName);
         final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
         final var targetPlanKey = targetProjectKey + "-" + cleanTargetName;
         final var jobXml = jenkinsJobService.getJobConfigForJobInFolder(sourceProjectKey, sourcePlanKey);
+
+        updateBuildPlanURLs(sourceExercise, targetExercise, jobXml);
+
         jenkinsJobService.createJobInFolder(jobXml, targetProjectKey, targetPlanKey);
 
         return targetPlanKey;
@@ -362,7 +435,7 @@ public class JenkinsBuildPlanService {
     /**
      * Assigns access permissions to instructors and TAs for the specified build plan.
      * This is done by getting all users that belong to the instructor and TA groups of
-     * the exercise' course and adding permissions to the Jenkins job.
+     * the exercises' course and adding permissions to the Jenkins job.
      *
      * @param programmingExercise the programming exercise
      * @param planName            the name of the build plan
@@ -371,9 +444,12 @@ public class JenkinsBuildPlanService {
         try {
             // Retrieve the TAs and instructors that will be given access to the plan of the programming exercise
             Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-            var teachingAssistants = userRepository.findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
-            var editors = userRepository.findAllInGroupWithAuthorities(course.getEditorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
-            var instructors = userRepository.findAllInGroupWithAuthorities(course.getInstructorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
+            var teachingAssistants = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()).stream()
+                    .map(User::getLogin).collect(Collectors.toSet());
+            var editors = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getEditorGroupName()).stream().map(User::getLogin)
+                    .collect(Collectors.toSet());
+            var instructors = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()).stream().map(User::getLogin)
+                    .collect(Collectors.toSet());
 
             // The build plan of the exercise is inside the course folder
             var jobFolder = programmingExercise.getProjectKey();
@@ -381,7 +457,7 @@ public class JenkinsBuildPlanService {
             jenkinsJobPermissionsService.addInstructorAndEditorAndTAPermissionsToUsersForJob(teachingAssistants, editors, instructors, jobFolder, jobName);
         }
         catch (IOException e) {
-            throw new JenkinsException("Cannot give assign permissions to plan" + planName, e);
+            throw new JenkinsException("Cannot give assign permissions to plan " + planName, e);
         }
     }
 
@@ -399,5 +475,46 @@ public class JenkinsBuildPlanService {
         catch (HttpClientErrorException e) {
             throw new JenkinsException("Unable to enable plan " + planKey + "; statusCode=" + e.getStatusCode() + "; body=" + e.getResponseBodyAsString());
         }
+    }
+
+    /**
+     * Creates a custom Build Plan for a Programming Exercise using Aeolus. If the build plan could not be created, null is
+     * returned. Example: "PROJECT-BUILDPLANKEY" is created -> "PROJECT-BUILDPLANKEY" is returned, same as the
+     * default build plan creation.
+     *
+     * @param programmingExercise   the programming exercise for which to create the build plan
+     * @param buildPlanId           the id of the build plan
+     * @param repositoryUri         the url of the assignment repository
+     * @param testRepositoryUri     the url of the test repository
+     * @param solutionRepositoryUri the url of the solution repository
+     * @return the key of the created build plan, or null if it could not be created
+     */
+    private String createCustomAeolusBuildPlanForExercise(ProgrammingExercise programmingExercise, String buildPlanId, VcsRepositoryUri repositoryUri,
+            VcsRepositoryUri testRepositoryUri, VcsRepositoryUri solutionRepositoryUri) throws ContinuousIntegrationBuildPlanException {
+        if (aeolusBuildPlanService.isEmpty() || programmingExercise.getBuildPlanConfiguration() == null) {
+            return null;
+        }
+        try {
+            Windfile windfile = programmingExercise.getWindfile();
+            Map<String, AeolusRepository> repositories = aeolusBuildPlanService.get().createRepositoryMapForWindfile(programmingExercise.getProgrammingLanguage(),
+                    programmingExercise.getBranch(), programmingExercise.getCheckoutSolutionRepository(), repositoryUri, testRepositoryUri, solutionRepositoryUri, List.of());
+
+            String resultHookUrl = artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH;
+            windfile.setPreProcessingMetadata(buildPlanId, programmingExercise.getProjectName(), this.vcsCredentials, resultHookUrl, "planDescription", repositories,
+                    this.artemisAuthenticationTokenKey);
+            String generatedKey = aeolusBuildPlanService.get().publishBuildPlan(windfile, AeolusTarget.JENKINS);
+
+            if (generatedKey != null && generatedKey.contains("-")) {
+                return buildPlanId;
+            }
+            else {
+                throw new ContinuousIntegrationBuildPlanException("Could not create custom build plan for exercise " + programmingExercise.getTitle());
+            }
+        }
+        catch (ContinuousIntegrationBuildPlanException e) {
+            log.error("Could not create custom build plan for exercise " + programmingExercise.getTitle() + " with id " + programmingExercise.getId()
+                    + ", will create default build plan", e);
+        }
+        return null;
     }
 }

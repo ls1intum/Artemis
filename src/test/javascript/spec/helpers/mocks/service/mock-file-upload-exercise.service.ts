@@ -10,6 +10,7 @@ fileUploadExercise.maxPoints = 20;
 fileUploadExercise.filePattern = 'pdf,png';
 fileUploadExercise.problemStatement = 'Example problem statement';
 fileUploadExercise.course = new Course();
+fileUploadExercise.categories = [];
 
 export class MockFileUploadExerciseService {
     create = (fileUploadExerciseParam: FileUploadExercise) => of();

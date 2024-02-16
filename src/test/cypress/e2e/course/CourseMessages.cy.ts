@@ -20,6 +20,17 @@ describe('Course messages', () => {
         });
     });
 
+    it('accepts code of conduct', () => {
+        cy.login(instructor, `/courses/${course.id}/messages`);
+        courseMessages.acceptCodeOfConductButton();
+        cy.login(studentOne, `/courses/${course.id}/messages`);
+        courseMessages.acceptCodeOfConductButton();
+        cy.login(studentTwo, `/courses/${course.id}/messages`);
+        courseMessages.acceptCodeOfConductButton();
+        cy.login(tutor, `/courses/${course.id}/messages`);
+        courseMessages.acceptCodeOfConductButton();
+    });
+
     describe('Channel messages', () => {
         describe('Create channel', () => {
             it('check for pre-created channels', () => {
@@ -127,7 +138,7 @@ describe('Course messages', () => {
                 cy.login(admin);
                 communicationAPIRequest.createCourseMessageChannel(course, 'test-channel', 'Test Channel', true, true).then((response) => {
                     channel = response.body;
-                    communicationAPIRequest.joinUserIntoChannel(course, channel, instructor);
+                    communicationAPIRequest.joinUserIntoChannel(course, channel.id!, instructor);
                 });
             });
 
@@ -197,7 +208,7 @@ describe('Course messages', () => {
                 cy.login(admin);
                 communicationAPIRequest.createCourseMessageChannel(course, 'write-test-channel', 'Write Test Channel', false, true).then((response) => {
                     channel = response.body;
-                    communicationAPIRequest.joinUserIntoChannel(course, channel, studentOne);
+                    communicationAPIRequest.joinUserIntoChannel(course, channel.id!, studentOne);
                 });
             });
 
@@ -223,7 +234,7 @@ describe('Course messages', () => {
                 });
             });
 
-            it('student should be able to delete his message in channel', () => {
+            it('student should be able to delete message in channel', () => {
                 cy.login(studentOne, `/courses/${course.id}/messages?conversationId=${channel.id}`);
                 const messageText = 'Student Edit Test Message';
                 communicationAPIRequest.createCourseMessage(course, channel.id!, 'channel', messageText).then((response) => {
@@ -398,7 +409,7 @@ describe('Course messages', () => {
                 });
             });
 
-            it('student should be able to delete his message in group chat', () => {
+            it('student should be able to delete message in group chat', () => {
                 cy.login(studentOne, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
                 const messageText = 'Student Edit Test Message';
                 communicationAPIRequest.createCourseMessage(course, groupChat.id!, 'groupChat', messageText).then((response) => {

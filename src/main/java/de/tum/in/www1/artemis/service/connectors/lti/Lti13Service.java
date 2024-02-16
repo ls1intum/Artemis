@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.stereotype.Service;
@@ -26,14 +27,16 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.google.gson.JsonObject;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lti.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
 import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import net.minidev.json.JSONObject;
 
 @Service
 @Profile("lti")
@@ -41,7 +44,7 @@ public class Lti13Service {
 
     private static final String EXERCISE_PATH_PATTERN = "/courses/{courseId}/exercises/{exerciseId}";
 
-    private final Logger log = LoggerFactory.getLogger(Lti13Service.class);
+    private static final Logger log = LoggerFactory.getLogger(Lti13Service.class);
 
     private final UserRepository userRepository;
 
@@ -59,11 +62,15 @@ public class Lti13Service {
 
     private final OnlineCourseConfigurationService onlineCourseConfigurationService;
 
+    private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
+
+    private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
+
     private final RestTemplate restTemplate;
 
     public Lti13Service(UserRepository userRepository, ExerciseRepository exerciseRepository, CourseRepository courseRepository, Lti13ResourceLaunchRepository launchRepository,
             LtiService ltiService, ResultRepository resultRepository, Lti13TokenRetriever tokenRetriever, OnlineCourseConfigurationService onlineCourseConfigurationService,
-            RestTemplate restTemplate) {
+            RestTemplate restTemplate, ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.courseRepository = courseRepository;
@@ -73,6 +80,8 @@ public class Lti13Service {
         this.tokenRetriever = tokenRetriever;
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.restTemplate = restTemplate;
+        this.artemisAuthenticationProvider = artemisAuthenticationProvider;
+        this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
     }
 
     /**
@@ -101,14 +110,23 @@ public class Lti13Service {
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
         }
 
-        ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
-                ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        ltiService.onSuccessfulLtiAuthentication(user, targetExercise.get());
+        Optional<String> optionalUsername = artemisAuthenticationProvider.getUsernameForEmail(ltiIdToken.getEmail());
 
+        if (!onlineCourseConfiguration.isRequireExistingUser() && optionalUsername.isEmpty()) {
+            SecurityContextHolder.getContext().setAuthentication(ltiService.createNewUserFromLaunchRequest(ltiIdToken.getEmail(),
+                    createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(), ltiIdToken.getFamilyName()));
+
+        }
+
+        String username = optionalUsername.orElseGet(() -> createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration));
+        User user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username).orElseThrow();
+        ltiService.onSuccessfulLtiAuthentication(user, targetExercise.get());
         Lti13LaunchRequest launchRequest = launchRequestFrom(ltiIdToken, clientRegistrationId);
 
         createOrUpdateResourceLaunch(launchRequest, user, targetExercise.get());
+
+        ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
+                ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
     }
 
     /**
@@ -153,7 +171,9 @@ public class Lti13Service {
      */
     public void onNewResult(StudentParticipation participation) {
         Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
-        ClientRegistration clientRegistration = onlineCourseConfigurationService.getClientRegistration(course.getOnlineCourseConfiguration());
+
+        LtiPlatformConfiguration ltiPlatformConfiguration = course.getOnlineCourseConfiguration().getLtiPlatformConfiguration();
+        ClientRegistration clientRegistration = onlineCourseConfigurationService.getClientRegistration(ltiPlatformConfiguration);
         if (clientRegistration == null) {
             log.error("Could not transmit score to external LMS for course {}: client registration not found", course.getTitle());
             return;
@@ -168,7 +188,7 @@ public class Lti13Service {
                 return;
             }
 
-            Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+            Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
 
             if (result.isEmpty()) {
                 log.error("onNewResult triggered for participation {} but no result could be found", participation.getId());
@@ -222,15 +242,15 @@ public class Lti13Service {
     }
 
     private String getScoreBody(String userId, String comment, Double score) {
-        JSONObject requestBody = new JSONObject();
-        requestBody.put("userId", userId);
-        requestBody.put("timestamp", (new DateTime()).toString());
-        requestBody.put("activityProgress", "Submitted");
-        requestBody.put("gradingProgress", "FullyGraded");
-        requestBody.put("comment", comment);
-        requestBody.put("scoreGiven", score);
-        requestBody.put("scoreMaximum", 100D);
-        return requestBody.toJSONString();
+        JsonObject requestBody = new JsonObject();
+        requestBody.addProperty("userId", userId);
+        requestBody.addProperty("timestamp", (new DateTime()).toString());
+        requestBody.addProperty("activityProgress", "Submitted");
+        requestBody.addProperty("gradingProgress", "FullyGraded");
+        requestBody.addProperty("comment", comment);
+        requestBody.addProperty("scoreGiven", score);
+        requestBody.addProperty("scoreMaximum", 100D);
+        return requestBody.toString();
     }
 
     /**
@@ -294,5 +314,43 @@ public class Lti13Service {
      */
     public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
         ltiService.buildLtiResponse(uriComponentsBuilder, response);
+    }
+
+    /**
+     * Builds a response indicating the need for successful login with the associated username.
+     *
+     * @param response   The HttpServletResponse object.
+     * @param ltiIdToken The OIDC ID token with the LTI email address.
+     */
+    public void buildLtiEmailInUseResponse(HttpServletResponse response, OidcIdToken ltiIdToken) {
+        Optional<String> optionalUsername = artemisAuthenticationProvider.getUsernameForEmail(ltiIdToken.getEmail());
+
+        if (optionalUsername.isPresent()) {
+            String sanitizedUsername = getSanitizedUsername(optionalUsername.get());
+            response.addHeader("ltiSuccessLoginRequired", sanitizedUsername);
+        }
+        ltiService.prepareLogoutCookie(response);
+    }
+
+    private String getSanitizedUsername(String username) {
+        // Remove \r and LF \n characters to prevent HTTP response splitting
+        return username.replaceAll("[\r\n]", "");
+    }
+
+    /**
+     * Initiates the deep linking process for a course based on the provided LTI ID token and client registration ID.
+     *
+     * @param ltiIdToken           The ID token containing the deep linking information.
+     * @param clientRegistrationId The client registration ID associated with the LTI platform.
+     * @throws BadRequestAlertException if LTI is not configured.
+     */
+    public void startDeepLinking(OidcIdToken ltiIdToken, String clientRegistrationId) {
+
+        Optional<LtiPlatformConfiguration> ltiPlatformConfiguration = ltiPlatformConfigurationRepository.findByRegistrationId(clientRegistrationId);
+        if (ltiPlatformConfiguration.isEmpty()) {
+            throw new BadRequestAlertException("Configuration not found for this client registration ID:" + clientRegistrationId, "LTI", "ltiNotConfigured");
+        }
+
+        ltiService.authenticateLtiUser(ltiIdToken.getEmail(), ltiIdToken.getPreferredUsername(), ltiIdToken.getGivenName(), ltiIdToken.getFamilyName(), true);
     }
 }

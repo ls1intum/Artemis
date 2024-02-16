@@ -61,6 +61,7 @@
                 "steps": {
                     "generalInfoStepTitle": "Information",
                     "difficultyStepTitle": "Mode",
+                    "buildPlansTitle": "Build Plans",
                     "languageStepTitle": "Language",
                     "gradingStepTitle": "Grading",
                     "problemStepTitle": "Problem",
@@ -70,6 +71,7 @@
                     "generalInfoStepTitle": "General Information",
                     "generalInfoStepMessage": "Input essential information that forms the foundation of your programming exercise",
                     "difficultyStepTitle": "Mode",
+                    "buildPlansTitle": "Build Plans",
                     "difficultyStepMessage": "Configure the settings related to the execution and collaboration aspects of the programming exercise",
                     "languageStepTitle": "Programming Language",
                     "languageStepMessage": "Set the specific details related to the programming language used in the exercise as well as features directly related to it",
@@ -98,20 +100,28 @@
             "noReleaseAndStartDateWarning": "You have not defined a release and start date for this exercise, this means that it will be immediately published and students cam participate in the exercise.",
             "unsavedChangesLanguageChange": "The problem statement still contains unsaved changes. Do you really want to change the programming language?",
             "unsavedChangesProjectTypeChange": "The problem statement still contains unsaved changes. Do you really want to change the project type?",
-            "templateRepositoryUrl": "Template Repository Url",
-            "testRepositoryUrl": "Test Repository Url",
-            "solutionRepositoryUrl": "Solution Repository Url",
+            "templateRepositoryUri": "Template Repository Uri",
+            "testRepositoryUri": "Test Repository Uri",
+            "solutionRepositoryUri": "Solution Repository Uri",
             "auxiliaryRepositories": "Auxiliary Repositories",
             "noCheckoutDirectorySet": "No checkout directory was set.",
             "noCheckoutDirectorySetTooltip": "Since no checkout directory was specified, the repository was not automatically added to a build plan.",
             "templateBuildPlanId": "Template Build Plan Id",
             "solutionBuildPlanId": "Solution Build Plan Id",
             "repositories": "Repositories",
+            "openRepository": "Open Repository",
             "buildplans": "Build Plans",
             "buildplan": "Build Plan",
             "buildPlanEditor": "Build Plan Editor",
             "buildPlanFetchError": "Could not find a build plan for this exercise. This is expected for older exercises. Edit the build plan in the CI system or reset the build plan in Artemis to create a new one that is editable here.",
             "publishBuildPlanUrl": "Publish Build Plan",
+            "customizeBuildPlan": "Customize Build Plan",
+            "customizeBuildPlanWithAeolus": "Customize Build Plan with Aeolus",
+            "runActionAlways": "Always run, even if other actions fail",
+            "workdir": "Working Directory",
+            "parameters": "Parameters",
+            "dockerImage": "Docker Image",
+            "script": "Script",
             "allowOnlineEditor": {
                 "title": "Allow Online Editor",
                 "alert": "At least one option (Offline IDE or Online Editor) must be selected"
@@ -162,7 +172,7 @@
             "structureTestOracle": "Update Structure Test Oracle",
             "structureTestOracleWarning": "This action extracts all structural tests from the test repository and saves them in the test.json file. ATTENTION: All uncommitted changes from the online editor will be lost!",
             "combineTemplateCommits": "Combine Template Commits",
-            "checkPlagiarism": "Check Plagiarism",
+            "checkPlagiarism": "Plagiarism",
             "checkPlagiarismSuccess": "Plagiarism check finished. Results are included in the zip file.",
             "combineTemplateCommitsWarning": "This action combines all commits in the template repository into one commit. ATTENTION: All uncommitted changes from the online editor will be lost!",
             "combineTemplateCommitsError": "Template repository commits could not be combined.",
@@ -205,7 +215,9 @@
                 "missingTestCases": "There are {{number}} valid test cases in your test repository that were not found in the markdown of the problem statement:",
                 "issues": "Test case issues.",
                 "ok": "Test cases ok.",
-                "invalidTestCase": "The test case '{{id}}' could not be found in the test repository."
+                "invalidTestCase": "The test case '{{id}}' could not be found in the test repository.",
+                "repeatedTestCase": "The test case '{{id}}' is repeated.",
+                "repeatedTestCases": "There are {{number}} repeated test cases in the problem statement. This might cause unexpected behaviour:"
             },
             "tasksAnalysis": {
                 "issues": "Task issues.",
@@ -311,7 +323,7 @@
                 "notReleasedTooltip": "The programming exercise is not yet released or is released but does not yet have any student results. You may change the grading configuration without having to trigger existing student submissions with the updated settings."
             },
             "export": {
-                "downloadRepo": "Download Repo",
+                "downloadRepo": "Download Repository",
                 "downloadExampleSolution": "Download Example Solution",
                 "downloadTests": "Download tests",
                 "downloadTestsWithExampleSolution": "Download tests with example solution",
@@ -351,7 +363,8 @@
                     "tooltip": "Standardize line endings and encoding for consistency"
                 },
                 "successMessageRepos": "Export of repos was successful. The exported zip file with all repositories is currently being downloaded.",
-                "successMessageExercise": "Export of exercise was successful. The exported zip file with all exercise material is currently being downloaded."
+                "successMessageExercise": "Export of exercise was successful. The exported zip file with all exercise material is currently being downloaded.",
+                "notFoundMessageRepos": "No Repsoitories exported for exercise {{exerciseId}}: There are no submission of the given students."
             },
             "resubmitOnFailedSubmission": "An automatic assessment for this participant's last submission could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
             "resubmit": "Resubmit the last submission. This will execute a build run on the participant's repository without making a commit.",
@@ -483,6 +496,7 @@
                 },
                 "submissionPenalty": {
                     "optionLabel": "Submission Penalty",
+                    "detailLabel": "Submission Penalty Points",
                     "penaltyInputFieldTitle": "Exceeding Submission Limit Penalty",
                     "exceedingLimitDescription": "The number of points that is deducted from the result score for each submission exceeding the submission limit. Enter any number of points greater than 0.",
                     "penaltyInputFieldValidationWarning": {
@@ -495,7 +509,7 @@
                 "submissionPolicyType": {
                     "title": "Submission Policy Type",
                     "none": {
-                        "title": "None"
+                        "title": "-"
                     },
                     "lock_repository": {
                         "title": "Lock Repository",
@@ -518,12 +532,22 @@
             "diffReport": {
                 "button": "Show",
                 "tooltip": "Shows the detailed git-diff between the template and solution repositories.",
+                "tooltipBetweenSubmissions": "Shows the detailed git-diff between the current and previous submission.",
                 "title": "Template-Solution-Diff",
+                "titleForSubmissions": "Submission-Diff",
                 "template": "Template",
                 "solution": "Solution",
+                "previousSubmission": "Previous Submission",
+                "currentSubmission": "Current Submission",
                 "errorWhileFetchingRepos": "An error occurred while fetching the repositories. Please check your internet connection and reopen the modal.",
                 "404": "Template-Solution-Diff has not been generated yet. Please do a push to the template or solution repository to generate it.",
                 "lineStatLabel": "Lines added/removed between template and solution",
+                "lineStatBetweenSubmissionsCurrentSubmissionLabel": "Lines added/removed between the current submission with commit hash <span class=\"font-italic text-info\"> {{ currentCommitHash }} </span>",
+                "lineStatBetweenSubmissionsPreviousSubmissionLabel": " and the previous submission with commit hash <span class=\"font-italic text-info\"> {{ previousCommitHash }} </span>",
+                "lineStatBetweenSubmissionsTemplateLabel": "and the template",
+                "lineStatTooltipExamTimeline": "Unfiltered lines that were added and removed when comparing the current and the previous submission.",
+                "lineStatTooltipFullReportExamTimeline": "Filtered lines that were added and removed when comparing the current and the previous submission. This excludes empty lines.",
+                "lineStatTooltipFullEntryExamTimeline": "Filtered lines that were added and removed when comparing the current and the previous submission of this file. This excludes empty lines.",
                 "lineStatTooltipDetailPage": "Unfiltered lines that were added and removed when comparing the template and solution repositories",
                 "lineStatTooltipFullReport": "Filtered lines that were added and removed when comparing the template and solution repositories. This excludes empty lines.",
                 "lineStatTooltipFullEntry": "Filtered lines that were added and removed when comparing the template and solution versions of this file. This excludes empty lines."
@@ -541,6 +565,7 @@
             "withDependenciesTooltip": "Adds an external Apache commons-lang dependency to the generated project as an example how Maven dependencies should be used with Artemis exercises.",
             "recordTestwiseCoverage": "Record Testwise Coverage",
             "recordTestwiseCoverageTooltip": "Activate this option to record the testwise coverage for the solution repository. This option is only available for Java/Kotlin-exercises with non-sequential test runs.",
+            "customizeBuildPlansWithAeolusTooltip": "Activate this option to customize the build plans with Aeolus. This option is only available during exercise creation.",
             "coveredLineRatio": "Ratio Test-Covered Lines",
             "testwiseCoverageReport": {
                 "button": "Show testwise coverage",
@@ -561,7 +586,19 @@
                 "dependenciesDownloadedCount": "Number of downloaded dependencies",
                 "tooltip": "The average build duration is calculated based on all builds (template, solution and student submissions). The number of downloaded dependencies can be reduced by caching dependencies in the Docker image."
             },
-            "studentDownloadTestsTooltip": "Here you can download the tests. The example solution is automatically inserted in the place where you have to put your submission for testing."
+            "studentDownloadTestsTooltip": "Here you can download the tests. The example solution is automatically inserted in the place where you have to put your submission for testing.",
+            "commitInfo": {
+                "title": "Commit Information",
+                "commitHash": "Commit Hash",
+                "author": "Author",
+                "date": "Date",
+                "message": "Message",
+                "previousSubmission": "Previous Submission",
+                "currentSubmission": "Current Submission",
+                "template": "Template",
+                "history": "Commit History",
+                "result": "Result"
+            }
         },
         "error": {
             "noparticipations": "No existing user was specified or no submission exists."

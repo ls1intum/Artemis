@@ -10,7 +10,7 @@ import { MockParticipationWebsocketService } from '../../helpers/mocks/service/m
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -18,7 +18,7 @@ import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
@@ -27,7 +27,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { UMLElement, UMLModel } from '@ls1intum/apollon';
+import { UMLDiagramType, UMLElement, UMLModel } from '@ls1intum/apollon';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -44,7 +44,7 @@ import { HttpResponse } from '@angular/common/http';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { AlertService } from 'app/core/util/alert.service';
 
-describe('ModelingSubmission Management Component', () => {
+describe('ModelingSubmissionComponent', () => {
     // needed to make sure ace is defined
     ace.acequire('ace/ext/modelist.js');
     let comp: ModelingSubmissionComponent;
@@ -52,7 +52,6 @@ describe('ModelingSubmission Management Component', () => {
     let debugElement: DebugElement;
     let service: ModelingSubmissionService;
     let alertService: AlertService;
-    let router: Router;
 
     const route = { params: of({ courseId: 5, exerciseId: 22, participationId: 123 }) } as any as ActivatedRoute;
     const participation = new StudentParticipation();
@@ -99,7 +98,6 @@ describe('ModelingSubmission Management Component', () => {
                 debugElement = fixture.debugElement;
                 service = debugElement.injector.get(ModelingSubmissionService);
                 alertService = debugElement.injector.get(AlertService);
-                router = debugElement.injector.get(Router);
                 comp.modelingEditor = TestBed.createComponent(MockComponent(ModelingEditorComponent)).componentInstance;
             });
         console.error = jest.fn();
@@ -191,11 +189,12 @@ describe('ModelingSubmission Management Component', () => {
         expect(comp.isActive).toBeFalse();
     });
 
-    it('should navigate to access denied page on 403 error status', () => {
+    it('should catch error on 403 error status', () => {
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(throwError(() => ({ status: 403 })));
-        const routerStub = jest.spyOn(router, 'navigate').mockReturnValue(new Promise(() => true));
+        const alertServiceSpy = jest.spyOn(alertService, 'error');
         fixture.detectChanges();
-        expect(routerStub).toHaveBeenCalledOnce();
+
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
 
     it('should set correct properties on modeling exercise update when saving', () => {
@@ -313,14 +312,31 @@ describe('ModelingSubmission Management Component', () => {
     });
 
     it('should update selected entities with given elements', () => {
-        const relationships = ['relationShip1', 'relationShip2'];
-        const selection = { elements: ['ownerId1', 'ownerId2'], relationships };
+        const selection = {
+            elements: {
+                ownerId1: true,
+                ownerId2: true,
+            },
+            relationships: {
+                relationShip1: true,
+                relationShip2: true,
+            },
+        };
         comp.umlModel = <UMLModel>(<unknown>{
-            elements: [<UMLElement>(<unknown>{ owner: 'ownerId1', id: 'elementId1' }), <UMLElement>(<unknown>{ owner: 'ownerId2', id: 'elementId2' })],
+            elements: {
+                elementId1: <UMLElement>(<unknown>{
+                    owner: 'ownerId1',
+                    id: 'elementId1',
+                }),
+                elementId2: <UMLElement>(<unknown>{
+                    owner: 'ownerId2',
+                    id: 'elementId2',
+                }),
+            },
         });
         fixture.detectChanges();
         comp.onSelectionChanged(selection);
-        expect(comp.selectedRelationships).toEqual(relationships);
+        expect(comp.selectedRelationships).toEqual(['relationShip1', 'relationShip2']);
         expect(comp.selectedEntities).toEqual(['ownerId1', 'ownerId2', 'elementId1', 'elementId2']);
     });
 
@@ -463,5 +479,34 @@ describe('ModelingSubmission Management Component', () => {
         expect(referencedFeedback).toBeDefined();
         expect(referencedFeedback).toHaveLength(1);
         expect(referencedFeedback![0].isSubsequent).toBeTrue();
+    });
+
+    it('should be set up with input values if present instead of loading new values from server', () => {
+        // @ts-ignore method is private
+        const setUpComponentWithInputValuesSpy = jest.spyOn(comp, 'setupComponentWithInputValues');
+        const getDataForFileUploadEditorSpy = jest.spyOn(service, 'getLatestSubmissionForModelingEditor');
+        const modelingSubmission = submission;
+        modelingSubmission.model = JSON.stringify({
+            elements: [
+                {
+                    content: 'some element',
+                },
+            ],
+        });
+        comp.inputExercise = participation.exercise;
+        comp.inputSubmission = modelingSubmission;
+        comp.inputParticipation = participation;
+
+        fixture.detectChanges();
+
+        expect(setUpComponentWithInputValuesSpy).toHaveBeenCalledOnce();
+        expect(comp.modelingExercise).toEqual(participation.exercise);
+        expect(comp.submission).toEqual(modelingSubmission);
+        expect(comp.participation).toEqual(participation);
+        expect(comp.umlModel).toBeTruthy();
+        expect(comp.hasElements).toBeTrue();
+
+        // should not fetch additional information from server, reason for input values!
+        expect(getDataForFileUploadEditorSpy).not.toHaveBeenCalled();
     });
 });

@@ -167,11 +167,13 @@ describe('ProgrammingExerciseTask Service', () => {
                 bonusPoints: 0,
                 taskName: 'weightTask',
                 weight: 2,
+                type: 'MIXED',
             },
             {
                 bonusPoints: 4,
                 taskName: 'bonusTask',
                 weight: 0,
+                type: 'MIXED',
             },
             {
                 bonusMultiplier: 2,
@@ -302,5 +304,47 @@ describe('ProgrammingExerciseTask Service', () => {
         testCase.changed = true;
 
         expect(service.hasUnsavedChanges()).toBeTrue();
+    });
+
+    it('should remove tasks with only duplicated tests cases', () => {
+        // Add a second task which uses the same test cases (test1 and test2)
+        const duplicatedTask: ProgrammingExerciseServerSideTask = { ...serverSideTasks[0] };
+        duplicatedTask.id = 99;
+
+        firstValueFrom(service.configure(exercise as ProgrammingExercise, course, gradingStatistics));
+        httpMock.expectOne(`${resourceUrl}/${exercise.id}/tasks-with-unassigned-test-cases`).flush([...serverSideTasks, duplicatedTask]);
+
+        const currentTasks = service.updateTasks();
+        const addedTask = currentTasks.find((task) => task.id == 99);
+
+        expect(currentTasks).toHaveLength(3); // 5 - inactive task - task with only duplicated tests
+        expect(addedTask).toBeUndefined();
+    });
+
+    it('should remove duplicated tests cases from tasks', () => {
+        // Add a second task which uses the same test cases (test1 and test2) but also has unique tests
+        const duplicatedTask: ProgrammingExerciseServerSideTask = { ...serverSideTasks[0] };
+        duplicatedTask.id = 99;
+        duplicatedTask.testCases = [
+            ...duplicatedTask.testCases!,
+            {
+                id: 27,
+                testName: 'unique',
+                visibility: Visibility.Always,
+                bonusMultiplier: 2,
+                active: true,
+                type: ProgrammingExerciseTestCaseType.BEHAVIORAL,
+            },
+        ];
+
+        firstValueFrom(service.configure(exercise as ProgrammingExercise, course, gradingStatistics));
+        httpMock.expectOne(`${resourceUrl}/${exercise.id}/tasks-with-unassigned-test-cases`).flush([...serverSideTasks, duplicatedTask]);
+
+        const currentTasks = service.updateTasks();
+        const addedTask = currentTasks.find((task) => task.id == 99);
+
+        expect(currentTasks).toHaveLength(4); // 5 - inactive task
+        expect(addedTask!.testCases).toHaveLength(1);
+        expect(addedTask!.testCases[0].id).toBe(27);
     });
 });

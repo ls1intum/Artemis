@@ -7,10 +7,12 @@ import static org.mockito.Mockito.verify;
 
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.gitlab4j.api.GitLabApiException;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+import org.gitlab4j.api.models.Group;
+import org.gitlab4j.api.models.Project;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,12 +24,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 
@@ -66,6 +69,33 @@ class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Test
     @WithMockUser(username = "student1")
+    void testCheckIfGroupNotFoundThenProjectNotExists() {
+        gitlabRequestMockProvider.mockGetOptionalGroup("project-key", Optional.empty());
+        assertThat(versionControlService.checkIfProjectExists("project-key", "project name")).as("a project cannot exist if there is no group for it").isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    void testCheckIfGroupContainsNoRepositoriesThenProjectNotExists() throws GitLabApiException {
+        final Group group = new Group();
+        gitlabRequestMockProvider.mockGetOptionalGroup("project-key", Optional.of(group));
+        gitlabRequestMockProvider.mockGetProjectsStream(group, Stream.empty());
+
+        assertThat(versionControlService.checkIfProjectExists("project-key", "project name")).as("an empty exercise group can safely be reused").isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    void testCheckIfGroupContainsRepositoriesThenProjectExists() throws GitLabApiException {
+        final Group group = new Group();
+        gitlabRequestMockProvider.mockGetOptionalGroup("project-key", Optional.of(group));
+        gitlabRequestMockProvider.mockGetProjectsStream(group, Stream.of(new Project()));
+
+        assertThat(versionControlService.checkIfProjectExists("project-key", "project name")).as("a non-empty exercise group cannot be used for another exercise").isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
     void testHealthOk() throws URISyntaxException, JsonProcessingException {
         gitlabRequestMockProvider.mockHealth("ok", HttpStatus.OK);
         var health = versionControlService.health();
@@ -94,9 +124,9 @@ class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "master", "main", "someOtherName" })
     void testGetDefaultBranch(String defaultBranch) throws URISyntaxException, GitLabApiException {
-        VcsRepositoryUrl repoURL = new VcsRepositoryUrl("http://some.test.url/scm/PROJECTNAME/REPONAME-exercise.git");
+        VcsRepositoryUri repoUri = new VcsRepositoryUri("http://some.test.url/scm/PROJECTNAME/REPONAME-exercise.git");
         gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
-        String actualDefaultBranch = versionControlService.getDefaultBranchOfRepository(repoURL);
+        String actualDefaultBranch = versionControlService.getDefaultBranchOfRepository(repoUri);
         assertThat(actualDefaultBranch).isEqualTo(defaultBranch);
     }
 
@@ -118,38 +148,38 @@ class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     }
 
     @Test
-    void testGetLastCommitDetails() throws ParseException {
+    void testGetLastCommitDetails() throws JsonProcessingException {
         String latestCommitHash = "11028e4104243d8cbae9175f2bc938cb8c2d7924";
-        Object body = new JSONParser().parse(GITLAB_PUSH_EVENT_REQUEST);
+        Object body = new ObjectMapper().readValue(GITLAB_PUSH_EVENT_REQUEST, Object.class);
         Commit commit = versionControlService.getLastCommitDetails(body);
-        assertThat(commit.getCommitHash()).isEqualTo(latestCommitHash);
-        assertThat(commit.getBranch()).isNotNull();
-        assertThat(commit.getMessage()).isNotNull();
-        assertThat(commit.getAuthorEmail()).isNotNull();
-        assertThat(commit.getAuthorName()).isNotNull();
+        assertThat(commit.commitHash()).isEqualTo(latestCommitHash);
+        assertThat(commit.branch()).isNotNull();
+        assertThat(commit.message()).isNotNull();
+        assertThat(commit.authorEmail()).isNotNull();
+        assertThat(commit.authorName()).isNotNull();
     }
 
     @Test
-    void testGetLastCommitDetailsWrongCommitOrder() throws ParseException {
+    void testGetLastCommitDetailsWrongCommitOrder() throws JsonProcessingException {
         String latestCommitHash = "11028e4104243d8cbae9175f2bc938cb8c2d7924";
-        Object body = new JSONParser().parse(GITLAB_PUSH_EVENT_REQUEST_WRONG_COMMIT_ORDER);
+        Object body = new ObjectMapper().readValue(GITLAB_PUSH_EVENT_REQUEST_WRONG_COMMIT_ORDER, Object.class);
         Commit commit = versionControlService.getLastCommitDetails(body);
-        assertThat(commit.getCommitHash()).isEqualTo(latestCommitHash);
-        assertThat(commit.getBranch()).isNotNull();
-        assertThat(commit.getMessage()).isNotNull();
-        assertThat(commit.getAuthorEmail()).isNotNull();
-        assertThat(commit.getAuthorName()).isNotNull();
+        assertThat(commit.commitHash()).isEqualTo(latestCommitHash);
+        assertThat(commit.branch()).isNotNull();
+        assertThat(commit.message()).isNotNull();
+        assertThat(commit.authorEmail()).isNotNull();
+        assertThat(commit.authorName()).isNotNull();
     }
 
     @Test
-    void testGetLastCommitDetailsWithoutCommits() throws ParseException {
+    void testGetLastCommitDetailsWithoutCommits() throws JsonProcessingException {
         String latestCommitHash = "11028e4104243d8cbae9175f2bc938cb8c2d7924";
-        Object body = new JSONParser().parse(GITLAB_PUSH_EVENT_REQUEST_WITHOUT_COMMIT);
+        Object body = new ObjectMapper().readValue(GITLAB_PUSH_EVENT_REQUEST_WITHOUT_COMMIT, Object.class);
         Commit commit = versionControlService.getLastCommitDetails(body);
-        assertThat(commit.getCommitHash()).isEqualTo(latestCommitHash);
-        assertThat(commit.getBranch()).isNull();
-        assertThat(commit.getMessage()).isNull();
-        assertThat(commit.getAuthorEmail()).isNull();
-        assertThat(commit.getAuthorName()).isNull();
+        assertThat(commit.commitHash()).isEqualTo(latestCommitHash);
+        assertThat(commit.branch()).isNull();
+        assertThat(commit.message()).isNull();
+        assertThat(commit.authorEmail()).isNull();
+        assertThat(commit.authorName()).isNull();
     }
 }

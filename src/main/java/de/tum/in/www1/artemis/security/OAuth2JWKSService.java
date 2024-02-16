@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -27,13 +28,14 @@ import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
  * On initialisation, each ClientRegistration gets assigned a fresh generated RSAKey.
  */
 @Component
+@Profile("lti")
 public class OAuth2JWKSService {
 
     private final OnlineCourseConfigurationService onlineCourseConfigurationService;
 
     private final StringKeyGenerator kidGenerator = new Base64StringKeyGenerator(32);
 
-    private final Logger log = LoggerFactory.getLogger(OAuth2JWKSService.class);
+    private static final Logger log = LoggerFactory.getLogger(OAuth2JWKSService.class);
 
     private final Map<String, String> clientRegistrationIdToKeyId = new HashMap<>();
 
@@ -83,7 +85,7 @@ public class OAuth2JWKSService {
 
     private List<JWK> generateOAuth2ClientKeys() {
         List<JWK> keys = new LinkedList<>();
-        onlineCourseConfigurationService.getAllClientRegistrations().forEach(c -> generateAndAddKey(c, keys));
+        onlineCourseConfigurationService.getAllClientRegistrations().forEach(clientRegistration -> generateAndAddKey(clientRegistration, keys));
         return keys;
     }
 

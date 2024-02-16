@@ -39,6 +39,7 @@ export class IrisStateStore implements OnDestroy {
         serverResponseTimeout: null,
         currentMessageCount: -1,
         rateLimit: -1,
+        rateLimitTimeframeHours: -1,
     };
 
     private readonly action = new Subject<ResolvableAction>();
@@ -157,6 +158,7 @@ export class IrisStateStore implements OnDestroy {
                 serverResponseTimeout: null,
                 currentMessageCount: state.currentMessageCount,
                 rateLimit: state.rateLimit,
+                rateLimitTimeframeHours: state.rateLimitTimeframeHours,
             };
         }
         if (isConversationErrorOccurredAction(action)) {
@@ -227,11 +229,19 @@ export class IrisStateStore implements OnDestroy {
         }
         if (isRateLimitUpdatedAction(action)) {
             const castedAction = action as RateLimitUpdatedAction;
+            const rateLimitInfo = castedAction.rateLimitInfo;
+            let errorMessage: IrisErrorType | null = null;
+            if (rateLimitInfo.rateLimit >= 0 && rateLimitInfo.currentMessageCount >= rateLimitInfo.rateLimit) {
+                errorMessage = errorMessages[IrisErrorMessageKey.RATE_LIMIT_EXCEEDED];
+                errorMessage.paramsMap = new Map<string, any>();
+                errorMessage.paramsMap.set('hours', rateLimitInfo.rateLimitTimeframeHours);
+            }
             return {
                 ...state,
-                error: castedAction.rateLimit >= 0 && castedAction.currentMessageCount >= castedAction.rateLimit ? errorMessages[IrisErrorMessageKey.RATE_LIMIT_EXCEEDED] : null,
-                currentMessageCount: castedAction.currentMessageCount,
-                rateLimit: castedAction.rateLimit,
+                error: errorMessage,
+                currentMessageCount: rateLimitInfo.currentMessageCount,
+                rateLimit: rateLimitInfo.rateLimit,
+                rateLimitTimeframeHours: rateLimitInfo.rateLimitTimeframeHours,
             };
         }
 

@@ -279,8 +279,8 @@ export class UsersImportDialogComponent implements OnDestroy {
         return !this.hasImported
             ? 0
             : this.examUserMode
-            ? this.examUsersToImport.length - this.numberOfUsersNotImported
-            : this.usersToImport.length - this.numberOfUsersNotImported;
+              ? this.examUsersToImport.length - this.numberOfUsersNotImported
+              : this.usersToImport.length - this.numberOfUsersNotImported;
     }
 
     /**

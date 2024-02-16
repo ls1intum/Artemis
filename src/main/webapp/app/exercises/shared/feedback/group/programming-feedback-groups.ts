@@ -23,8 +23,9 @@ class ProgrammingFeedbackGroupWrong extends FeedbackGroup {
 
     shouldContain(feedbackItem: FeedbackItem): boolean {
         const isReviewerFeedback = feedbackItem.type === 'Reviewer' && feedbackItem.credits !== undefined && feedbackItem.credits < 0;
-        const isTestFeedback = feedbackItem.type === 'Test' && feedbackItem.positive === false;
-        return isReviewerFeedback || isTestFeedback;
+        const isTestFeedback = feedbackItem.type === 'Test';
+        const isFailedTest = feedbackItem.positive === false || (feedbackItem.positive === undefined && feedbackItem.credits === 0);
+        return isReviewerFeedback || (isTestFeedback && isFailedTest);
     }
 }
 
@@ -81,7 +82,8 @@ class ProgrammingFeedbackGroupCorrect extends FeedbackGroup {
 
     shouldContain(feedbackItem: FeedbackItem): boolean {
         const isReviewerFeedback = feedbackItem.type === 'Reviewer' && feedbackItem.credits !== undefined && feedbackItem.credits > 0;
-        const isTestFeedback = feedbackItem.type === 'Test' && feedbackItem.positive === true;
-        return isReviewerFeedback || isTestFeedback;
+        const isTestFeedback = feedbackItem.type === 'Test';
+        const isSuccessfulTest = feedbackItem.positive === true || (feedbackItem.positive === undefined && !!feedbackItem.credits);
+        return isReviewerFeedback || (isTestFeedback && isSuccessfulTest);
     }
 }

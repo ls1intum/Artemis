@@ -26,6 +26,10 @@
         height: 100%;
     }
 
+    .no-dropdown-indicator::after {
+        display: none;
+    }
+
     .markdown-editor {
         display: flex;
         flex-flow: column nowrap;

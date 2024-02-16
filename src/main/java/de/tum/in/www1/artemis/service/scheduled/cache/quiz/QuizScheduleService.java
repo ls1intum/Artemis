@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
+import javax.annotation.PostConstruct;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.exception.ConstraintViolationException;
@@ -43,6 +44,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.QuizMessagingService;
 import de.tum.in.www1.artemis.service.QuizStatisticService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
 
 @Service
@@ -51,10 +53,6 @@ public class QuizScheduleService {
     private static final Logger log = LoggerFactory.getLogger(QuizScheduleService.class);
 
     private static final String HAZELCAST_PROCESS_CACHE_HANDLER = QuizProcessCacheTask.HAZELCAST_PROCESS_CACHE_TASK + "-handler";
-
-    private final IScheduledExecutorService threadPoolTaskScheduler;
-
-    private final IAtomicReference<ScheduledTaskHandler> scheduledProcessQuizSubmissions;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -68,13 +66,21 @@ public class QuizScheduleService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final QuizCache quizCache;
+    private final HazelcastInstance hazelcastInstance;
 
     private final QuizExerciseRepository quizExerciseRepository;
 
+    private final Optional<LtiNewResultService> ltiNewResultService;
+
+    private QuizCache quizCache;
+
+    private IScheduledExecutorService threadPoolTaskScheduler;
+
+    private IAtomicReference<ScheduledTaskHandler> scheduledProcessQuizSubmissions;
+
     public QuizScheduleService(WebsocketMessagingService websocketMessagingService, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
             QuizSubmissionRepository quizSubmissionRepository, HazelcastInstance hazelcastInstance, QuizExerciseRepository quizExerciseRepository,
-            QuizMessagingService quizMessagingService, QuizStatisticService quizStatisticService) {
+            QuizMessagingService quizMessagingService, QuizStatisticService quizStatisticService, Optional<LtiNewResultService> ltiNewResultService) {
         this.websocketMessagingService = websocketMessagingService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.userRepository = userRepository;
@@ -82,6 +88,12 @@ public class QuizScheduleService {
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizMessagingService = quizMessagingService;
         this.quizStatisticService = quizStatisticService;
+        this.ltiNewResultService = ltiNewResultService;
+        this.hazelcastInstance = hazelcastInstance;
+    }
+
+    @PostConstruct
+    public void init() {
         this.scheduledProcessQuizSubmissions = hazelcastInstance.getCPSubsystem().getAtomicReference(HAZELCAST_PROCESS_CACHE_HANDLER);
         this.threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_QUIZ_SCHEDULER);
         this.quizCache = new QuizCache(hazelcastInstance);
@@ -491,8 +503,11 @@ public class QuizScheduleService {
                             log.error("Participation is missing student (or student is missing username): {}", participation);
                         }
                         else {
-                            sendQuizResultToUser(quizExerciseId, participation);
-                            cachedQuiz.getParticipations().remove(entry.getKey());
+                            if(ltiNewResultService.isPresent()) {
+                                ltiNewResultService.get().onNewResult(participation);
+                            }
+                           sendQuizResultToUser(quizExerciseId, participation);
+                           cachedQuiz.getParticipations().remove(entry.getKey());
                         }
                     });
                     if (!finishedParticipations.isEmpty()) {

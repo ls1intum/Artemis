@@ -8,6 +8,7 @@ Coding and design guidelines
    :maxdepth: 3
 
    guidelines/server
+   guidelines/server-tests
    guidelines/client
    guidelines/client-tests
    guidelines/client-design

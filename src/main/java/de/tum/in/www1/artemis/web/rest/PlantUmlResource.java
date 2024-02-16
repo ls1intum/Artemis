@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
+
 import java.io.IOException;
 
 import org.slf4j.Logger;
@@ -18,7 +20,7 @@ import de.tum.in.www1.artemis.service.PlantUmlService;
 @RequestMapping(PlantUmlResource.Endpoints.ROOT)
 public class PlantUmlResource {
 
-    private final Logger log = LoggerFactory.getLogger(PlantUmlResource.class);
+    private static final Logger log = LoggerFactory.getLogger(PlantUmlResource.class);
 
     private final PlantUmlService plantUmlService;
 
@@ -38,11 +40,13 @@ public class PlantUmlResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> generatePng(@RequestParam("plantuml") String plantuml, @RequestParam(value = "useDarkTheme", defaultValue = "false") boolean useDarkTheme)
             throws IOException {
-        long start = System.currentTimeMillis();
+        long start = System.nanoTime();
         final var png = plantUmlService.generatePng(plantuml, useDarkTheme);
         final var responseHeaders = new HttpHeaders();
         responseHeaders.setContentType(MediaType.IMAGE_PNG);
-        log.info("PlantUml.generatePng took {}ms", System.currentTimeMillis() - start);
+        if (log.isInfoEnabled()) {
+            log.info("PlantUml.generatePng took {}", formatDurationFrom(start));
+        }
         return new ResponseEntity<>(png, responseHeaders, HttpStatus.OK);
     }
 
@@ -58,9 +62,11 @@ public class PlantUmlResource {
     @EnforceAtLeastStudent
     public ResponseEntity<String> generateSvg(@RequestParam("plantuml") String plantuml, @RequestParam(value = "useDarkTheme", defaultValue = "false") boolean useDarkTheme)
             throws IOException {
-        long start = System.currentTimeMillis();
+        long start = System.nanoTime();
         final var svg = plantUmlService.generateSvg(plantuml, useDarkTheme);
-        log.info("PlantUml.generateSvg took {}ms", System.currentTimeMillis() - start);
+        if (log.isInfoEnabled()) {
+            log.info("PlantUml.generateSvg took {}", formatDurationFrom(start));
+        }
         return new ResponseEntity<>(svg, HttpStatus.OK);
     }
 

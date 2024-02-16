@@ -6,7 +6,7 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { VERSION } from 'app/app.constants';
+import { PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI, VERSION } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -34,9 +34,11 @@ import {
     faCog,
     faEye,
     faFlag,
+    faGears,
     faHeart,
     faList,
     faLock,
+    faPuzzlePiece,
     faRobot,
     faSignOutAlt,
     faStamp,
@@ -86,6 +88,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     isExamActive = false;
     examActiveCheckFuture?: ReturnType<typeof setTimeout>;
     irisEnabled: boolean;
+    localCIActive: boolean = false;
+    ltiEnabled: boolean;
 
     // Icons
     faBars = faBars;
@@ -110,6 +114,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     faBookOpen = faBookOpen;
     faUserPlus = faUserPlus;
     faSignOutAlt = faSignOutAlt;
+    faGears = faGears;
+    faPuzzlePiece = faPuzzlePiece;
 
     private authStateSubscription: Subscription;
     private routerEventSubscription: Subscription;
@@ -191,7 +197,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.gitBranchName = profileInfo.git.branch;
                 this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
                 this.gitUsername = profileInfo.git.commit.user.name;
-                this.irisEnabled = profileInfo.activeProfiles.includes('iris');
+                this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
+                this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
+                this.ltiEnabled = profileInfo?.activeProfiles.includes(PROFILE_LTI);
             }
         });
 
@@ -299,6 +307,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         unit_management: 'artemisApp.lectureUnit.home.title',
         exams: 'artemisApp.examManagement.title',
         exercise_groups: 'artemisApp.examManagement.exerciseGroups',
+        quiz_pool: 'artemisApp.examManagement.quizPool',
         students: 'artemisApp.course.students',
         tutors: 'artemisApp.course.tutors',
         instructors: 'artemisApp.course.instructors',
@@ -333,6 +342,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
         edit_build_plan: 'artemisApp.programmingExercise.buildPlanEditor',
         suspicious_behavior: 'artemisApp.examManagement.suspiciousBehavior.title',
         suspicious_sessions: 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title',
+        exam_timeline: 'artemisApp.examTimeline.breadcrumb',
+        iris_settings: 'artemisApp.iris.settings.title.breadcrumb',
+        generate: 'entity.action.generate',
+        build_queue: 'artemisApp.buildQueue.title',
+        build_agents: 'artemisApp.buildAgents.title',
+        commit_history: 'artemisApp.repository.commitHistory.title',
+        commit_details: 'artemisApp.repository.commitHistory.commitDetails.title',
+        repository: 'artemisApp.repository.title',
     };
 
     studentPathBreadcrumbTranslations = {
@@ -351,6 +368,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         participate: 'artemisApp.submission.detail.title',
         live: 'artemisApp.submission.detail.title',
         courses: 'artemisApp.course.home.title',
+        enroll: 'artemisApp.studentDashboard.enroll.title',
     };
 
     /**
@@ -412,6 +430,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             switch (this.lastRouteUrlSegment) {
                 case 'code-editor':
                 case 'test-exam':
+                case 'repository':
                 case 'participate':
                     this.addTranslationAsCrumb(currentPath, this.lastRouteUrlSegment);
                     return;
@@ -427,11 +446,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     break;
             }
         }
-
         switch (this.lastRouteUrlSegment) {
             // Displays the path segment as breadcrumb (no other title exists)
             case 'system-notification-management':
             case 'teams':
+            case 'repository':
             case 'code-editor':
                 this.addBreadcrumb(currentPath, segment, false);
                 break;
@@ -520,13 +539,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
         const isStudentPath = currentPath.startsWith('/courses');
 
         if (isStudentPath) {
+            if (segment === 'repository') {
+                return;
+            }
             const exercisesMatcher = segment?.match(/.+-exercises/);
             if (exercisesMatcher) {
                 this.addTranslationAsCrumb(currentPath.replace(exercisesMatcher[0], 'exercises'), 'exercises');
                 return;
             }
         }
-
         // When we're not dealing with an ID we need to translate the current part
         // The translation might still depend on the previous parts
         switch (segment) {

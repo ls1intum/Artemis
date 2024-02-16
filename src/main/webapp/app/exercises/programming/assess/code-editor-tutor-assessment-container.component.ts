@@ -28,7 +28,7 @@ import { CodeEditorRepositoryFileService } from 'app/exercises/programming/share
 import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise.utils';
+import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { SubmissionType, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
@@ -39,6 +39,8 @@ import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/co
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { AthenaService } from 'app/assessment/athena.service';
+import { FeedbackSuggestionsPendingConfirmationDialogComponent } from 'app/exercises/shared/feedback/feedback-suggestions-pending-confirmation-dialog/feedback-suggestions-pending-confirmation-dialog.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -125,14 +127,15 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         private programmingSubmissionService: ProgrammingSubmissionService,
         private domainService: DomainService,
         private complaintService: ComplaintService,
-        translateService: TranslateService,
         private route: ActivatedRoute,
         private alertService: AlertService,
         private structuredGradingCriterionService: StructuredGradingCriterionService,
         private repositoryFileService: CodeEditorRepositoryFileService,
         private programmingExerciseService: ProgrammingExerciseService,
         private profileService: ProfileService,
+        private modalService: NgbModal,
         private athenaService: AthenaService,
+        translateService: TranslateService,
     ) {
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
         translateService.get('artemisApp.assessment.messages.acceptComplaintWithoutMoreScore').subscribe((text) => (this.acceptComplaintWithoutMoreScoreText = text));
@@ -231,7 +234,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         return this.programmingSubmissionService.lockAndGetProgrammingSubmissionParticipation(submissionId, this.correctionRound);
     }
 
-    private handleReceivedSubmission(submission: ProgrammingSubmission): Promise<void> {
+    private async handleReceivedSubmission(submission: ProgrammingSubmission): Promise<void> {
         this.loadingInitialSubmission = false;
 
         // Set domain to correctly fetch data
@@ -258,7 +261,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.handleFeedback();
         this.getComplaint();
         this.calculateTotalScore();
-        return this.loadFeedbackSuggestions();
+        // Only load suggestions for new assessments, they don't make sense later.
+        // The assessment is new if it only contains automatic feedback.
+        if ((this.manualResult?.feedbacks?.length ?? 0) === this.automaticFeedback.length) {
+            await this.loadFeedbackSuggestions();
+        }
     }
 
     private handleErrorResponse(error: HttpErrorResponse): void {
@@ -275,7 +282,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Load the feedback suggestions for the current submission from Athena.
      */
     private async loadFeedbackSuggestions(): Promise<void> {
-        this.feedbackSuggestions = (await firstValueFrom(this.athenaService.getFeedbackSuggestionsForProgramming(this.exerciseId, this.submission!.id!))) ?? [];
+        this.feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise, this.submission!.id!))) ?? [];
         const allFeedback = [...this.referencedFeedback, ...this.unreferencedFeedback]; // pre-compute to not have to do this in the loop
         // Don't show feedback suggestions that have the same description and reference - probably it is coming from an earlier suggestion anyway
         this.feedbackSuggestions = this.feedbackSuggestions.filter((suggestion) =>
@@ -338,9 +345,28 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     /**
+     * Show confirmation dialog for discarding suggestions before submitting (if there are any)
+     * @return true if the user confirmed the discard (=> continue to submit), false otherwise
+     */
+    async discardPendingSubmissionsWithConfirmation(): Promise<boolean> {
+        if (this.feedbackSuggestions.length > 0) {
+            const modalRef = this.modalService.open(FeedbackSuggestionsPendingConfirmationDialogComponent, { size: 'lg', backdrop: 'static', animation: true });
+            const suggestionsDiscardConfirmed: boolean = await firstValueFrom(modalRef.closed);
+            if (!suggestionsDiscardConfirmed) {
+                return false;
+            }
+            this.feedbackSuggestions = []; // Discard all pending suggestions
+        }
+        return true;
+    }
+
+    /**
      * Submit the assessment
      */
-    submit(): void {
+    async submit(): Promise<void> {
+        if (!(await this.discardPendingSubmissionsWithConfirmation())) {
+            return;
+        }
         this.submitBusy = true;
         this.handleSaveOrSubmit(true, 'artemisApp.textAssessment.submitSuccessful');
         this.assessmentsAreValid = false;
@@ -554,6 +580,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.alertService.closeAll();
         this.alertService.success(translationKey);
         this.saveBusy = this.submitBusy = false;
+        this.checkPermissions();
     }
 
     /**
@@ -640,7 +667,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private calculateTotalScoreOfFeedbacks(feedbacks: Feedback[]): number {
-        const maxPoints = this.exercise.maxPoints! + (this.exercise.bonusPoints ?? 0.0);
+        const maxPoints = getTotalMaxPoints(this.exercise);
         let totalScore = 0.0;
         let scoreAutomaticTests = 0.0;
         const gradingInstructions = {}; // { instructionId: noOfEncounters }

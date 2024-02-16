@@ -81,7 +81,7 @@ public class ResultWebsocketService {
             students.stream().filter(student -> authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
                     .forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, resultDTO));
 
-            var filteredFeedback = result.createFilteredFeedbacks(!isWorkingPeriodOver);
+            var filteredFeedback = result.createFilteredFeedbacks(!isWorkingPeriodOver, exercise);
             var filteredFeedbackResultDTO = ResultDTO.of(result, filteredFeedback);
 
             students.stream().filter(student -> !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))

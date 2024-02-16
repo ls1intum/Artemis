@@ -2,7 +2,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { NgbTooltipModule, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbTooltipModule, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { LoadedImage } from 'app/shared/image-cropper/interfaces/loaded-image.interface';
 import { LoadImageService } from 'app/shared/image-cropper/services/load-image.service';
@@ -37,6 +37,8 @@ import { By } from '@angular/platform-browser';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { cloneDeep } from 'lodash-es';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -58,6 +60,7 @@ describe('Course Management Update Component', () => {
     const validTimeZone = 'Europe/Berlin';
     let loadImageSpy: jest.SpyInstance;
     let eventManager: EventManager;
+    let modalService: NgbModal;
 
     beforeEach(() => {
         course = new Course();
@@ -102,6 +105,7 @@ describe('Course Management Update Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(TranslateService),
                 MockProvider(LoadImageService),
             ],
@@ -132,6 +136,7 @@ describe('Course Management Update Component', () => {
                 loadImageSpy = jest.spyOn(loadImageService, 'loadImageFile');
                 accountService = TestBed.inject(AccountService);
                 eventManager = TestBed.inject(EventManager);
+                modalService = TestBed.inject(NgbModal);
             });
     });
 
@@ -355,6 +360,32 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.controls['registrationEnabled'].value).toBeTrue();
             expect(comp.course.enrollmentEnabled).toBeTrue();
         });
+
+        it('should call unenrollmentEnabled', () => {
+            const enabelunrollSpy = jest.spyOn(comp, 'changeUnenrollmentEnabled').mockReturnValue();
+            comp.course = new Course();
+            comp.course.enrollmentEnabled = true;
+            comp.course.unenrollmentEnabled = true;
+            comp.courseForm = new FormGroup({
+                registrationEnabled: new FormControl(false),
+                onlineCourse: new FormControl(true),
+                enrollmentStartDate: new FormControl(),
+                enrollmentEndDate: new FormControl(),
+            });
+            comp.changeRegistrationEnabled();
+            expect(enabelunrollSpy).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('updateCourseInformationSharingMessagingCodeOfConduct', () => {
+        it('should update course information sharing code of conduct', () => {
+            comp.course = new Course();
+            comp.courseForm = new FormGroup({
+                courseInformationSharingMessagingCodeOfConduct: new FormControl(),
+            });
+            comp.updateCourseInformationSharingMessagingCodeOfConduct('# Code of Conduct');
+            expect(comp.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].value).toBe('# Code of Conduct');
+        });
     });
 
     describe('changeComplaintsEnabled', () => {
@@ -399,6 +430,20 @@ describe('Course Management Update Component', () => {
         });
     });
 
+    describe('changeUnenrollmentEnabled', () => {
+        it('should toggle unenrollment enabled', () => {
+            comp.course = new Course();
+            comp.course.endDate = dayjs();
+            comp.courseForm = new FormGroup({
+                unenrollmentEnabled: new FormControl(false),
+                unenrollmentEndDate: new FormControl(undefined),
+            });
+            comp.changeUnenrollmentEnabled();
+            expect(comp.courseForm.controls['unenrollmentEnabled'].value).toBeTruthy();
+            expect(comp.course.unenrollmentEndDate).toBe(comp.course.endDate);
+        });
+    });
+
     describe('changeCustomizeGroupNames', () => {
         it('should initialize values if enabled and reset if disabled', () => {
             comp.courseForm = new FormGroup({
@@ -439,10 +484,10 @@ describe('Course Management Update Component', () => {
         it('should get semesters around current year', () => {
             const years = dayjs().year() - 2018 + 1;
             const semesters = comp.getSemesters();
-            expect(semesters[0]).toBe('');
+            expect(semesters.last()).toBe('');
             for (let i = 0; i <= years; i++) {
-                expect(semesters[2 * i + 1]).toBe('SS' + (18 + i));
-                expect(semesters[2 * i + 2]).toBe('WS' + (18 + i) + '/' + (19 + i));
+                expect(semesters[2 * i]).toBe('WS' + (18 + years - i) + '/' + (19 + years - i));
+                expect(semesters[2 * i + 1]).toBe('SS' + (18 + years - i));
             }
         });
     });
@@ -675,5 +720,72 @@ describe('Course Management Update Component', () => {
             expect(addButton).toBeNull();
             expect(removeButton).toBeNull();
         });
+    });
+
+    it('should open organizations modal', () => {
+        jest.spyOn(modalService, 'open').mockReturnValue({ closed: of(new Organization()), componentInstance: {} } as NgbModalRef);
+        comp.openOrganizationsModal();
+        expect(comp.courseOrganizations).toHaveLength(1);
+    });
+});
+
+describe('Course Management Update Component Create', () => {
+    const validTimeZone = 'Europe/Berlin';
+    let component: CourseUpdateComponent;
+    let fixture: ComponentFixture<CourseUpdateComponent>;
+    let httpMock: HttpTestingController;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [
+                ArtemisTestModule,
+                HttpClientTestingModule,
+                MockModule(ReactiveFormsModule),
+                MockModule(FormsModule),
+                ImageCropperModule,
+                MockDirective(NgbTypeahead),
+                MockModule(NgbTooltipModule),
+            ],
+            providers: [
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(TranslateService),
+                MockProvider(LoadImageService),
+            ],
+            declarations: [
+                CourseUpdateComponent,
+                MarkdownEditorStubComponent,
+                MockComponent(ColorSelectorComponent),
+                MockComponent(FormDateTimePickerComponent),
+                MockComponent(HelpIconComponent),
+                MockComponent(SecuredImageComponent),
+                MockDirective(FeatureToggleHideDirective),
+                MockDirective(HasAnyAuthorityDirective),
+                MockDirective(TranslateDirective),
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(RemoveKeysPipe),
+            ],
+        })
+            .compileComponents()
+            .then(() => {
+                (Intl as any).supportedValuesOf = () => [validTimeZone];
+                fixture = TestBed.createComponent(CourseUpdateComponent);
+                component = fixture.componentInstance;
+                httpMock = TestBed.inject(HttpTestingController);
+            });
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+        (Intl as any).supportedValuesOf = undefined;
+    });
+
+    it('should get code of conduct template if a new course is created', () => {
+        fixture.detectChanges();
+        const req = httpMock.expectOne({ method: 'GET' });
+        const codeOfConduct = 'Code of Conduct';
+        req.flush(codeOfConduct);
+        expect(component.course.courseInformationSharingMessagingCodeOfConduct).toEqual(codeOfConduct);
     });
 });

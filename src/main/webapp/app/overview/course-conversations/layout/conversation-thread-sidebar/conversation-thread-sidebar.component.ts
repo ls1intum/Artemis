@@ -3,7 +3,8 @@ import interact from 'interactjs';
 import { Post } from 'app/entities/metis/post.model';
 import { faArrowLeft, faChevronLeft, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 @Component({
     selector: 'jhi-conversation-thread-sidebar',
@@ -14,23 +15,29 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
     @Input()
     readOnlyMode = false;
     @Input()
-    activeConversation: ConversationDto;
+    set activeConversation(conversation: ConversationDTO) {
+        this.conversation = conversation;
+        this.hasChannelModerationRights = getAsChannelDTO(this.conversation)?.hasChannelModerationRights ?? false;
+    }
+    @Input()
+    set activePost(activePost: Post) {
+        this.post = activePost;
+        this.createdAnswerPost = this.createEmptyAnswerPost();
+    }
 
-    @Output() closePostThread = new EventEmitter<void>();
+    @Output()
+    closePostThread = new EventEmitter<void>();
 
     post?: Post;
     createdAnswerPost: AnswerPost;
+    conversation: ConversationDTO;
+    hasChannelModerationRights = false;
 
     // Icons
     faXmark = faXmark;
     faChevronLeft = faChevronLeft;
     faGripLinesVertical = faGripLinesVertical;
     faArrowLeft = faArrowLeft;
-
-    @Input() set activePost(activePost: Post) {
-        this.post = activePost;
-        this.createdAnswerPost = this.createEmptyAnswerPost();
-    }
 
     /**
      * creates empty default answer post that is needed on initialization of a newly opened modal to edit or create an answer post, with accordingly set resolvesPost flag

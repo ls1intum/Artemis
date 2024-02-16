@@ -1,7 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { LongFeedbackTextService } from 'app/exercises/shared/feedback/long-feedback-text.service';
-import { LongFeedbackText } from 'app/entities/long-feedback-text.model';
 
 @Component({
     selector: 'jhi-feedback-text',
@@ -34,18 +33,18 @@ export class FeedbackTextComponent implements OnInit {
 
         this.longFeedbackService.find(resultId, feedbackId).subscribe((longFeedbackResponse) => {
             const longFeedback = longFeedbackResponse.body!;
-            const textLength = longFeedback.text?.length ?? 0;
+            const textLength = longFeedback.length ?? 0;
 
             if (textLength > this.MAX_DISPLAYABLE_LENGTH) {
                 this.setDownloadInfo(longFeedback);
             } else {
-                this.text = longFeedback.text!;
+                this.text = longFeedback;
             }
         });
     }
 
-    private setDownloadInfo(longFeedback: LongFeedbackText) {
-        this.downloadText = 'data:text/plain;charset=utf-8,' + encodeURIComponent(longFeedback.text!);
+    private setDownloadInfo(longFeedback: string) {
+        this.downloadText = 'data:text/plain;charset=utf-8,' + encodeURIComponent(longFeedback);
         this.downloadFilename = `feedback_${this.feedback.feedbackReference.id}.txt`;
     }
 }

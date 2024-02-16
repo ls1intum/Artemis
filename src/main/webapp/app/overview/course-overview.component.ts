@@ -3,7 +3,7 @@ import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, Subject, Subscription, catchError, map, of, takeUntil, throwError } from 'rxjs';
+import { Observable, Subject, Subscription, catchError, firstValueFrom, map, of, takeUntil, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
@@ -32,11 +32,9 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
-import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -55,6 +53,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     private quizExercisesChannel: string;
     public hasUnreadMessages: boolean;
     public messagesRouteLoaded: boolean;
+    public communicationRouteLoaded: boolean;
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
@@ -110,11 +109,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private serverDateService: ArtemisServerDateService,
         private alertService: AlertService,
         private changeDetectorRef: ChangeDetectorRef,
-        private profileService: ProfileService,
-        private tutorialGroupService: TutorialGroupsService,
-        private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
         private metisConversationService: MetisConversationService,
         private router: Router,
+        private courseAccessStorageService: CourseAccessStorageService,
     ) {}
 
     async ngOnInit() {
@@ -124,7 +121,10 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
         this.course = this.courseStorageService.getCourse(this.courseId);
 
-        await this.loadCourse().toPromise();
+        // Notify the course access storage service that the course has been accessed
+        this.courseAccessStorageService.onCourseAccessed(this.courseId);
+
+        await firstValueFrom(this.loadCourse());
         await this.initAfterCourseLoad();
     }
 
@@ -134,11 +134,11 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     private setUpConversationService() {
-        if (!isMessagingEnabled(this.course)) {
+        if (!isMessagingEnabled(this.course) && !isCommunicationEnabled(this.course)) {
             return;
         }
 
-        if (!this.conversationServiceInstantiated && this.messagesRouteLoaded) {
+        if (!this.conversationServiceInstantiated && (this.messagesRouteLoaded || this.communicationRouteLoaded)) {
             this.metisConversationService
                 .setUpConversationService(this.course!)
                 .pipe(takeUntil(this.ngUnsubscribe))
@@ -149,7 +149,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                         this.subscribeToHasUnreadMessages();
                     },
                 });
-        } else if (!this.checkedForUnreadMessages) {
+        } else if (!this.checkedForUnreadMessages && isMessagingEnabled(this.course)) {
             this.metisConversationService.checkForUnreadMessages(this.course!);
             this.subscribeToHasUnreadMessages();
             this.checkedForUnreadMessages = true;
@@ -178,6 +178,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      */
     onSubRouteActivate(componentRef: any) {
         this.messagesRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'messages';
+        this.communicationRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'discussion';
 
         this.setUpConversationService();
 
@@ -235,7 +236,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 if (error.status === 403) {
                     return of(false);
                 } else {
-                    return throwError(error);
+                    return throwError(() => error);
                 }
             }),
         );
@@ -261,7 +262,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      */
     loadCourse(refresh = false): Observable<void> {
         this.refreshingCourse = refresh;
-        const observable = this.courseService.findOneForDashboard(this.courseId, refresh).pipe(
+        const observable = this.courseService.findOneForDashboard(this.courseId).pipe(
             map((res: HttpResponse<Course>) => {
                 if (res.body) {
                     this.course = res.body;
@@ -277,7 +278,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             catchError((error: HttpErrorResponse) => {
                 if (error.status === 403) {
                     this.redirectToCourseRegistrationPageIfCanRegisterOrElseThrow(error);
-                    return of();
+                    // Emit a default value, for example `undefined`
+                    return of(undefined);
                 } else {
                     return throwError(() => error);
                 }
@@ -312,7 +314,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.loadCourseSubscription?.unsubscribe();
         this.controlsSubscription?.unsubscribe();
         this.vcSubscription?.unsubscribe();
-        this.ngUnsubscribe.next();
+        this.subscription?.unsubscribe();
+        this.ngUnsubscribe.next(undefined);
         this.ngUnsubscribe.complete();
     }
 
@@ -352,14 +355,14 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      * Check if the course has any competencies or prerequisites
      */
     hasCompetencies(): boolean {
-        return !!(this.course?.competencies?.length || this.course?.prerequisites?.length);
+        return !!(this.course?.numberOfCompetencies || this.course?.numberOfPrerequisites);
     }
 
     /**
      * Check if the course has a tutorial groups
      */
     hasTutorialGroups(): boolean {
-        return !!this.course?.tutorialGroups?.length;
+        return !!this.course?.numberOfTutorialGroups;
     }
 
     /**

@@ -4,21 +4,26 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
+import java.util.*;
+
 import javax.mail.internet.MimeMessage;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.provider.Arguments;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.mail.javamail.JavaMailSender;
 
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.exercise.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti10Service;
+import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.*;
@@ -31,6 +36,7 @@ import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.user.UserFactory;
 
 /**
  * this test should be completely independent of any profiles or configurations (e.g. VCS, CIS)
@@ -46,6 +52,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     // NOTE: we prefer SpyBean over MockBean, because it is more lightweight, we can mock method, but we can also invoke actual methods during testing
     @SpyBean
     protected Lti10Service lti10Service;
+
+    @SpyBean
+    protected Lti13Service lti13Service;
 
     @SpyBean
     protected GitService gitService;
@@ -105,7 +114,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     @SpyBean
-    protected UrlService urlService;
+    protected UriService uriService;
 
     @SpyBean
     protected ScheduleService scheduleService;
@@ -144,29 +153,29 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected void resetSpyBeans() {
         Mockito.reset(lti10Service, gitService, groupNotificationService, conversationNotificationService, tutorialGroupNotificationService, singleUserNotificationService,
                 websocketMessagingService, examAccessService, mailService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService,
-                urlService, scheduleService, participantScoreScheduleService, javaMailSender, programmingTriggerService, zipFileService);
+                uriService, scheduleService, participantScoreScheduleService, javaMailSender, programmingTriggerService, zipFileService);
     }
 
     @Override
-    public void mockGetRepositorySlugFromRepositoryUrl(String repositorySlug, VcsRepositoryUrl repositoryUrl) {
+    public void mockGetRepositorySlugFromRepositoryUri(String repositorySlug, VcsRepositoryUri repositoryUri) {
         // mock both versions to be independent
-        doReturn(repositorySlug).when(urlService).getRepositorySlugFromRepositoryUrl(repositoryUrl);
-        doReturn(repositorySlug).when(urlService).getRepositorySlugFromRepositoryUrlString(repositoryUrl.toString());
+        doReturn(repositorySlug).when(uriService).getRepositorySlugFromRepositoryUri(repositoryUri);
+        doReturn(repositorySlug).when(uriService).getRepositorySlugFromRepositoryUriString(repositoryUri.toString());
     }
 
     @Override
-    public void mockGetProjectKeyFromRepositoryUrl(String projectKey, VcsRepositoryUrl repositoryUrl) {
-        doReturn(projectKey).when(urlService).getProjectKeyFromRepositoryUrl(repositoryUrl);
+    public void mockGetProjectKeyFromRepositoryUri(String projectKey, VcsRepositoryUri repositoryUri) {
+        doReturn(projectKey).when(uriService).getProjectKeyFromRepositoryUri(repositoryUri);
     }
 
     @Override
-    public void mockGetRepositoryPathFromRepositoryUrl(String projectPath, VcsRepositoryUrl repositoryUrl) {
-        doReturn(projectPath).when(urlService).getRepositoryPathFromRepositoryUrl(repositoryUrl);
+    public void mockGetRepositoryPathFromRepositoryUri(String projectPath, VcsRepositoryUri repositoryUri) {
+        doReturn(projectPath).when(uriService).getRepositoryPathFromRepositoryUri(repositoryUri);
     }
 
     @Override
     public void mockGetProjectKeyFromAnyUrl(String projectKey) {
-        doReturn(projectKey).when(urlService).getProjectKeyFromRepositoryUrl(any());
+        doReturn(projectKey).when(uriService).getProjectKeyFromRepositoryUri(any());
     }
 
     /**
@@ -177,5 +186,33 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
      */
     protected <T, E extends Exception> QueryCountAssert<T, E> assertThatDb(ThrowingProducer<T, E> call) {
         return QueryCountAssert.assertThatDb(queryInterceptor, call);
+    }
+
+    /**
+     * Provides a list of various user mentions flagged with in indicator whether the user mention is valid
+     *
+     * @param courseMemberLogin1 login of one course member
+     * @param courseMemberLogin2 login of another course member
+     * @return list of user mentions and validity flags
+     */
+    protected static List<Arguments> userMentionProvider(String courseMemberLogin1, String courseMemberLogin2) {
+        User courseMember1 = UserFactory.generateActivatedUser(courseMemberLogin1);
+        User courseMember2 = UserFactory.generateActivatedUser(courseMemberLogin2);
+        User noCourseMember = UserFactory.generateActivatedUser("noCourseMember");
+
+        // First argument is a string containing a user mention
+        // Second argument indicates whether the user mention is valid
+        return List.of(Arguments.of("no mention", true), // no user mention
+                Arguments.of("[user]" + courseMember1.getName() + "(" + courseMember1.getLogin() + ")[/user]", true), // valid mention
+                Arguments.of("[user](" + courseMember1.getLogin() + ")[/user]", false), // missing full name
+                Arguments.of("[user]" + courseMember1.getName() + "()[/user]", false), // missing login
+                Arguments.of("[user]" + courseMember1.getName() + "[/user]", false), // missing login and parentheses
+                Arguments.of("[user]" + courseMember2.getName() + "(" + courseMember2.getLogin() + ")[/user][user]" + courseMember1.getName() + "(" + courseMember1.getLogin()
+                        + ")[/user]", true), // multiple valid user mentions
+                Arguments.of("[user]invalidName(" + courseMember1.getLogin() + ")[/user]", false), // invalid full name
+                Arguments.of("[user]" + noCourseMember.getName() + "(" + noCourseMember.getLogin() + ")[/user]", false), // not a course member
+                Arguments.of("[user]invalidName[user]" + courseMember1.getName() + "(" + courseMember1.getLogin() + ")[/user](invalid)[/user]", true) // matching only inner
+
+        );
     }
 }

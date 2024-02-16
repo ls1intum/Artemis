@@ -10,8 +10,13 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-@JsonSubTypes({ @JsonSubTypes.Type(value = OneToOneChatDTO.class, name = "oneToOneChat"), @JsonSubTypes.Type(value = GroupChatDTO.class, name = "groupChat"),
-        @JsonSubTypes.Type(value = ChannelDTO.class, name = "channel"), })
+// @formatter:off
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = OneToOneChatDTO.class, name = "oneToOneChat"),
+    @JsonSubTypes.Type(value = GroupChatDTO.class, name = "groupChat"),
+    @JsonSubTypes.Type(value = ChannelDTO.class, name = "channel"),
+})
+// @formatter:on
 public class ConversationDTO {
 
     /**
@@ -39,6 +44,9 @@ public class ConversationDTO {
 
     // property not taken from entity
     private Boolean isHidden;
+
+    // property not taken from entity
+    private Boolean isMuted;
 
     // property not taken from entity
     private Boolean isCreator;
@@ -148,6 +156,14 @@ public class ConversationDTO {
 
     public void setIsHidden(Boolean hidden) {
         isHidden = hidden;
+    }
+
+    public Boolean getIsMuted() {
+        return isMuted;
+    }
+
+    public void setIsMuted(Boolean isMuted) {
+        this.isMuted = isMuted;
     }
 
     public ZonedDateTime getLastReadDate() {

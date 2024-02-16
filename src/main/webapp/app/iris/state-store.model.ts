@@ -1,5 +1,6 @@
-import { IrisClientMessage, IrisMessage, IrisServerMessage } from 'app/entities/iris/iris-message.model';
+import { IrisMessage, IrisServerMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey, IrisErrorType, errorMessages } from 'app/entities/iris/iris-errors.model';
+import { IrisRateLimitInformation } from 'app/iris/websocket.service';
 
 export enum ActionType {
     NUM_NEW_MESSAGES_RESET = 'num-new-messages-reset',
@@ -61,7 +62,7 @@ export class StudentMessageSentAction implements MessageStoreAction {
     readonly type: ActionType;
 
     public constructor(
-        public readonly message: IrisClientMessage,
+        public readonly message: IrisUserMessage,
         public readonly timeoutId: ReturnType<typeof setTimeout> | null = null,
     ) {
         this.type = ActionType.STUDENT_MESSAGE_SENT;
@@ -93,10 +94,7 @@ export class RateMessageSuccessAction implements MessageStoreAction {
 export class RateLimitUpdatedAction implements MessageStoreAction {
     readonly type: ActionType;
 
-    public constructor(
-        public readonly currentMessageCount: number,
-        public readonly rateLimit: number,
-    ) {
+    public constructor(public readonly rateLimitInfo: IrisRateLimitInformation) {
         this.type = ActionType.RATE_LIMIT_UPDATED;
     }
 }
@@ -143,5 +141,6 @@ export class MessageStoreState {
         public serverResponseTimeout: ReturnType<typeof setTimeout> | null,
         public currentMessageCount: number,
         public rateLimit: number,
+        public rateLimitTimeframeHours: number,
     ) {}
 }

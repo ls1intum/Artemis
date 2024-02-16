@@ -53,11 +53,4 @@ describe('CourseTutorialGroupsOverviewComponent', () => {
         expect(tableComponentInstance.tutorialGroups).toEqual([tutorialGroupOne, tutorialGroupTwo]);
         expect(tableComponentInstance.course).toEqual(course);
     });
-
-    it('should navigate to tutorial group detail page when tutorial group click callback is called', () => {
-        const navigateSpy = jest.spyOn(router, 'navigate');
-        component.onTutorialGroupSelected(tutorialGroupOne);
-        expect(navigateSpy).toHaveBeenCalledOnce();
-        expect(navigateSpy).toHaveBeenCalledWith(['/courses', 1, 'tutorial-groups', 1]);
-    });
 });

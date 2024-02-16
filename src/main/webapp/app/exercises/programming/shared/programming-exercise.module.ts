@@ -13,6 +13,8 @@ import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercis
 import { ProgrammingExerciseResetButtonDirective } from 'app/exercises/programming/manage/reset/programming-exercise-reset-button.directive';
 import { ProgrammingExerciseResetDialogComponent } from 'app/exercises/programming/manage/reset/programming-exercise-reset-dialog.component';
 import { ProgrammingExerciseCreateButtonsComponent } from 'app/exercises/programming/manage/programming-exercise-create-buttons.component';
+import { CommitsInfoComponent } from './commits-info/commits-info.component';
+import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 
 @NgModule({
     imports: [
@@ -25,6 +27,7 @@ import { ProgrammingExerciseCreateButtonsComponent } from 'app/exercises/program
         ArtemisExerciseScoresModule,
         ArtemisProgrammingAssessmentModule,
         ExerciseCategoriesModule,
+        SubmissionResultStatusModule,
     ],
     declarations: [
         ProgrammingExerciseComponent,
@@ -32,7 +35,14 @@ import { ProgrammingExerciseCreateButtonsComponent } from 'app/exercises/program
         OrionProgrammingExerciseComponent,
         ProgrammingExerciseResetButtonDirective,
         ProgrammingExerciseResetDialogComponent,
+        CommitsInfoComponent,
     ],
-    exports: [ProgrammingExerciseComponent, ProgrammingExerciseCreateButtonsComponent, OrionProgrammingExerciseComponent, ProgrammingExerciseResetButtonDirective],
+    exports: [
+        ProgrammingExerciseComponent,
+        ProgrammingExerciseCreateButtonsComponent,
+        OrionProgrammingExerciseComponent,
+        ProgrammingExerciseResetButtonDirective,
+        CommitsInfoComponent,
+    ],
 })
 export class ArtemisProgrammingExerciseModule {}

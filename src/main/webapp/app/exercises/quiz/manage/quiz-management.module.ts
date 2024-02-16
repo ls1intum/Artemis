@@ -11,7 +11,7 @@ import { ArtemisQuizStatisticModule } from 'app/exercises/quiz/manage/statistics
 import { ArtemisApollonDiagramsModule } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.module';
 import { quizManagementRoute } from 'app/exercises/quiz/manage/quiz-management.route';
 import { QuizExerciseComponent } from 'app/exercises/quiz/manage/quiz-exercise.component';
-import { QuizExerciseDetailComponent } from 'app/exercises/quiz/manage/quiz-exercise-detail.component';
+import { QuizExerciseUpdateComponent } from 'app/exercises/quiz/manage/quiz-exercise-update.component';
 import { RouterModule } from '@angular/router';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/category-selector.module';
@@ -31,10 +31,17 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { FitTextModule } from 'app/exercises/quiz/shared/fit-text/fit-text.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
+import { QuizPoolMappingComponent } from 'app/exercises/quiz/manage/quiz-pool-mapping.component';
+import { QuizPoolMappingQuestionListComponent } from 'app/exercises/quiz/manage/quiz-pool-mapping-question-list.component';
+import { QuizPoolComponent } from 'app/exercises/quiz/manage/quiz-pool.component';
 import { QuizExerciseCreateButtonsComponent } from 'app/exercises/quiz/manage/quiz-exercise-create-buttons.component';
 import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit.component';
 import { QuizQuestionListEditExistingComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit-existing.component';
 import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.module';
+import { QuizExerciseDetailComponent } from 'app/exercises/quiz/manage/quiz-exercise-detail.component';
+import { DetailModule } from 'app/detail-overview-list/detail.module';
+import { QuizExerciseManageButtonsComponent } from 'app/exercises/quiz/manage/quiz-exercise-manage-buttons.component';
+import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
 
 const ENTITY_STATES = [...quizManagementRoute];
 
@@ -58,11 +65,15 @@ const ENTITY_STATES = [...quizManagementRoute];
         ArtemisSharedComponentModule,
         ExerciseCategoriesModule,
         ExerciseTitleChannelNameModule,
+        DetailModule,
+        ArtemisExerciseModule,
     ],
     declarations: [
+        QuizExerciseManageButtonsComponent,
         QuizExerciseComponent,
         QuizExerciseCreateButtonsComponent,
         QuizConfirmImportInvalidQuestionsModalComponent,
+        QuizExerciseUpdateComponent,
         QuizExerciseDetailComponent,
         MultipleChoiceQuestionEditComponent,
         DragAndDropQuestionEditComponent,
@@ -75,6 +86,9 @@ const ENTITY_STATES = [...quizManagementRoute];
         QuizReEvaluateWarningComponent,
         QuizExerciseExportComponent,
         MatchPercentageInfoModalComponent,
+        QuizPoolMappingComponent,
+        QuizPoolMappingQuestionListComponent,
+        QuizPoolComponent,
         QuizQuestionListEditComponent,
         QuizQuestionListEditExistingComponent,
     ],

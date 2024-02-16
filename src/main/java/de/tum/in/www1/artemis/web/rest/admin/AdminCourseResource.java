@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest.admin;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.*;
 
 import org.slf4j.Logger;
@@ -22,9 +23,7 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -36,7 +35,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("api/admin/")
 public class AdminCourseResource {
 
-    private final Logger log = LoggerFactory.getLogger(AdminCourseResource.class);
+    private static final Logger log = LoggerFactory.getLogger(AdminCourseResource.class);
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -53,10 +52,10 @@ public class AdminCourseResource {
 
     private final FileService fileService;
 
-    private final OnlineCourseConfigurationService onlineCourseConfigurationService;
+    private final Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService;
 
     public AdminCourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
-            FileService fileService, OnlineCourseConfigurationService onlineCourseConfigurationService, ChannelService channelService) {
+            FileService fileService, Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, ChannelService channelService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
@@ -117,20 +116,23 @@ public class AdminCourseResource {
         course.validateAccuracyOfScores();
         course.validateStartAndEndDate();
 
-        if (course.isOnlineCourse()) {
-            onlineCourseConfigurationService.createOnlineCourseConfiguration(course);
+        if (course.isOnlineCourse() && onlineCourseConfigurationService.isPresent()) {
+            onlineCourseConfigurationService.get().createOnlineCourseConfiguration(course);
         }
 
         courseService.createOrValidateGroups(course);
 
-        if (file != null) {
-            String pathString = fileService.handleSaveFile(file, false, false).toString();
-            course.setCourseIcon(pathString);
-        }
-
         Course createdCourse = courseRepository.save(course);
 
-        Arrays.stream(DefaultChannelType.values()).forEach(channelType -> createDefaultChannel(createdCourse, channelType));
+        if (file != null) {
+            Path basePath = FilePathService.getCourseIconFilePath();
+            Path savePath = fileService.saveFile(file, basePath);
+            createdCourse.setCourseIcon(FilePathService.publicPathForActualPathOrThrow(savePath, createdCourse.getId()).toString());
+            createdCourse = courseRepository.save(createdCourse);
+        }
+
+        Course finalCreatedCourse = createdCourse;
+        Arrays.stream(DefaultChannelType.values()).forEach(channelType -> createDefaultChannel(finalCreatedCourse, channelType));
 
         return ResponseEntity.created(new URI("/api/courses/" + createdCourse.getId())).body(createdCourse);
     }
@@ -152,6 +154,9 @@ public class AdminCourseResource {
         log.info("User {} has requested to delete the course {}", user.getLogin(), course.getTitle());
 
         courseService.delete(course);
+        if (course.getCourseIcon() != null) {
+            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(course.getCourseIcon())), 0);
+        }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, Course.ENTITY_NAME, course.getTitle())).build();
     }
 

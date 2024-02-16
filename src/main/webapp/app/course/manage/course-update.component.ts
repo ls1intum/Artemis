@@ -8,7 +8,7 @@ import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
-import { ARTEMIS_DEFAULT_COLOR, PROFILE_LOCALVC } from 'app/app.constants';
+import { ARTEMIS_DEFAULT_COLOR, PROFILE_LTI } from 'app/app.constants';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import dayjs from 'dayjs/esm';
@@ -18,7 +18,7 @@ import { Organization } from 'app/entities/organization.model';
 import { NgbModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
-import { faBan, faExclamationTriangle, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faExclamationTriangle, faQuestionCircle, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/utils/blob-util';
 import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
@@ -26,6 +26,8 @@ import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { FileService } from 'app/shared/http/file.service';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-course-update',
@@ -59,6 +61,7 @@ export class CourseUpdateComponent implements OnInit {
     faSave = faSave;
     faBan = faBan;
     faTimes = faTimes;
+    faTrash = faTrash;
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
 
@@ -78,6 +81,7 @@ export class CourseUpdateComponent implements OnInit {
         private courseManagementService: CourseManagementService,
         private courseAdminService: CourseAdminService,
         private activatedRoute: ActivatedRoute,
+        private fileService: FileService,
         private alertService: AlertService,
         private profileService: ProfileService,
         private organizationService: OrganizationManagementService,
@@ -108,6 +112,15 @@ export class CourseUpdateComponent implements OnInit {
                     this.course.maxComplaintTextLimit! > 0 &&
                     this.course.maxComplaintResponseTextLimit! > 0;
                 this.requestMoreFeedbackEnabled = this.course.maxRequestMoreFeedbackTimeDays! > 0;
+            } else {
+                this.fileService.getTemplateCodeOfCondcut().subscribe({
+                    next: (res: HttpResponse<string>) => {
+                        if (res.body) {
+                            this.course.courseInformationSharingMessagingCodeOfConduct = res.body;
+                        }
+                    },
+                    error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                });
             }
         });
 
@@ -133,7 +146,7 @@ export class CourseUpdateComponent implements OnInit {
                         this.course.instructorGroupName = 'artemis-dev';
                     }
                 }
-                this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+                this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LTI);
             }
         });
 
@@ -480,11 +493,12 @@ export class CourseUpdateComponent implements OnInit {
         // 2018 is the first year we offer semesters for and go one year into the future
         const years = dayjs().year() - 2018 + 1;
         // Add an empty semester as default value
-        const semesters: string[] = [''];
+        const semesters: string[] = [];
         for (let i = 0; i <= years; i++) {
-            semesters[2 * i + 1] = 'SS' + (18 + i);
-            semesters[2 * i + 2] = 'WS' + (18 + i) + '/' + (19 + i);
+            semesters[2 * i] = 'WS' + (18 + years - i) + '/' + (19 + years - i);
+            semesters[2 * i + 1] = 'SS' + (18 + years - i);
         }
+        semesters.push('');
         return semesters;
     }
 

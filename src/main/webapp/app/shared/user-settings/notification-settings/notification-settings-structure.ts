@@ -118,6 +118,33 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
             ],
         },
         {
+            key: 'examNotifications',
+            restrictionLevels: [Authority.USER],
+            settings: [
+                {
+                    key: 'newExamPost',
+                    descriptionKey: 'newExamPostDescription',
+                    settingId: SettingId.NOTIFICATION__EXAM_NOTIFICATION__NEW_EXAM_POST,
+                },
+                {
+                    key: 'newReplyForExamPost',
+                    descriptionKey: 'newReplyForExamPostDescription',
+                    settingId: SettingId.NOTIFICATION__EXAM_NOTIFICATION__NEW_REPLY_FOR_EXAM_POST,
+                },
+            ],
+        },
+        {
+            key: 'userMentionNotifications',
+            restrictionLevels: [Authority.USER],
+            settings: [
+                {
+                    key: 'newUserMention',
+                    descriptionKey: 'newUserMentionDescription',
+                    settingId: SettingId.NOTIFICATION__USER_NOTIFICATION__USER_MENTION,
+                },
+            ],
+        },
+        {
             key: 'conversationNotifications',
             restrictionLevels: [Authority.USER],
             settings: [

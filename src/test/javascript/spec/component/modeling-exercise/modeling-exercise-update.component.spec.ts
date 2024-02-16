@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 
 import { ArtemisTestModule } from '../../test.module';
 import { ModelingExerciseUpdateComponent } from 'app/exercises/modeling/manage/modeling-exercise-update.component';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
@@ -21,8 +21,14 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
+import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
+import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
+import { NgModel } from '@angular/forms';
+import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
+import { UMLDiagramType } from '@ls1intum/apollon';
 
-describe('ModelingExercise Management Update Component', () => {
+describe('ModelingExerciseUpdateComponent', () => {
     let comp: ModelingExerciseUpdateComponent;
     let fixture: ComponentFixture<ModelingExerciseUpdateComponent>;
     let service: ModelingExerciseService;
@@ -125,10 +131,10 @@ describe('ModelingExercise Management Update Component', () => {
         modelingExercise.dueDate = dayjs();
         modelingExercise.assessmentDueDate = dayjs();
         modelingExercise.channelName = 'test';
-        const courseId = 1;
+        const courseIdImportingCourse = 1;
         beforeEach(() => {
             const route = TestBed.inject(ActivatedRoute);
-            route.params = of({ courseId });
+            route.params = of({ courseId: courseIdImportingCourse });
             route.url = of([{ path: 'import' } as UrlSegment]);
             route.data = of({ modelingExercise });
         });
@@ -144,9 +150,17 @@ describe('ModelingExercise Management Update Component', () => {
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
-            expect(courseService.findAllCategoriesOfCourse).toHaveBeenLastCalledWith(course.id);
+            expect(courseService.findAllCategoriesOfCourse).toHaveBeenLastCalledWith(courseIdImportingCourse);
             expect(comp.existingCategories).toEqual(categories);
         }));
+
+        it('should load exercise categories', () => {
+            const loadExerciseCategoriesSpy = jest.spyOn(Utils, 'loadCourseExerciseCategories');
+
+            comp.ngOnInit();
+
+            expect(loadExerciseCategoriesSpy).toHaveBeenCalledOnce();
+        });
     });
 
     describe('ngOnInit in import mode: Exam to Course', () => {
@@ -266,5 +280,42 @@ describe('ModelingExercise Management Update Component', () => {
         comp.isExamMode = true;
         comp.diagramTypeChanged();
         expect(comp.modelingExercise.assessmentType).toEqual(AssessmentType.SEMI_AUTOMATIC);
+    });
+
+    it('should updateCategories properly by making category available for selection again when removing it', () => {
+        comp.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        comp.exerciseCategories = [];
+        const newCategories = [{ category: 'Easy' }, { category: 'Hard' }];
+
+        comp.updateCategories(newCategories);
+
+        expect(comp.modelingExercise.categories).toEqual(newCategories);
+        expect(comp.exerciseCategories).toEqual(newCategories);
+    });
+
+    it('should subscribe and unsubscribe to input element changes', () => {
+        const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
+        comp.modelingExercise = { startDate: dayjs(), dueDate: dayjs(), assessmentDueDate: dayjs(), releaseDate: dayjs() } as ModelingExercise;
+        comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { formValidChanges: new Subject(), formValid: true } } as ExerciseTitleChannelNameComponent;
+        comp.exerciseUpdatePlagiarismComponent = { formValidChanges: new Subject(), formValid: true } as ExerciseUpdatePlagiarismComponent;
+        comp.teamConfigFormGroupComponent = { formValidChanges: new Subject(), formValid: true } as TeamConfigFormGroupComponent;
+        comp.bonusPoints = { valueChanges: new Subject(), valid: true } as any as NgModel;
+        comp.points = { valueChanges: new Subject(), valid: true } as any as NgModel;
+
+        comp.ngAfterViewInit();
+
+        (comp.points.valueChanges as Subject<boolean>).next(false);
+        (comp.bonusPoints.valueChanges as Subject<boolean>).next(false);
+        comp.teamConfigFormGroupComponent.formValidChanges.next(false);
+        comp.exerciseUpdatePlagiarismComponent.formValidChanges.next(false);
+        comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValidChanges.next(false);
+        expect(calculateValidSpy).toHaveBeenCalledTimes(5);
+
+        comp.ngOnDestroy();
+
+        expect(comp.titleChannelNameComponentSubscription?.closed).toBeTrue();
+        expect(comp.plagiarismSubscription?.closed).toBeTrue();
+        expect(comp.bonusPointsSubscription?.closed).toBeTrue();
+        expect(comp.pointsSubscription?.closed).toBeTrue();
     });
 });

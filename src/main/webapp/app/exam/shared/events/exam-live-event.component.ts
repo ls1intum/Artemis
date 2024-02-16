@@ -1,6 +1,12 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { faCheck, faEye, faPaperPlane } from '@fortawesome/free-solid-svg-icons';
-import { ExamLiveEvent, ExamLiveEventType, ExamWideAnnouncementEvent, WorkingTimeUpdateEvent } from 'app/exam/participate/exam-participation-live-events.service';
+import {
+    ExamAttendanceCheckEvent,
+    ExamLiveEvent,
+    ExamLiveEventType,
+    ExamWideAnnouncementEvent,
+    WorkingTimeUpdateEvent,
+} from 'app/exam/participate/exam-participation-live-events.service';
 
 @Component({
     selector: 'jhi-exam-live-event',
@@ -24,11 +30,15 @@ export class ExamLiveEventComponent {
     faPaperPlane = faPaperPlane;
     faEye = faEye;
 
-    eventAsExamWideAnnouncementEvent(): ExamWideAnnouncementEvent {
+    get examWideAnnouncementEvent(): ExamWideAnnouncementEvent {
         return this.event as ExamWideAnnouncementEvent;
     }
 
-    eventAsWorkingTimeUpdateEvent(): WorkingTimeUpdateEvent {
+    get examAttendanceCheckEvent(): ExamAttendanceCheckEvent {
+        return this.event as ExamAttendanceCheckEvent;
+    }
+
+    get workingTimeUpdateEvent(): WorkingTimeUpdateEvent {
         return this.event as WorkingTimeUpdateEvent;
     }
 

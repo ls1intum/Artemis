@@ -9,13 +9,14 @@ import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdow
 import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { PostTagSelectorComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
-import { CourseWideContext, PageType } from 'app/shared/metis/metis.util';
+import { PageType } from 'app/shared/metis/metis.util';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ArtemisTestModule } from '../../../../../test.module';
 import { PostComponent } from 'app/shared/metis/post/post.component';
-import { metisCourse, metisCoursePosts, metisExercise, metisLecture, metisPostLectureUser1, metisPostToCreateUser1 } from '../../../../../helpers/sample/metis-sample-data';
+import { metisCourse, metisExercise, metisPostLectureUser1, metisPostTechSupport, metisPostToCreateUser1 } from '../../../../../helpers/sample/metis-sample-data';
 import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 describe('PostCreateEditModalComponent', () => {
     let component: PostCreateEditModalComponent;
@@ -61,7 +62,7 @@ describe('PostCreateEditModalComponent', () => {
 
     it('should init modal with correct context, title and content for post without id', () => {
         metisServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
-        component.posting = { ...metisPostToCreateUser1, courseWideContext: CourseWideContext.TECH_SUPPORT };
+        component.posting = { ...metisPostToCreateUser1 };
         component.ngOnInit();
         component.ngOnChanges();
         expect(component.pageType).toEqual(PageType.OVERVIEW);
@@ -73,26 +74,18 @@ describe('PostCreateEditModalComponent', () => {
         expect(component.exercises).toHaveLength(metisCourse.exercises!.length);
         expect(component.similarPosts).toHaveLength(0);
         // currently the default selection when opening the model in the overview for creating a new post is the course-wide context TECH_SUPPORT
-        expect(component.currentContextSelectorOption).toEqual({
-            courseWideContext: CourseWideContext.TECH_SUPPORT,
-            exercise: undefined,
-            lecture: undefined,
-        });
+        expect(component.currentContextSelectorOption).toEqual({});
         expect(component.tags).toEqual([]);
     });
 
     it('should reset context selection on changes', () => {
         metisServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
-        component.posting = { ...metisPostToCreateUser1, courseWideContext: CourseWideContext.TECH_SUPPORT };
+        component.posting = { ...metisPostTechSupport };
         component.ngOnInit();
-        component.currentContextSelectorOption.courseWideContext = CourseWideContext.ORGANIZATION;
+        component.currentContextSelectorOption.conversation = { id: 1 } as Channel;
         component.ngOnChanges();
         // change to Organization as course-wide topic should be reset to Tech Support
-        expect(component.currentContextSelectorOption).toEqual({
-            courseWideContext: CourseWideContext.TECH_SUPPORT,
-            exercise: undefined,
-            lecture: undefined,
-        });
+        expect(component.currentContextSelectorOption).toEqual({ conversation: metisPostTechSupport.conversation });
         expect(component.tags).toEqual([]);
     });
 
@@ -107,20 +100,17 @@ describe('PostCreateEditModalComponent', () => {
         component.formGroup.setValue({
             title: newTitle,
             content: newContent,
-            context: { courseWideContext: undefined, exercise: undefined, metisLecture },
+            context: {},
         });
         // debounce time of title input field
         tick(800);
-        expect(component.similarPosts).toEqual(metisCoursePosts.slice(0, 5));
+        expect(component.similarPosts).toEqual([]);
         // trigger the method that is called on clicking the save button
         component.confirm();
         expect(metisServiceCreateStub).toHaveBeenCalledWith({
             ...component.posting,
             content: newContent,
             title: newTitle,
-            courseWideContext: undefined,
-            exercise: undefined,
-            metisLecture,
         });
         tick();
         expect(component.isLoading).toBeFalse();
@@ -140,7 +130,7 @@ describe('PostCreateEditModalComponent', () => {
         component.formGroup.setValue({
             title: newTitle,
             content: newContent,
-            context: { courseWideContext: CourseWideContext.ANNOUNCEMENT, exercise: undefined, undefined },
+            context: { conversationId: metisPostToCreateUser1.conversation?.id, exercise: undefined, undefined },
         });
         // trigger the method that is called on clicking the save button
         component.confirm();
@@ -148,9 +138,6 @@ describe('PostCreateEditModalComponent', () => {
             ...component.posting,
             content: newContent,
             title: newTitle,
-            courseWideContext: CourseWideContext.ANNOUNCEMENT,
-            exercise: undefined,
-            lecture: undefined,
         });
         // debounce time of title input field
         tick(800);

@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { ChecklistCheckComponent } from 'app/shared/components/checklist-check.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
-import { ConfirmAutofocusButtonComponent, ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-button/clone-repo-button.component';
@@ -23,6 +23,7 @@ import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-hea
 import { ExerciseImportTabsComponent } from 'app/exercises/shared/import/exercise-import-tabs.component';
 import { ExerciseImportFromFileComponent } from 'app/exercises/shared/import/from-file/exercise-import-from-file.component';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
+import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisCoursesRoutingModule, FeatureToggleModule, ClipboardModule],
@@ -70,6 +71,7 @@ import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exer
         ExerciseImportTabsComponent,
         ExerciseImportFromFileComponent,
         ExerciseImportWrapperComponent,
+        ConfirmAutofocusModalComponent,
     ],
 })
 export class ArtemisSharedComponentModule {}

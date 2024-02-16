@@ -141,8 +141,10 @@ describe('ThemeService', () => {
     });
 
     it('does print correctly', fakeAsync(() => {
+        const initialDisplayClass = 'someDisplayClass';
+
         const winSpy = jest.spyOn(window, 'print').mockImplementation();
-        const returnedElement = { rel: 'stylesheet' };
+        const returnedElement = { rel: 'stylesheet', style: { display: initialDisplayClass } };
         const docSpy = jest.spyOn(document, 'getElementById').mockReturnValue(returnedElement as any as HTMLElement);
 
         service.print();
@@ -151,8 +153,11 @@ describe('ThemeService', () => {
         expect(docSpy).toHaveBeenCalledWith(THEME_OVERRIDE_ID);
         expect(returnedElement.rel).toBe('none-tmp');
         tick(250);
+        expect(docSpy).toHaveBeenCalledWith('notification-sidebar');
+        expect(docSpy).toHaveBeenCalledTimes(3); // 1x for theme override, 2x for notification sidebar (changing style to display: none and back to initial value)
         expect(winSpy).toHaveBeenCalledOnce();
         tick(250);
         expect(returnedElement.rel).toBe('stylesheet');
+        expect(returnedElement.style.display).toBe(initialDisplayClass);
     }));
 });

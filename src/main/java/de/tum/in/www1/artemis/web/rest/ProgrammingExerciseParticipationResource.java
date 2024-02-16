@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -8,16 +9,19 @@ import java.util.stream.Collectors;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -25,6 +29,7 @@ import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
+import de.tum.in.www1.artemis.web.rest.dto.CommitInfoDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -79,6 +84,24 @@ public class ProgrammingExerciseParticipationResource {
     public ResponseEntity<ProgrammingExerciseStudentParticipation> getParticipationWithLatestResultForStudentParticipation(@PathVariable Long participationId) {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository
                 .findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId)
+                .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+
+        // hide details that should not be shown to the students
+        resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
+        return ResponseEntity.ok(participation);
+    }
+
+    /**
+     * Get the given student participation with all results and feedbacks.
+     *
+     * @param participationId for which to retrieve the student participation with all results and feedbacks.
+     * @return the ResponseEntity with status 200 (OK) and the participation with all results and feedbacks in the body.
+     */
+    @GetMapping("/programming-exercise-participations/{participationId}/student-participation-with-all-results")
+    @EnforceAtLeastStudent
+    public ResponseEntity<ProgrammingExerciseStudentParticipation> getParticipationWithAllResultsForStudentParticipation(@PathVariable Long participationId) {
+        ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdWithAllResultsAndRelatedSubmissions(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
@@ -196,19 +219,84 @@ public class ProgrammingExerciseParticipationResource {
             throw new BadRequestAlertException("Cannot reset repository in an exam", ENTITY_NAME, "noRepoResetInExam");
         }
 
-        VcsRepositoryUrl sourceURL;
+        VcsRepositoryUri sourceURL;
         if (gradedParticipationId != null) {
             ProgrammingExerciseStudentParticipation gradedParticipation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(gradedParticipationId);
             participationAuthCheckService.checkCanAccessParticipationElseThrow(gradedParticipation);
 
-            sourceURL = gradedParticipation.getVcsRepositoryUrl();
+            sourceURL = gradedParticipation.getVcsRepositoryUri();
         }
         else {
-            sourceURL = exercise.getVcsTemplateRepositoryUrl();
+            sourceURL = exercise.getVcsTemplateRepositoryUri();
         }
 
-        programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUrl(), sourceURL);
+        programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUri(), sourceURL);
 
         return ResponseEntity.ok().build();
     }
+
+    /**
+     * GET /programming-exercise-participations/{participationId}/commits-info : Get the commits information (author, timestamp, message, hash) of a programming exercise
+     * participation.
+     *
+     * @param participationId the id of the participation for which to retrieve the commits information
+     * @return A list of commitInfo DTOs with the commits information of the participation
+     */
+    @GetMapping("programming-exercise-participations/{participationId}/commits-info")
+    @EnforceAtLeastInstructor
+    List<CommitInfoDTO> getCommitInfosForParticipationRepo(@PathVariable long participationId) {
+        ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, participation.getProgrammingExercise(), null);
+        return programmingExerciseParticipationService.getCommitInfos(participation);
+    }
+
+    /**
+     * GET /programming-exercise-participations/{participationId}/commits-history : Get the commit history of a programming exercise participation.
+     * Here we check is at least a teaching assistant for the exercise. If true the user can have access to the commit history of any participation of the exercise.
+     * If the user is a student, we check if the user is the owner of the participation.
+     *
+     * @param participationId the id of the participation for which to retrieve the commit history
+     * @return A list of commitInfo DTOs with the commits information of the participation
+     */
+    @GetMapping("programming-exercise-participations/{participationId}/commit-history")
+    @EnforceAtLeastStudent
+    public List<CommitInfoDTO> getCommitHistoryForParticipationRepo(@PathVariable long participationId) {
+        ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        return programmingExerciseParticipationService.getCommitInfos(participation);
+    }
+
+    /**
+     * GET /programming-exercise-participations/{participationId}/files-content : Get the content of the files of a programming exercise participation.
+     *
+     * @param participationId the id of the participation for which to retrieve the files content
+     * @param commitId        the id of the commit for which to retrieve the files content
+     * @return a redirect to the endpoint returning the files with content
+     */
+    @GetMapping("programming-exercise-participations/{participationId}/files-content/{commitId}")
+    @EnforceAtLeastInstructor
+    public ModelAndView redirectGetParticipationRepositoryFiles(@PathVariable long participationId, @PathVariable String commitId) {
+        ProgrammingExercise exercise = programmingExerciseRepository.findByParticipationId(participationId).orElseThrow();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+        var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
+        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content/" + commitId);
+    }
+
+    /**
+     * GET /programming-exercise-participations/{participationId}/files-content-commit-details/{commitId} : Get the content of the files of a programming exercise participation.
+     * This method is specifically for the commit details view, where not only Instructors and Admins should have access to the files content as in
+     * redirectGetParticipationRepositoryFiles but also students and tutors that have access to the participation.
+     *
+     * @param participationId the id of the participation for which to retrieve the files content
+     * @param commitId        the id of the commit for which to retrieve the files content
+     * @return a redirect to the endpoint returning the files with content
+     */
+    @GetMapping("programming-exercise-participations/{participationId}/files-content-commit-details/{commitId}")
+    @EnforceAtLeastStudent
+    public ModelAndView redirectGetParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long participationId, @PathVariable String commitId) {
+        var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content/" + commitId);
+    }
+
 }

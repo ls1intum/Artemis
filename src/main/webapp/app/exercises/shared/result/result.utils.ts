@@ -13,7 +13,7 @@ import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/fre
 import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/exercises/shared/participation/participation.utils';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { Participation } from 'app/entities/participation/participation.model';
+import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
 import { TestCaseResult } from 'app/entities/test-case-result.model';
@@ -276,6 +276,14 @@ export const resultIsPreliminary = (result: Result) => {
 };
 
 /**
+ * Returns true if the specified result is a student Participation
+ * @param result the result.
+ */
+export const isStudentParticipation = (result: Result) => {
+    return Boolean(result.participation && result.participation.type !== ParticipationType.TEMPLATE && result.participation.type !== ParticipationType.SOLUTION);
+};
+
+/**
  * Returns true if the submission of the result is of type programming, is automatic, and
  * its build has failed.
  * @param result
@@ -314,9 +322,9 @@ export function getTestCaseNamesFromResults(results: ResultWithPointsPerGradingC
         if (!result.result.feedbacks) {
             return [];
         }
-        result.result.feedbacks.map((f) => {
-            if (Feedback.isTestCaseFeedback(f)) {
-                testCasesNames.add(f.text ?? 'Test ' + result.result.feedbacks?.indexOf(f) + 1);
+        result.result.feedbacks.forEach((feedback) => {
+            if (Feedback.isTestCaseFeedback(feedback)) {
+                testCasesNames.add(feedback.testCase?.testName ?? 'Test ' + (result.result.feedbacks!.indexOf(feedback) + 1));
             }
         });
     });
@@ -358,7 +366,7 @@ export function getFeedbackByTestCase(testCase: string, feedbacks?: Feedback[]):
     if (!feedbacks) {
         return null;
     }
-    const i = feedbacks.findIndex((feedback) => feedback.text?.localeCompare(testCase) === 0);
+    const i = feedbacks.findIndex((feedback) => feedback.testCase?.testName?.localeCompare(testCase) === 0);
     return i !== -1 ? feedbacks[i] : null;
 }
 

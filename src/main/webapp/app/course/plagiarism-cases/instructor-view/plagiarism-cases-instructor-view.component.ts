@@ -17,9 +17,9 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     plagiarismCases: PlagiarismCase[] = [];
     groupedPlagiarismCases: any; // maybe? { [key: number]: PlagiarismCase[] }
     exercisesWithPlagiarismCases: Exercise[] = [];
-    getIcon = getIcon;
 
-    documentationType = DocumentationType.PlagiarismChecks;
+    readonly getIcon = getIcon;
+    readonly documentationType: DocumentationType = 'PlagiarismChecks';
 
     constructor(
         private plagiarismCasesService: PlagiarismCasesService,

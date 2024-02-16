@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "course": {
+            "searchForCourse": "Search for a course...",
             "home": {
                 "title": "Courses",
                 "createLabel": "Create new course",
@@ -65,11 +66,13 @@
             "startDate": "Start",
             "endDate": "End",
             "semester": "Semester",
+            "ltiConfiguration": "LTI Configuration",
+            "recentlyAccessed": "Recently accessed",
             "maxPoints": {
                 "title": "Maximum number of points for course",
                 "info": "This value is used for example calculations (e.g. in the grading key) and does not influence the students' grades. The grades are calculated based on the points achievable in the course."
             },
-            "accuracyOfScores": "Amount of decimal places used for calculating the scores",
+            "accuracyOfScores": "Number of decimal places used for calculating the scores",
             "defaultProgrammingLanguage": "Default Programming Language",
             "gradingSystem": "Grading Key",
             "testCourse": {
@@ -94,10 +97,7 @@
                 "messagingEnabled": {
                     "label": "Messaging Enabled",
                     "tooltip": "Enables messaging between course users in private or public channels, group chats or direct messages. Channels can only be created by instructors and tutors. Users can self-join public channels and must be invited to private channels. Every user can start a private group chat and add other users. A group chat is limited to 10 members. Every user can start a private one-to-one chat with another user. The chats happens in the messaging space of the course.",
-                    "codeOfConduct": {
-                        "label": "Code of Conduct",
-                        "tooltip": "The Code of Conduct describes to users how best to communicate and which consequences might be raised if there is misconduct, as well as, contact information for reporting."
-                    }
+                    "codeOfConduct": "Messaging Code of Conduct"
                 }
             },
             "registrationEnabled": {
@@ -209,6 +209,12 @@
             },
             "detail": {
                 "title": "Course Details:",
+                "sections": {
+                    "general": "General Information",
+                    "mode": "Mode",
+                    "enrollment": "Enrollment",
+                    "messaging": "Messages & Communication"
+                },
                 "assessmentsTitle": "Total Assessments",
                 "complaintsTitle": "Total Complaints",
                 "moreFeedbackTitle": "More Feedback Requests",
@@ -228,7 +234,6 @@
             "activeStudents": "Active students",
             "activeStudentsExplanation": "Active students are students that submitted at least once in the corresponding week.",
             "average": "Average: ",
-            "meanReferenceLineCheckboxLabel": "Show mean as reference line",
             "exerciseType": "Exercise type",
             "programming": "Programming",
             "quiz": "Quiz",
@@ -242,10 +247,10 @@
             },
             "calendarWeek": "Calendar Week",
             "scopeButton": {
-                "recentWeekButton": "Recent activity",
-                "recentWeekTooltip": "Includes the activity of the last 17 weeks. If the course started less than 17 weeks ago, the data starts at its start date.",
-                "lifetimeOverviewButtonLabel": "Lifetime overview",
-                "lifetimeOverviewTooltip": "Shows the period starting from the course start date until the current date. If the course is already finished, the data ends at its end date."
+                "period": "{{ amount }}W",
+                "periodTooltip": "Activity of the last {{ amount }} weeks.",
+                "overview": "Max",
+                "overviewTooltip": "Activity since the course start date till now."
             }
         }
     }

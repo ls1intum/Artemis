@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import {
+    faBan,
+    faBell,
     faChartPie,
     faCheckSquare,
     faClipboardCheck,
@@ -30,6 +32,7 @@ import {
     faTasks,
     faThList,
     faUserSecret,
+    faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
@@ -192,6 +195,16 @@ export class FeatureOverviewComponent implements OnInit {
             '/content/images/feature-overview/students/student_grade_key.png',
         );
 
+        const featureExerciseUpdateNotification = new Feature(
+            'featureOverview.students.feature.exerciseUpdateNotification.title',
+            'featureOverview.students.feature.exerciseUpdateNotification.shortDescription',
+            'featureOverview.students.feature.exerciseUpdateNotification.descriptionTextOne',
+            faBell,
+            undefined,
+            '/content/images/feature-overview/students/exercise_update_notification.png',
+            '/content/images/feature-overview/students/exercise_diff_view.png',
+        );
+
         this.features = [
             featureConduction,
             featureExamMode,
@@ -202,6 +215,7 @@ export class FeatureOverviewComponent implements OnInit {
             featureApollonEditor,
             featureTextEditor,
             featureQuizExercises,
+            featureExerciseUpdateNotification,
             featureSummary,
             featureQualityAndFair,
             featureOnlineReview,
@@ -283,6 +297,8 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.instructor.feature.sessionMonitoring.shortDescription',
             'featureOverview.instructor.feature.sessionMonitoring.descriptionTextOne',
             faHdd,
+            undefined,
+            '/content/images/feature-overview/instructors/session_monitoring.png',
         );
 
         const featurePlagiarismDetection = new Feature(
@@ -368,6 +384,24 @@ export class FeatureOverviewComponent implements OnInit {
             '/content/images/feature-overview/instructors/grade_key_editor.png',
         );
 
+        const featureSubmissionPolicy = new Feature(
+            'featureOverview.instructor.feature.submissionPolicy.title',
+            'featureOverview.instructor.feature.submissionPolicy.shortDescription',
+            'featureOverview.instructor.feature.submissionPolicy.descriptionTextOne',
+            faBan,
+            undefined,
+            undefined,
+            '/content/images/feature-overview/instructors/submission-policy-lock-configure-grading.png',
+        );
+
+        const featureExamExerciseUpdates = new Feature(
+            'featureOverview.instructor.feature.examExerciseUpdates.title',
+            'featureOverview.instructor.feature.examExerciseUpdates.shortDescription',
+            'featureOverview.instructor.feature.examExerciseUpdates.descriptionTextOne',
+            faWrench,
+            undefined,
+            '/content/images/feature-overview/instructors/exam_exercise_update_notification.png',
+        );
         this.features = [
             featureCreateConductAssess,
             featureConfiguration,
@@ -375,6 +409,7 @@ export class FeatureOverviewComponent implements OnInit {
             featureExerciseTypes,
             featureExerciseVariants,
             featureTestRuns,
+            featureExamExerciseUpdates,
             featureSessionMonitoring,
             featurePlagiarismDetection,
             featureAnonymousAssessment,
@@ -385,6 +420,7 @@ export class FeatureOverviewComponent implements OnInit {
             featureStatistics,
             featureChecklist,
             featureGradeKey,
+            featureSubmissionPolicy,
         ];
     }
 

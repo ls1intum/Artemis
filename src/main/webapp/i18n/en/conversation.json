@@ -54,6 +54,8 @@
                     "hide": "Hide",
                     "favorite": "Favorite",
                     "unfavorite": "Unfavorite",
+                    "mute": "Mute",
+                    "unmute": "Unmute",
                     "settings": "Settings"
                 }
             }

@@ -2,6 +2,8 @@
     "artemisApp": {
         "studentDashboard": {
             "title": "Your current courses",
+            "recentlyAccessed": "Recently accessed courses",
+            "otherCourses": "Other courses",
             "exerciseTitle": "Current active exercise in \"{{ course }}\"",
             "exerciseTitleWithoutDueDate": "Current exercise in \"{{ course }}\":",
             "examTitle": "Current exam in \"{{ course }}\":",
@@ -19,7 +21,7 @@
                 "noCourse": "No courses available for enrollment",
                 "courseLoading": "Course is loading...",
                 "coursesLoading": "Courses are loading...",
-                "courseEnrollmentConfirmationTitle": "Confirm Course Enrollment"
+                "courseEnrollmentConfirmationTitle": "Confirm enrollment for course \"{{ courseName }}\""
             },
             "course": "Course"
         },
@@ -28,6 +30,7 @@
             "showMore": "Show more",
             "showLess": "Show less",
             "manage": "Manage",
+            "studentView": "Student view",
             "menu": {
                 "exercises": "Exercises",
                 "statistics": "Statistics",
@@ -56,12 +59,19 @@
                 "sortExercises": "Sort exercises",
                 "newFirst": "Newest",
                 "oldFirst": "Oldest",
+                "past": "Past",
+                "current": "Current",
+                "future": "Future",
+                "noDueDate": "No due date",
+                "view": "View",
+                "timeframeView": "Timeframe view",
+                "weeklyView": "Weekly view",
                 "noExercises": "No exercises available for the course.",
+                "noExerciseMatchesSearchAndFilters": "No exercises found with the current search and filter settings.",
                 "notReleasedTooltip": "Only visible to teaching assistants and instructors. Release Date: ",
                 "notReleased": "Not released",
                 "live": "Live",
                 "shortDueDate": "Due",
-                "noDueDate": "No due date",
                 "userNotAssignedToTeam": "You have not been assigned to a team yet.",
                 "userNotStartedExercise": "You have not started this exercise yet.",
                 "exerciseSubmitted": "Submitted, you can still submit updates.",

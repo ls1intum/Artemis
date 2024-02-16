@@ -1,4 +1,4 @@
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -9,6 +9,7 @@ import { Injectable } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { UMLDiagramType } from '@ls1intum/apollon';
 
 @Injectable({ providedIn: 'root' })
 export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
@@ -20,7 +21,7 @@ export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
 
     resolve(route: ActivatedRouteSnapshot) {
         if (route.params['exerciseId']) {
-            return this.modelingExerciseService.find(route.params['exerciseId']).pipe(
+            return this.modelingExerciseService.find(route.params['exerciseId'], true).pipe(
                 filter((res) => !!res.body),
                 map((modelingExercise: HttpResponse<ModelingExercise>) => modelingExercise.body!),
             );

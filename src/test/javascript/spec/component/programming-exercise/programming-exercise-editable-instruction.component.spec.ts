@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { Subject } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { DebugElement } from '@angular/core';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -24,13 +25,18 @@ import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programmi
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { HttpResponse } from '@angular/common/http';
+import { AlertService } from 'app/core/util/alert.service';
+import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 
 describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let comp: ProgrammingExerciseEditableInstructionComponent;
     let fixture: ComponentFixture<ProgrammingExerciseEditableInstructionComponent>;
     let debugElement: DebugElement;
     let gradingService: IProgrammingExerciseGradingService;
+    let programmingExerciseService: ProgrammingExerciseService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
+    let alertService: AlertService;
 
     let subscribeForTestCaseSpy: jest.SpyInstance;
     let getLatestResultWithFeedbacksStub: jest.SpyInstance;
@@ -62,6 +68,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 { provide: ProgrammingExerciseGradingService, useClass: MockProgrammingExerciseGradingService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AlertService, useClass: MockAlertService },
             ],
         })
             .compileComponents()
@@ -75,6 +82,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 subscribeForTestCaseSpy = jest.spyOn(gradingService, 'subscribeForTestCases');
                 getLatestResultWithFeedbacksStub = jest.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
                 generateHtmlSubjectStub = jest.spyOn(comp.generateHtmlSubject, 'next');
+                programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
+                alertService = debugElement.injector.get(AlertService);
             });
     });
 
@@ -159,7 +168,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(comp.exerciseTestCases).toHaveLength(0);
         expect(getLatestResultWithFeedbacksStub).toHaveBeenNthCalledWith(1, exercise.templateParticipation!.id!);
 
-        subject.next({ feedbacks: [{ text: 'testY' }, { text: 'testX' }] } as Result);
+        subject.next({ feedbacks: [{ testCase: { testName: 'testY' } }, { testCase: { testName: 'testX' } }] } as Result);
         tick();
 
         expect(comp.exerciseTestCases).toHaveLength(2);
@@ -247,4 +256,40 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         fixture.destroy();
         flush();
     }));
+
+    it('should save the problem statement to the server', () => {
+        comp.exercise = exercise;
+        comp.editMode = true;
+
+        const updateProblemStatement = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(of(new HttpResponse({ body: exercise })));
+
+        comp.updateProblemStatement('new problem statement');
+        comp.saveInstructions({ stopPropagation: () => {} } as Event);
+
+        expect(updateProblemStatement).toHaveBeenCalledExactlyOnceWith(exercise.id, 'new problem statement');
+    });
+
+    it('should log an error on save', () => {
+        const updateProblemStatementSpy = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(throwError(undefined));
+        const logErrorSpy = jest.spyOn(alertService, 'error');
+
+        comp.exercise = exercise;
+        comp.editMode = true;
+
+        comp.saveInstructions(new KeyboardEvent('cmd+s'));
+        expect(updateProblemStatementSpy).toHaveBeenCalledOnce();
+        expect(logErrorSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should save on key commands', () => {
+        const saveInstructionsSpy = jest.spyOn(comp, 'saveInstructions');
+        comp.exercise = exercise;
+        comp.editMode = true;
+
+        comp.saveOnControlAndS(new KeyboardEvent('ctrl+s'));
+        expect(saveInstructionsSpy).toHaveBeenCalledOnce();
+
+        comp.saveOnCommandAndS(new KeyboardEvent('cmd+s'));
+        expect(saveInstructionsSpy).toHaveBeenCalledOnce();
+    });
 });

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
@@ -15,7 +16,11 @@ import org.springframework.stereotype.Component;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -31,9 +36,68 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitl
     @Autowired
     private CourseUtilService courseUtilService;
 
+    @Autowired
+    private AuthorizationCheckService authCheckService;
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
+    }
+
+    @Nested
+    @Component
+    class IsUserAllowedToGetResultTest {
+
+        @Autowired
+        private ParticipationUtilService participationUtilService;
+
+        private ModelingExercise modelingExercise;
+
+        private StudentParticipation participation;
+
+        private Result result;
+
+        @BeforeEach
+        void initTestCase() {
+            Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+            modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
+
+            participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
+            participation.setTestRun(true);
+            result = new Result();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testIsAllowedAsInstructorDuringTestRun() {
+            boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result);
+            assertThat(isUserAllowedToGetResult).isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+        void testIsNotAllowedAsStudentDuringTestRun() {
+            boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result);
+            assertThat(isUserAllowedToGetResult).isFalse();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testIsNotAllowedAsInstructorForNonTestRunExerciseBeforeDeadline() {
+            participation.setTestRun(false);
+
+            boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result);
+            assertThat(isUserAllowedToGetResult).isFalse();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+        void testIsNotAllowedAsStudentForNonTestRunExerciseBeforeDeadline() {
+            participation.setTestRun(false);
+
+            boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result);
+            assertThat(isUserAllowedToGetResult).isFalse();
+        }
     }
 
     @Nested
@@ -42,9 +106,6 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitl
     class IsUserAllowedToEnrollForCourseTest {
 
         // We need our own courseService here that overshadows the one from the CourseServiceTest, so that the new property is applied to it.
-        @Autowired
-        private AuthorizationCheckService authCheckService;
-
         @Autowired
         private CourseRepository courseRepository;
 
@@ -104,7 +165,6 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitl
             courseRepository.save(course);
             assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToEnrollInCourseElseThrow(this.student1, course))
                     .withMessage("The course does currently not allow enrollment.");
-            ;
         }
 
         @Test

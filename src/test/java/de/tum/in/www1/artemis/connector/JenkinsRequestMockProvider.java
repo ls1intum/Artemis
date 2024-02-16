@@ -128,8 +128,17 @@ public class JenkinsRequestMockProvider {
     public void mockCreateBuildPlan(String projectKey, String planKey, boolean jobAlreadyExists) throws IOException {
         var job = projectKey + "-" + planKey;
         mockCreateJobInFolder(projectKey, job, jobAlreadyExists);
+        mockCreateBuildPlan(projectKey, job);
+    }
+
+    private void mockCreateBuildPlan(String projectKey, String job) throws IOException {
         mockGivePlanPermissions(projectKey, job);
         mockTriggerBuild(projectKey, job, false);
+    }
+
+    public void mockCreateCustomBuildPlan(String projectKey, String planKey) throws IOException {
+        var job = projectKey + "-" + planKey;
+        mockCreateBuildPlan(projectKey, job);
     }
 
     public void mockCreateJobInFolder(String jobFolder, String job, boolean jobAlreadyExists) throws IOException {
@@ -232,6 +241,8 @@ public class JenkinsRequestMockProvider {
         mockGetJobXmlForBuildPlanWith(projectKey, mockXml);
 
         final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("job", projectKey, "job", planName, "config.xml").build().toUri();
+
+        // build plan URL is updated after the repository URIs, so in this case, the URI is used twice
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
 
         mockTriggerBuild(projectKey, planName, false);

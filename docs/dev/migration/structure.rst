@@ -66,6 +66,11 @@ Only in special cases where you cannot avoid different SQL statements depending 
         <!-- … -->
     </databaseChangelog>
 
+2.1.1. DATETIME
+===============
+The recommended default data type for storing values that involve date and time, such as creation dates and timestamps, is :code:`datetime(3)`.
+Liquibase will translate this to :code:`datetime(3)` for MySQL and :code:`timestamp(3)` for PostgreSQL.
+This choice ensures consistent support for milliseconds across both MySQL and PostgreSQL databases.
 
 3. Development
 ==============

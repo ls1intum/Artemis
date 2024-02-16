@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,16 +18,16 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface QuizQuestionRepository extends JpaRepository<QuizQuestion, Long> {
 
+    Set<QuizQuestion> findByExercise_Id(long id);
+
     @Query("""
             SELECT question
-            FROM QuizExercise exercise
-                LEFT JOIN  exercise.quizQuestions question
-            WHERE exercise.id = :exerciseId
+            FROM DragAndDropQuestion question
+            WHERE question.id = :questionId
             """)
-    Set<QuizQuestion> getQuizQuestionsByExerciseId(@Param("exerciseId") long exerciseId);
+    Optional<DragAndDropQuestion> findDnDQuestionById(@Param("questionId") long questionId);
 
     default DragAndDropQuestion findDnDQuestionByIdOrElseThrow(Long questionId) {
-        return (DragAndDropQuestion) findById(questionId).orElseThrow(() -> new EntityNotFoundException("DragAndDropQuestion", questionId));
+        return findDnDQuestionById(questionId).orElseThrow(() -> new EntityNotFoundException("DragAndDropQuestion", questionId));
     }
-
 }

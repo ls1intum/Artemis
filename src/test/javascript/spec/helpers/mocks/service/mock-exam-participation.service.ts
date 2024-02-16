@@ -12,6 +12,9 @@ studentExamInstance.exercises = exercises as Exercise[];
 const examParticipationSubjectMock = new BehaviorSubject<StudentExam>(studentExamInstance);
 
 export class MockExamParticipationService {
+    loadStudentExam = (courseId: number, examId: number): Observable<StudentExam> => {
+        return examParticipationSubjectMock;
+    };
     loadStudentExamWithExercisesForSummary = (): Observable<StudentExam> => {
         return examParticipationSubjectMock;
     };
@@ -24,7 +27,7 @@ export class MockExamParticipationService {
         return examParticipationSubjectMock;
     }
 
-    loadStudentExamGradeInfoForSummary(courseId: number, examId: number, userId?: number): Observable<StudentExamWithGradeDTO> {
+    loadStudentExamGradeInfoForSummary(courseId: number, examId: number, userId?: number, isTestRun?: boolean): Observable<StudentExamWithGradeDTO> {
         return of({} as StudentExamWithGradeDTO);
     }
 
@@ -33,4 +36,8 @@ export class MockExamParticipationService {
     };
 
     saveStudentExamToLocalStorage(courseId: number, examId: number, studentExam: StudentExam): void {}
+
+    public getOwnStudentExam(courseId: number, examId: number): Observable<StudentExam> {
+        return of({} as StudentExam);
+    }
 }

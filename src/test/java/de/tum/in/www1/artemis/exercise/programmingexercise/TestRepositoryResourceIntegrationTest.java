@@ -18,8 +18,6 @@ import org.eclipse.jgit.merge.MergeStrategy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledOnOs;
-import org.junit.jupiter.api.condition.OS;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -79,14 +77,14 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         filePath = Path.of(testRepo.localRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(filePath);
 
-        var testRepoUrl = new GitUtilService.MockFileRepositoryUrl(testRepo.localRepoFile);
-        programmingExercise.setTestRepositoryUrl(testRepoUrl.toString());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoUrl, true);
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoUrl, false);
+        var testRepoUri = new GitUtilService.MockFileRepositoryUri(testRepo.localRepoFile);
+        programmingExercise.setTestRepositoryUri(testRepoUri.toString());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoUri, true);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoUri, false);
 
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUrl), eq(true),
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri), eq(true),
                 any());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUrl), eq(false),
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri), eq(false),
                 any());
 
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
@@ -112,17 +110,10 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetFilesAsStudent() throws Exception {
-
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    void testGetFilesAsStudent_accessForbidden() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        var files = request.getMap(testRepoBaseUrl + programmingExercise.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
-        assertThat(files).isNotEmpty();
-
-        // Check if all files exist
-        for (String key : files.keySet()) {
-            assertThat((Path.of(testRepo.localRepoFile + "/" + key))).exists();
-        }
+        request.getMap(testRepoBaseUrl + programmingExercise.getId() + "/files", HttpStatus.FORBIDDEN, String.class, FileType.class);
     }
 
     @Test
@@ -374,7 +365,6 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @DisabledOnOs(OS.WINDOWS) // git file locking issues
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testPullChanges() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
@@ -382,84 +372,85 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
 
         // Create a commit for the local and the remote repository
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/commit", null, HttpStatus.OK, null);
-        var remoteRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.originRepoFile.toPath(), null);
+        try (var remoteRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.originRepoFile.toPath(), null)) {
 
-        // Create file in the remote repository
-        Path filePath = Path.of(testRepo.originRepoFile + "/" + fileName);
-        Files.createFile(filePath);
+            // Create file in the remote repository
+            Path filePath = Path.of(testRepo.originRepoFile + "/" + fileName);
+            Files.createFile(filePath);
 
-        // Check if the file exists in the remote repository and that it doesn't yet exist in the local repository
-        assertThat(Path.of(testRepo.originRepoFile + "/" + fileName)).exists();
-        assertThat(Path.of(testRepo.localRepoFile + "/" + fileName)).doesNotExist();
+            // Check if the file exists in the remote repository and that it doesn't yet exist in the local repository
+            assertThat(Path.of(testRepo.originRepoFile + "/" + fileName)).exists();
+            assertThat(Path.of(testRepo.localRepoFile + "/" + fileName)).doesNotExist();
 
-        // Stage all changes and make a second commit in the remote repository
-        gitService.stageAllChanges(remoteRepository);
-        GitService.commit(testRepo.originGit).setMessage("TestCommit").setAllowEmpty(true).setCommitter("testname", "test@email").call();
+            // Stage all changes and make a second commit in the remote repository
+            gitService.stageAllChanges(remoteRepository);
+            GitService.commit(testRepo.originGit).setMessage("TestCommit").setAllowEmpty(true).setCommitter("testname", "test@email").call();
 
-        // Checks if the current commit is not equal on the local and the remote repository
-        assertThat(testRepo.getAllLocalCommits().get(0)).isNotEqualTo(testRepo.getAllOriginCommits().get(0));
+            // Checks if the current commit is not equal on the local and the remote repository
+            assertThat(testRepo.getAllLocalCommits().get(0)).isNotEqualTo(testRepo.getAllOriginCommits().get(0));
 
-        // Execute the Rest call
-        request.get(testRepoBaseUrl + programmingExercise.getId() + "/pull", HttpStatus.OK, Void.class);
+            // Execute the Rest call
+            request.get(testRepoBaseUrl + programmingExercise.getId() + "/pull", HttpStatus.OK, Void.class);
 
-        // Check if the current commit is the same on the local and the remote repository and if the file exists on the local repository
-        assertThat(testRepo.getAllLocalCommits().get(0)).isEqualTo(testRepo.getAllOriginCommits().get(0));
-        assertThat(Path.of(testRepo.localRepoFile + "/" + fileName)).exists();
+            // Check if the current commit is the same on the local and the remote repository and if the file exists on the local repository
+            assertThat(testRepo.getAllLocalCommits().get(0)).isEqualTo(testRepo.getAllOriginCommits().get(0));
+            assertThat(Path.of(testRepo.localRepoFile + "/" + fileName)).exists();
+        }
     }
 
     @Test
-    @DisabledOnOs(OS.WINDOWS) // git file locking issues
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testResetToLastCommit() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         String fileName = "testFile";
-        var localRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null);
-        var remoteRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.originRepoFile.toPath(), null);
+        try (var localRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null);
+                var remoteRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.originRepoFile.toPath(), null)) {
 
-        // Check status of git before the commit
-        var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
+            // Check status of git before the commit
+            var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+            assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
 
-        // Create a commit for the local and the remote repository
-        request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/commit", null, HttpStatus.OK, null);
+            // Create a commit for the local and the remote repository
+            request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/commit", null, HttpStatus.OK, null);
 
-        // Check status of git after the commit
-        var receivedStatusAfterCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
+            // Check status of git after the commit
+            var receivedStatusAfterCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+            assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
 
-        // Create file in the local repository and commit it
-        Path localFilePath = Path.of(testRepo.localRepoFile + "/" + fileName);
-        var localFile = Files.createFile(localFilePath).toFile();
-        // write content to the created file
-        FileUtils.write(localFile, "local", Charset.defaultCharset());
-        gitService.stageAllChanges(localRepo);
-        GitService.commit(testRepo.localGit).setMessage("local").call();
+            // Create file in the local repository and commit it
+            Path localFilePath = Path.of(testRepo.localRepoFile + "/" + fileName);
+            var localFile = Files.createFile(localFilePath).toFile();
+            // write content to the created file
+            FileUtils.write(localFile, "local", Charset.defaultCharset());
+            gitService.stageAllChanges(localRepo);
+            GitService.commit(testRepo.localGit).setMessage("local").call();
 
-        // Create file in the remote repository and commit it
-        Path remoteFilePath = Path.of(testRepo.originRepoFile + "/" + fileName);
-        var remoteFile = Files.createFile(remoteFilePath).toFile();
-        // write content to the created file
-        FileUtils.write(remoteFile, "remote", Charset.defaultCharset());
-        gitService.stageAllChanges(remoteRepo);
-        GitService.commit(testRepo.originGit).setMessage("remote").call();
+            // Create file in the remote repository and commit it
+            Path remoteFilePath = Path.of(testRepo.originRepoFile + "/" + fileName);
+            var remoteFile = Files.createFile(remoteFilePath).toFile();
+            // write content to the created file
+            FileUtils.write(remoteFile, "remote", Charset.defaultCharset());
+            gitService.stageAllChanges(remoteRepo);
+            GitService.commit(testRepo.originGit).setMessage("remote").call();
 
-        // Merge the two and a conflict will occur
-        testRepo.localGit.fetch().setRemote("origin").call();
-        List<Ref> refs = testRepo.localGit.branchList().setListMode(ListBranchCommand.ListMode.REMOTE).call();
-        var result = testRepo.localGit.merge().include(refs.get(0).getObjectId()).setStrategy(MergeStrategy.RESOLVE).call();
-        var status = testRepo.localGit.status().call();
-        assertThat(status.getConflicting()).isNotEmpty();
-        assertThat(result.getMergeStatus()).isEqualTo(MergeResult.MergeStatus.CONFLICTING);
+            // Merge the two and a conflict will occur
+            testRepo.localGit.fetch().setRemote("origin").call();
+            List<Ref> refs = testRepo.localGit.branchList().setListMode(ListBranchCommand.ListMode.REMOTE).call();
+            var result = testRepo.localGit.merge().include(refs.get(0).getObjectId()).setStrategy(MergeStrategy.RESOLVE).call();
+            var status = testRepo.localGit.status().call();
+            assertThat(status.getConflicting()).isNotEmpty();
+            assertThat(result.getMergeStatus()).isEqualTo(MergeResult.MergeStatus.CONFLICTING);
 
-        // Execute the reset Rest call
-        request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/reset", null, HttpStatus.OK, null);
+            // Execute the reset Rest call
+            request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/reset", null, HttpStatus.OK, null);
 
-        // Check the git status after the reset
-        status = testRepo.localGit.status().call();
-        assertThat(status.getConflicting()).isEmpty();
-        assertThat(testRepo.getAllLocalCommits().get(0)).isEqualTo(testRepo.getAllOriginCommits().get(0));
-        var receivedStatusAfterReset = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusAfterReset.repositoryStatus()).hasToString("CLEAN");
+            // Check the git status after the reset
+            status = testRepo.localGit.status().call();
+            assertThat(status.getConflicting()).isEmpty();
+            assertThat(testRepo.getAllLocalCommits().get(0)).isEqualTo(testRepo.getAllOriginCommits().get(0));
+            var receivedStatusAfterReset = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+            assertThat(receivedStatusAfterReset.repositoryStatus()).hasToString("CLEAN");
+        }
     }
 
     @Test

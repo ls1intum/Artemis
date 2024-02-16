@@ -173,12 +173,6 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testEditCourseShouldPreserveIrisSettings() throws Exception {
-        courseTestService.testEditCourseShouldPreserveIrisSettings();
-    }
-
-    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testUpdateCourseGroups() throws Exception {
         bitbucketRequestMockProvider.mockRevokeGroupPermissionFromAnyProject("instructor");
@@ -553,6 +547,24 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchMembersForUserMentionsSearchTermFilteringCorrect() throws Exception {
+        courseTestService.testSearchMembersForUserMentionsSearchTermFilteringCorrect();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchMembersForUserMentionsSearchResultLimit() throws Exception {
+        courseTestService.testSearchMembersForUserMentionsSearchResultLimit();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void tearchMembersForUserMentionsNoSearchTerm() throws Exception {
+        courseTestService.testSearchMembersForUserMentionsNoSearchTerm();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllEditorsInCourse() throws Exception {
         courseTestService.testGetAllEditorsInCourse();
@@ -695,7 +707,7 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
         courseTestService.testArchiveCourseWithQuizExerciseCannotExportExerciseDetails();
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @MethodSource("provideFileNameAndErrorMsg")
     void testArchiveCourseWithQuizExerciseCannotExportMCOrSAAnswersSubmission(String dynamicFilenamePart, String dynamicErrorMsgPart) throws Exception {
@@ -941,12 +953,6 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testInvalidOnlineCourseConfigurationNonUniqueRegistrationId() throws Exception {
-        courseTestService.testInvalidOnlineCourseConfigurationNonUniqueRegistrationId();
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateValidOnlineCourseConfigurationAsStudent_forbidden() throws Exception {
         courseTestService.testUpdateValidOnlineCourseConfigurationAsStudent_forbidden();
@@ -980,5 +986,29 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateCourseEnableLearningPaths() throws Exception {
         courseTestService.testUpdateCourseEnableLearningPaths();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testGetCoursesForImportWithoutPermission() throws Exception {
+        courseTestService.testGetCoursesForImportWithoutPermission();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetCoursesForImport_asInsturctor() throws Exception {
+        courseTestService.testGetCoursesForImport();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetCoursesForImport_asAdmin() throws Exception {
+        courseTestService.testGetCoursesForImport();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testFindAllOnlineCoursesForLtiDashboard() throws Exception {
+        courseTestService.testFindAllOnlineCoursesForLtiDashboard();
     }
 }

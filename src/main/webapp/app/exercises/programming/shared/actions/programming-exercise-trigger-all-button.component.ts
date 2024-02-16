@@ -27,8 +27,7 @@ import { faBan, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
             [title]="'artemisApp.programmingExercise.resubmitAll'"
             [featureToggle]="FeatureToggle.ProgrammingExercises"
             (onClick)="openTriggerAllModal()"
-        >
-        </jhi-button>
+        />
     `,
 })
 export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
@@ -90,20 +89,22 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
                 <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="cancel()"></button>
             </div>
             <div class="modal-body">
-                <p *ngIf="dueDatePassed" class="text-danger font-weight-bold" jhiTranslate="artemisApp.programmingExercise.resubmitAllConfirmAfterDueDate">
-                    The due date has passed, some of the student submissions might have received manual results created by teaching assistants. Newly generated automatic results
-                    would replace the manual results as the latest result for the participation.
-                </p>
+                @if (dueDatePassed) {
+                    <p class="text-danger font-weight-bold" jhiTranslate="artemisApp.programmingExercise.resubmitAllConfirmAfterDueDate">
+                        The due date has passed, some of the student submissions might have received manual results created by teaching assistants. Newly generated automatic
+                        results would replace the manual results as the latest result for the participation.
+                    </p>
+                }
                 <p jhiTranslate="artemisApp.programmingExercise.resubmitAllDialog">
                     WARNING: Triggering all participations again is a very expensive operation. This action will start a CI build for every participation in this exercise!
                 </p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="cancel()">
-                    <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                    <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
                 <button type="submit" class="btn btn-danger">
-                    <fa-icon [icon]="faTimes"></fa-icon>&nbsp;
+                    <fa-icon [icon]="faTimes" />&nbsp;
                     <span jhiTranslate="entity.action.confirm">Confirm</span>
                 </button>
             </div>

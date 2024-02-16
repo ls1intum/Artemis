@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.BuildPlan;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
-import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
@@ -76,7 +76,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     private final GitLabApi gitlab;
 
-    private final UrlService urlService;
+    private final UriService uriService;
 
     private final BuildPlanRepository buildPlanRepository;
 
@@ -103,32 +103,31 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     private String gitlabToken;
 
     public GitLabCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            GitLabApi gitlab, UrlService urlService, BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService,
+            GitLabApi gitlab, UriService uriService, BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
             TestwiseCoverageService testwiseCoverageService) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
         this.gitlab = gitlab;
-        this.urlService = urlService;
+        this.uriService = uriService;
         this.buildPlanRepository = buildPlanRepository;
         this.buildPlanService = buildPlanService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL,
-            VcsRepositoryUrl solutionRepositoryURL) {
+    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri,
+            VcsRepositoryUri solutionRepositoryUri) {
         addBuildPlanToProgrammingExercise(exercise, false);
         // This method is called twice when creating an exercise. Once for the template repository and once for the solution repository.
         // The second time, we don't want to overwrite the configuration.
         setupGitLabCIConfigurationForGroup(exercise, false);
-        setupGitLabCIConfigurationForRepository(repositoryURL, exercise, planKey);
-        // TODO: triggerBuild(repositoryURL, exercise.getBranch());
+        setupGitLabCIConfigurationForRepository(repositoryUri, exercise, planKey);
+        // TODO: triggerBuild(repositoryUri, exercise.getBranch());
     }
 
-    private void setupGitLabCIConfigurationForRepository(VcsRepositoryUrl repositoryURL, ProgrammingExercise exercise, String buildPlanId) {
-        final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryURL);
+    private void setupGitLabCIConfigurationForRepository(VcsRepositoryUri repositoryUri, ProgrammingExercise exercise, String buildPlanId) {
+        final String repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
         final ProjectApi projectApi = gitlab.getProjectApi();
-
         try {
             Project project = projectApi.getProject(repositoryPath);
 
@@ -144,7 +143,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             updateRepositoryVariable(repositoryPath, VARIABLE_BUILD_PLAN_ID_NAME, buildPlanId);
         }
         catch (GitLabApiException e) {
-            throw new GitLabCIException("Error enabling CI for " + repositoryURL, e);
+            throw new GitLabCIException("Error enabling CI for " + repositoryUri, e);
         }
     }
 
@@ -160,7 +159,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         updateGroupVariable(projectKey, VARIABLE_NOTIFICATION_URL_NAME, artemisServerUrl.toExternalForm() + NEW_RESULT_RESOURCE_API_PATH, overwrite);
         updateGroupVariable(projectKey, VARIABLE_SUBMISSION_GIT_BRANCH_NAME, exercise.getBranch(), overwrite);
         updateGroupVariable(projectKey, VARIABLE_TEST_GIT_BRANCH_NAME, exercise.getBranch(), overwrite);
-        updateGroupVariable(projectKey, VARIABLE_TEST_GIT_REPOSITORY_SLUG_NAME, urlService.getRepositorySlugFromRepositoryUrlString(exercise.getTestRepositoryUrl()), overwrite);
+        updateGroupVariable(projectKey, VARIABLE_TEST_GIT_REPOSITORY_SLUG_NAME, uriService.getRepositorySlugFromRepositoryUriString(exercise.getTestRepositoryUri()), overwrite);
         // TODO: Use a token that is only valid for the test repository for each programming exercise
         updateGroupVariable(projectKey, VARIABLE_TEST_GIT_TOKEN, gitlabToken, overwrite);
         updateGroupVariable(projectKey, VARIABLE_TEST_GIT_USER, gitlabUser, overwrite);
@@ -218,29 +217,33 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         // When recreating the build plan for the exercise, we want to overwrite the configuration.
         setupGitLabCIConfigurationForGroup(exercise, true);
 
-        VcsRepositoryUrl templateUrl = exercise.getVcsTemplateRepositoryUrl();
-        setupGitLabCIConfigurationForRepository(templateUrl, exercise, exercise.getTemplateBuildPlanId());
+        VcsRepositoryUri templateUri = exercise.getVcsTemplateRepositoryUri();
+        setupGitLabCIConfigurationForRepository(templateUri, exercise, exercise.getTemplateBuildPlanId());
         // TODO: triggerBuild(templateUrl, exercise.getBranch());
 
-        VcsRepositoryUrl solutionUrl = exercise.getVcsSolutionRepositoryUrl();
-        setupGitLabCIConfigurationForRepository(solutionUrl, exercise, exercise.getSolutionBuildPlanId());
+        VcsRepositoryUri solutionUri = exercise.getVcsSolutionRepositoryUri();
+        setupGitLabCIConfigurationForRepository(solutionUri, exercise, exercise.getSolutionBuildPlanId());
         // TODO: triggerBuild(solutionUrl, exercise.getBranch());
     }
 
     @Override
-    public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName,
+    public String copyBuildPlan(ProgrammingExercise sourceExercise, String sourcePlanName, ProgrammingExercise targetExercise, String targetProjectName, String targetPlanName,
             boolean targetProjectExists) {
         // In GitLab CI we don't have to copy the build plan.
         // Instead, we configure a CI config path leading to the API when enabling the CI.
 
         // When sending the build results back, the build plan key is used to identify the participation.
         // Therefore, we return the key here even though GitLab CI does not need it.
-        return targetProjectKey + "-" + targetPlanName.toUpperCase().replaceAll("[^A-Z0-9]", "");
+        return generateBuildPlanId(targetExercise.getProjectKey(), targetPlanName);
+    }
+
+    private String generateBuildPlanId(String projectKey, String planKey) {
+        return projectKey + "-" + planKey.toUpperCase().replaceAll("[^A-Z0-9]", "");
     }
 
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) {
-        setupGitLabCIConfigurationForRepository(participation.getVcsRepositoryUrl(), participation.getProgrammingExercise(), participation.getBuildPlanId());
+        setupGitLabCIConfigurationForRepository(participation.getVcsRepositoryUri(), participation.getProgrammingExercise(), participation.getBuildPlanId());
     }
 
     @Override
@@ -286,7 +289,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     }
 
     private Optional<Pipeline> getLatestPipeline(final ProgrammingExerciseParticipation participation) throws GitLabApiException {
-        final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl());
+        final String repositoryPath = uriService.getRepositoryPathFromRepositoryUri(participation.getVcsRepositoryUri());
         final Optional<String> commitHash = participation.findLatestSubmission().map(ProgrammingSubmission.class::cast).map(ProgrammingSubmission::getCommitHash);
         if (commitHash.isEmpty()) {
             return Optional.empty();
@@ -319,7 +322,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
+    public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUri, String existingRepoUri,
             String newDefaultBranch) {
         log.error("Unsupported action: GitLabCIService.updatePlanRepository()");
     }

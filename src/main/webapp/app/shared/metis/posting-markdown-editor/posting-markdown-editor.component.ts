@@ -13,6 +13,11 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
 import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
 import { LectureService } from 'app/lecture/lecture.service';
+import { UserMentionCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/userMentionCommand';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { ChannelMentionCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/channelMentionCommand';
+import { ChannelService } from 'app/shared/metis/conversations/channel.service';
+import { isMessagingOrCommunicationEnabled } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -38,13 +43,19 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     constructor(
         private cdref: ChangeDetectorRef,
         private metisService: MetisService,
+        private courseManagementService: CourseManagementService,
         private lectureService: LectureService,
+        private channelService: ChannelService,
     ) {}
 
     /**
      * on initialization: sets commands that will be available as formatting buttons during creation/editing of postings
      */
     ngOnInit(): void {
+        const messagingOnlyCommands = isMessagingOrCommunicationEnabled(this.metisService.getCourse())
+            ? [new UserMentionCommand(this.courseManagementService, this.metisService), new ChannelMentionCommand(this.channelService, this.metisService)]
+            : [];
+
         this.defaultCommands = [
             new BoldCommand(),
             new ItalicCommand(),
@@ -53,6 +64,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new CodeCommand(),
             new CodeBlockCommand(),
             new LinkCommand(),
+            ...messagingOnlyCommands,
             new ExerciseReferenceCommand(this.metisService),
             new LectureAttachmentReferenceCommand(this.metisService, this.lectureService),
         ];

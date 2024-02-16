@@ -33,6 +33,14 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 import { ExamEditWorkingTimeComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time.component';
 import { ExamLiveAnnouncementCreateButtonComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-button.component';
+import { QuizPoolService } from 'app/exercises/quiz/manage/quiz-pool.service';
+import { QuizPool } from 'app/entities/quiz/quiz-pool.model';
+import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService } from 'ngx-webstorage';
+import * as Utils from 'app/shared/util/utils';
 
 @Component({
     template: '',
@@ -43,6 +51,7 @@ describe('ExamDetailComponent', () => {
     let examDetailComponentFixture: ComponentFixture<ExamDetailComponent>;
     let examDetailComponent: ExamDetailComponent;
     let service: ExamManagementService;
+    let quizPoolService: QuizPoolService;
     let router: Router;
 
     const exampleHTML = '<h1>Sample Markdown</h1>';
@@ -67,6 +76,7 @@ describe('ExamDetailComponent', () => {
                 HttpClientTestingModule,
             ],
             declarations: [
+                DetailOverviewListComponent,
                 ExamDetailComponent,
                 DummyComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -104,6 +114,9 @@ describe('ExamDetailComponent', () => {
                 }),
                 MockProvider(AlertService),
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
+                MockProvider(ArtemisDurationFromSecondsPipe),
             ],
             schemas: [],
         })
@@ -112,6 +125,7 @@ describe('ExamDetailComponent', () => {
                 examDetailComponentFixture = TestBed.createComponent(ExamDetailComponent);
                 examDetailComponent = examDetailComponentFixture.componentInstance;
                 service = TestBed.inject(ExamManagementService);
+                quizPoolService = TestBed.inject(QuizPoolService);
             });
 
         router = TestBed.inject(Router);
@@ -129,6 +143,7 @@ describe('ExamDetailComponent', () => {
         exam.examMaxPoints = 100;
         exam.exerciseGroups = [];
         examDetailComponent.exam = exam;
+        jest.spyOn(quizPoolService, 'find').mockReturnValue(of(new HttpResponse<QuizPool>({ body: new QuizPool() })));
     });
 
     afterEach(() => {
@@ -138,10 +153,8 @@ describe('ExamDetailComponent', () => {
     it('should load exam from route and display it to user', () => {
         examDetailComponentFixture.detectChanges();
         expect(examDetailComponent).not.toBeNull();
-        // stand in for other properties too who are simply loaded from the exam and displayed in spans
-        const titleSpan = examDetailComponentFixture.debugElement.query(By.css('#examTitle')).nativeElement;
-        expect(titleSpan).not.toBeNull();
-        expect(titleSpan.innerHTML).toEqual(exam.title);
+        expect(examDetailComponent.examDetailSections).toBeDefined();
+        expect(examDetailComponentFixture.debugElement.nativeElement.innerHTML).toInclude(exam.title!);
     });
 
     it('should correctly route to edit subpage', fakeAsync(() => {
@@ -261,5 +274,12 @@ describe('ExamDetailComponent', () => {
         // THEN
         expect(service.delete).toHaveBeenCalledOnce();
         expect(router.navigate).toHaveBeenCalledOnce();
+    });
+
+    it('should call scrollToTopOfPage on component initialization', () => {
+        const scrollToTopOfPageSpy = jest.spyOn(Utils, 'scrollToTopOfPage');
+        examDetailComponent.ngOnInit();
+        expect(scrollToTopOfPageSpy).toHaveBeenCalled();
+        scrollToTopOfPageSpy.mockRestore();
     });
 });

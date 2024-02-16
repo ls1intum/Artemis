@@ -5,6 +5,8 @@ import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifi
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
+import java.util.stream.Stream;
 
 import org.springframework.stereotype.Service;
 
@@ -12,8 +14,10 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.dto.ScoreDTO;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class ParticipantScoreService {
@@ -28,13 +32,16 @@ public class ParticipantScoreService {
 
     private final PresentationPointsCalculationService presentationPointsCalculationService;
 
+    private final TeamRepository teamRepository;
+
     public ParticipantScoreService(UserRepository userRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
-            GradingScaleService gradingScaleService, PresentationPointsCalculationService presentationPointsCalculationService) {
+            GradingScaleService gradingScaleService, PresentationPointsCalculationService presentationPointsCalculationService, TeamRepository teamRepository) {
         this.userRepository = userRepository;
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
         this.gradingScaleService = gradingScaleService;
         this.presentationPointsCalculationService = presentationPointsCalculationService;
+        this.teamRepository = teamRepository;
     }
 
     /**
@@ -82,9 +89,9 @@ public class ParticipantScoreService {
 
         // we want the score for everybody who can perform exercises in the course (students, tutors and instructors)
         Set<User> usersOfCourse = new HashSet<>();
-        usersOfCourse.addAll(userRepository.findAllInGroupWithAuthorities(course.getStudentGroupName()));
-        usersOfCourse.addAll(userRepository.findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName()));
-        usersOfCourse.addAll(userRepository.findAllInGroupWithAuthorities(course.getInstructorGroupName()));
+        usersOfCourse.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getStudentGroupName()));
+        usersOfCourse.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()));
+        usersOfCourse.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()));
 
         // we only consider released exercises that are not optional
         Set<Exercise> exercisesToConsider = course.getExercises().stream().filter(Exercise::isCourseExercise)
@@ -113,7 +120,8 @@ public class ParticipantScoreService {
         Set<Exercise> individualExercises = exercises.stream().filter(exercise -> !exercise.isTeamMode()).collect(Collectors.toSet());
         Set<Exercise> teamExercises = exercises.stream().filter(Exercise::isTeamMode).collect(Collectors.toSet());
 
-        Course course = exercises.stream().findAny().orElseThrow().getCourseViaExerciseGroupOrCourseMember();
+        Course course = exercises.stream().findAny().orElseThrow(() -> new EntityNotFoundException("The result you are referring to does not exist"))
+                .getCourseViaExerciseGroupOrCourseMember();
 
         // For every student we want to calculate the score
         Map<Long, ScoreDTO> userIdToScores = users.stream().collect(Collectors.toMap(User::getId, user -> new ScoreDTO(user.getId(), user.getLogin(), 0.0, 0.0, 0.0)));
@@ -131,11 +139,14 @@ public class ParticipantScoreService {
         }
 
         // team exercises
-        // [0] -> Team
+        // [0] -> Team ID
         // [1] -> sum of achieved points in exercises
+        // We have to retrieve this separately because the students are not directly retrievable due to the taxonomy structure
         List<Object[]> teamAndAchievedPoints = teamScoreRepository.getAchievedPointsOfTeams(teamExercises);
+        List<Long> teamIds = teamAndAchievedPoints.stream().map(rawData -> ((Long) rawData[0])).toList();
+        Map<Long, Team> teamIdToTeam = teamRepository.findAllWithStudentsByIdIn(teamIds).stream().collect(Collectors.toMap(Team::getId, team -> team));
         for (Object[] rawData : teamAndAchievedPoints) {
-            Team team = (Team) rawData[0];
+            Team team = teamIdToTeam.get((Long) rawData[0]);
             double achievedPoints = rawData[1] != null ? ((Number) rawData[1]).doubleValue() : 0.0;
             for (User student : team.getStudents()) {
                 if (userIdToScores.containsKey(student.getId())) {
@@ -155,6 +166,40 @@ public class ParticipantScoreService {
         }
 
         return new ArrayList<>(userIdToScores.values());
+    }
 
+    /**
+     * Gets all participation scores of the exercises for a user.
+     *
+     * @param user      the user whose scores should be fetched
+     * @param exercises the exercises the scores should be fetched from
+     * @return stream of participant scores
+     */
+    public Stream<ParticipantScore> getStudentAndTeamParticipations(User user, Set<Exercise> exercises) {
+        var studentScores = studentScoreRepository.findAllByExercisesAndUser(exercises, user);
+        var teamScores = teamScoreRepository.findAllByExercisesAndUser(exercises, user);
+        return Stream.concat(studentScores.stream(), teamScores.stream());
+    }
+
+    /**
+     * Gets all participation scores of the exercises for a user.
+     *
+     * @param user      the user whose scores should be fetched
+     * @param exercises the exercises the scores should be fetched from
+     * @return stream of participant latest scores
+     */
+    public Stream<Double> getStudentAndTeamParticipationScores(User user, Set<Exercise> exercises) {
+        return getStudentAndTeamParticipations(user, exercises).map(ParticipantScore::getLastScore);
+    }
+
+    /**
+     * Gets all participation scores of the exercises for a user.
+     *
+     * @param user      the user whose scores should be fetched
+     * @param exercises the exercises the scores should be fetched from
+     * @return stream of participant latest scores
+     */
+    public DoubleStream getStudentAndTeamParticipationScoresAsDoubleStream(User user, Set<Exercise> exercises) {
+        return getStudentAndTeamParticipationScores(user, exercises).mapToDouble(Double::doubleValue);
     }
 }

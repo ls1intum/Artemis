@@ -5,7 +5,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { CommitState, DomainType, EditorState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { Exercise, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
@@ -18,6 +18,7 @@ import {
     CodeEditorRepositoryFileService,
     CodeEditorRepositoryService,
 } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { SubmissionVersion } from 'app/entities/submission-version.model';
 
 @Component({
     selector: 'jhi-programming-submission-exam',
@@ -33,6 +34,8 @@ import {
     styleUrls: ['./programming-exam-submission.component.scss'],
 })
 export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnChanges, OnInit {
+    exerciseType = ExerciseType.PROGRAMMING;
+
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     @ViewChild(ProgrammingExerciseInstructionComponent, { static: false }) instructions: ProgrammingExerciseInstructionComponent;
 
@@ -58,6 +61,10 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
             return this.studentParticipation.submissions[0];
         }
         return undefined;
+    }
+
+    getExerciseId(): number | undefined {
+        return this.exercise.id;
     }
 
     getExercise(): Exercise {
@@ -147,5 +154,11 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
     updateViewFromSubmission(): void {
         // do nothing - the code editor itself is taking care of updating the view from submission
+    }
+    setSubmissionVersion(submissionVersion: SubmissionVersion): void {
+        // if we do not assign the parameter, eslint will complain because either the parameter is unused or if we suppress this with ts-ignore that ts-ignore shadows compilation errors.
+        this.submissionVersion = submissionVersion;
+        // submission versions are not supported for programming exercises
+        throw new Error('Submission versions are not supported for file upload exercises.');
     }
 }

@@ -1,6 +1,6 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { SuspiciousExamSessions } from 'app/entities/exam-session.model';
+import { SuspiciousExamSessions, SuspiciousSessionsAnalysisOptions } from 'app/entities/exam-session.model';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -9,7 +9,18 @@ import { Observable } from 'rxjs';
 export class SuspiciousSessionsService {
     constructor(private http: HttpClient) {}
 
-    getSuspiciousSessions(courseId: number, examId: number): Observable<SuspiciousExamSessions[]> {
-        return this.http.get<SuspiciousExamSessions[]>(`api/courses/${courseId}/exams/${examId}/suspicious-sessions`);
+    getSuspiciousSessions(courseId: number, examId: number, options: SuspiciousSessionsAnalysisOptions): Observable<SuspiciousExamSessions[]> {
+        let params = new HttpParams()
+            .set('differentStudentExamsSameIPAddress', options.sameIpAddressDifferentStudentExams.toString())
+            .set('differentStudentExamsSameBrowserFingerprint', options.sameBrowserFingerprintDifferentStudentExams.toString())
+            .set('sameStudentExamDifferentIPAddresses', options.differentIpAddressesSameStudentExam.toString())
+            .set('sameStudentExamDifferentBrowserFingerprints', options.differentIpAddressesSameStudentExam.toString())
+            .set('ipOutsideOfRange', options.ipAddressOutsideOfRange.toString());
+
+        // If subnet is provided, add it to the params
+        if (options.ipSubnet) {
+            params = params.set('ipSubnet', options.ipSubnet);
+        }
+        return this.http.get<SuspiciousExamSessions[]>(`api/courses/${courseId}/exams/${examId}/suspicious-sessions`, { params });
     }
 }

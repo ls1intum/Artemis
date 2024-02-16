@@ -13,7 +13,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faEye, faFileExport, faPlayCircle, faPlus, faSignal, faSort, faStopCircle, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.service';
 
 @Component({
@@ -30,15 +30,11 @@ export class QuizExerciseComponent extends ExerciseComponent {
 
     // Icons
     faSort = faSort;
-    faPlus = faPlus;
-    faTimes = faTimes;
-    faEye = faEye;
-    faWrench = faWrench;
-    faTable = faTable;
-    faSignal = faSignal;
-    faFileExport = faFileExport;
-    faPlayCircle = faPlayCircle;
-    faStopCircle = faStopCircle;
+    faTrash = faTrash;
+
+    protected get exercises() {
+        return this.quizExercises;
+    }
 
     constructor(
         public quizExerciseService: QuizExerciseService,
@@ -110,23 +106,6 @@ export class QuizExerciseComponent extends ExerciseComponent {
     }
 
     /**
-     * Set the quiz open for practice
-     *
-     * @param quizExerciseId the quiz exercise id to start
-     */
-    openForPractice(quizExerciseId: number) {
-        this.quizExerciseService.openForPractice(quizExerciseId).subscribe({
-            next: (res: HttpResponse<QuizExercise>) => {
-                this.handleNewQuizExercise(res.body!);
-            },
-            error: (res: HttpErrorResponse) => {
-                this.onError(res);
-                this.loadOne(quizExerciseId);
-            },
-        });
-    }
-
-    /**
      * Set the quiz exercise status for all quiz exercises.
      */
     setQuizExercisesStatus() {
@@ -134,84 +113,17 @@ export class QuizExerciseComponent extends ExerciseComponent {
     }
 
     /**
-     * Start the given quiz-exercise immediately
-     *
-     * @param quizExerciseId the quiz exercise id to start
-     */
-    startQuiz(quizExerciseId: number) {
-        this.quizExerciseService.start(quizExerciseId).subscribe({
-            next: (res: HttpResponse<QuizExercise>) => {
-                this.handleNewQuizExercise(res.body!);
-            },
-            error: (res: HttpErrorResponse) => {
-                this.onError(res);
-                this.loadOne(quizExerciseId);
-            },
-        });
-    }
-
-    /**
-     * End the given quiz-exercise immediately
-     *
-     * @param quizExerciseId the quiz exercise id to end
-     */
-    endQuiz(quizExerciseId: number) {
-        return this.quizExerciseService.end(quizExerciseId).subscribe({
-            next: (res: HttpResponse<QuizExercise>) => {
-                this.handleNewQuizExercise(res.body!);
-                this.dialogErrorSource.next('');
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
-    }
-
-    /**
-     * Start the given quiz-batch immediately
-     *
-     * @param quizExerciseId the quiz exercise id the batch belongs to
-     * @param quizBatchId the quiz batch id to start
-     */
-    startBatch(quizExerciseId: number, quizBatchId: number) {
-        this.quizExerciseService.startBatch(quizBatchId).subscribe({
-            next: () => {
-                this.loadOne(quizExerciseId);
-            },
-            error: (res: HttpErrorResponse) => {
-                this.onError(res);
-                this.loadOne(quizExerciseId);
-            },
-        });
-    }
-
-    /**
-     * Adds a new batch to the given quiz
-     *
-     * @param quizExerciseId the quiz exercise id to add a batch to
-     */
-    addBatch(quizExerciseId: number) {
-        this.quizExerciseService.addBatch(quizExerciseId).subscribe({
-            next: () => {
-                this.loadOne(quizExerciseId);
-            },
-            error: (res: HttpErrorResponse) => {
-                this.onError(res);
-                this.loadOne(quizExerciseId);
-            },
-        });
-    }
-
-    /**
      * Do not load all quizExercise if only one has changed
      *
      * @param quizExerciseId
      */
-    private loadOne(quizExerciseId: number) {
+    loadOne(quizExerciseId: number) {
         this.quizExerciseService.find(quizExerciseId).subscribe((res: HttpResponse<QuizExercise>) => {
             this.handleNewQuizExercise(res.body!);
         });
     }
 
-    private handleNewQuizExercise(newQuizExercise: QuizExercise) {
+    handleNewQuizExercise(newQuizExercise: QuizExercise) {
         const index = this.quizExercises.findIndex((quizExercise) => quizExercise.id === newQuizExercise.id);
         newQuizExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(newQuizExercise.course);
         newQuizExercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(newQuizExercise.course);
@@ -225,70 +137,6 @@ export class QuizExerciseComponent extends ExerciseComponent {
             this.quizExercises[index] = newQuizExercise;
         }
         this.applyFilter();
-    }
-
-    /**
-     * Exports questions for the given quiz exercise in json file
-     * @param quizExerciseId The quiz exercise id we want to export
-     * @param exportAll If true exports all questions, else exports only those whose export flag is true
-     */
-    exportQuizById(quizExerciseId: number, exportAll: boolean) {
-        this.quizExerciseService.find(quizExerciseId).subscribe((res: HttpResponse<QuizExercise>) => {
-            const exercise = res.body!;
-            this.quizExerciseService.exportQuiz(exercise.quizQuestions, exportAll, exercise.title);
-        });
-    }
-
-    /**
-     * Make the given quiz-exercise visible to students
-     *
-     * @param quizExerciseId the quiz exercise id to start
-     */
-    showQuiz(quizExerciseId: number) {
-        this.quizExerciseService.setVisible(quizExerciseId).subscribe({
-            next: (res: HttpResponse<QuizExercise>) => {
-                this.handleNewQuizExercise(res.body!);
-            },
-            error: (res: HttpErrorResponse) => {
-                this.onError(res);
-                this.loadOne(quizExerciseId);
-            },
-        });
-    }
-
-    /**
-     * Deletes quiz exercise
-     * @param quizExerciseId id of the quiz exercise that will be deleted
-     */
-    deleteQuizExercise(quizExerciseId: number) {
-        return this.quizExerciseService.delete(quizExerciseId).subscribe({
-            next: () => {
-                this.eventManager.broadcast({
-                    name: 'quizExerciseListModification',
-                    content: 'Deleted an quizExercise',
-                });
-                this.dialogErrorSource.next('');
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
-    }
-
-    /**
-     * Resets quiz exercise
-     * @param quizExercise the quiz exercise that will be deleted
-     */
-    resetQuizExercise(quizExercise: QuizExercise) {
-        this.exerciseService.reset(quizExercise.id!).subscribe({
-            next: () => {
-                this.eventManager.broadcast({
-                    name: 'quizExerciseListModification',
-                    content: 'Reset an quizExercise',
-                });
-                this.dialogErrorSource.next('');
-                this.alertService.success('artemisApp.quizExercise.resetSuccessful', { title: quizExercise.title });
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
     }
 
     public sortRows() {

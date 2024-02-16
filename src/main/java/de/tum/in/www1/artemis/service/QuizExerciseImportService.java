@@ -19,24 +19,20 @@ import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 @Service
 public class QuizExerciseImportService extends ExerciseImportService {
 
-    private final Logger log = LoggerFactory.getLogger(QuizExerciseImportService.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizExerciseImportService.class);
 
     private final QuizExerciseService quizExerciseService;
 
     private final FileService fileService;
 
-    private final FilePathService filePathService;
-
     private final ChannelService channelService;
 
     public QuizExerciseImportService(QuizExerciseService quizExerciseService, FileService fileService, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService,
-            FilePathService filePathService) {
+            SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.quizExerciseService = quizExerciseService;
         this.fileService = fileService;
         this.channelService = channelService;
-        this.filePathService = filePathService;
     }
 
     /**
@@ -85,105 +81,128 @@ public class QuizExerciseImportService extends ExerciseImportService {
     }
 
     /**
-     * This helper method copies all questions of the {@code importedExercise} into a new exercise.
+     * This helper method copies all questions of the {@code sourceExercise} into a new exercise.
      *
-     * @param importedExercise The exercise from which to copy the questions
-     * @param newExercise      The exercise to which the questions are copied
+     * @param sourceExercise The exercise from which to copy the questions
+     * @param newExercise    The exercise to which the questions are copied
      */
-    private void copyQuizQuestions(QuizExercise importedExercise, QuizExercise newExercise) {
+    private void copyQuizQuestions(QuizExercise sourceExercise, QuizExercise newExercise) {
         log.debug("Copying the QuizQuestions to new QuizExercise: {}", newExercise);
 
-        for (QuizQuestion quizQuestion : importedExercise.getQuizQuestions()) {
+        for (QuizQuestion quizQuestion : sourceExercise.getQuizQuestions()) {
             quizQuestion.setId(null);
             quizQuestion.setQuizQuestionStatistic(null);
             if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
-                for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
-                    answerOption.setId(null);
-                    answerOption.setQuestion(mcQuestion);
-                }
+                setUpMultipleChoiceQuestionForImport(mcQuestion);
             }
             else if (quizQuestion instanceof DragAndDropQuestion dndQuestion) {
-                if (dndQuestion.getBackgroundFilePath() != null) {
-                    URI backgroundFilePublicPath = URI.create(dndQuestion.getBackgroundFilePath());
-                    URI backgroundFileIntendedPath = URI.create(FileService.BACKGROUND_FILE_SUBPATH);
-                    // Check whether pictureFilePublicPath is actually a picture file path
-                    // (which is the case when its path starts with the path backgroundFileIntendedPath)
-                    FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(backgroundFilePublicPath, backgroundFileIntendedPath);
-                    // Need to copy the file and get a new path, otherwise two different questions would share the same image and would cause problems in case one was deleted
-                    Path oldPath = filePathService.actualPathForPublicPath(backgroundFilePublicPath);
-                    Path newPath = fileService.copyExistingFileToTarget(oldPath, FilePathService.getDragAndDropBackgroundFilePath());
-                    dndQuestion.setBackgroundFilePath(filePathService.publicPathForActualPath(newPath, null).toString());
-                }
-                else {
-                    log.warn("BackgroundFilePath of DragAndDropQuestion {} is null", dndQuestion.getId());
-                }
-
-                for (DropLocation dropLocation : dndQuestion.getDropLocations()) {
-                    dropLocation.setId(null);
-                    dropLocation.setQuestion(dndQuestion);
-                }
-                for (DragItem dragItem : dndQuestion.getDragItems()) {
-                    dragItem.setId(null);
-                    dragItem.setQuestion(dndQuestion);
-                    if (dragItem.getPictureFilePath() != null) {
-                        URI pictureFilePublicPath = URI.create(dragItem.getPictureFilePath());
-                        URI pictureFileIntendedPath = URI.create(FileService.PICTURE_FILE_SUBPATH);
-                        // Check whether pictureFilePublicPath is actually a picture file path
-                        // (which is the case when its path starts with the path pictureFileIntendedPath)
-                        FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(pictureFilePublicPath, pictureFileIntendedPath);
-                        // Need to copy the file and get a new path, same as above
-                        Path oldDragItemPath = filePathService.actualPathForPublicPath(pictureFilePublicPath);
-                        Path newDragItemPath = fileService.copyExistingFileToTarget(oldDragItemPath, FilePathService.getDragItemFilePath());
-                        dragItem.setPictureFilePath(filePathService.publicPathForActualPath(newDragItemPath, null).toString());
-                    }
-                }
-                for (DragAndDropMapping dragAndDropMapping : dndQuestion.getCorrectMappings()) {
-                    dragAndDropMapping.setId(null);
-                    dragAndDropMapping.setQuestion(dndQuestion);
-                    if (dragAndDropMapping.getDragItemIndex() != null) {
-                        dragAndDropMapping.setDragItem(dndQuestion.getDragItems().get(dragAndDropMapping.getDragItemIndex()));
-                    }
-                    if (dragAndDropMapping.getDropLocationIndex() != null) {
-                        dragAndDropMapping.setDropLocation(dndQuestion.getDropLocations().get(dragAndDropMapping.getDropLocationIndex()));
-                    }
-                }
+                setUpDragAndDropQuestionForImport(dndQuestion);
             }
             else if (quizQuestion instanceof ShortAnswerQuestion saQuestion) {
-                for (ShortAnswerSpot shortAnswerSpot : saQuestion.getSpots()) {
-                    shortAnswerSpot.setId(null);
-                    shortAnswerSpot.setQuestion(saQuestion);
-                }
-                for (ShortAnswerSolution shortAnswerSolution : saQuestion.getSolutions()) {
-                    shortAnswerSolution.setId(null);
-                    shortAnswerSolution.setQuestion(saQuestion);
-                }
-                for (ShortAnswerMapping shortAnswerMapping : saQuestion.getCorrectMappings()) {
-                    shortAnswerMapping.setId(null);
-                    shortAnswerMapping.setQuestion(saQuestion);
-                    if (shortAnswerMapping.getShortAnswerSolutionIndex() != null) {
-                        shortAnswerMapping.setSolution(saQuestion.getSolutions().get(shortAnswerMapping.getShortAnswerSolutionIndex()));
-                    }
-                    if (shortAnswerMapping.getShortAnswerSpotIndex() != null) {
-                        shortAnswerMapping.setSpot(saQuestion.getSpots().get(shortAnswerMapping.getShortAnswerSpotIndex()));
-                    }
-                }
+                setUpShortAnswerQuestionForImport(saQuestion);
             }
             quizQuestion.setExercise(newExercise);
         }
-        newExercise.setQuizQuestions(importedExercise.getQuizQuestions());
+        newExercise.setQuizQuestions(sourceExercise.getQuizQuestions());
+    }
+
+    private void setUpMultipleChoiceQuestionForImport(MultipleChoiceQuestion mcQuestion) {
+        for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
+            answerOption.setId(null);
+            answerOption.setQuestion(mcQuestion);
+        }
+    }
+
+    private void setUpDragAndDropQuestionForImport(DragAndDropQuestion dndQuestion) {
+        if (dndQuestion.getBackgroundFilePath() != null) {
+            URI backgroundFilePublicPath = URI.create(dndQuestion.getBackgroundFilePath());
+            URI backgroundFileIntendedPath = URI.create(FileService.BACKGROUND_FILE_SUBPATH);
+            // Check whether pictureFilePublicPath is actually a picture file path
+            // (which is the case when its path starts with the path backgroundFileIntendedPath)
+            FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(backgroundFilePublicPath, backgroundFileIntendedPath);
+            // Need to copy the file and get a new path, otherwise two different questions would share the same image and would cause problems in case one was deleted
+            Path oldPath = FilePathService.actualPathForPublicPath(backgroundFilePublicPath);
+            Path newPath = fileService.copyExistingFileToTarget(oldPath, FilePathService.getDragAndDropBackgroundFilePath());
+            dndQuestion.setBackgroundFilePath(FilePathService.publicPathForActualPathOrThrow(newPath, null).toString());
+        }
+        else {
+            log.warn("BackgroundFilePath of DragAndDropQuestion {} is null", dndQuestion.getId());
+        }
+
+        for (DropLocation dropLocation : dndQuestion.getDropLocations()) {
+            dropLocation.setId(null);
+            dropLocation.setQuestion(dndQuestion);
+        }
+
+        setUpDragItemsForImport(dndQuestion);
+        setUpDragAndDropMappingsForImport(dndQuestion);
+    }
+
+    private void setUpDragItemsForImport(DragAndDropQuestion dndQuestion) {
+        for (DragItem dragItem : dndQuestion.getDragItems()) {
+            dragItem.setId(null);
+            dragItem.setQuestion(dndQuestion);
+            if (dragItem.getPictureFilePath() == null) {
+                continue;
+            }
+
+            URI pictureFilePublicPath = URI.create(dragItem.getPictureFilePath());
+            URI pictureFileIntendedPath = URI.create(FileService.PICTURE_FILE_SUBPATH);
+            // Check whether pictureFilePublicPath is actually a picture file path
+            // (which is the case when its path starts with the path pictureFileIntendedPath)
+            FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(pictureFilePublicPath, pictureFileIntendedPath);
+            // Need to copy the file and get a new path, same as above
+            Path oldDragItemPath = FilePathService.actualPathForPublicPath(pictureFilePublicPath);
+            Path newDragItemPath = fileService.copyExistingFileToTarget(oldDragItemPath, FilePathService.getDragItemFilePath());
+            dragItem.setPictureFilePath(FilePathService.publicPathForActualPathOrThrow(newDragItemPath, null).toString());
+        }
+    }
+
+    private void setUpDragAndDropMappingsForImport(DragAndDropQuestion dndQuestion) {
+        for (DragAndDropMapping dragAndDropMapping : dndQuestion.getCorrectMappings()) {
+            dragAndDropMapping.setId(null);
+            dragAndDropMapping.setQuestion(dndQuestion);
+            if (dragAndDropMapping.getDragItemIndex() != null) {
+                dragAndDropMapping.setDragItem(dndQuestion.getDragItems().get(dragAndDropMapping.getDragItemIndex()));
+            }
+            if (dragAndDropMapping.getDropLocationIndex() != null) {
+                dragAndDropMapping.setDropLocation(dndQuestion.getDropLocations().get(dragAndDropMapping.getDropLocationIndex()));
+            }
+        }
+    }
+
+    private void setUpShortAnswerQuestionForImport(ShortAnswerQuestion saQuestion) {
+        for (ShortAnswerSpot shortAnswerSpot : saQuestion.getSpots()) {
+            shortAnswerSpot.setId(null);
+            shortAnswerSpot.setQuestion(saQuestion);
+        }
+        for (ShortAnswerSolution shortAnswerSolution : saQuestion.getSolutions()) {
+            shortAnswerSolution.setId(null);
+            shortAnswerSolution.setQuestion(saQuestion);
+        }
+        for (ShortAnswerMapping shortAnswerMapping : saQuestion.getCorrectMappings()) {
+            shortAnswerMapping.setId(null);
+            shortAnswerMapping.setQuestion(saQuestion);
+            if (shortAnswerMapping.getShortAnswerSolutionIndex() != null) {
+                shortAnswerMapping.setSolution(saQuestion.getSolutions().get(shortAnswerMapping.getShortAnswerSolutionIndex()));
+            }
+            if (shortAnswerMapping.getShortAnswerSpotIndex() != null) {
+                shortAnswerMapping.setSpot(saQuestion.getSpots().get(shortAnswerMapping.getShortAnswerSpotIndex()));
+            }
+        }
     }
 
     /**
-     * This helper method copies all batches of the {@code importedExercise} into a new exercise.
+     * This helper method copies all batches of the {@code sourceExercise} into a new exercise.
      *
-     * @param importedExercise The exercise from which to copy the batches
-     * @param newExercise      The exercise to which the batches are copied
+     * @param sourceExercise The exercise from which to copy the batches
+     * @param newExercise    The exercise to which the batches are copied
      */
-    private void copyQuizBatches(QuizExercise importedExercise, QuizExercise newExercise) {
+    private void copyQuizBatches(QuizExercise sourceExercise, QuizExercise newExercise) {
         log.debug("Copying the QuizBatches to new QuizExercise: {}", newExercise);
 
         Set<QuizBatch> quizBatchList = new HashSet<>();
-        for (QuizBatch batch : importedExercise.getQuizBatches()) {
+        for (QuizBatch batch : sourceExercise.getQuizBatches()) {
             batch.setId(null);
             batch.setQuizExercise(newExercise);
             quizBatchList.add(batch);

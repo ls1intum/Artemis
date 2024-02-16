@@ -13,9 +13,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.post.ConversationUtilService;
+import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -27,6 +31,12 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
 
     @Autowired
     private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
 
     private NotificationSetting settingA;
 
@@ -111,5 +121,19 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSaveNotificationSettingsForCurrentUser_BAD_REQUEST() throws Exception {
         request.putWithResponseBody("/api/notification-settings", null, NotificationSetting[].class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testLoadMutedConversations() throws Exception {
+        Course course = courseUtilService.createCourse();
+        Channel mutedChannel = conversationUtilService.createCourseWideChannel(course, "muted");
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "test");
+        conversationUtilService.addParticipantToConversation(mutedChannel, TEST_PREFIX + "student1", true);
+        conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
+
+        List<Long> mutedConversations = request.getList("/api/muted-conversations", HttpStatus.OK, Long.class);
+        assertThat(mutedConversations).hasSize(1);
+        assertThat(mutedConversations).contains(mutedChannel.getId());
     }
 }

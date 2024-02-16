@@ -1,8 +1,13 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
+
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 
+import javax.annotation.Nullable;
 import javax.annotation.PreDestroy;
 
 import org.slf4j.Logger;
@@ -21,10 +26,12 @@ import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 import com.hazelcast.config.*;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.spring.cache.HazelcastCacheManager;
 import com.hazelcast.spring.context.SpringManagedContext;
 
 import de.tum.in.www1.artemis.service.HazelcastPathSerializer;
@@ -36,19 +43,26 @@ import tech.jhipster.config.cache.PrefixedKeyGenerator;
 @EnableCaching
 public class CacheConfiguration {
 
-    private final Logger log = LoggerFactory.getLogger(CacheConfiguration.class);
+    private static final Logger log = LoggerFactory.getLogger(CacheConfiguration.class);
 
-    private GitProperties gitProperties;
+    @Nullable
+    private final GitProperties gitProperties;
 
-    private BuildProperties buildProperties;
+    @Nullable
+    private final BuildProperties buildProperties;
 
     private final ServerProperties serverProperties;
 
+    // the discovery service client that connects against the registration (jhipster registry) so that multiple server nodes can find each other to synchronize using Hazelcast
     private final DiscoveryClient discoveryClient;
 
-    private Registration registration;
+    // the service registry, in our current deployment this is the jhipster registry which offers a Eureka Server under the hood
+    @Nullable
+    private final Registration registration;
 
     private final ApplicationContext applicationContext;
+
+    private final Environment env;
 
     @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
     private String instanceName;
@@ -62,15 +76,17 @@ public class CacheConfiguration {
     @Value("${spring.hazelcast.localInstances:true}")
     private boolean hazelcastLocalInstances;
 
-    public CacheConfiguration(ServerProperties serverProperties, DiscoveryClient discoveryClient, ApplicationContext applicationContext) {
+    // NOTE: the registration is optional
+    public CacheConfiguration(ServerProperties serverProperties, DiscoveryClient discoveryClient, ApplicationContext applicationContext,
+            @Autowired(required = false) @Nullable Registration registration, @Autowired(required = false) @Nullable GitProperties gitProperties,
+            @Autowired(required = false) @Nullable BuildProperties buildProperties, Environment env) {
         this.serverProperties = serverProperties;
         this.discoveryClient = discoveryClient;
         this.applicationContext = applicationContext;
-    }
-
-    @Autowired(required = false) // ok
-    public void setRegistration(Registration registration) {
         this.registration = registration;
+        this.gitProperties = gitProperties;
+        this.buildProperties = buildProperties;
+        this.env = env;
     }
 
     @PreDestroy
@@ -82,7 +98,7 @@ public class CacheConfiguration {
     @Bean
     public CacheManager cacheManager(HazelcastInstance hazelcastInstance) {
         log.debug("Starting HazelcastCacheManager");
-        return new com.hazelcast.spring.cache.HazelcastCacheManager(hazelcastInstance);
+        return new HazelcastCacheManager(hazelcastInstance);
     }
 
     /**
@@ -160,10 +176,27 @@ public class CacheConfiguration {
             }
         }
         config.getMapConfigs().put("default", initializeDefaultMapConfig(jHipsterProperties));
+        config.getMapConfigs().put("files", initializeFilesMapConfig(jHipsterProperties));
         config.getMapConfigs().put("de.tum.in.www1.artemis.domain.*", initializeDomainMapConfig(jHipsterProperties));
+
+        // only add the queue config if the profile "localci" is active
+        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+        if (activeProfiles.contains(PROFILE_LOCALCI)) {
+            // add queue config for local ci shared queue
+            configureQueueCluster(config, jHipsterProperties);
+        }
 
         QuizScheduleService.configureHazelcast(config);
         return Hazelcast.newHazelcastInstance(config);
+    }
+
+    private void configureQueueCluster(Config config, JHipsterProperties jHipsterProperties) {
+        // Queue specific configurations
+        log.info("Configure Build Job Queue synchronization in Hazelcast for Local CI");
+        QueueConfig queueConfig = new QueueConfig("buildJobQueue");
+        queueConfig.setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount());
+        queueConfig.setPriorityComparatorClassName("de.tum.in.www1.artemis.service.connectors.localci.LocalCIPriorityQueueComparator");
+        config.addQueueConfig(queueConfig);
     }
 
     private void hazelcastBindOnlyOnInterface(String hazelcastInterface, Config config) {
@@ -179,6 +212,11 @@ public class CacheConfiguration {
         config.setProperty("hazelcast.socket.client.bind.any", "false");
     }
 
+    /**
+     * Note: this is configured to be able to cache files in the Hazelcast cluster, see {@link de.tum.in.www1.artemis.service.FileService#getFileForPath}
+     *
+     * @return the serializer config for files based on paths
+     */
     private SerializerConfig createPathSerializerConfig() {
         SerializerConfig serializerConfig = new SerializerConfig();
         serializerConfig.setTypeClass(Path.class);
@@ -186,40 +224,29 @@ public class CacheConfiguration {
         return serializerConfig;
     }
 
-    @Autowired(required = false) // ok
-    public void setGitProperties(GitProperties gitProperties) {
-        this.gitProperties = gitProperties;
-    }
-
-    @Autowired(required = false) // ok
-    public void setBuildProperties(BuildProperties buildProperties) {
-        this.buildProperties = buildProperties;
-    }
-
     @Bean
     public KeyGenerator keyGenerator() {
         return new PrefixedKeyGenerator(this.gitProperties, this.buildProperties);
     }
 
-    private MapConfig initializeDefaultMapConfig(JHipsterProperties jHipsterProperties) {
-        MapConfig mapConfig = new MapConfig();
-
-        /*
-         * Number of backups. If 1 is set as the backup-count for example, then all entries of the map will be copied to another JVM for fail-safety. Valid numbers are 0 (no
-         * backup), 1, 2, 3. While we store most of the data in the database, we might use the backup for live quiz exercises and their corresponding hazelcast hash maps
-         */
-        mapConfig.setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount());
-
-        /*
-         * Valid values are: NONE (no eviction), LRU (Least Recently Used), LFU (Least Frequently Used). LRU is the default.
-         */
-        mapConfig.setEvictionConfig(new EvictionConfig().setEvictionPolicy(EvictionPolicy.LRU).setMaxSizePolicy(MaxSizePolicy.PER_NODE));
-        return mapConfig;
+    // config for files in the files system
+    private MapConfig initializeFilesMapConfig(JHipsterProperties jHipsterProperties) {
+        return new MapConfig().setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount())
+                .setEvictionConfig(new EvictionConfig().setEvictionPolicy(EvictionPolicy.LRU).setMaxSizePolicy(MaxSizePolicy.PER_NODE))
+                .setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
     }
 
+    // default config, if nothing specific is defined
+    private MapConfig initializeDefaultMapConfig(JHipsterProperties jHipsterProperties) {
+        return new MapConfig()
+                // Number of backups. If 1 is set as the backup-count e.g., then all entries of the map will be copied to another JVM for fail-safety. Valid numbers are 0 (no
+                // backup), 1, 2, 3. While we store most of the data in the database, we might use the backup for live quiz exercises and their corresponding hazelcast hash maps
+                .setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount())
+                .setEvictionConfig(new EvictionConfig().setEvictionPolicy(EvictionPolicy.LRU).setMaxSizePolicy(MaxSizePolicy.PER_NODE));
+    }
+
+    // config for all domain object, i.e. entities such as Course, Exercise, etc.
     private MapConfig initializeDomainMapConfig(JHipsterProperties jHipsterProperties) {
-        MapConfig mapConfig = new MapConfig();
-        mapConfig.setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
-        return mapConfig;
+        return new MapConfig().setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
     }
 }

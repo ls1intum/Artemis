@@ -12,7 +12,7 @@ import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-manage
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
-import { faPencilAlt, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faPencilAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
 @Component({
@@ -41,8 +41,15 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
+    routerEditLinksBase = {
+        [LectureUnitType.ATTACHMENT]: 'attachment-units',
+        [LectureUnitType.VIDEO]: 'video-units',
+        [LectureUnitType.TEXT]: 'text-units',
+        [LectureUnitType.ONLINE]: 'online-units',
+    };
+
     // Icons
-    faTimes = faTimes;
+    faTrash = faTrash;
     faPencilAlt = faPencilAlt;
 
     constructor(
@@ -192,27 +199,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     onEditButtonClicked(lectureUnit: LectureUnit) {
-        if (!this.emitEditEvents) {
-            this.router.navigate(this.editButtonRouterLink(lectureUnit)!, { relativeTo: this.activatedRoute });
-            return;
-        }
-
         this.onEditLectureUnitClicked.emit(lectureUnit);
-    }
-
-    editButtonRouterLink(lectureUnit: LectureUnit) {
-        switch (lectureUnit?.type) {
-            case LectureUnitType.ATTACHMENT:
-                return ['attachment-units', lectureUnit.id, 'edit'];
-            case LectureUnitType.VIDEO:
-                return ['video-units', lectureUnit.id, 'edit'];
-            case LectureUnitType.TEXT:
-                return ['text-units', lectureUnit.id, 'edit'];
-            case LectureUnitType.ONLINE:
-                return ['online-units', lectureUnit.id, 'edit'];
-            default:
-                return;
-        }
     }
 
     getLectureUnitReleaseDate(lectureUnit: LectureUnit) {

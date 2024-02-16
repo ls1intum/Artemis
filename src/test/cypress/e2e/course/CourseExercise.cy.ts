@@ -23,13 +23,13 @@ describe('Course Exercise', () => {
 
         before('Create Exercises', () => {
             exerciseAPIRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate], 'Course Exercise Quiz 1').then((response) => {
-                exercise1 = response.body;
+                exercise1 = convertModelAfterMultiPart(response);
             });
             exerciseAPIRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate], 'Course Exercise Quiz 2').then((response) => {
-                exercise2 = response.body;
+                exercise2 = convertModelAfterMultiPart(response);
             });
             exerciseAPIRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate], 'Course Exercise 3').then((response) => {
-                exercise3 = response.body;
+                exercise3 = convertModelAfterMultiPart(response);
             });
         });
 

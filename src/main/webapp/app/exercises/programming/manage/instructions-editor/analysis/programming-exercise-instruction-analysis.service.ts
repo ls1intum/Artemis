@@ -8,14 +8,15 @@ import {
     ProblemStatementIssue,
 } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 
+const TEST_CASE_REGEX = /\[[^[\]]+]\(((?:[^(),]+(?:\([^()]*\)[^(),]*)?(?:,[^(),]+(?:\([^()]*\)[^(),]*)?)*)?)\)/;
+const INVALID_TEST_CASE_TRANSLATION = 'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase';
+const REPEATED_TEST_CASE_TRANSLATION = 'artemisApp.programmingExercise.testCaseAnalysis.repeatedTestCase';
+
 /**
  * Analyzes the problem statement of a programming-exercise and provides information support concerning potential issues.
  */
 @Injectable()
 export class ProgrammingExerciseInstructionAnalysisService {
-    private readonly TEST_CASE_REGEX = /.*?\[.*]\((.*)\)/;
-    private readonly INVALID_TEST_CASE_TRANSLATION = 'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase';
-
     constructor(private translateService: TranslateService) {}
 
     /**
@@ -30,32 +31,33 @@ export class ProgrammingExerciseInstructionAnalysisService {
         // Look for task regex matches in the problem statement including their line numbers.
         const tasksFromProblemStatement = matchRegexWithLineNumbers(problemStatement, taskRegex);
 
-        const { invalidTestCases, missingTestCases, invalidTestCaseAnalysis } = this.analyzeTestCases(tasksFromProblemStatement, exerciseTestCases);
+        const { invalidTestCases, missingTestCases, repeatedTestCases, invalidTestCaseAnalysis } = this.analyzeTestCases(tasksFromProblemStatement, exerciseTestCases);
 
         const completeAnalysis: ProblemStatementAnalysis = this.mergeAnalysis(invalidTestCaseAnalysis);
-        return { invalidTestCases, missingTestCases, completeAnalysis, numOfTasks: tasksFromProblemStatement.length };
+        return { invalidTestCases, missingTestCases, repeatedTestCases, completeAnalysis, numOfTasks: tasksFromProblemStatement.length };
     };
 
     /**
      * Analyze the test cases for the following criteria:
      * - Are test cases in the problem statement that don't exist for the exercise?
      * - Do test cases exist for this exercise that are not part of the problem statement?
+     * - Are any test cases in the problem statement repeated?
      *
-     * Will also set the invalidTestCases & missingTestCases attributes of the component.
+     * Will also set the invalidTestCases & missingTestCases & repeatedTestCases attributes of the component.
      *
      * @param tasksFromProblemStatement to analyze.
      * @param exerciseTestCases to double check the test cases found in the problem statement.
      */
     private analyzeTestCases = (tasksFromProblemStatement: RegExpLineNumberMatchArray, exerciseTestCases: string[]) => {
         // Extract the testCase list from the task matches.
-        const testCasesInMarkdown = this.extractRegexFromTasks(tasksFromProblemStatement, this.TEST_CASE_REGEX);
-        // Look for test cases that are not part of the test repository. Could e.g. be typos.
+        const testCasesInMarkdown = this.extractRegexFromTasks(tasksFromProblemStatement, TEST_CASE_REGEX);
+        // Look for test cases that are not part of the test repository. Could, e.g., be typos.
         const invalidTestCaseAnalysis = testCasesInMarkdown
             .map(
                 ([lineNumber, testCases]) =>
                     [
                         lineNumber,
-                        testCases.filter((testCase) => !exerciseTestCases.map((exTestcase) => exTestcase.toLowerCase()).includes(testCase.toLowerCase())),
+                        uniq(testCases.filter((testCase) => !exerciseTestCases.map((exTestcase) => exTestcase.toLowerCase()).includes(testCase.toLowerCase()))),
                         ProblemStatementIssue.INVALID_TEST_CASES,
                     ] as AnalysisItem,
             )
@@ -67,7 +69,22 @@ export class ProgrammingExerciseInstructionAnalysisService {
 
         const invalidTestCases = invalidTestCaseAnalysis.flatMap(([, testCases]) => testCases);
 
-        return { missingTestCases, invalidTestCases, invalidTestCaseAnalysis };
+        const testCaseOccurrences = testCasesInMarkdown.reduce((acc, [lineNumber, testCases]) => {
+            testCases.forEach((testCase) => {
+                acc.set(testCase, (acc.get(testCase) || []).concat(lineNumber));
+            });
+            return acc;
+        }, new Map<string, number[]>());
+
+        const repeatedTestCaseAnalysis = [...testCaseOccurrences.entries()]
+            .filter(([, lineNumbers]) => lineNumbers.length > 1)
+            .flatMap(([testCase, lineNumbers]) => uniq(lineNumbers).map((lineNumber) => [lineNumber, [testCase], ProblemStatementIssue.REPEATED_TEST_CASES] as AnalysisItem));
+
+        const repeatedTestCases = uniq(repeatedTestCaseAnalysis.flatMap(([, testCases]) => testCases));
+
+        invalidTestCaseAnalysis.push(...repeatedTestCaseAnalysis);
+
+        return { missingTestCases, invalidTestCases, repeatedTestCases, invalidTestCaseAnalysis };
     };
 
     /**
@@ -78,7 +95,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
     private mergeAnalysis = (...analysis: Array<AnalysisItem[]>): ProblemStatementAnalysis => {
         const reducer = (acc: ProblemStatementAnalysis, [lineNumber, values, issueType]: AnalysisItem): ProblemStatementAnalysis => {
             const lineNumberValues = acc.get(lineNumber);
-            const issueValues = lineNumberValues ? lineNumberValues[issueType] || [] : [];
+            const issueValues = lineNumberValues?.[issueType] ?? [];
             acc.set(lineNumber, { lineNumber, ...lineNumberValues, [issueType]: [...issueValues, ...values] });
             return acc;
         };
@@ -98,13 +115,14 @@ export class ProgrammingExerciseInstructionAnalysisService {
      *
      * @param issueType for which to retrieve the fitting translation.
      */
-    private getTranslationByIssueType = (issueType: ProblemStatementIssue) => {
+    private getTranslationByIssueType = (issueType: ProblemStatementIssue): string => {
         switch (issueType) {
             case ProblemStatementIssue.INVALID_TEST_CASES:
-                return this.INVALID_TEST_CASE_TRANSLATION;
-            default:
-                return '';
+                return INVALID_TEST_CASE_TRANSLATION;
+            case ProblemStatementIssue.REPEATED_TEST_CASES:
+                return REPEATED_TEST_CASE_TRANSLATION;
         }
+        // no default value, please add a new translation when adding new issue types
     };
 
     /**
@@ -115,7 +133,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
      * @param regex to search for in the tasks.
      */
     private extractRegexFromTasks(tasks: [number, string][], regex: RegExp): [number, string[]][] {
-        const cleanMatches = (matches: string[]) => uniq(matches.flat().filter(Boolean));
+        const cleanMatches = (matches: string[]) => matches.flat().filter(Boolean);
 
         return tasks
             .filter(([, task]) => !!task)

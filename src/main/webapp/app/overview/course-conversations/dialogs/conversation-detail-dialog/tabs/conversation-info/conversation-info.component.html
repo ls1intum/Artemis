@@ -1,85 +1,90 @@
-<div *ngIf="activeConversation && course" class="container-fluid conversation-info">
-    <div class="row info-container">
-        <!-- Name (Only for Channels and Group Chats)-->
-        <ng-container *ngIf="getAsChannelOrGroupChat(activeConversation) as channelOrGroupChat">
-            <div id="name-section" class="col-12 info-section" [class.interactive]="!readOnlyMode">
-                <div class="form-floating">
-                    <textarea
-                        class="form-control"
-                        readonly
-                        placeholder="dummyPlaceholder"
-                        id="name"
-                        value="{{ channelOrGroupChat.name ?? ('artemisApp.dialogs.conversationDetail.infoTab.noName' | artemisTranslate) }}"
-                    >
-                    </textarea>
-                    <label for="name">{{ 'artemisApp.dialogs.conversationDetail.infoTab.name' | artemisTranslate }}</label>
-
-                    <button
-                        class="action-button right btn btn-link btn-sm"
-                        (click)="openEditNameModal($event)"
-                        *ngIf="
+@if (activeConversation && course) {
+    <div class="container-fluid conversation-info">
+        <div class="row info-container">
+            <!-- Name (Only for Channels and Group Chats)-->
+            @if (getAsChannelOrGroupChat(activeConversation); as channelOrGroupChat) {
+                <div id="name-section" class="col-12 info-section" [class.interactive]="!readOnlyMode">
+                    <div class="form-floating">
+                        <textarea
+                            class="form-control"
+                            readonly
+                            placeholder="dummyPlaceholder"
+                            id="name"
+                            value="{{ channelOrGroupChat.name ?? ('artemisApp.dialogs.conversationDetail.infoTab.noName' | artemisTranslate) }}"
+                        >
+                        </textarea>
+                        <label for="name">{{ 'artemisApp.dialogs.conversationDetail.infoTab.name' | artemisTranslate }}</label>
+                        @if (
                             (isChannel(channelOrGroupChat) && canChangeChannelProperties(channelOrGroupChat)) ||
                             (isGroupChat(channelOrGroupChat) && canChangeGroupChatProperties(channelOrGroupChat))
-                        "
-                    >
-                        {{ 'artemisApp.dialogs.conversationDetail.infoTab.editName' | artemisTranslate }}
-                    </button>
+                        ) {
+                            <button class="action-button right btn btn-link btn-sm" (click)="openEditNameModal($event)">
+                                {{ 'artemisApp.dialogs.conversationDetail.infoTab.editName' | artemisTranslate }}
+                            </button>
+                        }
+                    </div>
                 </div>
-            </div>
-        </ng-container>
-        <!-- Topic (Only for Channels)-->
-        <ng-container *ngIf="getAsChannel(activeConversation) as channel">
-            <div id="topic-section" class="col-12 info-section" [class.interactive]="!readOnlyMode">
-                <div class="form-floating">
-                    <textarea
-                        class="form-control large"
-                        readonly
-                        placeholder="dummyPlaceholder"
-                        id="topic"
-                        value="{{ channel.topic ?? ('artemisApp.dialogs.conversationDetail.infoTab.noTopic' | artemisTranslate) }}"
-                    >
-                    </textarea>
-                    <label for="topic">{{ 'artemisApp.dialogs.conversationDetail.infoTab.topic' | artemisTranslate }}</label>
-                    <button class="action-button right btn btn-link btn-sm" (click)="openEditTopicModal($event)" *ngIf="canChangeChannelProperties(channel)">
-                        {{ 'artemisApp.dialogs.conversationDetail.infoTab.editTopic' | artemisTranslate }}
-                    </button>
+            }
+            <!-- Topic (Only for Channels)-->
+            @if (getAsChannel(activeConversation); as channel) {
+                <div id="topic-section" class="col-12 info-section" [class.interactive]="!readOnlyMode">
+                    <div class="form-floating">
+                        <textarea
+                            class="form-control large"
+                            readonly
+                            placeholder="dummyPlaceholder"
+                            id="topic"
+                            value="{{ channel.topic ?? ('artemisApp.dialogs.conversationDetail.infoTab.noTopic' | artemisTranslate) }}"
+                        >
+                        </textarea>
+                        <label for="topic">{{ 'artemisApp.dialogs.conversationDetail.infoTab.topic' | artemisTranslate }}</label>
+                        @if (canChangeChannelProperties(channel)) {
+                            <button class="action-button right btn btn-link btn-sm" (click)="openEditTopicModal($event)">
+                                {{ 'artemisApp.dialogs.conversationDetail.infoTab.editTopic' | artemisTranslate }}
+                            </button>
+                        }
+                    </div>
                 </div>
-            </div>
-        </ng-container>
-        <!-- Description (Only for Channels)-->
-        <ng-container *ngIf="getAsChannel(activeConversation) as channel">
-            <div id="description-section" class="col-12 info-section" [class.interactive]="!readOnlyMode">
-                <div class="form-floating">
-                    <textarea
-                        class="form-control large"
-                        readonly
-                        placeholder="dummyPlaceholder"
-                        id="description"
-                        value="{{ channel.description ?? ('artemisApp.dialogs.conversationDetail.infoTab.noDescription' | artemisTranslate) }}"
-                    >
-                    </textarea>
-                    <label for="description">{{ 'artemisApp.dialogs.conversationDetail.infoTab.description' | artemisTranslate }}</label>
-                    <button class="action-button right btn btn-link btn-sm" (click)="openDescriptionTopicModal($event)" *ngIf="canChangeChannelProperties(channel)">
-                        {{ 'artemisApp.dialogs.conversationDetail.infoTab.editDescription' | artemisTranslate }}
-                    </button>
+            }
+            <!-- Description (Only for Channels)-->
+            @if (getAsChannel(activeConversation); as channel) {
+                <div id="description-section" class="col-12 info-section" [class.interactive]="!readOnlyMode">
+                    <div class="form-floating">
+                        <textarea
+                            class="form-control large"
+                            readonly
+                            placeholder="dummyPlaceholder"
+                            id="description"
+                            value="{{ channel.description ?? ('artemisApp.dialogs.conversationDetail.infoTab.noDescription' | artemisTranslate) }}"
+                        >
+                        </textarea>
+                        <label for="description">{{ 'artemisApp.dialogs.conversationDetail.infoTab.description' | artemisTranslate }}</label>
+                        @if (canChangeChannelProperties(channel)) {
+                            <button class="action-button right btn btn-link btn-sm" (click)="openDescriptionTopicModal($event)">
+                                {{ 'artemisApp.dialogs.conversationDetail.infoTab.editDescription' | artemisTranslate }}
+                            </button>
+                        }
+                    </div>
                 </div>
+            }
+            <!-- More Info -->
+            <div id="moreinfo-section" class="col-12 info-section">
+                <div>
+                    <h6>{{ 'artemisApp.dialogs.conversationDetail.infoTab.moreInfo' | artemisTranslate }}</h6>
+                </div>
+                <ul>
+                    @if (activeConversation.creator) {
+                        <li>
+                            {{ 'artemisApp.dialogs.conversationDetail.infoTab.createdBy' | artemisTranslate }}:
+                            {{ activeConversation.creator ? getUserLabel(activeConversation.creator) : '' }}
+                        </li>
+                    }
+                    <li>
+                        {{ 'artemisApp.dialogs.conversationDetail.infoTab.createdOn' | artemisTranslate }}:
+                        {{ activeConversation.creationDate ? (activeConversation.creationDate | artemisDate) : '' }}
+                    </li>
+                </ul>
             </div>
-        </ng-container>
-        <!-- More Info -->
-        <div id="moreinfo-section" class="col-12 info-section">
-            <div>
-                <h6>{{ 'artemisApp.dialogs.conversationDetail.infoTab.moreInfo' | artemisTranslate }}</h6>
-            </div>
-            <ul>
-                <li *ngIf="activeConversation.creator">
-                    {{ 'artemisApp.dialogs.conversationDetail.infoTab.createdBy' | artemisTranslate }}:
-                    {{ activeConversation.creator ? getUserLabel(activeConversation.creator) : '' }}
-                </li>
-                <li>
-                    {{ 'artemisApp.dialogs.conversationDetail.infoTab.createdOn' | artemisTranslate }}:
-                    {{ activeConversation.creationDate ? (activeConversation.creationDate | artemisDate) : '' }}
-                </li>
-            </ul>
         </div>
     </div>
-</div>
+}

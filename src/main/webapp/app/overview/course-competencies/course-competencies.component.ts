@@ -5,7 +5,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Competency } from 'app/entities/competency.model';
-import { Subscription, forkJoin } from 'rxjs';
+import { forkJoin } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
@@ -28,8 +28,6 @@ export class CourseCompetenciesComponent implements OnInit {
     faAngleDown = faAngleDown;
     faAngleUp = faAngleUp;
 
-    private courseUpdateSubscription?: Subscription;
-
     constructor(
         private activatedRoute: ActivatedRoute,
         private alertService: AlertService,
@@ -43,14 +41,14 @@ export class CourseCompetenciesComponent implements OnInit {
         });
 
         this.setCourse(this.courseStorageService.getCourse(this.courseId));
-        this.courseUpdateSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course) => this.setCourse(course));
     }
 
     private setCourse(course?: Course) {
         this.course = course;
-        if (this.course && this.course.competencies && this.course.prerequisites) {
-            this.competencies = this.course.competencies;
-            this.prerequisites = this.course.prerequisites;
+        // Note: this component is only shown if there are at least 1 competencies or at least 1 prerequisites, so if they do not exist, we load the data from the server
+        if (this.course && ((this.course.competencies && this.course.competencies.length > 0) || (this.course.prerequisites && this.course.prerequisites.length > 0))) {
+            this.competencies = this.course.competencies || [];
+            this.prerequisites = this.course.prerequisites || [];
         } else {
             this.loadData();
         }
@@ -61,9 +59,9 @@ export class CourseCompetenciesComponent implements OnInit {
     }
 
     get countMasteredCompetencies() {
-        return this.competencies.filter((lg) => {
-            if (lg.userProgress?.length && lg.masteryThreshold) {
-                return lg.userProgress.first()!.progress == 100 && lg.userProgress.first()!.confidence! >= lg.masteryThreshold!;
+        return this.competencies.filter((competency) => {
+            if (competency.userProgress?.length && competency.masteryThreshold) {
+                return competency.userProgress.first()!.progress == 100 && competency.userProgress.first()!.confidence! >= competency.masteryThreshold!;
             }
             return false;
         }).length;
@@ -82,6 +80,11 @@ export class CourseCompetenciesComponent implements OnInit {
             next: ([competencies, prerequisites]) => {
                 this.competencies = competencies.body!;
                 this.prerequisites = prerequisites.body!;
+                // Also update the course, so we do not need to fetch again next time
+                if (this.course) {
+                    this.course.competencies = this.competencies;
+                    this.course.prerequisites = this.prerequisites;
+                }
                 this.isLoading = false;
             },
             error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),

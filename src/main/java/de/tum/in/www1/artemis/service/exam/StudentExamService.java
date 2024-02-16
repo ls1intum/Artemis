@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.CacheManager;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -51,7 +52,7 @@ public class StudentExamService {
 
     private static final String EXAM_EXERCISE_START_STATUS_TOPIC = "/topic/exams/%s/exercise-start-status";
 
-    private final Logger log = LoggerFactory.getLogger(StudentExamService.class);
+    private static final Logger log = LoggerFactory.getLogger(StudentExamService.class);
 
     private final ParticipationService participationService;
 
@@ -89,13 +90,15 @@ public class StudentExamService {
 
     private final TaskScheduler scheduler;
 
+    private final ExamQuizQuestionsGenerator examQuizQuestionsGenerator;
+
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, TextSubmissionRepository textSubmissionRepository,
             ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingTriggerService programmingTriggerService, ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService,
-            @Qualifier("taskScheduler") TaskScheduler scheduler) {
+            @Qualifier("taskScheduler") TaskScheduler scheduler, QuizPoolService quizPoolService) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -114,6 +117,7 @@ public class StudentExamService {
         this.cacheManager = cacheManager;
         this.websocketMessagingService = websocketMessagingService;
         this.scheduler = scheduler;
+        this.examQuizQuestionsGenerator = quizPoolService;
     }
 
     /**
@@ -367,23 +371,7 @@ public class StudentExamService {
                 // we should still be able to compare even if the quizQuestion or the quizQuestion id is null
                 if (quizQuestion1 == null || quizQuestion1.getId() == null || quizQuestion2 == null || quizQuestion2.getId() == null
                         || quizQuestion1.getId().equals(quizQuestion2.getId())) {
-                    boolean equal;
-
-                    if (answer1 instanceof DragAndDropSubmittedAnswer submittedAnswer1 && answer2 instanceof DragAndDropSubmittedAnswer submittedAnswer2) {
-                        equal = isContentEqualTo(submittedAnswer1, submittedAnswer2);
-                    }
-                    else if (answer1 instanceof MultipleChoiceSubmittedAnswer submittedAnswer1 && answer2 instanceof MultipleChoiceSubmittedAnswer submittedAnswer2) {
-                        equal = isContentEqualTo(submittedAnswer1, submittedAnswer2);
-                    }
-                    else if (answer1 instanceof ShortAnswerSubmittedAnswer submittedAnswer1 && answer2 instanceof ShortAnswerSubmittedAnswer submittedAnswer2) {
-                        equal = isContentEqualTo(submittedAnswer1, submittedAnswer2);
-                    }
-                    else {
-                        LoggerFactory.getLogger(StudentExamService.class).error("Cannot compare {} and {} for equality, classes unknown", answer1, answer2);
-                        return false;
-                    }
-
-                    if (!equal) {
+                    if (!isContentEqualTo(answer1, answer2)) {
                         return false;
                     }
                 }
@@ -391,6 +379,29 @@ public class StudentExamService {
         }
         // we did not find any differences
         return true;
+    }
+
+    /**
+     * Returns {@code true} if the quiz submissions are equal to each other
+     * and {@code false} otherwise.
+     *
+     * @param answer1 a quiz submission
+     * @param answer2 a quiz submission to be compared with {@code submission1} for equality
+     * @return {@code true} if the quiz submissions are equal to each other and {@code false} otherwise
+     * @throws RuntimeException if the answer types are not supported
+     */
+    public static boolean isContentEqualTo(SubmittedAnswer answer1, SubmittedAnswer answer2) {
+        if (answer1 instanceof DragAndDropSubmittedAnswer submittedAnswer1 && answer2 instanceof DragAndDropSubmittedAnswer submittedAnswer2) {
+            return isContentEqualTo(submittedAnswer1, submittedAnswer2);
+        }
+        else if (answer1 instanceof MultipleChoiceSubmittedAnswer submittedAnswer1 && answer2 instanceof MultipleChoiceSubmittedAnswer submittedAnswer2) {
+            return isContentEqualTo(submittedAnswer1, submittedAnswer2);
+        }
+        else if (answer1 instanceof ShortAnswerSubmittedAnswer submittedAnswer1 && answer2 instanceof ShortAnswerSubmittedAnswer submittedAnswer2) {
+            return isContentEqualTo(submittedAnswer1, submittedAnswer2);
+        }
+        log.error("Cannot compare {} and {} for equality, classes unknown", answer1, answer2);
+        return false;
     }
 
     /**
@@ -782,6 +793,48 @@ public class StudentExamService {
         // StudentExams are saved in the called method
         HashSet<User> userHashSet = new HashSet<>();
         userHashSet.add(student);
-        return studentExamRepository.createRandomStudentExams(exam, userHashSet).get(0);
+        return studentExamRepository.createRandomStudentExams(exam, userHashSet, examQuizQuestionsGenerator).get(0);
+    }
+
+    /**
+     * Generates the student exams randomly based on the exam configuration and the exercise groups
+     * Important: the passed exams needs to include the registered users, exercise groups and exercises (eagerly loaded)
+     *
+     * @param exam with eagerly loaded registered users, exerciseGroups and exercises loaded
+     * @return the list of student exams with their corresponding users
+     */
+    @Transactional
+    public List<StudentExam> generateStudentExams(final Exam exam) {
+        final var existingStudentExams = studentExamRepository.findByExamId(exam.getId());
+        // https://jira.spring.io/browse/DATAJPA-1367 deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
+        studentExamRepository.deleteAll(existingStudentExams);
+
+        Set<User> users = exam.getRegisteredUsers();
+
+        // StudentExams are saved in the called method
+        return studentExamRepository.createRandomStudentExams(exam, users, examQuizQuestionsGenerator);
+    }
+
+    /**
+     * Generates the missing student exams randomly based on the exam configuration and the exercise groups.
+     * The difference between all registered users and the users who already have an individual exam is the set of users for which student exams will be created.
+     * <p>
+     * Important: the passed exams needs to include the registered users, exercise groups and exercises (eagerly loaded)
+     *
+     * @param exam with eagerly loaded registered users, exerciseGroups and exercises loaded
+     * @return the list of student exams with their corresponding users
+     */
+    @Transactional
+    public List<StudentExam> generateMissingStudentExams(Exam exam) {
+
+        // Get all users who already have an individual exam
+        Set<User> usersWithStudentExam = studentExamRepository.findUsersWithStudentExamsForExam(exam.getId());
+
+        // Get all students who don't have an exam yet
+        Set<User> missingUsers = exam.getRegisteredUsers();
+        missingUsers.removeAll(usersWithStudentExam);
+
+        // StudentExams are saved in the called method
+        return studentExamRepository.createRandomStudentExams(exam, missingUsers, examQuizQuestionsGenerator);
     }
 }

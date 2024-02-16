@@ -23,20 +23,38 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface ProgrammingSubmissionRepository extends JpaRepository<ProgrammingSubmission, Long> {
 
-    @EntityGraph(type = LOAD, attributePaths = { "results.feedbacks" })
-    ProgrammingSubmission findFirstByParticipationIdAndCommitHashOrderByIdDesc(Long participationId, String commitHash);
+    /**
+     * Load programming submission only
+     *
+     * @param submissionId the submissionId
+     * @return programming submission
+     */
+    @NotNull
+    default ProgrammingSubmission findByIdElseThrow(long submissionId) {
+        return findById(submissionId).orElseThrow(() -> new EntityNotFoundException("ProgrammingSubmission", submissionId));
+    }
 
     @Query("""
-            SELECT s FROM ProgrammingSubmission s
-            LEFT JOIN FETCH s.results
-            WHERE (s.type <> 'ILLEGAL' or s.type is null)
-            AND s.participation.id = :#{#participationId}
-            AND s.id = (SELECT max(s2.id) FROM ProgrammingSubmission s2 WHERE s2.participation.id = :#{#participationId} AND (s2.type <> 'ILLEGAL' or s2.type is null))
+            SELECT s
+            FROM ProgrammingSubmission s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH s.participation p
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
+            WHERE p.id = :participationId
+                AND s.commitHash = :commitHash
+            ORDER BY s.id DESC
             """)
-    Optional<ProgrammingSubmission> findFirstByParticipationIdOrderByLegalSubmissionDateDesc(@Param("participationId") Long participationId);
+    List<ProgrammingSubmission> findByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(@Param("participationId") long participationId,
+            @Param("commitHash") String commitHash);
+
+    default ProgrammingSubmission findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(long participationId, String commitHash) {
+        return findByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participationId, commitHash).stream().findFirst().orElse(null);
+    }
 
     @EntityGraph(type = LOAD, attributePaths = "results")
-    Optional<ProgrammingSubmission> findFirstByParticipationIdOrderBySubmissionDateDesc(Long participationId);
+    Optional<ProgrammingSubmission> findFirstByParticipationIdOrderBySubmissionDateDesc(long participationId);
 
     /**
      * Provide a list of graded submissions. To be graded a submission must:
@@ -48,34 +66,47 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
      * @param pageable        Pageable
      * @return ProgrammingSubmission list (can be empty!)
      */
-    @EntityGraph(type = LOAD, attributePaths = "results")
-    @Query("select s from ProgrammingSubmission s left join s.participation p left join p.exercise e where p.id = :#{#participationId} and (s.type = 'INSTRUCTOR' or s.type = 'TEST' or e.dueDate is null or s.submissionDate <= e.dueDate) order by s.submissionDate desc")
-    List<ProgrammingSubmission> findGradedByParticipationIdOrderBySubmissionDateDesc(@Param("participationId") Long participationId, Pageable pageable);
+    @Query("""
+            SELECT s
+            FROM ProgrammingSubmission s
+                LEFT JOIN s.participation p
+                LEFT JOIN p.exercise e
+                LEFT JOIN FETCH s.results r
+            WHERE p.id = :participationId
+                AND (
+                    s.type = de.tum.in.www1.artemis.domain.enumeration.SubmissionType.INSTRUCTOR
+                    OR s.type = de.tum.in.www1.artemis.domain.enumeration.SubmissionType.TEST
+                    OR e.dueDate IS NULL
+                    OR s.submissionDate <= e.dueDate
+                )
+            ORDER BY s.submissionDate DESC
+            """)
+    List<ProgrammingSubmission> findGradedByParticipationIdOrderBySubmissionDateDesc(@Param("participationId") long participationId, Pageable pageable);
+
+    @EntityGraph(type = LOAD, attributePaths = "results.feedbacks")
+    Optional<ProgrammingSubmission> findWithEagerResultsAndFeedbacksById(long submissionId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.feedbacks.testCase", "results.assessor" })
+    Optional<ProgrammingSubmission> findWithEagerResultsFeedbacksTestCasesAssessorById(long submissionId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "buildLogEntries" })
+    Optional<ProgrammingSubmission> findWithEagerBuildLogEntriesById(long submissionId);
 
     @Query("""
             SELECT s
             FROM ProgrammingSubmission s
-            WHERE s.participation.id = :participationId
-                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
-            ORDER BY s.submissionDate DESC
+                LEFT JOIN FETCH s.results r
+            WHERE r.id = :resultId
             """)
-    List<ProgrammingSubmission> findLatestLegalSubmissionForParticipation(@Param("participationId") Long participationId, Pageable pageable);
+    Optional<ProgrammingSubmission> findByResultId(@Param("resultId") long resultId);
 
-    @EntityGraph(type = LOAD, attributePaths = "results")
-    Optional<ProgrammingSubmission> findWithEagerResultsById(Long submissionId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor" })
-    Optional<ProgrammingSubmission> findWithEagerResultsFeedbacksAssessorById(long submissionId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "buildLogEntries" })
-    Optional<ProgrammingSubmission> findWithEagerBuildLogEntriesById(Long submissionId);
-
-    @Query("select s from ProgrammingSubmission s left join fetch s.results r where r.id = :#{#resultId}")
-    Optional<ProgrammingSubmission> findByResultId(@Param("resultId") Long resultId);
-
-    @EntityGraph(type = LOAD, attributePaths = "results")
-    @Query("select s from ProgrammingSubmission s where s.participation.id = :#{#participationId}")
-    List<ProgrammingSubmission> findAllByParticipationIdWithResults(@Param("participationId") Long participationId);
+    @Query("""
+            SELECT DISTINCT s
+            FROM ProgrammingSubmission s
+                LEFT JOIN FETCH s.results r
+            WHERE s.participation.id = :participationId
+            """)
+    List<ProgrammingSubmission> findAllByParticipationIdWithResults(@Param("participationId") long participationId);
 
     /**
      * Get the programming submission with the given id from the database. The submission is loaded together with exercise it belongs to, its result, the feedback of the result and
@@ -85,18 +116,12 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
      * @return the programming submission with the given id
      */
     @NotNull
-    default ProgrammingSubmission findByIdWithResultsFeedbacksAssessor(long submissionId) {
-        return findWithEagerResultsFeedbacksAssessorById(submissionId).orElseThrow(() -> new EntityNotFoundException("Programming Submission", submissionId));
+    default ProgrammingSubmission findByIdWithResultsFeedbacksAssessorTestCases(long submissionId) {
+        return findWithEagerResultsFeedbacksTestCasesAssessorById(submissionId).orElseThrow(() -> new EntityNotFoundException("Programming Submission", submissionId));
     }
 
     @NotNull
-    default ProgrammingSubmission findByResultIdElseThrow(Long resultId) {
+    default ProgrammingSubmission findByResultIdElseThrow(long resultId) {
         return findByResultId(resultId).orElseThrow(() -> new EntityNotFoundException("Programming Submission for Result", resultId));
-    }
-
-    @NotNull
-    default ProgrammingSubmission findByIdWithEagerResultsFeedbacksAssessorElseThrow(Long submissionId) {
-        return findWithEagerResultsFeedbacksAssessorById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Programming submission with id \"" + submissionId + "\" does not exist"));
     }
 }

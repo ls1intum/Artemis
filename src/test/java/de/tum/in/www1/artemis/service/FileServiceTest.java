@@ -46,15 +46,20 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final URI VALID_BACKGROUND_PATH = URI.create("/api/uploads/images/drag-and-drop/backgrounds/1/BackgroundFile.jpg");
 
-    private static final URI VALID_INTENDED_BACKGROUND_PATH = URI.create("/api/" + FilePathService.getDragAndDropBackgroundFilePath() + "/");
+    private static final URI VALID_INTENDED_BACKGROUND_PATH = createURIWithPath("/api/", FilePathService.getDragAndDropBackgroundFilePath());
 
     private static final URI INVALID_BACKGROUND_PATH = URI.create("/api/uploads/images/drag-and-drop/backgrounds/1/../../../exam-users/signatures/some-file.png");
 
     private static final URI VALID_DRAGITEM_PATH = URI.create("/api/uploads/images/drag-and-drop/drag-items/1/PictureFile.jpg");
 
-    private static final URI VALID_INTENDED_DRAGITEM_PATH = URI.create("/api/" + FilePathService.getDragItemFilePath() + "/");
+    private static final URI VALID_INTENDED_DRAGITEM_PATH = createURIWithPath("/api/", FilePathService.getDragItemFilePath());
 
     private static final URI INVALID_DRAGITEM_PATH = URI.create("/api/uploads/images/drag-and-drop/drag-items/1/../../../exam-users/signatures/some-file.png");
+
+    private static URI createURIWithPath(String prefix, Path path) {
+        String replacementForWindows = path.toString().replace('\\', '/');
+        return URI.create(prefix + replacementForWindows + '/');
+    }
 
     @AfterEach
     void cleanup() throws IOException {
@@ -270,7 +275,7 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testMergePdf() throws IOException {
-        List<String> paths = new ArrayList<>();
+        List<Path> paths = new ArrayList<>();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         PDDocument doc1 = new PDDocument();
         doc1.addPage(new PDPage());
@@ -290,8 +295,8 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         writeFile("testfile2.pdf", outputStream.toByteArray());
 
-        paths.add(Path.of(".", "exportTest", "testfile1.pdf").toString());
-        paths.add(Path.of(".", "exportTest", "testfile2.pdf").toString());
+        paths.add(Path.of(".", "exportTest", "testfile1.pdf"));
+        paths.add(Path.of(".", "exportTest", "testfile2.pdf"));
 
         Optional<byte[]> mergedFile = fileService.mergePdfFiles(paths, "list_of_pdfs");
         assertThat(mergedFile).isPresent();

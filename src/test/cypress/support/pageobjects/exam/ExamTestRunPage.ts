@@ -50,15 +50,15 @@ export class ExamTestRunPage {
     }
 
     setWorkingTimeHours(hours: number) {
-        cy.get('#hours').clear().type(hours.toString());
+        cy.get('#workingTimeHours').clear().type(hours.toString());
     }
 
     setWorkingTimeMinutes(minutes: number) {
-        cy.get('#minutes').clear().type(minutes.toString());
+        cy.get('#workingTimeMinutes').clear().type(minutes.toString());
     }
 
     setWorkingTimeSeconds(seconds: number) {
-        cy.get('#seconds').clear().type(seconds.toString());
+        cy.get('#workingTimeSeconds').clear().type(seconds.toString());
     }
 
     getWorkingTime(testRunId: number) {
@@ -87,7 +87,7 @@ export class ExamTestRunPage {
 
     deleteTestRun(testRunId: number) {
         cy.get(`#testrun-${testRunId}`).find('.delete-testrun').click();
-        cy.get('#confirm-exercise-name').type('Test Run');
+        cy.get('#confirm-entity-name').type('Test Run');
         cy.intercept(DELETE, BASE_API + '/courses/*/exams/*/test-run/*').as('deleteTestRunQuery');
         cy.get('#delete').click();
         return cy.wait('@deleteTestRunQuery');

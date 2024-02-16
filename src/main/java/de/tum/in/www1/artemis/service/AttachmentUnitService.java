@@ -5,7 +5,6 @@ import java.time.ZonedDateTime;
 import java.util.Objects;
 
 import org.apache.commons.io.FilenameUtils;
-import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -15,7 +14,7 @@ import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.SlideRepository;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
 public class AttachmentUnitService {
@@ -26,21 +25,15 @@ public class AttachmentUnitService {
 
     private final FileService fileService;
 
-    private final FilePathService filePathService;
-
-    private final CacheManager cacheManager;
-
     private final SlideSplitterService slideSplitterService;
 
     private final SlideRepository slideRepository;
 
     public AttachmentUnitService(SlideRepository slideRepository, SlideSplitterService slideSplitterService, AttachmentUnitRepository attachmentUnitRepository,
-            AttachmentRepository attachmentRepository, FileService fileService, FilePathService filePathService, CacheManager cacheManager) {
+            AttachmentRepository attachmentRepository, FileService fileService) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
-        this.filePathService = filePathService;
-        this.cacheManager = cacheManager;
         this.slideSplitterService = slideSplitterService;
         this.slideRepository = slideRepository;
     }
@@ -94,7 +87,7 @@ public class AttachmentUnitService {
 
         Attachment existingAttachment = existingAttachmentUnit.getAttachment();
         if (existingAttachment == null) {
-            throw new ConflictException("Attachment unit must be associated to an attachment", "AttachmentUnit", "attachmentMissing");
+            throw new BadRequestAlertException("Attachment unit must be associated to an attachment", "AttachmentUnit", "attachmentMissing");
         }
 
         updateAttachment(existingAttachment, updateAttachment, savedAttachmentUnit);
@@ -158,7 +151,7 @@ public class AttachmentUnitService {
      */
     private void evictCache(MultipartFile file, AttachmentUnit attachmentUnit) {
         if (file != null && !file.isEmpty()) {
-            this.cacheManager.getCache("files").evict(filePathService.actualPathForPublicPath(URI.create(attachmentUnit.getAttachment().getLink())).toString());
+            this.fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(URI.create(attachmentUnit.getAttachment().getLink())));
         }
     }
 

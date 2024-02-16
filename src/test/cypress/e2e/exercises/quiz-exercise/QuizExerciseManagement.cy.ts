@@ -1,8 +1,6 @@
 import { Interception } from 'cypress/types/net-stubbing';
-
 import { Course } from 'app/entities/course.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-
 import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { courseManagement, courseManagementAPIRequest, courseManagementExercises, exerciseAPIRequest, navigationBar, quizExerciseCreation } from '../../../support/artemis';
 import { admin } from '../../../support/users';
@@ -60,7 +58,7 @@ describe('Quiz Exercise Management', () => {
         before('Create quiz Exercise', () => {
             cy.login(admin);
             exerciseAPIRequest.createQuizExercise({ course }, [multipleChoiceTemplate]).then((quizResponse) => {
-                quizExercise = quizResponse.body;
+                quizExercise = convertModelAfterMultiPart(quizResponse);
             });
         });
 

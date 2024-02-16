@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockModule } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../test.module';
 import { of } from 'rxjs';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -12,12 +12,14 @@ import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { LearningPathGraphSidebarComponent } from 'app/course/learning-paths/participate/learning-path-graph-sidebar.component';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { LearningPathLectureUnitViewComponent } from 'app/course/learning-paths/participate/lecture-unit/learning-path-lecture-unit-view.component';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
-import { ExerciseEntry, LearningPathHistoryStorageService, LectureUnitEntry } from 'app/course/learning-paths/participate/learning-path-history-storage.service';
+import { ExerciseEntry, LearningPathStorageService, LectureUnitEntry, StorageEntry } from 'app/course/learning-paths/participate/learning-path-storage.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { LearningPathComponent } from 'app/course/learning-paths/learning-path-graph/learning-path.component';
 
 describe('LearningPathContainerComponent', () => {
     let fixture: ComponentFixture<LearningPathContainerComponent>;
@@ -27,20 +29,23 @@ describe('LearningPathContainerComponent', () => {
     const learningPathId = 1337;
     let lectureService: LectureService;
     let lecture: Lecture;
+    const lectureId = 2;
     let lectureUnit: LectureUnit;
+    const lectureUnitId = 3;
     let findWithDetailsStub: jest.SpyInstance;
     let exerciseService: ExerciseService;
     let exercise: Exercise;
+    const exerciseId = 4;
     let getExerciseDetailsStub: jest.SpyInstance;
-    let historyService: LearningPathHistoryStorageService;
-    let storeLectureUnitStub: jest.SpyInstance;
-    let storeExerciseStub: jest.SpyInstance;
-    let hasPreviousStub: jest.SpyInstance;
-    let getPreviousStub: jest.SpyInstance;
+    let historyService: LearningPathStorageService;
+    let hasNextRecommendationStub: jest.SpyInstance;
+    let getNextRecommendationStub: jest.SpyInstance;
+    let hasPrevRecommendationStub: jest.SpyInstance;
+    let getPrevRecommendationStub: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockComponent(LearningPathGraphSidebarComponent), MockModule(RouterModule)],
+            imports: [ArtemisTestModule, MockModule(RouterModule), MockPipe(ArtemisTranslatePipe), MockDirective(NgbTooltip), LearningPathComponent],
             declarations: [LearningPathContainerComponent],
             providers: [
                 {
@@ -65,23 +70,23 @@ describe('LearningPathContainerComponent', () => {
                 getLearningPathIdStub = jest.spyOn(learningPathService, 'getLearningPathId').mockReturnValue(of(new HttpResponse({ body: learningPathId })));
 
                 lectureUnit = new AttachmentUnit();
-                lectureUnit.id = 3;
+                lectureUnit.id = lectureUnitId;
                 lecture = new Lecture();
-                lecture.id = 2;
+                lecture.id = lectureId;
                 lecture.lectureUnits = [lectureUnit];
                 lectureService = TestBed.inject(LectureService);
                 findWithDetailsStub = jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(new HttpResponse({ body: lecture })));
 
                 exercise = new TextExercise(undefined, undefined);
-                exercise.id = 4;
+                exercise.id = exerciseId;
                 exerciseService = TestBed.inject(ExerciseService);
                 getExerciseDetailsStub = jest.spyOn(exerciseService, 'getExerciseDetails').mockReturnValue(of(new HttpResponse({ body: exercise })));
 
-                historyService = TestBed.inject(LearningPathHistoryStorageService);
-                storeLectureUnitStub = jest.spyOn(historyService, 'storeLectureUnit');
-                storeExerciseStub = jest.spyOn(historyService, 'storeExercise');
-                hasPreviousStub = jest.spyOn(historyService, 'hasPrevious');
-                getPreviousStub = jest.spyOn(historyService, 'getPrevious');
+                historyService = TestBed.inject(LearningPathStorageService);
+                hasNextRecommendationStub = jest.spyOn(historyService, 'hasNextRecommendation');
+                getNextRecommendationStub = jest.spyOn(historyService, 'getNextRecommendation');
+                hasPrevRecommendationStub = jest.spyOn(historyService, 'hasPrevRecommendation');
+                getPrevRecommendationStub = jest.spyOn(historyService, 'getPrevRecommendation');
 
                 fixture.detectChanges();
             });
@@ -97,54 +102,40 @@ describe('LearningPathContainerComponent', () => {
         expect(getLearningPathIdStub).toHaveBeenCalledWith(1);
     });
 
-    it('should store current lecture unit in history', () => {
-        comp.learningObjectId = lectureUnit.id!;
-        comp.lectureUnit = lectureUnit;
-        comp.lectureId = lecture.id;
-        comp.lecture = lecture;
-        fixture.detectChanges();
-        comp.onNextTask();
-        expect(storeLectureUnitStub).toHaveBeenCalledOnce();
-        expect(storeLectureUnitStub).toHaveBeenCalledWith(learningPathId, lecture.id, lectureUnit.id);
-        expect(storeExerciseStub).not.toHaveBeenCalled();
-    });
-
-    it('should store current exercise in history', () => {
-        comp.learningObjectId = exercise.id!;
-        comp.exercise = exercise;
-        fixture.detectChanges();
-        comp.onNextTask();
-        expect(storeLectureUnitStub).not.toHaveBeenCalled();
-        expect(storeExerciseStub).toHaveBeenCalledOnce();
-        expect(storeExerciseStub).toHaveBeenCalledWith(learningPathId, exercise.id);
-    });
-
-    it('should load no previous task if history is empty', () => {
-        expect(historyService.hasPrevious(learningPathId)).toBeFalsy();
+    it('should not load previous task if no task selected', () => {
         comp.onPrevTask();
-        expect(getPreviousStub).not.toHaveBeenCalled();
+        expect(getPrevRecommendationStub).not.toHaveBeenCalled();
         expect(findWithDetailsStub).not.toHaveBeenCalled();
         expect(getExerciseDetailsStub).not.toHaveBeenCalled();
     });
 
-    it('should load previous lecture unit', () => {
-        hasPreviousStub.mockReturnValue(true);
-        getPreviousStub.mockReturnValue(new LectureUnitEntry(lecture.id!, lectureUnit.id!));
+    it.each([
+        [new LectureUnitEntry(lectureId, lectureUnitId), false],
+        [new LectureUnitEntry(lectureId, lectureUnitId), true],
+        [new ExerciseEntry(exerciseId), false],
+        [new ExerciseEntry(exerciseId), true],
+    ])('should load entry', (entry: StorageEntry, next: boolean) => {
+        if (next) {
+            hasNextRecommendationStub.mockReturnValue(true);
+            getNextRecommendationStub.mockReturnValue(entry);
+        } else {
+            hasPrevRecommendationStub.mockReturnValue(true);
+            getPrevRecommendationStub.mockReturnValue(entry);
+        }
         fixture.detectChanges();
-        comp.onPrevTask();
-        expect(findWithDetailsStub).toHaveBeenCalled();
-        expect(findWithDetailsStub).toHaveBeenCalledWith(lecture.id);
-        expect(getExerciseDetailsStub).not.toHaveBeenCalled();
-    });
+        if (next) {
+            comp.onNextTask();
+        } else {
+            comp.onPrevTask();
+        }
 
-    it('should load previous exercise', () => {
-        hasPreviousStub.mockReturnValue(true);
-        getPreviousStub.mockReturnValue(new ExerciseEntry(exercise.id!));
-        fixture.detectChanges();
-        comp.onPrevTask();
-        expect(findWithDetailsStub).not.toHaveBeenCalled();
-        expect(getExerciseDetailsStub).toHaveBeenCalled();
-        expect(getExerciseDetailsStub).toHaveBeenCalledWith(exercise.id);
+        if (entry instanceof LectureUnitEntry) {
+            expect(findWithDetailsStub).toHaveBeenCalledExactlyOnceWith(lecture.id);
+            expect(getExerciseDetailsStub).not.toHaveBeenCalled();
+        } else {
+            expect(findWithDetailsStub).not.toHaveBeenCalled();
+            expect(getExerciseDetailsStub).toHaveBeenCalledExactlyOnceWith(exercise.id);
+        }
     });
 
     it('should set properties of lecture unit view on activate', () => {
@@ -183,29 +174,5 @@ describe('LearningPathContainerComponent', () => {
         comp.onNodeClicked(node);
         expect(comp.learningObjectId).toBe(node.linkedResource);
         expect(getExerciseDetailsStub).toHaveBeenCalledWith(node.linkedResource);
-    });
-
-    it('should handle store current lecture unit in history on node click', () => {
-        comp.learningObjectId = lectureUnit.id!;
-        comp.lectureUnit = lectureUnit;
-        comp.lectureId = lecture.id;
-        comp.lecture = lecture;
-        fixture.detectChanges();
-        const node = { id: 'some-id', type: NodeType.EXERCISE, linkedResource: 2 } as NgxLearningPathNode;
-        comp.onNodeClicked(node);
-        expect(storeLectureUnitStub).toHaveBeenCalledOnce();
-        expect(storeLectureUnitStub).toHaveBeenCalledWith(learningPathId, lecture.id, lectureUnit.id!);
-        expect(storeExerciseStub).not.toHaveBeenCalled();
-    });
-
-    it('should handle store current exercise in history on node click', () => {
-        comp.learningObjectId = exercise.id!;
-        comp.exercise = exercise;
-        fixture.detectChanges();
-        const node = { id: 'some-id', type: NodeType.EXERCISE, linkedResource: 2 } as NgxLearningPathNode;
-        comp.onNodeClicked(node);
-        expect(storeLectureUnitStub).not.toHaveBeenCalled();
-        expect(storeExerciseStub).toHaveBeenCalledOnce();
-        expect(storeExerciseStub).toHaveBeenCalledWith(learningPathId, exercise.id!);
     });
 });

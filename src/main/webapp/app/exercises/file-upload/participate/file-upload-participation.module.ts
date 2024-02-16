@@ -21,5 +21,6 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
         ArtemisMarkdownModule,
     ],
     declarations: [FileUploadSubmissionComponent],
+    exports: [FileUploadSubmissionComponent],
 })
 export class ArtemisFileUploadParticipationModule {}

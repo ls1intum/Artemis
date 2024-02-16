@@ -27,15 +27,15 @@ public interface StudentScoreRepository extends JpaRepository<StudentScore, Long
     void deleteAllByUserId(long userId);
 
     @EntityGraph(type = LOAD, attributePaths = { "user", "exercise" })
-    Optional<StudentScore> findByExercise_IdAndUser_Id(Long exerciseId, Long userId);
+    Optional<StudentScore> findByExercise_IdAndUser_Id(long exerciseId, long userId);
 
     @EntityGraph(type = LOAD, attributePaths = { "user", "exercise", "lastResult", "lastRatedResult" })
     List<StudentScore> findAllByExerciseIn(Set<Exercise> exercises, Pageable pageable);
 
     @Query("""
-              SELECT DISTINCT s
-              FROM StudentScore s
-              WHERE s.exercise = :exercise
+            SELECT DISTINCT s
+            FROM StudentScore s
+            WHERE s.exercise = :exercise
                 AND s.user = :user
             """)
     Optional<StudentScore> findStudentScoreByExerciseAndUserLazy(@Param("exercise") Exercise exercise, @Param("user") User user);
@@ -56,7 +56,7 @@ public interface StudentScoreRepository extends JpaRepository<StudentScore, Long
             WHERE s.user = :user
                 AND s.exercise IN :exercises
             """)
-    List<StudentScore> findAllByExercisesAndUser(@Param("exercises") List<Exercise> exercises, @Param("user") User user);
+    List<StudentScore> findAllByExercisesAndUser(@Param("exercises") Set<Exercise> exercises, @Param("user") User user);
 
     @Query("""
             SELECT s
