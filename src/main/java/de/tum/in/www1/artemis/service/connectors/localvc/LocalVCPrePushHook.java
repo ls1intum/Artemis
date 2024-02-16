@@ -42,6 +42,12 @@ public class LocalVCPrePushHook implements PreReceiveHook {
             return;
         }
 
+        // Reject pushes to anything other than the default branch.
+        if (!command.getRefName().equals("refs/heads/main")) {
+            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You cannot push to a branch other than the default branch.");
+            return;
+        }
+
         Repository repository = receivePack.getRepository();
 
         try {
