@@ -7,7 +7,7 @@
     [class.btn-sm]="smallButton"
     (click)="handleClick()"
 >
-    <fa-icon [hidden]="!buttonLoading" [spin]="true" [icon]="faCircleNotch"></fa-icon>
+    <fa-icon [hidden]="!buttonLoading" [spin]="true" [icon]="faCircleNotch" />
     @if (!buttonLoading) {
         <span class="intellij-logo"></span>
     }

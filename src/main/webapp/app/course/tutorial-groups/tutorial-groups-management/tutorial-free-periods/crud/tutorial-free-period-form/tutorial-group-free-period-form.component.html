@@ -50,8 +50,8 @@
                             readonly
                             class="form-control"
                         />
-                        <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="startDate"><fa-icon [icon]="faCalendarAlt"></fa-icon></button>
-                        <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #startDate [pickerMode]="'dialog'"></owl-date-time>
+                        <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="startDate"><fa-icon [icon]="faCalendarAlt" /></button>
+                        <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #startDate [pickerMode]="'dialog'" />
                     </div>
                     @if (startDateControl?.invalid && (startDateControl?.dirty || startDateControl?.touched) && startDateControl?.errors?.required) {
                         <div class="alert alert-danger">

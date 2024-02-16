@@ -6,7 +6,7 @@
                     <h4>{{ 'artemisApp.pages.tutorialFreePeriodsManagement.title' | artemisTranslate }}</h4>
                     <div>
                         <button type="button" class="btn btn-primary" id="create-tutorial-free-day" (click)="openCreateFreePeriodDialog($event)">
-                            <fa-icon [icon]="faPlus"></fa-icon>
+                            <fa-icon [icon]="faPlus" />
                             <span>{{ 'artemisApp.pages.tutorialFreePeriodsManagement.createFreePeriodButton' | artemisTranslate }}</span>
                         </button>
                     </div>
@@ -17,7 +17,7 @@
                     {{ 'artemisApp.pages.tutorialFreePeriodsManagement.timeZoneExplanation' | artemisTranslate: { timeZone: course.timeZone } }}
                 </div>
             </div>
-
+          
             <!-- List of free Periods -->
             @if (freePeriods && freePeriods.length > 0) {
                 <jhi-tutorial-group-free-periods-table

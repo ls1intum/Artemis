@@ -38,7 +38,6 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -78,12 +77,10 @@ public class ProgrammingPlagiarismDetectionService {
 
     private final ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService;
 
-    private final AuthorizationCheckService authCheckService;
-
     public ProgrammingPlagiarismDetectionService(FileService fileService, ProgrammingExerciseRepository programmingExerciseRepository, PlagiarismService plagiarismService,
             GitService gitService, StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseExportService programmingExerciseExportService,
             PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService, UriService uriService,
-            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService, AuthorizationCheckService authCheckService) {
+            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService) {
         this.fileService = fileService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.plagiarismService = plagiarismService;
@@ -94,7 +91,6 @@ public class ProgrammingPlagiarismDetectionService {
         this.plagiarismCacheService = plagiarismCacheService;
         this.uriService = uriService;
         this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
-        this.authCheckService = authCheckService;
     }
 
     /**
