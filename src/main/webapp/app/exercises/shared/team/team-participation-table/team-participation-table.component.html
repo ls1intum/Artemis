@@ -1,5 +1,5 @@
 @if (exercise && exercise.isAtLeastInstructor) {
-    <jhi-assessment-warning [exercise]="exercise" [submissions]="submissions"></jhi-assessment-warning>
+    <jhi-assessment-warning [exercise]="exercise" [submissions]="submissions" />
 }
 <jhi-data-table [isLoading]="isLoading" [showPageSizeDropdown]="false" [showSearchField]="false" [allEntities]="exercises">
     <ng-template let-settings="settings" let-controls="controls">
@@ -19,7 +19,7 @@
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('title')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.exercise"> Exercise </span>
-                        <fa-icon [icon]="controls.iconForSortPropField('title')"></fa-icon>
+                        <fa-icon [icon]="controls.iconForSortPropField('title')" />
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="row">
@@ -32,7 +32,7 @@
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('releaseDate')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.releaseDate"> Release Date </span>
-                        <fa-icon [icon]="controls.iconForSortPropField('releaseDate')"></fa-icon>
+                        <fa-icon [icon]="controls.iconForSortPropField('releaseDate')" />
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value" class="me-5">
@@ -43,7 +43,7 @@
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('dueDate')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.dueDate"> Due Date </span>
-                        <fa-icon [icon]="controls.iconForSortPropField('individualDueDate')"></fa-icon>
+                        <fa-icon [icon]="controls.iconForSortPropField('individualDueDate')" />
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value" class="me-5">
@@ -70,7 +70,7 @@
                             <span class="datatable-header-cell-label bold sortable">
                                 {{ 'artemisApp.team.detail.participationsTable.columns.participationId.label' | artemisTranslate }}
                             </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('id')"></fa-icon>
+                            <fa-icon [icon]="controls.iconForSortPropField('id')" />
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="row">
@@ -104,7 +104,7 @@
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('participation.initializationDate')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.initializationDate"> Initialization Date </span>
-                        <fa-icon [icon]="controls.iconForSortPropField('participation.initializationDate')"></fa-icon>
+                        <fa-icon [icon]="controls.iconForSortPropField('participation.initializationDate')" />
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="row">
@@ -133,7 +133,7 @@
                                     [class.disabled]="isAssessmentButtonDisabled(value, value.submission)"
                                     [routerLink]="getAssessmentLink(value, value.participation, value.submission)"
                                     class="btn btn-warning btn-sm"
-                                    ><fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
+                                    ><fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
                                     {{ 'artemisApp.exerciseAssessmentDashboard.' + assessmentAction(value.submission) + 'Assessment' | artemisTranslate }}</a
                                 >
                             </div>
@@ -142,7 +142,7 @@
                                     class="mx-3"
                                     [icon]="faFlag"
                                     ngbTooltip="{{ 'artemisApp.team.detail.participationsTable.complaintOrMoreFeedbackRequest' | artemisTranslate }}"
-                                ></fa-icon>
+                                />
                             }
                         </div>
                     </ng-template>

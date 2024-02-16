@@ -2,19 +2,18 @@
     <h2>{{ tutorialGroup.title }}</h2>
     <hr />
     @if (header) {
-        <ng-template [ngTemplateOutlet]="header" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"></ng-template>
+        <ng-template [ngTemplateOutlet]="header" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }" />
         <hr />
     }
     @if (tutorialDetailSections) {
-        <jhi-detail-overview-list [sections]="tutorialDetailSections"></jhi-detail-overview-list>
+        <jhi-detail-overview-list [sections]="tutorialDetailSections" />
     }
     <div class="mt-1">
         <strong>{{ 'artemisApp.entities.tutorialGroup.sessions' | artemisTranslate }}</strong>
     </div>
     @if (sessions && sessions.length) {
         <div class="scrollbar table-wrapper-scroll-y border border-lightgrey p-3">
-            <jhi-tutorial-group-sessions-table [timeZone]="timeZone" [sessions]="sessions" [tutorialGroup]="tutorialGroup" [showIdColumn]="false" [isReadOnly]="true">
-            </jhi-tutorial-group-sessions-table>
+            <jhi-tutorial-group-sessions-table [timeZone]="timeZone" [sessions]="sessions" [tutorialGroup]="tutorialGroup" [showIdColumn]="false" [isReadOnly]="true" />
         </div>
     } @else {
         <span>{{ '-' }}</span>

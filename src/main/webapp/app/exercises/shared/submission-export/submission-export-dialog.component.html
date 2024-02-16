@@ -40,13 +40,13 @@
                     <strong jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.filterLateSubmissionsDate.title"
                         >Date for filter late submissions (defaults to exercise due date if not set)</strong
                     >
-                    <jhi-help-icon text="artemisApp.instructorDashboard.exportSubmissions.filterLateSubmissionsDate.tooltip"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.instructorDashboard.exportSubmissions.filterLateSubmissionsDate.tooltip" />
                     <jhi-date-time-picker
                         [(ngModel)]="this.submissionExportOptions.filterLateSubmissionsDate"
                         [disabled]="!this.submissionExportOptions.filterLateSubmissions"
                         [shouldDisplayTimeZoneWarning]="false"
                         name="filterLateSubmissionsDate"
-                    ></jhi-date-time-picker>
+                    />
                 </div>
             </ng-container>
         </div>
@@ -60,7 +60,7 @@
                 class="btn btn-default"
             >
                 @if (this.exportInProgress) {
-                    <span class="me-1"><fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon></span>
+                    <span class="me-1"><fa-icon [icon]="faCircleNotch" [spin]="true" /></span>
                 }
                 <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span jhiTranslate="entity.action.export">Export</span>
             </button>
@@ -68,6 +68,6 @@
     </form>
 } @else {
     <div class="d-flex justify-content-center mt-4 mb-4">
-        <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
+        <fa-icon [icon]="faCircleNotch" [spin]="true" />
     </div>
 }

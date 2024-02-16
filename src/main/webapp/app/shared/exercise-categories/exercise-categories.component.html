@@ -1,7 +1,7 @@
 @if (exercise.releaseDate && dayjs(exercise.releaseDate).isAfter(dayjs()) && showTags.notReleased) {
     <h4 class="fw-medium">
         <a [routerLink]="['/courses', exercise.course?.id, 'exercises', exercise.id!]">
-            <jhi-not-released-tag [exercise]="exercise"></jhi-not-released-tag>
+            <jhi-not-released-tag [exercise]="exercise" />
         </a>
     </h4>
 }
@@ -17,13 +17,13 @@
 }
 @if (exercise.difficulty && showTags.difficulty) {
     <h4 class="fw-medium">
-        <jhi-difficulty-badge [exercise]="exercise" [showNoLevel]="showTags.difficultyIfNoLevel ?? false"></jhi-difficulty-badge>
+        <jhi-difficulty-badge [exercise]="exercise" [showNoLevel]="showTags.difficultyIfNoLevel ?? false" />
     </h4>
 }
 @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY && showTags.includedInScore) {
     <h4 class="fw-medium">
         <a [routerLink]="['/courses', exercise.course?.id, 'exercises', exercise.id!]">
-            <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
+            <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
         </a>
     </h4>
 }
