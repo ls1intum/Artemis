@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis.config.migration.entries;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -17,10 +20,17 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.ParticipationInterface;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.service.connectors.aeolus.*;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Action;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildScriptGenerationService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.ScriptAction;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 
 @Component
 public class MigrationEntry20240104_195600 extends MigrationEntry {
@@ -121,6 +131,11 @@ public class MigrationEntry20240104_195600 extends MigrationEntry {
         evaluateErrorList();
     }
 
+    /**
+     * We only need to migrate the solution build plan, as the student build plans and template ones are not used in the new tech stack.
+     *
+     * @param solutionParticipations the solution participations to migrate
+     */
     private void migrateSolutions(List<SolutionProgrammingExerciseParticipation> solutionParticipations) {
         if (aeolusBuildScriptGenerationService.isEmpty()) {
             log.error("Failed to migrate solutions because the AeolusBuildScriptGenerationService is not present.");
@@ -140,7 +155,8 @@ public class MigrationEntry20240104_195600 extends MigrationEntry {
                 windfile.setAuthor(null);
                 windfile.setGitCredentials(null);
                 this.makeWindfileLocalCIOptimized(windfile);
-                // TODO: should we modify the docker parameters here? e.g. remove stuff like --net=host
+                // TODO: should we modify the docker parameters here? e.g. remove stuff like --net=host? -> this is more a question for after
+                // the migration is done as localci does not respect the docker parameters anyway at the moment
                 var programmingExercise = solutionParticipation.getProgrammingExercise();
                 programmingExercise.setBuildPlanConfiguration(new Gson().toJson(windfile));
                 programmingExerciseRepository.save(programmingExercise);
@@ -158,6 +174,11 @@ public class MigrationEntry20240104_195600 extends MigrationEntry {
         }
     }
 
+    /**
+     * LocalCI needs some special treatment for some exercises. This method modifies the windfile to make it work flawlessly with LocalCI.
+     *
+     * @param windfile the windfile to modify
+     */
     private void makeWindfileLocalCIOptimized(Windfile windfile) {
         var actions = windfile.getActions();
         for (Action action : actions) {
