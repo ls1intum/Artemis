@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.config;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.net.URLDecoder.decode;
 
@@ -35,7 +34,7 @@ import tech.jhipster.web.filter.CachingHttpHeadersFilter;
 /**
  * Configuration of web application with Servlet 3.0 APIs.
  */
-@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
+@Profile(PROFILE_CORE)
 @Configuration
 public class WebConfigurer implements ServletContextInitializer, WebServerFactoryCustomizer<WebServerFactory> {
 
