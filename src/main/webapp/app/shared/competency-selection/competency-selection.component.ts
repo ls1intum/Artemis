@@ -10,6 +10,7 @@ import { finalize } from 'rxjs';
 @Component({
     selector: 'jhi-competency-selection',
     templateUrl: './competency-selection.component.html',
+    styleUrl: './competency-selection.component.scss',
     providers: [
         {
             provide: NG_VALUE_ACCESSOR,
@@ -21,7 +22,7 @@ import { finalize } from 'rxjs';
 export class CompetencySelectionComponent implements OnInit, ControlValueAccessor {
     @Input() labelName: string;
     @Input() labelTooltip: string;
-    @Input() value: any;
+    @Input() value: Competency[] = [];
     @Input() disabled: boolean;
     @Input() error: boolean;
     @Input() competencies: Competency[];
@@ -88,8 +89,13 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         });
     }
 
-    updateField(newValue: Competency[]) {
-        this.value = newValue;
+    toggleCompetency(newValue: Competency) {
+        if (this.value?.includes(newValue)) {
+            this.value = this.value.filter((value: Competency) => value !== newValue);
+        } else {
+            this.value = [...this.value, newValue];
+        }
+
         this._onChange(this.value);
         this.valueChange.emit();
     }
@@ -100,7 +106,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
             const ids = value.map((el) => el.id);
             this.value = this.competencies.filter((competency) => ids.includes(competency.id));
         } else {
-            this.value = value;
+            this.value = value ?? [];
         }
     }
 
