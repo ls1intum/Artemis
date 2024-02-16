@@ -8,17 +8,17 @@
                             <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(modelingExercises)" [ngModel]="allChecked" />
                         </th>
                     }
-                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.release">Release</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.due">Due</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="assessmentDueDate"><span jhiTranslate="artemisApp.exercise.assessmentDue">Assessment Due</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonus">Bonus</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="includedInOverallScore"><span jhiTranslate="artemisApp.exercise.includedCompletely">Included</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.release">Release</span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.due">Due</span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="assessmentDueDate"><span jhiTranslate="artemisApp.exercise.assessmentDue">Assessment Due</span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonus">Bonus</span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="includedInOverallScore"><span jhiTranslate="artemisApp.exercise.includedCompletely">Included</span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     @if (course.presentationScore !== 0) {
                         <th jhiSortBy="presentationScoreEnabled">
-                            <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon>
+                            <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation</span>&nbsp;<fa-icon [icon]="faSort" />
                         </th>
                     }
                     <th><span jhiTranslate="artemisApp.modelingExercise.diagramType">Diagram Type</span></th>
@@ -62,7 +62,7 @@
                             <td>{{ modelingExercise.presentationScoreEnabled }}</td>
                         }
                         <td jhiTranslate="{{ 'artemisApp.DiagramType.' + modelingExercise.diagramType }}">{{ modelingExercise.diagramType }}</td>
-                        <td class="d-md-table-cell"><jhi-exercise-categories [exercise]="modelingExercise"></jhi-exercise-categories></td>
+                        <td class="d-md-table-cell"><jhi-exercise-categories [exercise]="modelingExercise" /></td>
                         <td class="text-end">
                             <div class="btn-group flex-btn-group-container">
                                 <!-- Participations -->
@@ -71,7 +71,7 @@
                                         [routerLink]="['/course-management', courseId, 'modeling-exercises', modelingExercise.id, 'participations']"
                                         class="btn btn-primary btn-sm me-1"
                                     >
-                                        <fa-icon [icon]="farListAlt"></fa-icon>
+                                        <fa-icon [icon]="farListAlt" />
                                         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                                     </a>
                                 }
@@ -81,7 +81,7 @@
                                         [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'scores']"
                                         class="btn btn-info btn-sm me-1"
                                     >
-                                        <fa-icon [icon]="faTable"></fa-icon>
+                                        <fa-icon [icon]="faTable" />
                                         <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
                                     </a>
                                 }
@@ -91,7 +91,7 @@
                                         [routerLink]="['/course-management', courseId, 'modeling-exercises', modelingExercise.id, 'example-submissions']"
                                         class="btn btn-success btn-sm me-1"
                                     >
-                                        <fa-icon [icon]="faBook"></fa-icon>
+                                        <fa-icon [icon]="faBook" />
                                         <span class="d-none d-md-inline" jhiTranslate="entity.action.exampleSubmissions">Example Submissions</span>
                                     </a>
                                 }
@@ -101,7 +101,7 @@
                                         [routerLink]="['/course-management', modelingExercise.course?.id, 'exercises', modelingExercise.id, 'teams']"
                                         class="btn btn-primary btn-sm me-1"
                                     >
-                                        <fa-icon [icon]="faUsers"></fa-icon>
+                                        <fa-icon [icon]="faUsers" />
                                         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
                                     </a>
                                 }
@@ -111,7 +111,7 @@
                                         [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'edit']"
                                         class="btn btn-warning btn-sm me-1"
                                     >
-                                        <fa-icon [icon]="faWrench"></fa-icon>
+                                        <fa-icon [icon]="faWrench" />
                                         <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                                     </a>
                                 }
@@ -126,7 +126,7 @@
                                         (delete)="deleteModelingExercise(modelingExercise.id!)"
                                         [dialogError]="dialogError$"
                                     >
-                                        <fa-icon [icon]="faTrash"></fa-icon>
+                                        <fa-icon [icon]="faTrash" />
                                     </button>
                                 }
                             </div>
@@ -147,7 +147,7 @@
                         id="delete-all-quiz"
                         class="mb-1"
                     >
-                        <fa-icon [icon]="faTrash"></fa-icon>
+                        <fa-icon [icon]="faTrash" />
                     </button>
                 }
             </div>

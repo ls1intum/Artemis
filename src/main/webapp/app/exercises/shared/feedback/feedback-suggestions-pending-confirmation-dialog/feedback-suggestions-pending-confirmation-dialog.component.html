@@ -12,7 +12,7 @@
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="close(false)">
-            <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button type="submit" ngClass="btn btn-primary" (click)="close(true)">
             <span jhiTranslate="artemisApp.assessment.suggestionPendingDialog.discardAndSubmit">Discard suggestions & submit</span>

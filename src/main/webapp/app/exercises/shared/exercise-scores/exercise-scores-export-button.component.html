@@ -1,7 +1,7 @@
 @if (isProgrammingExerciseResults) {
     <div ngbDropdown class="d-inline">
         <button id="export-results-dropdown" class="btn btn-info btn-sm me-1" ngbDropdownToggle>
-            <fa-icon [icon]="faDownload"></fa-icon>
+            <fa-icon [icon]="faDownload" />
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.export.results.title">Export Results</span>
         </button>
         <div ngbDropdownMenu="export-results-dropdown">
@@ -29,7 +29,7 @@
 }
 @if (!isProgrammingExerciseResults) {
     <button class="btn btn-info btn-sm me-1" (click)="exportResults(false, false)">
-        <fa-icon [icon]="faDownload"></fa-icon>
+        <fa-icon [icon]="faDownload" />
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.export.results.title">Export Results</span>
     </button>
 }

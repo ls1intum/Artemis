@@ -19,12 +19,12 @@
                 <tr (sortChange)="sortRows()" [(ascending)]="listSorting" [(predicate)]="sortedColumn" class="flex-row" jhiSort>
                     <th class="col-1" jhiSortBy="ID">
                         <span>#</span>
-                        <fa-icon [icon]="faSort"></fa-icon>
+                        <fa-icon [icon]="faSort" />
                     </th>
                     @for (column of columns; track column) {
                         <th class="col-4" [jhiSortBy]="column.name">
                             <span>{{ 'artemisApp.competency.importAll.table.' + column.name | artemisTranslate }}</span>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <fa-icon [icon]="faSort" />
                         </th>
                     }
                     <th class="col-1"></th>
@@ -38,7 +38,7 @@
                         </td>
                         @for (column of columns; track column) {
                             <td class="text-break col-4">
-                                <ngb-highlight [result]="column.getProperty(course)" [term]="searchTerm"></ngb-highlight>
+                                <ngb-highlight [result]="column.getProperty(course)" [term]="searchTerm" />
                             </td>
                         }
                         <td class="col-1">
