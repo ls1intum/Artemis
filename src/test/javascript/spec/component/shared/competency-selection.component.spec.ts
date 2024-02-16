@@ -61,13 +61,13 @@ describe('CompetencySelection', () => {
 
         fixture.detectChanges();
 
-        const select = fixture.debugElement.query(By.css('select'));
-        expect(component.value).toBeUndefined();
+        const selector = fixture.debugElement.nativeElement.querySelector('#competency-selector');
+        expect(component.value).toBeEmpty();
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).not.toHaveBeenCalled();
         expect(component.isLoading).toBeFalse();
         expect(component.competencies).toBeArrayOfSize(2);
-        expect(select).not.toBeNull();
+        expect(selector).not.toBeNull();
     });
 
     it('should get competencies from service', () => {
