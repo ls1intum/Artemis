@@ -117,37 +117,30 @@ public class CompetencyService {
     }
 
     /**
-     * Imports all competencies from a course (and optionally their relations) into another.
+     * Imports the given competencies and relations into a course
      *
-     * @param targetCourse    the course to import into
-     * @param sourceCourse    the course to import from
-     * @param importRelations if competency relations should get imported aswell
-     * @return A list of competencies, each also containing the relations it is the tail competency for.
+     * @param course       the course to import into
+     * @param competencies the competencies to import
+     * @param relations    the relations to import
+     * @return The list of imported competencies, each also containing the relations it is the tail competency for.
      */
-    public List<CompetencyWithTailRelationDTO> importAllCompetenciesFromCourse(Course targetCourse, Course sourceCourse, boolean importRelations) {
-        var competencies = competencyRepository.findAllForCourse(sourceCourse.getId());
-        if (competencies.isEmpty()) {
-            return Collections.emptyList();
-        }
-        // map the id of the old competency to the new competency
-        // used for assigning imported relations to the new competency
+    public List<CompetencyWithTailRelationDTO> importCompetenciesAndRelations(Course course, Set<Competency> competencies, Set<CompetencyRelation> relations) {
         var idToImportedCompetency = new HashMap<Long, CompetencyWithTailRelationDTO>();
 
         for (var competency : competencies) {
             Competency importedCompetency = getCompetencyToCreate(competency);
-            importedCompetency.setCourse(targetCourse);
+            importedCompetency.setCourse(course);
 
             importedCompetency = competencyRepository.save(importedCompetency);
             idToImportedCompetency.put(competency.getId(), new CompetencyWithTailRelationDTO(importedCompetency, new ArrayList<>()));
         }
 
-        if (targetCourse.getLearningPathsEnabled()) {
+        if (course.getLearningPathsEnabled()) {
             var importedCompetencies = idToImportedCompetency.values().stream().map(CompetencyWithTailRelationDTO::competency).toList();
-            learningPathService.linkCompetenciesToLearningPathsOfCourse(importedCompetencies, targetCourse.getId());
+            learningPathService.linkCompetenciesToLearningPathsOfCourse(importedCompetencies, course.getId());
         }
 
-        if (importRelations) {
-            var relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(sourceCourse.getId());
+        if (!relations.isEmpty()) {
             for (var relation : relations) {
                 var tailCompetencyDTO = idToImportedCompetency.get(relation.getTailCompetency().getId());
                 var headCompetencyDTO = idToImportedCompetency.get(relation.getHeadCompetency().getId());
@@ -162,6 +155,23 @@ public class CompetencyService {
             }
         }
         return idToImportedCompetency.values().stream().toList();
+    }
+
+    public List<Competency> importCompetencies(Course course, Set<Competency> competencies) {
+        var importedCompetencies = new ArrayList<Competency>();
+
+        for (var competency : competencies) {
+            Competency importedCompetency = getCompetencyToCreate(competency);
+            importedCompetency.setCourse(course);
+
+            importedCompetency = competencyRepository.save(importedCompetency);
+            importedCompetencies.add(importedCompetency);
+        }
+
+        if (course.getLearningPathsEnabled()) {
+            learningPathService.linkCompetenciesToLearningPathsOfCourse(importedCompetencies, course.getId());
+        }
+        return importedCompetencies;
     }
 
     /**

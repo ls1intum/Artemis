@@ -101,4 +101,6 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
             SELECT * FROM transitive_closure
             """, nativeQuery = true)
     Set<Long> getMatchingCompetenciesByCompetencyId(@Param("competencyId") long competencyId);
+
+    Set<CompetencyRelation> findAllByHeadCompetencyIdInAndTailCompetencyIdIn(Set<Long> headCompetencyIds, Set<Long> tailCompetencyIds);
 }

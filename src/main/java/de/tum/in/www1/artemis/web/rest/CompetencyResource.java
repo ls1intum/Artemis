@@ -31,8 +31,8 @@ import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.dto.pageablesearch.CompetencyPageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
@@ -275,7 +275,40 @@ public class CompetencyResource {
     }
 
     /**
-     * Imports all competencies of the source course (and optionally their relations) into another
+     * POST /courses/:courseId/competencies/import/bulk : imports a number of competencies (and optionally their relations) into a course.
+     *
+     * @param courseId             the id of the course to which the competencies should be imported to
+     * @param competenciesToImport the competencies that should be imported
+     * @return the ResponseEntity with status 201 (Created) and with body containing the imported competencies
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("/courses/{courseId}/competencies/import/bulk")
+    @EnforceAtLeastEditor
+    public ResponseEntity<List<CompetencyWithTailRelationDTO>> importCompetencies(@PathVariable long courseId, @RequestBody List<Competency> competenciesToImport,
+            @RequestParam(defaultValue = "false") boolean importRelations) throws URISyntaxException {
+        log.info("REST request to import a competency: {}", competenciesToImport);
+
+        var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+
+        var competencies = new HashSet<>(competenciesToImport);
+        List<CompetencyWithTailRelationDTO> importedCompetencies;
+
+        if (importRelations) {
+            var competencyIds = competenciesToImport.stream().map(DomainObject::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+            var relations = competencyRelationRepository.findAllByHeadCompetencyIdInAndTailCompetencyIdIn(competencyIds, competencyIds);
+            importedCompetencies = competencyService.importCompetenciesAndRelations(course, competencies, relations);
+        }
+        else {
+            importedCompetencies = competencyService.importCompetencies(course, competencies).stream()
+                    .map(competency -> new CompetencyWithTailRelationDTO(competency, new ArrayList<>())).toList();
+        }
+
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(importedCompetencies);
+    }
+
+    /**
+     * POST courses/{courseId}/competencies/import-all/{sourceCourseId} : Imports all competencies of the source course (and optionally their relations) into another.
      *
      * @param courseId        the id of the course to import into
      * @param sourceCourseId  the id of the course to import from
@@ -292,12 +325,22 @@ public class CompetencyResource {
         if (courseId == sourceCourseId) {
             throw new BadRequestAlertException("Cannot import from a course into itself", "Course", "courseCycle");
         }
-        var course = courseRepository.findByIdElseThrow(courseId);
+        var targetCourse = courseRepository.findByIdElseThrow(courseId);
         var sourceCourse = courseRepository.findByIdElseThrow(sourceCourseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, targetCourse, null);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, sourceCourse, null);
 
-        List<CompetencyWithTailRelationDTO> importedCompetencies = competencyService.importAllCompetenciesFromCourse(course, sourceCourse, importRelations);
+        var competencies = competencyRepository.findAllForCourse(sourceCourse.getId());
+        List<CompetencyWithTailRelationDTO> importedCompetencies;
+
+        if (importRelations) {
+            var relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(sourceCourse.getId());
+            importedCompetencies = competencyService.importCompetenciesAndRelations(targetCourse, competencies, relations);
+        }
+        else {
+            importedCompetencies = competencyService.importCompetencies(targetCourse, competencies).stream()
+                    .map(competency -> new CompetencyWithTailRelationDTO(competency, new ArrayList<>())).toList();
+        }
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(importedCompetencies);
     }
