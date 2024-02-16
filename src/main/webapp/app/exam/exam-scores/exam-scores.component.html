@@ -658,7 +658,7 @@
                                     </td>
                                 }
                                 @if (hasBonus) {
-                                    @if (presentationScoreThreshold != undefined) {
+                                    @if (presentationScoreThreshold !== undefined) {
                                         <td>
                                             {{ studentResult.gradeWithBonus?.achievedPresentationScore ?? '-' }}
                                         </td>

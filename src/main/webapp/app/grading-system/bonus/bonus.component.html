@@ -136,7 +136,7 @@
                                 <th>{{ 'artemisApp.bonus.examples.examGrade' | artemisTranslate }}</th>
                                 <th>{{ 'artemisApp.bonus.examples.bonusSourceStudentPoints' | artemisTranslate }}</th>
                                 <th>{{ 'artemisApp.bonus.examples.bonusGrade' | artemisTranslate }}</th>
-                                @if (currentBonusStrategyOption == BonusStrategyOption.POINTS) {
+                                @if (currentBonusStrategyOption === BonusStrategyOption.POINTS) {
                                     <th>{{ 'artemisApp.bonus.examples.finalPoints' | artemisTranslate }}</th>
                                 }
                                 <th>{{ 'artemisApp.bonus.examples.finalGrade' | artemisTranslate }}</th>
@@ -197,7 +197,7 @@
                                 <td>{{ dynamicExample.bonusGrade }}</td>
                                 @if (bonus.bonusStrategy === BonusStrategy.POINTS) {
                                     <td>
-                                        @if (dynamicExample.finalPoints != undefined) {
+                                        @if (dynamicExample.finalPoints !== undefined) {
                                             {{ dynamicExample.studentPointsOfBonusTo }} {{ getCalculationSign(bonus.weight!) }} {{ dynamicExample.bonusGrade }} =
                                             {{ dynamicExample.finalPoints }}
                                             @if (dynamicExample.exceedsMax) {

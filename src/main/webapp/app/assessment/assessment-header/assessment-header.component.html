@@ -36,7 +36,7 @@
                 exercise &&
                 !exercise.isAtLeastInstructor &&
                 hasComplaint &&
-                complaintType != ComplaintType.COMPLAINT &&
+                complaintType !== ComplaintType.COMPLAINT &&
                 !complaintHandled &&
                 exercise.assessmentType !== AssessmentType.AUTOMATIC
             ) {
@@ -49,7 +49,7 @@
                 exercise &&
                 !exercise.isAtLeastInstructor &&
                 hasComplaint &&
-                complaintType != ComplaintType.COMPLAINT &&
+                complaintType !== ComplaintType.COMPLAINT &&
                 exercise.assessmentType === AssessmentType.AUTOMATIC &&
                 !complaintHandled &&
                 !exercise.teamMode
@@ -58,7 +58,7 @@
                     You may respond to the feedback request.
                 </span>
             }
-            @if (isAssessor && exercise && !exercise.isAtLeastInstructor && hasComplaint && complaintType == ComplaintType.COMPLAINT && !complaintHandled && exercise.teamMode) {
+            @if (isAssessor && exercise && !exercise.isAtLeastInstructor && hasComplaint && complaintType === ComplaintType.COMPLAINT && !complaintHandled && exercise.teamMode) {
                 <span id="teamComplaint" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.teamComplaint"> You have to respond to the complaint. </span>
             }
             @if (
@@ -66,7 +66,7 @@
                 exercise &&
                 !exercise.isAtLeastInstructor &&
                 hasComplaint &&
-                complaintType == ComplaintType.COMPLAINT &&
+                complaintType === ComplaintType.COMPLAINT &&
                 exercise.assessmentType === AssessmentType.AUTOMATIC &&
                 !complaintHandled &&
                 !exercise.teamMode
@@ -81,7 +81,7 @@
                 !exercise.isAtLeastInstructor &&
                 hasComplaint &&
                 exercise.assessmentType !== AssessmentType.AUTOMATIC &&
-                complaintType == ComplaintType.COMPLAINT &&
+                complaintType === ComplaintType.COMPLAINT &&
                 !complaintHandled &&
                 !exercise.teamMode
             ) {

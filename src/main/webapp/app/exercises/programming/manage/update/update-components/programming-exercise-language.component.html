@@ -173,9 +173,9 @@
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.recordTestwiseCoverageTooltip" />
         </div>
     }
-    @if (programmingExerciseCreationConfig.customBuildPlansSupported == PROFILE_LOCALCI) {
+    @if (programmingExerciseCreationConfig.customBuildPlansSupported === PROFILE_LOCALCI) {
         <jhi-programming-exercise-custom-build-plan [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="this.programmingExerciseCreationConfig" />
-    } @else if (programmingExerciseCreationConfig.customBuildPlansSupported == PROFILE_AEOLUS) {
+    } @else if (programmingExerciseCreationConfig.customBuildPlansSupported === PROFILE_AEOLUS) {
         <jhi-programming-exercise-custom-aeolus-build-plan
             [programmingExercise]="programmingExercise"
             [programmingExerciseCreationConfig]="this.programmingExerciseCreationConfig"

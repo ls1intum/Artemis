@@ -21,7 +21,7 @@
                 <div></div>
             </ng-template>
             <div class="d-flex align-items-center">
-                @if (activeTab != 'submission-policy') {
+                @if (activeTab !== 'submission-policy') {
                     <jhi-programming-exercise-configure-grading-status
                         [exerciseIsReleasedAndHasResults]="isReleasedAndHasResults"
                         [hasUnsavedTestCaseChanges]="hasUnsavedChanges"
@@ -39,7 +39,7 @@
             </div>
         </div>
         <div class="grading-body-container mt-3">
-            @if (activeTab == 'submission-policy') {
+            @if (activeTab === 'submission-policy') {
                 <div>
                     <jhi-programming-exercise-grading-submission-policy-configuration-actions
                         [exercise]="programmingExercise"
@@ -50,7 +50,7 @@
                         (onToggle)="toggleSubmissionPolicy()"
                     />
                     <jhi-submission-policy-update #policyUpdate [programmingExercise]="programmingExercise" [editable]="programmingExercise.isAtLeastInstructor!" />
-                    @if (programmingExercise.isAtLeastEditor && programmingExercise.submissionPolicy != undefined) {
+                    @if (programmingExercise.isAtLeastEditor && programmingExercise.submissionPolicy !== undefined) {
                         <ngb-alert [dismissible]="false" [type]="'info'">
                             <span>{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.triggerAllInformation' | artemisTranslate }}</span>
                         </ngb-alert>
@@ -59,7 +59,7 @@
             }
         </div>
         <div class="grading-body-container mt-3">
-            @if (activeTab == 'test-cases') {
+            @if (activeTab === 'test-cases') {
                 <div>
                     <div class="grading-table-layout">
                         <div class="col-7">

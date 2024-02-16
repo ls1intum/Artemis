@@ -54,7 +54,7 @@
                                     {{ studentExamWithGrade?.achievedPointsPerExercise?.[exercise.id!] ?? 0 }}
                                 </td>
                                 <td class="text-center">
-                                    @if (exercise.maxPoints != undefined) {
+                                    @if (exercise.maxPoints !== undefined) {
                                         <span>{{ exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? 0 : exercise.maxPoints }}</span>
                                     }
                                 </td>
@@ -67,7 +67,7 @@
                                 </td>
                                 @if (studentExamWithGrade?.maxBonusPoints) {
                                     <td>
-                                        @if (exercise.bonusPoints != undefined) {
+                                        @if (exercise.bonusPoints !== undefined) {
                                             <span>{{
                                                 exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? exercise.maxPoints : exercise.bonusPoints
                                             }}</span>
@@ -126,7 +126,7 @@
                                           }
                             }}
                         }
-                        @if (studentExamWithGrade.studentResult.gradeWithBonus != undefined) {
+                        @if (studentExamWithGrade.studentResult.gradeWithBonus !== undefined) {
                             {{
                                 'artemisApp.exam.examSummary.points.youAchievedFromBonus.' + studentExamWithGrade.studentResult.gradeWithBonus.bonusStrategy
                                     | artemisTranslate

@@ -250,7 +250,7 @@
                         </span>
                     }
 
-                    @if (!exercise.gradingInstructions || exercise.gradingInstructions.length == 0) {
+                    @if (!exercise.gradingInstructions || exercise.gradingInstructions.length === 0) {
                         <span>
                             {{ 'artemisApp.exerciseAssessmentDashboard.startYourParticipation' | artemisTranslate }}
                         </span>
@@ -545,7 +545,7 @@
                                         @if (
                                             isExamMode &&
                                             (!unassessedSubmissionByRound?.get(correctionRound)?.id || exercise.teamMode || isTestRun) &&
-                                            numberOfSubmissions.inTime != roundState.inTime
+                                            numberOfSubmissions.inTime !== roundState.inTime
                                         ) {
                                             <div class="alert alert-info">
                                                 <span
@@ -632,17 +632,17 @@
                                                     }
                                                 </td>
                                                 <td>
-                                                    @if (submissionWithComplaint.complaint.accepted == undefined) {
+                                                    @if (submissionWithComplaint.complaint.accepted === undefined) {
                                                         <span class="text-warning">
                                                             {{ 'artemisApp.complaint.listOfComplaints.noReply' | artemisTranslate }}
                                                         </span>
                                                     }
-                                                    @if (submissionWithComplaint.complaint.accepted == true) {
+                                                    @if (submissionWithComplaint.complaint.accepted === true) {
                                                         <span class="text-success">
                                                             {{ 'artemisApp.complaint.listOfComplaints.accepted' | artemisTranslate }}
                                                         </span>
                                                     }
-                                                    @if (submissionWithComplaint.complaint.accepted == false) {
+                                                    @if (submissionWithComplaint.complaint.accepted === false) {
                                                         <span class="text-danger">
                                                             {{ 'artemisApp.complaint.listOfComplaints.rejected' | artemisTranslate }}
                                                         </span>
@@ -759,12 +759,12 @@
                                                     }
                                                 </td>
                                                 <td>
-                                                    @if (moreFeedbackRequest.complaint.accepted == undefined) {
+                                                    @if (moreFeedbackRequest.complaint.accepted === undefined) {
                                                         <span class="text-warning">
                                                             {{ 'artemisApp.complaint.listOfComplaints.noReply' | artemisTranslate }}
                                                         </span>
                                                     }
-                                                    @if (moreFeedbackRequest.complaint.accepted == true) {
+                                                    @if (moreFeedbackRequest.complaint.accepted === true) {
                                                         <span class="text-success">
                                                             {{ 'artemisApp.moreFeedback.accepted' | artemisTranslate }}
                                                         </span>

@@ -2,12 +2,6 @@
     <div>
         @if (course?.complaintsEnabled ?? false) {
             <p>
-                @if (!isExamMode && remainingNumberOfComplaints == undefined) {
-                    <span
-                        [jhiTranslate]="'artemisApp.complaint.' + (exercise.teamMode ? 'descriptionTeam' : 'description')"
-                        [translateValues]="{ maxComplaintNumber: course?.maxComplaints ?? 0 }"
-                    ></span>
-                }
                 @if (!isExamMode && remainingNumberOfComplaints >= 0) {
                     <span
                         [jhiTranslate]="'artemisApp.complaint.' + (exercise.teamMode ? 'descriptionTeamExtended' : 'descriptionExtended')"
@@ -60,7 +54,6 @@
                     [exercise]="exercise"
                     [resultId]="result!.id!"
                     [examId]="exam?.id!"
-                    [remainingNumberOfComplaints]="remainingNumberOfComplaints"
                     [complaintType]="formComplaintType"
                     [isCurrentUserSubmissionAuthor]="isCorrectUserToFileAction"
                     (submit)="loadPotentialComplaint()"

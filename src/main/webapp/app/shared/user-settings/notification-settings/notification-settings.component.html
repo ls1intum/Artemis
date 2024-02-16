@@ -41,7 +41,7 @@
                             </span>
                             <!--Setting Specific Properties-->
                             <div class="d-flex">
-                                @if (setting.webapp != undefined && (setting.webappSupport == undefined || setting.webappSupport)) {
+                                @if (setting.webapp !== undefined && (setting.webappSupport === undefined || setting.webappSupport)) {
                                     <div class="form-check pe-3">
                                         <input
                                             type="checkbox"
@@ -54,7 +54,7 @@
                                         <label class="form-check-label" for="{{ setting.settingId }}">WebApp</label>
                                     </div>
                                 }
-                                @if (setting.email != undefined && setting.emailSupport) {
+                                @if (setting.email !== undefined && setting.emailSupport) {
                                     <div class="form-check">
                                         <input
                                             type="checkbox"

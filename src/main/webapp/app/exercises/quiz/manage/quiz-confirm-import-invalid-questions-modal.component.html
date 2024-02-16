@@ -9,10 +9,10 @@
             <p></p>
             @for (reason of invalidFlaggedQuestions; track reason) {
                 <div>
-                    @if ((reason.translateValues | json) != '{}') {
+                    @if ((reason.translateValues | json) !== '{}') {
                         <p jhiTranslate="{{ reason.translateKey }}" [translateValues]="{ index: reason.translateValues.index }"></p>
                     }
-                    @if ((reason.translateValues | json) == '{}') {
+                    @if ((reason.translateValues | json) === '{}') {
                         <p jhiTranslate="{{ reason.translateKey }}"></p>
                     }
                 </div>

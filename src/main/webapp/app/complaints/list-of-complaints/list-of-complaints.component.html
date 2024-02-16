@@ -173,16 +173,16 @@
                             </span>
                         </td>
                         <td>
-                            @if (complaint.accepted == undefined) {
+                            @if (complaint.accepted === undefined) {
                                 <span class="text-warning">{{ 'artemisApp.complaint.listOfComplaints.noReply' | artemisTranslate }}</span>
                             }
-                            @if (complaint.accepted == true && complaintType === ComplaintType.COMPLAINT) {
+                            @if (complaint.accepted === true && complaintType === ComplaintType.COMPLAINT) {
                                 <span class="text-success">{{ 'artemisApp.complaint.listOfComplaints.accepted' | artemisTranslate }}</span>
                             }
-                            @if (complaint.accepted == true && complaintType === ComplaintType.MORE_FEEDBACK) {
+                            @if (complaint.accepted === true && complaintType === ComplaintType.MORE_FEEDBACK) {
                                 <span class="text-success">{{ 'artemisApp.moreFeedback.accepted' | artemisTranslate }}</span>
                             }
-                            @if (complaint.accepted == false) {
+                            @if (complaint.accepted === false) {
                                 <span class="text-danger">{{ 'artemisApp.complaint.listOfComplaints.rejected' | artemisTranslate }}</span>
                             }
                         </td>

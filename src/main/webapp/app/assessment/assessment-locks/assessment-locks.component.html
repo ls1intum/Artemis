@@ -37,7 +37,7 @@
                             <td>{{ submission.submissionDate | artemisDate: 'long-date' }}</td>
                             <td>{{ submission.participation!.submissions ? submission.participation!.submissions.length : 0 }}</td>
                             <td>
-                                @if (submission.latestResult?.score != undefined) {
+                                @if (submission.latestResult?.score !== undefined) {
                                     <span>{{ submission.latestResult!.score }}%</span>
                                 }
                             </td>

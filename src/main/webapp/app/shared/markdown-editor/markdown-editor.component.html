@@ -169,7 +169,7 @@
                             </div>
                         }
                         <!-- domain commands -->
-                        @if (domainCommands && domainCommands.length != 0) {
+                        @if (domainCommands && domainCommands.length !== 0) {
                             <div class="markdown-editor__commands-domain">
                                 @for (command of domainCommands | typeCheck: DomainTagCommand; track command) {
                                     @if (command.displayCommandButton) {

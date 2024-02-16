@@ -93,7 +93,7 @@
                                 <div class="w-100 text-end">
                                     @if (course?.isAtLeastInstructor) {
                                         <div class="btn-group">
-                                            @if (testRun.user?.id == instructor?.id) {
+                                            @if (testRun.user?.id === instructor?.id) {
                                                 @if (!testRun.submitted) {
                                                     <a class="start-testrun btn btn-primary btn-sm me-1 mb-1" [routerLink]="['../test-runs/' + testRun.id + '/conduction']">
                                                         @if (!testRun.started) {

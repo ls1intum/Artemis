@@ -41,7 +41,7 @@
                                 @if (exercise.difficulty) {
                                     <jhi-difficulty-badge class="ms-1" [exercise]="exercise" />
                                 }
-                                @if (exercise.includedInOverallScore && exercise.includedInOverallScore != IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                                @if (exercise.includedInOverallScore && exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
                                     <jhi-included-in-score-badge class="ms-1" [includedInOverallScore]="exercise.includedInOverallScore" />
                                 }
                             </td>

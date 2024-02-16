@@ -8,7 +8,7 @@
                 }
             </span>
         }
-        @if (block.feedback && block.feedback.isSubsequent == undefined) {
+        @if (block.feedback && block.feedback.isSubsequent === undefined) {
             <div class="feedback-text mt-1" [ngClass]="block.feedbackCssClass">
                 <span class="feedback-points">
                     @if (block.circleIcon) {

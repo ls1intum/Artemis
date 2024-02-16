@@ -5,7 +5,7 @@
 <div class="modal-body">
     <div class="mb-3">
         <span class="badge bg-primary hand" (click)="selectedThreadState = undefined">
-            @if (selectedThreadState == undefined) {
+            @if (selectedThreadState === undefined) {
                 <fa-icon [icon]="faCheck" />
             }
             All&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpAll }}</span>

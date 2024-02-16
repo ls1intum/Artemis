@@ -1,7 +1,7 @@
 @if (participation.submissionCount) {
     @for (correctionRound of correctionRoundIndices; track correctionRound) {
         @if (
-            (correctionRound == 0 || participation.results?.[correctionRound - 1]?.completionDate) &&
+            (correctionRound === 0 || participation.results?.[correctionRound - 1]?.completionDate) &&
             (newManualResultAllowed ||
                 (participation.results?.[correctionRound]?.assessmentType && participation.results?.[correctionRound]?.assessmentType !== AssessmentType.AUTOMATIC))
         ) {

@@ -10,7 +10,7 @@
     {{ exercise?.title }}
 </td>
 <td class="align-middle">
-    @if (exercise && achievedPointsPerExercise?.[exercise.id!] != undefined) {
+    @if (exercise && achievedPointsPerExercise?.[exercise.id!] !== undefined) {
         <ng-container class="score">
             {{ achievedPointsPerExercise?.[exercise.id!] }}
         </ng-container>
@@ -53,7 +53,7 @@
                     </a>
                 </div>
             }
-            @if (submission && result === undefined && exercise.type != ExerciseType.PROGRAMMING) {
+            @if (submission && result === undefined && exercise.type !== ExerciseType.PROGRAMMING) {
                 <div>
                     <!-- in case of new result-->
                     <a

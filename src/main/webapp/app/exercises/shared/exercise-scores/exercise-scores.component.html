@@ -47,7 +47,7 @@
                         }
                     </ul>
                 </div>
-                @if (filteredParticipations.length && participationsPerFilter.get(resultCriteria.filterProp) != filteredParticipations.length) {
+                @if (filteredParticipations.length && participationsPerFilter.get(resultCriteria.filterProp) !== filteredParticipations.length) {
                     <span>
                         {{
                             'artemisApp.exercise.showingOfResults'

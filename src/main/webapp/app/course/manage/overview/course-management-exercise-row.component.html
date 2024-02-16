@@ -103,7 +103,7 @@
                     </div>
                 </div>
                 <div class="row-flex exercise-score-container">
-                    @if (statistic && rowType == exerciseRowType.CURRENT) {
+                    @if (statistic && rowType === exerciseRowType.CURRENT) {
                         <div class="exercise-score">
                             <span>{{ 'artemisApp.course.participations' | artemisTranslate }}</span>
                             <jhi-progress-bar
@@ -114,7 +114,7 @@
                             />
                         </div>
                     }
-                    @if (statistic && rowType == exerciseRowType.ASSESSING) {
+                    @if (statistic && rowType === exerciseRowType.ASSESSING) {
                         <div class="exercise-score">
                             <span>{{ 'artemisApp.course.assessmentProgress' | artemisTranslate }}</span>
                             <jhi-progress-bar
@@ -125,7 +125,7 @@
                             />
                         </div>
                     }
-                    @if (statistic && rowType == exerciseRowType.PAST) {
+                    @if (statistic && rowType === exerciseRowType.PAST) {
                         <div class="exercise-score">
                             <span>{{ 'artemisApp.course.averageScore' | artemisTranslate }}</span>
                             <jhi-progress-bar
