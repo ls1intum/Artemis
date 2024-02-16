@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.assessment;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import javax.validation.constraints.NotNull;
@@ -225,7 +226,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
             gradingCriterion = gradingCriterionRepository.save(gradingCriterion);
 
             var instructions = ExerciseFactory.generateGradingInstructions(gradingCriterion, 1, 1);
-            instructions = gradingInstructionRepository.saveAll(instructions);
+            instructions = new HashSet<>(gradingInstructionRepository.saveAll(instructions));
             instructions.forEach(feedback::setGradingInstruction);
             resultService.addFeedbackToResult(result, List.of(feedback), true);
         }
