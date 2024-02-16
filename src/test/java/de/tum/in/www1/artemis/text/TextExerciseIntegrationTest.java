@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
@@ -1222,8 +1221,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(textExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
 
-        StudentParticipation participationWithInstruction = participationUtilService.addAssessmentWithFeedbackWithGradingInstructionsForExercise(textExercise,
-                TEST_PREFIX + "instructor1");
+        participationUtilService.addAssessmentWithFeedbackWithGradingInstructionsForExercise(textExercise, TEST_PREFIX + "instructor1");
 
         // remove instruction which is associated with feedbacks
         gradingCriteria.removeIf(criterion -> criterion.getTitle() == null);
@@ -1375,7 +1373,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(importedFeedbackGradingInstruction.getCredits()).isEqualTo(gradingInstruction.getCredits());
         assertThat(importedFeedbackGradingInstruction.getUsageCount()).isEqualTo(gradingInstruction.getUsageCount());
 
-        var importedTextExerciseFromDB = textExerciseRepository.findByIdWithExampleSubmissionsAndResults(importedTextExercise.getId()).orElseThrow();
+        var importedTextExerciseFromDB = textExerciseRepository.findWithExampleSubmissionsAndResultsById(importedTextExercise.getId()).orElseThrow();
         var importedFeedbackGradingInstructionFromDb = importedTextExerciseFromDB.getExampleSubmissions().stream().findFirst().orElseThrow().getSubmission().getLatestResult()
                 .getFeedbacks().get(0).getGradingInstruction();
 

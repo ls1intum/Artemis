@@ -30,7 +30,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -41,7 +41,7 @@ import de.tum.in.www1.artemis.util.LocalRepository;
 class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Autowired
-    ProgrammingSubmissionRepository programmingSubmissionRepository;
+    ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     private LocalRepository assignmentRepository;
 

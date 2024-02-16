@@ -13,13 +13,13 @@
         Magnifying Class for finished StudentExams, to indicate the possibility to review the exam -->
                 <h4 class="col-sm-auto icon-settings">
                     @if (withinWorkingTime) {
-                        <fa-icon [icon]="faCirclePlay" size="2x"></fa-icon>
+                        <fa-icon [icon]="faCirclePlay" size="2x" />
                     }
                     @if (!withinWorkingTime && studentExam.submitted) {
-                        <fa-icon [icon]="faMagnifyingGlass" size="2x"></fa-icon>
+                        <fa-icon [icon]="faMagnifyingGlass" size="2x" />
                     }
                     @if (!withinWorkingTime && !studentExam.submitted) {
-                        <fa-icon [icon]="faFileCircleXmark" size="2x"></fa-icon>
+                        <fa-icon [icon]="faFileCircleXmark" size="2x" />
                     }
                 </h4>
                 <div class="col-sm">
@@ -45,7 +45,7 @@
                                     @if (studentExam.submissionDate && studentExam.startedDate) {
                                         <div class="text-end">
                                             {{ 'artemisApp.exam.overview.testExam.workingTimeCalculated' | artemisTranslate }}
-                                            <jhi-testexam-working-time [studentExam]="studentExam"></jhi-testexam-working-time>
+                                            <jhi-testexam-working-time [studentExam]="studentExam" />
                                         </div>
                                     }
                                 </div>

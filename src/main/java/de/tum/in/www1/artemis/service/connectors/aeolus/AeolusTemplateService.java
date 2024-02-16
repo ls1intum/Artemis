@@ -37,9 +37,9 @@ public class AeolusTemplateService {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
-    private final ResourceLoaderService resourceLoaderService;
-
     private final Map<String, Windfile> templateCache = new ConcurrentHashMap<>();
+
+    private final ResourceLoaderService resourceLoaderService;
 
     private final BuildScriptProvider buildScriptProvider;
 
