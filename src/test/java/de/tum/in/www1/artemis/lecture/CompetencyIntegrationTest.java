@@ -257,6 +257,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         request.post("/api/courses/" + course.getId() + "/competencies", new Competency(), HttpStatus.FORBIDDEN);
         request.get("/api/courses/" + course.getId() + "/competencies/" + competency.getId() + "/course-progress", HttpStatus.FORBIDDEN, CourseCompetencyProgressDTO.class);
         request.delete("/api/courses/" + course.getId() + "/competencies/" + competency.getId(), HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + course.getId() + "/competencies/bulk", List.of(), HttpStatus.FORBIDDEN);
         request.post("/api/courses/" + course.getId() + "/competencies/import-all/1", null, HttpStatus.FORBIDDEN);
     }
 
@@ -330,7 +331,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getCompetency_asStudent_wrongCourse() throws Exception {
-        request.get("/api/courses/" + course2.getId() + "/competencies/" + competency.getId(), HttpStatus.CONFLICT, Competency.class);
+        request.get("/api/courses/" + course2.getId() + "/competencies/" + competency.getId(), HttpStatus.BAD_REQUEST, Competency.class);
     }
 
     @Test
@@ -749,8 +750,8 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void removePrerequisite_conflict() throws Exception {
-        request.delete("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), HttpStatus.CONFLICT);
+    void removePrerequisite_bad_request() throws Exception {
+        request.delete("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -763,7 +764,41 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void addPrerequisite_doNotAllowCycle() throws Exception {
         // Test that a competency of a course can not be a prerequisite to the same course
-        request.postWithResponseBody("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), competency, Competency.class, HttpStatus.CONFLICT);
+        request.postWithResponseBody("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), competency, Competency.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createCompetencies_asInstructor_shouldCreateCompetencies() throws Exception {
+        var competency1 = new Competency();
+        competency1.setTitle("Competency1");
+        competency1.setDescription("This is an example competency");
+        competency1.setTaxonomy(CompetencyTaxonomy.UNDERSTAND);
+        competency1.setCourse(course);
+        var competency2 = new Competency();
+        competency2.setTitle("Competency2");
+        competency2.setDescription("This is another example competency");
+        competency2.setTaxonomy(CompetencyTaxonomy.REMEMBER);
+        competency2.setCourse(course);
+
+        var competenciesToCreate = List.of(competency1, competency2);
+
+        var persistedCompetencies = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/bulk", competenciesToCreate, Competency.class,
+                HttpStatus.CREATED);
+        assertThat(persistedCompetencies).usingRecursiveFieldByFieldElementComparatorOnFields("title", "description", "taxonomy").isEqualTo(competenciesToCreate);
+        assertThat(persistedCompetencies).extracting("id").isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createCompetencies_asInstructor_badRequest() throws Exception {
+        Competency competency = new Competency(); // no title
+        request.post("/api/courses/" + course.getId() + "/competencies/bulk", List.of(competency), HttpStatus.BAD_REQUEST);
+        competency.setTitle(" "); // empty title
+        request.post("/api/courses/" + course.getId() + "/competencies/bulk", List.of(competency), HttpStatus.BAD_REQUEST);
+        competency.setTitle("Title");
+        competency.setId(1L); // id is set
+        request.post("/api/courses/" + course.getId() + "/competencies/bulk", List.of(competency), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -791,6 +826,13 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         // relations should be empty when not importing them
         assertThat(competencyDTOList.get(0).tailRelations()).isNull();
         assertThat(competencyDTOList.get(1).tailRelations()).isNull();
+
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    void createCompetencies_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
+        request.post("/api/courses/" + course.getId() + "/competencies/bulk", List.of(), HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -802,8 +844,8 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void importingCompetencies_intoSameCourse_shouldReturnConflict() throws Exception {
+    void importingCompetencies_intoSameCourse_shouldReturnBadRequest() throws Exception {
         request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-all/" + course.getId(), null, CompetencyWithTailRelationDTO.class,
-                HttpStatus.CONFLICT);
+                HttpStatus.BAD_REQUEST);
     }
 }
