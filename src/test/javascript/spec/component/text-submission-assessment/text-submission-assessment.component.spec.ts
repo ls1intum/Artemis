@@ -636,4 +636,9 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.submit();
         expect(component.canOverride).toBeTrue();
     });
+
+    it('should not invalidate assessment after saving', async () => {
+        component.save();
+        expect(component.assessmentsAreValid).toBeTrue();
+    });
 });

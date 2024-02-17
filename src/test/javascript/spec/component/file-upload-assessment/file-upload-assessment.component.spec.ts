@@ -362,6 +362,21 @@ describe('FileUploadAssessmentComponent', () => {
             expect(alertServiceErrorSpy).toHaveBeenCalledWith('artemisApp.assessment.messages.saveFailed');
             expect(comp.isLoading).toBeFalse();
         });
+
+        it('should not invalidate assessment after saving', () => {
+            const submission = createSubmission(exercise);
+            const result = createResult(comp.submission);
+            result.feedbacks = [{ id: 23, credits: 1, reference: 'reference', detailText: 'text' }];
+            setLatestSubmissionResult(submission, result);
+            comp.submission = submission;
+
+            const returnedMock = new HttpResponse<FileUploadSubmission>({ body: submission });
+            jest.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(returnedMock));
+
+            comp.ngOnInit();
+            comp.onSaveAssessment();
+            expect(comp.assessmentsAreValid).toBeTrue();
+        });
     });
 
     it('should update the assessment after submit', () => {

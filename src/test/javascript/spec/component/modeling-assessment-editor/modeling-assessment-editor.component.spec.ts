@@ -96,47 +96,51 @@ describe('ModelingAssessmentEditorComponent', () => {
     afterEach(() => {
         jest.restoreAllMocks();
     });
+
+    const getSubmissionWithData = (): ModelingSubmission => {
+        return {
+            id: 1,
+            submitted: true,
+            type: 'MANUAL',
+            text: 'Test\n\nTest\n\nTest',
+            participation: {
+                type: ParticipationType.SOLUTION,
+                exercise: {
+                    id: 1,
+                    problemStatement: 'problem',
+                    gradingInstructions: 'grading',
+                    title: 'title',
+                    shortName: 'name',
+                    exerciseGroup: {
+                        exam: {
+                            course: new Course(),
+                        } as unknown as Exam,
+                    } as unknown as ExerciseGroup,
+                } as unknown as Exercise,
+            } as unknown as Participation,
+            results: [
+                {
+                    id: 2374,
+                    score: 8,
+                    rated: true,
+                    hasComplaint: true,
+                    feedbacks: [
+                        {
+                            id: 2,
+                            detailText: 'Feedback',
+                            credits: 1,
+                            reference: 'path',
+                        } as Feedback,
+                    ],
+                } as unknown as Result,
+            ],
+        } as unknown as ModelingSubmission;
+    };
     describe('ngOnInit tests', () => {
         it('ngOnInit', fakeAsync(() => {
             modelingSubmissionSpy = jest.spyOn(modelingSubmissionService, 'getSubmission');
             complaintSpy = jest.spyOn(complaintService, 'findBySubmissionId');
-            const submission = {
-                id: 1,
-                submitted: true,
-                type: 'MANUAL',
-                text: 'Test\n\nTest\n\nTest',
-                participation: {
-                    type: ParticipationType.SOLUTION,
-                    exercise: {
-                        id: 1,
-                        problemStatement: 'problem',
-                        gradingInstructions: 'grading',
-                        title: 'title',
-                        shortName: 'name',
-                        exerciseGroup: {
-                            exam: {
-                                course: new Course(),
-                            } as unknown as Exam,
-                        } as unknown as ExerciseGroup,
-                    } as unknown as Exercise,
-                } as unknown as Participation,
-                results: [
-                    {
-                        id: 2374,
-                        score: 8,
-                        rated: true,
-                        hasComplaint: true,
-                        feedbacks: [
-                            {
-                                id: 2,
-                                detailText: 'Feedback',
-                                credits: 1,
-                                reference: 'path',
-                            } as Feedback,
-                        ],
-                    } as unknown as Result,
-                ],
-            } as unknown as ModelingSubmission;
+            const submission = getSubmissionWithData();
 
             modelingSubmissionSpy.mockReturnValue(of(submission));
             const user = <User>{ id: 99, groups: ['instructorGroup'] };
@@ -276,6 +280,16 @@ describe('ModelingAssessmentEditorComponent', () => {
 
             component.onSubmitAssessment();
             expect(component.canOverride).toBeTrue();
+        }));
+
+        it('should not invalidate assessment after saving', fakeAsync(() => {
+            component.submission = getSubmissionWithData();
+            jest.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(component.submission));
+
+            component.ngOnInit();
+            tick(500);
+            component.onSaveAssessment();
+            expect(component.assessmentsAreValid).toBeTrue();
         }));
     });
 
