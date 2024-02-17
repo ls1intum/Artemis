@@ -23,10 +23,10 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     @Input() labelName: string;
     @Input() labelTooltip: string;
     // selected competencies
-    @Input() value: Competency[] = [];
+    @Input() value?: Competency[];
     @Input() disabled: boolean;
     // all course competencies
-    @Input() competencies: Competency[] = [];
+    @Input() competencies?: Competency[];
 
     @Output() valueChange = new EventEmitter();
 
@@ -91,10 +91,16 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     }
 
     toggleCompetency(newValue: Competency) {
-        if (this.value?.includes(newValue)) {
-            this.value = this.value.filter((value: Competency) => value !== newValue);
+        const indexInSelectedCompetencies = this.value?.findIndex((value) => value.id === newValue.id) ?? -1;
+        if (indexInSelectedCompetencies !== -1) {
+            this.value?.splice(indexInSelectedCompetencies, 1);
         } else {
-            this.value = [...this.value, newValue];
+            this.value = [...(this.value ?? []), newValue];
+        }
+
+        // make sure to do not send an empty list to server
+        if (!this.value?.length) {
+            this.value = undefined;
         }
 
         this._onChange(this.value);
