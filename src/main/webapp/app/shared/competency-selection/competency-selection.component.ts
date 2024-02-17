@@ -31,6 +31,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     @Output() valueChange = new EventEmitter();
 
     isLoading = false;
+    checkboxStates: Record<number, boolean>;
 
     getIcon = getIcon;
     faQuestionCircle = faQuestionCircle;
@@ -89,23 +90,35 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
             competency.userProgress = undefined;
             return competency;
         });
+        this.checkboxStates = this.competencies.reduce(
+            (states, competency) => {
+                if (competency.id) {
+                    states[competency.id] = !!this.value?.find((value) => value.id === competency.id);
+                }
+                return states;
+            },
+            {} as Record<number, boolean>,
+        );
     }
 
     toggleCompetency(newValue: Competency) {
-        const indexInSelectedCompetencies = this.value?.findIndex((value) => value.id === newValue.id) ?? -1;
-        if (indexInSelectedCompetencies !== -1) {
-            this.value?.splice(indexInSelectedCompetencies, 1);
-        } else {
-            this.value = [...(this.value ?? []), newValue];
-        }
+        if (newValue.id) {
+            if (this.checkboxStates[newValue.id]) {
+                this.value = this.value?.filter((value) => value.id !== newValue.id);
+            } else {
+                this.value = [...(this.value ?? []), newValue];
+            }
 
-        // make sure to do not send an empty list to server
-        if (!this.value?.length) {
-            this.value = undefined;
-        }
+            this.checkboxStates[newValue.id] = !this.checkboxStates[newValue.id];
 
-        this._onChange(this.value);
-        this.valueChange.emit();
+            // make sure to do not send an empty list to server
+            if (!this.value?.length) {
+                this.value = undefined;
+            }
+
+            this._onChange(this.value);
+            this.valueChange.emit();
+        }
     }
 
     writeValue(value?: Competency[]): void {

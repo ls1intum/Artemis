@@ -19,19 +19,21 @@
         } @else {
             <div class="competency-selector p-2" id="competency-selector">
                 @for (competency of competencies; track competency) {
-                    <div>
-                        <input
-                            id="competency-{{ competency.id }}"
-                            type="checkbox"
-                            [ngModel]="value?.includes(competency)"
-                            (ngModelChange)="toggleCompetency(competency)"
-                            [disabled]="disabled"
-                        />
-                        <label for="competency-{{ competency.id }}">
-                            <fa-icon [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" />
-                            {{ competency.title }}
-                        </label>
-                    </div>
+                    @if (competency.id) {
+                        <div>
+                            <input
+                                id="competency-{{ competency.id }}"
+                                type="checkbox"
+                                [ngModel]="checkboxStates[competency.id]"
+                                (ngModelChange)="toggleCompetency(competency)"
+                                [disabled]="disabled"
+                            />
+                            <label for="competency-{{ competency.id }}">
+                                <fa-icon [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" />
+                                {{ competency.title }}
+                            </label>
+                        </div>
+                    }
                 }
             </div>
         }
