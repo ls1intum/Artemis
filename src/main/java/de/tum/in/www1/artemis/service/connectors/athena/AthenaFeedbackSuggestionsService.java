@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.service.dto.athena.*;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -28,6 +30,8 @@ public class AthenaFeedbackSuggestionsService {
     private final AthenaConnector<RequestDTO, ResponseDTOText> textAthenaConnector;
 
     private final AthenaConnector<RequestDTO, ResponseDTOProgramming> programmingAthenaConnector;
+
+    private final AthenaConnector<RequestDTO, ResponseDTOModeling> modelingAthenaConnector;
 
     private final AthenaModuleUrlHelper athenaModuleUrlHelper;
 
@@ -51,6 +55,9 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     private record ResponseDTOProgramming(List<ProgrammingFeedbackDTO> data) {
+    }
+
+    private record ResponseDTOModeling(List<ModelingFeedbackDTO> data) {
     }
 
     /**
@@ -87,6 +94,29 @@ public class AthenaFeedbackSuggestionsService {
 
         final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), athenaDTOConverter.ofSubmission(exercise.getId(), submission));
         ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/feedback_suggestions",
+                request, 0);
+        log.info("Athena responded to feedback suggestions request: {}", response.data);
+        return response.data.stream().toList();
+    }
+
+    /**
+     * Calls the remote Athena service to get feedback suggestions for a given submission.
+     *
+     * @param exercise   the {@link ModelingExercise} the suggestions are fetched for
+     * @param submission the {@link ModelingSubmission} the suggestions are fetched for
+     * @return a list of feedback suggestions
+     */
+    public List<ModelingFeedbackDTO> getModelingFeedbackSuggestions(ModelingExercise exercise, ModelingSubmission submission) throws NetworkingException {
+        log.debug("Start Athena Feedback Suggestions Service for Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
+
+        if (!Objects.equals(submission.getParticipation().getExercise().getId(), exercise.getId())) {
+            log.error("Exercise id {} does not match submission's exercise id {}", exercise.getId(), submission.getParticipation().getExercise().getId());
+            throw new ConflictException("Exercise id " + exercise.getId() + " does not match submission's exercise id " + submission.getParticipation().getExercise().getId(),
+                    "Exercise", "exerciseIdDoesNotMatch");
+        }
+
+        final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), athenaDTOConverter.ofSubmission(exercise.getId(), submission));
+        ResponseDTOModeling response = modelingAthenaConnector.invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/feedback_suggestions",
                 request, 0);
         log.info("Athena responded to feedback suggestions request: {}", response.data);
         return response.data.stream().toList();

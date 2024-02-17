@@ -22,6 +22,9 @@ public class AthenaModuleUrlHelper {
     @Value("${artemis.athena.modules.programming:module_programming_themisml}")
     private String programmingModuleName;
 
+    @Value("module_modelling_llm")
+    private String modelingModuleName;
+
     /**
      * Get the URL for an Athena module, depending on the type of exercise.
      *
@@ -35,6 +38,9 @@ public class AthenaModuleUrlHelper {
             }
             case PROGRAMMING -> {
                 return athenaUrl + "/modules/programming/" + programmingModuleName;
+            }
+            case MODELING -> {
+                return athenaUrl + "modules/modelling/" + modelingModuleName;
             }
             default -> throw new IllegalArgumentException("Exercise type not supported: " + exerciseType);
         }

@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.security.annotations.ManualConfig;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSuggestionsService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaRepositoryExportService;
+import de.tum.in.www1.artemis.service.dto.athena.ModelingFeedbackDTO;
 import de.tum.in.www1.artemis.service.dto.athena.ProgrammingFeedbackDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -51,6 +52,10 @@ public class AthenaResource {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
+    private final ModelingExerciseRepository modelingExerciseRepository;
+
+    private final ModelingSubmissionRepository modelingSubmissionRepository;
+
     private final AuthorizationCheckService authCheckService;
 
     private final AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService;
@@ -62,12 +67,14 @@ public class AthenaResource {
      */
     public AthenaResource(TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            AuthorizationCheckService authCheckService, AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService,
-            AthenaRepositoryExportService athenaRepositoryExportService) {
+            ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository, AuthorizationCheckService authCheckService,
+            AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, AthenaRepositoryExportService athenaRepositoryExportService) {
         this.textExerciseRepository = textExerciseRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.modelingExerciseRepository = modelingExerciseRepository;
+        this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.authCheckService = authCheckService;
         this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
         this.athenaRepositoryExportService = athenaRepositoryExportService;
@@ -138,9 +145,9 @@ public class AthenaResource {
      */
     @GetMapping("athena/programming-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<ProgrammingFeedbackDTO>> getModelingFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
-        return getFeedbackSuggestions(exerciseId, submissionId, programmingExerciseRepository::findByIdElseThrow, programmingSubmissionRepository::findByIdElseThrow,
-                athenaFeedbackSuggestionsService::getProgrammingFeedbackSuggestions);
+    public ResponseEntity<List<ModelingFeedbackDTO>> getModelingFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
+        return getFeedbackSuggestions(exerciseId, submissionId, modelingExerciseRepository::findByIdElseThrow, modelingSubmissionRepository::findByIdElseThrow,
+                athenaFeedbackSuggestionsService::getModelingFeedbackSuggestions);
     }
 
     /**
