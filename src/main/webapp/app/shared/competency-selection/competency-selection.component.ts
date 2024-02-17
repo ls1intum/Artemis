@@ -49,7 +49,8 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         if (!this.competencies && courseId) {
             const course = this.courseStorageService.getCourse(courseId);
-            if (course?.competencies) {
+            // an empty array is used as fallback, if a course is cached, where no competencies have been queried
+            if (course?.competencies?.length) {
                 this.setCompetencies(course.competencies!);
             } else {
                 this.isLoading = true;
