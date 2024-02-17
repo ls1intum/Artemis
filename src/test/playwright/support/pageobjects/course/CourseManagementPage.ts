@@ -4,7 +4,7 @@ import { BASE_API, COURSE_BASE } from '../../constants';
 import { Course } from 'app/entities/course.model';
 
 /**
- * A class which encapsulates UI selectors and actions for the course management page.
+ * A class which encapsulates UI selectors and actions for the Course Management page.
  */
 export class CourseManagementPage {
     private readonly page: Page;
