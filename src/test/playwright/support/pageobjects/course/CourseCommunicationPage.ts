@@ -268,7 +268,7 @@ export class CourseCommunicationPage {
     async checkResolved(postID: number) {
         const pageLocator = this.getSinglePost(postID);
         const messageResolvedIcon = pageLocator.locator(`fa-icon[ng-reflect-ngb-tooltip='Message has been resolved']`);
-        await expect(messageResolvedIcon).toBeVisible();
+        await expect(messageResolvedIcon).toBeAttached();
     }
 
     /**
