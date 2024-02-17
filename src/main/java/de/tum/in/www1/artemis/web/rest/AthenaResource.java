@@ -130,6 +130,20 @@ public class AthenaResource {
     }
 
     /**
+     * GET athena/modeling-exercises/:exerciseId/submissions/:submissionId/feedback-suggestions : Get feedback suggestions from Athena for a programming exercise
+     *
+     * @param exerciseId   the id of the exercise the submission belongs to
+     * @param submissionId the id of the submission to get feedback suggestions for
+     * @return 200 Ok if successful with the corresponding result as body
+     */
+    @GetMapping("athena/programming-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
+    @EnforceAtLeastTutor
+    public ResponseEntity<List<ProgrammingFeedbackDTO>> getModelingFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
+        return getFeedbackSuggestions(exerciseId, submissionId, programmingExerciseRepository::findByIdElseThrow, programmingSubmissionRepository::findByIdElseThrow,
+                athenaFeedbackSuggestionsService::getProgrammingFeedbackSuggestions);
+    }
+
+    /**
      * Check if the given auth header is valid for Athena, otherwise throw an exception.
      *
      * @param auth the auth header value to check

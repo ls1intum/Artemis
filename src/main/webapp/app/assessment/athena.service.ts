@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, map, of, switchMap } from 'rxjs';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/entities/feedback-suggestion.model';
+import { ModelingFeedbackSuggestion, ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/entities/feedback-suggestion.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
@@ -125,6 +125,36 @@ export class AthenaService {
                         feedback.type = FeedbackType.MANUAL_UNREFERENCED;
                         feedback.reference = undefined;
                     }
+                    // Load grading instruction from exercise, if available
+                    if (suggestion.structuredGradingInstructionId != undefined) {
+                        feedback.gradingInstruction = this.findGradingInstruction(exercise, suggestion.structuredGradingInstructionId);
+                    }
+                    return feedback;
+                });
+            }),
+        );
+    }
+
+    /**
+     * Get feedback suggestions for the given programming submission from Athena
+     *
+     * @param exercise
+     * @param submissionId the id of the submission
+     * @return observable that emits the feedback suggestions as Feedback objects with the "FeedbackSuggestion:" prefix
+     */
+    public getModelingFeedbackSuggestions(exercise: Exercise, submissionId: number): Observable<Feedback[]> {
+        return this.getFeedbackSuggestions<ModelingFeedbackSuggestion>(exercise, submissionId).pipe(
+            map((suggestions) => {
+                return suggestions.map((suggestion) => {
+                    const feedback = new Feedback();
+                    feedback.credits = suggestion.credits;
+                    feedback.text = FEEDBACK_SUGGESTION_IDENTIFIER + suggestion.title;
+                    feedback.detailText = suggestion.description;
+
+                    // As we currently have no way to annotate structured feedback in Apollon, we treat all feedback as unreferenced
+                    feedback.type = FeedbackType.MANUAL_UNREFERENCED;
+                    feedback.reference = undefined;
+
                     // Load grading instruction from exercise, if available
                     if (suggestion.structuredGradingInstructionId != undefined) {
                         feedback.gradingInstruction = this.findGradingInstruction(exercise, suggestion.structuredGradingInstructionId);

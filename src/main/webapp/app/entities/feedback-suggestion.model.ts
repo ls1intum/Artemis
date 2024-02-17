@@ -26,3 +26,16 @@ export class ProgrammingFeedbackSuggestion {
         public lineEnd: number | undefined,
     ) {}
 }
+
+export class ModelingFeedbackSuggestion {
+    constructor(
+        public id: number | undefined,
+        public exerciseId: number,
+        public submissionId: number,
+        public title: string,
+        public description: string,
+        public credits: number,
+        public structuredGradingInstructionId: number | undefined,
+        public element_ids: string[],
+    ) {}
+}

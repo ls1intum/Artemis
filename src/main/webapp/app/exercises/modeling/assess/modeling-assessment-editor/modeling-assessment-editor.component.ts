@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
+import { firstValueFrom } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -28,6 +29,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { AthenaService } from 'app/assessment/athena.service';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -43,6 +45,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     result?: Result;
     referencedFeedback: Feedback[] = [];
     unreferencedFeedback: Feedback[] = [];
+    automaticFeedback: Feedback[] = [];
+    feedbackSuggestions: Feedback[] = []; // all pending Athena feedback suggestions (neither accepted nor rejected yet)
     highlightedElements: Map<string, string>; // map elementId -> highlight color
     highlightMissingFeedback = false;
 
@@ -50,6 +54,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     nextSubmissionBusy: boolean;
     courseId: number;
     examId = 0;
+    exercise: ModelingExercise;
     exerciseId: number;
     exerciseGroupId: number;
     exerciseDashboardLink: string[];
@@ -70,6 +75,13 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     private cancelConfirmationText: string;
 
+    /**
+     * Get all feedback suggestions without a reference. They will be shown in cards below the build output.
+     */
+    get unreferencedFeedbackSuggestions() {
+        return this.feedbackSuggestions.filter((feedback) => !feedback.reference);
+    }
+
     constructor(
         private alertService: AlertService,
         private router: Router,
@@ -83,6 +95,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         private structuredGradingCriterionService: StructuredGradingCriterionService,
         private submissionService: SubmissionService,
         private exampleSubmissionService: ExampleSubmissionService,
+        private athenaService: AthenaService,
     ) {
         translateService.get('artemisApp.modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
@@ -121,6 +134,18 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         });
     }
 
+    /**
+     * Load the feedback suggestions for the current submission from Athena.
+     */
+    private async loadFeedbackSuggestions(): Promise<void> {
+        this.feedbackSuggestions = (await firstValueFrom(this.athenaService.getModelingFeedbackSuggestions(this.exercise, this.submission!.id!))) ?? [];
+        const allFeedback = [...this.referencedFeedback, ...this.unreferencedFeedback]; // pre-compute to not have to do this in the loop
+        // Don't show feedback suggestions that have the same description and reference - probably it is coming from an earlier suggestion anyway
+        this.feedbackSuggestions = this.feedbackSuggestions.filter((suggestion) =>
+            allFeedback.every((feedback) => feedback.detailText !== suggestion.detailText || feedback.reference !== suggestion.reference),
+        );
+    }
+
     private loadSubmission(submissionId: number): void {
         this.modelingSubmissionService.getSubmission(submissionId, this.correctionRound, this.resultId).subscribe({
             next: (submission: ModelingSubmission) => {
@@ -153,7 +178,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         });
     }
 
-    private handleReceivedSubmission(submission: ModelingSubmission): void {
+    private async handleReceivedSubmission(submission: ModelingSubmission): Promise<void> {
         this.loadingInitialSubmission = false;
         this.submission = submission;
         const studentParticipation = this.submission.participation as StudentParticipation;
@@ -169,6 +194,12 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.hasAssessmentDueDatePassed = !!this.modelingExercise?.assessmentDueDate && dayjs(this.modelingExercise.assessmentDueDate).isBefore(dayjs());
 
         this.getComplaint();
+
+        // Only load suggestions for new assessments, they don't make sense later.
+        // The assessment is new if it only contains automatic feedback.
+        if ((this.result?.feedbacks?.length ?? 0) === this.automaticFeedback.length) {
+            await this.loadFeedbackSuggestions();
+        }
 
         if (this.result?.feedbacks) {
             this.result = this.modelingAssessmentService.convertResult(this.result);
@@ -270,6 +301,15 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return this.isAssessor && isBeforeAssessmentDueDate;
         }
         return false;
+    }
+
+    /**
+     * Remove a feedback suggestion because it was accepted or discarded.
+     * The actual feedback creation when accepting happens in code-editor-ace-component/unreferenced-feedback because they have full control over the suggestion cards.
+     * @param feedback Feedback suggestion that is removed
+     */
+    removeSuggestion(feedback: Feedback) {
+        this.feedbackSuggestions = this.feedbackSuggestions.filter((feedbackSuggestion) => feedbackSuggestion !== feedback);
     }
 
     get readOnly(): boolean {
