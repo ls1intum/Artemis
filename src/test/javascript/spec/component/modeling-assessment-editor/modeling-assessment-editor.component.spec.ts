@@ -154,6 +154,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             complaintSpy.mockReturnValue(of({ body: complaint } as HttpResponse<Complaint>));
 
             const handleFeedbackSpy = jest.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
+            const verifyFeedbackSpy = jest.spyOn(component, 'validateFeedback');
 
             component.ngOnInit();
             tick(500);
@@ -161,7 +162,9 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.isLoading).toBeFalse();
             expect(component.complaint).toEqual(complaint);
             modelingSubmissionSpy.mockRestore();
-            expect(handleFeedbackSpy).toHaveBeenCalledOnce();
+            // called twice, since the feedback is additionally verified during the component initialization
+            expect(handleFeedbackSpy).toHaveBeenCalledTimes(2);
+            expect(verifyFeedbackSpy).toHaveBeenCalledOnce();
         }));
 
         it('wrongly call ngOnInit and throw exception', fakeAsync(() => {

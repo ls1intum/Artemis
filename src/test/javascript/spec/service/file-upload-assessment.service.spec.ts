@@ -40,6 +40,7 @@ describe('Modeling Assessment Service', () => {
             elemDefault.completionDate = dayjs();
             elemDefault.submission = { id: 187, submissionDate: dayjs() };
             elemDefault.participation = { id: 6, initializationDate: dayjs() };
+            elemDefault.assessmentNote = { id: 58, note: 'Note Text' };
             it('should save an assessment', async () => {
                 const submissionId = 187;
                 const feedbacks = [
@@ -53,9 +54,10 @@ describe('Modeling Assessment Service', () => {
                         credits: 1,
                     } as Feedback,
                 ];
+                const assessmentNoteText = 'Note Text';
                 const returnedFromService = Object.assign({}, elemDefault);
                 service
-                    .saveAssessment(feedbacks, submissionId, false)
+                    .saveAssessment(feedbacks, submissionId, assessmentNoteText, false)
                     .pipe(take(1))
                     .subscribe((resp) => (expectedResult = resp));
                 const req = httpMock.expectOne({
@@ -79,9 +81,10 @@ describe('Modeling Assessment Service', () => {
                         credits: 1,
                     } as Feedback,
                 ];
+                const assessmentNoteText = 'Note Text';
                 const returnedFromService = Object.assign({}, elemDefault);
                 service
-                    .saveAssessment(feedbacks, submissionId, true)
+                    .saveAssessment(feedbacks, submissionId, assessmentNoteText, true)
                     .pipe(take(1))
                     .subscribe((resp) => (expectedResult = resp));
                 const req = httpMock.expectOne({
