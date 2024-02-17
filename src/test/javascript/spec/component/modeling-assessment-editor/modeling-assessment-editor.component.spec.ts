@@ -131,6 +131,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                                 id: 2,
                                 detailText: 'Feedback',
                                 credits: 1,
+                                reference: 'path',
                             } as Feedback,
                         ],
                     } as unknown as Result,
@@ -165,6 +166,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             // called twice, since the feedback is additionally verified during the component initialization
             expect(handleFeedbackSpy).toHaveBeenCalledTimes(2);
             expect(verifyFeedbackSpy).toHaveBeenCalledOnce();
+            expect(component.assessmentsAreValid).toBeTrue();
         }));
 
         it('wrongly call ngOnInit and throw exception', fakeAsync(() => {
@@ -207,84 +209,75 @@ describe('ModelingAssessmentEditorComponent', () => {
         }));
     });
 
-    it('should save assessment', fakeAsync(() => {
-        const course = new Course();
-        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
-        component.modelingExercise.maxPoints = 10;
+    describe('save and submit', () => {
+        beforeEach(() => {
+            const course = new Course();
+            component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
+            component.modelingExercise.assessmentDueDate = dayjs().subtract(2, 'days');
+            component.modelingExercise.maxPoints = 10;
 
-        const feedback = createTestFeedback();
-        component.unreferencedFeedback = [feedback];
+            const feedback = createTestFeedback();
+            component.unreferencedFeedback = [feedback];
 
-        component.result = {
-            id: 2374,
-            score: 8,
-            rated: true,
-            hasComplaint: false,
-        } as unknown as Result;
-
-        component.submission = {
-            id: 1,
-            submitted: true,
-            type: 'MANUAL',
-            text: 'Test\n\nTest\n\nTest',
-        } as unknown as ModelingSubmission;
-        component.submission.results = [component.result];
-        getLatestSubmissionResult(component.submission)!.feedbacks = [
-            {
-                id: 2,
-                detailText: 'Feedback',
-                credits: 1,
-            } as Feedback,
-        ];
-        const saveAssessmentSpy = jest.spyOn(service, 'saveAssessment').mockReturnValue(of(getLatestSubmissionResult(component.submission)!));
-
-        component.ngOnInit();
-        tick(500);
-        component.onSaveAssessment();
-        expect(saveAssessmentSpy).toHaveBeenCalledOnce();
-    }));
-
-    it('should try to submit assessment', fakeAsync(() => {
-        const course = new Course();
-        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
-        component.modelingExercise.assessmentDueDate = dayjs().subtract(2, 'days');
-
-        // make sure feedback is valid
-        const feedback = createTestFeedback();
-        component.unreferencedFeedback = [feedback];
-
-        component.submission = {
-            id: 1,
-            submitted: true,
-            type: 'MANUAL',
-            text: 'Test\n\nTest\n\nTest',
-        } as unknown as ModelingSubmission;
-        component.submission.results = [
-            {
+            component.result = {
                 id: 2374,
                 score: 8,
                 rated: true,
                 hasComplaint: false,
-            } as unknown as Result,
-        ];
-        getLatestSubmissionResult(component.submission)!.feedbacks = [
-            {
-                id: 2,
-                detailText: 'Feedback',
-                credits: 1,
-            } as Feedback,
-        ];
-        jest.spyOn(service, 'saveAssessment').mockReturnValue(of(getLatestSubmissionResult(component.submission)!));
-        jest.spyOn(window, 'confirm').mockReturnValue(false);
+            } as unknown as Result;
 
-        component.ngOnInit();
-        tick(500);
+            component.submission = {
+                id: 1,
+                submitted: true,
+                type: 'MANUAL',
+                text: 'Test\n\nTest\n\nTest',
+            } as unknown as ModelingSubmission;
+            component.submission.results = [component.result];
+            getLatestSubmissionResult(component.submission)!.feedbacks = [
+                {
+                    id: 2,
+                    detailText: 'Feedback',
+                    credits: 1,
+                } as Feedback,
+            ];
+        });
 
-        component.onSubmitAssessment();
+        it('should save assessment', fakeAsync(() => {
+            const saveAssessmentSpy = jest.spyOn(service, 'saveAssessment').mockReturnValue(of(getLatestSubmissionResult(component.submission)!));
 
-        expect(window.confirm).toHaveBeenCalledOnce();
-        expect(component.highlightMissingFeedback).toBeTrue();
-    }));
+            component.ngOnInit();
+            tick(500);
+            component.onSaveAssessment();
+            expect(saveAssessmentSpy).toHaveBeenCalledOnce();
+        }));
+
+        it('should try to submit assessment', fakeAsync(() => {
+            jest.spyOn(service, 'saveAssessment').mockReturnValue(of(getLatestSubmissionResult(component.submission)));
+            jest.spyOn(window, 'confirm').mockReturnValue(false);
+
+            component.ngOnInit();
+            tick(500);
+
+            component.onSubmitAssessment();
+
+            expect(window.confirm).toHaveBeenCalledOnce();
+            expect(component.highlightMissingFeedback).toBeTrue();
+
+            component.modelingExercise.isAtLeastInstructor = true;
+            expect(component.canOverride).toBeTrue();
+        }));
+
+        it('should allow overriding directly after submitting', fakeAsync(() => {
+            jest.spyOn(window, 'confirm').mockReturnValue(false);
+
+            component.modelingExercise!.isAtLeastInstructor = true;
+            component.ngOnInit();
+            tick(500);
+
+            component.onSubmitAssessment();
+            expect(component.canOverride).toBeTrue();
+        }));
+    });
 
     const createTestFeedback = (): Feedback => {
         const feedback = new Feedback();
