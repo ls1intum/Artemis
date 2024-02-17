@@ -359,7 +359,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         }
         var repositoryName = uriService.getRepositorySlugFromRepositoryUriString(repositoryUrl);
         var projectKey = exercise.getProjectKey();
-        Repository oldRepository = gitService.getOrCheckoutRepository(new VcsRepositoryUri(repositoryUrl), true, bitbucketLocalVCMigrationService.get().getDefaultBranch());
+        Repository oldRepository = gitService.getOrCheckoutRepository(new VcsRepositoryUri(repositoryUrl), true);
         if (oldRepository == null) {
             log.error("Failed to clone repository from Bitbucket: {}", repositoryUrl);
             return null;
@@ -379,6 +379,10 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
      * @param oldOrigin      the old origin of the repository
      */
     private void cloneRepo(String projectKey, String repositorySlug, String oldOrigin) {
+        if (bitbucketLocalVCMigrationService.isEmpty()) {
+            log.error("Failed to clone repository from Bitbucket: {}", repositorySlug);
+            return;
+        }
         LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(projectKey, repositorySlug, bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl());
 
         Path remoteDirPath = localVCRepositoryUri.getLocalRepositoryPath(bitbucketLocalVCMigrationService.get().getLocalVCBasePath());
@@ -387,9 +391,9 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             Files.createDirectories(remoteDirPath);
 
             // Create a bare local repository with JGit.
-            Git git = Git.cloneRepository().setDirectory(remoteDirPath.toFile()).setBare(true).setURI(oldOrigin)
-                    .setBranch(bitbucketLocalVCMigrationService.get().getDefaultBranch()).call();
-
+            Git git = Git.cloneRepository().setDirectory(remoteDirPath.toFile()).setBare(true).setURI(oldOrigin).call();
+            // Rename the default branch to the configured default branch.
+            git.branchRename().setNewName(bitbucketLocalVCMigrationService.get().getDefaultBranch()).call();
             git.close();
             log.debug("Created local git repository {} in folder {}", repositorySlug, remoteDirPath);
         }
