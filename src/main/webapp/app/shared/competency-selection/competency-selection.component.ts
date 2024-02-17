@@ -10,7 +10,7 @@ import { finalize } from 'rxjs';
 @Component({
     selector: 'jhi-competency-selection',
     templateUrl: './competency-selection.component.html',
-    styleUrl: './competency-selection.component.scss',
+    styleUrls: ['./competency-selection.component.scss'],
     providers: [
         {
             provide: NG_VALUE_ACCESSOR,
@@ -117,7 +117,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
             }
 
             this._onChange(this.value);
-            this.valueChange.emit();
+            this.valueChange.emit(this.value);
         }
     }
 
