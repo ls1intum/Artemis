@@ -20,8 +20,6 @@ import de.tum.in.www1.artemis.web.rest.dto.science.ScienceEventDTO;
 
 class ScienceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
-    private static final String TEST_PREFIX = "scienceintegration";
-
     @Autowired
     private ScienceEventRepository scienceEventRepository;
 

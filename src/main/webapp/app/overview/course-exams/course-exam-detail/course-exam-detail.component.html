@@ -15,38 +15,38 @@
             @if (examState === 'UNDEFINED') {
                 <h4 class="icon-settings">
                     <!-- Case 7: Undefined exam state. show Pencil without further information -->
-                    <fa-icon [icon]="faPenAlt" size="3x"></fa-icon>
+                    <fa-icon [icon]="faPenAlt" size="3x" />
                 </h4>
             } @else {
                 <h4 class="col-3 icon-settings">
                     @switch (examState) {
                         <!-- Calender to indicate an upcoming exam -->
                         @case ('UPCOMING') {
-                            <fa-icon [icon]="faCalendarDay" size="2x"></fa-icon>
+                            <fa-icon [icon]="faCalendarDay" size="2x" />
                         }
                         <!-- Play Button without circle to indicate, the exam starts shortly -->
                         @case ('IMMINENT') {
-                            <fa-icon [icon]="faPlay" size="2x"></fa-icon>
+                            <fa-icon [icon]="faPlay" size="2x" />
                         }
                         <!-- Play-Button to indicate, the exam can be started -->
                         @case ('CONDUCTING') {
-                            <fa-icon [icon]="faCirclePlay" size="2x"></fa-icon>
+                            <fa-icon [icon]="faCirclePlay" size="2x" />
                         }
                         <!-- User with a clock to indicate indivial time extensions -->
                         @case ('TIMEEXTENSION') {
-                            <fa-icon [icon]="faUserClock" size="2x"></fa-icon>
+                            <fa-icon [icon]="faUserClock" size="2x" />
                         }
                         <!-- Magnifying Glass to indicate, the exam can be reviewed -->
                         @case ('STUDENTREVIEW') {
-                            <fa-icon [icon]="faMagnifyingGlass" size="2x"></fa-icon>
+                            <fa-icon [icon]="faMagnifyingGlass" size="2x" />
                         }
                         <!-- Book to indicate, the exam is closed -->
                         @case ('CLOSED') {
-                            <fa-icon [icon]="faBook" size="2x"></fa-icon>
+                            <fa-icon [icon]="faBook" size="2x" />
                         }
                         <!-- Stop to indicate, no more attemps are possible -->
                         @case ('NO_MORE_ATTEMPTS') {
-                            <fa-icon [icon]="faCircleStop" size="2x"></fa-icon>
+                            <fa-icon [icon]="faCircleStop" size="2x" />
                         }
                     }
                 </h4>

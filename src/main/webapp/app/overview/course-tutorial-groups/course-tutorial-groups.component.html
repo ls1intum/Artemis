@@ -29,20 +29,16 @@
         <div class="col-12" [ngClass]="{ 'col-xl-8': tutorialGroupFreeDays && tutorialGroupFreeDays.length > 0 }">
             @switch (selectedFilter) {
                 @case ('all') {
-                    <jhi-course-tutorial-groups-overview [tutorialGroups]="tutorialGroups" [course]="course" [configuration]="configuration"></jhi-course-tutorial-groups-overview>
+                    <jhi-course-tutorial-groups-overview [tutorialGroups]="tutorialGroups" [course]="course" [configuration]="configuration" />
                 }
                 @case ('registered') {
-                    <jhi-course-tutorial-groups-registered
-                        [registeredTutorialGroups]="registeredTutorialGroups"
-                        [course]="course"
-                        [configuration]="configuration"
-                    ></jhi-course-tutorial-groups-registered>
+                    <jhi-course-tutorial-groups-registered [registeredTutorialGroups]="registeredTutorialGroups" [course]="course" [configuration]="configuration" />
                 }
             }
         </div>
         @if (tutorialGroupFreeDays && tutorialGroupFreeDays.length > 0) {
             <div class="col-12 col-xl-4">
-                <jhi-tutorial-group-free-days-overview [tutorialGroupFreeDays]="tutorialGroupFreeDays"></jhi-tutorial-group-free-days-overview>
+                <jhi-tutorial-group-free-days-overview [tutorialGroupFreeDays]="tutorialGroupFreeDays" />
             </div>
         }
     </div>
