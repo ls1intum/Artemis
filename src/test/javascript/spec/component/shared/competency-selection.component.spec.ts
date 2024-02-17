@@ -100,11 +100,13 @@ describe('CompetencySelection', () => {
 
     it('should be hidden when no competencies', () => {
         const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [] });
+        const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [] })));
 
         fixture.detectChanges();
 
         const select = fixture.debugElement.query(By.css('select'));
         expect(getCourseSpy).toHaveBeenCalledOnce();
+        expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(component.isLoading).toBeFalse();
         expect(component.competencies).toBeEmpty();
         expect(select).toBeNull();
@@ -158,6 +160,7 @@ describe('CompetencySelection', () => {
     });
 
     it('should register onchange', () => {
+        component.checkboxStates = {};
         const registerSpy = jest.fn();
         component.registerOnChange(registerSpy);
         component.toggleCompetency({ id: 1 });
