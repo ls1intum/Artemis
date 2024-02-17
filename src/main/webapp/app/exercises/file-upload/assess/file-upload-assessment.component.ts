@@ -153,6 +153,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 }
 
                 this.initializePropertiesFromSubmission(submission);
+                this.validateAssessment();
                 // Update the url with the new id, without reloading the page, to make the history consistent
                 const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);
                 this.location.go(newUrl);
@@ -175,6 +176,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: (res) => {
                     this.initializePropertiesFromSubmission(res.body!);
+                    this.validateAssessment();
                 },
                 error: (error: HttpErrorResponse) => {
                     this.loadingInitialSubmission = false;

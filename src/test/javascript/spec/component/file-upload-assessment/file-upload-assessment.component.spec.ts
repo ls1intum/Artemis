@@ -32,7 +32,7 @@ import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instr
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
@@ -165,6 +165,21 @@ describe('FileUploadAssessmentComponent', () => {
             expect(getFirstResult(comp.submission)).toEqual(comp.result);
             expect(comp.correctionRound).toBe(1);
         }));
+
+        it('should validate assessments on component init', () => {
+            const submission = createSubmission(exercise);
+            const result = createResult(comp.submission);
+            result.feedbacks = [{ id: 23, credits: 1, reference: 'reference', detailText: 'text' }];
+            setLatestSubmissionResult(submission, result);
+
+            const returnedMock = new HttpResponse<FileUploadSubmission>({ body: submission });
+            jest.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(returnedMock));
+
+            comp.assessmentsAreValid = false;
+            comp.ngOnInit();
+
+            expect(comp.assessmentsAreValid).toBeTrue();
+        });
     });
 
     describe('loadSubmission', () => {
@@ -612,6 +627,12 @@ describe('FileUploadAssessmentComponent', () => {
         it('should not be able to override if exercise is undefined', () => {
             comp.exercise = undefined;
             expect(comp.canOverride).toBeFalse();
+        });
+
+        it('should be able to override directly after submitting', async () => {
+            comp.isAssessor = true;
+            comp.onSubmitAssessment();
+            expect(comp.canOverride).toBeTrue();
         });
     });
 
