@@ -624,4 +624,16 @@ describe('TextSubmissionAssessmentComponent', () => {
         tick();
         expect(athenaServiceFeedbackSuggestionsSpy).not.toHaveBeenCalled();
     }));
+
+    it('should validate assessments on component init', async () => {
+        component.assessmentsAreValid = false;
+        await component.ngOnInit();
+        expect(component.assessmentsAreValid).toBeTrue();
+    });
+
+    it('should allow overriding directly after submitting', async () => {
+        component.isAssessor = true;
+        component.submit();
+        expect(component.canOverride).toBeTrue();
+    });
 });
