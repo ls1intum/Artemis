@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -13,6 +15,7 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
@@ -24,6 +27,7 @@ import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 /**
  * Service that provides utilities for managing files in a git repository.
  */
+@Profile(PROFILE_CORE)
 @Service
 public class RepositoryService {
 

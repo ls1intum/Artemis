@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.config;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -26,6 +26,7 @@ import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 
 import com.hazelcast.config.*;
@@ -39,6 +40,7 @@ import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import tech.jhipster.config.JHipsterProperties;
 import tech.jhipster.config.cache.PrefixedKeyGenerator;
 
+@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
 @Configuration
 @EnableCaching
 public class CacheConfiguration {
@@ -181,7 +183,7 @@ public class CacheConfiguration {
 
         // only add the queue config if the profile "localci" is active
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-        if (activeProfiles.contains(PROFILE_LOCALCI)) {
+        if (activeProfiles.contains(PROFILE_LOCALCI) || activeProfiles.contains(PROFILE_BUILDAGENT)) {
             // add queue config for local ci shared queue
             configureQueueCluster(config, jHipsterProperties);
         }

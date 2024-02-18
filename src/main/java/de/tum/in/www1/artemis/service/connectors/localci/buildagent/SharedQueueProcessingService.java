@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.localci.buildagent;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_BUILDAGENT;
+
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
@@ -29,7 +31,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.*;
 /**
  * Includes functionality for processing build jobs from the shared build job queue.
  */
-@Profile("buildagent")
+@Profile(PROFILE_BUILDAGENT)
 @Service
 public class SharedQueueProcessingService {
 
@@ -239,15 +241,20 @@ public class SharedQueueProcessingService {
             checkAvailabilityAndProcessNextBuild();
 
         }).exceptionally(ex -> {
-            JobTimingInfo jobTimingInfo = new JobTimingInfo(buildJob.jobTimingInfo().submissionDate(), buildJob.jobTimingInfo().buildStartDate(), ZonedDateTime.now());
+            ZonedDateTime completionDate = ZonedDateTime.now();
 
-            LocalCIBuildJobQueueItem job = new LocalCIBuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(), buildJob.participationId(),
-                    buildJob.courseId(), buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildJobResult.CANCELLED, buildJob.repositoryInfo(), jobTimingInfo,
-                    buildJob.buildConfig());
+            LocalCIBuildJobQueueItem job;
+            BuildJobResult result;
 
             if (!(ex.getCause() instanceof CancellationException) || !ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
+                result = BuildJobResult.FAILED;
                 log.error("Error while processing build job: {}", buildJob, ex);
             }
+            else {
+                result = BuildJobResult.CANCELLED;
+            }
+
+            job = new LocalCIBuildJobQueueItem(buildJob, completionDate, result);
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(null, job, ex);
             resultQueue.add(resultQueueItem);

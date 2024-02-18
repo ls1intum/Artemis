@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static java.time.ZonedDateTime.now;
 
 import java.io.File;
@@ -67,6 +68,7 @@ import tech.jhipster.web.util.PaginationUtil;
 /**
  * REST controller for managing Course.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
 public class CourseResource {
@@ -289,6 +291,7 @@ public class CourseResource {
      * @param onlineCourseConfiguration the online course configuration to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated online course configuration
      */
+    // TODO: move into LTIResource
     @PutMapping("courses/{courseId}/onlineCourseConfiguration")
     @EnforceAtLeastInstructor
     @Profile("lti")
@@ -928,7 +931,7 @@ public class CourseResource {
      * @param roles       the roles which should be searched in
      * @return the ResponseEntity with status 200 (OK) and with body all users
      */
-    @GetMapping("/courses/{courseId}/users/search")
+    @GetMapping("courses/{courseId}/users/search")
     @EnforceAtLeastStudent
     public ResponseEntity<List<UserPublicInfoDTO>> searchUsersInCourse(@PathVariable Long courseId, @RequestParam("loginOrName") String loginOrName,
             @RequestParam("roles") List<String> roles) {
