@@ -160,6 +160,9 @@ class ProgrammingExerciseIntegrationTestService {
     @Autowired
     private ZipFileTestUtilService zipFileTestUtilService;
 
+    @Autowired
+    private TeamRepository teamRepository;
+
     private Course course;
 
     public ProgrammingExercise programmingExercise;
@@ -1770,6 +1773,21 @@ class ProgrammingExerciseIntegrationTestService {
         assertPlagiarismResult(programmingExercise, result, 100.0);
     }
 
+    void testCheckPlagiarismForTeamExercise() throws Exception {
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+
+        var programmingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationById(exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
+        programmingExercise.setMode(ExerciseMode.TEAM);
+        programmingExerciseRepository.save(programmingExercise);
+
+        prepareTwoTeamRepositoriesForPlagiarismChecks(programmingExercise);
+
+        final var path = ROOT + CHECK_PLAGIARISM.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        var result = request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, plagiarismUtilService.getDefaultPlagiarismOptions());
+        assertPlagiarismResult(programmingExercise, result, 100.0);
+    }
+
     void testCheckPlagiarismJplagReport() throws Exception {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         var programmingExercise = programmingExerciseRepository
@@ -1821,6 +1839,27 @@ class ProgrammingExerciseIntegrationTestService {
         participationUtilService.addResultToSubmission(submissionStudent2, AssessmentType.AUTOMATIC, null);
         participationUtilService.addResultToSubmission(submissionInstructor1, AssessmentType.AUTOMATIC, null);
 
+        prepareTwoSubmissionsForPlagiarismChecks(programmingExercise);
+    }
+
+    private Team createTeam(ProgrammingExercise programmingExercise, String suffix) {
+        var student = userUtilService.getUserByLogin(userPrefix + "student" + suffix);
+        var team = new Team().name("Team " + suffix).shortName(userPrefix + "team" + suffix).exercise(programmingExercise).students(Set.of(student));
+        return teamRepository.save(programmingExercise, team);
+    }
+
+    private void prepareTwoTeamRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, GitAPIException {
+        var participationTeam1 = participationUtilService.addTeamParticipationForProgrammingExercise(programmingExercise, createTeam(programmingExercise, "1"));
+        var participationTeam2 = participationUtilService.addTeamParticipationForProgrammingExercise(programmingExercise, createTeam(programmingExercise, "2"));
+        var submissionTeam1 = programmingExerciseUtilService.createProgrammingSubmission(participationTeam1, false);
+        var submissionTeam2 = programmingExerciseUtilService.createProgrammingSubmission(participationTeam2, false);
+        participationUtilService.addResultToSubmission(submissionTeam1, AssessmentType.AUTOMATIC, null);
+        participationUtilService.addResultToSubmission(submissionTeam2, AssessmentType.AUTOMATIC, null);
+
+        prepareTwoSubmissionsForPlagiarismChecks(programmingExercise);
+    }
+
+    private void prepareTwoSubmissionsForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, GitAPIException {
         var jPlagReposDir = Path.of(repoDownloadClonePath, "jplag-repos");
         var projectKey = programmingExercise.getProjectKey();
 
