@@ -803,15 +803,17 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importingCompetencies_asInstructor_shouldImportCompetencies() throws Exception {
-        var competencyDTOList = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-all/" + course2.getId(), null,
+        var course3 = courseUtilService.createCourse();
+
+        var competencyDTOList = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-all/" + course3.getId(), null,
                 CompetencyWithTailRelationDTO.class, HttpStatus.CREATED);
         assertThat(competencyDTOList).isEmpty();
 
-        Competency head = createCompetency(course2);
-        Competency tail = createCompetency(course2);
+        Competency head = createCompetency(course3);
+        Competency tail = createCompetency(course3);
         createRelation(head, tail, RelationType.RELATES);
 
-        competencyDTOList = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-all/" + course2.getId() + "?importRelations=true", null,
+        competencyDTOList = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-all/" + course3.getId() + "?importRelations=true", null,
                 CompetencyWithTailRelationDTO.class, HttpStatus.CREATED);
 
         assertThat(competencyDTOList).hasSize(2);
@@ -819,7 +821,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         assertThat(competencyDTOList.get(0).tailRelations()).isNull();
         assertThat(competencyDTOList.get(1).tailRelations()).hasSize(1);
 
-        competencyDTOList = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-all/" + course2.getId(), null,
+        competencyDTOList = request.postListWithResponseBody("/api/courses/" + course.getId() + "/competencies/import-all/" + course3.getId(), null,
                 CompetencyWithTailRelationDTO.class, HttpStatus.CREATED);
         assertThat(competencyDTOList).hasSize(2);
         // relations should be empty when not importing them
@@ -874,6 +876,16 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    void getCompetenciesForImport_asInstructorNotInCourse_shouldNotGetCompetencies() throws Exception {
+        // configure search so all competencies would get returned
+        final var search = pageableSearchUtilService.configureCompetencySearch("", "", "", "");
+        var result = request.getSearchResult("/api/competencies/for-import", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
+
+        assertThat(result.getResultsOnPage()).isEmpty();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getCompetenciesForImport_asInstructor_shouldGetCompetenciesFromOwnCourses() throws Exception {
         final var search = pageableSearchUtilService.configureCompetencySearch(competency.getTitle(), "", "", "");
@@ -884,7 +896,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void getCompetenciesForImport_asAdmin_shouldGetAllCompetencies() throws Exception {
+    void getCompetenciesForImport_asAdmin_shouldGetCompetencies() throws Exception {
         final var search = pageableSearchUtilService.configureCompetencySearch(competency.getTitle(), "", "", "");
         final var result = request.getSearchResult("/api/competencies/for-import", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);

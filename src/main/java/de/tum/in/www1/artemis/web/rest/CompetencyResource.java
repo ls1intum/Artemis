@@ -279,6 +279,7 @@ public class CompetencyResource {
      *
      * @param courseId             the id of the course to which the competencies should be imported to
      * @param competenciesToImport the competencies that should be imported
+     * @param importRelations      if relations should be imported aswell
      * @return the ResponseEntity with status 201 (Created) and with body containing the imported competencies
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
