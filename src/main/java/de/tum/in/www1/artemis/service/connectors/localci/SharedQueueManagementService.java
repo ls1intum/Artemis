@@ -73,7 +73,7 @@ public class SharedQueueManagementService {
     /**
      * Pushes the last build dates for all docker images to the hazelcast map dockerImageCleanupInfo
      */
-    @Scheduled(fixedRate = 90000, initialDelay = Long.MAX_VALUE)
+    @Scheduled(fixedRate = 90000, initialDelay = 1000 * 60 * 10)
     public void pushDockerImageCleanupInfo() {
         dockerImageCleanupInfo.clear();
         Set<DockerImageBuild> lastBuildDatesForDockerImages = buildJobRepository.findAllLastBuildDatesForDockerImages();

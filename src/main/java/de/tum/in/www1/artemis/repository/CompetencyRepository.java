@@ -190,7 +190,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long>, J
      * @return the competencies with the progress of the user
      */
     @EntityGraph(type = LOAD, attributePaths = { "userProgress" })
-    default List<Competency> findWithUserSpecificProgressByCourseId(@Param("courseId") long courseId, @Param("userId") long userId) {
+    default List<Competency> findWithUserSpecificProgressByCourseId(long courseId, long userId) {
         List<Competency> competencies = findWithUserProgressByCourseId(courseId);
         competencies.forEach(competency -> competency.getUserProgress().removeIf(progress -> progress.getUser().getId() != userId));
         return competencies;
