@@ -11,6 +11,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.Git;
@@ -138,16 +139,11 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         }
 
         log.info("Will migrate {} programming exercises and {} student repositories now. This might take a while", programmingExerciseCount, studentCount);
-        final int ESTIMAE_TIME_PER_REPOSITORY = 2; // 2s per repository
-        final double estimatedTimeExercise = programmingExerciseCount * ESTIMAE_TIME_PER_REPOSITORY * ESTIMAE_TIME_PER_REPOSITORY * ESTIMAE_TIME_PER_REPOSITORY; // test, template,
-                                                                                                                                                                 // solution, we
-                                                                                                                                                                 // dont estimate
-                                                                                                                                                                 // the auxiliary
-                                                                                                                                                                 // repositories
-        final double estimatedTimeStudents = studentCount * ESTIMAE_TIME_PER_REPOSITORY;
 
         final long totalFullBatchCount = programmingExerciseCount / BATCH_SIZE;
         final int threadCount = (int) Math.max(1, Math.min(totalFullBatchCount, MAX_THREAD_COUNT));
+        final double estimatedTimeExercise = getRestDurationInHours(0, programmingExerciseCount, 3, threadCount);
+        final double estimatedTimeStudents = getRestDurationInHours(0, studentCount, 1, threadCount);
 
         final double estimatedTime = (estimatedTimeExercise + estimatedTimeStudents) / MAX_THREAD_COUNT / 3600;
         log.info("Using {} threads for migration, and assuming 2s per repository, the migration should take around {}", MAX_THREAD_COUNT, estimatedTime + " hours");
@@ -159,6 +155,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         /*
          * migrate the solution participations first, then the template participations, then the student participations
          */
+        AtomicInteger solutionCounter = new AtomicInteger(0);
         var solutionCount = solutionProgrammingExerciseParticipationRepository.count();
         log.info("Found {} solution participations to migrate.", solutionCount);
         for (int currentPageStart = 0; currentPageStart < solutionCount; currentPageStart += BATCH_SIZE) {
@@ -167,7 +164,12 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             log.info("Will migrate {} solution participations in batch.", solutionParticipationPage.getNumberOfElements());
             var solutionParticipationsPartitions = Lists.partition(solutionParticipationPage.toList(), threadCount);
             for (var solutionParticipations : solutionParticipationsPartitions) {
-                executorService.submit(() -> migrateSolutions(solutionParticipations));
+                executorService.submit(() -> {
+                    migrateSolutions(solutionParticipations);
+                    solutionCounter.addAndGet(solutionParticipations.size());
+                    log.info("Migrated {}/{} solution participations", solutionCounter.get(), solutionCount);
+                    log.info("Estimated time remaining: {} hours for solution repositories", getRestDurationInHours(solutionCounter.get(), solutionCount, 3, threadCount));
+                });
             }
         }
 
@@ -175,6 +177,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         /*
          * migrate the template participations
          */
+        AtomicInteger templateCounter = new AtomicInteger(0);
         var templateCount = templateProgrammingExerciseParticipationRepository.count();
         log.info("Found {} template participations to migrate", templateCount);
         for (int currentPageStart = 0; currentPageStart < templateCount; currentPageStart += BATCH_SIZE) {
@@ -183,7 +186,12 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             log.info("Will migrate {} template programming exercises in batch.", templateParticipationPage.getNumberOfElements());
             var templateParticipationsPartitions = Lists.partition(templateParticipationPage.toList(), threadCount);
             for (var templateParticipations : templateParticipationsPartitions) {
-                executorService.submit(() -> migrateTemplates(templateParticipations));
+                executorService.submit(() -> {
+                    migrateTemplates(templateParticipations);
+                    templateCounter.addAndGet(templateParticipations.size());
+                    log.info("Migrated {}/{} template participations", templateCounter.get(), templateCount);
+                    log.info("Estimated time remaining: {} hours for template repositories", getRestDurationInHours(templateCounter.get(), templateCount, 3, threadCount));
+                });
             }
         }
 
@@ -191,6 +199,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         /*
          * migrate the student participations
          */
+        AtomicInteger studentCounter = new AtomicInteger(0);
         log.info("Found {} student programming exercise participations with build plans to migrate.", studentCount);
         for (int currentPageStart = 0; currentPageStart < studentCount; currentPageStart += BATCH_SIZE) {
             Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
@@ -198,7 +207,12 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             log.info("Will migrate {} student programming exercise participations in batch.", studentParticipationPage.getNumberOfElements());
             var studentPartitionsPartitions = Lists.partition(studentParticipationPage.toList(), threadCount);
             for (var studentParticipations : studentPartitionsPartitions) {
-                executorService.submit(() -> migrateStudents(studentParticipations));
+                executorService.submit(() -> {
+                    migrateStudents(studentParticipations);
+                    studentCounter.addAndGet(studentParticipations.size());
+                    log.info("Migrated {}/{} student participations", studentCounter.get(), studentCount);
+                    log.info("Estimated time remaining: {} hours for student repositories", getRestDurationInHours(studentCounter.get(), studentCount, 1, threadCount));
+                });
             }
         }
 
@@ -224,6 +238,14 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
 
         log.info("Finished migrating programming exercises and student participations");
         evaluateErrorList();
+    }
+
+    private double getRestDurationInHours(final int done, final long total, final int reposPerEntry, final int threads) {
+        final long ESTIMATED_TIME_PER_REPOSITORY = 2; // 2s per repository
+        final long stillTodo = total - done;
+        final long timePerEntry = ESTIMATED_TIME_PER_REPOSITORY * reposPerEntry;
+
+        return ((double) (stillTodo * timePerEntry) / threads) / 3600D;
     }
 
     private String migrateTestRepo(ProgrammingExercise programmingExercise) throws GitAPIException, URISyntaxException {
