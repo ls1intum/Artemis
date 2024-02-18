@@ -51,7 +51,7 @@ public class MigrationEntry20230920_181600 extends MigrationEntry {
 
     private final Environment environment;
 
-    private final UriService uriService = new UriService();
+    private final UriService uriService;
 
     private final CopyOnWriteArrayList<ProgrammingExerciseParticipation> errorList = new CopyOnWriteArrayList<>();
 
@@ -61,13 +61,14 @@ public class MigrationEntry20230920_181600 extends MigrationEntry {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<CIVCSMigrationService> ciMigrationService,
-            Environment environment) {
+            Environment environment, UriService uriService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.ciMigrationService = ciMigrationService;
         this.environment = environment;
+        this.uriService = uriService;
     }
 
     @Override

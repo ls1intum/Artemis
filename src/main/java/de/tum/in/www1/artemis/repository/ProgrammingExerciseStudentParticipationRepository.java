@@ -201,6 +201,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             SELECT DISTINCT p
             FROM ProgrammingExerciseStudentParticipation p
             WHERE p.buildPlanId IS NOT NULL
+            ORDER BY p.id DESC
             """)
     Page<ProgrammingExerciseStudentParticipation> findAllWithBuildPlanId(Pageable pageable);
 
