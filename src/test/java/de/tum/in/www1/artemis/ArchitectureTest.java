@@ -228,7 +228,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
             "BETWEEN", "HAVING", "EMPTY", "MEMBER", "OF", "UPPER", "LOWER", "TRIM");
 
     private ArchCondition<JavaMethod> useUpperCaseSQLStyle() {
-        return new ArchCondition<>("@Query content should follow the style guide") {
+        return new ArchCondition<>("follow the style guide") {
 
             @Override
             public void check(JavaMethod item, ConditionEvents events) {
