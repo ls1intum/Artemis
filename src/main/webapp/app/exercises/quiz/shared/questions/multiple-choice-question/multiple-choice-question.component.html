@@ -22,7 +22,7 @@
             </ng-template>
             @if (question.hint) {
                 <span class="label label-info" [ngbPopover]="renderedHint" triggers="mouseenter:mouseleave">
-                    <fa-icon [icon]="faQuestionCircle"></fa-icon>
+                    <fa-icon [icon]="faQuestionCircle" />
                     <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
                 </span>
             }
@@ -32,7 +32,7 @@
             </ng-template>
             @if (question.explanation && showResult) {
                 <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="right auto" triggers="mouseenter:mouseleave">
-                    <fa-icon [icon]="faExclamationCircle"></fa-icon>
+                    <fa-icon [icon]="faExclamationCircle" />
                     <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
                 </span>
             }
@@ -56,7 +56,7 @@
                     [questionIndex]="questionIndex"
                     [multipleChoiceSubmittedResult]="submittedResult"
                     [quizQuestions]="quizQuestions"
-                ></jhi-quiz-scoring-infostudent-modal>
+                />
             </span>
         </div>
     }
@@ -77,7 +77,7 @@
                             </ng-template>
                             @if (answerOption.hint) {
                                 <span class="label label-info" [ngbPopover]="renderedAnswerOptionsHint" triggers="mouseenter:mouseleave">
-                                    <fa-icon [icon]="faQuestionCircle"></fa-icon>
+                                    <fa-icon [icon]="faQuestionCircle" />
                                     <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
                                 </span>
                             }
@@ -85,10 +85,10 @@
                     </div>
                     <div class="selection" id="mc-answer-selection-{{ i }}">
                         @if (isAnswerOptionSelected(answerOption)) {
-                            <fa-icon [icon]="question.singleChoice ? faDotCircle : faCheckSquare" size="2x"></fa-icon>
+                            <fa-icon [icon]="question.singleChoice ? faDotCircle : faCheckSquare" size="2x" />
                         }
                         @if (!isAnswerOptionSelected(answerOption)) {
-                            <fa-icon [icon]="question.singleChoice ? faCircle : faSquare" size="2x"></fa-icon>
+                            <fa-icon [icon]="question.singleChoice ? faCircle : faSquare" size="2x" />
                         }
                     </div>
                 </div>
@@ -117,7 +117,7 @@
                             </ng-template>
                             @if (answerOption.hint) {
                                 <span class="label label-info" [ngbPopover]="renderedAnswerOptionsHint2" triggers="mouseenter:mouseleave">
-                                    <fa-icon [icon]="faQuestionCircle"></fa-icon>
+                                    <fa-icon [icon]="faQuestionCircle" />
                                     <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
                                 </span>
                             }
@@ -126,7 +126,7 @@
                             </ng-template>
                             @if (answerOption.explanation) {
                                 <span class="label label-primary" [ngbPopover]="renderedAnswerOptionsExplanation" triggers="mouseenter:mouseleave">
-                                    <fa-icon [icon]="faExclamationCircle"></fa-icon>
+                                    <fa-icon [icon]="faExclamationCircle" />
                                     <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
                                 </span>
                             }
@@ -143,7 +143,7 @@
                             <span id="answer-option-{{ i }}-invalid" class="wrong" jhiTranslate="artemisApp.quizQuestion.invalid"></span>
                         }
                         @if (answerOption.invalid || question.invalid) {
-                            <fa-icon ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.invalid' | artemisTranslate }}" style="color: black" [icon]="faQuestionCircle"></fa-icon>
+                            <fa-icon ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.invalid' | artemisTranslate }}" style="color: black" [icon]="faQuestionCircle" />
                         }
                     </td>
                     @if (!forceSampleSolution) {
@@ -153,17 +153,17 @@
                                 !answerOption.invalid &&
                                 ((isAnswerOptionSelected(answerOption) && !answerOption.isCorrect) || (!isAnswerOptionSelected(answerOption) && answerOption.isCorrect))
                             ) {
-                                <fa-icon size="2x" [icon]="faExclamationTriangle" class="warning"></fa-icon>
+                                <fa-icon size="2x" [icon]="faExclamationTriangle" class="warning" />
                             }
                         </td>
                     }
                     @if (!forceSampleSolution) {
                         <td class="selection">
                             @if (isAnswerOptionSelected(answerOption)) {
-                                <fa-icon [icon]="question.singleChoice ? faDotCircle : faCheckSquare" size="2x"></fa-icon>
+                                <fa-icon [icon]="question.singleChoice ? faDotCircle : faCheckSquare" size="2x" />
                             }
                             @if (!isAnswerOptionSelected(answerOption)) {
-                                <fa-icon [icon]="question.singleChoice ? faCircle : faSquare" size="2x"></fa-icon>
+                                <fa-icon [icon]="question.singleChoice ? faCircle : faSquare" size="2x" />
                             }
                         </td>
                     }

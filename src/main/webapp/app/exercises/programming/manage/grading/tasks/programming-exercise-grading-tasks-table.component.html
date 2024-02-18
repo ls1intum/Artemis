@@ -48,8 +48,8 @@
             (click)="changeSort('name')"
         >
             <p class="mb-0" [innerHtml]="'artemisApp.programmingExercise.configureGrading.gradingTableHeader.testName' | artemisTranslate"></p>
-            <fa-icon [icon]="getSortIcon('name')" class="ms-2"></fa-icon>
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2"></fa-icon>
+            <fa-icon [icon]="getSortIcon('name')" class="ms-2" />
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2" />
         </button>
         <button
             type="button"
@@ -58,9 +58,9 @@
             placement="bottom auto"
             (click)="changeSort('weight')"
         >
-            <fa-icon [icon]="faScaleUnbalanced" size="xl"></fa-icon>
-            <fa-icon [icon]="getSortIcon('weight')" class="ms-2"></fa-icon>
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2"></fa-icon>
+            <fa-icon [icon]="faScaleUnbalanced" size="xl" />
+            <fa-icon [icon]="getSortIcon('weight')" class="ms-2" />
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2" />
         </button>
         <button
             type="button"
@@ -69,9 +69,9 @@
             placement="bottom auto"
             (click)="changeSort('multiplier')"
         >
-            <fa-icon [icon]="faAsterisk" size="xl"></fa-icon>
-            <fa-icon [icon]="getSortIcon('multiplier')" class="ms-2"></fa-icon>
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2"></fa-icon>
+            <fa-icon [icon]="faAsterisk" size="xl" />
+            <fa-icon [icon]="getSortIcon('multiplier')" class="ms-2" />
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2" />
         </button>
         <button
             type="button"
@@ -80,9 +80,9 @@
             placement="bottom auto"
             (click)="changeSort('bonusPoints')"
         >
-            <fa-icon [icon]="faMedal" size="xl"></fa-icon>
-            <fa-icon [icon]="getSortIcon('bonusPoints')" class="ms-2"></fa-icon>
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2"></fa-icon>
+            <fa-icon [icon]="faMedal" size="xl" />
+            <fa-icon [icon]="getSortIcon('bonusPoints')" class="ms-2" />
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2" />
         </button>
         <button
             type="button"
@@ -92,8 +92,8 @@
             (click)="changeSort('visibility')"
         >
             <p class="mb-0" [innerHtml]="'artemisApp.programmingExercise.configureGrading.gradingTableHeader.visibility' | artemisTranslate"></p>
-            <fa-icon [icon]="getSortIcon('visibility')" class="ms-2"></fa-icon>
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2"></fa-icon>
+            <fa-icon [icon]="getSortIcon('visibility')" class="ms-2" />
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2" />
         </button>
         <button
             type="button"
@@ -103,8 +103,8 @@
             (click)="changeSort('resulting')"
         >
             <p class="mb-0" [innerHtml]="'artemisApp.programmingExercise.configureGrading.gradingTableHeader.resultingPoints' | artemisTranslate"></p>
-            <fa-icon [icon]="getSortIcon('resulting')" class="ms-2"></fa-icon>
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2"></fa-icon>
+            <fa-icon [icon]="getSortIcon('resulting')" class="ms-2" />
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2" />
         </button>
         <button
             type="button"
@@ -114,14 +114,14 @@
             (click)="changeSort('type')"
         >
             <p class="mb-0" [innerHtml]="'artemisApp.programmingExercise.configureGrading.gradingTableHeader.testType' | artemisTranslate"></p>
-            <fa-icon [icon]="getSortIcon('type')" class="ms-2"></fa-icon>
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2"></fa-icon>
+            <fa-icon [icon]="getSortIcon('type')" class="ms-2" />
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2" />
         </button>
         <div class="task__row__cell">
             {{ 'artemisApp.programmingExercise.configureGrading.gradingTableHeader.passedPercent' | artemisTranslate }}
         </div>
     </div>
     @for (task of tasks; track task; let i = $index) {
-        <jhi-programming-exercise-task [index]="i" [task]="task" [openSubject]="allTasksExpandedSubject" (updateTasksEvent)="updateTasks()"></jhi-programming-exercise-task>
+        <jhi-programming-exercise-task [index]="i" [task]="task" [openSubject]="allTasksExpandedSubject" (updateTasksEvent)="updateTasks()" />
     }
 </form>
