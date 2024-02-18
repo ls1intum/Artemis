@@ -18,13 +18,13 @@ export class ProgrammingExerciseDifficultyComponent {
 
     faQuestionCircle = faQuestionCircle;
 
-    updateReadOnly() {
-        if (this.isReadOnlyDisabled()) {
+    disableReadOnlyModeIfConditionsNotMet() {
+        if (this.shouldDisableReadOnlyMode()) {
             this.programmingExercise.allowOnlineEditorReadOnlyMode = false;
         }
     }
 
-    isReadOnlyDisabled(): boolean {
+    shouldDisableReadOnlyMode(): boolean {
         return !this.programmingExercise.allowOfflineIde || !this.programmingExercise.allowOnlineEditor;
     }
 }

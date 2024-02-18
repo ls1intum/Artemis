@@ -21,7 +21,7 @@
                     name="allowOfflineIde"
                     id="field_allowOfflineIde"
                     [(ngModel)]="programmingExercise.allowOfflineIde"
-                    (change)="updateReadOnly()"
+                    (change)="disableReadOnlyModeIfConditionsNotMet()"
                     checked
                 />
                 <span jhiTranslate="artemisApp.programmingExercise.allowOfflineIde.title">Allow Offline IDE</span>
@@ -44,7 +44,7 @@
                         name="allowOnlineEditor"
                         id="field_allowOnlineEditor"
                         [(ngModel)]="programmingExercise.allowOnlineEditor"
-                        (change)="updateReadOnly()"
+                        (change)="disableReadOnlyModeIfConditionsNotMet()"
                         checked
                     />
                     <span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor.title">Allow Online Editor</span>
@@ -59,14 +59,14 @@
                 </label>
             </div>
             <div class="form-check" style="margin-left: 20px">
-                <label [class]="'form-check-label'" [ngStyle]="isReadOnlyDisabled() ? { color: 'grey' } : {}" for="field_allowOnlineEditorReadOnlyMode">
+                <label [class]="'form-check-label'" [ngStyle]="shouldDisableReadOnlyMode() ? { color: 'grey' } : {}" for="field_allowOnlineEditorReadOnlyMode">
                     <input
                         class="form-check-input"
                         type="checkbox"
                         name="allowOnlineEditorReadOnlyMode"
                         id="field_allowOnlineEditorReadOnlyMode"
                         [(ngModel)]="programmingExercise.allowOnlineEditorReadOnlyMode"
-                        [disabled]="isReadOnlyDisabled()"
+                        [disabled]="shouldDisableReadOnlyMode()"
                         checked
                     />
                     <span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor.readOnlyMode.title">read-only mode</span>
