@@ -398,8 +398,12 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
 
             // Create a bare local repository with JGit.
             Git git = Git.cloneRepository().setDirectory(repositoryPath.toFile()).setBare(true).setURI(oldOrigin).call();
-            // Rename the default branch to the configured default branch.
-            git.branchRename().setNewName(bitbucketLocalVCMigrationService.get().getDefaultBranch()).call();
+
+            if (!git.getRepository().getBranch().equals(bitbucketLocalVCMigrationService.get().getDefaultBranch())) {
+                // Rename the default branch to the configured default branch.
+                git.branchRename().setNewName(bitbucketLocalVCMigrationService.get().getDefaultBranch()).call();
+            }
+
             git.close();
             log.debug("Created local git repository {} in folder {}", repositorySlug, repositoryPath);
         }
