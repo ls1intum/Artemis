@@ -28,6 +28,7 @@ import com.google.common.collect.Lists;
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ParticipationInterface;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -40,7 +41,6 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipation
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.UriService;
-import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCService;
@@ -74,8 +74,6 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
 
     private final Environment environment;
 
-    private final GitService gitService;
-
     private final Optional<LocalVCService> localVCService;
 
     private final Optional<BitbucketService> bitbucketService;
@@ -88,7 +86,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<LocalVCService> localVCService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, GitService gitService, Optional<BitbucketService> bitbucketService, UriService uriService,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, Optional<BitbucketService> bitbucketService, UriService uriService,
             Optional<BitbucketLocalVCMigrationService> bitbucketLocalVCMigrationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.environment = environment;
@@ -96,7 +94,6 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.localVCService = localVCService;
-        this.gitService = gitService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.bitbucketService = bitbucketService;
         this.uriService = uriService;
@@ -141,9 +138,20 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         }
 
         log.info("Will migrate {} programming exercises and {} student repositories now. This might take a while", programmingExerciseCount, studentCount);
+        final int ESTIMAE_TIME_PER_REPOSITORY = 2; // 2s per repository
+        final double estimatedTimeExercise = programmingExerciseCount * ESTIMAE_TIME_PER_REPOSITORY * ESTIMAE_TIME_PER_REPOSITORY * ESTIMAE_TIME_PER_REPOSITORY; // test, template,
+                                                                                                                                                                 // solution, we
+                                                                                                                                                                 // dont estimate
+                                                                                                                                                                 // the auxiliary
+                                                                                                                                                                 // repositories
+        final double estimatedTimeStudents = studentCount * ESTIMAE_TIME_PER_REPOSITORY;
+
+        final long totalFullBatchCount = programmingExerciseCount / BATCH_SIZE;
+        final int threadCount = (int) Math.max(1, Math.min(totalFullBatchCount, MAX_THREAD_COUNT));
+
+        final double estimatedTime = (estimatedTimeExercise + estimatedTimeStudents) / MAX_THREAD_COUNT / 3600;
+        log.info("Using {} threads for migration, and assuming 2s per repository, the migration should take around {}", MAX_THREAD_COUNT, estimatedTime + " hours");
         // Number of full batches. The last batch might be smaller
-        long totalFullBatchCount = programmingExerciseCount / BATCH_SIZE;
-        int threadCount = (int) Math.max(1, Math.min(totalFullBatchCount, MAX_THREAD_COUNT));
 
         // Use fixed thread pool to prevent loading too many exercises into memory at once
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
@@ -373,7 +381,10 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             log.info("Repository {} is already in local VC", repositoryUri);
             return repositoryUri;
         }
-
+        if (!bitbucketService.get().repositoryUriIsValid(new VcsRepositoryUri(repositoryUri))) {
+            log.info("Repository {} is not available in Bitbucket, removing the reference in the database", repositoryUri);
+            return null;
+        }
         try {
             var repositoryName = uriService.getRepositorySlugFromRepositoryUriString(repositoryUri);
             var projectKey = exercise.getProjectKey();
