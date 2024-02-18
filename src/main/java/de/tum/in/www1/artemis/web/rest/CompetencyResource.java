@@ -127,7 +127,7 @@ public class CompetencyResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-        final var competencies = competencyRepository.findByCourseIdWithProgressOfUser(courseId, user.getId());
+        final var competencies = competencyRepository.findWithUserSpecificProgressByCourseId(courseId, user.getId());
         return ResponseEntity.ok(competencies);
     }
 
