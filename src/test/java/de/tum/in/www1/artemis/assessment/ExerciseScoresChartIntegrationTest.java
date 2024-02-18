@@ -134,24 +134,23 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationIndepe
     void getCourseExerciseScores_asStudent_shouldReturnCorrectIndividualAverageAndMaxScores() throws Exception {
         List<ExerciseScoresDTO> exerciseScores = request.getList(getEndpointUrl(idOfCourse), HttpStatus.OK, ExerciseScoresDTO.class);
         assertThat(exerciseScores).hasSize(3);
-        ExerciseScoresDTO individualTextExercise = exerciseScores.stream().filter(exerciseScoresDTO -> exerciseScoresDTO.exerciseId.equals(idOfIndividualTextExercise)).findFirst()
+        ExerciseScoresDTO individualTextExercise = exerciseScores.stream().filter(exerciseScoresDTO -> exerciseScoresDTO.exerciseId() == idOfIndividualTextExercise).findFirst()
                 .orElseThrow();
-        ExerciseScoresDTO teamTextExercise = exerciseScores.stream().filter(exerciseScoresDTO -> exerciseScoresDTO.exerciseId.equals(idOfTeamTextExercise)).findFirst()
-                .orElseThrow();
+        ExerciseScoresDTO teamTextExercise = exerciseScores.stream().filter(exerciseScoresDTO -> exerciseScoresDTO.exerciseId() == idOfTeamTextExercise).findFirst().orElseThrow();
         ExerciseScoresDTO individualTextExerciseWithoutParticipants = exerciseScores.stream()
-                .filter(exerciseScoresDTO -> exerciseScoresDTO.exerciseId.equals(idOfIndividualTextExerciseWithoutParticipants)).findFirst().orElseThrow();
+                .filter(exerciseScoresDTO -> exerciseScoresDTO.exerciseId() == idOfIndividualTextExerciseWithoutParticipants).findFirst().orElseThrow();
 
-        assertThat(individualTextExercise.scoreOfStudent).isEqualTo(50.0);
-        assertThat(individualTextExercise.averageScoreAchieved).isEqualTo(40.0);
-        assertThat(individualTextExercise.maxScoreAchieved).isEqualTo(50);
+        assertThat(individualTextExercise.scoreOfStudent()).isEqualTo(50.0);
+        assertThat(individualTextExercise.averageScoreAchieved()).isEqualTo(40.0);
+        assertThat(individualTextExercise.maxScoreAchieved()).isEqualTo(50);
 
-        assertThat(teamTextExercise.scoreOfStudent).isEqualTo(50.0);
-        assertThat(teamTextExercise.averageScoreAchieved).isEqualTo(70.0);
-        assertThat(teamTextExercise.maxScoreAchieved).isEqualTo(90.0);
+        assertThat(teamTextExercise.scoreOfStudent()).isEqualTo(50.0);
+        assertThat(teamTextExercise.averageScoreAchieved()).isEqualTo(70.0);
+        assertThat(teamTextExercise.maxScoreAchieved()).isEqualTo(90.0);
 
-        assertThat(individualTextExerciseWithoutParticipants.scoreOfStudent).isZero();
-        assertThat(individualTextExerciseWithoutParticipants.averageScoreAchieved).isZero();
-        assertThat(individualTextExerciseWithoutParticipants.maxScoreAchieved).isZero();
+        assertThat(individualTextExerciseWithoutParticipants.scoreOfStudent()).isZero();
+        assertThat(individualTextExerciseWithoutParticipants.averageScoreAchieved()).isZero();
+        assertThat(individualTextExerciseWithoutParticipants.maxScoreAchieved()).isZero();
     }
 
     private String getEndpointUrl(long courseId) {
