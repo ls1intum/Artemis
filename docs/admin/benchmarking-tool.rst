@@ -1,7 +1,7 @@
 Benchmarking Tool
 =================
 
-The Artemis Benchmarking Tool is a web application that can be used to test the performance of Artemis under heavy load.
+The Artemis Benchmarking Tool is a web application designed for Artemis administrators to test the performance of Artemis under heavy load.
 It is available on `GitHub <https://github.com/ls1intum/Artemis-Benchmarking>`_.
 
 The Benchmarking Tool for Artemis is designed to simulate realistic user interactions with the Artemis platform,
@@ -9,7 +9,7 @@ particularly focusing on exam conductions where the system's performance and sca
 
 This tool enables system administrators and developers to assess and analyze Artemis's behavior under simulated load conditions,
 providing valuable insights into response times, system workload, and overall stability.
-These insight can be used to identify the limits of the hardware infrastructure as well as the software architecture,
+These insights can be used to identify the limits of the hardware infrastructure as well as the software architecture,
 thereby allowing for targeted optimizations and improvements.
 The main goal is to ensure that the respective Artemis setup is able to handle the expected load during exams without any performance issues.
 
