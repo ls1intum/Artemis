@@ -353,14 +353,23 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             log.info("Repository {} is already in local VC", repositoryUri);
             return repositoryUri;
         }
-        var repositoryName = uriService.getRepositorySlugFromRepositoryUriString(repositoryUri);
-        var projectKey = exercise.getProjectKey();
+        /*
+         * We clone the repository from Bitbucket to check if it still exists, we use the cloning approach instead
+         * of the Bitbucket API to avoid rate limits and to ensure that the repository is still available.
+         */
         Repository oldRepository = gitService.getOrCheckoutRepository(new VcsRepositoryUri(repositoryUri), true);
         if (oldRepository == null) {
-            // TODO: we should handle this case. If the repo does not exist anymore on Bitbucket, we should set the repository URL to null for the participation
-            log.error("Failed to clone repository from Bitbucket: {}", repositoryUri);
+            /*
+             * By returning null here, we indicate that the repository does not exist anymore, the calling method will
+             * then remove the reference to the repository in the database.
+             */
+            log.error("Failed to clone repository from Bitbucket: {}, the repository is unavailable, we remove the reference to it.", repositoryUri);
             return null;
         }
+
+        var repositoryName = uriService.getRepositorySlugFromRepositoryUriString(repositoryUri);
+        var projectKey = exercise.getProjectKey();
+
         localVCService.get().createProjectForExercise(exercise);
         copyRepoToLocalVC(projectKey, repositoryName, repositoryUri);
         var uri = new LocalVCRepositoryUri(projectKey, repositoryName, bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl());
