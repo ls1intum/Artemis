@@ -258,7 +258,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query("""
             SELECT user
             FROM User user
-                LEFT JOIN user.groups userGroup
+                LEFT JOIN FETCH user.groups userGroup
             WHERE user.isDeleted IS FALSE
                 AND userGroup IN :groupNames
                 AND (
