@@ -259,6 +259,10 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
      * @param solutionParticipations the solution participations to migrate
      */
     private void migrateSolutions(List<SolutionProgrammingExerciseParticipation> solutionParticipations) {
+        if (bitbucketLocalVCMigrationService.isEmpty()) {
+            log.error("Failed to migrate solution participations because the Bitbucket migration service is not available.");
+            return;
+        }
         for (var solutionParticipation : solutionParticipations) {
             try {
                 var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(solutionParticipation.getProgrammingExercise(), solutionParticipation.getRepositoryUri());
@@ -266,6 +270,9 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
                 solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
                 url = migrateTestRepo(solutionParticipation.getProgrammingExercise());
                 var programmingExercise = solutionParticipation.getProgrammingExercise();
+                if (url != null && !bitbucketLocalVCMigrationService.get().getDefaultBranch().equals(programmingExercise.getBranch())) {
+                    programmingExercise.setBranch(bitbucketLocalVCMigrationService.get().getDefaultBranch());
+                }
                 programmingExercise.setTestRepositoryUri(url);
                 programmingExerciseRepository.save(programmingExercise);
                 migrateAuxiliaryRepositories(programmingExercise);
@@ -303,9 +310,16 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
      * @param participations list of student participations to migrate
      */
     private void migrateStudents(List<ProgrammingExerciseStudentParticipation> participations) {
+        if (bitbucketLocalVCMigrationService.isEmpty()) {
+            log.error("Failed to migrate student participations because the Bitbucket migration service is not available.");
+            return;
+        }
         for (var participation : participations)
             try {
                 var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(participation.getProgrammingExercise(), participation.getRepositoryUri());
+                if (url != null && !bitbucketLocalVCMigrationService.get().getDefaultBranch().equals(participation.getBranch())) {
+                    participation.setBranch(bitbucketLocalVCMigrationService.get().getDefaultBranch());
+                }
                 participation.setRepositoryUri(url);
                 programmingExerciseStudentParticipationRepository.save(participation);
             }
