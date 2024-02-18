@@ -70,7 +70,7 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
             FROM ConversationParticipant conversationParticipant
             WHERE conversationParticipant.conversation.id = :conversationId
                 AND conversationParticipant.user.id = :userId
-                AND conversationParticipant.isModerator IS TRUE
+                AND conversationParticipant.isModerator = TRUE
             """)
     Optional<ConversationParticipant> findModeratorConversationParticipantByConversationIdAndUserId(@Param("conversationId") Long conversationId, @Param("userId") Long userId);
 

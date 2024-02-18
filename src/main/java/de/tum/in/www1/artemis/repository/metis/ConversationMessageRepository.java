@@ -90,7 +90,7 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
                 LEFT JOIN post.tags tag
                 LEFT JOIN Channel channel ON channel.id = post.conversation.id
             WHERE channel.course.id = :courseId
-                AND channel.isCourseWide IS TRUE
+                AND channel.isCourseWide = TRUE
             """)
     List<String> findPostTagsForCourse(@Param("courseId") Long courseId);
 }

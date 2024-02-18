@@ -45,7 +45,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             FROM Submission submission
                 LEFT JOIN FETCH submission.results r
                 LEFT JOIN FETCH r.feedbacks
-            WHERE submission.exampleSubmission IS TRUE
+            WHERE submission.exampleSubmission = TRUE
                 AND submission.id = :submissionId
             """)
     Optional<Submission> findExampleSubmissionByIdWithEagerResult(@Param("submissionId") long submissionId);
@@ -228,7 +228,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 JOIN p.exercise e
             WHERE TYPE(s) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
                 AND e.id IN :exerciseIds
-                AND s.submitted IS TRUE
+                AND s.submitted = TRUE
                 AND (s.submissionDate <= e.dueDate OR e.dueDate IS NULL)
             """)
     long countAllByExerciseIdsSubmittedBeforeDueDate(@Param("exerciseIds") Set<Long> exerciseIds);
@@ -245,8 +245,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             FROM Submission submission
             WHERE TYPE(submission) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
                 AND submission.participation.exercise.exerciseGroup.exam.id = :examId
-                AND submission.submitted IS TRUE
-                AND submission.participation.testRun IS FALSE
+                AND submission.submitted = TRUE
+                AND submission.participation.testRun = FALSE
             """)
     long countByExamIdSubmittedSubmissionsIgnoreTestRuns(@Param("examId") long examId);
 
@@ -263,7 +263,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 JOIN p.exercise e
             WHERE TYPE(s) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
                 AND e.id IN :exerciseIds
-                AND s.submitted IS TRUE
+                AND s.submitted = TRUE
                 AND e.dueDate IS NOT NULL
                 AND s.submissionDate > e.dueDate
             """)
@@ -280,7 +280,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 JOIN p.exercise e
                 JOIN p.submissions s
             WHERE e.id = :exerciseId
-                AND s.submitted IS TRUE
+                AND s.submitted = TRUE
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
                 AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
             """)
@@ -299,8 +299,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 JOIN p.submissions s
                 JOIN p.exercise e
             WHERE e.id = :exerciseId
-                AND p.testRun IS FALSE
-                AND s.submitted IS TRUE
+                AND p.testRun = FALSE
+                AND s.submitted = TRUE
                 AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
                 AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
             """)
@@ -322,8 +322,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 JOIN p.submissions s
                 JOIN p.exercise e
             WHERE e.id IN :exerciseIds
-                AND p.testRun IS FALSE
-                AND s.submitted IS TRUE
+                AND p.testRun = FALSE
+                AND s.submitted = TRUE
                 AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
             GROUP BY p.exercise.id
             """)
@@ -340,7 +340,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             FROM StudentParticipation p
                 JOIN p.submissions s
             WHERE p.exercise.id = :exerciseId
-                AND s.submitted IS TRUE
+                AND s.submitted = TRUE
             """)
     long countByExerciseIdSubmitted(@Param("exerciseId") long exerciseId);
 
@@ -373,7 +373,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 JOIN p.submissions s
                 JOIN p.exercise e
             WHERE e.id IN :exerciseIds
-                AND s.submitted IS TRUE
+                AND s.submitted = TRUE
                 AND s.submissionDate > e.dueDate
             GROUP BY e.id
             """)
@@ -396,7 +396,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 LEFT JOIN FETCH r.assessor a
             WHERE submission.participation.exercise.id = :exerciseId
                 AND :assessor = a
-                AND submission.participation.testRun IS FALSE
+                AND submission.participation.testRun = FALSE
             """)
     <T extends Submission> List<T> findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("assessor") User assessor);
 
@@ -496,12 +496,12 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             SELECT s
             FROM Submission s
             WHERE s.participation.exercise.id = :exerciseId
-                AND s.submitted IS TRUE
+                AND s.submitted = TRUE
                 AND s.submissionDate = (
                     SELECT MAX(s2.submissionDate)
                     FROM Submission s2
                     WHERE s2.participation.id = s.participation.id
-                        AND s2.submitted IS TRUE
+                        AND s2.submitted = TRUE
                 )
             """)
     Page<Submission> findLatestSubmittedSubmissionsByExerciseId(@Param("exerciseId") long exerciseId, Pageable pageable);
