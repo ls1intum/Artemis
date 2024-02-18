@@ -21,6 +21,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.google.gson.Gson;
 
+import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.domain.lti.Claims;
 import de.tum.in.www1.artemis.domain.lti.LtiAuthenticationResponseDTO;
 import de.tum.in.www1.artemis.exception.LtiEmailAlreadyInUseException;
@@ -66,6 +67,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             try {
                 // here we need to check if this is a deep-linking request or a launch request
                 if ("LtiDeepLinkingRequest".equals(ltiIdToken.getClaim(Claims.MESSAGE_TYPE))) {
+                    targetLink = CustomLti13Configurer.LTI13_DEEPLINKING_PATH;
                     lti13Service.startDeepLinking(ltiIdToken, authToken.getAuthorizedClientRegistrationId());
                 }
                 else {

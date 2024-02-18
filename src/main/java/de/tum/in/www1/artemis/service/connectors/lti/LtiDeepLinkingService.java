@@ -10,6 +10,7 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
@@ -62,7 +63,9 @@ public class LtiDeepLinkingService {
         Lti13DeepLinkingResponse lti13DeepLinkingResponse = new Lti13DeepLinkingResponse(ltiIdToken, clientRegistrationId);
         // Fill selected exercise link into content items
         String contentItems = this.populateContentItems(String.valueOf(courseId), exerciseIds);
-        lti13DeepLinkingResponse.setContentItems(contentItems);
+
+        String contentItemsJsonArr = new GsonBuilder().create().toJson(contentItems);
+        lti13DeepLinkingResponse.setContentItems(contentItemsJsonArr);
 
         // Prepare return url with jwt and id parameters
         return this.buildLtiDeepLinkResponse(clientRegistrationId, lti13DeepLinkingResponse);
@@ -102,6 +105,8 @@ public class LtiDeepLinkingService {
             JsonObject item = setContentItem(courseId, String.valueOf(exerciseId));
             contentItems.add(item);
         }
+
+        // TODO: properly serialize JsonArray ( should not generate element and value fields)
         return contentItems.toString();
     }
 

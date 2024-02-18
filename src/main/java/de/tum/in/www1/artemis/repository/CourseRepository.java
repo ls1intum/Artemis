@@ -200,15 +200,12 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     Course findWithEagerTutorialGroupConfigurationsById(long courseId);
 
     /**
-     * Fetches online courses with a specific LTI registration ID.
-     * Eagerly loads related configurations.
+     * Fetches all online courses.
      *
-     * @param registrationId The LTI platform's registration ID.
      * @return Set of eagerly loaded courses.
      */
-    @EntityGraph(attributePaths = { "onlineCourseConfiguration", "onlineCourseConfiguration.ltiPlatformConfiguration" })
-    @Query("SELECT c FROM Course c WHERE c.onlineCourse = TRUE AND c.onlineCourseConfiguration.ltiPlatformConfiguration.registrationId = :registrationId")
-    Set<Course> findOnlineCoursesWithRegistrationIdEager(@Param("registrationId") String registrationId);
+    @Query("SELECT c FROM Course c WHERE c.onlineCourse = TRUE")
+    Set<Course> findOnlineCoursesWithRegistrationIdEager();
 
     List<Course> findAllByShortName(String shortName);
 

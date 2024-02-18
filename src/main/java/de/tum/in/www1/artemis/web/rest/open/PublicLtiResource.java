@@ -166,6 +166,35 @@ public class PublicLtiResource {
         response.sendRedirect(redirectUrl); // Redirect using user-provided values is safe because user-provided values are used in the query parameters, not the url itself
     }
 
+    @PostMapping("lti13/deep-link")
+    @EnforceNothing
+    public void lti13DeepLinkRedirect(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String state = request.getParameter("state");
+        if (state == null) {
+            errorOnMissingParameter(response, "state");
+            return;
+        }
+
+        String idToken = request.getParameter("id_token");
+        if (idToken == null) {
+            errorOnMissingParameter(response, "id_token");
+            return;
+        }
+
+        if (!isValidJwtIgnoreSignature(idToken)) {
+            errorOnIllegalParameter(response, "id_token");
+            return;
+        }
+
+        UriComponentsBuilder uriBuilder = buildRedirect(request);
+        uriBuilder.path(LOGIN_REDIRECT_CLIENT_PATH);
+        uriBuilder.queryParam("state", UriComponent.encode(state, UriComponent.Type.QUERY_PARAM));
+        uriBuilder.queryParam("id_token", UriComponent.encode(idToken, UriComponent.Type.QUERY_PARAM));
+        String redirectUrl = uriBuilder.build().toString();
+        log.info("redirect to url: {}", redirectUrl);
+        response.sendRedirect(redirectUrl); // Redirect using user-provided values is safe because user-provided values are used in the query parameters, not the url itself
+    }
+
     /**
      * Strips the signature from a potential JWT and makes sure the rest is valid.
      *

@@ -379,8 +379,8 @@ public class CourseService {
      * @param user           the User object representing the instructor whose courses are to be fetched.
      * @return a set of {@link Course} objects where the user is an instructor, related to the specified LTI platform.
      */
-    public Set<Course> findAllOnlineCoursesForPlatformForUser(String registrationId, User user) {
-        return courseRepository.findOnlineCoursesWithRegistrationIdEager(registrationId).stream().filter(course -> authCheckService.isInstructorInCourse(course, user))
+    public Set<Course> findAllOnlineCoursesForPlatformForUser(User user) {
+        return courseRepository.findOnlineCoursesWithRegistrationIdEager().stream().filter(course -> authCheckService.isInstructorInCourse(course, user))
                 .collect(Collectors.toSet());
     }
 
