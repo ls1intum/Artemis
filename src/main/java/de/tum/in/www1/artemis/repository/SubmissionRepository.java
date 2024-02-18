@@ -75,10 +75,11 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @param submissionIds the ids of the submissions which should be retrieved
      * @return a list of submissions with their results eagerly loaded
      */
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.assessor" })
     @Query("""
             SELECT DISTINCT s
             FROM Submission s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.assessor
             WHERE s.id IN :submissionIds
             """)
     List<Submission> findBySubmissionIdsWithEagerResults(@Param("submissionIds") List<Long> submissionIds);

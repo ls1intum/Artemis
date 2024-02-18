@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.repository.metis.conversation;
 
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
-
 import java.util.List;
 
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,14 +13,14 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface GroupChatRepository extends JpaRepository<GroupChat, Long> {
 
-    @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants.user.groups" })
     @Query("""
             SELECT DISTINCT groupChat
             FROM GroupChat groupChat
-                LEFT JOIN groupChat.conversationParticipants conversationParticipant
-                LEFT JOIN FETCH groupChat.conversationParticipants
+                LEFT JOIN FETCH groupChat.conversationParticipants conversationParticipant
+                LEFT JOIN FETCH conversationParticipant.user user
+                LEFT JOIN FETCH user.groups
             WHERE groupChat.course.id = :courseId
-                AND conversationParticipant.user.id = :userId
+                AND user.id = :userId
             ORDER BY groupChat.lastMessageDate DESC
             """)
     List<GroupChat> findGroupChatsOfUserWithParticipantsAndUserGroups(@Param("courseId") Long courseId, @Param("userId") Long userId);

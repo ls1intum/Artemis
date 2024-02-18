@@ -1,12 +1,9 @@
 package de.tum.in.www1.artemis.repository;
 
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
-
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -37,10 +34,12 @@ public interface NotificationSettingRepository extends JpaRepository<Notificatio
             """)
     Set<NotificationSetting> findAllNotificationSettingsForRecipientsWithId(@Param("userIds") List<Long> userIds);
 
-    @EntityGraph(type = LOAD, attributePaths = { "user.groups", "user.authorities" })
     @Query("""
             SELECT setting
             FROM NotificationSetting setting
+                LEFT JOIN FETCH setting.user user
+                LEFT JOIN FETCH user.groups
+                LEFT JOIN FETCH user.authorities
             WHERE setting.settingId = :settingId
                 AND setting.email IS TRUE
             """)

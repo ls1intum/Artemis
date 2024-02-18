@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface TemplateProgrammingExerciseParticipationRepository extends JpaRepository<TemplateProgrammingExerciseParticipation, Long> {
 
-    @EntityGraph(type = LOAD, attributePaths = { "results", "programmingExercise" })
     @Query("""
             SELECT p
             FROM TemplateProgrammingExerciseParticipation p

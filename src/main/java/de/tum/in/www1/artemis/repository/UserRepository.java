@@ -163,7 +163,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             SELECT DISTINCT user
             FROM User user
                 LEFT JOIN FETCH user.groups
-            WHERE user.isDeleted IS FALSE
+            WHERE user.isDeleted = FALSE
                 AND :groupName MEMBER OF user.groups
                 AND (
                     user.login LIKE :#{#loginOrName}%
@@ -204,7 +204,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             SELECT user
             FROM User user
                 LEFT JOIN FETCH user.groups
-            WHERE user.isDeleted IS FALSE
+            WHERE user.isDeleted = FALSE
                 AND :groupName MEMBER OF user.groups
                 AND (
                     user.login LIKE :#{#loginOrName}%
@@ -213,7 +213,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             """, countQuery = """
             SELECT COUNT(user)
             FROM User user
-            WHERE user.isDeleted IS FALSE
+            WHERE user.isDeleted = FALSE
                 AND :groupName MEMBER OF user.groups
                 AND (
                     user.login LIKE :#{#loginOrName}%
@@ -226,7 +226,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             SELECT user
             FROM User user
                 LEFT JOIN FETCH user.groups userGroup
-            WHERE user.isDeleted IS FALSE
+            WHERE user.isDeleted = FALSE
                 AND userGroup IN :groupNames
                 AND (
                     user.login LIKE :#{#loginOrName}%
@@ -237,7 +237,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             SELECT COUNT(user)
             FROM User user
                 LEFT JOIN user.groups userGroup
-            WHERE user.isDeleted IS FALSE
+            WHERE user.isDeleted = FALSE
                 AND userGroup IN :groupNames
                 AND (
                     user.login LIKE :#{#loginOrName}%
@@ -275,7 +275,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 LEFT JOIN FETCH user.groups
                 JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
                 JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
-            WHERE user.isDeleted IS FALSE
+            WHERE user.isDeleted = FALSE
                 AND conversation.id = :conversationId
                 AND (
                     :loginOrName = ''
@@ -287,7 +287,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             FROM User user
                 JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
                 JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
-            WHERE user.isDeleted IS FALSE
+            WHERE user.isDeleted = FALSE
                 AND conversation.id = :conversationId
                 AND (
                     :loginOrName = ''
@@ -303,7 +303,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 JOIN FETCH user.groups userGroup
                 JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
                 JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
-            WHERE user.isDeleted IS FALSE
+            WHERE user.isDeleted = FALSE
                 AND conversation.id = :conversationId
                 AND (
                     :loginOrName = ''
@@ -316,7 +316,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 JOIN user.groups userGroup
                 JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
                 JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
-            WHERE user.isDeleted IS FALSE
+            WHERE user.isDeleted = FALSE
                 AND conversation.id = :conversationId
                 AND (
                     :loginOrName = ''
@@ -327,20 +327,19 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     Page<User> searchAllByLoginOrNameInConversationWithCourseGroups(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
             @Param("groupNames") Set<String> groupNames);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups" })
     @Query("""
             SELECT DISTINCT user
             FROM User user
                 JOIN user.groups userGroup
                 JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
                 JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
-            WHERE user.isDeleted IS FALSE
+            WHERE user.isDeleted = FALSE
                 AND conversation.id = :conversationId
                 AND (
                     :loginOrName = ''
                     OR user.login LIKE :#{#loginOrName}%
                     OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
-                ) AND conversationParticipant.isModerator IS TRUE
+                ) AND conversationParticipant.isModerator = TRUE
             """)
     Page<User> searchChannelModeratorsByLoginOrNameInConversation(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId);
 
@@ -397,7 +396,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             FROM User user
                 LEFT JOIN FETCH user.groups
                 JOIN Course course ON course.id = :courseId
-            WHERE user.isDeleted IS FALSE
+            WHERE user.isDeleted = FALSE
                 AND (
                     user.login LIKE :#{#loginOrName}%
                     OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
@@ -411,7 +410,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             SELECT COUNT(DISTINCT user)
             FROM User user
                 JOIN Course course ON course.id = :courseId
-            WHERE user.isDeleted IS FALSE
+            WHERE user.isDeleted = FALSE
                 AND (
                     user.login LIKE :#{#loginOrName}%
                     OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
@@ -480,7 +479,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             SELECT DISTINCT user
             FROM User user
                 LEFT JOIN FETCH user.groups
-            WHERE user.isDeleted IS FALSE
+            WHERE user.isDeleted = FALSE
                 AND :groupName MEMBER OF user.groups
                 AND user NOT IN :ignoredUsers
             """)

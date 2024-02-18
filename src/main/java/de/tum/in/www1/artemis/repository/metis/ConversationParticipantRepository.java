@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.repository.metis;
 
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
-
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
@@ -37,9 +35,11 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
             """)
     Set<ConversationParticipant> findConversationParticipantsByConversationId(@Param("conversationId") Long conversationId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "user.groups", "user.authorities" })
     @Query("""
             SELECT DISTINCT conversationParticipant
+                LEFT JOIN FETCH conversationParticipant.user user
+                LEFT JOIN FETCH user.groups
+                LEFT JOIN FETCH user.authorities
             FROM ConversationParticipant conversationParticipant
             WHERE conversationParticipant.conversation.id = :conversationId
             """)
