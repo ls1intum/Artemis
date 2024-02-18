@@ -37,7 +37,7 @@ public class MigrationEntry20240104_195600 extends MigrationEntry {
 
     private static final int BATCH_SIZE = 100;
 
-    private static final int MAX_THREAD_COUNT = 10;
+    private static final int MAX_THREAD_COUNT = 32;
 
     private static final String ERROR_MESSAGE = "Failed to migrate programming exercises within nine hours. Aborting migration.";
 
@@ -144,16 +144,23 @@ public class MigrationEntry20240104_195600 extends MigrationEntry {
         for (var solutionParticipation : solutionParticipations) {
             try {
                 Windfile windfile = aeolusBuildScriptGenerationService.get().translateBuildPlan(solutionParticipation.getBuildPlanId());
+                if (windfile == null) {
+                    log.error("Failed to migrate solution participation with id {} because the windfile is null", solutionParticipation.getId());
+                    errorList.add(solutionParticipation);
+                    continue;
+                }
                 if (windfile.getMetadata().getDocker() == null) {
                     log.info(
                             "Migrating solution participation with id {} but the docker image is null, the build plan will be translated but not be functional as an instructor needs to add a docker image",
                             solutionParticipation.getId());
                 }
+                // we don't need the following fields in the windfile
                 windfile.setRepositories(null);
                 windfile.setId(null);
                 windfile.setName(null);
                 windfile.setAuthor(null);
                 windfile.setGitCredentials(null);
+                windfile.setDescription(null);
                 this.makeWindfileLocalCIOptimized(windfile);
                 // TODO: should we modify the docker parameters here? e.g. remove stuff like --net=host? -> this is more a question for after
                 // the migration is done as localci does not respect the docker parameters anyway at the moment
