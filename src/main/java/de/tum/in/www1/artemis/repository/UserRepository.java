@@ -112,7 +112,10 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 LEFT JOIN FETCH user.groups
                 LEFT JOIN FETCH user.authorities
             WHERE user.isDeleted = FALSE
-                AND :groupName MEMBER OF user.groups
+                AND (
+                    LOWER(user.email) = LOWER(:searchInput)
+                    OR LOWER(user.login) = LOWER(:searchInput)
+                )
             """)
     List<User> findAllByEmailOrUsernameIgnoreCase(@Param("searchInput") String searchInput);
 
@@ -412,9 +415,23 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             SELECT COUNT(DISTINCT user)
             FROM User user
                 LEFT JOIN FETCH user.groups
+                JOIN Course course ON course.id = :courseId
             WHERE user.isDeleted = FALSE
+                AND (user.login LIKE :loginOrName% OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%)
+                AND (
+                    user.login LIKE :#{#loginOrName}%
+                    OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
+                )
+                AND (course.studentGroupName MEMBER OF user.groups
+                    OR course.teachingAssistantGroupName MEMBER OF user.groups
+                    OR course.editorGroupName MEMBER OF user.groups
+                    OR course.instructorGroupName MEMBER OF user.groups
+                )
             """)
     Page<User> searchAllByLoginOrNameInCourse(Pageable page, @Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    Page<User> findAllWithGroupsByIsDeletedIsFalse(Pageable pageable);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Set<User> findAllWithGroupsAndAuthoritiesByIsDeletedIsFalse();
