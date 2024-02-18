@@ -45,6 +45,7 @@ import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 @Component
 public class MigrationEntry20240103_143700 extends MigrationEntry {
@@ -142,11 +143,12 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
 
         final long totalFullBatchCount = programmingExerciseCount / BATCH_SIZE;
         final int threadCount = (int) Math.max(1, Math.min(totalFullBatchCount, MAX_THREAD_COUNT));
-        final double estimatedTimeExercise = getRestDurationInHours(0, programmingExerciseCount, 3, threadCount);
-        final double estimatedTimeStudents = getRestDurationInHours(0, studentCount, 1, threadCount);
+        final long estimatedTimeExercise = getRestDurationInSeconds(0, programmingExerciseCount, 3, threadCount);
+        final long estimatedTimeStudents = getRestDurationInSeconds(0, studentCount, 1, threadCount);
 
-        final double estimatedTime = (estimatedTimeExercise + estimatedTimeStudents) / MAX_THREAD_COUNT / 3600;
-        log.info("Using {} threads for migration, and assuming 2s per repository, the migration should take around {}", MAX_THREAD_COUNT, estimatedTime + " hours");
+        final long estimatedTime = (estimatedTimeExercise + estimatedTimeStudents);
+        log.info("Using {} threads for migration, and assuming 2s per repository, the migration should take around {}", MAX_THREAD_COUNT,
+                TimeLogUtil.formatDuration(estimatedTime));
         // Number of full batches. The last batch might be smaller
 
         // Use fixed thread pool to prevent loading too many exercises into memory at once
@@ -168,7 +170,8 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
                     migrateSolutions(solutionParticipations);
                     solutionCounter.addAndGet(solutionParticipations.size());
                     log.info("Migrated {}/{} solution participations", solutionCounter.get(), solutionCount);
-                    log.info("Estimated time remaining: {} hours for solution repositories", getRestDurationInHours(solutionCounter.get(), solutionCount, 3, threadCount));
+                    log.info("Estimated time remaining: {} hours for solution repositories",
+                            TimeLogUtil.formatDuration(getRestDurationInSeconds(solutionCounter.get(), solutionCount, 3, threadCount)));
                 });
             }
         }
@@ -190,7 +193,8 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
                     migrateTemplates(templateParticipations);
                     templateCounter.addAndGet(templateParticipations.size());
                     log.info("Migrated {}/{} template participations", templateCounter.get(), templateCount);
-                    log.info("Estimated time remaining: {} hours for template repositories", getRestDurationInHours(templateCounter.get(), templateCount, 3, threadCount));
+                    log.info("Estimated time remaining: {} hours for template repositories",
+                            TimeLogUtil.formatDuration(getRestDurationInSeconds(templateCounter.get(), templateCount, 3, threadCount)));
                 });
             }
         }
@@ -211,7 +215,8 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
                     migrateStudents(studentParticipations);
                     studentCounter.addAndGet(studentParticipations.size());
                     log.info("Migrated {}/{} student participations", studentCounter.get(), studentCount);
-                    log.info("Estimated time remaining: {} hours for student repositories", getRestDurationInHours(studentCounter.get(), studentCount, 1, threadCount));
+                    log.info("Estimated time remaining: {} hours for student repositories",
+                            TimeLogUtil.formatDuration(getRestDurationInSeconds(studentCounter.get(), studentCount, 1, threadCount)));
                 });
             }
         }
@@ -240,12 +245,12 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         evaluateErrorList();
     }
 
-    private double getRestDurationInHours(final int done, final long total, final int reposPerEntry, final int threads) {
+    private long getRestDurationInSeconds(final int done, final long total, final int reposPerEntry, final int threads) {
         final long ESTIMATED_TIME_PER_REPOSITORY = 2; // 2s per repository
         final long stillTodo = total - done;
         final long timePerEntry = ESTIMATED_TIME_PER_REPOSITORY * reposPerEntry;
 
-        return ((double) (stillTodo * timePerEntry) / threads) / 3600D;
+        return (stillTodo * timePerEntry) / threads;
     }
 
     private String migrateTestRepo(ProgrammingExercise programmingExercise) throws GitAPIException, URISyntaxException {
