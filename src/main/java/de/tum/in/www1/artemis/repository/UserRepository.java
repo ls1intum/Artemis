@@ -258,10 +258,20 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @param groupNames  Names of groups in which to search for users
      * @return All users matching search criteria
      */
-    @Query("""
+    @Query(value = """
             SELECT user
             FROM User user
                 LEFT JOIN FETCH user.groups userGroup
+            WHERE user.isDeleted = FALSE
+                AND userGroup IN :groupNames
+                AND (
+                    user.login LIKE :#{#loginOrName}%
+                    OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
+                )
+            """, countQuery = """
+            SELECT user
+            FROM User user
+                LEFT JOIN user.groups userGroup
             WHERE user.isDeleted = FALSE
                 AND userGroup IN :groupNames
                 AND (
@@ -329,7 +339,20 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     Page<User> searchAllByLoginOrNameInConversationWithCourseGroups(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
             @Param("groupNames") Set<String> groupNames);
 
-    @Query("""
+    @Query(value = """
+            SELECT DISTINCT user
+            FROM User user
+                JOIN FETCH user.groups userGroup
+                JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
+                JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
+            WHERE user.isDeleted = FALSE
+                AND conversation.id = :conversationId
+                AND (
+                    :loginOrName = ''
+                    OR user.login LIKE :#{#loginOrName}%
+                    OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
+                ) AND conversationParticipant.isModerator = TRUE
+            """, countQuery = """
             SELECT DISTINCT user
             FROM User user
                 JOIN user.groups userGroup
@@ -396,34 +419,32 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query(value = """
             SELECT DISTINCT user
             FROM User user
-                LEFT JOIN FETCH user.groups
+                LEFT JOIN FETCH user.groups groups
                 JOIN Course course ON course.id = :courseId
             WHERE user.isDeleted = FALSE
-                AND (user.login LIKE :loginOrName% OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%)
                 AND (
                     user.login LIKE :#{#loginOrName}%
-                    OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 )
-                AND (course.studentGroupName MEMBER OF user.groups
-                    OR course.teachingAssistantGroupName MEMBER OF user.groups
-                    OR course.editorGroupName MEMBER OF user.groups
-                    OR course.instructorGroupName MEMBER OF user.groups
+                AND (course.studentGroupName MEMBER OF groups
+                    OR course.teachingAssistantGroupName MEMBER OF groups
+                    OR course.editorGroupName MEMBER OF groups
+                    OR course.instructorGroupName MEMBER OF groups
                 )
             """, countQuery = """
             SELECT COUNT(DISTINCT user)
             FROM User user
-                LEFT JOIN FETCH user.groups
+                LEFT JOIN user.groups groups
                 JOIN Course course ON course.id = :courseId
             WHERE user.isDeleted = FALSE
-                AND (user.login LIKE :loginOrName% OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%)
                 AND (
                     user.login LIKE :#{#loginOrName}%
-                    OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 )
-                AND (course.studentGroupName MEMBER OF user.groups
-                    OR course.teachingAssistantGroupName MEMBER OF user.groups
-                    OR course.editorGroupName MEMBER OF user.groups
-                    OR course.instructorGroupName MEMBER OF user.groups
+                AND (course.studentGroupName MEMBER OF groups
+                    OR course.teachingAssistantGroupName MEMBER OF groups
+                    OR course.editorGroupName MEMBER OF groups
+                    OR course.instructorGroupName MEMBER OF groups
                 )
             """)
     Page<User> searchAllByLoginOrNameInCourse(Pageable page, @Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
