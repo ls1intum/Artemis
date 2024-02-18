@@ -132,8 +132,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 user.lastName,
                 user.langKey,
                 user.email,
-                CASE WHEN cp.isMuted = true THEN true ELSE false END,
-                CASE WHEN cp.isHidden = TRUE THEN TRUE ELSE FALSE END,
+                cp.isMuted,
+                cp.isHidden,
                 CASE WHEN ug.group = :teachingAssistantGroupName
                     OR ug.group = :editorGroupName
                     OR ug.group = :instructorGroupName
@@ -277,7 +277,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 LEFT JOIN FETCH user.groups
                 JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
                 JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
-                LEFT JOIN FETCH user.groups
             WHERE user.isDeleted = FALSE
                 AND conversation.id = :conversationId
                 AND (
@@ -399,7 +398,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             FROM User user
                 LEFT JOIN FETCH user.groups
                 JOIN Course course ON course.id = :courseId
-                LEFT JOIN FETCH user.groups
             WHERE user.isDeleted = FALSE
                 AND (user.login LIKE :loginOrName% OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%)
                 AND (
