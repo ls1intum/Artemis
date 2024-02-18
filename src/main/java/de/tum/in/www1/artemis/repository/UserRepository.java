@@ -269,7 +269,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                     OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
                 )
             """, countQuery = """
-            SELECT user
+            SELECT COUNT(user)
             FROM User user
                 LEFT JOIN user.groups userGroup
             WHERE user.isDeleted = FALSE
@@ -295,7 +295,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                     OR CONCAT_WS(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%
                 )
             """, countQuery = """
-            SELECT DISTINCT user
+            SELECT COUNT(DISTINCT user)
             FROM User user
                 JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
                 JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
