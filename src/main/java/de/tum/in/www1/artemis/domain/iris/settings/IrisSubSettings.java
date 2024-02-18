@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.DomainObject;
  * {@link IrisChatSubSettings} are used to specify settings for the chat feature.
  * {@link IrisHestiaSubSettings} are used to specify settings for the Hestia integration.
  * {@link IrisCodeEditorSubSettings} are used to specify settings for the code editor feature.
+ * {@link IrisCompetencyGenerationSubSettings} are used to specify settings for the competency generation feature.
  * <p>
  * Also see {@link de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService} for more information.
  */
@@ -34,7 +35,8 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 @JsonSubTypes({
     @JsonSubTypes.Type(value = IrisChatSubSettings.class, name = "chat"),
     @JsonSubTypes.Type(value = IrisHestiaSubSettings.class, name = "hestia"),
-    @JsonSubTypes.Type(value = IrisCodeEditorSubSettings.class, name = "code-editor")
+    @JsonSubTypes.Type(value = IrisCodeEditorSubSettings.class, name = "code-editor"),
+    @JsonSubTypes.Type(value = IrisCompetencyGenerationSubSettings.class, name = "competency-generation")
 })
 // @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

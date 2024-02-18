@@ -50,13 +50,13 @@ public interface ExampleSubmissionRepository extends JpaRepository<ExampleSubmis
             """)
     Optional<ExampleSubmission> findByIdWithResultsAndFeedback(@Param("exampleSubmissionId") long exampleSubmissionId);
 
-    Optional<ExampleSubmission> findBySubmissionId(@Param("submissionId") long submissionId);
+    Optional<ExampleSubmission> findBySubmissionId(long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.results" })
-    Optional<ExampleSubmission> findWithResultsBySubmissionId(@Param("submissionId") long submissionId);
+    Optional<ExampleSubmission> findWithResultsBySubmissionId(long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.results", "submission.results.feedbacks", "exercise", "exercise.gradingCriteria" })
-    Optional<ExampleSubmission> findWithSubmissionResultExerciseGradingCriteriaById(@Param("exampleSubmissionId") long exampleSubmissionId);
+    Optional<ExampleSubmission> findWithSubmissionResultExerciseGradingCriteriaById(long exampleSubmissionId);
 
     /**
      * Given the id of an example submission, it returns the results of the linked submission, if any

@@ -4,7 +4,7 @@ import { Component, EventEmitter, Input, NgModule, Output } from '@angular/core'
     // eslint-disable-next-line @angular-eslint/component-selector
     selector: 'ngb-alert',
     exportAs: 'ngbAlert',
-    template: '<ng-content></ng-content>',
+    template: '<ng-content />',
 })
 class NgbAlertMockComponent {
     @Input() animation: boolean;

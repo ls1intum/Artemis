@@ -1,12 +1,12 @@
 <div class="guided-tour" [class.success]="testCaseState === TestCaseState.SUCCESS" [class.failed]="testCaseState === TestCaseState.FAIL">
     @if (testCaseState === TestCaseState.SUCCESS) {
-        <fa-icon [icon]="farCheckCircle" size="lg" class="test-icon text-success"></fa-icon>
+        <fa-icon [icon]="farCheckCircle" size="lg" class="test-icon text-success" />
     }
     @if (testCaseState === TestCaseState.FAIL) {
-        <fa-icon [icon]="farTimesCircle" size="lg" class="test-icon text-danger"></fa-icon>
+        <fa-icon [icon]="farTimesCircle" size="lg" class="test-icon text-danger" />
     }
     @if (testCaseState === TestCaseState.NO_RESULT || testCaseState === TestCaseState.NOT_EXECUTED) {
-        <fa-icon [icon]="faQuestionCircle" size="lg" class="test-icon text-secondary"></fa-icon>
+        <fa-icon [icon]="faQuestionCircle" size="lg" class="test-icon text-secondary" />
     }
     @if (taskName) {
         <span class="task-name">{{ taskName }}</span>

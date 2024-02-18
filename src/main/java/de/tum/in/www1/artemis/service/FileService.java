@@ -939,7 +939,7 @@ public class FileService implements DisposableBean {
      * @param mergedPdfFilename title of merged pdf file
      * @return byte array of the merged file
      */
-    public Optional<byte[]> mergePdfFiles(List<String> paths, String mergedPdfFilename) {
+    public Optional<byte[]> mergePdfFiles(List<Path> paths, String mergedPdfFilename) {
         if (paths == null || paths.isEmpty()) {
             return Optional.empty();
         }
@@ -947,10 +947,9 @@ public class FileService implements DisposableBean {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         try {
-            for (String path : paths) {
-                File file = new File(path);
-                if (file.exists()) {
-                    pdfMerger.addSource(file);
+            for (Path path : paths) {
+                if (Files.exists(path)) {
+                    pdfMerger.addSource(path.toFile());
                 }
             }
 

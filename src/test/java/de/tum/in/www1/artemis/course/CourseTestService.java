@@ -44,6 +44,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.assessment.ComplaintUtilService;
@@ -166,6 +167,9 @@ public class CourseTestService {
 
     @Autowired
     private OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
+
+    @Autowired
+    private LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -3169,6 +3173,46 @@ public class CourseTestService {
         assertThat(response).usingRecursiveComparison().ignoringFields("id").isEqualTo(ocConfiguration);
     }
 
+    /**
+     * Tests fetching online courses for an LTI dashboard using a client ID.
+     * Verifies the response matches the expected course details.
+     *
+     * @throws Exception if any error occurs during the test execution.
+     */
+    public void testFindAllOnlineCoursesForLtiDashboard() throws Exception {
+        LtiPlatformConfiguration ltiPlatformConfiguration = new LtiPlatformConfiguration();
+        ltiPlatformConfiguration.setRegistrationId("registrationId");
+        ltiPlatformConfiguration.setClientId("clientId");
+        ltiPlatformConfiguration.setAuthorizationUri("authUri");
+        ltiPlatformConfiguration.setTokenUri("tokenUri");
+        ltiPlatformConfiguration.setJwkSetUri("jwkUri");
+        ltiPlatformConfigurationRepository.save(ltiPlatformConfiguration);
+
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        course.setOnlineCourse(true);
+        OnlineCourseConfiguration onlineCourseConfiguration = CourseFactory.generateOnlineCourseConfiguration(course, "key", "secret", "prefix", "url");
+        onlineCourseConfiguration.setLtiPlatformConfiguration(ltiPlatformConfiguration);
+
+        course = courseRepo.save(course);
+        onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
+
+        OnlineCourseConfiguration ocConfiguration = course.getOnlineCourseConfiguration();
+        String clientId = ocConfiguration.getLtiPlatformConfiguration().getRegistrationId();
+
+        String jsonResponse = request.get("/api/courses/for-lti-dashboard?clientId=" + clientId, HttpStatus.OK, String.class);
+        List<OnlineCourseDTO> receivedCourseForDashboard = objectMapper.readValue(jsonResponse, new TypeReference<List<OnlineCourseDTO>>() {
+            // This empty block is necessary to provide type information for JSON deserialization
+        });
+
+        assertThat(receivedCourseForDashboard).hasSize(1);
+
+        OnlineCourseDTO dto = receivedCourseForDashboard.get(0);
+        assertThat(dto.id()).isEqualTo(course.getId());
+        assertThat(dto.title()).isEqualTo(course.getTitle());
+        assertThat(dto.shortName()).isEqualTo(course.getShortName());
+        assertThat(dto.registrationId()).isEqualTo(clientId);
+    }
+
     public MockHttpServletRequestBuilder buildCreateCourse(@NotNull Course course) throws JsonProcessingException {
         return buildCreateCourse(course, null);
     }
@@ -3286,7 +3330,6 @@ public class CourseTestService {
         for (Course course : coursesExpected) {
             Optional<CourseForImportDTO> found = courses.stream().filter(c -> Objects.equals(c.id(), course.getId())).findFirst();
             assertThat(found).as("Course is available").isPresent();
-            CourseForImportDTO courseFound = found.orElseThrow();
         }
     }
 }

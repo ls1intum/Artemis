@@ -61,9 +61,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
         OidcIdToken ltiIdToken = null;
         try {
             OidcAuthenticationToken authToken = finishOidcFlow(request, response);
-
             ltiIdToken = ((OidcUser) authToken.getPrincipal()).getIdToken();
-
             targetLink = ltiIdToken.getClaim(Claims.TARGET_LINK_URI).toString();
 
             lti13Service.performLaunch(ltiIdToken, authToken.getAuthorizedClientRegistrationId());

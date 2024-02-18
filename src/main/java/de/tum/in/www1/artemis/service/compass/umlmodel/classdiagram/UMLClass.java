@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Objects;
 
 import jakarta.annotation.Nullable;
 
@@ -234,6 +235,11 @@ public class UMLClass extends UMLElement implements Serializable {
      */
     public int getElementCount() {
         return getAttributes().size() + getMethods().size() + 1;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), name, classType, umlPackage, attributes, methods);
     }
 
     @Override

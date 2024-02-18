@@ -26,26 +26,27 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long>, JpaSpecificationExecutor<QuizExercise> {
 
     @Query("""
-            SELECT DISTINCT e FROM QuizExercise e
-            LEFT JOIN FETCH e.categories
-            WHERE e.course.id = :#{#courseId}
+            SELECT DISTINCT e
+            FROM QuizExercise e
+                LEFT JOIN FETCH e.categories
+            WHERE e.course.id = :courseId
             """)
     List<QuizExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT qe
             FROM QuizExercise qe
-            WHERE qe.exerciseGroup.exam.id = :#{#examId}
+            WHERE qe.exerciseGroup.exam.id = :examId
             """)
-    List<QuizExercise> findByExamId(Long examId);
+    List<QuizExercise> findByExamId(@Param("examId") Long examId);
 
     @Query("""
             SELECT DISTINCT qe
             FROM QuizExercise qe
-            LEFT JOIN qe.quizBatches b
-            WHERE b.startTime > :#{#earliestReleaseDate}
+                LEFT JOIN qe.quizBatches b
+            WHERE b.startTime > :earliestReleaseDate
             """)
-    List<QuizExercise> findAllPlannedToStartAfter(ZonedDateTime earliestReleaseDate);
+    List<QuizExercise> findAllPlannedToStartAfter(@Param("earliestReleaseDate") ZonedDateTime earliestReleaseDate);
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "quizBatches" })
     Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId);

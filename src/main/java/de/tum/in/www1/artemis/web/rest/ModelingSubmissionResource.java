@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -259,7 +257,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         if (submission != null) {
             // needed to show the grading criteria in the assessment view
-            List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+            Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
             modelingExercise.setGradingCriteria(gradingCriteria);
             // Make sure the exercise is connected to the participation in the json response
             submission.getParticipation().setExercise(modelingExercise);

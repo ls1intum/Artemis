@@ -2,185 +2,20 @@
     <h2>{{ tutorialGroup.title }}</h2>
     <hr />
     @if (header) {
-        <ng-template [ngTemplateOutlet]="header" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"></ng-template>
+        <ng-template [ngTemplateOutlet]="header" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }" />
         <hr />
     }
-    <h3>{{ 'artemisApp.pages.tutorialGroupDetail.title' | artemisTranslate }}:</h3>
-    <dl class="row-md jh-entity-details markdown-preview">
-        <!-- Course -->
-        <dt>
-            <span>{{ 'artemisApp.entities.tutorialGroup.course' | artemisTranslate }}</span>
-        </dt>
-        <dd>
-            <a [routerLink]="['../..']" class="link-primary">{{ tutorialGroup.courseTitle }}</a>
-        </dd>
-        <!-- Title -->
-        <dt>
-            <span>{{ 'artemisApp.entities.tutorialGroup.title' | artemisTranslate }}</span>
-        </dt>
-        <dd>
-            @if (tutorialGroup.title) {
-                <span>{{ tutorialGroup.title }}</span>
-            }
-        </dd>
-        <!-- Channel -->
-        @if (tutorialGroup.channel && isMessagingEnabled(course)) {
-            <dt>
-                <a class="th-link" [routerLink]="['/courses', course.id!, 'messages']">{{ 'artemisApp.entities.tutorialGroup.channel' | artemisTranslate }}</a>
-            </dt>
-            <dd>
-                @if (tutorialGroup.channel.isMember) {
-                    <a
-                        [id]="'channel-' + tutorialGroup.id + '-' + tutorialGroup.channel.id"
-                        [routerLink]="['/courses', course.id!, 'messages']"
-                        [queryParams]="{ conversationId: tutorialGroup.channel.id }"
-                        class="link-primary"
-                        >{{ tutorialGroup.channel.name }}</a
-                    >
-                } @else {
-                    <span>{{ tutorialGroup.channel.name }}</span>
-                }
-            </dd>
-        }
-        <!-- Tutor -->
-        <dt>
-            <span>{{ 'artemisApp.entities.tutorialGroup.teachingAssistant' | artemisTranslate }}</span>
-        </dt>
-        <dd>
-            @if (tutorialGroup.teachingAssistantName) {
-                <span>{{ tutorialGroup.teachingAssistantName }}</span>
-            } @else {
-                <span>{{ 'artemisApp.pages.tutorialGroupDetail.teachingAssistantNotSet' | artemisTranslate }}</span>
-            }
-        </dd>
-        <!-- Utilization -->
-        <dt>
-            <span>{{ 'artemisApp.entities.tutorialGroup.utilization' | artemisTranslate }}</span>
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.entities.tutorialGroup.utilizationHelpDetail' | artemisTranslate }}"></fa-icon>
-        </dt>
-        <dd>
-            <jhi-tutorial-group-utilization-indicator [tutorialGroup]="tutorialGroup"></jhi-tutorial-group-utilization-indicator>
-        </dd>
-        <!-- Average Attendance -->
-        <dt>
-            <span>{{ 'artemisApp.entities.tutorialGroup.averageAttendanceDetail' | artemisTranslate }}</span>
-            <fa-icon
-                [icon]="faQuestionCircle"
-                class="text-secondary"
-                ngbTooltip="{{ 'artemisApp.entities.tutorialGroup.averageAttendanceHelpDetail' | artemisTranslate }}"
-            ></fa-icon>
-        </dt>
-        <dd>
-            @if (tutorialGroup.averageAttendance !== undefined) {
-                <span>{{ Math.round(tutorialGroup.averageAttendance) }}</span>
-            } @else {
-                <span>{{ '' }}</span>
-            }
-        </dd>
-        <!-- Capacity -->
-        <dt>
-            <span>{{ 'artemisApp.entities.tutorialGroup.capacity' | artemisTranslate }}</span>
-        </dt>
-        <dd>
-            @if (tutorialGroup.capacity) {
-                <span>{{ tutorialGroup.capacity }}</span>
-            } @else {
-                <span>{{ 'artemisApp.pages.tutorialGroupDetail.capacityNotSet' | artemisTranslate }}</span>
-            }
-        </dd>
-        <!-- Registered Students -->
-        <dt>
-            <span>{{ 'artemisApp.entities.tutorialGroup.registrations' | artemisTranslate }}</span>
-        </dt>
-        <dd>
-            <span>{{ tutorialGroup.numberOfRegisteredUsers ?? '0' }}</span>
-        </dd>
-        <!-- Online/Offline -->
-        <dt>
-            <span>{{ 'artemisApp.entities.tutorialGroup.isOnline' | artemisTranslate }}</span>
-        </dt>
-        <dd>
-            <span>
-                {{ (tutorialGroup.isOnline ? 'artemisApp.generic.online' : 'artemisApp.generic.offline') | artemisTranslate }}
-            </span>
-        </dd>
-        <!-- Language -->
-        <dt>
-            <span>{{ 'artemisApp.entities.tutorialGroup.language' | artemisTranslate }}</span>
-        </dt>
-        <dd>
-            <span>
-                {{ tutorialGroup.language ? tutorialGroup.language : '' }}
-            </span>
-        </dd>
-        <!-- Campus -->
-        <dt>
-            <span>{{ 'artemisApp.entities.tutorialGroup.campus' | artemisTranslate }}</span>
-        </dt>
-        <dd>
-            @if (tutorialGroup.campus) {
-                <span>{{ tutorialGroup.campus }}</span>
-            } @else {
-                <span>{{ 'artemisApp.pages.tutorialGroupDetail.campusNotSet' | artemisTranslate }}</span>
-            }
-        </dd>
-        <!-- Additional Information -->
-        <dt>
-            <span>{{ 'artemisApp.entities.tutorialGroup.additionalInformation' | artemisTranslate }}</span>
-        </dt>
-        @if (formattedAdditionalInformation) {
-            <dd class="editor-outline-background" [innerHTML]="formattedAdditionalInformation"></dd>
-        } @else {
-            <span>{{ 'artemisApp.pages.tutorialGroupDetail.additionalInformationNotSet' | artemisTranslate }}</span>
-        }
-        <!-- Schedule -->
-        <dt>
-            <span>{{ 'artemisApp.entities.tutorialGroup.schedule' | artemisTranslate }}</span>
-        </dt>
-        <dd>
-            @if (tutorialGroup.tutorialGroupSchedule) {
-                <span>{{
-                    (getDayTranslationKey(tutorialGroup.tutorialGroupSchedule?.dayOfWeek) | artemisTranslate) +
-                        ' ' +
-                        (tutorialGroup.tutorialGroupSchedule?.startTime | removeSeconds) +
-                        '-' +
-                        (tutorialGroup.tutorialGroupSchedule?.endTime | removeSeconds)
-                }}</span>
-                <br />
-                @if (tutorialGroup.isOnline) {
-                    <span>{{ 'artemisApp.forms.scheduleForm.locationInput.labelOnline' | artemisTranslate }}</span>
-                }
-                @if (!tutorialGroup.isOnline) {
-                    <span>{{ 'artemisApp.forms.scheduleForm.locationInput.labelOffline' | artemisTranslate }}</span>
-                }
-                : {{ tutorialGroup.tutorialGroupSchedule?.location }}
-                <br />
-                <span>
-                    {{
-                        (tutorialGroup.tutorialGroupSchedule!.repetitionFrequency! === 1
-                            ? 'artemisApp.entities.tutorialGroupSchedule.repetitionOneWeek'
-                            : 'artemisApp.entities.tutorialGroupSchedule.repetitionNWeeks'
-                        ) | artemisTranslate: { n: tutorialGroup.tutorialGroupSchedule!.repetitionFrequency! }
-                    }}
-                </span>
-            } @else {
-                <span>{{ 'artemisApp.pages.tutorialGroupDetail.scheduleNotSet' | artemisTranslate }}</span>
-            }
-            <br />
-        </dd>
-        <!-- Sessions -->
-        <dt>
-            <span>{{ 'artemisApp.entities.tutorialGroup.sessions' | artemisTranslate }}</span>
-        </dt>
-        <dd>
-            @if (sessions && sessions.length > 0) {
-                <div class="scrollbar table-wrapper-scroll-y border border-lightgrey p-3">
-                    <jhi-tutorial-group-sessions-table [timeZone]="timeZone" [sessions]="sessions" [tutorialGroup]="tutorialGroup" [showIdColumn]="false" [isReadOnly]="true">
-                    </jhi-tutorial-group-sessions-table>
-                </div>
-            } @else {
-                <span>{{ 'artemisApp.pages.tutorialGroupDetail.sessionsNotFound' | artemisTranslate }}</span>
-            }
-        </dd>
-    </dl>
+    @if (tutorialDetailSections) {
+        <jhi-detail-overview-list [sections]="tutorialDetailSections" />
+    }
+    <div class="mt-1">
+        <strong>{{ 'artemisApp.entities.tutorialGroup.sessions' | artemisTranslate }}</strong>
+    </div>
+    @if (sessions && sessions.length) {
+        <div class="scrollbar table-wrapper-scroll-y border border-lightgrey p-3">
+            <jhi-tutorial-group-sessions-table [timeZone]="timeZone" [sessions]="sessions" [tutorialGroup]="tutorialGroup" [showIdColumn]="false" [isReadOnly]="true" />
+        </div>
+    } @else {
+        <span>{{ '-' }}</span>
+    }
 </div>

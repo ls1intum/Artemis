@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -39,7 +42,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long>, J
             SELECT c
             FROM Competency c
                 LEFT JOIN FETCH c.lectureUnits lu
-            WHERE c.id = :#{#competencyId}
+            WHERE c.id = :competencyId
             """)
     Optional<Competency> findByIdWithLectureUnits(@Param("competencyId") long competencyId);
 
@@ -192,4 +195,25 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long>, J
     }
 
     long countByCourse(Course course);
+
+    /**
+     * Gets all competencies for the given course with the progress of the specified user.
+     * <p>
+     * The query only fetches data related to specified user. Participations for other users are not included.
+     * IMPORTANT: JPA doesn't support JOIN-FETCH-ON statements. To fetch the relevant data we utilize the entity graph annotation.
+     * Moving the ON clauses to the WHERE clause would result in significantly different and faulty output.
+     *
+     * @param courseId the id of the course
+     * @param userId   the id of the user
+     * @return the competencies with the progress of the user
+     */
+    @Query("""
+            SELECT competency
+            FROM Competency competency
+                LEFT JOIN competency.userProgress progress
+                    ON competency.id = progress.competency.id AND progress.user.id = :userId
+            WHERE competency.course.id = :courseId
+            """)
+    @EntityGraph(type = LOAD, attributePaths = { "userProgress" })
+    List<Competency> findByCourseIdWithProgressOfUser(@Param("courseId") long courseId, @Param("userId") long userId);
 }

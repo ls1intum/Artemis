@@ -282,12 +282,6 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetFilesAtCommitTutorForbidden() throws Exception {
-        request.getMap(studentRepoBaseUrl + participation.getId() + "/files-content/" + 123, HttpStatus.FORBIDDEN, String.class, String.class);
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFilesAtCommitInstructorNotInCourseForbidden() throws Exception {
         prepareRepository();

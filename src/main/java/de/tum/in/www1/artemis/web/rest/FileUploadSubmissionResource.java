@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -232,7 +230,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         if (!(fileUploadExercise instanceof FileUploadExercise)) {
             throw new BadRequestAlertException("The requested exercise was not found.", "exerciseId", "400");
         }
-        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         fileUploadExercise.setGradingCriteria(gradingCriteria);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 

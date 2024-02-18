@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service.messaging;
 
 import java.util.Optional;
 
+import jakarta.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -45,6 +47,8 @@ public class InstanceMessageReceiveService {
 
     private final UserRepository userRepository;
 
+    private final HazelcastInstance hazelcastInstance;
+
     public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
             ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseScheduleService modelingExerciseScheduleService, ExerciseRepository exerciseRepository,
             Optional<AthenaScheduleService> athenaScheduleService, HazelcastInstance hazelcastInstance, UserRepository userRepository, UserScheduleService userScheduleService,
@@ -59,7 +63,14 @@ public class InstanceMessageReceiveService {
         this.userScheduleService = userScheduleService;
         this.notificationScheduleService = notificationScheduleService;
         this.participantScoreScheduleService = participantScoreScheduleService;
+        this.hazelcastInstance = hazelcastInstance;
+    }
 
+    /**
+     * Initialize all topic listeners from hazelcast
+     */
+    @PostConstruct
+    public void init() {
         hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_SCHEDULE.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
             processScheduleProgrammingExercise((message.getMessageObject()));

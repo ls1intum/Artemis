@@ -9,13 +9,8 @@
     <div class="container">
         <div class="d-flex align-items-center">
             <h3>{{ 'artemisApp.competency.createCompetency.title' | artemisTranslate }}</h3>
-            <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+            <jhi-documentation-button [type]="documentationType" />
         </div>
-        <jhi-competency-form
-            [isEditMode]="false"
-            (formSubmitted)="createCompetency($event)"
-            [courseId]="courseId"
-            [lecturesOfCourseWithLectureUnits]="lecturesWithLectureUnits"
-        ></jhi-competency-form>
+        <jhi-competency-form [isEditMode]="false" (formSubmitted)="createCompetency($event)" [courseId]="courseId" [lecturesOfCourseWithLectureUnits]="lecturesWithLectureUnits" />
     </div>
 }

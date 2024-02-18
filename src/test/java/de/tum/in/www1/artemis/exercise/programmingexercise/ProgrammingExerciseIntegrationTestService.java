@@ -58,6 +58,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.GradingCriterionUtil;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.plagiarism.PlagiarismUtilService;
@@ -692,15 +693,16 @@ class ProgrammingExerciseIntegrationTestService {
         var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
         assertThat(programmingExerciseServer.getTitle()).isEqualTo(programmingExercise.getTitle());
 
-        List<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(programmingExerciseServer);
+        exerciseUtilService.addGradingInstructionsToExercise(programmingExerciseServer);
 
-        assertThat(programmingExerciseServer.getGradingCriteria().get(0).getTitle()).isNull();
-        assertThat(programmingExerciseServer.getGradingCriteria().get(1).getTitle()).isEqualTo("test title");
+        GradingCriterion criterionWithoutTitle = GradingCriterionUtil.findGradingCriterionByTitle(programmingExerciseServer, null);
+        GradingCriterion criterionWithTitle = GradingCriterionUtil.findGradingCriterionByTitle(programmingExerciseServer, "test title");
 
-        assertThat(gradingCriteria.get(0).getStructuredGradingInstructions()).hasSize(1);
-        assertThat(gradingCriteria.get(1).getStructuredGradingInstructions()).hasSize(3);
-        assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().get(0).getInstructionDescription())
-                .isEqualTo("created first instruction with empty criteria for testing");
+        assertThat(criterionWithTitle.getStructuredGradingInstructions()).hasSize(3);
+        assertThat(criterionWithoutTitle.getStructuredGradingInstructions()).hasSize(1);
+        final String expectedDescription = "created first instruction with empty criteria for testing";
+        assertThat(criterionWithoutTitle.getStructuredGradingInstructions().stream().filter(instruction -> expectedDescription.equals(instruction.getInstructionDescription()))
+                .findAny()).isPresent();
     }
 
     void testGetProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
@@ -1435,7 +1437,7 @@ class ProgrammingExerciseIntegrationTestService {
 
         mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, true);
         mockDelegate.mockConnectorRequestsForImport(programmingExercise, exerciseToBeImported, false, false);
-        mockDelegate.mockConnectorRequestsForSetup(exerciseToBeImported, false);
+        mockDelegate.mockConnectorRequestsForSetup(exerciseToBeImported, false, false, false);
         mockBuildPlanAndRepositoryCheck(programmingExercise);
         doNothing().when(versionControlService).addWebHooksForExercise(any());
         doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any(), any());
@@ -2091,7 +2093,7 @@ class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockGetBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanName, true, true, false, false);
         mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanName, false);
         mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanName, false);
-        mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false);
+        mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false, false, false);
 
         var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, false, true);
         request.put(defaultResetEndpoint(), resetOptions, HttpStatus.OK);
@@ -2169,7 +2171,7 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setShortName("ExerciseTitle");
         programmingExercise.setTitle("Title");
         if (expectedStatus == HttpStatus.CREATED) {
-            mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false);
+            mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false, false, false);
             mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());
         }
         request.postWithResponseBody(defaultAuxiliaryRepositoryEndpoint(), programmingExercise, ProgrammingExercise.class, expectedStatus);

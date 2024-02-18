@@ -65,7 +65,7 @@ public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long
                 LEFT JOIN participants.user user
             WHERE user = :user
             """)
-    Set<OneToOneChat> findAllByParticipatingUser(User user);
+    Set<OneToOneChat> findAllByParticipatingUser(@Param("user") User user);
 
     Integer countByCreatorIdAndCourseId(Long creatorId, Long courseId);
 }

@@ -29,9 +29,6 @@ import de.tum.in.www1.artemis.service.FileService;
 public class Attachment extends DomainObject implements Serializable {
 
     @Transient
-    private final transient FilePathService filePathService = new FilePathService();
-
-    @Transient
     private final transient FileService fileService = new FileService();
 
     @Transient

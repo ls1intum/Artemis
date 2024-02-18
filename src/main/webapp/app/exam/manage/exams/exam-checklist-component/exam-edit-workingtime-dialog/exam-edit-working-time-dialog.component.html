@@ -34,7 +34,7 @@
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()" [disabled]="isLoading">
-            <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button
             id="confirm"
@@ -44,10 +44,10 @@
             [disabled]="editForm.invalid || isLoading || !isWorkingTimeChangeValid"
         >
             @if (isLoading) {
-                <span><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span>
+                <span><fa-icon [icon]="faSpinner" [spin]="true" />&nbsp;</span>
             }
             @if (!isLoading) {
-                <fa-icon [icon]="faCheck"></fa-icon>
+                <fa-icon [icon]="faCheck" />
             }
             &nbsp;
             <span jhiTranslate="entity.action.confirm">Confirm</span>

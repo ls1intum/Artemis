@@ -3,8 +3,10 @@ package de.tum.in.www1.artemis;
 import static com.tngtech.archunit.base.DescribedPredicate.*;
 import static com.tngtech.archunit.core.domain.JavaCall.Predicates.target;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.*;
+import static com.tngtech.archunit.core.domain.JavaCodeUnit.Predicates.constructor;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
+import static com.tngtech.archunit.core.domain.properties.HasType.Predicates.rawType;
 import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.*;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
@@ -17,11 +19,14 @@ import org.eclipse.jgit.api.Git;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.slf4j.Logger;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Repository;
 
+import com.hazelcast.core.HazelcastInstance;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.*;
 import com.tngtech.archunit.lang.*;
@@ -149,27 +154,12 @@ class ArchitectureTest extends AbstractArchitectureTest {
         jsonParser.check(allClasses);
     }
 
-    // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes
-
-    private DescribedPredicate<? super JavaAnnotation<?>> simpleNameAnnotation(String name) {
-        return equalTo(name).as("Annotation with simple name " + name).onResultOf(annotation -> annotation.getRawType().getSimpleName());
-    }
-
-    private DescribedPredicate<? super JavaAnnotation<?>> resideInPackageAnnotation(String packageName) {
-        return equalTo(packageName).as("Annotation in package " + packageName).onResultOf(annotation -> annotation.getRawType().getPackageName());
-    }
-
-    private ArchCondition<JavaMethod> notHaveAnyParameterAnnotatedWith(DescribedPredicate<? super JavaAnnotation<?>> annotationPredicate) {
-        return new ArchCondition<>("have parameters annotated with ") {
-
-            @Override
-            public void check(JavaMethod item, ConditionEvents events) {
-                boolean satisfied = item.getParameterAnnotations().stream().flatMap(Collection::stream).noneMatch(annotationPredicate);
-                if (!satisfied) {
-                    events.add(violated(item, String.format("Method %s has parameter violating %s", item.getFullName(), annotationPredicate.getDescription())));
-                }
-            }
-        };
+    @Test
+    void testRepositoryParamAnnotation() {
+        var useParamInQueries = methods().that().areAnnotatedWith(Query.class).should(haveAllParametersAnnotatedWithUnless(rawType(Param.class), type(Pageable.class)));
+        var notUseParamOutsideQueries = methods().that().areNotAnnotatedWith(Query.class).should(notHaveAnyParameterAnnotatedWith(rawType(Param.class)));
+        useParamInQueries.check(productionClasses);
+        notUseParamOutsideQueries.check(productionClasses);
     }
 
     /**
@@ -181,5 +171,60 @@ class ArchitectureTest extends AbstractArchitectureTest {
         ArchRule usage = noClasses().should().callMethod(Git.class, "commit").because("You should use GitService.commit() instead");
         var classesWithoutGitService = allClasses.that(not(assignableTo(GitService.class)));
         usage.check(classesWithoutGitService);
+    }
+
+    @Test
+    void testNoHazelcastUsageInConstructors() {
+        // CacheHandler and QuizCache are exceptions because these classes are not created during startup
+        var exceptions = or(declaredClassSimpleName("QuizCache"), declaredClassSimpleName("CacheHandler"));
+        var notUseHazelcastInConstructor = methods().that().areDeclaredIn(HazelcastInstance.class).should().onlyBeCalled().byCodeUnitsThat(is(not(constructor()).or(exceptions)))
+                .because("Calling Hazelcast during Application startup might be slow since the Network gets used. Use @PostConstruct-methods instead.");
+        notUseHazelcastInConstructor.check(allClasses);
+    }
+
+    // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes
+
+    private DescribedPredicate<? super JavaAnnotation<?>> simpleNameAnnotation(String name) {
+        return equalTo(name).as("Annotation with simple name " + name).onResultOf(annotation -> annotation.getRawType().getSimpleName());
+    }
+
+    private DescribedPredicate<? super JavaAnnotation<?>> resideInPackageAnnotation(String packageName) {
+        return equalTo(packageName).as("Annotation in package " + packageName).onResultOf(annotation -> annotation.getRawType().getPackageName());
+    }
+
+    private DescribedPredicate<? super JavaCodeUnit> declaredClassSimpleName(String name) {
+        return equalTo(name).as("Declared in class with simple name " + name).onResultOf(unit -> unit.getOwner().getSimpleName());
+    }
+
+    private ArchCondition<JavaMethod> notHaveAnyParameterAnnotatedWith(DescribedPredicate<? super JavaAnnotation<?>> annotationPredicate) {
+        return new ArchCondition<>("not have parameters annotated with " + annotationPredicate.getDescription()) {
+
+            @Override
+            public void check(JavaMethod item, ConditionEvents events) {
+                boolean satisfied = item.getParameterAnnotations().stream().flatMap(Collection::stream).noneMatch(annotationPredicate);
+                if (!satisfied) {
+                    events.add(violated(item, String.format("Method %s has parameter violating %s", item.getFullName(), annotationPredicate.getDescription())));
+                }
+            }
+        };
+    }
+
+    private ArchCondition<JavaMethod> haveAllParametersAnnotatedWithUnless(DescribedPredicate<? super JavaAnnotation<?>> annotationPredicate,
+            DescribedPredicate<JavaClass> exception) {
+        return new ArchCondition<>("have all parameters annotated with " + annotationPredicate.getDescription()) {
+
+            @Override
+            public void check(JavaMethod item, ConditionEvents events) {
+                boolean satisfied = item.getParameters().stream()
+                        // Ignore annotations of the Pageable parameter
+                        .filter(javaParameter -> !exception.test(javaParameter.getRawType())).map(JavaParameter::getAnnotations)
+                        // Else, one of the annotations should match the given predicate
+                        // This allows parameters with multiple annotations (e.g. @NonNull @Param)
+                        .allMatch(annotations -> annotations.stream().anyMatch(annotationPredicate));
+                if (!satisfied) {
+                    events.add(violated(item, String.format("Method %s has parameter violating %s", item.getFullName(), annotationPredicate.getDescription())));
+                }
+            }
+        };
     }
 }
