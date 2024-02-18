@@ -6,23 +6,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.persistence.criteria.Fetch;
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.JoinType;
-
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.competency.Competency;
-import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
-import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
-import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -46,37 +38,25 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long>, J
             """)
     Optional<Competency> findByIdWithLectureUnits(@Param("competencyId") long competencyId);
 
-    class CompetencySpecification {
-
-        static public Specification<Competency> getCompetencyWithFetchesAndConditionalJoins(Long competencyId, Long userId) {
-            return (root, query, builder) -> {
-                root.fetch("userProgress", JoinType.LEFT);
-                root.fetch("exercises", JoinType.LEFT);
-                Fetch<Competency, LectureUnit> lectureUnitFetch = root.fetch("lectureUnits", JoinType.LEFT);
-                lectureUnitFetch.fetch("completedUsers", JoinType.LEFT);
-                lectureUnitFetch.fetch("lecture", JoinType.LEFT);
-
-                Join<LectureUnit, LectureUnitCompletion> completionJoin = root.join("lectureUnits", JoinType.LEFT).join("completedUsers", JoinType.LEFT);
-                completionJoin.on(completionJoin.get("user").get("id").in(userId));
-
-                Join<LectureUnit, CompetencyProgress> progressJoin = root.join("userProgress", JoinType.LEFT);
-                progressJoin.on(progressJoin.get("user").get("id").in(userId));
-                return builder.and(builder.equal(root.get("id"), competencyId));
-            };
-        }
-    }
+    @EntityGraph(type = LOAD, attributePaths = { "userProgress", "exercises", "lectureUnits", "lectureUnits.completedUsers", "lectureUnits.lecture" })
+    Optional<Competency> findCompetencyWithUserProgressAndExercisesAndCompletedUsersAndLecturesById(Long id);
 
     /**
      * Fetches a competency with all linked exercises, lecture units, the associated progress, and completion of the specified user.
      * <p>
-     * IMPORTANT: We use the {@link Specification} to fetch the lazy loaded data. The fetched data is limited by joining on the user id.
+     * As JPQL doesn't support conditional JOIN FETCH statements, we have to filter the fetched results manually.
      *
      * @param competencyId the id of the competency that should be fetched
      * @param userId       the id of the user whose progress should be fetched
      * @return the competency
      */
     default Optional<Competency> findByIdWithExercisesAndLectureUnitsAndProgressForUser(Long competencyId, Long userId) {
-        return findOne(CompetencySpecification.getCompetencyWithFetchesAndConditionalJoins(competencyId, userId));
+        Optional<Competency> competency = findCompetencyWithUserProgressAndExercisesAndCompletedUsersAndLecturesById(competencyId);
+        return competency.map(c -> {
+            c.getUserProgress().removeIf(p -> !p.getUser().getId().equals(userId));
+            c.getLectureUnits().forEach(unit -> unit.getCompletedUsers().removeIf(u -> !u.getUser().getId().equals(userId)));
+            return c;
+        });
     }
 
     @Query("""
