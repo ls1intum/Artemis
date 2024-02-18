@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.localvcci;
 
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_RESULTS_DIRECTORY;
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -158,6 +159,11 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
             Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(templateParticipation.getId());
             return buildJobOptional.isPresent() && buildJobOptional.get().getTriggeredByPushTo().equals(RepositoryType.TESTS);
         });
+
+        // Assert that the build job for the solution was completed before the build job for the template participation has started
+        var solutionBuildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(solutionParticipation.getId()).get();
+        var templateBuildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(templateParticipation.getId()).get();
+        assertThat(solutionBuildJob.getBuildCompletionDate()).isBefore(templateBuildJob.getBuildStartDate());
 
     }
 
