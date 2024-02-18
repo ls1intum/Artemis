@@ -65,4 +65,46 @@ public interface LearningPathRepository extends JpaRepository<LearningPath, Long
             """)
     long countLearningPathsOfEnrolledStudentsInCourse(@Param("courseId") long courseId);
 
+    /**
+     * Gets a learning path with eagerly fetched competencies, linked lecture units and exercises, and the corresponding domain objects storing the progress.
+     * <p>
+     * <b>As JPQL does not support conditional JOIN FETCH statements, we have to filter the fetched entities returned in this call.</b>
+     * <p>
+     * Consider using {@link #findWithEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsersByIdElseThrow(long)} instead.
+     *
+     * @param learningPathId the id of the learning path to fetch
+     * @return the learning path with fetched data
+     */
+    @Query("""
+            SELECT learningPath
+            FROM LearningPath learningPath
+                LEFT JOIN FETCH learningPath.competencies competencies
+                LEFT JOIN FETCH competencies.userProgress progress
+                LEFT JOIN FETCH competencies.lectureUnits lectureUnits
+                LEFT JOIN FETCH lectureUnits.completedUsers completedUsers
+                LEFT JOIN FETCH competencies.exercises exercises
+                LEFT JOIN FETCH exercises.studentParticipations studentParticipations
+            WHERE learningPath.id = :learningPathId
+            """)
+    Optional<LearningPath> findWithEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsersWithoutJoinConditionById(@Param("learningPathId") long learningPathId);
+
+    /**
+     * Gets a learning path with eagerly fetched competencies, linked lecture units and exercises, and the corresponding domain objects storing the progress.
+     *
+     * @param learningPathId the id of the learning path to fetch
+     * @return the learning path with fetched data
+     */
+    default LearningPath findWithEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsersByIdElseThrow(long learningPathId) {
+        LearningPath learningPath = findWithEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsersWithoutJoinConditionById(learningPathId)
+                .orElseThrow(() -> new EntityNotFoundException("LearningPath", learningPathId));
+        long userId = learningPath.getUser().getId();
+        learningPath.getCompetencies().forEach(competency -> {
+            competency.getUserProgress().removeIf(progress -> progress.getUser().getId() != userId);
+            competency.getLectureUnits().forEach(lectureUnit -> lectureUnit.getCompletedUsers().removeIf(user -> user.getUser().getId() != userId));
+            competency.getExercises().forEach(exercise -> exercise.getStudentParticipations()
+                    .removeIf(participation -> participation.getStudent().isEmpty() || participation.getStudent().get().getId() != userId));
+        });
+
+        return learningPath;
+    }
 }
