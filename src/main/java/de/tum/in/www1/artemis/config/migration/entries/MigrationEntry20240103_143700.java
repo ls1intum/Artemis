@@ -28,8 +28,6 @@ import com.google.common.collect.Lists;
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ParticipationInterface;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -375,12 +373,19 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             log.info("Repository {} is already in local VC", repositoryUri);
             return repositoryUri;
         }
-        /*
-         * We clone the repository from Bitbucket to check if it still exists, we use the cloning approach instead
-         * of the Bitbucket API to avoid rate limits and to ensure that the repository is still available.
-         */
-        Repository oldRepository = gitService.getOrCheckoutRepository(new VcsRepositoryUri(repositoryUri), true);
-        if (oldRepository == null) {
+
+        try {
+            var repositoryName = uriService.getRepositorySlugFromRepositoryUriString(repositoryUri);
+            var projectKey = exercise.getProjectKey();
+
+            localVCService.get().createProjectForExercise(exercise);
+            log.debug("Cloning repository {} from Bitbucket and moving it to local VCS", repositoryUri);
+            copyRepoToLocalVC(projectKey, repositoryName, repositoryUri);
+            log.debug("Successfully cloned repository {} from Bitbucket and moved it to local VCS", repositoryUri);
+            var uri = new LocalVCRepositoryUri(projectKey, repositoryName, bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl());
+            return uri.toString();
+        }
+        catch (LocalVCInternalException e) {
             /*
              * By returning null here, we indicate that the repository does not exist anymore, the calling method will
              * then remove the reference to the repository in the database.
@@ -388,14 +393,6 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             log.error("Failed to clone repository from Bitbucket: {}, the repository is unavailable, we remove the reference to it.", repositoryUri);
             return null;
         }
-
-        var repositoryName = uriService.getRepositorySlugFromRepositoryUriString(repositoryUri);
-        var projectKey = exercise.getProjectKey();
-
-        localVCService.get().createProjectForExercise(exercise);
-        copyRepoToLocalVC(projectKey, repositoryName, repositoryUri);
-        var uri = new LocalVCRepositoryUri(projectKey, repositoryName, bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl());
-        return uri.toString();
     }
 
     /**
