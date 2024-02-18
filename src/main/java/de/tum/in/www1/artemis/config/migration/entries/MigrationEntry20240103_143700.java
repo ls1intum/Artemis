@@ -11,6 +11,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.Git;
@@ -28,6 +29,7 @@ import com.google.common.collect.Lists;
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.participation.ParticipationInterface;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -40,10 +42,10 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipation
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.UriService;
-import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 @Component
 public class MigrationEntry20240103_143700 extends MigrationEntry {
@@ -74,8 +76,6 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
 
     private final Environment environment;
 
-    private final GitService gitService;
-
     private final Optional<LocalVCService> localVCService;
 
     private final Optional<BitbucketService> bitbucketService;
@@ -88,7 +88,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<LocalVCService> localVCService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, GitService gitService, Optional<BitbucketService> bitbucketService, UriService uriService,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, Optional<BitbucketService> bitbucketService, UriService uriService,
             Optional<BitbucketLocalVCMigrationService> bitbucketLocalVCMigrationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.environment = environment;
@@ -96,7 +96,6 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.localVCService = localVCService;
-        this.gitService = gitService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.bitbucketService = bitbucketService;
         this.uriService = uriService;
@@ -141,9 +140,16 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         }
 
         log.info("Will migrate {} programming exercises and {} student repositories now. This might take a while", programmingExerciseCount, studentCount);
+
+        final long totalFullBatchCount = programmingExerciseCount / BATCH_SIZE;
+        final int threadCount = (int) Math.max(1, Math.min(totalFullBatchCount, MAX_THREAD_COUNT));
+        final long estimatedTimeExercise = getRestDurationInSeconds(0, programmingExerciseCount, 3, threadCount);
+        final long estimatedTimeStudents = getRestDurationInSeconds(0, studentCount, 1, threadCount);
+
+        final long estimatedTime = (estimatedTimeExercise + estimatedTimeStudents);
+        log.info("Using {} threads for migration, and assuming 2s per repository, the migration should take around {}", MAX_THREAD_COUNT,
+                TimeLogUtil.formatDuration(estimatedTime));
         // Number of full batches. The last batch might be smaller
-        long totalFullBatchCount = programmingExerciseCount / BATCH_SIZE;
-        int threadCount = (int) Math.max(1, Math.min(totalFullBatchCount, MAX_THREAD_COUNT));
 
         // Use fixed thread pool to prevent loading too many exercises into memory at once
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
@@ -151,6 +157,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         /*
          * migrate the solution participations first, then the template participations, then the student participations
          */
+        AtomicInteger solutionCounter = new AtomicInteger(0);
         var solutionCount = solutionProgrammingExerciseParticipationRepository.count();
         log.info("Found {} solution participations to migrate.", solutionCount);
         for (int currentPageStart = 0; currentPageStart < solutionCount; currentPageStart += BATCH_SIZE) {
@@ -161,12 +168,17 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             for (var solutionParticipations : solutionParticipationsPartitions) {
                 executorService.submit(() -> migrateSolutions(solutionParticipations));
             }
+            solutionCounter.addAndGet(solutionParticipationPage.getNumberOfElements());
+            log.info("Migrated {}/{} solution participations", solutionCounter.get(), solutionCount);
+            log.info("Estimated time remaining: {} hours for solution repositories",
+                    TimeLogUtil.formatDuration(getRestDurationInSeconds(solutionCounter.get(), solutionCount, 2, threadCount)));
         }
 
         log.info("Submitted all solution participations to thread pool for migration.");
         /*
          * migrate the template participations
          */
+        AtomicInteger templateCounter = new AtomicInteger(0);
         var templateCount = templateProgrammingExerciseParticipationRepository.count();
         log.info("Found {} template participations to migrate", templateCount);
         for (int currentPageStart = 0; currentPageStart < templateCount; currentPageStart += BATCH_SIZE) {
@@ -177,12 +189,17 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             for (var templateParticipations : templateParticipationsPartitions) {
                 executorService.submit(() -> migrateTemplates(templateParticipations));
             }
+            templateCounter.addAndGet(templateParticipationPage.getNumberOfElements());
+            log.info("Migrated {}/{} template participations", templateCounter.get(), templateCount);
+            log.info("Estimated time remaining: {} hours for template repositories",
+                    TimeLogUtil.formatDuration(getRestDurationInSeconds(templateCounter.get(), templateCount, 1, threadCount)));
         }
 
         log.info("Submitted all template participations to thread pool for migration.");
         /*
          * migrate the student participations
          */
+        AtomicInteger studentCounter = new AtomicInteger(0);
         log.info("Found {} student programming exercise participations with build plans to migrate.", studentCount);
         for (int currentPageStart = 0; currentPageStart < studentCount; currentPageStart += BATCH_SIZE) {
             Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
@@ -192,6 +209,10 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             for (var studentParticipations : studentPartitionsPartitions) {
                 executorService.submit(() -> migrateStudents(studentParticipations));
             }
+            studentCounter.addAndGet(studentParticipationPage.getNumberOfElements());
+            log.info("Migrated {}/{} student participations", studentCounter.get(), studentCount);
+            log.info("Estimated time remaining: {} hours for student repositories",
+                    TimeLogUtil.formatDuration(getRestDurationInSeconds(studentCounter.get(), studentCount, 1, threadCount)));
         }
 
         // Wait for all threads to finish
@@ -218,6 +239,14 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         evaluateErrorList();
     }
 
+    private long getRestDurationInSeconds(final int done, final long total, final int reposPerEntry, final int threads) {
+        final long ESTIMATED_TIME_PER_REPOSITORY = 2; // 2s per repository
+        final long stillTodo = total - done;
+        final long timePerEntry = ESTIMATED_TIME_PER_REPOSITORY * reposPerEntry;
+
+        return (stillTodo * timePerEntry) / threads;
+    }
+
     private String migrateTestRepo(ProgrammingExercise programmingExercise) throws GitAPIException, URISyntaxException {
         return cloneRepositoryFromBitbucketAndMoveToLocalVCS(programmingExercise, programmingExercise.getTestRepositoryUri());
     }
@@ -231,6 +260,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         for (var repo : getAuxiliaryRepositories(programmingExercise.getId())) {
             try {
                 var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(programmingExercise, repo.getRepositoryUri());
+                log.debug("Migrated auxiliary repository with id {} to {}", repo.getId(), url);
                 repo.setRepositoryUri(url);
                 auxiliaryRepositoryRepository.save(repo);
             }
@@ -264,12 +294,15 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         for (var solutionParticipation : solutionParticipations) {
             try {
                 var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(solutionParticipation.getProgrammingExercise(), solutionParticipation.getRepositoryUri());
+                log.debug("Migrated solution participation with id {} to {}", solutionParticipation.getId(), url);
                 solutionParticipation.setRepositoryUri(url);
                 solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
                 url = migrateTestRepo(solutionParticipation.getProgrammingExercise());
+                log.debug("Migrated test repository for solution participation with id {} to {}", solutionParticipation.getId(), url);
                 var programmingExercise = solutionParticipation.getProgrammingExercise();
                 if (url != null && !bitbucketLocalVCMigrationService.get().getDefaultBranch().equals(programmingExercise.getBranch())) {
                     programmingExercise.setBranch(bitbucketLocalVCMigrationService.get().getDefaultBranch());
+                    log.debug("Changed branch of programming exercise with id {} to {}", programmingExercise.getId(), programmingExercise.getBranch());
                 }
                 programmingExercise.setTestRepositoryUri(url);
                 programmingExerciseRepository.save(programmingExercise);
@@ -292,6 +325,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             try {
                 var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(templateParticipation.getProgrammingExercise(), templateParticipation.getRepositoryUri());
                 templateParticipation.setRepositoryUri(url);
+                log.debug("Migrated template participation with id {} to {}", templateParticipation.getId(), url);
                 templateProgrammingExerciseParticipationRepository.save(templateParticipation);
             }
             catch (Exception e) {
@@ -317,6 +351,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
                 var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(participation.getProgrammingExercise(), participation.getRepositoryUri());
                 if (url != null && !bitbucketLocalVCMigrationService.get().getDefaultBranch().equals(participation.getBranch())) {
                     participation.setBranch(bitbucketLocalVCMigrationService.get().getDefaultBranch());
+                    log.debug("Changed branch of student participation with id {} to {}", participation.getId(), participation.getBranch());
                 }
                 participation.setRepositoryUri(url);
                 programmingExerciseStudentParticipationRepository.save(participation);
@@ -373,7 +408,10 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             log.info("Repository {} is already in local VC", repositoryUri);
             return repositoryUri;
         }
-
+        if (!bitbucketService.get().repositoryUriIsValid(new VcsRepositoryUri(repositoryUri))) {
+            log.info("Repository {} is not available in Bitbucket, removing the reference in the database", repositoryUri);
+            return null;
+        }
         try {
             var repositoryName = uriService.getRepositorySlugFromRepositoryUriString(repositoryUri);
             var projectKey = exercise.getProjectKey();
@@ -414,6 +452,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
 
         try {
             Files.createDirectories(repositoryPath);
+            log.debug("Created local git repository folder {}", repositoryPath);
 
             // Create a bare local repository with JGit.
             Git git = Git.cloneRepository().setDirectory(repositoryPath.toFile()).setBare(true).setURI(oldOrigin).call();
@@ -421,8 +460,8 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             if (!git.getRepository().getBranch().equals(bitbucketLocalVCMigrationService.get().getDefaultBranch())) {
                 // Rename the default branch to the configured default branch.
                 git.branchRename().setNewName(bitbucketLocalVCMigrationService.get().getDefaultBranch()).call();
+                log.debug("Renamed default branch of local git repository {} to {}", repositorySlug, bitbucketLocalVCMigrationService.get().getDefaultBranch());
             }
-
             git.close();
             log.debug("Created local git repository {} in folder {}", repositorySlug, repositoryPath);
         }
