@@ -26,6 +26,7 @@ import org.springframework.stereotype.Component;
 import com.google.common.collect.Lists;
 
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
+import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
@@ -229,10 +230,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
      * @param programmingExercise the programming exercise to migrate the auxiliary repositories for
      */
     private void migrateAuxiliaryRepositories(ProgrammingExercise programmingExercise) {
-        if (programmingExercise.getAuxiliaryRepositories() == null) {
-            return;
-        }
-        for (var repo : programmingExercise.getAuxiliaryRepositories()) {
+        for (var repo : getAuxiliaryRepositories(programmingExercise.getId())) {
             try {
                 var url = cloneRepositoryFromBitbucketAndMoveToLocalVCS(programmingExercise, repo.getRepositoryUri());
                 repo.setRepositoryUri(url);
@@ -242,6 +240,16 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
                 log.error("Failed to migrate auxiliary repository with id {}", repo.getId(), e);
             }
         }
+    }
+
+    /**
+     * Returns a list of auxiliary repositories for the given exercise.
+     *
+     * @param exerciseId The id of the exercise
+     * @return A list of auxiliary repositories, or an empty list if the migration service does not support auxiliary repositories
+     */
+    private List<AuxiliaryRepository> getAuxiliaryRepositories(Long exerciseId) {
+        return auxiliaryRepositoryRepository.findByExerciseId(exerciseId);
     }
 
     /**
