@@ -174,7 +174,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testJPQLStyle() {
-        methods().that().areAnnotatedWith(Query.class).should(useUpperCaseSQLStyle()).check(allClasses);
+        var queryRule = methods().that().areAnnotatedWith(Query.class).should(useUpperCaseSQLStyle()).because("@Query content should follow the style guide");
+        queryRule.check(allClasses);
     }
 
     // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes
@@ -229,7 +230,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
             "BETWEEN", "HAVING", "EMPTY", "MEMBER", "OF", "UPPER", "LOWER", "TRIM");
 
     private ArchCondition<JavaMethod> useUpperCaseSQLStyle() {
-        return new ArchCondition<>("follow the style guide") {
+        return new ArchCondition<>("have keywords in upper case") {
 
             @Override
             public void check(JavaMethod item, ConditionEvents events) {
