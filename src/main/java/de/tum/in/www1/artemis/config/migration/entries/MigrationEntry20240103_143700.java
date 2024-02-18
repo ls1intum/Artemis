@@ -69,27 +69,27 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    private final Optional<LocalVCService> localVCService;
-
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
-    private final Optional<BitbucketService> bitbucketService;
-
-    private final UriService uriService = new UriService();
+    private final UriService uriService;
 
     private final Environment environment;
 
     private final GitService gitService;
 
-    private final CopyOnWriteArrayList<ProgrammingExerciseParticipation> errorList = new CopyOnWriteArrayList<>();
+    private final Optional<LocalVCService> localVCService;
+
+    private final Optional<BitbucketService> bitbucketService;
 
     private final Optional<BitbucketLocalVCMigrationService> bitbucketLocalVCMigrationService;
+
+    private final CopyOnWriteArrayList<ProgrammingExerciseParticipation> errorList = new CopyOnWriteArrayList<>();
 
     public MigrationEntry20240103_143700(ProgrammingExerciseRepository programmingExerciseRepository, Environment environment,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<LocalVCService> localVCService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, GitService gitService, Optional<BitbucketService> bitbucketService,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, GitService gitService, Optional<BitbucketService> bitbucketService, UriService uriService,
             Optional<BitbucketLocalVCMigrationService> bitbucketLocalVCMigrationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.environment = environment;
@@ -100,6 +100,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         this.gitService = gitService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.bitbucketService = bitbucketService;
+        this.uriService = uriService;
         this.bitbucketLocalVCMigrationService = bitbucketLocalVCMigrationService;
     }
 
@@ -360,7 +361,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
             return null;
         }
         localVCService.get().createProjectForExercise(exercise);
-        cloneRepo(projectKey, repositoryName, repositoryUrl);
+        copyRepoToLocalVC(projectKey, repositoryName, repositoryUrl);
         var url = new LocalVCRepositoryUri(projectKey, repositoryName, bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl());
         return url.toString();
     }
@@ -373,27 +374,27 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
      * @param repositorySlug the repository slug
      * @param oldOrigin      the old origin of the repository
      */
-    private void cloneRepo(String projectKey, String repositorySlug, String oldOrigin) {
+    private void copyRepoToLocalVC(String projectKey, String repositorySlug, String oldOrigin) {
         if (bitbucketLocalVCMigrationService.isEmpty()) {
             log.error("Failed to clone repository from Bitbucket: {}", repositorySlug);
             return;
         }
         LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(projectKey, repositorySlug, bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl());
 
-        Path remoteDirPath = localVCRepositoryUri.getLocalRepositoryPath(bitbucketLocalVCMigrationService.get().getLocalVCBasePath());
+        Path repositoryPath = localVCRepositoryUri.getLocalRepositoryPath(bitbucketLocalVCMigrationService.get().getLocalVCBasePath());
 
         try {
-            Files.createDirectories(remoteDirPath);
+            Files.createDirectories(repositoryPath);
 
             // Create a bare local repository with JGit.
-            Git git = Git.cloneRepository().setDirectory(remoteDirPath.toFile()).setBare(true).setURI(oldOrigin).call();
+            Git git = Git.cloneRepository().setDirectory(repositoryPath.toFile()).setBare(true).setURI(oldOrigin).call();
             // Rename the default branch to the configured default branch.
             git.branchRename().setNewName(bitbucketLocalVCMigrationService.get().getDefaultBranch()).call();
             git.close();
-            log.debug("Created local git repository {} in folder {}", repositorySlug, remoteDirPath);
+            log.debug("Created local git repository {} in folder {}", repositorySlug, repositoryPath);
         }
         catch (GitAPIException | IOException e) {
-            log.error("Could not create local git repo {} at location {}", repositorySlug, remoteDirPath, e);
+            log.error("Could not create local git repo {} at location {}", repositorySlug, repositoryPath, e);
             throw new LocalVCInternalException("Error while creating local git project.", e);
         }
     }
