@@ -527,6 +527,16 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         Path outputDir = fileService.getTemporaryUniquePathWithoutPathCreation(repoDownloadClonePath, 10);
         var zippedRepos = exportStudentRepositories(programmingExercise, participations, repositoryExportOptions, outputDir, outputDir, new ArrayList<>());
 
+        if (zippedRepos != null && zippedRepos.size() == 1) {
+            if (zippedRepos.get(0).toFile().exists()) {
+                return zippedRepos.get(0).toFile();
+            }
+            else {
+                log.error("Provided zip repo was empty");
+                return null;
+            }
+        }
+
         try {
             // Create a zip folder containing the zipped repositories.
             return createZipWithAllRepositories(programmingExercise, zippedRepos, outputDir);
