@@ -1,43 +1,62 @@
 <table class="table table-striped align-middle flex">
     <thead class="thead-dark">
-        <tr (sortChange)="sortRows()" [(ascending)]="listSorting" [(predicate)]="sortedColumn" class="flex-row" jhiSort>
-            <!-- ID column, always present -->
-            <th class="col-1" jhiSortBy="ID">
+        <tr (sortChange)="onSortChange($event)" [(ascending)]="ascending" [(predicate)]="search.sortedColumn" class="flex-row" jhiSort>
+            <th jhiSortBy="ID">
                 <span>#</span>
                 <fa-icon [icon]="faSort" />
             </th>
-            @for (column of columns; track column) {
-                <th class="col-4" [jhiSortBy]="column.name">
-                    <span [jhiTranslate]="'artemisApp.' + entityName + '.import.table.' + column.name"></span>
-                    <fa-icon [icon]="faSort" />
-                </th>
-            }
-            <th class="col-1"></th>
+            <th jhiSortBy="TITLE">
+                <span [jhiTranslate]="'artemisApp.competency.import.table.TITLE'"></span>
+                <fa-icon [icon]="faSort" />
+            </th>
+            <!-- do not allow sorting by description -->
+            <th>
+                <span [jhiTranslate]="'artemisApp.competency.import.table.DESCRIPTION'"></span>
+            </th>
+            <th jhiSortBy="COURSE_TITLE">
+                <span [jhiTranslate]="'artemisApp.competency.import.table.COURSE_TITLE'"></span>
+                <fa-icon [icon]="faSort" />
+            </th>
+            <th jhiSortBy="SEMESTER">
+                <span [jhiTranslate]="'artemisApp.competency.import.table.SEMESTER'"></span>
+                <fa-icon [icon]="faSort" />
+            </th>
+            <!-- column for buttons -->
+            <th></th>
         </tr>
     </thead>
     <tbody>
-        @for (entity of content.resultsOnPage; track trackId($index, entity)) {
-            <tr class="flex-row">
-                <td class="col-1">
-                    <span>{{ entity.id }}</span>
+        @for (competency of content.resultsOnPage; track trackId($index, competency)) {
+            <tr>
+                <td>
+                    <span>{{ competency.id }}</span>
                 </td>
-                @for (column of columns; track column) {
-                    <td class="text-break col-4">
-                        <ngb-highlight [result]="column.getProperty(entity)" [term]="searchTerm" />
-                    </td>
-                }
-                <!-- TODO: maybe change what the button can do? -->
-                <td class="col-1">
-                    <jhi-button
-                        (onClick)="selectImport.emit(entity)"
-                        [disabled]="disabledIds.includes(entity.id!)"
-                        [title]="'artemisApp.' + entityName + '.import.table.doImport'"
-                    />
+                <td>
+                    {{ competency.title }}
+                </td>
+                <!-- TODO: extra column type for description that hides it. -->
+                <td class="markdown-preview" [innerHTML]="competency.description | htmlForMarkdown"></td>
+                <td>
+                    {{ competency.course?.title }}
+                </td>
+                <td>
+                    {{ competency.course?.semester }}
+                </td>
+                <!-- TODO: remove and add as child. -->
+                <td>
+                    <jhi-button [disabled]="disabledIds.includes(competency.id!)" title="hehe" />
                 </td>
             </tr>
         }
     </tbody>
 </table>
 <div class="d-flex justify-content-between p-2">
-    <ngb-pagination (pageChange)="onPageChange($event)" [(page)]="state.page" [collectionSize]="total" [maxSize]="10" [pageSize]="state.pageSize" [rotate]="true" />
+    <ngb-pagination
+        (pageChange)="onPageChange($event)"
+        [(page)]="search.page"
+        [collectionSize]="search.pageSize * content.numberOfPages"
+        [maxSize]="10"
+        [pageSize]="search.pageSize"
+        [rotate]="true"
+    />
 </div>

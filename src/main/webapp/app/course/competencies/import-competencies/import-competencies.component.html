@@ -1,11 +1,16 @@
 <div class="container">
     <h2 id="page-heading">{{ 'artemisApp.competency.import.title' | artemisTranslate }}</h2>
-    <jhi-competency-search (search)="search($event)" />
+    <jhi-competency-search [search]="filter" (searchChange)="filterChange($event)" />
     <h3 class="mt-2">{{ 'artemisApp.competency.import.searchTableHeader' | artemisTranslate }}</h3>
-    <!-- TODO: add table as normal table component/extract import component :) -->
+    @if (searchedCompetencies.resultsOnPage?.length) {
+        <jhi-competency-table [content]="searchedCompetencies" [disabledIds]="[]" [search]="search" (searchChange)="searchChange($event)" />
+    } @else {
+        <!-- TODO: other message :) -->
+        <span>{{ 'global.generic.emptyList' | artemisTranslate }}</span>
+    }
+
     <h3 class="mt-2">{{ 'artemisApp.competency.import.selectedTableHeader' | artemisTranslate }}</h3>
-    <!-- TODO: add table as normal table component/extract import component :) -->
-    />
+    <!-- TODO: how to do table? pagination & sort will be ugly. (but they will want a sort anyways...) -->
     <div class="mt-2">
         <div class="mb-1 d-flex">
             <span>{{ 'artemisApp.competency.import.importRelations' | artemisTranslate }}</span>

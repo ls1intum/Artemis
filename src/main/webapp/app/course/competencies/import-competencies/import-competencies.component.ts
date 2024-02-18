@@ -1,7 +1,6 @@
 import { Component, HostListener, OnInit } from '@angular/core';
 import { faBan, faFileImport, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
-import { CompetencyFilter } from 'app/course/competencies/import-competencies/competency-search.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -10,6 +9,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { Competency } from 'app/entities/competency.model';
+import { BasePageableSearch, CompetencyFilter, CompetencyPageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 
 @Component({
     selector: 'jhi-import-competencies',
@@ -20,7 +20,27 @@ export class ImportCompetenciesComponent implements OnInit, ComponentCanDeactiva
     importRelations = true;
     showAdvancedSearch = false;
     courseId: number;
-    competencies: Competency[] = [];
+
+    searchedCompetencies: SearchResult<Competency> = { resultsOnPage: [], numberOfPages: 0 };
+    //TODO: from this course, or in selectedCompetencies.
+    disabledIds: number[] = [];
+    //TODO: if i use this i need to solve: sorting, pagination
+    // (or just say display 999 elements per page or smth > pagination then still shows and its kinda cringe :D)
+    selectedCompetencies: SearchResult<Competency>;
+
+    filter: CompetencyFilter = {
+        courseTitle: '',
+        description: '',
+        semester: '',
+        title: '',
+    };
+
+    search: BasePageableSearch = {
+        page: 1,
+        pageSize: 10,
+        sortingOrder: SortingOrder.DESCENDING,
+        sortedColumn: 'ID',
+    };
 
     //Icons
     protected readonly faBan = faBan;
@@ -40,17 +60,26 @@ export class ImportCompetenciesComponent implements OnInit, ComponentCanDeactiva
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
+            this.performSearch({ ...this.filter, ...this.search });
         });
     }
 
-    search(filter: CompetencyFilter) {
-        console.log(filter);
+    filterChange(filter: CompetencyFilter) {
+        this.filter = filter;
+        this.performSearch({ ...this.filter, ...this.search });
+    }
+
+    searchChange(search: BasePageableSearch) {
+        this.search = search;
+        this.performSearch({ ...this.filter, ...this.search });
+    }
+
+    performSearch(search: CompetencyPageableSearch) {
         this.isLoading = true;
-        this.competencyService.getAllForCourse(this.courseId).subscribe({
+        this.competencyService.getForImport(search).subscribe({
             next: (res) => {
-                this.competencies = res.body ?? [];
+                this.searchedCompetencies = res;
                 this.isLoading = false;
-                console.log(this.competencies);
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });

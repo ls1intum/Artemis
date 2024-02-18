@@ -136,6 +136,7 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
      * @param pageNumber The current page number
      */
     onPageChange(pageNumber: number) {
+        console.log(pageNumber);
         if (pageNumber) {
             this.page = pageNumber;
         }

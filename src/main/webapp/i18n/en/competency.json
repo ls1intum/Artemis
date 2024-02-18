@@ -65,6 +65,12 @@
                     "fieldCourseSemester": "Semester",
                     "showAdvancedSearch": "Show advanced search",
                     "hideAdvancedSearch": "Hide advanced search"
+                },
+                "table": {
+                    "TITLE": "Title",
+                    "DESCRIPTION": "Description",
+                    "COURSE_TITLE": "Course Title",
+                    "SEMESTER": "Semester"
                 }
             },
             "generate": {

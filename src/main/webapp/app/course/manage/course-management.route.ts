@@ -26,7 +26,6 @@ import { LearningPathManagementComponent } from 'app/course/learning-paths/learn
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
 import { ImportCompetenciesComponent } from 'app/course/competencies/import-competencies/import-competencies.component';
-import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { LocalCIGuard } from 'app/localci/localci-guard.service';
 import { IrisGuard } from 'app/iris/iris-guard.service';
 
