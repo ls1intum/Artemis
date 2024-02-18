@@ -53,9 +53,9 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
 
     private static final int MAX_THREAD_COUNT = 32;
 
-    private static final String ERROR_MESSAGE = "Failed to migrate programming exercises within twenty four hours. Aborting migration.";
+    private static final int TIMEOUT_IN_HOURS = 48;
 
-    private static final int TIMEOUT_IN_HOURS = 24;
+    private static final String ERROR_MESSAGE = "Failed to migrate programming exercises within " + TIMEOUT_IN_HOURS + " hours. Aborting migration.";
 
     private static final List<String> MIGRATABLE_PROFILES = List.of("bitbucket", "localvc");
 
@@ -71,8 +71,6 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
 
     private final Optional<LocalVCService> localVCService;
 
-    private final Optional<BambooMigrationService> ciMigrationService;
-
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     private final Optional<BitbucketService> bitbucketService;
@@ -87,7 +85,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
 
     private final Optional<BitbucketLocalVCMigrationService> bitbucketLocalVCMigrationService;
 
-    public MigrationEntry20240103_143700(ProgrammingExerciseRepository programmingExerciseRepository, Optional<BambooMigrationService> ciMigrationService, Environment environment,
+    public MigrationEntry20240103_143700(ProgrammingExerciseRepository programmingExerciseRepository, Environment environment,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<LocalVCService> localVCService,
@@ -99,7 +97,6 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.localVCService = localVCService;
-        this.ciMigrationService = ciMigrationService;
         this.gitService = gitService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.bitbucketService = bitbucketService;
@@ -136,8 +133,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         }
 
         var programmingExerciseCount = programmingExerciseRepository.count();
-        var studentCount = ciMigrationService.orElseThrow().getPageableStudentParticipations(programmingExerciseStudentParticipationRepository, Pageable.unpaged())
-                .getTotalElements();
+        var studentCount = programmingExerciseStudentParticipationRepository.findAllWithBuildPlanId(Pageable.unpaged()).getTotalElements();
 
         if (programmingExerciseCount == 0) {
             // no exercises to change, migration complete
@@ -190,8 +186,7 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
         log.info("Found {} student programming exercise participations with build plans to migrate.", studentCount);
         for (int currentPageStart = 0; currentPageStart < studentCount; currentPageStart += BATCH_SIZE) {
             Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
-            Page<ProgrammingExerciseStudentParticipation> studentParticipationPage = ciMigrationService.orElseThrow()
-                    .getPageableStudentParticipations(programmingExerciseStudentParticipationRepository, pageable);
+            Page<ProgrammingExerciseStudentParticipation> studentParticipationPage = programmingExerciseStudentParticipationRepository.findAllWithBuildPlanId(pageable);
             log.info("Will migrate {} student programming exercise participations in batch.", studentParticipationPage.getNumberOfElements());
             var studentPartitionsPartitions = Lists.partition(studentParticipationPage.toList(), threadCount);
             for (var studentParticipations : studentPartitionsPartitions) {
