@@ -339,31 +339,32 @@ public class MigrationEntry20240103_143700 extends MigrationEntry {
      * This is done by cloning the repository from Bitbucket and then creating a bare repository in the local VCS.
      *
      * @param exercise      the programming exercise
-     * @param repositoryUrl the repository URL
-     * @return the URL of the repository in the local VCS
+     * @param repositoryUri the repository URI
+     * @return the URI of the repository in the local VCS
      * @throws GitAPIException    if an error occurs during the git operation
      * @throws URISyntaxException if the repository URL is invalid
      */
-    private String cloneRepositoryFromBitbucketAndMoveToLocalVCS(ProgrammingExercise exercise, String repositoryUrl) throws GitAPIException, URISyntaxException {
+    private String cloneRepositoryFromBitbucketAndMoveToLocalVCS(ProgrammingExercise exercise, String repositoryUri) throws GitAPIException, URISyntaxException {
         if (localVCService.isEmpty() || bitbucketService.isEmpty() || bitbucketLocalVCMigrationService.isEmpty()) {
-            log.error("Failed to clone repository from Bitbucket: {}", repositoryUrl);
+            log.error("Failed to clone repository from Bitbucket: {}", repositoryUri);
             return null;
         }
-        if (repositoryUrl.startsWith(bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl().toString())) {
-            log.info("Repository {} is already in local VC", repositoryUrl);
-            return repositoryUrl;
+        if (repositoryUri.startsWith(bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl().toString())) {
+            log.info("Repository {} is already in local VC", repositoryUri);
+            return repositoryUri;
         }
-        var repositoryName = uriService.getRepositorySlugFromRepositoryUriString(repositoryUrl);
+        var repositoryName = uriService.getRepositorySlugFromRepositoryUriString(repositoryUri);
         var projectKey = exercise.getProjectKey();
-        Repository oldRepository = gitService.getOrCheckoutRepository(new VcsRepositoryUri(repositoryUrl), true);
+        Repository oldRepository = gitService.getOrCheckoutRepository(new VcsRepositoryUri(repositoryUri), true);
         if (oldRepository == null) {
-            log.error("Failed to clone repository from Bitbucket: {}", repositoryUrl);
+            // TODO: we should handle this case. If the repo does not exist anymore on Bitbucket, we should set the repository URL to null for the participation
+            log.error("Failed to clone repository from Bitbucket: {}", repositoryUri);
             return null;
         }
         localVCService.get().createProjectForExercise(exercise);
-        copyRepoToLocalVC(projectKey, repositoryName, repositoryUrl);
-        var url = new LocalVCRepositoryUri(projectKey, repositoryName, bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl());
-        return url.toString();
+        copyRepoToLocalVC(projectKey, repositoryName, repositoryUri);
+        var uri = new LocalVCRepositoryUri(projectKey, repositoryName, bitbucketLocalVCMigrationService.get().getLocalVCBaseUrl());
+        return uri.toString();
     }
 
     /**
