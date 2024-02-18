@@ -37,10 +37,10 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
 
     @Query("""
             SELECT DISTINCT conversationParticipant
+            FROM ConversationParticipant conversationParticipant
                 LEFT JOIN FETCH conversationParticipant.user user
                 LEFT JOIN FETCH user.groups
                 LEFT JOIN FETCH user.authorities
-            FROM ConversationParticipant conversationParticipant
             WHERE conversationParticipant.conversation.id = :conversationId
             """)
     Set<ConversationParticipant> findConversationParticipantsWithUserGroupsByConversationId(@Param("conversationId") Long conversationId);
