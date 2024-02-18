@@ -356,55 +356,14 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         return users.map(UserDTO::new);
     }
 
-    /**
-     * Gets users in a group by their registration number.
-     *
-     * @param groupName           Name of group in which to search for users
-     * @param registrationNumbers Registration numbers of users
-     * @return found users that match the criteria
-     */
-    @Query("""
-            SELECT user
-            FROM User user
-                LEFT JOIN FETCH user.groups
-            WHERE user.isDeleted = FALSE
-                AND :groupName MEMBER OF user.groups
-                AND user.registrationNumber IN :registrationNumbers
-            """)
-    List<User> findAllByRegistrationNumbersInGroup(@Param("groupName") String groupName, @Param("registrationNumbers") Set<String> registrationNumbers);
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    List<User> findAllWithGroupsByIsDeletedIsFalseAndGroupsContainsAndRegistrationNumberIn(String groupName, Set<String> registrationNumbers);
 
-    /**
-     * Gets users in a group by their login.
-     *
-     * @param groupName Name of group in which to search for users
-     * @param logins    Logins of users
-     * @return found users that match the criteria
-     */
-    @Query("""
-            SELECT user
-            FROM User user
-                LEFT JOIN FETCH user.groups
-            WHERE user.isDeleted = FALSE
-                AND :groupName MEMBER OF user.groups
-                AND user.login IN :logins
-            """)
-    List<User> findAllByLoginsInGroup(@Param("groupName") String groupName, @Param("logins") Set<String> logins);
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    List<User> findAllWithGroupsByIsDeletedIsFalseAndGroupsContainsAndLoginIn(String groupName, Set<String> logins);
 
-    /**
-     * Gets users with groups by their login.
-     *
-     * @param logins Logins of users
-     * @return found users that match the criteria
-     */
-    @Query("""
-            SELECT DISTINCT user
-            FROM User user
-                LEFT JOIN FETCH user.groups
-                LEFT JOIN FETCH user.authorities
-            WHERE user.isDeleted = FALSE
-                AND user.login IN :logins
-            """)
-    Set<User> findAllByLogins(@Param("logins") Set<String> logins);
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
+    Set<User> findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndLoginIn(Set<String> logins);
 
     /**
      * Searches for users by their login or full name.
@@ -456,15 +415,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             WHERE user.isDeleted = FALSE
             """)
     Page<User> searchAllByLoginOrNameInCourse(Pageable page, @Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
-
-    @Query("""
-            SELECT user
-            FROM User user
-                LEFT JOIN FETCH user.groups
-                LEFT JOIN FETCH user.authorities
-            WHERE user.isDeleted = FALSE
-            """)
-    Set<User> findAllWithGroupsAndAuthorities();
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Set<User> findAllWithGroupsAndAuthoritiesByIsDeletedIsFalse();
