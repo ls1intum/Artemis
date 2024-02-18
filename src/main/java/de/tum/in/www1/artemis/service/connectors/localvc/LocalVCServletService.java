@@ -251,7 +251,7 @@ public class LocalVCServletService {
                 repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(repositoryActionType == RepositoryActionType.WRITE, exercise, user, repositoryTypeOrUserName);
             }
             catch (AccessForbiddenException e) {
-                throw new LocalVCAuthException(e);
+                throw new LocalVCForbiddenException(e);
             }
             return;
         }
