@@ -38,4 +38,53 @@ describe('CompetencySearchComponent', () => {
         componentFixture.detectChanges();
         expect(component).toBeDefined();
     });
+
+    it('should reset', () => {
+        componentFixture.detectChanges();
+        for (const key in component.search) {
+            component.search[key] = 'any value';
+        }
+
+        componentFixture.debugElement.nativeElement.querySelector('#resetFilterButton > .jhi-btn').click();
+
+        for (const key in component.search) {
+            expect(component.search[key]).toBe('');
+        }
+    });
+
+    it('should submit with only title', () => {
+        componentFixture.detectChanges();
+        const searchChangeEmitSpy = jest.spyOn(component.searchChange, 'emit');
+
+        for (const key in component.search) {
+            component.search[key] = 'any value';
+        }
+
+        componentFixture.debugElement.nativeElement.querySelector('#submitFilterButton > .jhi-btn').click();
+        expect(searchChangeEmitSpy).toHaveBeenCalledWith({ title: 'any value', description: '', courseTitle: '', semester: '' });
+    });
+
+    it('should submit with advanced search', () => {
+        componentFixture.detectChanges();
+        const searchChangeEmitSpy = jest.spyOn(component.searchChange, 'emit');
+
+        for (const key in component.search) {
+            component.search[key] = 'any value';
+        }
+        component.advancedSearchEnabled = true;
+
+        componentFixture.debugElement.nativeElement.querySelector('#submitFilterButton > .jhi-btn').click();
+        expect(searchChangeEmitSpy).toHaveBeenCalledWith({ title: 'any value', description: 'any value', courseTitle: 'any value', semester: 'any value' });
+    });
+
+    it('should toggle advanced search', () => {
+        componentFixture.detectChanges();
+        const advancedSearchToggle = componentFixture.debugElement.nativeElement.querySelector('#toggleAdvancedSearch');
+
+        advancedSearchToggle.click();
+        expect(component.advancedSearchEnabled).toBeTrue();
+
+        advancedSearchToggle.click();
+        expect(component.advancedSearchEnabled).toBeFalse();
+    });
 });
