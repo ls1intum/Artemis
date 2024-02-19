@@ -1,16 +1,14 @@
 import { Injectable } from '@angular/core';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import posthog from 'posthog-js';
+import { posthog } from 'posthog-js';
 
 @Injectable({ providedIn: 'root' })
 export class AnalyticsService {
-    private environment: string;
-
     /**
-     * Initialize PostHog with profile information.
+     * Initialize Analytics with profile information.
      * @param profileInfo
      */
-    public async initPostHog(profileInfo: ProfileInfo): Promise<void> {
+    public async initAnalytics(profileInfo: ProfileInfo): Promise<void> {
         if (!profileInfo || !profileInfo.postHog) {
             return;
         }

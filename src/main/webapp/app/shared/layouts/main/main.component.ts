@@ -30,8 +30,8 @@ export class JhiMainComponent implements OnInit {
         private document: Document,
         private renderer: Renderer2,
     ) {
-        this.setupErrorHandling().then(null);
-        this.setupAnalytics().then(null);
+        this.setupErrorHandling().then(undefined);
+        this.setupAnalytics().then(undefined);
     }
 
     private async setupErrorHandling() {
@@ -44,7 +44,7 @@ export class JhiMainComponent implements OnInit {
     private async setupAnalytics() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             // postHog is only activated if it was specified in the application.yml file
-            this.analyticsService.initPostHog(profileInfo);
+            this.analyticsService.initAnalytics(profileInfo);
         });
     }
 
